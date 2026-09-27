@@ -1,6 +1,14 @@
-# Verification - version 0.13, 2026-09-27
+# Verification - version 0.14, 2026-09-27
 
-## v0.13 checks
+## v0.14 checks
+
+The full automated suite passes 148 tests. Seven hiring tests cover pure deterministic offers, distinct roles, exact preview-to-hire identity, pricing, daily refresh, same-day save/load stability, consumed/stale/wrong-town rejection, affordability and company limits, malformed save data, and old-save stat preservation. A sweep across 64 seeds and eight days reaches all ten backgrounds and twelve traits, verifies their stat effects, and checks that tradeoffs never directly cancel the positive trait. New recruit bonuses feed actual battle units and survive an active-battle save/reload. Six historical fixtures retain equipment, purse, inventory and battle positions. Offline cache consistency and `git diff --check` pass.
+
+At 1024x768, the three hiring cards show fees, upkeep, equipment status, background bonuses, traits, and final stats with 44-pixel hire buttons visible. The board also renders as a single column at 390 pixels. Hiring Jonas Vey for 180 crowns changed the balance from 900 to 720, removed only his offer, and retained the other candidates after reload. His company sheet matched the preview: 100 HP, 106 maximum fatigue, 113 initiative, 56 melee skill, and 48 ranged skill, including Strong and Impatient. Advancing past midnight produced three fresh offers.
+
+With the local server stopped and a direct HTTP request failing, a fresh browser tab restored the day-two company. Hiring Milo Hart offline spent 130 crowns, leaving 570. Reloading preserved his Farmhand background, Eagle Eyes and Stocky traits, 106/106 HP, 108 maximum fatigue, 101 initiative and 50 ranged skill. No JavaScript errors occurred in this offline flow. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+## Historical v0.13 checks
 
 The full automated suite passes 141 tests. Perk coverage includes point budgets and level gates, duplicate/unknown/overspent rejection, legacy migration, stat rounding and wound-deficit preservation, terrain movement, cover and hit modifiers, every packaged bow/crossbow variant and famed copies, damage/morale/recovery/XP effects, and save/reload during a Berserk bonus action. A second kill cannot trigger Berserk again in the same round. All 19 perk images match their credited source hashes and are included with the perk module in the offline cache. Six historical fixtures retain equipment, purse, inventory and battle positions after migration.
 

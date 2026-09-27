@@ -2,6 +2,7 @@
 import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { PERKS, PERK_BY_ID, hasPerk } from './perks.js';
+import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile } from './recruits.js';
 
 export { PERKS } from './perks.js';
 
@@ -265,6 +266,7 @@ function normalizeMember(person) {
     : person.pendingLevelUps.map(entry => ({ level: entry.level, rolls: { ...entry.rolls } }));
   return {
     ...person,
+    traits: [...(person.traits ?? [])],
     reserveEquipment: { weapon: person.reserveEquipment?.weapon ?? null, shield: person.reserveEquipment?.shield ?? null },
     accessories: [...(person.accessories ?? [null, null])],
     level,
@@ -280,33 +282,76 @@ function normalizeMember(person) {
   };
 }
 
+const LEGACY_BACKGROUND_INFO = Object.freeze({
+  Captain: Object.freeze({ role: 'leader', description: 'A proven company leader with strong close-combat instincts and resolve.', bonuses: Object.freeze({ meleeSkill: 9, resolve: 10 }) }),
+  Scout: Object.freeze({ role: 'ranged', description: 'An experienced pathfinder who spots danger and acts early.', bonuses: Object.freeze({ rangedSkill: 13, rangedDefense: 3, initiative: 10 }) }),
+  Guard: Object.freeze({ role: 'frontline', description: 'A dependable shield hand trained to hold the line.', bonuses: Object.freeze({ maxHp: 5, meleeSkill: 6, meleeDefense: 3 }) }),
+  'Caravan Guard': Object.freeze({ role: 'frontline', description: 'A road guard accustomed to close ambushes and long marches.', bonuses: Object.freeze({ maxHp: 5, meleeSkill: 6, meleeDefense: 3 }) }),
+  Hunter: Object.freeze({ role: 'ranged', description: 'A practiced tracker with a sharp eye and quick reactions.', bonuses: Object.freeze({ rangedSkill: 13, rangedDefense: 3, initiative: 10 }) }),
+  Outrider: Object.freeze({ role: 'ranged', description: 'A swift advance scout comfortable fighting at range.', bonuses: Object.freeze({ rangedSkill: 13, rangedDefense: 3, initiative: 10 }) }),
+});
+
+function exposedRecruitEntry(entry) {
+  return entry ? { ...entry, bonuses: { ...entry.bonuses }, ...(entry.role ? { bio: entry.description } : {}) } : null;
+}
+
+export function getBackground(person) {
+  const defined = RECRUIT_BACKGROUND_BY_ID.get(person?.backgroundId);
+  if (defined) return exposedRecruitEntry(defined);
+  const name = typeof person?.background === 'string' ? person.background : '';
+  if (!name) return null;
+  const legacy = LEGACY_BACKGROUND_INFO[name];
+  const description = legacy?.description ?? `A seasoned ${name.toLowerCase()} with no special stat modifier.`;
+  return {
+    id: null,
+    name,
+    role: legacy?.role ?? 'support',
+    bio: description,
+    description,
+    bonuses: { ...(legacy?.bonuses ?? {}) },
+  };
+}
+
+export function getTraits(person) {
+  return (person?.traits ?? []).map(id => exposedRecruitEntry(RECRUIT_TRAIT_BY_ID.get(id))).filter(Boolean);
+}
+
+function recruitBonuses(person) {
+  const entries = [RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId), ...(person.traits ?? []).map(id => RECRUIT_TRAIT_BY_ID.get(id))].filter(Boolean);
+  const bonuses = {};
+  for (const entry of entries) for (const [key, value] of Object.entries(entry.bonuses)) bonuses[key] = (bonuses[key] ?? 0) + value;
+  return bonuses;
+}
+
 export function getCompanyStats(person) {
   const attributes = person.attributes ?? {};
   const level = person.level ?? 1;
   const background = person.background ?? '';
+  const recruit = recruitBonuses(person);
   const equipped = getEquipment(person);
   const armorFatigue = (equipped.armor?.fatigue ?? 0) + (equipped.helmet?.fatigue ?? 0);
   const otherFatigue = (equipped.weapon?.fatigue ?? 0) + (equipped.shield?.fatigue ?? 0);
   const fatigue = otherFatigue + (hasPerk(person, 'brawny') ? Math.floor(armorFatigue * .7) : armorFatigue);
-  const guard = background === 'Guard' || background === 'Caravan Guard';
-  const scout = background === 'Scout' || background === 'Hunter' || background === 'Outrider';
-  const captain = background === 'Captain';
-  const baseMaxHp = 100 + (guard ? 5 : 0) + (attributes.maxHp ?? 0);
+  const legacy = !person.backgroundId;
+  const guard = legacy && (background === 'Guard' || background === 'Caravan Guard');
+  const scout = legacy && (background === 'Scout' || background === 'Hunter' || background === 'Outrider');
+  const captain = legacy && background === 'Captain';
+  const baseMaxHp = 100 + (guard ? 5 : 0) + (attributes.maxHp ?? 0) + (recruit.maxHp ?? 0);
   const maxHp = hasPerk(person, 'colossus') ? Math.round(baseMaxHp * 1.25) : baseMaxHp;
   const maxBodyArmor = armorMaximum(person.equipment?.armor);
   const maxHeadArmor = armorMaximum(person.equipment?.helmet);
   const shieldDefense = equipped.shield?.defense ?? 0;
   const effectiveShieldDefense = hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense;
-  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) - fatigue);
+  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) - fatigue);
   const dodgeDefense = hasPerk(person, 'dodge') ? Math.floor(initiative * .15) : 0;
-  const baseResolve = 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0);
+  const baseResolve = 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0) + (recruit.resolve ?? 0);
   return {
     maxHp,
-    meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0),
-    rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0),
-    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
-    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
-    maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) - fatigue),
+    meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0),
+    rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0),
+    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
+    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
+    maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue),
     initiative,
     resolve: hasPerk(person, 'fortified-mind') ? Math.ceil(baseResolve * 1.25) : baseResolve,
     level,
@@ -353,6 +398,7 @@ export function createGame(seed = Date.now()) {
     contract: null,
     contractSerial: 0,
     recruitSerial: 0,
+    hiredRecruitOffers: [],
     log: [],
     visited: ['oakwatch'],
   };
@@ -942,30 +988,67 @@ export function getEquipment(person) {
   return Object.fromEntries(SLOTS.map(slot => [slot, getItem(person.equipment?.[slot]) ?? null]));
 }
 
-const RECRUITS = [
-  ['Elsi Rowan', 'Wayfarer'], ['Garrick Vale', 'Caravan Guard'], ['Nessa Flint', 'Hunter'],
-  ['Odo Fen', 'Farmhand'], ['Iris Blackwell', 'Deserter'], ['Hugo Reed', 'Sailor'],
-  ['Ada Pike', 'Tinker'], ['Kellan Moss', 'Outrider'], ['Sera Wren', 'Pilgrim'],
-];
+function recruitOfferDay(id) {
+  const match = /^hire:([a-z0-9-]+):([1-9]\d{0,6}):([0-2])$/.exec(id);
+  return match && TOWN_BY_ID.has(match[1]) ? Number(match[2]) : null;
+}
 
-export function recruit(state) {
+function recruitPerson(state, town, slot) {
+  const profile = makeRecruitProfile(state.seed, town.id, state.day, slot);
+  const background = RECRUIT_BACKGROUND_BY_ID.get(profile.backgroundId);
+  const person = normalizeMember({
+    id: `recruit-${town.id}-${state.day}-${slot}`,
+    name: profile.name,
+    background: background.name,
+    backgroundId: background.id,
+    traits: [...profile.traitIds],
+    seed: profile.personSeed,
+    hp: 100,
+    morale: 70,
+    equipment: { armor: null, helmet: null, weapon: null, shield: null },
+  });
+  person.hp = getCompanyStats(person).maxHp;
+  return { id: profile.offerId, person, cost: background.cost };
+}
+
+export function getRecruitOffers(state) {
+  const town = townAt(state);
+  if (!town) return [];
+  const consumed = new Set(state.hiredRecruitOffers ?? []);
+  return Array.from({ length: 3 }, (_, slot) => recruitPerson(state, town, slot))
+    .filter(offer => !consumed.has(offer.id))
+    .map(offer => ({
+      ...offer,
+      background: getBackground(offer.person),
+      traits: getTraits(offer.person),
+      stats: getCompanyStats(offer.person),
+    }));
+}
+
+export function recruit(state, offerId) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
   if (state.party.length >= MAX_COMPANY_SIZE) return result(false, 'The company has room for only twelve members.');
-  const cost = 160;
-  if (state.gold < cost) return result(false, 'Recruitment costs 160 crowns.');
-  const serial = state.recruitSerial++;
-  const [name, background] = RECRUITS[(state.seed + serial) % RECRUITS.length];
-  const person = normalizeMember({ id: `recruit-${serial + 1}`, name, background, seed: (state.seed ^ Math.imul(serial + 1, 2654435761)) >>> 0, hp: 100, morale: 70, equipment: { armor: null, helmet: null, weapon: null, shield: null } });
+  const offers = getRecruitOffers(state);
+  const offer = offerId === undefined ? offers[0] : offers.find(entry => entry.id === offerId);
+  if (!offer) return result(false, 'That recruit is no longer available here today.');
+  if (state.gold < offer.cost) return result(false, `Recruitment costs ${offer.cost} crowns.`);
   const formation = getFormation(state);
-  state.party.push(person);
   const vacancy = [...FRONT_FORMATION, ...REAR_FORMATION].find(index => formation[index] === null);
+  if (vacancy === undefined) return result(false, 'The company formation has no open place.');
+  const person = normalizeMember(offer.person);
+  state.party.push(person);
   formation[vacancy] = person.id;
   state.formation = formation;
-  state.gold -= cost;
-  const message = `${name} joins the Ashen Company for ${cost} crowns.`;
+  state.gold -= offer.cost;
+  state.recruitSerial += 1;
+  state.hiredRecruitOffers = [
+    ...(state.hiredRecruitOffers ?? []).filter(id => recruitOfferDay(id) === state.day),
+    offer.id,
+  ];
+  const message = `${person.name} joins the Ashen Company for ${offer.cost} crowns.`;
   record(state, message);
   return result(true, message);
 }
@@ -2009,6 +2092,8 @@ export function validateSave(input) {
   assert(TACTICS.includes(tactic), 'tactic');
   for (const key of ['gold', 'food']) assert(validCount(input[key]) && input[key] <= 1000000000, key);
   for (const key of ['renown', 'contractSerial', 'recruitSerial']) assert(validCount(input[key]) && input[key] <= 1000000, key);
+  const hiredRecruitOffers = input.hiredRecruitOffers ?? [];
+  assert(Array.isArray(hiredRecruitOffers) && hiredRecruitOffers.length <= 48 && hiredRecruitOffers.every(id => typeof id === 'string' && recruitOfferDay(id) !== null && recruitOfferDay(id) <= input.day) && new Set(hiredRecruitOffers).size === hiredRecruitOffers.length, 'hired recruit offers');
   assert(validPoint(input.position), 'position');
   assert(input.destination === null || validPoint(input.destination), 'destination');
   assert(Array.isArray(input.inventory) && input.inventory.length <= MAX_INVENTORY && input.inventory.every(id => getItem(id)), 'inventory');
@@ -2042,6 +2127,11 @@ export function validateSave(input) {
     ids.add(person.id);
     assert(typeof person.name === 'string' && person.name.length > 0 && person.name.length <= 80, 'person name');
     assert(typeof person.background === 'string' && person.background.length > 0 && person.background.length <= 80, 'person background');
+    const backgroundDefinition = person.backgroundId === undefined ? null : RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId);
+    assert(person.backgroundId === undefined || backgroundDefinition && person.background === backgroundDefinition.name, 'person background id');
+    const traits = person.traits ?? [];
+    assert(Array.isArray(traits) && traits.length <= 2 && traits.every(id => typeof id === 'string' && RECRUIT_TRAIT_BY_ID.has(id)) && new Set(traits).size === traits.length, 'person traits');
+    assert(backgroundDefinition ? traits.length >= 1 && RECRUIT_TRAIT_BY_ID.get(traits[0]).kind === 'positive' && (traits.length === 1 || RECRUIT_TRAIT_BY_ID.get(traits[1]).kind === 'tradeoff') : traits.length === 0, 'person trait kinds');
     assert(validCount(person.seed) && person.seed <= 0xffffffff, 'person seed');
     assert(Number.isFinite(person.morale) && person.morale >= 0 && person.morale <= 100, 'person morale');
     assert(person.equipment && typeof person.equipment === 'object' && !Array.isArray(person.equipment), 'equipment');
@@ -2126,6 +2216,8 @@ export function validateSave(input) {
   const conditions = [...inventoryCondition];
   const party = input.party.map(person => normalizeMember({
     id: person.id, name: person.name, background: person.background, seed: person.seed,
+    ...(person.backgroundId === undefined ? {} : { backgroundId: person.backgroundId }),
+    traits: [...(person.traits ?? [])],
     hp: person.hp, morale: person.morale,
     equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot]])),
     reserveEquipment: { weapon: person.reserveEquipment?.weapon ?? null, shield: person.reserveEquipment?.shield ?? null },
@@ -2158,7 +2250,7 @@ export function validateSave(input) {
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,
     destinationAction: destinationAction ? { type: destinationAction.type, id: destinationAction.id, ...(destinationAction.type === 'camp' ? { generation: destinationAction.generation } : {}) } : null,
     contract: input.contract ? { id: input.contract.id, type: input.contract.type ?? 'courier', from: input.contract.from, to: input.contract.to, reward: input.contract.reward, renown: input.contract.renown ?? 1, ...(input.contract.type === 'supply' ? { goodId: input.contract.goodId, quantity: input.contract.quantity } : {}), ...(input.contract.type === 'hunt' ? { campId: input.contract.campId, campGeneration: input.contract.campGeneration??0 } : {}), acceptedDay: input.contract.acceptedDay } : null,
-    contractSerial: input.contractSerial, recruitSerial: input.recruitSerial,
+    contractSerial: input.contractSerial, recruitSerial: input.recruitSerial, hiredRecruitOffers: [...hiredRecruitOffers],
     log: [...input.log], visited: [...input.visited],
   };
 }
