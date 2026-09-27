@@ -60,8 +60,9 @@ test('a full pack cannot grow beyond the save limit', () => {
 
 test('trade, recruiting and contracts require the issuing town', () => {
   const state = createGame(9);
-  assert.equal(buyItem(state, 'mail-shirt').ok, true);
-  assert.equal(sellItem(state, 'mail-shirt').ok, true);
+  const localItem = getMarket(state).equipment.find(row => row.stock > 0 && row.buyPrice <= state.gold).itemId;
+  assert.equal(buyItem(state, localItem).ok, true);
+  assert.equal(sellItem(state, localItem).ok, true);
   assert.equal(recruit(state).ok, true);
   assert.equal(travelTo(state, 420, 460).ok, true);
   assert.equal(tick(state, 3).ok, true);

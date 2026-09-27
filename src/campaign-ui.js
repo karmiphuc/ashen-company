@@ -1,4 +1,4 @@
-import { SETTLEMENTS, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, huntComplete, PERKS, getPerkPoints, getBackground, getTraits } from './engine.js';
+import { SETTLEMENTS, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, huntComplete, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy } from './engine.js';
 import { portraitHTML, itemImage } from './portraits.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6,6 +6,17 @@ const item = getItem;
 const town = id => SETTLEMENTS.find(entry => entry.id === id);
 const itemIcon = (entry, alt=entry?.name) => `<img class="equipment-icon${entry?.rarity === 'famed' ? ' famed-item-icon' : ''}" src="${itemImage(entry)}" alt="${esc(alt)}">`;
 export const statLabels = {maxHp:'Hitpoints',maxFatigue:'Maximum Fatigue',resolve:'Resolve',initiative:'Initiative',meleeSkill:'Melee Skill',rangedSkill:'Ranged Skill',meleeDefense:'Melee Defense',rangedDefense:'Ranged Defense'};
+
+export function townEventHTML(state, townId, compact=false) {
+  const event=getTownEvent(state,townId);
+  if(!event)return '';
+  return `<section class="town-event ${compact?'compact':''}"><div class="town-event-heading"><strong>${esc(event.name)}</strong><small>Through day ${event.endDay} · ${event.daysRemaining} ${event.daysRemaining===1?'day':'days'} left</small></div>${compact?'':`<p>${esc(event.description)}</p>`}<p class="town-event-effects">${event.effects.map(esc).join(' · ')}</p></section>`;
+}
+
+export function marketNewsHTML(state) {
+  const events=getTownEconomy(state).events;
+  return `<section class="market-news"><p class="market-news-intro">Word from the trade roads. These are current conditions; prices may change before you arrive. City armorer shipments return every 12 days. Better equipment rotates weekly and can sell out.</p><div class="market-news-grid">${events.map(event=>`<article class="market-news-card"><div class="eyebrow">${esc(event.town.kind)} · ${esc(event.town.name)}</div>${townEventHTML(state,event.town.id)}<button data-event-town="${event.town.id}">Show ${esc(event.town.name)} on map</button></article>`).join('')||'<p>The markets are quiet today. New local events arrive throughout the fortnight.</p>'}</div><p class="market-news-note">Completed courier jobs have a 50% chance to bring one extra piece of equipment to the destination market. Check the chronicle for arrivals.</p></section>`;
+}
 
 const bonusText = bonuses => Object.entries(bonuses || {}).map(([key,value])=>`${value>0?'+':''}${value} ${statLabels[key] || key}`).join(' · ');
 const traitHTML = trait => `<div class="recruit-trait ${trait.kind}"><strong>${esc(trait.name)}${trait.kind==='tradeoff'?'<small>Trade-off</small>':''}</strong><span>${esc(bonusText(trait.bonuses))}</span></div>`;

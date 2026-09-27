@@ -20,6 +20,7 @@ const CORE = [
   './src/additional-items.js',
   './src/perks.js',
   './src/recruits.js',
+  './src/town-events.js',
   './src/map.js',
   './src/portraits.js',
   './manifest.webmanifest',

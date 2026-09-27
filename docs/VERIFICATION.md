@@ -1,6 +1,16 @@
-# Verification - version 0.14, 2026-09-27
+# Verification - version 0.15, 2026-09-27
 
-## v0.14 checks
+## v0.15 checks
+
+The full automated suite passes 155 tests. Seven town-economy cases cover deterministic schedules and expiry, all six advertised price/stock effects, scarce weekly equipment, purchase quotes and resale spreads, shipment grants across reload/expiry/week boundaries, bounded once-only courier rewards, legacy markets, famed buybacks, and malformed market markers. Reloading a saved market just as a shipment starts preserves its pending grant. Six historical fixtures still retain equipment, purse, inventory and battle positions. Offline cache consistency and diff checks pass.
+
+At 1024x768, Market news showed a remote event and its Show on map action selected the correct town with the same notice. An Ironford shipment on day 10 displayed a 10% equipment discount and day-15 rotation. Buying its only Brigandine cost 363 crowns (9,000 to 8,637), removed the trader listing, and remained sold out after reload and advancement to day 11. At Highpass during Good Harvest, buying five provisions cost 30 crowns, increased provisions from 21 to 26, and reduced shop stock from 29 to 24; grain displayed 26 to buy and 24 to sell.
+
+A staged courier approach completed through normal travel, paid 215 crowns, and logged one new Bascinet in Ironford's armory. The item appeared at stock one for 265 crowns and survived reload without duplication.
+
+With the local server stopped and direct HTTP unavailable, a fresh tab restored the courier reward. Buying that Bascinet offline spent 265 crowns (9,215 to 8,950). Reloading preserved one Bascinet in the stash and no remaining trader listing, with no JavaScript errors. The Market news layout was inspected at 390 pixels as well as tablet size. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+## Historical v0.14 checks
 
 The full automated suite passes 148 tests. Seven hiring tests cover pure deterministic offers, distinct roles, exact preview-to-hire identity, pricing, daily refresh, same-day save/load stability, consumed/stale/wrong-town rejection, affordability and company limits, malformed save data, and old-save stat preservation. A sweep across 64 seeds and eight days reaches all ten backgrounds and twelve traits, verifies their stat effects, and checks that tradeoffs never directly cancel the positive trait. New recruit bonuses feed actual battle units and survive an active-battle save/reload. Six historical fixtures retain equipment, purse, inventory and battle positions. Offline cache consistency and `git diff --check` pass.
 

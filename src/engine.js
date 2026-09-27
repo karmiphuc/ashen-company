@@ -3,6 +3,7 @@ import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors
 import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { PERKS, PERK_BY_ID, hasPerk } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile } from './recruits.js';
+import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-events.js';
 
 export { PERKS } from './perks.js';
 
@@ -427,59 +428,143 @@ export function townAt(state) {
   return SETTLEMENTS.find(town => distance(state.position, town) <= TOWN_RADIUS) ?? null;
 }
 
-function goodPrices(town, good) {
-  const buyPrice = Math.max(1, Math.round(good.basePrice * MARKET_FACTORS[town.id][good.id]));
-  return { buyPrice, sellPrice: Math.max(1, Math.floor(buyPrice * .75)) };
+const ARMORY_ROTATION_DAYS = 7;
+
+function armoryCycle(day) { return Math.floor((day - 1) / ARMORY_ROTATION_DAYS); }
+
+export function getTownEvent(state, townId) {
+  const town = TOWN_BY_ID.get(townId);
+  return town ? scheduledTownEvent(state, town) : null;
 }
 
-function equipmentPrices(town, item) {
-  const buyPrice = Math.max(1, Math.round(item.price * GEAR_FACTORS[town.id]));
+export function getTownEconomy(state) {
+  const events = SETTLEMENTS.flatMap(town => {
+    const event = scheduledTownEvent(state, town);
+    return event ? [{ town, ...event }] : [];
+  });
+  return {
+    events,
+    rumors: events.map(event => `${event.town.name}: ${event.name}. ${event.effectText}`),
+  };
+}
+
+function goodPrices(state, town, good) {
+  const modifiers = townEventModifiers(scheduledTownEvent(state, town));
+  const eventFactor = (good.id === 'grain' ? modifiers.grainBuy : null) ?? modifiers.goodsBuy ?? 1;
+  const baseBuyPrice = Math.max(1, Math.round(good.basePrice * MARKET_FACTORS[town.id][good.id]));
+  const buyPrice = Math.max(1, Math.round(baseBuyPrice * eventFactor));
+  const baseSellPrice = Math.max(1, Math.floor(baseBuyPrice * .75));
+  const sellPrice = Math.max(1, Math.floor(baseSellPrice * (modifiers.goodsSell ?? (modifiers.goodsBuy ?? 1))));
+  return { buyPrice, sellPrice };
+}
+
+function equipmentPrices(state, town, item) {
+  const modifiers = townEventModifiers(scheduledTownEvent(state, town));
+  const eventFactor = item.rarity === 'famed' ? 1 : modifiers.equipmentBuy ?? 1;
+  const buyPrice = Math.max(1, Math.round(item.price * GEAR_FACTORS[town.id] * eventFactor));
   return { buyPrice, sellPrice: Math.max(1, Math.floor(buyPrice / 2)) };
 }
 
-function defaultMarketStock(state, town) {
-  const goods = Object.fromEntries(GOODS.map(good => {
-    const factor = MARKET_FACTORS[town.id][good.id];
-    const stock = (factor <= .8 ? 8 : factor >= 1.3 ? 2 : 5) + hashSeed(`${state.seed}:${state.day}:${town.id}:${good.id}`) % 3;
-    return [good.id, stock];
-  }));
-  const equipment = Object.fromEntries(ITEMS.map(item => {
-    const premium = item.price >= 350;
-    const available = !premium || town.kind === 'city' || town.kind === 'fort';
-    return [item.id, available ? 1 + hashSeed(`${state.seed}:${state.day}:${town.id}:${item.id}`) % (item.price < 250 ? 3 : 2) : 0];
-  }));
-  const food = 18 + (MARKET_FACTORS[town.id].grain <= .8 ? 12 : 0) + hashSeed(`${state.seed}:${state.day}:${town.id}:food`) % 6;
-  const supplies = Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock + hashSeed(`${state.seed}:${state.day}:${town.id}:${kind}`) % 3]));
-  return { day: state.day, food, goods, equipment, supplies, buyback: (state.marketStock?.[town.id]?.buyback ?? []).map(entry => ({ ...entry })) };
+function rotatedItems(items, state, town, cycle, label) {
+  return [...items].sort((a, b) => townEventHash(`${state.seed}:${town.id}:${cycle}:${label}:${a.id}`) - townEventHash(`${state.seed}:${town.id}:${cycle}:${label}:${b.id}`));
 }
 
-function marketStock(state, town) {
-  const existing = state.marketStock?.[town.id];
-  return existing?.day === state.day ? existing : defaultMarketStock(state, town);
+function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
+  const equipment = Object.fromEntries(ITEMS.map(item => [item.id, 0]));
+  const common = ITEMS.filter(item => item.price < 250);
+  const better = ITEMS.filter(item => item.price >= 250 && item.price < 450);
+  const premium = ITEMS.filter(item => item.price >= 450);
+  for (const item of common) equipment[item.id] = 1 + Number(townEventHash(`${state.seed}:${town.id}:${cycle}:common:${item.id}`) % 4 === 0);
+  const betterSlots = town.kind === 'city' || town.kind === 'fort' ? 4 : town.kind === 'town' ? 3 : 2;
+  const premiumSlots = town.kind === 'city' || town.kind === 'fort' ? 2 : town.kind === 'town' ? 1 : 0;
+  for (const item of rotatedItems(better, state, town, cycle, 'better').slice(0, betterSlots)) equipment[item.id] = 1;
+  for (const item of rotatedItems(premium, state, town, cycle, 'premium').slice(0, premiumSlots)) equipment[item.id] = 1;
+  return equipment;
 }
+
+function dailyMarketStock(state, town) {
+  const modifiers = townEventModifiers(scheduledTownEvent(state, town));
+  const goods = Object.fromEntries(GOODS.map(good => {
+    const factor = MARKET_FACTORS[town.id][good.id];
+    const adjustment = (good.id === 'grain' ? modifiers.grainStock : null) ?? modifiers.goodsStock ?? 0;
+    const minimum = good.id === 'grain' && modifiers.grainStock < 0 ? 2 : 0;
+    const stock = (factor <= .8 ? 8 : factor >= 1.3 ? 2 : 5) + hashSeed(`${state.seed}:${state.day}:${town.id}:${good.id}`) % 3 + adjustment;
+    return [good.id, Math.max(minimum, stock)];
+  }));
+  const baseFood = 18 + (MARKET_FACTORS[town.id].grain <= .8 ? 12 : 0) + hashSeed(`${state.seed}:${state.day}:${town.id}:food`) % 6;
+  const food = Math.max(modifiers.foodStock < 0 ? 12 : 0, baseFood + (modifiers.foodStock ?? 0));
+  const supplies = Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock + hashSeed(`${state.seed}:${state.day}:${town.id}:${kind}`) % 3]));
+  return { food, goods, supplies };
+}
+
+function addShipmentStock(equipment, state, town, event, cycle) {
+  const candidates = ITEMS.filter(item => item.price >= 250 && equipment[item.id] === 0);
+  const count = town.kind === 'city' ? 4 : town.kind === 'fort' ? 3 : 2;
+  for (const item of rotatedItems(candidates, state, town, cycle, event.id).slice(0, count)) equipment[item.id] += 1;
+}
+
+function projectedMarketStock(state, town) {
+  const existing = state.marketStock?.[town.id];
+  const cycle = armoryCycle(state.day);
+  const existingCycle = existing?.armoryCycle ?? (existing ? armoryCycle(existing.day) : -1);
+  const daily = existing?.day === state.day
+    ? { food: existing.food, goods: { ...existing.goods }, supplies: { ...(existing.supplies ?? Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock]))) } }
+    : dailyMarketStock(state, town);
+  const equipment = existing && existingCycle === cycle ? { ...existing.equipment } : defaultArmoryStock(state, town, cycle);
+  let appliedEventId = existing?.appliedEventId ?? null;
+  const event = scheduledTownEvent(state, town);
+  if (event?.type === 'armorer-shipment' && appliedEventId !== event.id) {
+    addShipmentStock(equipment, state, town, event, cycle);
+    appliedEventId = event.id;
+  }
+  return {
+    day: state.day,
+    ...daily,
+    equipment,
+    armoryCycle: cycle,
+    appliedEventId,
+    buyback: (existing?.buyback ?? []).map(entry => ({ ...entry })),
+  };
+}
+
+function marketStock(state, town) { return projectedMarketStock(state, town); }
 
 function writableMarketStock(state, town) {
   if (!state.marketStock) state.marketStock = {};
-  if (state.marketStock[town.id]?.day !== state.day) state.marketStock[town.id] = defaultMarketStock(state, town);
+  state.marketStock[town.id] = projectedMarketStock(state, town);
   return state.marketStock[town.id];
+}
+
+function visibleEquipmentStock(state, town, item, stock, event) {
+  if (item.rarity === 'famed' || event?.type !== 'militia-muster' || item.price < 250) return stock;
+  return townEventHash(`${event.id}:${item.id}:reserved`) % 2 === 0 ? 0 : stock;
 }
 
 export function getMarket(state, townId) {
   const town = townAt(state);
   if (!town || (townId !== undefined && town.id !== townId)) return null;
   const stock = marketStock(state, town);
+  const event = scheduledTownEvent(state, town);
+  const cycle = armoryCycle(state.day);
   const famedIds = new Set([...(stock.buyback ?? []).map(entry => entry.itemId), ...state.inventory.filter(id => getItem(id)?.rarity === 'famed')]);
   return {
     town,
-    food: { buyPrice: Math.max(2, Math.round(5 * MARKET_FACTORS[town.id].grain)), stock: stock.food, owned: state.food },
+    event,
+    armory: {
+      cycleStartDay: cycle * ARMORY_ROTATION_DAYS + 1,
+      nextRestockDay: (cycle + 1) * ARMORY_ROTATION_DAYS + 1,
+      daysUntilRestock: (cycle + 1) * ARMORY_ROTATION_DAYS + 1 - state.day,
+      summary: 'Armory stock rotates weekly. Provisions, trade goods, and supplies restock daily.',
+    },
+    food: { buyPrice: Math.max(2, Math.round(5 * MARKET_FACTORS[town.id].grain * (townEventModifiers(event).foodBuy ?? 1))), stock: stock.food, owned: state.food },
     equipment: [
-      ...ITEMS.map(item => ({ itemId: item.id, ...equipmentPrices(town, item), stock: stock.equipment[item.id], owned: state.inventory.filter(id => id === item.id).length })),
+      ...ITEMS.map(item => ({ itemId: item.id, ...equipmentPrices(state, town, item), stock: visibleEquipmentStock(state, town, item, stock.equipment[item.id], event), owned: state.inventory.filter(id => id === item.id).length })),
       ...[...famedIds].map(itemId => {
         const offers = (stock.buyback ?? []).filter(entry => entry.itemId === itemId);
-        return { itemId, ...equipmentPrices(town, getItem(itemId)), stock: offers.length, owned: state.inventory.filter(id => id === itemId).length, condition: offers[0]?.condition ?? null, famed: true, buyback: offers.length > 0 };
+        return { itemId, ...equipmentPrices(state, town, getItem(itemId)), stock: offers.length, owned: state.inventory.filter(id => id === itemId).length, condition: offers[0]?.condition ?? null, famed: true, buyback: offers.length > 0 };
       }),
     ],
-    goods: GOODS.map(good => ({ goodId: good.id, name: good.name, description: good.description, ...goodPrices(town, good), stock: stock.goods[good.id], owned: state.cargo?.[good.id] ?? 0 })),
+    goods: GOODS.map(good => ({ goodId: good.id, name: good.name, description: good.description, ...goodPrices(state, town, good), stock: stock.goods[good.id], owned: state.cargo?.[good.id] ?? 0 })),
     supplies: Object.entries(SUPPLY_INFO).map(([kind, info]) => ({ kind, name: info.name, buyPrice: info.buyPrice, stock: stock.supplies?.[kind] ?? info.stock, owned: state.supplies?.[kind] ?? 0 })),
   };
 }
@@ -610,6 +695,20 @@ function completeContract(state, town) {
   state.renown += contract.renown ?? 1;
   const description = contract.type === 'hunt' ? 'Brigand hunt completed' : contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
   record(state, `${description} at ${town.name}. Earned ${contract.reward} crowns and ${contract.renown ?? 1} renown.`);
+  if ((contract.type === undefined || contract.type === 'courier') && townEventHash(`${state.seed}:${contract.id}:${town.id}:courier-item`) % 2 === 0) {
+    const better = townEventHash(`${state.seed}:${contract.id}:${town.id}:courier-quality`) % 3 === 0;
+    const stock = writableMarketStock(state, town);
+    const event = scheduledTownEvent(state, town);
+    const candidates = ITEMS.filter(item => {
+      const rightTier = better ? item.price >= 250 && item.price < 450 : item.price < 250;
+      return rightTier && stock.equipment[item.id] < 1024 && visibleEquipmentStock(state, town, item, stock.equipment[item.id] + 1, event) > 0;
+    });
+    if (candidates.length) {
+      const item = candidates[townEventHash(`${state.seed}:${contract.id}:${town.id}:courier-choice`) % candidates.length];
+      stock.equipment[item.id] += 1;
+      record(state, `${town.name}'s factor adds ${item.name} to the local armory stock.`);
+    }
+  }
   state.contract = null;
   return true;
 }
@@ -715,7 +814,7 @@ export function getContractOffers(state, townId) {
   const buyers = [...candidates].sort((a, b) => MARKET_FACTORS[b.id][good.id] - MARKET_FACTORS[a.id][good.id]);
   const supplyTarget = buyers[(state.seed + state.contractSerial) % 2];
   const quantity = 4 + state.contractSerial % 2;
-  const supplyReward = Math.round((quantity * goodPrices(town, good).buyPrice + 60 + distance(town, supplyTarget) * .38) / 5) * 5;
+  const supplyReward = Math.round((quantity * goodPrices(state, town, good).buyPrice + 60 + distance(town, supplyTarget) * .38) / 5) * 5;
   const serial = state.contractSerial + 1;
   const offers = [
     { id: `courier-${serial}`, type: 'courier', from: town.id, to: courierTarget.id, reward: courierReward, renown: 1 },
@@ -811,8 +910,9 @@ export function sellItem(state, itemId) {
   if (index < 0) return result(false, 'That item is not in the company pack.');
   const item = getItem(itemId);
   const offer = getMarket(state).equipment.find(entry => entry.itemId === itemId);
-  const sellPrice = offer?.sellPrice ?? equipmentPrices(access.town, item).sellPrice;
+  const sellPrice = offer?.sellPrice ?? equipmentPrices(state, access.town, item).sellPrice;
   if (item.rarity === 'famed' && (marketStock(state, access.town).buyback?.length ?? 0) >= MAX_INVENTORY) return result(false, 'The market cannot hold more famed gear.');
+  if (item.rarity !== 'famed' && marketStock(state, access.town).equipment[itemId] >= 1024) return result(false, 'The armory cannot hold more of that item.');
   state.inventory.splice(index, 1);
   const condition = state.inventoryCondition.splice(index, 1)[0];
   state.gold += sellPrice;
@@ -2110,12 +2210,20 @@ export function validateSave(input) {
   assert(recordObject(cargo) && Object.keys(cargo).every(id => GOOD_BY_ID.has(id) && validCount(cargo[id]) && cargo[id] <= MAX_CARGO) && Object.values(cargo).reduce((total, count) => total + count, 0) <= MAX_CARGO, 'cargo');
   const markets = input.marketStock === undefined ? {} : input.marketStock;
   assert(recordObject(markets) && Object.keys(markets).every(id => TOWN_BY_ID.has(id)), 'market stock');
-  for (const market of Object.values(markets)) {
+  for (const [townId, market] of Object.entries(markets)) {
     assert(recordObject(market) && Number.isSafeInteger(market.day) && market.day >= 1 && market.day <= input.day && validCount(market.food) && market.food <= 100, 'market stock');
     assert(recordObject(market.goods) && GOODS.every(good => validCount(market.goods[good.id]) && market.goods[good.id] <= 100) && Object.keys(market.goods).length === GOODS.length, 'goods stock');
     assert(recordObject(market.equipment) && ITEMS.filter(item => !NEW_ITEM_IDS.has(item.id)).every(item => validCount(market.equipment[item.id]) && market.equipment[item.id] <= 1024) && Object.keys(market.equipment).every(id => ITEM_BY_ID.has(id) && validCount(market.equipment[id]) && market.equipment[id] <= 1024), 'equipment stock');
     if (market.buyback !== undefined) assert(Array.isArray(market.buyback) && market.buyback.length <= MAX_INVENTORY && market.buyback.every(entry => recordObject(entry) && getItem(entry.itemId)?.rarity === 'famed' && (itemCondition(entry.itemId) === null ? entry.condition === null : validCount(entry.condition) && entry.condition <= itemCondition(entry.itemId))), 'famed buyback');
     if (market.supplies !== undefined) assert(recordObject(market.supplies) && Object.keys(market.supplies).length === 3 && Object.keys(SUPPLY_INFO).every(kind => validCount(market.supplies[kind]) && market.supplies[kind] <= 100), 'supplies stock');
+    if (market.armoryCycle !== undefined) assert(validCount(market.armoryCycle) && market.armoryCycle === armoryCycle(market.day), 'armory cycle');
+    if (market.appliedEventId !== undefined && market.appliedEventId !== null) {
+      assert(typeof market.appliedEventId === 'string' && market.appliedEventId.length <= 96, 'market event');
+      const match = /^([a-z0-9-]+):([1-9]\d*):([a-z-]+)$/.exec(market.appliedEventId);
+      const eventDay = Number(match?.[2]);
+      const event = match && Number.isSafeInteger(eventDay) && eventDay <= input.day ? scheduledTownEvent({ seed: input.seed, day: eventDay }, TOWN_BY_ID.get(townId)) : null;
+      assert(match && match[1] === townId && match[3] === 'armorer-shipment' && event?.id === market.appliedEventId, 'market event');
+    }
   }
   const gameOver = input.gameOver === undefined ? false : input.gameOver;
   assert(typeof gameOver === 'boolean', 'game over');
@@ -2242,7 +2350,20 @@ export function validateSave(input) {
     gold: input.gold, food: input.food, renown: input.renown,
     party, formation: [...formation],
     inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
-    marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...defaultMarketStock({ seed: input.seed, day: market.day }, TOWN_BY_ID.get(id)).equipment, ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])), buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: entry.condition })) }])),
+    marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => {
+      const town = TOWN_BY_ID.get(id);
+      const marketEvent = scheduledTownEvent({ seed: input.seed, day: market.day }, town);
+      return [id, {
+        day: market.day,
+        food: market.food,
+        goods: { ...market.goods },
+        equipment: { ...defaultArmoryStock({ seed: input.seed, day: market.day }, town), ...market.equipment },
+        supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])),
+        armoryCycle: market.armoryCycle ?? armoryCycle(market.day),
+        appliedEventId: market.appliedEventId === undefined ? (marketEvent?.type === 'armorer-shipment' ? marketEvent.id : null) : market.appliedEventId,
+        buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: entry.condition })),
+      }];
+    })),
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
     bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil, spawnCycle: entry.spawnCycle ?? 1 }])), pursuit, tactic,
     battle, gameOver,
