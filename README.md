@@ -1,39 +1,41 @@
 # Ashen Company
 
-An original, offline mercenary-company web game inspired by the strategic travel and layered equipment of Battle Brothers and Mount & Blade. Built for touch, including iPad. No account, server, external fonts, or runtime dependencies.
+An offline mercenary-company overworld game for iPad and desktop browsers. Travel between settlements, trade local goods, provision the company, fulfil contracts, recruit companions, and outfit them with layered armor, helmets, weapons, and shields. The art includes Battle Brothers / Legends assets; see [asset credits](docs/ASSET-CREDITS.md).
+
+Play at **https://karmiphuc.github.io/ashen-company/**. No account, server, external fonts, or runtime dependencies are required.
 
 ## Play
 
-Open **https://karmiphuc.github.io/ashen-company/**.
+- Drag the map to pan and pinch to zoom. Tap a settlement to select it, then use the sidebar to travel there. Tapping open ground starts travel directly. Travel can be paused or run at 1x or 3x speed.
+- At settlements, recruit companions and use the marketplace to buy or sell equipment, trade goods, and provisions. Local stock and prices vary.
+- Take courier jobs for a delivery payment, or buy the requested cargo for a supply contract. Supply goods are consumed on delivery. Good routes include Oakwatch timber to Highpass, Saltwick salt to Thornwall, and Ironford iron to Saltwick.
+- Equip the company from the Equipment view. Tap a companion portrait to select them; choose a carried item to equip it or return equipment to baggage.
+- Camp to heal or forage for food. Each companion eats one provision and costs five crowns per day. Carrying capacity for trade cargo is 30 items.
 
-1. Start at Oakwatch with three companions and 900 crowns.
-2. Take a delivery contract. Tap its destination to travel; use 1x or 3x speed.
-3. Collect payment automatically on arrival, then take another job.
-4. Buy equipment in settlements. Open **The company** and equip it from baggage.
-5. Recruit up to eight companions, camp to heal, and forage for provisions.
+Travel pauses at arrival, when a menu is open, and when the app goes into the background. The world does not simulate while the app is closed.
 
-Every companion consumes one provision and earns five crowns per day. Travel pauses on arrival, when opening a menu, and when the app goes into the background. There is no progress simulation while the app is closed. Roads and the small wandering caravan are visual scenery; movement is direct and terrain changes speed.
+## Install for offline play on iPad
 
-## Before a flight
+1. Open the game in Safari while online.
+2. Choose **Share > Add to Home Screen**. Enable **Open as Web App** if Safari shows that option, then add it.
+3. Launch the new Home Screen icon and wait for **Offline ready**.
+4. Turn on airplane mode, close the app, reopen it from the icon, and confirm the company loads.
 
-In Safari on your iPad, open the game online, choose **Share > Add to Home Screen**, enable **Open as Web App** if shown, and launch the new icon. Wait for **Offline ready**. Then turn on airplane mode, close and reopen the game from its icon, and verify your company is present.
-
-Progress saves to this device. Use **Settings > Export save** to keep a backup in Files; **Import save** restores it. Saves do not sync between devices. Browser data can be evicted by iPadOS under storage pressure, so export before travelling. The readiness indicator checks that every required app file is cached.
+Progress is saved on this device and does not sync. Browser storage can be removed by iPadOS, so use **Save / Menu > Export save** and keep the file in Files before travelling. Use **Import save** to restore it. The offline indicator checks whether required app files are cached; it does not guarantee the device will retain the save.
 
 ## Current scope
 
-- Eight settlements on an original continuous map; tap-to-travel, pause and speed controls.
-- Renewable delivery contracts, wages, food, camping, foraging and recruiting.
-- Eighteen equipment items across body armor, helmets, weapons and shields.
-- Original SVG character portraits with separate equipment layers, varied faces, and instant visual updates.
-- Local autosave, validated JSON import/export and an offline service worker.
-- Responsive tablet landscape, portrait and phone layouts.
+- Eight settlements on an original continuous map, with map drag/pinch controls, terrain-adjusted travel, pause, and speed controls.
+- Courier and supply contracts, local market prices and stocks, five trade goods, provisions, recruiting, camping, and foraging.
+- Eighteen equipment items across body armor, helmets, weapons, and shields, shown on layered companion portraits.
+- Local autosave, validated JSON save import/export, and a service worker for offline launch.
+- Responsive tablet landscape, portrait, and phone layouts.
 
-This is the first playable overworld prototype, not a full Battle Brothers clone. Map layout and settlement stocks are fixed. Protection, weapon power and gear fatigue are displayed groundwork for phase 2; they do not currently drive combat. There are no battles, enemies, tactical formations, loot drops, procedural campaigns or faction simulation yet.
+This is a playable overworld prototype. There is no combat yet. Protection, weapon power, and fatigue are displayed groundwork for phase 2; they do not currently drive battles. Tactical formations, enemies, loot drops, procedural campaigns, and faction simulation are not implemented.
 
 ## Phase 2: automated battles
 
-Add encounters and an auto-resolved battle scene where the equipped portraits fight without manual turn control. Carry armor, weapon power, fatigue, injuries and loot back into the campaign. Keep the map and economic loop playable independently.
+Add encounters and an auto-resolved battle scene where equipped companions fight without manual turn control. Carry armor, weapon power, fatigue, injuries, and loot back into the campaign.
 
 ## Development
 
@@ -41,11 +43,12 @@ Requires Node.js 22 or newer. No installation step.
 
 ```sh
 npm start
+npm run prepare-offline
 npm test
 ```
 
-Open `http://127.0.0.1:4173`. The website is static and can be hosted directly from the main branch root on GitHub Pages. All URLs are relative to support project subpaths. When changing app assets, increment the cache version in `sw.js` so previously installed clients refresh their offline bundle.
+Open `http://127.0.0.1:4173`. The site is static and can be hosted from the main branch root on GitHub Pages. URLs are relative to support project subpaths. After changing app files or artwork, run `npm run prepare-offline` to rebuild the complete offline list and content-derived cache version, then reload the preview after its new worker activates.
 
-`src/engine.js` holds pure game rules. `src/app.js` binds the UI and local save. `src/portraits.js` assembles original SVG layers. `src/map.js` draws the world. The 160x160 portrait canvas anchors heads and shoulders consistently; the draw order is background, rear weapon, torso/armor, face, helmet, foreground shield, finish.
+`src/engine.js` holds game rules. `src/app.js` binds the UI and local save. `src/portraits.js` assembles the character and equipment layers. `src/map.js` draws and navigates the world map. Portrait layers share fixed anchors so equipment remains aligned as it is added.
 
-See [the research notes](docs/RESEARCH.md) for primary sources, design decisions and iPad storage limitations, and [verification](docs/VERIFICATION.md) for the tested boundary.
+See [asset credits](docs/ASSET-CREDITS.md), [research notes](docs/RESEARCH.md), and [verification notes](docs/VERIFICATION.md).

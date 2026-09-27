@@ -1,13 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ITEMS, SETTLEMENTS, createGame, travelTo, tick, townAt, acceptContract,
-  buyItem, sellItem, equipItem, unequipItem, recruit, camp, forage,
+  ITEMS, GOODS, SETTLEMENTS, createGame, travelTo, tick, townAt, getContractOffers, acceptContract,
+  getMarket, buyFood, buyGood, sellGood, buyItem, sellItem, equipItem, unequipItem, recruit, camp, forage,
   getEquipment, terrainAt, validateSave,
 } from '../src/engine.js';
 
 function ownedItems(state) {
   return [...state.inventory, ...state.party.flatMap(person => Object.values(person.equipment).filter(Boolean))].sort();
+}
+
+function reach(state, townId) {
+  const town = SETTLEMENTS.find(entry => entry.id === townId);
+  assert.equal(travelTo(state, town.x, town.y).ok, true);
+  for (let i = 0; i < 8 && state.destination; i++) tick(state, 12);
+  assert.equal(state.destination, null);
+  assert.equal(townAt(state)?.id, townId);
 }
 
 test('new games are deterministic and start in Oakwatch with valid saves', () => {
@@ -65,11 +73,101 @@ test('trade, recruiting and contracts require the issuing town', () => {
   const gold = state.gold;
   const partySize = state.party.length;
   assert.equal(buyItem(state, 'spear').ok, false);
+  assert.equal(buyFood(state, 5).ok, false);
+  assert.equal(buyGood(state, 'grain', 1).ok, false);
+  assert.equal(sellGood(state, 'grain', 1).ok, false);
+  assert.equal(getMarket(state), null);
   assert.equal(sellItem(state, 'cloth-hood').ok, false);
   assert.equal(recruit(state).ok, false);
   assert.equal(acceptContract(state, 'oakwatch').ok, false);
   assert.equal(state.gold, gold);
   assert.equal(state.party.length, partySize);
+});
+
+test('markets differ by town, have finite stock, and renew the next day', () => {
+  const state = createGame(7391);
+  const snapshot = structuredClone(state);
+  const market = getMarket(state);
+  assert.deepEqual(state, snapshot);
+  assert.equal(market.town.id, 'oakwatch');
+  assert.equal(GOODS.length, market.goods.length);
+  const grain = market.goods.find(entry => entry.goodId === 'grain');
+  assert.ok(grain.buyPrice > grain.sellPrice);
+  assert.equal(buyGood(state, 'grain', grain.stock).ok, true);
+  assert.equal(getMarket(state).goods.find(entry => entry.goodId === 'grain').stock, 0);
+  assert.equal(buyGood(state, 'grain').ok, false);
+  const foodBefore = state.food;
+  assert.equal(buyFood(state, 5).ok, true);
+  assert.equal(state.food, foodBefore + 5);
+  tick(state, 16);
+  assert.equal(state.day, 2);
+  assert.ok(getMarket(state).goods.find(entry => entry.goodId === 'grain').stock > 0);
+  const oakMail = market.equipment.find(entry => entry.itemId === 'mail-shirt').buyPrice;
+  reach(state, 'ironford');
+  assert.ok(getMarket(state).equipment.find(entry => entry.itemId === 'mail-shirt').buyPrice < oakMail);
+});
+
+test('trade profits across towns without same-town buy/sell profit', () => {
+  const state = createGame(13);
+  const oak = getMarket(state).goods.find(entry => entry.goodId === 'grain');
+  assert.ok(oak.sellPrice < oak.buyPrice);
+  assert.equal(buyGood(state, 'grain', 4).ok, true);
+  reach(state, 'thornwall');
+  const thornwall = getMarket(state).goods.find(entry => entry.goodId === 'grain');
+  assert.ok(thornwall.sellPrice > oak.buyPrice);
+  const beforeSelling = state.gold;
+  assert.equal(sellGood(state, 'grain', 4).ok, true);
+  assert.equal(state.gold, beforeSelling + thornwall.sellPrice * 4);
+  assert.equal(state.cargo.grain, undefined);
+  assert.deepEqual(validateSave(state), state);
+});
+
+test('supply contracts require and consume cargo, while old courier saves migrate', () => {
+  const state = createGame(7391);
+  const beforeOffers = structuredClone(state);
+  const offers = getContractOffers(state, 'oakwatch');
+  assert.deepEqual(state, beforeOffers);
+  assert.deepEqual(offers.map(offer => offer.type), ['courier', 'supply']);
+  const supply = offers[1];
+  assert.equal(acceptContract(state, 'oakwatch', supply.id).ok, true);
+  assert.equal(state.contract.goodId, supply.goodId);
+  assert.equal(buyGood(state, supply.goodId, supply.quantity).ok, true);
+  reach(state, supply.to);
+  assert.equal(state.contract, null);
+  assert.equal(state.cargo[supply.goodId], undefined);
+  assert.equal(state.renown, 2);
+  assert.deepEqual(validateSave(state), state);
+
+  const legacy = createGame(44);
+  acceptContract(legacy, 'oakwatch');
+  delete legacy.cargo;
+  delete legacy.marketStock;
+  delete legacy.contract.type;
+  delete legacy.contract.renown;
+  const imported = validateSave(legacy);
+  assert.deepEqual(imported.cargo, {});
+  assert.deepEqual(imported.marketStock, {});
+  assert.equal(imported.contract.type, 'courier');
+  assert.equal(imported.contract.renown, 1);
+  reach(imported, imported.contract.to);
+  assert.equal(imported.contract, null);
+  assert.equal(imported.renown, 1);
+});
+
+test('an undersupplied delivery remains open and can finish after arrival', () => {
+  const state = createGame(7391);
+  const offer = getContractOffers(state, 'oakwatch')[1];
+  acceptContract(state, 'oakwatch', offer.id);
+  reach(state, offer.to);
+  assert.equal(state.contract?.type, 'supply');
+  for (let i = 0; i < 3 && state.contract; i++) {
+    const available = getMarket(state).goods.find(entry => entry.goodId === offer.goodId).stock;
+    const needed = offer.quantity - (state.cargo[offer.goodId] ?? 0);
+    if (available) assert.equal(buyGood(state, offer.goodId, Math.min(needed, available)).ok, true);
+    if (state.contract) tick(state, 24);
+  }
+  assert.equal(state.contract, null);
+  assert.equal(state.renown, 2);
 });
 
 test('travel obeys bounds and difficult terrain slows progress', () => {
@@ -150,9 +248,13 @@ test('save validation rejects corrupted resources, coordinates and item referenc
     save => { save.log = Array(31).fill('Day 1: test'); },
     save => { save.day = 1000001; },
     save => { save.contractSerial = 1000001; },
+    save => { save.cargo = { grain: 31 }; },
+    save => { save.cargo = { unknown: 1 }; },
+    save => { save.marketStock = { oakwatch: { day: 1, food: -1, goods: {}, equipment: {} } }; },
     save => { save.visited.push('missing-place'); },
     save => { save.contract = { id: 'delivery-1', from: 'oakwatch', to: 'nowhere', reward: 100, acceptedDay: 1 }; },
     save => { save.contractSerial = 1; save.contract = { id: 'delivery-1', from: 'oakwatch', to: 'greyhaven', reward: 5001, acceptedDay: 1 }; },
+    save => { save.contractSerial = 1; save.contract = { id: 'delivery-1', type: 'supply', from: 'oakwatch', to: 'greyhaven', reward: 100, acceptedDay: 1, renown: 2, goodId: 'unknown', quantity: 4 }; },
   ];
   for (const mutate of variants) {
     const corrupted = structuredClone(base);

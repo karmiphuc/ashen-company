@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "assets": [
+    { "file": "patched-coat.png", "source": "gfx/ui/items/legend_armor/inventory_gambeson_01.png", "sha256": "fd900e07428ae53bef16d6866389201041803d40ad33bb2fb14c13e63e082b93" },
+    { "file": "quilted-jack.png", "source": "gfx/ui/items/legend_armor/inventory_gambeson_01.png", "sha256": "fd900e07428ae53bef16d6866389201041803d40ad33bb2fb14c13e63e082b93" },
+    { "file": "leather-vest.png", "source": "gfx/ui/items/legend_armor/inventory_leather_jacket_simple_01.png", "sha256": "54ebe50f71cf1ebf3d57c636b6782343090c78b4c77fc78bebd77d11aa0080fe" },
+    { "file": "mail-shirt.png", "source": "gfx/ui/items/legend_armor/inventory_mail_shirt_simple_01.png", "sha256": "c0a6df4960d8e0bc160c4e10e6cf597937fd36ea85de18a4e547acd135607629" },
+    { "file": "brigandine.png", "source": "gfx/ui/items/legend_armor/inventory_leather_brigandine_01.png", "sha256": "4752db29fb011e29229ddb2d63e8ffe6fa8c0e3ceee1e3cba3a31814e287f3c8" },
+    { "file": "plate-harness.png", "source": "gfx/ui/items/legend_armor/inventory_plate_full_01.png", "sha256": "e65f2d486e286b6811f46d1b8089063b226442a624691b14e86b9e52d728e427" },
+    { "file": "cloth-hood.png", "source": "gfx/ui/items/legend_helmets/inventory_simple_hood_01.png", "sha256": "bd35f7b5f8ae6e881b098558759ccaad6a94e290a670c1c7878c4b878ebca01e" },
+    { "file": "leather-cap.png", "source": "gfx/ui/items/legend_helmets/inventory_simple_hood_01.png", "sha256": "bd35f7b5f8ae6e881b098558759ccaad6a94e290a670c1c7878c4b878ebca01e" },
+    { "file": "iron-helm.png", "source": "gfx/ui/items/legend_helmets/inventory_southern_helmet_nasal_01.png", "sha256": "b9d9d4bb85de0627d84619825bdab61b5e339bb3b391ec6adbe9b40eb13b9345" },
+    { "file": "kettle-helm.png", "source": "gfx/ui/items/legend_helmets/inventory_kettle_helm_01.png", "sha256": "545241e4b72e3ab07b8263591980e0d505ac372006934e15a1e695edfb04909a" },
+    { "file": "greathelm.png", "source": "gfx/ui/items/legend_helmets/inventory_great_helm_01.png", "sha256": "d980ce1fe87ffb891bb7a702a179a5b98698bd3b30daf074ee0f7e3f0a5dc43b" },
+    { "file": "arming-sword.png", "source": "gfx/ui/items/weapons/melee/sword_01_1.png", "sha256": "f0321617f103df972e0f6b2aa46c939c9edfdfef6113b9728153fa3997f95eed" },
+    { "file": "spear.png", "source": "gfx/ui/items/weapons/melee/spear_01_1.png", "sha256": "d2eaa661e008ae9be3607a68961dd4dda55026693553835a04f8253614ba95fc" },
+    { "file": "wood-axe.png", "source": "gfx/ui/items/weapons/melee/axe_01_1.png", "sha256": "263f73e5cce47e05718aafc628415612a4e035d5ef711d558907cdca8fab7dbf" },
+    { "file": "hunting-bow.png", "source": "gfx/ui/items/weapons/ranged/war_bow_02.png", "sha256": "744ab2e4c26e84503dbc2b3d46477d2269ae77e5a4c7c6d79dca344250985331" },
+    { "file": "buckler.png", "source": "gfx/ui/items/shields/inventory_shield_round_101.png", "sha256": "a14c18bf6eec54c72cdb2f6ad686dc1f282443f307fd21e831e419b0b5fe49eb" },
+    { "file": "round-shield.png", "source": "gfx/ui/items/shields/inventory_shield_round_101.png", "sha256": "a14c18bf6eec54c72cdb2f6ad686dc1f282443f307fd21e831e419b0b5fe49eb" },
+    { "file": "kite-shield.png", "source": "gfx/ui/items/shields/inventory_kite_shield_101.png", "sha256": "31ae2becf2e845c14f56571a4479d874ecb6958345392c1d528abae1aeab3b14" }
+  ]
+}

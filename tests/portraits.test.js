@@ -1,70 +1,51 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ITEMS } from '../src/engine.js';
-import { portraitSVG } from '../src/portraits.js';
+import { itemImage, portraitHTML, portraitSVG } from '../src/portraits.js';
 
-const PERSON = { seed: 491, name: 'Mara Ash', skin: '#c9825f' };
-const SLOT_ORDER = ['background', 'weapon', 'torso', 'face', 'helmet', 'shield', 'finish'];
+const PERSON = { seed: 491, name: 'Mara Ash' };
+const LAYERS = ['weapon', 'body', 'armor', 'head', 'hair', 'beard', 'helmet', 'shield'];
 
-function equipmentFor(slot, visual) {
+function equipped(slot, visual) {
   return { [slot]: { id: `${slot}-${visual}`, visual } };
 }
 
-test('portrait SVG is deterministic and keeps stable drawing layers', () => {
+test('portrait output is deterministic and preserves authored raster draw order', () => {
   const equipment = {
-    armor: { id: 'plate-harness', visual: 'plate' },
-    helmet: { id: 'greathelm', visual: 'greathelm' },
-    weapon: { id: 'hunting-bow', visual: 'bow' },
-    shield: { id: 'kite-shield', visual: 'kite' },
+    armor: { id: 'plate-harness', visual: 'plate' }, helmet: { id: 'greathelm', visual: 'greathelm' },
+    weapon: { id: 'hunting-bow', visual: 'bow' }, shield: { id: 'kite-shield', visual: 'kite' },
   };
-  const one = portraitSVG(PERSON, equipment, 280);
-  const two = portraitSVG(PERSON, equipment, 280);
-
-  assert.equal(one, two);
-  assert.match(one, /viewBox="0 0 160 160" width="280" height="280"/);
-  assert.deepEqual([...one.matchAll(/data-layer="([a-z]+)"/g)].map(match => match[1]), SLOT_ORDER);
-  assert.ok(one.indexOf('data-layer="weapon"') < one.indexOf('data-layer="torso"'));
-  assert.ok(one.indexOf('data-layer="helmet"') > one.indexOf('data-layer="face"'));
-  assert.ok(one.indexOf('data-layer="shield"') > one.indexOf('data-layer="helmet"'));
+  const one = portraitSVG(PERSON, equipment, 208);
+  assert.equal(one, portraitHTML(PERSON, equipment, 208));
+  assert.equal(one, portraitSVG(PERSON, equipment, 208));
+  assert.match(one, /data-portrait-canvas="104x142"/);
+  assert.match(one, /width:208px;height:284px/);
+  assert.match(one, /transform:scale\(2\);transform-origin:top left/);
+  assert.deepEqual([...one.matchAll(/data-layer="([a-z]+)"/g)].map(match => match[1]), LAYERS.filter(layer => !['hair', 'beard'].includes(layer)));
+  assert.ok(!one.includes('background:#ead8ad'));
+  const unhelmeted = portraitSVG(PERSON, { armor: equipment.armor, weapon: equipment.weapon, shield: equipment.shield });
+  assert.deepEqual([...unhelmeted.matchAll(/data-layer="([a-z]+)"/g)].map(match => match[1]), LAYERS);
+  const openHelm = portraitSVG(PERSON, { helmet: { id: 'iron-helm', visual: 'nasal' } });
+  assert.ok(!openHelm.includes('data-layer="hair"'));
+  assert.ok(openHelm.includes('data-layer="beard"'));
 });
 
-test('every engine visual has a distinct SVG treatment in its equipment slot', () => {
-  const visualsBySlot = new Map();
+test('actual engine visuals select distinct authored body equipment layers', () => {
+  for (const slot of ['armor', 'helmet', 'weapon', 'shield']) {
+    const visuals = [...new Set(ITEMS.filter(item => item.slot === slot).map(item => item.visual))];
+    const sources = visuals.map(value => {
+      const html = portraitHTML(PERSON, equipped(slot, value));
+      return html.match(new RegExp(`data-layer="${slot}"[^>]*src="([^"]+)"`))?.[1];
+    });
+    assert.equal(new Set(sources).size, visuals.length, `${slot} needs one raster layer per visual`);
+    for (const source of sources) assert.match(source, /^assets\/portraits\/.+\.png$/);
+  }
+});
+
+test('engine item IDs resolve to packaged inventory icons and unknown items are safe', () => {
   for (const item of ITEMS) {
-    if (!visualsBySlot.has(item.slot)) visualsBySlot.set(item.slot, new Set());
-    visualsBySlot.get(item.slot).add(item.visual);
+    assert.match(itemImage(item), new RegExp(`^assets/items/${item.id}\\.png$`));
   }
-
-  for (const [slot, visuals] of visualsBySlot) {
-    const portraits = [...visuals].map(visual => portraitSVG(PERSON, equipmentFor(slot, visual)));
-    assert.equal(new Set(portraits).size, visuals.size, `${slot} visuals should have distinct art`);
-  }
-});
-
-test('portrait colors accept hex values and reject unsafe SVG/CSS values', () => {
-  const valid = portraitSVG(
-    { ...PERSON, skin: '#a1b2c3' },
-    {
-      armor: { id: 'test-armor', visual: 'leather', color: '#123abc' },
-      helmet: { id: 'test-helm', visual: 'nasal', color: '#456def' },
-      weapon: { id: 'test-weapon', visual: 'sword', color: '#789abc' },
-      shield: { id: 'test-shield', visual: 'round', color: '#abcdef' },
-    },
-  );
-  for (const color of ['#a1b2c3', '#123abc', '#456def', '#789abc', '#abcdef']) {
-    assert.ok(valid.includes(color), `expected safe color ${color}`);
-  }
-
-  const unsafe = 'url(#injected)';
-  const sanitized = portraitSVG(
-    { ...PERSON, skin: unsafe },
-    {
-      armor: { id: 'unsafe-armor', visual: 'plate', color: unsafe },
-      helmet: { id: 'unsafe-helm', visual: 'greathelm', color: unsafe },
-      weapon: { id: 'unsafe-weapon', visual: 'axe', color: unsafe },
-      shield: { id: 'unsafe-shield', visual: 'kite', color: unsafe },
-    },
-  );
-  assert.ok(!sanitized.includes(unsafe));
-  assert.match(sanitized, /fill="#[0-9a-f]{3,8}"/i);
+  assert.equal(itemImage({ id: 'not-an-item' }), null);
+  assert.equal(itemImage(null), null);
 });

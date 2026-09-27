@@ -1,0 +1,30 @@
+{
+  "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "metadata": ["unpacked/legend_characters/metadata.xml", "unpacked/legend_weapons/metadata.xml"],
+  "canvas": { "width": 104, "height": 142, "offsetY": 35 },
+  "assets": [
+    { "file": "body-03.png", "source": "unpacked/legend_characters/entity/bodies/bust_naked_body_03.png", "sha256": "4f9dce4461e448b9b1a1aacb7d6bf25526304c0c737a41fae20f4a25e7b80999" },
+    { "file": "body-04.png", "source": "unpacked/legend_characters/entity/bodies/bust_naked_body_04.png", "sha256": "a3b90d972d6a8ce9ffb8d84dff3fff2b2b9a388ebfcf49247b816adc60e2289e" },
+    { "file": "head-34.png", "source": "unpacked/legend_characters/entity/heads/bust_head_34.png", "sha256": "f4e76470f857144b3ae95d8ce2eac172e424ee5a6cf522f9ab028701c65b23f1" },
+    { "file": "hair-black-21.png", "source": "unpacked/legend_characters/entity/heads/hair_black_21.png", "sha256": "c8ce84df30851613d700c0f1bf25df09b7d90a1245f15cd891138089250138a9" },
+    { "file": "hair-brown-21.png", "source": "unpacked/legend_characters/entity/heads/hair_brown_21.png", "sha256": "7276939330e4c3fc49a27750cb91b931361197de9c6e7dc9fcbeede4af795dc3" },
+    { "file": "beard-black-01.png", "source": "unpacked/legend_characters/entity/heads/beard_black_01.png", "sha256": "d2f341b5a5a37a2d5693ad09d0a93043388d05238ebd1b2ba5188631b2703b59" },
+    { "file": "beard-brown-01.png", "source": "unpacked/legend_characters/entity/heads/beard_brown_01.png", "sha256": "1e7ae3d850f54173b600b52cfd57bc930e3f0f18237114adb9182b394b644ed2" },
+    { "file": "armor-padded.png", "source": "unpacked/legend_armor/entity/legend_armor/gambeson_01.png", "sha256": "1f27c9a2e767e25724c7dfde1c8e82a6c9a0b91549be59ee64bcdfdabe22defd" },
+    { "file": "armor-leather.png", "source": "unpacked/legend_armor/entity/legend_armor/leather_jacket_simple_01.png", "sha256": "19e5e3c2fb11f4809c9a2d5f031914c9a2ad246281d36bf3457cc321bcf219bf" },
+    { "file": "armor-mail.png", "source": "unpacked/legend_armor/entity/legend_armor/mail_shirt_simple_01.png", "sha256": "70aed8eab2ce1babd5c3a4f533d0a5019c67d3b8effe276f73e071776d37108d" },
+    { "file": "armor-brigandine.png", "source": "unpacked/legend_armor/entity/legend_armor/leather_brigandine_01.png", "sha256": "1cf9d8470cc0e7d19996b4ad46b581507a261ab00e3f6a2270cb5738bdb4a351" },
+    { "file": "armor-plate.png", "source": "unpacked/legend_armor/entity/legend_armor/plate_full_01.png", "sha256": "56bafa974aa0533d38be337f4fa699389121e5c7a09136cdcfda736493e9c370" },
+    { "file": "helmet-hood.png", "source": "unpacked/legend_helmets/entity/legend_helmets/layers/simple_hood_01.png", "sha256": "09759c337f7b5b541f3427ecc629f461962998b0f3c91786e440e3a2d136272f" },
+    { "file": "helmet-nasal.png", "source": "unpacked/legend_helmets/entity/legend_helmets/layers/southern_helmet_nasal_01.png", "sha256": "45a42261049f8182bf771e269d57371942914addabca323e91d94a616acfd7ee" },
+    { "file": "helmet-kettle.png", "source": "unpacked/legend_helmets/entity/legend_helmets/layers/kettle_helm_01.png", "sha256": "faf2349883e3141dafed0763e146c5d967648307ff5208932651e862e5bd4f8a" },
+    { "file": "helmet-greathelm.png", "source": "unpacked/legend_helmets/entity/legend_helmets/layers/great_helm_01.png", "sha256": "d5e0ede8f5ba4286cff25d80b752eb32948581e51056b66cdb19acc9707beb73" },
+    { "file": "weapon-spear.png", "source": "unpacked/legend_weapons/icons/icon_spear_01_1.png", "sha256": "f90ca44c7536f330bac64cd740e8cbb396123aecfb1b9562da8a34f2f07e8b51" },
+    { "file": "weapon-sword.png", "source": "unpacked/legend_weapons/icons/icon_sword_01_1.png", "sha256": "2eea6bda601a31f6b1b90a2f910867b144e0a9cda8053b7c37a9e834901a737b" },
+    { "file": "weapon-axe.png", "source": "unpacked/legend_weapons/icons/icon_axe_01_1.png", "sha256": "ae79e0b1886247e8db053524083e7aebae7185f84e7db1a04bc777e39cb28958" },
+    { "file": "weapon-bow.png", "source": "unpacked/legend_weapons/icons/icon_war_bow_02.png", "sha256": "c4c53f5ffd2bd65050413852bc31d90b4cf6bd8c7ac5e0c2cdb9e479795c9371" },
+    { "file": "shield-round.png", "source": "unpacked/legend_weapons/icons/shield_round_101.png", "sha256": "9db3bf4dd60eefa51b65069bf8d437ae39909f3cc46ee07c7a5d44c801bb5570" },
+    { "file": "shield-kite.png", "source": "unpacked/legend_weapons/icons/shield_kite_101.png", "sha256": "c107adda0a2257bb9dabb8988947727234cab030614a862575f307dc00de8b9c" }
+  ]
+}

@@ -1,0 +1,408 @@
+{
+  "repository": "Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "files": [
+    {
+      "local": "assets/ui/asset_money_small.png",
+      "source": "gfx/ui/icons/asset_money_small.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/icons/asset_money_small.png",
+      "bytes": 1939
+    },
+    {
+      "local": "assets/ui/inventory_slot_helmet.png",
+      "source": "gfx/ui/icons/inventory_slot_helmet.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/icons/inventory_slot_helmet.png",
+      "bytes": 528
+    },
+    {
+      "local": "assets/ui/input_2_active.png",
+      "source": "gfx/ui/skin/input_2_active.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/skin/input_2_active.png",
+      "bytes": 2422
+    },
+    {
+      "local": "assets/ui/dialog_background_01_wide.png",
+      "source": "gfx/ui/skin/dialog_background_01_wide.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/skin/dialog_background_01_wide.png",
+      "bytes": 1027516
+    },
+    {
+      "local": "assets/ui/papers_icon.png",
+      "source": "gfx/ui/icons/papers_icon.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/icons/papers_icon.png",
+      "bytes": 1367
+    },
+    {
+      "local": "assets/ui/background_inventory.png",
+      "source": "gfx/ui/skin/background_inventory.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/skin/background_inventory.png",
+      "bytes": 1320306
+    },
+    {
+      "local": "assets/world/world_detail_forest_green_02.png",
+      "source": "unpacked/legend_world/world_detail/forest/world_detail_forest_green_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/forest/world_detail_forest_green_02.png",
+      "bytes": 90167
+    },
+    {
+      "local": "assets/world/world_detail_forest_green_03.png",
+      "source": "unpacked/legend_world/world_detail/forest/world_detail_forest_green_03.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/forest/world_detail_forest_green_03.png",
+      "bytes": 89230
+    },
+    {
+      "local": "assets/ui/input_2_default.png",
+      "source": "gfx/ui/skin/input_2_default.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/skin/input_2_default.png",
+      "bytes": 2133
+    },
+    {
+      "local": "assets/world/world_detail_forest_green_04.png",
+      "source": "unpacked/legend_world/world_detail/forest/world_detail_forest_green_04.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/forest/world_detail_forest_green_04.png",
+      "bytes": 84626
+    },
+    {
+      "local": "assets/world/world_detail_forest_green_01.png",
+      "source": "unpacked/legend_world/world_detail/forest/world_detail_forest_green_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/forest/world_detail_forest_green_01.png",
+      "bytes": 93001
+    },
+    {
+      "local": "assets/ui/popup_background_300x600.png",
+      "source": "gfx/ui/skin/popup_background_300x600.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/skin/popup_background_300x600.png",
+      "bytes": 306816
+    },
+    {
+      "local": "assets/world/banner_101.png",
+      "source": "unpacked/legend_world/world_entity/banner/banner_101.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/banner/banner_101.png",
+      "bytes": 7280
+    },
+    {
+      "local": "assets/world/world_detail_autumn_green_02.png",
+      "source": "unpacked/legend_world/world_detail/forest_autumn/world_detail_autumn_green_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/forest_autumn/world_detail_autumn_green_02.png",
+      "bytes": 83043
+    },
+    {
+      "local": "assets/world/world_detail_autumn_green_01.png",
+      "source": "unpacked/legend_world/world_detail/forest_autumn/world_detail_autumn_green_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/forest_autumn/world_detail_autumn_green_01.png",
+      "bytes": 79641
+    },
+    {
+      "local": "assets/world/legend_world_grass_hill_02.png",
+      "source": "unpacked/legend_world/world_detail/grass/legend_world_grass_hill_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/grass/legend_world_grass_hill_02.png",
+      "bytes": 99940
+    },
+    {
+      "local": "assets/world/legend_world_grass_hill_01.png",
+      "source": "unpacked/legend_world/world_detail/grass/legend_world_grass_hill_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/grass/legend_world_grass_hill_01.png",
+      "bytes": 78734
+    },
+    {
+      "local": "assets/world/legend_world_grass_hill_03.png",
+      "source": "unpacked/legend_world/world_detail/grass/legend_world_grass_hill_03.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_detail/grass/legend_world_grass_hill_03.png",
+      "bytes": 105249
+    },
+    {
+      "local": "assets/world/figure_player_assassin.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_assassin.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_assassin.png",
+      "bytes": 6293
+    },
+    {
+      "local": "assets/world/banner_102.png",
+      "source": "unpacked/legend_world/world_entity/banner/banner_102.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/banner/banner_102.png",
+      "bytes": 5154
+    },
+    {
+      "local": "assets/world/figure_player_berserker.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_berserker.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_berserker.png",
+      "bytes": 3990
+    },
+    {
+      "local": "assets/world/figure_player_crusader.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_crusader.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_crusader.png",
+      "bytes": 4227
+    },
+    {
+      "local": "assets/world/banner_103.png",
+      "source": "unpacked/legend_world/world_entity/banner/banner_103.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/banner/banner_103.png",
+      "bytes": 9421
+    },
+    {
+      "local": "assets/world/figure_player_beggar.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_beggar.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_beggar.png",
+      "bytes": 3651
+    },
+    {
+      "local": "assets/world/figure_player_legion.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_legion.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_legion.png",
+      "bytes": 6984
+    },
+    {
+      "local": "assets/world/figure_player_party.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_party.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_party.png",
+      "bytes": 3877
+    },
+    {
+      "local": "assets/world/figure_player_druid.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_druid.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_druid.png",
+      "bytes": 5787
+    },
+    {
+      "local": "assets/world/figure_player_noble.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_noble.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_noble.png",
+      "bytes": 7848
+    },
+    {
+      "local": "assets/world/figure_player_nomad.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_nomad.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_nomad.png",
+      "bytes": 6543
+    },
+    {
+      "local": "assets/world/figure_player_inquisition.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_inquisition.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_inquisition.png",
+      "bytes": 4057
+    },
+    {
+      "local": "assets/world/figure_player_ranger.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_ranger.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_ranger.png",
+      "bytes": 3930
+    },
+    {
+      "local": "assets/world/figure_player_slave.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_slave.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_slave.png",
+      "bytes": 6391
+    },
+    {
+      "local": "assets/world/figure_player_seer.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_seer.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_seer.png",
+      "bytes": 4606
+    },
+    {
+      "local": "assets/world/figure_player_trader.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_trader.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_trader.png",
+      "bytes": 3574
+    },
+    {
+      "local": "assets/world/figure_player_vala.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_vala.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_vala.png",
+      "bytes": 4654
+    },
+    {
+      "local": "assets/world/figure_player_troupe.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_troupe.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_troupe.png",
+      "bytes": 4941
+    },
+    {
+      "local": "assets/world/houses_02_01.png",
+      "source": "unpacked/legend_world/world_settlement/houses_02_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/houses_02_01.png",
+      "bytes": 82852
+    },
+    {
+      "local": "assets/world/city_01.png",
+      "source": "unpacked/legend_world/world_settlement/city_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/city_01.png",
+      "bytes": 127841
+    },
+    {
+      "local": "assets/world/harbor_sw.png",
+      "source": "unpacked/legend_world/world_settlement/harbor_sw.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/harbor_sw.png",
+      "bytes": 47003
+    },
+    {
+      "local": "assets/world/figure_player_warlock.png",
+      "source": "unpacked/legend_world/world_entity/party/figure_player_warlock.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_entity/party/figure_player_warlock.png",
+      "bytes": 4499
+    },
+    {
+      "local": "assets/world/houses_01_01.png",
+      "source": "unpacked/legend_world/world_settlement/houses_01_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/houses_01_01.png",
+      "bytes": 97467
+    },
+    {
+      "local": "assets/world/fortified_outpost_01.png",
+      "source": "unpacked/legend_world/world_settlement/fortified_outpost_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/fortified_outpost_01.png",
+      "bytes": 86731
+    },
+    {
+      "local": "assets/world/townhall_01.png",
+      "source": "unpacked/legend_world/world_settlement/townhall_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/townhall_01.png",
+      "bytes": 78673
+    },
+    {
+      "local": "assets/world/houses_03_01.png",
+      "source": "unpacked/legend_world/world_settlement/houses_03_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/houses_03_01.png",
+      "bytes": 86618
+    },
+    {
+      "local": "assets/world/stronghold_01.png",
+      "source": "unpacked/legend_world/world_settlement/stronghold_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/stronghold_01.png",
+      "bytes": 70017
+    },
+    {
+      "local": "assets/world/stronghold_02.png",
+      "source": "unpacked/legend_world/world_settlement/stronghold_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/stronghold_02.png",
+      "bytes": 103360
+    },
+    {
+      "local": "assets/world/townhall_02.png",
+      "source": "unpacked/legend_world/world_settlement/townhall_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/townhall_02.png",
+      "bytes": 83921
+    },
+    {
+      "local": "assets/world/stone_watchtower_01.png",
+      "source": "unpacked/legend_world/world_settlement/stone_watchtower_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/stone_watchtower_01.png",
+      "bytes": 60206
+    },
+    {
+      "local": "assets/world/wheat_field_01.png",
+      "source": "unpacked/legend_world/world_settlement/wheat_field_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/wheat_field_01.png",
+      "bytes": 41026
+    },
+    {
+      "local": "assets/world/world_forest_01.png",
+      "source": "unpacked/world_tiles/world_tiles/world_forest_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_forest_01.png",
+      "bytes": 154001
+    },
+    {
+      "local": "assets/world/world_forest_02.png",
+      "source": "unpacked/world_tiles/world_tiles/world_forest_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_forest_02.png",
+      "bytes": 148593
+    },
+    {
+      "local": "assets/world/winery_01.png",
+      "source": "unpacked/legend_world/world_settlement/winery_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/winery_01.png",
+      "bytes": 94534
+    },
+    {
+      "local": "assets/world/wheat_farm_01.png",
+      "source": "unpacked/legend_world/world_settlement/wheat_farm_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/wheat_farm_01.png",
+      "bytes": 63476
+    },
+    {
+      "local": "assets/world/world_grass_01.png",
+      "source": "unpacked/world_tiles/world_tiles/world_grass_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_grass_01.png",
+      "bytes": 145049
+    },
+    {
+      "local": "assets/world/world_highlands_01.png",
+      "source": "unpacked/world_tiles/world_tiles/world_highlands_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_highlands_01.png",
+      "bytes": 104083
+    },
+    {
+      "local": "assets/world/world_grass_04.png",
+      "source": "unpacked/world_tiles/world_tiles/world_grass_04.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_grass_04.png",
+      "bytes": 126362
+    },
+    {
+      "local": "assets/world/world_grass_02.png",
+      "source": "unpacked/world_tiles/world_tiles/world_grass_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_grass_02.png",
+      "bytes": 135536
+    },
+    {
+      "local": "assets/world/world_highlands_03.png",
+      "source": "unpacked/world_tiles/world_tiles/world_highlands_03.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_highlands_03.png",
+      "bytes": 134377
+    },
+    {
+      "local": "assets/world/world_grass_03.png",
+      "source": "unpacked/world_tiles/world_tiles/world_grass_03.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_grass_03.png",
+      "bytes": 136054
+    },
+    {
+      "local": "assets/world/world_highlands_02.png",
+      "source": "unpacked/world_tiles/world_tiles/world_highlands_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_highlands_02.png",
+      "bytes": 127831
+    },
+    {
+      "local": "assets/world/world_plains_02.png",
+      "source": "unpacked/world_tiles/world_tiles/world_plains_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_plains_02.png",
+      "bytes": 152061
+    },
+    {
+      "local": "assets/world/world_plains_03.png",
+      "source": "unpacked/world_tiles/world_tiles/world_plains_03.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_plains_03.png",
+      "bytes": 149147
+    },
+    {
+      "local": "assets/world/world_snow_02.png",
+      "source": "unpacked/world_tiles/world_tiles/world_snow_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_snow_02.png",
+      "bytes": 88689
+    },
+    {
+      "local": "assets/world/world_ocean_00.png",
+      "source": "unpacked/world_tiles/world_tiles/world_ocean_00.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_ocean_00.png",
+      "bytes": 3558
+    },
+    {
+      "local": "assets/world/world_snow_01.png",
+      "source": "unpacked/world_tiles/world_tiles/world_snow_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_snow_01.png",
+      "bytes": 98502
+    },
+    {
+      "local": "assets/world/world_plains_01.png",
+      "source": "unpacked/world_tiles/world_tiles/world_plains_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_plains_01.png",
+      "bytes": 142421
+    },
+    {
+      "local": "assets/world/world_swamp_01.png",
+      "source": "unpacked/world_tiles/world_tiles/world_swamp_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_swamp_01.png",
+      "bytes": 125078
+    }
+  ]
+}

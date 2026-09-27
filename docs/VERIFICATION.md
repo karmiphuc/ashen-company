@@ -1,29 +1,24 @@
-# Verification - 2026-09-27
+# Verification - version 0.2, 2026-09-27
 
-## Automated rules
+## Automated checks
 
-Run `npm test`. The Node tests cover deterministic startup, supported equipment visuals, inventory conservation during equip/stow, pack limits, settlement access rules, travel bounds and terrain speeds, contract completion and renewal, daily upkeep, and rejection of invalid saves.
+`npm run prepare-offline`, `npm test`, and `git diff --check` pass. Eighteen Node tests cover game startup, inventory conservation, capacity, settlement access, local markets and stock renewal, cross-town profit, supply deliveries, migration of version 1 saves, travel and upkeep, malformed-save rejection, portrait layer selection, item artwork, and offline asset completeness. The generated service worker precaches 118 local files and is checked against a content-derived hash.
 
-## Browser checks
+## Browser checks for this version
 
-Executed against the local static site using Playwright and installed Microsoft Edge, with a 1194 x 834 touch viewport:
+Executed in the Codex in-app browser:
 
-- Initial render and all-assets offline-ready message.
-- Buy mail armor and a kettle helmet, equip both, confirm portrait and equipment slots update.
-- Take a delivery, travel at accelerated speed, receive the reward and renown.
-- Disable networking, reload, recover the saved company, camp and open equipment.
-- Check 834 x 1194 tablet portrait and 390 x 844 phone widths for horizontal overflow.
-- Inspect world, company and portrait screenshots; no uncaught page errors.
-- Export the current company when storage is unavailable or an old save is corrupt; preserve the corrupt original separately and restore autosaving by importing the current export.
+- Bought mail armor for 320 crowns, five provisions for 20 crowns, and one timber for 20 crowns; balances and stocks updated.
+- Equipped the mail shirt; the old leather vest returned to baggage and protection rose from 32 to 44.
+- Accepted the Oakwatch courier job, travelled to Barrowfield at 3x, and received 185 crowns and one renown on arrival.
+- Selected a destination from the settlement list and exercised camera zoom.
+- Inspected the painted map, equipment inventory and raster portraits at tablet landscape, 834 x 1194 portrait, and 390 x 844 narrow dimensions. Fixed portrait cropping and the narrow equipment grid during this pass.
+- Stopped the local origin server and confirmed a direct HTTP request failed. Closed the game tab and opened a new tab at the same address. The cached game loaded with the saved balances, equipment and destination intact.
+- With the origin still stopped, opened the marketplace, bought a kettle helmet for 245 crowns, and equipped it; armor rose to 63 and the character image changed.
+- No missing DOM images or browser JavaScript errors were observed in the exercised flows.
 
-WebKit 26.5 checks passed for initial rendering, touch interactions, reloading and opening a new tab after the origin server was stopped, retaining the saved company, navigation state, and save export/import.
+## Limits
 
-The Playwright WebKit `setOffline(true)` navigation check failed with an internal error matching a documented upstream automation issue: [microsoft/playwright #42775](https://github.com/microsoft/playwright/issues/42775). Server-stopped checks were run separately and passed. These checks establish cached operation without the origin server; they do not establish real iPad airplane-mode behavior.
+Browser-sized previews and an origin-stopped check do not prove Safari installation or real iPad airplane-mode behavior. On the device, add the game to the Home Screen, wait for Offline ready, export a save, and test closing/reopening in airplane mode before the flight. Storage may be removed by the browser or operating system.
 
-## Remaining device check
-
-Actual Safari on iPad, Add to Home Screen installation, and a full airplane-mode relaunch on the user's device remain unverified. Follow the preflight steps in the README. iPadOS can evict browser storage, so keep an exported save backup.
-
-## Scope
-
-No combat, injury/loot loop, faction simulation or procedural map is claimed. Equipment protection/power/fatigue are groundwork for a later automated-combat phase. The small caravan and road network are scenery; the player travels directly across terrain.
+The app has no combat, enemies, loot loop, factions, or procedural campaign yet. Equipment combat values are displayed groundwork for phase 2. Roads and the passing caravan are scenery; player travel is directly across terrain.

@@ -1,167 +1,83 @@
-import { ITEMS, SETTLEMENTS, createGame, travelTo, tick, townAt, acceptContract, buyItem, sellItem, equipItem, unequipItem, recruit, camp, forage, getEquipment, terrainAt, validateSave } from './engine.js';
-import { portraitSVG } from './portraits.js';
-import { mapSVG, updateMap } from './map.js';
-
-const SAVE_KEY='ashen-company-save-v1';
-const $=selector=>document.querySelector(selector);
-const esc=text=>String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const itemById=id=>ITEMS.find(i=>i.id===id);
-const townById=id=>SETTLEMENTS.find(t=>t.id===id);
-const icons={armor:'♜',helmet:'♟',weapon:'⚔',shield:'◈'};
-let state=createGame(7391),tab='world',selected='captain',speed=0,toastTimer,saveProblem=false;
-let unreadSave=false,corruptSave=null;
-try {
-  const raw=localStorage.getItem(SAVE_KEY);
-  if(raw) {try {state=validateSave(JSON.parse(raw));} catch {unreadSave=true;corruptSave=raw;}}
-} catch {saveProblem=true;}
-
-function save() {
-  if(unreadSave) return;
-  try {localStorage.setItem(SAVE_KEY,JSON.stringify(state));saveProblem=false;} catch {if(!saveProblem) toast('Storage is unavailable. Export your save before closing.');saveProblem=true;}
+import {ITEMS,GOODS,SETTLEMENTS,createGame,travelTo,tick,townAt,acceptContract,buyItem,sellItem,equipItem,unequipItem,recruit,camp,forage,getEquipment,terrainAt,validateSave,getMarket,buyFood,buyGood,sellGood,getContractOffers} from './engine.js';
+import {portraitSVG,itemImage} from './portraits.js';
+import {mapHTML,mountMap,updateMap,focusMap,zoomMap,selectMapTown} from './map.js';
+const SAVE_KEY='ashen-company-save-v1',$=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const item=id=>ITEMS.find(i=>i.id===id),town=id=>SETTLEMENTS.find(t=>t.id===id),good=id=>GOODS.find(g=>g.id===id);
+const specialties={oakwatch:'Timber & grain',greyhaven:'Wool market',ironford:'Iron & affordable steel',thornwall:'High demand for supplies',redmere:'Salt trade',highpass:'Mountain trading post',saltwick:'Cheap salt',barrowfield:'Grain & wool'};
+const townArt={oakwatch:'houses_02_01',greyhaven:'townhall_02',ironford:'stronghold_01',thornwall:'stronghold_02',redmere:'townhall_01',highpass:'fortified_outpost_01',saltwick:'houses_01_01',barrowfield:'houses_03_01'};
+let state=createGame(7391),tab='world',selected='captain',chosenTown='oakwatch',speed=0,slotFilter='all',marketTab='gear',toastTimer,saveProblem=false,corruptSave=null,unreadSave=false;
+try{const raw=localStorage.getItem(SAVE_KEY);if(raw){try{state=validateSave(JSON.parse(raw));chosenTown=townAt(state)?.id||'oakwatch';}catch{unreadSave=true;corruptSave=raw;}}}catch{saveProblem=true;}
+function save(){if(unreadSave)return;try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));saveProblem=false;}catch{if(!saveProblem)toast('Autosave unavailable. Export a save before closing.');saveProblem=true;}}
+function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),4000);}
+function person(){return state.party.find(p=>p.id===selected)||state.party[0];}
+function icon(i,extra=''){return `<img class="equipment-icon ${extra}" src="${itemImage(i)}" alt="${esc(i.name)}" loading="lazy">`;}
+function resources(){const days=Math.floor(state.food/state.party.length);$('#resources').innerHTML=`<div class="resource"><img src="./assets/ui/asset_money_small.png" alt=""><span><strong>${state.gold.toLocaleString()}</strong><small>Crowns</small></span></div><div class="resource"><span><strong>${state.food}</strong><small>Food · ${days} days</small></span></div><div class="resource renown"><span><strong>${state.renown}</strong><small>Renown</small></span></div><div class="resource clock"><span><strong>Day ${state.day}</strong><small>${String(Math.floor(state.hour)).padStart(2,'0')}:00 · ${speed?'Travelling':'Paused'}</small></span></div>`;}
+function run(action,...args){const result=action(state,...args);toast(result.message);save();render();return result;}
+function showModal(title,body,kicker='ASHEN COMPANY'){speed=0;updateSpeed();resources();$('#modal-content').innerHTML=`<div class="modal-header"><div><div class="eyebrow">${kicker}</div><h2>${title}</h2></div><button class="close-button" data-action="close-modal" aria-label="Close dialog">Close</button></div><div class="modal-body">${body}</div>`;if(!$('#modal').open)$('#modal').showModal();}
+function contractHTML(){
+ if(!state.contract)return `<div class="contract-card"><h3>Find your next contract</h3><p>Earn crowns carrying dispatches, or buy cargo to fulfil a supply order.</p><button class="primary" data-action="contracts">View the notice board</button></div>`;
+ const c=state.contract,t=town(c.to),supply=c.type==='supply';return `<div class="contract-card"><div class="eyebrow">${supply?'Supply contract':'Sealed dispatches'}</div><h3>${supply?`${c.quantity} ${good(c.goodId).name}`:'Delivery'} to ${t.name}</h3><p>${supply?`Cargo: ${state.cargo[c.goodId]||0} / ${c.quantity}. Buy goods at a market, then deliver.`:'Your dispatches are packed. Reach the destination to collect payment.'}</p><div class="contract-reward">${c.reward} crowns · ${c.renown||1} renown</div><button class="primary" data-travel="${t.id}">Travel to ${t.name}</button></div>`;
 }
-function toast(message) {$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),4500);}
-function run(action,...args) {const result=action(state,...args);toast(result.message);save();render();return result;}
-function showModal(title,body,kicker='THE ASHEN COMPANY') {
-  speed=0;updateSpeed();
-  $('#modal-content').innerHTML=`<div class="modal-header"><div><div class="eyebrow">${kicker}</div><h2>${title}</h2></div><button class="icon-button" data-action="close-modal" aria-label="Close dialog">×</button></div><div class="modal-body">${body}</div>`;
-  if(!$('#modal').open) $('#modal').showModal();
+function sidebarHTML(){
+ const t=town(chosenTown)||townAt(state)||SETTLEMENTS[0],here=townAt(state)?.id===t.id;
+ const distance=Math.round(Math.hypot(t.x-state.position.x,t.y-state.position.y)/55*10)/10;
+ return `<div class="location-header"><div class="eyebrow">${here?'Current settlement':'Selected destination'}</div><h2>${t.name}</h2><img class="settlement-portrait" src="./assets/world/${townArt[t.id]}.png" alt="${t.name}"><p class="town-specialty">${specialties[t.id]}</p></div><label class="destination-label" for="destinations">Destinations</label><select id="destinations">${SETTLEMENTS.map(s=>`<option value="${s.id}" ${s.id===t.id?'selected':''}>${s.name}${townAt(state)?.id===s.id?' (here)':''}</option>`).join('')}</select><div class="stack sidebar-actions">${here?`<button class="primary" data-action="market">Enter marketplace</button><button data-action="contracts">Contracts</button><button data-action="recruit">Hire companions</button>`:`<p class="travel-estimate">About ${distance} hours · terrain may slow travel</p><button class="primary" data-travel="${t.id}">Travel here</button>`}<div class="two-buttons"><button data-action="camp">Camp · 6h</button><button data-action="forage">Forage · 4h</button></div></div>${contractHTML()}<div class="upkeep">Daily upkeep: ${state.party.length*5} crowns + ${state.party.length} food</div>`;
 }
-function resources() {
-  $('#resources').innerHTML=`<div class="resource"><span class="symbol">◉</span><span><strong>${state.gold.toLocaleString()}</strong><small>Crowns</small></span></div><div class="resource"><span class="symbol">❧</span><span><strong>${state.food}</strong><small>Provisions</small></span></div><div class="resource renown"><span class="symbol">⚑</span><span><strong>${state.renown}</strong><small>Renown</small></span></div>`;
+function stripHTML(){return `<section class="company-strip" aria-label="Your company"><div class="strip-intro"><h3>Your company</h3><p>${state.party.length} / 8 companions</p></div><div class="strip-roster">${state.party.map(p=>`<button class="mini-person ${tab==='company'&&p.id===selected?'active':''}" data-person="${p.id}" aria-label="Equip ${esc(p.name)}">${portraitSVG(p,getEquipment(p),80)}<span class="mini-name">${esc(p.name.split(' ')[0])}</span><span class="hp-bar"><span style="width:${p.hp}%"></span></span></button>`).join('')}<button class="strip-recruit" data-action="recruit" aria-label="Recruit a companion">+</button></div><button class="secondary small" data-tab="company">Equipment</button></section>`;}
+function worldHTML(){return `<section class="world-layout"><div class="map-wrap">${mapHTML()}<div class="map-caption"><span>The Grey Marches</span><small>Drag to pan · pinch to zoom · tap a settlement</small></div><div class="map-zoom"><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="center" aria-label="Center on company">Company</button></div><div class="map-controls"><button data-speed="0" aria-label="Pause travel">Pause</button><button data-speed="1" aria-label="Normal travel speed">1×</button><button data-speed="3" aria-label="Fast travel speed">3×</button><span id="march-status">${state.destination?'On the march':'Company at rest'}</span></div></div><aside class="world-sidebar">${sidebarHTML()}</aside></section>${stripHTML()}`;}
+function inventoryHTML(){
+ const counts=new Map();state.inventory.forEach(id=>counts.set(id,(counts.get(id)||0)+1));
+ const owned=[...counts].filter(([id])=>slotFilter==='all'||item(id).slot===slotFilter);
+ return owned.map(([id,count])=>{const i=item(id),current=getEquipment(person())[i.slot],delta=(i.armor||i.power||0)-(current?.armor||current?.power||0);return `<button class="inventory-item" data-equip="${id}">${icon(i)}<strong>${i.name}${count>1?` ×${count}`:''}</strong><span>${i.armor?`${i.armor} armor`:`${i.power} power`} <em class="${delta>=0?'better':'worse'}">${delta>0?'+':''}${delta}</em></span><small>Tap to equip</small></button>`;}).join('')||'<p class="empty-state">No spare items in this slot. Buy gear at a settlement, or select another slot.</p>';
 }
-function contractHTML() {
-  if(!state.contract) return `<div class="contract-card"><div class="eyebrow">A COMPANY NEEDS WORK</div><h3>Every road has a story.</h3><p>Visit a settlement and take a delivery contract. A full purse buys better steel.</p></div>`;
-  const target=townById(state.contract.to);
-  return `<div class="contract-card"><div class="eyebrow">SEALED DISPATCHES</div><h3>Onward to ${target.name}</h3><p>Deliver the council's letter. Payment is yours when the company arrives.</p><div class="contract-reward">◉ ${state.contract.reward} crowns · 1 renown</div><button class="small secondary" data-travel="${target.id}" style="margin-top:13px;width:100%">Travel to ${target.name} →</button></div>`;
+function companyHTML(){const p=person();selected=p.id;const equipment=getEquipment(p),gear=Object.values(equipment).filter(Boolean);const armor=gear.reduce((s,i)=>s+(i.armor||0),0),fatigue=gear.reduce((s,i)=>s+(i.fatigue||0),0);return `<section class="page company-page"><div class="page-heading"><div><div class="eyebrow">COMPANY ROSTER</div><h1>${esc(p.name)}</h1><p>${esc(p.background)} · ${state.party.length} companions under your banner</p></div><button data-tab="world">Return to the map</button></div><div class="company-layout"><article class="character-card"><div class="hero-portrait">${portraitSVG(p,equipment,185)}</div><div class="character-stats"><div><strong>${p.hp}</strong><small>Health</small></div><div><strong>${armor}</strong><small>Armor</small></div><div><strong>${p.morale}</strong><small>Morale</small></div></div><p class="gear-note">Gear fatigue: ${fatigue}<br>Combat effects arrive in phase 2.</p></article><section class="equipment-panel"><h3>Equipped</h3><p>Choose a slot to compare gear.</p><div class="equipment-slots">${['helmet','armor','weapon','shield'].map(slot=>`<div class="slot-wrap"><button class="slot ${slotFilter===slot?'active':''}" data-slot="${slot}"><small>${slot}</small>${equipment[slot]?icon(equipment[slot]):`<span class="empty-slot">Empty</span>`}<strong>${equipment[slot]?.name||'Unequipped'}</strong></button>${equipment[slot]?`<button class="stow-button" data-unequip="${slot}">Stow</button>`:''}</div>`).join('')}</div></section><aside class="inventory-panel"><div class="inventory-title"><h3>Company baggage</h3><span>${state.inventory.length} items</span></div><div class="filter-tabs">${['all','armor','helmet','weapon','shield'].map(s=>`<button class="small ${slotFilter===s?'active':''}" data-slot="${s}">${s==='all'?'All':s[0].toUpperCase()+s.slice(1)}</button>`).join('')}</div><div class="inventory-grid">${inventoryHTML()}</div><p class="inventory-help">Tap an item to equip it on ${esc(p.name.split(' ')[0])}. The old item returns to baggage.</p><button class="primary" data-action="market">Open marketplace</button></aside></div></section>${stripHTML()}`;}
+function journalHTML(){return `<section class="page"><div class="page-heading"><div><div class="eyebrow">DAY ${state.day}</div><h1>The company chronicle</h1></div><button data-tab="world">Return to the map</button></div><div class="journal-layout"><div>${[...state.log].reverse().map(s=>`<div class="journal-entry">${esc(s)}</div>`).join('')}</div><aside class="paper-card"><h2>A living on the road</h2><ol><li>Take a courier job for a guaranteed payment.</li><li>Buy local goods cheaply and sell where demand is high.</li><li>Supply orders need purchased cargo; check the required quantity.</li><li>Buy food before leaving. Each person eats once per day.</li><li>Equip your companions by tapping their portraits.</li></ol><h3>Trade routes</h3><p>Oakwatch timber sells well at Highpass. Saltwick salt is prized at Thornwall. Ironford has cheaper iron and equipment.</p><p>There are no battles yet. Auto-combat is the next phase.</p><button data-action="settings">Save & offline settings</button></aside></div></section>`;}
+function render(){resources();$('#main').innerHTML=tab==='world'?worldHTML():tab==='company'?companyHTML():journalHTML();document.querySelectorAll('.nav-tabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));if(tab==='world'){mountMap(state,chooseTown,startTravel);selectMapTown(town(chosenTown));}updateSpeed();}
+function chooseTown(t){chosenTown=t.id;selectMapTown(t);const side=$('.world-sidebar');if(side)side.innerHTML=sidebarHTML();}
+function updateSpeed(){document.querySelectorAll('[data-speed]').forEach(b=>b.classList.toggle('active',Number(b.dataset.speed)===speed));const s=$('#march-status');if(s)s.textContent=state.destination?(speed?'On the march':'Travel paused'):'Company at rest';}
+function market(){const market=getMarket(state);if(!market){toast('Travel to a settlement to trade.');return;}const t=market.town;let content;
+ if(marketTab==='gear')content=`<div class="market-grid">${market.equipment.map(row=>{const i=item(row.itemId);return `<article class="shop-item">${icon(i)}<div><h3>${i.name}</h3><p>${i.armor?`${i.armor} protection · ${i.fatigue||0} fatigue`:`${i.power} weapon power`}</p><small>${row.stock} in stock</small></div><button class="small" data-buy="${i.id}" ${row.stock===0||state.gold<row.buyPrice?'disabled':''}>Buy ${row.buyPrice}</button></article>`;}).join('')}</div><h3 class="section-label">Sell spare equipment</h3><div class="sell-list">${market.equipment.filter(r=>r.owned>0).map(r=>`<button class="sell-item" data-sell="${r.itemId}">${icon(item(r.itemId))}<span>${item(r.itemId).name} ×${r.owned}</span><strong>Sell ${r.sellPrice}</strong></button>`).join('')||'<p>No spare equipment to sell.</p>'}</div><button class="primary" data-action="go-company">Equip your purchases</button>`;
+ else if(marketTab==='trade')content=`<p class="market-tip">Buy at a producing settlement, sell where demand is high. Cargo ${Object.values(state.cargo).reduce((s,n)=>s+n,0)} / 30.</p><div class="goods-list">${market.goods.map(r=>`<article class="trade-row"><div><h3>${r.name}</h3><p>${r.description}</p><small>Stock: ${r.stock} · In cargo: ${r.owned}</small></div><div class="trade-actions"><button data-buy-good="${r.goodId}" ${r.stock===0||state.gold<r.buyPrice?'disabled':''}>Buy ${r.buyPrice}</button><button data-sell-good="${r.goodId}" ${!r.owned?'disabled':''}>Sell ${r.sellPrice}</button></div></article>`).join('')}</div><p class="market-tip">Good routes: Oakwatch timber → Highpass · Saltwick salt → Thornwall · Ironford iron → Saltwick.</p>`;
+ else content=`<div class="provision-card"><h3>Food for the road</h3><p>${state.food} provisions in the company, enough for ${Math.floor(state.food/state.party.length)} days.<br>Daily consumption: ${state.party.length}. Merchant stock: ${market.food.stock}.</p><div class="button-row"><button class="primary" data-food="5" ${market.food.stock<5||state.gold<market.food.buyPrice*5?'disabled':''}>Buy 5 · ${market.food.buyPrice*5} crowns</button><button data-food="15" ${market.food.stock<15||state.gold<market.food.buyPrice*15?'disabled':''}>Buy 15 · ${market.food.buyPrice*15} crowns</button></div><p>Or forage for four hours to gather supplies without spending crowns.</p><button data-action="forage">Forage · 4 hours</button></div>`;
+ showModal('Marketplace',`<div class="market-summary"><span>${specialties[t.id]}</span><strong>${state.gold} crowns</strong></div><div class="market-tabs">${[['gear','Weapons & armor'],['trade','Trade goods'],['food','Provisions']].map(([id,label])=>`<button data-market-tab="${id}" class="${marketTab===id?'active':''}">${label}</button>`).join('')}</div>${content}`,t.name);
 }
-function sidebarHTML() {
-  const town=townAt(state),moving=!!state.destination;
-  const terrain=terrainAt(state.position.x,state.position.y);
-  return `<div><div class="eyebrow" id="world-date">DAY ${state.day} · ${String(Math.floor(state.hour)).padStart(2,'0')}:00</div><h2 id="location-name">${town?town.name:'The open road'}</h2><div class="location-pill" id="travel-status">${moving?'➤ On the march':'◇ Company at rest'} · ${terrain}</div><p class="sidebar-description">${town?town.description:'Beyond the gates, the Marches belong to whoever can endure them.'}</p></div><div class="divider"></div><div class="stack sidebar-actions">${town?`<button data-action="market">Marketplace <span>↗</span></button><button data-action="contracts">Contracts <span>▤</span></button><button data-action="recruit">Recruit a companion <span>+</span></button>`:`<button data-action="forage">Forage for provisions <span>4h</span></button>`}<button class="secondary" data-action="camp">Make camp <span>6h</span></button></div>${contractHTML()}<p class="intro-tip">Tap a settlement or open ground to travel. Time pauses when you arrive or open a menu.</p><div class="weather"><span>☼ Clear skies</span><span>${state.party.length * 5} crowns / day</span></div>`;
-}
-function stripHTML() {
-  return `<section class="company-strip" aria-label="Your company"><div class="strip-intro"><div class="eyebrow">YOUR BANNER</div><h3>The company</h3><p>${state.party.length} of 8 companions</p></div><div class="strip-roster">${state.party.map(p=>`<button class="mini-person" data-person="${p.id}" aria-label="Equip ${esc(p.name)}">${portraitSVG(p,getEquipment(p),90)}<span class="mini-name">${esc(p.name.split(' ')[0])}</span><span class="hp-bar"><span style="width:${p.hp}%"></span></span></button>`).join('')}<button class="strip-recruit" data-action="recruit" aria-label="Recruit a companion">+</button></div><button class="secondary small" data-tab="company">Manage<br>company →</button></section>`;
-}
-function worldHTML() {
-  return `<section class="world-layout"><div class="map-wrap"><div class="map-heading"><div class="eyebrow">THE WORLD AWAITS</div><h1>The Marches</h1><p>A land of small fortunes and long roads.</p></div>${mapSVG()}<div class="map-vignette"></div><div class="map-controls" aria-label="Travel speed"><button data-speed="0" aria-label="Pause travel">Ⅱ</button><button data-speed="1" aria-label="Normal travel speed">1×</button><button data-speed="3" aria-label="Fast travel speed">3×</button></div><div class="map-scale">30 LEAGUES</div></div><aside class="world-sidebar">${sidebarHTML()}</aside></section>${stripHTML()}`;
-}
-function inventoryHTML() {
-  const counts=new Map();state.inventory.forEach(id=>counts.set(id,(counts.get(id)||0)+1));
-  return [...counts].map(([id,count])=>{const item=itemById(id);return `<div class="item-row"><span class="item-icon">${icons[item.slot]}</span><div class="item-info"><strong>${item.name}${count>1?` ×${count}`:''}</strong><small>${item.slot} · ${item.armor?`${item.armor} protection`: `${item.power||0} power`}</small></div><button class="small" data-equip="${id}">Equip</button></div>`;}).join('') || '<div class="empty-state">Your baggage is empty. Visit a marketplace to buy equipment.</div>';
-}
-function companyHTML() {
-  const person=state.party.find(p=>p.id===selected)||state.party[0];selected=person.id;
-  const equipment=getEquipment(person),gear=Object.values(equipment).filter(Boolean),armor=gear.reduce((sum,i)=>sum+(i.armor||0),0),fatigue=gear.reduce((sum,i)=>sum+(i.fatigue||0),0);
-  return `<section class="page"><div class="page-heading"><div><div class="eyebrow">PEOPLE BEHIND THE BANNER</div><h1>The company</h1><p>Every piece of steel tells a different story. Equip a companion to see it.</p></div><span class="status-tag">${state.party.length} / 8 COMPANIONS</span></div><div class="company-layout"><div class="roster-list">${state.party.map(p=>`<button class="roster-person ${selected===p.id?'active':''}" data-person="${p.id}">${portraitSVG(p,getEquipment(p),65)}<span><strong>${esc(p.name)}</strong><small>${esc(p.background)}</small></span></button>`).join('')}<button class="secondary small" data-action="recruit">+ Recruit</button></div><article class="character-card"><div class="eyebrow">${esc(person.background)}</div><h2>${esc(person.name)}</h2><div class="hero-portrait">${portraitSVG(person,equipment,280)}</div><div class="character-stats"><div><strong>${person.hp}</strong><small>Health</small></div><div><strong>${armor}</strong><small>Protection</small></div><div><strong>${person.morale}</strong><small>Morale</small></div></div><div class="equipment-slots">${['helmet','armor','weapon','shield'].map(slot=>`<button class="slot" data-unequip="${slot}" ${!equipment[slot]?'disabled':''}><small>${slot}</small><strong>${equipment[slot]?.name||'Unequipped'}</strong><span>${equipment[slot]?'Tap to move into baggage':'Choose an item from baggage'}</span></button>`).join('')}</div><p class="controls-hint">Gear weight: ${fatigue} · Combat stats are reserved for phase 2.</p></article><aside class="inventory-panel"><div class="eyebrow">SHARED INVENTORY</div><h3 style="margin-top:7px">Company baggage</h3><p>Equip items on ${esc(person.name.split(' ')[0])}. Replaced gear returns here.</p>${inventoryHTML()}<button class="secondary small" data-action="market" style="width:100%;margin-top:15px">Visit marketplace →</button></aside></div></section>`;
-}
-function journalHTML() {
-  return `<section class="page"><div class="page-heading"><div><div class="eyebrow">INK, DUST & SMALL FORTUNES</div><h1>The chronicle</h1><p>The last thirty entries from your company's journey.</p></div><span class="status-tag">DAY ${state.day}</span></div><div class="journal-layout"><div>${[...state.log].reverse().map(entry=>`<div class="journal-entry">${esc(entry)}</div>`).join('')}</div><aside class="paper-card"><div class="eyebrow">THE CAPTAIN'S FIELD NOTES</div><h2>A living to be made</h2><p>You have a banner, a few companions, and enough coin for a beginning.</p><ul><li>Take <strong>delivery contracts</strong> in settlements.</li><li>Tap your destination, then watch the road.</li><li>Buy armor and helmets in the marketplace.</li><li>Equip each companion in <strong>The company</strong>.</li><li>Pay 5 crowns and 1 provision per person each day.</li><li>Camp to recover. Forage to replenish supplies.</li></ul><p><strong>First chapter:</strong> travel, contracts, trade and equipment. Automated battles, enemies and loot are planned for the next chapter.</p><button class="primary" data-action="settings">Prepare for offline play</button></aside></div></section>`;
-}
-function render() {
-  resources();$('#main').innerHTML=tab==='world'?worldHTML():tab==='company'?companyHTML():journalHTML();
-  document.querySelectorAll('.nav-tabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-  updateMap(state);updateSpeed();
-}
-function updateSpeed() {document.querySelectorAll('[data-speed]').forEach(b=>b.classList.toggle('active',Number(b.dataset.speed)===speed));}
-function market() {
-  const town=townAt(state);if(!town){toast('Visit a settlement to trade.');return;}
-  const sell=[...new Set(state.inventory)].map(id=>{const item=itemById(id);return `<div class="item-row"><div class="item-info"><strong>${item.name}</strong><small>In company baggage</small></div><button class="small" data-sell="${id}">Sell · ${Math.floor(item.price/2)} ◉</button></div>`;}).join('');
-  showModal('The marketplace',`<p>Outfit your company. You have <strong>${state.gold} crowns</strong>. New purchases go into company baggage.</p><div class="market-grid">${ITEMS.map(item=>`<article class="shop-item"><div class="eyebrow">${item.slot}</div><h3>${item.name}</h3><p>${item.description}</p><button data-buy="${item.id}" ${state.gold<item.price?'disabled':''}>Buy · ${item.price} ◉</button></article>`).join('')}</div><h3 style="margin-top:24px">Sell from baggage</h3>${sell||'<p>No spare equipment to sell.</p>'}<div class="button-row"><button data-action="forage">Forage for provisions · 4h</button><button class="primary" data-action="go-company">Equip your company →</button></div>`,town.name.toUpperCase());
-}
-function contracts() {
-  const town=townAt(state);if(!town){toast('Visit a settlement to find work.');return;}
-  if(state.contract){showModal('Work in hand',`${contractHTML()}<p style="margin-top:16px">Finish your delivery before taking another contract.</p>`);return;}
-  const preview=structuredClone(state);acceptContract(preview,town.id);const target=townById(preview.contract.to);
-  showModal('A letter for the road',`<p>The council needs sealed dispatches carried to <strong>${target.name}</strong>. The payment is modest, the work honest enough.</p><div class="paper-card"><div class="eyebrow">DELIVERY CONTRACT</div><h2>${town.name} → ${target.name}</h2><p>No deadline. Payment on arrival.</p><h3>${preview.contract.reward} crowns + 1 renown</h3></div><div class="button-row"><button class="primary" data-accept="${town.id}">Accept the contract</button><button class="secondary" data-action="close-modal">Perhaps later</button></div>`,town.name.toUpperCase());
-}
-function recruitModal() {
-  if(!townAt(state)){toast('Recruit companions at a settlement.');return;}
-  const preview=structuredClone(state),res=recruit(preview);
-  if(!res.ok){toast(res.message);return;}
-  const person=preview.party.at(-1),cost=state.gold-preview.gold;
-  showModal('Another hand for the road',`<div style="display:flex;align-items:center;gap:22px">${portraitSVG(person,getEquipment(person),150)}<div><div class="eyebrow">${esc(person.background)}</div><h2>${esc(person.name)}</h2><p>A place beneath your banner, a share of the road.</p></div></div><p>Hiring fee: <strong>${cost} crowns</strong>. Upkeep: 5 crowns and 1 provision per day. Company: ${state.party.length}/8.</p><div class="button-row"><button class="primary" data-action="hire">Hire companion · ${cost} ◉</button><button class="secondary" data-action="close-modal">Leave</button></div>`);
-}
-function settings() {
-  showModal('Ready for the long journey',`<p>Your company saves automatically on this device. Export a backup before your flight.</p><div class="save-note"><strong>On your iPad</strong><br>1. Open this game in Safari while online.<br>2. Share → Add to Home Screen, then open that icon.<br>3. Wait for <strong>Offline ready</strong> in the top bar.<br>4. Turn on airplane mode, close the game, and reopen it once to check.</div><p style="margin-top:15px">iPadOS can remove website data when storage is low. Keep an exported save in Files. This device's save does not sync with other devices.</p><div class="button-row"><button class="primary" data-action="export">Export save</button><button data-action="import">Import save</button>${corruptSave!==null?'<button data-action="export-recovery">Export damaged save</button>':' '}</div><input class="hidden" type="file" accept=".json,application/json" id="import-file"><p>${saveProblem?'Saving is unavailable. Export before closing.':unreadSave?'A damaged old save is preserved. Current play is temporary: export the current company, then import that file to resume autosaving. You can also export the damaged file for recovery.':'Company progress saves automatically.'}</p><div class="divider"></div><div class="button-row"><button class="secondary danger" data-action="new-game">Start a new company</button></div><p>Version 0.1 · An original mercenary chronicle.<br>Travel and equipment are playable. Auto-combat is planned for phase 2.</p>`);
-}
-function exportSave(recovery=false) {
-  const text=recovery&&corruptSave!==null?corruptSave:JSON.stringify(state,null,2);
-  const blob=new Blob([text],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=recovery?'ashen-company-damaged-save.json':`ashen-company-day-${state.day}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);toast('Save exported. Keep it in Files for the journey.');
-}
-function startTravel(x,y) {
-  const result=travelTo(state,x,y);toast(result.message);
-  if(result.ok){speed=1;tab='world';$('#modal').close();save();render();}
-}
-document.addEventListener('click',event=>{
-  const button=event.target.closest('button');
-  if(button) {
-    if(button.disabled) return;
-    if(button.dataset.tab){tab=button.dataset.tab;speed=0;render();return;}
-    if(button.dataset.person){selected=button.dataset.person;tab='company';speed=0;render();return;}
-    if(button.dataset.speed!==undefined){speed=Number(button.dataset.speed);if(speed&&!state.destination){speed=0;toast('Tap the map to choose a destination first.');}updateSpeed();return;}
-    if(button.dataset.travel){const t=townById(button.dataset.travel);startTravel(t.x,t.y);return;}
-    if(button.dataset.equip){run(equipItem,selected,button.dataset.equip);return;}
-    if(button.dataset.unequip){run(unequipItem,selected,button.dataset.unequip);return;}
-    if(button.dataset.buy){run(buyItem,button.dataset.buy);market();return;}
-    if(button.dataset.sell){run(sellItem,button.dataset.sell);market();return;}
-    if(button.dataset.accept){run(acceptContract,button.dataset.accept);$('#modal').close();return;}
-    switch(button.dataset.action) {
-      case 'close-modal':$('#modal').close();break;
-      case 'market':market();break;
-      case 'contracts':contracts();break;
-      case 'recruit':recruitModal();break;
-      case 'hire':run(recruit);$('#modal').close();break;
-      case 'camp':speed=0;run(camp);break;
-      case 'forage':speed=0;run(forage);if($('#modal').open) market();break;
-      case 'go-company':$('#modal').close();tab='company';render();break;
-      case 'settings':settings();break;
-      case 'export':exportSave();break;
-      case 'export-recovery':exportSave(true);break;
-      case 'import':$('#import-file').click();break;
-      case 'new-game':showModal('A new banner?',`<p>This replaces the company saved on this device. Export your current save first if you want to keep it.</p><div class="button-row"><button class="primary" data-action="export">Export current save</button><button class="danger" data-action="confirm-new">Replace company</button><button data-action="close-modal">Keep playing</button></div>`);break;
-      case 'confirm-new':state=createGame();selected=state.party[0].id;unreadSave=false;save();tab='world';$('#modal').close();render();toast('A new company gathers at Oakwatch.');break;
-    }
-    return;
-  }
-  const map=event.target.closest('#world-map');
-  if(map){const settlement=event.target.closest('[data-town]');if(settlement){const t=townById(settlement.dataset.town);if(townAt(state)?.id===t.id){contracts();return;}startTravel(t.x,t.y);}else {const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(map.getScreenCTM().inverse());startTravel(point.x,point.y);}}
+function contracts(){const t=townAt(state);if(!t){toast('Reach a settlement to read its notice board.');return;}if(state.contract){showModal('Your current contract',contractHTML(),t.name);return;}const offers=getContractOffers(state,t.id);showModal('The notice board',`<p>Choose one contract. Payment is made when its conditions are fulfilled.</p><div class="contract-offers">${offers.map(o=>`<article class="paper-card"><div class="eyebrow">${o.type==='supply'?'Supply order':'Courier job'}</div><h3>${o.type==='supply'?`${o.quantity} ${good(o.goodId).name} for`:'Dispatches to'} ${town(o.to).name}</h3><p>${o.type==='supply'?'Purchase the cargo at a market and bring it to the destination. The required goods are consumed on delivery.':'Carry a sealed letter. No purchases required; just reach the destination.'}</p><strong>${o.reward} crowns · ${o.renown} renown</strong><button class="primary" data-accept="${o.id}" data-origin="${t.id}">Accept ${o.type==='supply'?'supply order':'courier job'}</button></article>`).join('')}</div>`,t.name);}
+function recruitModal(){if(!townAt(state)){toast('Reach a settlement to hire companions.');return;}const preview=structuredClone(state),res=recruit(preview);if(!res.ok){toast(res.message);return;}const p=preview.party.at(-1),cost=state.gold-preview.gold;showModal('A new companion',`<div class="recruit-preview">${portraitSVG(p,getEquipment(p),190)}<div><div class="eyebrow">${esc(p.background)}</div><h2>${esc(p.name)}</h2><p>Hiring fee ${cost} crowns.<br>Daily upkeep: 5 crowns and 1 food.<br>Comes without equipment.</p></div></div><button class="primary" data-action="hire">Hire for ${cost} crowns</button>`);}
+function settings(){showModal('Save & offline play',`<p>Your company is saved on this device. Export a backup before travelling.</p><div class="save-note">On iPad: open in Safari online, Share → Add to Home Screen, then launch the icon. Wait for <strong>Offline ready</strong>, and test an airplane-mode relaunch before your flight.</div><div class="button-row"><button class="primary" data-action="export">Export save</button><button data-action="import">Import save</button>${corruptSave!==null?'<button data-action="export-recovery">Export damaged save</button>':''}</div><input id="import-file" class="hidden" type="file" accept=".json,application/json"><p>${saveProblem?'Autosave unavailable. Export your progress.':unreadSave?'A damaged save is preserved. Export your current company and import it to resume autosaving.':'Autosave active. Saves do not sync between devices.'}</p><div class="divider"></div><div class="button-row"><button class="danger" data-action="new-game">Start a new company</button></div><p class="credits">Artwork: Battle Brothers / Legends contributors. Personal noncommercial prototype. <a href="https://github.com/karmiphuc/ashen-company/blob/main/docs/ASSET-CREDITS.md" target="_blank" rel="noopener">Asset credits</a>.<br>Version 0.2 · Overworld, trade and equipment. Auto-combat remains phase 2.</p>`);}
+function exportSave(recovery=false){const text=recovery&&corruptSave!==null?corruptSave:JSON.stringify(state,null,2);const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=recovery?'ashen-company-damaged-save.json':`ashen-company-day-${state.day}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);toast('Save exported. Keep the file as a backup.');}
+function startTravel(x,y){const r=travelTo(state,x,y);toast(r.message);if(r.ok){speed=1;tab='world';$('#modal').close();save();render();}}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
+ if(b.dataset.tab){tab=b.dataset.tab;speed=0;render();return;}
+ if(b.dataset.person){selected=b.dataset.person;tab='company';speed=0;render();return;}
+ if(b.dataset.slot){slotFilter=b.dataset.slot;render();return;}
+ if(b.dataset.speed!==undefined){speed=Number(b.dataset.speed);if(speed&&!state.destination){speed=0;toast('Select a settlement, then choose Travel here.');}updateSpeed();resources();return;}
+ if(b.dataset.travel){const t=town(b.dataset.travel);chosenTown=t.id;startTravel(t.x,t.y);return;}
+ if(b.dataset.marketTab){marketTab=b.dataset.marketTab;market();return;}
+ if(b.dataset.equip){run(equipItem,selected,b.dataset.equip);return;}
+ if(b.dataset.unequip){run(unequipItem,selected,b.dataset.unequip);return;}
+ if(b.dataset.buy){run(buyItem,b.dataset.buy);market();return;}
+ if(b.dataset.sell){run(sellItem,b.dataset.sell);market();return;}
+ if(b.dataset.food){run(buyFood,Number(b.dataset.food));market();return;}
+ if(b.dataset.buyGood){run(buyGood,b.dataset.buyGood);market();return;}
+ if(b.dataset.sellGood){run(sellGood,b.dataset.sellGood);market();return;}
+ if(b.dataset.accept){run(acceptContract,b.dataset.origin,b.dataset.accept);$('#modal').close();return;}
+ switch(b.dataset.action){
+ case 'close-modal':$('#modal').close();break;case 'market':market();break;case 'contracts':contracts();break;case 'recruit':recruitModal();break;
+ case 'hire':run(recruit);$('#modal').close();break;case 'camp':speed=0;run(camp);break;case 'forage':speed=0;run(forage);if($('#modal').open)market();break;
+ case 'go-company':$('#modal').close();tab='company';slotFilter='all';render();break;case 'settings':settings();break;
+ case 'center':focusMap(state.position);break;case 'zoom-in':zoomMap(1.25);break;case 'zoom-out':zoomMap(.8);break;
+ case 'export':exportSave();break;case 'export-recovery':exportSave(true);break;case 'import':$('#import-file').click();break;
+ case 'new-game':showModal('Replace your company?',`<p>This replaces the save on this device. Export a backup first to keep the current company.</p><div class="button-row"><button data-action="export">Export current save</button><button class="danger" data-action="confirm-new">Replace company</button><button data-action="close-modal">Keep playing</button></div>`);break;
+ case 'confirm-new':state=createGame();selected=state.party[0].id;chosenTown='oakwatch';unreadSave=false;corruptSave=null;save();tab='world';$('#modal').close();render();toast('Your new company gathers at Oakwatch.');break;
+ }
 });
-document.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-town]')){event.preventDefault();event.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});
-document.addEventListener('change',async event=>{
-  if(event.target.id!=='import-file') return;
-  const file=event.target.files[0];if(!file)return;
-  try{if(file.size>250000)throw new Error('Save file is too large.');const imported=validateSave(JSON.parse(await file.text()));state=imported;unreadSave=false;selected=state.party[0].id;speed=0;save();$('#modal').close();render();toast('Company restored from your save.');}catch(error){toast(`Could not import save: ${error.message}`);}
-});
+document.addEventListener('change',async e=>{if(e.target.id==='destinations'){chooseTown(town(e.target.value));focusMap(town(e.target.value));return;}if(e.target.id!=='import-file')return;const file=e.target.files[0];if(!file)return;try{if(file.size>250000)throw new Error('Save file is too large.');state=validateSave(JSON.parse(await file.text()));unreadSave=false;selected=state.party[0].id;chosenTown=townAt(state)?.id||'oakwatch';speed=0;save();$('#modal').close();render();toast('Company restored from your save.');}catch(error){toast(`Could not import save: ${error.message}`);}});
 $('#settings-button').addEventListener('click',settings);
-$('#modal').addEventListener('click',event=>{if(event.target===$('#modal')){const r=$('#modal').getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)$('#modal').close();}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){speed=0;save();updateSpeed();}});
-window.addEventListener('pagehide',save);
-let lastFrame=performance.now(),lastSave=0,lastSidebar='';
-function animate(now) {
-  const elapsed=Math.min((now-lastFrame)/1000,.25);lastFrame=now;
-  if(speed&&state.destination&&!document.hidden&&!$('#modal').open&&tab==='world') {
-    const contractBefore=state.contract;
-    tick(state,elapsed*speed*.42);updateMap(state);
-    const key=`${state.day}-${Math.floor(state.hour)}-${townAt(state)?.id}-${!!state.destination}`;
-    if(key!==lastSidebar){$('.world-sidebar').innerHTML=sidebarHTML();resources();lastSidebar=key;}
-    if(!state.destination){speed=0;save();render();toast(contractBefore&&!state.contract?'Delivery complete. Your payment is in the purse.':'The company has arrived.');}
-    if(now-lastSave>2000){save();lastSave=now;}
-  }
-  requestAnimationFrame(animate);
-}
-render();requestAnimationFrame(animate);
-if(unreadSave)toast('An old save could not be read and was preserved. Open settings to recover.');
-else save();
-
-async function prepareOffline() {
-  const label=$('#offline-status');
-  if(!('serviceWorker' in navigator)){label.textContent='Offline unavailable';return;}
-  try {
-    await navigator.serviceWorker.register('./sw.js');
-    const registration=await navigator.serviceWorker.ready;
-    const check=()=>{const channel=new MessageChannel();channel.port1.onmessage=e=>{if(e.data?.ready){label.textContent='Offline ready';label.classList.add('ready');}else label.textContent='Open online to prepare';};(navigator.serviceWorker.controller||registration.active)?.postMessage({type:'CHECK_OFFLINE'},[channel.port2]);};
-    check();navigator.serviceWorker.addEventListener('controllerchange',check);
-  } catch {label.textContent='Open online to prepare';}
-}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){speed=0;save();updateSpeed();}});window.addEventListener('pagehide',save);
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!$('#modal').open&&!['INPUT','SELECT','BUTTON'].includes(e.target.tagName)){e.preventDefault();speed=state.destination?(speed?0:1):0;updateSpeed();resources();}});
+let last=performance.now(),lastSave=0,lastHour='';
+function animate(now){const elapsed=Math.min((now-last)/1000,.25);last=now;if(speed&&state.destination&&!document.hidden&&!$('#modal').open&&tab==='world'){const before=state.contract;tick(state,elapsed*speed*.42);updateMap(state);const key=`${state.day}-${Math.floor(state.hour)}`;if(key!==lastHour){resources();lastHour=key;}if(!state.destination){speed=0;chosenTown=townAt(state)?.id||chosenTown;save();render();toast(before&&!state.contract?'Contract fulfilled. Payment received.':'The company has arrived. Enter the marketplace or take a new contract.');}if(now-lastSave>2000){save();lastSave=now;}}requestAnimationFrame(animate);}
+render();requestAnimationFrame(animate);if(unreadSave)toast('A damaged save was preserved. Open Save / Menu to recover.');else save();
+async function prepareOffline(){const label=$('#offline-status');if(!('serviceWorker'in navigator)){label.textContent='Offline unavailable';return;}try{await navigator.serviceWorker.register('./sw.js');const reg=await navigator.serviceWorker.ready;const check=()=>{const ch=new MessageChannel();ch.port1.onmessage=e=>{label.textContent=e.data?.ready?'Offline ready':'Downloading offline files…';label.classList.toggle('ready',!!e.data?.ready);};(navigator.serviceWorker.controller||reg.active)?.postMessage({type:'CHECK_OFFLINE'},[ch.port2]);};check();navigator.serviceWorker.addEventListener('controllerchange',check);}catch{label.textContent='Open online to prepare';}}
 prepareOffline();
