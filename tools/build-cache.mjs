@@ -14,6 +14,7 @@ const CORE = [
   './src/campaign-ui.js',
   './src/battle-view.js',
   './src/app.js',
+  './src/item-details.js',
   './src/engine.js',
   './src/map.js',
   './src/portraits.js',

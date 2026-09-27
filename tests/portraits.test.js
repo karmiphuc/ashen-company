@@ -1,13 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { ITEMS } from '../src/engine.js';
 import { itemImage, portraitHTML, portraitSVG } from '../src/portraits.js';
 
-const PERSON = { seed: 491, name: 'Mara Ash' };
+const PERSON = { seed: 8, name: 'Mara Ash' };
 const LAYERS = ['body', 'armor', 'head', 'hair', 'beard', 'helmet', 'shield', 'weapon'];
 
 function equipped(slot, visual) {
   return { [slot]: { id: `${slot}-${visual}`, visual } };
+}
+
+function layerSource(html, layer) {
+  return html.match(new RegExp(`data-layer="${layer}"[\\s\\S]*?src="([^"]+)"`))?.[1];
+}
+
+function appearance(html) {
+  return html.match(/data-appearance="(\d+)"/)?.[1];
 }
 
 test('portrait output is deterministic and preserves authored raster draw order', () => {
@@ -31,7 +41,7 @@ test('portrait output is deterministic and preserves authored raster draw order'
   assert.match(one, /data-layer="weapon"[^>]*left:63px;top:53px;--layer-rest:rotate\(-30deg\);--layer-origin:27px 42px;--weapon-rest:rotate\(-30deg\);--weapon-origin:27px 42px;transform:rotate\(-30deg\);transform-origin:27px 42px/);
 });
 
-test('v0.5 visuals use their own authored layers and aligned head anchors', () => {
+test('equipment visuals use their own authored layers and aligned head anchors', () => {
   const expected = [
     ['armor', 'gambeson', 'armor-gambeson.png'], ['armor', 'reinforcedmail', 'armor-reinforced-mail.png'],
     ['helmet', 'bascinet', 'helmet-bascinet.png'], ['weapon', 'mace', 'weapon-mace.png'],
@@ -43,7 +53,53 @@ test('v0.5 visuals use their own authored layers and aligned head anchors', () =
   }
   assert.match(portraitHTML(PERSON), /data-layer="body"[^>]*left:11px;top:50px/);
   assert.match(portraitHTML(PERSON, equipped('helmet', 'nasal')), /helmet-nasal\.png"[^>]*left:-20px;top:-55px/);
-  assert.match(portraitHTML(PERSON, equipped('helmet', 'bascinet')), /helmet-bascinet\.png"[^>]*left:-26px;top:-53px/);
+  const bascinet = portraitHTML(PERSON, equipped('helmet', 'bascinet'));
+  assert.match(bascinet, /bb-portrait-composition"[^>]*top:13px/);
+  assert.match(bascinet, /helmet-bascinet\.png"[^>]*left:17px;top:-13px/);
+  assert.match(bascinet, /data-layer="head"[^>]*clip-path:polygon\(9px 17px,49px 17px,49px 54px,10px 58px\)/);
+  assert.match(bascinet, /data-layer="beard"[^>]*clip-path:polygon\(9px 17px,49px 17px,49px 54px,10px 58px\)/);
+});
+
+test('six authored heads remain deterministic across equipment, scale, and battle-style display objects', () => {
+  const profiles = new Map();
+  for (let seed = 0; seed < 256; seed++) {
+    const html = portraitHTML({ seed, name: `Brother ${seed}` });
+    assert.match(html, /data-appearance="[0-5]"/);
+    assert.match(layerSource(html, 'head'), /^assets\/portraits\/head-.+\.png$/);
+    profiles.set(layerSource(html, 'head'), layerSource(html, 'body'));
+  }
+  assert.equal(profiles.size, 6);
+  assert.equal(profiles.get('assets/portraits/head-34.png'), 'assets/portraits/body-03.png');
+  for (const [head, body] of profiles) {
+    if (head.includes('head-african-')) assert.match(body, /assets\/portraits\/body-african-0[0-2]\.png/);
+  }
+
+  const person = { seed: 8831, name: 'Stable Brother' };
+  const bare = portraitHTML(person, {}, 54);
+  const equippedPortrait = portraitHTML(person, {
+    armor: { visual: 'plate' }, helmet: { visual: 'bascinet' }, weapon: { visual: 'sword' }, shield: { visual: 'round' },
+  }, 208);
+  assert.equal(appearance(bare), appearance(equippedPortrait));
+  assert.equal(layerSource(bare, 'head'), layerSource(equippedPortrait, 'head'));
+  assert.equal(layerSource(bare, 'body'), layerSource(equippedPortrait, 'body'));
+});
+
+test('seed 7391 starter company opens with three visibly distinct authored heads', () => {
+  const starters = [
+    { name: 'Mara Voss', seed: (7391 ^ 0x1a41) >>> 0 },
+    { name: 'Toren Hale', seed: (7391 ^ 0x2b52) >>> 0 },
+    { name: 'Bryn Calder', seed: (7391 ^ 0x3c63) >>> 0 },
+  ];
+  const heads = starters.map(person => layerSource(portraitHTML(person), 'head'));
+  assert.equal(new Set(heads).size, starters.length);
+});
+
+test('portrait provenance manifest hashes every packaged source raster', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../assets/portraits/legends-source.json', import.meta.url), 'utf8'));
+  for (const asset of manifest.assets) {
+    const bytes = readFileSync(new URL(`../assets/portraits/${asset.file}`, import.meta.url));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256, asset.file);
+  }
 });
 
 test('actual engine visuals select distinct authored body equipment layers', () => {

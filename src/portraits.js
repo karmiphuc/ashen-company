@@ -5,6 +5,15 @@ const PORTRAIT_ROOT = 'assets/portraits/';
 const ITEM_ROOT = 'assets/items/';
 const CANVAS = { width: 104, height: 142 };
 
+const APPEARANCES = [
+  { body: 'body-03.png', head: 'head-34.png', headLeft: 27 },
+  { body: 'body-african-00.png', head: 'head-african-01.png', headLeft: 25, hair: 'hair-black-22.png', beard: 'beard-black-01.png' },
+  { body: 'body-african-01.png', head: 'head-african-02.png', headLeft: 25, hair: 'hair-brown-24.png' },
+  { body: 'body-african-02.png', head: 'head-african-03.png', headLeft: 25, hair: 'hair-blonde-27.png' },
+  { body: 'body-african-00.png', head: 'head-african-04.png', headLeft: 25, hair: 'hair-red-29.png', beard: 'beard-red-18.png' },
+  { body: 'body-african-01.png', head: 'head-african-05.png', headLeft: 25, hair: 'hair-grey-33.png', beard: 'beard-grey-01.png' },
+];
+
 export const VISUALS = {
   armor: {
     padded: ['armor-padded.png', 5, 46],
@@ -20,7 +29,7 @@ export const VISUALS = {
     nasal: ['helmet-nasal.png', -20, -55],
     kettle: ['helmet-kettle.png', -23, -59],
     greathelm: ['helmet-greathelm.png', -20, -58],
-    bascinet: ['helmet-bascinet.png', -26, -53],
+    bascinet: ['helmet-bascinet.png', 17, -13],
   },
   weapon: {
     spear: ['weapon-spear.png', 87, 33, 'rotate(-38deg)', '4px 70px'],
@@ -103,28 +112,31 @@ function portraitSize(size) {
 /** Return a fixed-anchor HTML raster composition for one company member. */
 export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const portraitSeed = hash(`${person.seed ?? 0}|${person.name ?? ''}`);
+  const appearanceIndex = (((portraitSeed >>> 16) ^ portraitSeed) >>> 0) % APPEARANCES.length;
+  const appearance = APPEARANCES[appearanceIndex];
   const width = portraitSize(size);
   const height = Math.round(width * CANVAS.height / CANVAS.width);
   const scale = Number((width / CANVAS.width).toFixed(6));
-  const body = portraitSeed % 2 ? 'body-03.png' : 'body-04.png';
-  const hair = portraitSeed % 3 ? 'hair-black-21.png' : 'hair-brown-21.png';
-  const beard = portraitSeed % 3 === 0 ? 'beard-brown-01.png' : 'beard-black-01.png';
   const armor = PORTRAIT.armor[visual(equipment.armor)];
   const helmet = PORTRAIT.helmet[visual(equipment.helmet)];
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
   const closedHelmet = helmetVisual === 'greathelm';
+  const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
+  const compositionTop = helmetVisual === 'bascinet' ? 13 : 0;
 
-  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:hidden;vertical-align:middle;background:transparent">
+  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:hidden;vertical-align:middle;background:transparent">
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
-      ${bodyLayer(body, Boolean(armor))}
-      ${layer('armor', armor)}
-      <img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}head-34.png" alt="" draggable="false" style="position:absolute;left:27px;top:0;max-width:none;pointer-events:none">
-      ${coveredHead ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${hair}" alt="" draggable="false" style="position:absolute;left:25px;top:0;max-width:none;pointer-events:none">`}
-      ${closedHelmet ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;max-width:none;pointer-events:none">`}
-      ${layer('helmet', helmet)}
-      ${layer('shield', PORTRAIT.shield[visual(equipment.shield)])}
-      ${layer('weapon', PORTRAIT.weapon[visual(equipment.weapon)])}
+      <span class="bb-portrait-composition" style="display:block;position:absolute;left:0;top:${compositionTop}px;width:104px;height:142px">
+        ${bodyLayer(appearance.body, Boolean(armor))}
+        ${layer('armor', armor)}
+        <img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:0;${faceClip}max-width:none;pointer-events:none">
+        ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:25px;top:0;max-width:none;pointer-events:none">`}
+        ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none">`}
+        ${layer('helmet', helmet)}
+        ${layer('shield', PORTRAIT.shield[visual(equipment.shield)])}
+        ${layer('weapon', PORTRAIT.weapon[visual(equipment.weapon)])}
+      </span>
     </span>
   </span>`;
 }
