@@ -13,7 +13,8 @@ function approach(state, id = 'quarry-camp') {
   } else assert.equal(pursueBand(state, id).ok, true);
   for (let step = 0; step < 12 && state.destination; step++) tick(state, 12);
   assert.equal(state.destination, null);
-  assert.equal(startBattle(state, id).ok, true);
+  if (id === 'quarry-camp') assert.equal(startBattle(state, id).ok, true);
+  else assert.equal(state.battle?.campId, id, 'catching a patrol starts its battle');
 }
 
 function activate(battle, id) {

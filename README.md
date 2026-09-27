@@ -21,6 +21,10 @@ Clearing a camp has a 15%, 25%, or 40% chance of a famed item, depending on diff
 
 The campaign also includes local market stocks and prices, five trade goods, wages and daily provisions, foraging, autosave, and JSON save export/import. Choose 1× or 3× to advance world time while travelling or waiting; pause, menus, and backgrounding stop it. The world does not simulate while the app is closed.
 
+Use **Battle formation** to arrange six front-line and six rear-line slots. Tap an occupied slot, then another slot to move or swap the fighters. The formation is saved and determines their starting battle positions. Arrange it before pursuing a roaming band: catching a pursued band starts combat directly. Camps retain their encounter preview.
+
+Victories recover a mix of crowns, supplies, and enemy equipment. Salvaged body armor and helmets retain their remaining durability; destroyed or badly ruined pieces are not recovered. Inspect the condition of each individual loot item before collecting it, then repair worn armor in camp with tools.
+
 ## Install for offline play on iPad
 
 1. Open the game in Safari while online.

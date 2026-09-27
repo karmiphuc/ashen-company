@@ -11,6 +11,7 @@ function catchBand(state, id) {
   for (let step = 0; step < 12 && state.destination; step++) tick(state, 12);
   assert.equal(state.destination, null);
   assert.equal(state.pursuit, null);
+  assert.equal(state.battle?.campId, id, 'catching a patrol starts its battle');
   assert.ok(getRoamingBands(state).some(band => band.id === id));
 }
 
@@ -49,7 +50,6 @@ test('bands give renewable fights, shared experience, and leave hunts untouched'
   const campState = structuredClone(state.camps);
   for (const id of ['road-thieves', 'hungry-deserters']) {
     catchBand(state, id);
-    assert.equal(startBattle(state, id).ok, true);
     assert.equal(state.battle.encounterType, 'band');
     assert.equal(advanceBattle(state).ok, true);
     const restored = validateSave(JSON.parse(JSON.stringify(state)));
@@ -194,7 +194,8 @@ test('seeded starter fights survive and reach an outcome', () => {
       const state = createGame(seed);
       if (encounter === 'quarry-camp') approachCamp(state);
       else catchBand(state, encounter);
-      assert.equal(startBattle(state, encounter).ok, true);
+      if (encounter === 'quarry-camp') assert.equal(startBattle(state, encounter).ok, true);
+      else assert.equal(state.battle?.campId, encounter);
       assert.equal(resolveBattle(state).ok, true);
       wins += Number(state.battle.status === 'victory');
       fullRosters += Number(state.battle.units.filter(unit => unit.side === 'company').every(unit => unit.alive));

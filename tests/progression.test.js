@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createGame, pursueBand, tick, startBattle, resolveBattle, finishBattle,
+  createGame, pursueBand, tick, resolveBattle, finishBattle,
   getLevelUp, trainAttributes, trainAttribute, getCompanyStats, equipItem, validateSave,
 } from '../src/engine.js';
 
@@ -11,7 +11,7 @@ function approachBand(state, id) {
   assert.equal(pursueBand(state, id).ok, true);
   for (let step = 0; step < 12 && state.destination; step++) tick(state, 12);
   assert.equal(state.destination, null);
-  assert.equal(startBattle(state, id).ok, true);
+  assert.equal(state.battle?.campId, id, 'catching a patrol starts its battle');
 }
 
 function winBand(state, id = 'road-thieves') {

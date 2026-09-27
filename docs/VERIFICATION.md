@@ -1,6 +1,16 @@
-# Verification - version 0.9, 2026-09-27
+# Verification - version 0.10, 2026-09-27
 
-## v0.9 checks
+## v0.10 checks
+
+The full automated suite passes 96 tests, including seven new cases for mixed salvage with exact durability, saved formation deployment, automatic pursuit combat, and legacy save migration. Offline asset/cache consistency and `git diff --check` pass.
+
+At 1024x768, a six-member formation supported occupied-slot swaps and moving Toren from the front to the rear; reloading preserved both changes. A natural seed-60 camp victory yielded 115 crowns, 5 provisions, 3 tools, 5 ammunition, three weapons, and two Patched Coats at 7/20 and 6/20 durability. Inspecting the second coat showed 6/20; collecting the reward preserved worn condition in the stash and added the supplies. Nearby engagement entered a running battle directly, and pursuing a band from farther away automatically entered battle on contact without a confirmation dialog.
+
+With the local server stopped and direct HTTP requests failing, a fresh tab loaded the cached game. Moving Toren to the rear line offline persisted after another reload. No JavaScript errors occurred in the exercised flows. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+An engine balance check across 100 seeds per tactic won every starter-band and first-camp battle. The two starter bands kept full rosters across all tactics; the first camp retained complete rosters in 97 offense, 98 defense, and 93 focused-fire runs. Across 100 victories, the first camp averaged 2.75 recovered items and 128 crowns; road thieves averaged 1.42 items and 60 crowns. These are sampled outcomes, not guarantees.
+
+## Historical v0.9 checks
 
 The full automated suite passes 89 tests, including ten new cases for famed equipment and patrol variety. Offline asset/cache consistency and `git diff --check` pass. Checks cover malformed famed IDs, real camp drops, no reload/retreat reroll, legacy battle migration, item inspection, equipment, damaged armor, sell/buyback, combat saves, and stable bounded patrol rosters.
 

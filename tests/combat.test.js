@@ -110,6 +110,7 @@ test('casualties leave the roster, their gear is recovered on victory, and defea
 
   const doomed = createGame(4);
   doomed.party = [doomed.party[0]];
+  doomed.formation = doomed.formation.map(id => id === doomed.party[0].id ? id : null);
   doomed.party[0].hp = 1;
   const doomedSite = getCampSites(doomed)[0];
   approach(doomed, doomedSite);

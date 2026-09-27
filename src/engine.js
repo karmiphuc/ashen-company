@@ -217,6 +217,36 @@ function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function inBounds(x, y) { return Number.isFinite(x) && Number.isFinite(y) && x >= BOUNDS.minX && x <= BOUNDS.maxX && y >= BOUNDS.minY && y <= BOUNDS.maxY; }
 function clamped(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function personById(state, id) { return state.party.find(person => person.id === id); }
+const FRONT_FORMATION = [2, 3, 1, 4, 0, 5];
+const REAR_FORMATION = [8, 9, 7, 10, 6, 11];
+
+function seedFormation(party) {
+  const slots = Array(12).fill(null);
+  const ranged = party.filter(person => (getItem(person.equipment?.weapon)?.range ?? 1) > 2);
+  const melee = party.filter(person => !ranged.includes(person));
+  for (const person of [...melee, ...ranged]) {
+    const preferred = ranged.includes(person) ? [...REAR_FORMATION, ...FRONT_FORMATION] : [...FRONT_FORMATION, ...REAR_FORMATION];
+    slots[preferred.find(index => slots[index] === null)] = person.id;
+  }
+  return slots;
+}
+
+export function getFormation(state) {
+  return [...(state.formation ?? seedFormation(state.party))];
+}
+
+export function moveFormation(state, fromIndex, toIndex) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  if (!Number.isSafeInteger(fromIndex) || !Number.isSafeInteger(toIndex) || fromIndex < 0 || fromIndex >= 12 || toIndex < 0 || toIndex >= 12) return result(false, 'Choose two formation slots.');
+  const formation = getFormation(state);
+  if (!formation[fromIndex]) return result(false, 'Select a company member to move.');
+  [formation[fromIndex], formation[toIndex]] = [formation[toIndex], formation[fromIndex]];
+  state.formation = formation;
+  const message = 'Company formation updated.';
+  record(state, message);
+  return result(true, message);
+}
 function armorMaximum(itemId) { return getItem(itemId)?.armor ?? 0; }
 function itemCondition(itemId) { return ['armor', 'helmet'].includes(getItem(itemId)?.slot) ? armorMaximum(itemId) : null; }
 function normalizeMember(person) {
@@ -310,6 +340,7 @@ export function createGame(seed = Date.now()) {
     visited: ['oakwatch'],
   };
   state.party = state.party.map(normalizeMember);
+  state.formation = seedFormation(state.party);
   record(state, 'The Ashen Company gathers at Oakwatch. The road is yours.');
   return state;
 }
@@ -442,7 +473,7 @@ export function pursueBand(state, id) {
   if (distance(state.position, band) <= BAND_RADIUS) {
     state.destination = null;
     state.pursuit = null;
-    return result(true, `${band.name} is within striking distance.`);
+    return startBattle(state, id);
   }
   state.pursuit = id;
   state.destination = { x: band.x, y: band.y };
@@ -539,6 +570,7 @@ export function tick(state, hours) {
   if (blocked) return blocked;
   if (!Number.isFinite(hours) || hours <= 0 || hours > 72) return result(false, 'Time must advance by more than zero and at most 72 hours.');
   let remaining = hours;
+  let engagement = null;
   while (remaining > 1e-9) {
     const step = Math.min(remaining, 0.25);
     if (state.pursuit) {
@@ -561,21 +593,19 @@ export function tick(state, hours) {
       }
     }
     advanceClock(state, step);
-    let intercepted = false;
     if (state.pursuit) {
       const target = getRoamingBands(state).find(band => band.id === state.pursuit);
       if (!target) { state.pursuit = null; state.destination = null; }
       else if (distance(state.position, target) <= BAND_RADIUS) {
         state.destination = null;
         state.pursuit = null;
-        intercepted = true;
-        record(state, `${target.name} is within striking distance.`);
+        engagement = startBattle(state, target.id);
       } else state.destination = { x: target.x, y: target.y };
     }
     remaining -= step;
-    if (intercepted) break;
+    if (engagement) break;
   }
-  return result(true, state.destination ? 'The company is on the road.' : 'Time passes.');
+  return engagement ?? result(true, state.destination ? 'The company is on the road.' : 'Time passes.');
 }
 
 export function getContractOffers(state, townId) {
@@ -825,7 +855,11 @@ export function recruit(state) {
   const serial = state.recruitSerial++;
   const [name, background] = RECRUITS[(state.seed + serial) % RECRUITS.length];
   const person = normalizeMember({ id: `recruit-${serial + 1}`, name, background, seed: (state.seed ^ Math.imul(serial + 1, 2654435761)) >>> 0, hp: 100, morale: 70, equipment: { armor: null, helmet: null, weapon: null, shield: null } });
+  const formation = getFormation(state);
   state.party.push(person);
+  const vacancy = [...FRONT_FORMATION, ...REAR_FORMATION].find(index => formation[index] === null);
+  formation[vacancy] = person.id;
+  state.formation = formation;
   state.gold -= cost;
   const message = `${name} joins the Ashen Company for ${cost} crowns.`;
   record(state, message);
@@ -1019,15 +1053,12 @@ export function startBattle(state, encounterId) {
   if (state.destination || distance(state.position, camp) > (encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
   if (!state.party.length) return result(false, 'No company members can fight.');
   const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y));
-  const deployed = [...state.party].sort((a, b) => {
-    const bowA = getItem(a.equipment.weapon)?.range > 1 ? 1 : 0;
-    const bowB = getItem(b.equipment.weapon)?.range > 1 ? 1 : 0;
-    return bowA - bowB || getCompanyStats(b).bodyArmor + getCompanyStats(b).headArmor - getCompanyStats(a).bodyArmor - getCompanyStats(a).headArmor;
-  });
-  const company = deployed.map((person, index) => {
+  const company = getFormation(state).flatMap((personId, index) => {
+    const person = personById(state, personId);
+    if (!person) return [];
     const stats = getCompanyStats(person);
-    return {
-      id: person.id, name: person.name, side: 'company', q: 2 - Math.floor(index / 4), r: 1 + index % 4,
+    return [{
+      id: person.id, name: person.name, side: 'company', q: index < 6 ? 2 : 1, r: 1 + index % 6,
       hp: person.hp, maxHp: stats.maxHp, bodyArmor: stats.bodyArmor, headArmor: stats.headArmor,
       maxBodyArmor: stats.maxBodyArmor, maxHeadArmor: stats.maxHeadArmor,
       equipment: { ...person.equipment }, seed: person.seed, alive: person.hp > 0,
@@ -1035,7 +1066,7 @@ export function startBattle(state, encounterId) {
       meleeSkill: stats.meleeSkill, rangedSkill: stats.rangedSkill,
       meleeDefense: stats.meleeDefense, rangedDefense: stats.rangedDefense,
       maxFatigue: stats.maxFatigue, initiative: stats.initiative, resolve: stats.resolve,
-    };
+    }];
   });
   const enemies = camp.enemies.map((enemy, index) => {
     const gear = { armor: enemy.armor, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield };
@@ -1060,8 +1091,9 @@ export function startBattle(state, encounterId) {
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     status: 'active', round: 1, activeId: null, units: [...company, ...enemies],
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
+    lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
     log: [], lastEvent: null,
-    loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [] },
+    loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [], itemConditions: [] },
     casualties: [], xp: {},
   };
   battle.turnOrder = sortTurnOrder(battle);
@@ -1094,6 +1126,39 @@ function nextBattleTurn(battle) {
   }
 }
 
+function victoryLoot(battle, enemies) {
+  const tier = battle.difficulty ?? 0;
+  const band = battle.encounterType === 'band';
+  const seed = battle.lootSeed ?? hashSeed(battle.id);
+  const roll = (key, count) => hashSeed(`${seed}:${key}`) % count;
+  const items = [];
+  const itemConditions = [];
+  const addItem = (id, condition = itemCondition(id)) => {
+    if (id && items.length < 24) { items.push(id); itemConditions.push(condition); }
+  };
+  if (!band) addItem(battle.famedDrop);
+  for (const enemy of enemies) {
+    for (const slot of ['weapon', 'shield', 'armor', 'helmet']) {
+      const id = enemy.equipment[slot];
+      if (!id || items.length >= 24) continue;
+      const maximum = armorMaximum(id);
+      const condition = slot === 'armor' ? enemy.bodyArmor : slot === 'helmet' ? enemy.headArmor : null;
+      if (maximum && condition < Math.ceil(maximum * .25)) continue;
+      const chance = slot === 'weapon' ? 70 : slot === 'shield' ? 55 : 40;
+      if (roll(`${enemy.id}:${slot}`, 100) < chance) addItem(id, condition);
+    }
+  }
+  if (!items.length || items.length === 1 && items[0] === battle.famedDrop) addItem(enemies[0]?.equipment.weapon);
+  return {
+    gold: (band ? 20 + enemies.length * 17 + tier * 12 : 45 + enemies.length * 14 + tier * 25) + roll('gold', band ? 21 : 31),
+    food: (band ? 2 : 2 + tier) + roll('food', 3),
+    tools: (band ? 1 : 1 + tier) + roll('tools', 2),
+    medicine: band ? roll('medicine', 2) : Number(tier >= 2) + roll('medicine', 2),
+    ammo: (band ? 2 : 2 + tier) + roll('ammo', 3),
+    items, itemConditions,
+  };
+}
+
 function finishBattlePhase(battle) {
   const companyAlive = battle.units.some(unit => unit.side === 'company' && unit.alive);
   const enemiesAlive = battle.units.some(unit => unit.side === 'enemy' && unit.alive);
@@ -1102,24 +1167,8 @@ function finishBattlePhase(battle) {
   battle.activeId = null;
   battle.casualties = battle.units.filter(unit => unit.side === 'company' && !unit.alive).map(unit => unit.id);
   if (companyAlive) {
-    const band = battle.encounterType === 'band';
     const enemies = battle.units.filter(unit=>unit.side==='enemy');
-    const camp = { difficulty:battle.difficulty??CAMP_BY_ID.get(battle.campId)?.difficulty??0, enemies:enemies.map(unit=>({weapon:unit.equipment.weapon})) };
-    battle.loot = band ? {
-      gold: 28 + camp.enemies.length * 19,
-      food: 3,
-      tools: 2,
-      medicine: 1,
-      ammo: 3,
-      items: [camp.enemies[0].weapon],
-    } : {
-      gold: 55 + camp.difficulty * 45,
-      food: 2 + camp.difficulty,
-      tools: 1 + camp.difficulty,
-      medicine: camp.difficulty >= 2 ? 1 : 0,
-      ammo: 2 + camp.difficulty,
-      items: [...(battle.famedDrop ? [battle.famedDrop] : []), camp.enemies[0].weapon],
-    };
+    battle.loot = victoryLoot(battle, enemies);
     for (const unit of battle.units.filter(entry => entry.side === 'company' && entry.alive)) {
       battle.xp[unit.id] = (battle.xp[unit.id] ?? 0) + 30;
     }
@@ -1378,6 +1427,7 @@ export function finishBattle(state) {
   const battle = state.battle;
   if (!battle || battle.status === 'active') return result(false, 'Finish the fight before claiming its result.');
   const victory = battle.status === 'victory';
+  const formation = getFormation(state);
   const survivors = [];
   for (const person of state.party) {
     const unit = battle.units.find(entry => entry.id === person.id);
@@ -1408,15 +1458,18 @@ export function finishBattle(state) {
     survivors.push(person);
   }
   state.party = survivors;
+  const survivingIds = new Set(survivors.map(person => person.id));
+  state.formation = formation.map(id => survivingIds.has(id) ? id : null);
   if (victory) {
     const loot = battle.loot;
     state.gold += loot.gold;
     state.food += loot.food;
     for (const kind of ['tools', 'medicine', 'ammo']) state.supplies[kind] += loot[kind];
-    for (const itemId of loot.items) {
+    for (let index = 0; index < loot.items.length; index++) {
       if (state.inventory.length >= MAX_INVENTORY) break;
+      const itemId = loot.items[index];
       state.inventory.push(itemId);
-      state.inventoryCondition.push(itemCondition(itemId));
+      state.inventoryCondition.push(loot.itemConditions?.[index] ?? itemCondition(itemId));
     }
     if (battle.encounterType === 'band') {
       const previous = state.bands[battle.campId];
@@ -1474,6 +1527,8 @@ function validateBattle(input, party, worldState) {
   const engaged = input.engaged ?? false;
   assert(typeof engaged === 'boolean', 'battle engaged');
   assert(validCount(input.rng) && input.rng <= 0xffffffff, 'battle random state');
+  const lootSeed = input.lootSeed ?? hashSeed(input.id);
+  assert(validCount(lootSeed) && lootSeed <= 0xffffffff, 'battle loot seed');
   const field = validateBattleField(input.field);
   assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_COMPANY_SIZE + 6, 'battle units');
   const ids = new Set();
@@ -1547,14 +1602,19 @@ function validateBattle(input, party, worldState) {
   } : null;
   const loot = input.loot;
   assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= 24 && loot.items.every(id => getItem(id)), 'battle loot');
+  const itemConditions = loot.itemConditions ?? loot.items.map(itemCondition);
+  assert(Array.isArray(itemConditions) && itemConditions.length === loot.items.length && itemConditions.every((condition, index) => {
+    const maximum = itemCondition(loot.items[index]);
+    return maximum === null ? condition === null : validCount(condition) && condition <= maximum;
+  }), 'battle loot condition');
   for (const key of ['food', 'tools', 'medicine', 'ammo']) assert(validCount(loot[key]) && loot[key] <= 1000, `battle loot ${key}`);
   assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
     id: input.id, campId: input.campId, encounterType, encounterName, difficulty, campGeneration, famedDrop, tactic, focusTargetId, lastContactRound, engaged, status: input.status, round: input.round, activeId: input.activeId,
-    field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng,
+    field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng, lootSeed,
     log: [...input.log], lastEvent: normalizedEvent,
-    loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items] },
+    loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items], itemConditions: [...itemConditions] },
     casualties: [...input.casualties], xp: { ...input.xp },
   };
 }
@@ -1636,6 +1696,8 @@ export function validateSave(input) {
     assert(validCount(member.armorDurability.head) && member.armorDurability.head <= armorMaximum(person.equipment.helmet), 'head durability');
     assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
   }
+  const formation = input.formation === undefined ? seedFormation(input.party) : input.formation;
+  assert(Array.isArray(formation) && formation.length === 12 && formation.every(id => id === null || ids.has(id)) && formation.filter(id => id !== null).length === ids.size && new Set(formation.filter(id => id !== null)).size === ids.size, 'formation');
   const camps = input.camps === undefined ? {} : input.camps;
   assert(recordObject(camps) && Object.keys(camps).every(isCampId), 'camps');
   for (const [id,entry] of Object.entries(camps)) {
@@ -1690,7 +1752,7 @@ export function validateSave(input) {
   return {
     version: 1, seed: input.seed, day: input.day, hour: input.hour,
     gold: input.gold, food: input.food, renown: input.renown,
-    party,
+    party, formation: [...formation],
     inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
     marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...defaultMarketStock({ seed: input.seed, day: market.day }, TOWN_BY_ID.get(id)).equipment, ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])), buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: entry.condition })) }])),
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
