@@ -1,6 +1,9 @@
 // Pure game rules for the offline overworld. The UI owns rendering and real time.
 import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
+import { PERKS, PERK_BY_ID, hasPerk } from './perks.js';
+
+export { PERKS } from './perks.js';
 
 export const ITEMS = Object.freeze([
   { id: 'patched-coat', name: 'Patched Coat', slot: 'armor', visual: 'padded', price: 45, armor: 20, fatigue: 2, description: 'Worn cloth, still better than bare skin.' },
@@ -266,6 +269,7 @@ function normalizeMember(person) {
     accessories: [...(person.accessories ?? [null, null])],
     level,
     xp: person.xp ?? 0,
+    perks: [...(person.perks ?? [])],
     trainingPoints: pendingLevelUps.length,
     pendingLevelUps,
     attributes: { ...Object.fromEntries(ATTRIBUTES.map(key => [key, 0])), ...person.attributes },
@@ -281,22 +285,30 @@ export function getCompanyStats(person) {
   const level = person.level ?? 1;
   const background = person.background ?? '';
   const equipped = getEquipment(person);
-  const fatigue = Object.values(equipped).reduce((total, item) => total + (item?.fatigue ?? 0), 0);
+  const armorFatigue = (equipped.armor?.fatigue ?? 0) + (equipped.helmet?.fatigue ?? 0);
+  const otherFatigue = (equipped.weapon?.fatigue ?? 0) + (equipped.shield?.fatigue ?? 0);
+  const fatigue = otherFatigue + (hasPerk(person, 'brawny') ? Math.floor(armorFatigue * .7) : armorFatigue);
   const guard = background === 'Guard' || background === 'Caravan Guard';
   const scout = background === 'Scout' || background === 'Hunter' || background === 'Outrider';
   const captain = background === 'Captain';
-  const maxHp = 100 + (guard ? 5 : 0) + (attributes.maxHp ?? 0);
+  const baseMaxHp = 100 + (guard ? 5 : 0) + (attributes.maxHp ?? 0);
+  const maxHp = hasPerk(person, 'colossus') ? Math.round(baseMaxHp * 1.25) : baseMaxHp;
   const maxBodyArmor = armorMaximum(person.equipment?.armor);
   const maxHeadArmor = armorMaximum(person.equipment?.helmet);
+  const shieldDefense = equipped.shield?.defense ?? 0;
+  const effectiveShieldDefense = hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense;
+  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) - fatigue);
+  const dodgeDefense = hasPerk(person, 'dodge') ? Math.floor(initiative * .15) : 0;
+  const baseResolve = 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0);
   return {
     maxHp,
     meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0),
     rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0),
-    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (equipped.shield?.defense ?? 0),
-    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (equipped.shield?.defense ?? 0),
+    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
+    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
     maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) - fatigue),
-    initiative: Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) - fatigue),
-    resolve: 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0),
+    initiative,
+    resolve: hasPerk(person, 'fortified-mind') ? Math.ceil(baseResolve * 1.25) : baseResolve,
     level,
     xp: person.xp ?? 0,
     nextLevelXp: level * 50,
@@ -963,6 +975,37 @@ export function getLevelUp(person) {
   return next ? { level: next.level, rolls: { ...next.rolls } } : null;
 }
 
+export function getPerkPoints(person) {
+  const level = Number.isSafeInteger(person?.level) ? person.level : 1;
+  const learned = Array.isArray(person?.perks) ? person.perks.length : 0;
+  return Math.max(0, level - 1 - learned);
+}
+
+export function getPerkChoices(person) {
+  const level = Number.isSafeInteger(person?.level) ? person.level : 1;
+  const learned = new Set(Array.isArray(person?.perks) ? person.perks : []);
+  return PERKS.filter(perk => perk.minLevel <= level && !learned.has(perk.id));
+}
+
+export function learnPerk(state, personId, perkId) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  const person = personById(state, personId);
+  if (!person) return result(false, 'Unknown company member.');
+  const perk = PERK_BY_ID.get(perkId);
+  if (!perk) return result(false, 'Unknown perk.');
+  person.perks ??= [];
+  if (person.perks.includes(perkId)) return result(false, `${person.name} already knows ${perk.name}.`);
+  if (person.level < perk.minLevel) return result(false, `${perk.name} unlocks at level ${perk.minLevel}.`);
+  if (getPerkPoints(person) < 1) return result(false, 'This member has no perk point to spend.');
+  const oldMaxHp = getCompanyStats(person).maxHp;
+  person.perks.push(perkId);
+  if (perkId === 'colossus') person.hp += getCompanyStats(person).maxHp - oldMaxHp;
+  const message = `${person.name} learned ${perk.name}.`;
+  record(state, message);
+  return result(true, message);
+}
+
 export function trainAttributes(state, personId, keys) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
@@ -973,8 +1016,9 @@ export function trainAttributes(state, personId, keys) {
   if (!Array.isArray(keys) || keys.length !== 3 || new Set(keys).size !== 3 || !keys.every(key => ATTRIBUTES.includes(key))) {
     return result(false, 'Choose three different attributes.');
   }
+  const oldMaxHp = getCompanyStats(person).maxHp;
   for (const key of keys) person.attributes[key] += next.rolls[key];
-  if (keys.includes('maxHp')) person.hp += next.rolls.maxHp;
+  if (keys.includes('maxHp')) person.hp += getCompanyStats(person).maxHp - oldMaxHp;
   person.pendingLevelUps.shift();
   person.trainingPoints = person.pendingLevelUps.length;
   const message = `${person.name} trained three attributes at level ${next.level}.`;
@@ -1165,10 +1209,12 @@ export function startBattle(state, encounterId) {
       maxBodyArmor: stats.maxBodyArmor, maxHeadArmor: stats.maxHeadArmor,
       equipment: { ...person.equipment }, reserveEquipment: { ...person.reserveEquipment }, accessories: [...person.accessories],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
+      perks: [...person.perks], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0,
       seed: person.seed, alive: person.hp > 0,
       morale: person.morale, fatigue: 0, ap: 2, reload: 0,
       meleeSkill: stats.meleeSkill, rangedSkill: stats.rangedSkill,
-      meleeDefense: stats.meleeDefense, rangedDefense: stats.rangedDefense,
+      meleeDefense: stats.meleeDefense - (hasPerk(person, 'dodge') ? Math.floor(stats.initiative * .15) : 0),
+      rangedDefense: stats.rangedDefense - (hasPerk(person, 'dodge') ? Math.floor(stats.initiative * .15) : 0),
       maxFatigue: stats.maxFatigue, initiative: stats.initiative, resolve: stats.resolve,
     }];
   });
@@ -1182,6 +1228,7 @@ export function startBattle(state, encounterId) {
       maxBodyArmor: armorMaximum(gear.armor), maxHeadArmor: armorMaximum(gear.helmet),
       equipment: gear, reserveEquipment: { weapon: null, shield: null }, accessories: [null, null],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
+      perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0,
       seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
       morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2, reload: 0,
       meleeSkill: 30 + camp.difficulty * 6, rangedSkill: 28 + camp.difficulty * 6,
@@ -1288,11 +1335,16 @@ function openNeighbors(battle, point, occupied) {
   return hexNeighbors(battle.field, point).filter(next => !occupied.has(`${next.q},${next.r}`));
 }
 
-function pathCost(battle, origin, path) {
+function battleMovementCost(battle, actor, from, to) {
+  const cost = movementCost(battle.field, from, to);
+  return hasPerk(actor, 'pathfinder') ? Math.max(1, cost - 1) : cost;
+}
+
+function pathCost(battle, actor, origin, path) {
   let total = 0;
   let point = origin;
   for (const next of path) {
-    total += movementCost(battle.field, point, next);
+    total += battleMovementCost(battle, actor, point, next);
     point = next;
   }
   return total;
@@ -1306,12 +1358,17 @@ function battleGearFatigue(equipment) {
   return (getItem(equipment.weapon)?.fatigue ?? 0) + (getItem(equipment.shield)?.fatigue ?? 0);
 }
 
+function shieldDefenseFor(actor, shieldId) {
+  const defense = getItem(shieldId)?.defense ?? 0;
+  return hasPerk(actor, 'shield-expert') ? Math.ceil(defense * 1.25) : defense;
+}
+
 function changeBattleWeapon(actor, weaponId, shieldId) {
-  const oldDefense = getItem(actor.equipment.shield)?.defense ?? 0;
+  const oldDefense = shieldDefenseFor(actor, actor.equipment.shield);
   const oldFatigue = battleGearFatigue(actor.equipment);
   actor.equipment.weapon = weaponId;
   actor.equipment.shield = shieldId;
-  const defenseDelta = (getItem(shieldId)?.defense ?? 0) - oldDefense;
+  const defenseDelta = shieldDefenseFor(actor, shieldId) - oldDefense;
   const fatigueDelta = oldFatigue - battleGearFatigue(actor.equipment);
   actor.meleeDefense += defenseDelta;
   actor.rangedDefense += defenseDelta;
@@ -1384,7 +1441,7 @@ function chooseBattleWeapon(state, actor, enemies) {
   const outOfAmmo = state.supplies.ammo === 0;
   if (active?.ranged && (nearest <= 1 || outOfAmmo)) {
     if (active.throwing && reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
-    if (!outOfAmmo && archerRetreatOption(state.battle, actor, active.range)) return false;
+    if (!outOfAmmo && archerRetreatOption(state.battle, actor, effectiveWeaponRange(actor, active))) return false;
     const pocketIndex = actor.accessories.findIndex(id => getItem(id)?.pocketWeapon);
     if (pocketIndex >= 0) {
       actor.pocketStowedWeapon = actor.equipment.weapon;
@@ -1409,6 +1466,11 @@ function chooseBattleWeapon(state, actor, enemies) {
   return false;
 }
 
+function rangedTerrainModifier(battle, actor, from, target) {
+  return heightHitModifier(battle.field, from, target)
+    + (hasPerk(actor, 'bullseye') ? 0 : rangedCoverModifier(battle.field, from, target));
+}
+
 function pathToTarget(battle, actor, target, range, keepRangedSpace = false) {
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   const queue = [{ q: actor.q, r: actor.r, path: [], cost: 0 }];
@@ -1420,7 +1482,7 @@ function pathToTarget(battle, actor, target, range, keepRangedSpace = false) {
     if (point.cost > best.get(`${point.q},${point.r}`)) continue;
     if (goal && point.cost > goal.cost) break;
     if (hexDistance(point, target) <= range && (!keepRangedSpace || nearestEnemyDistance(battle, actor, point) >= 2)) {
-      const aim = heightHitModifier(battle.field, point, target) + (keepRangedSpace ? rangedCoverModifier(battle.field, point, target) : 0);
+      const aim = keepRangedSpace ? rangedTerrainModifier(battle, actor, point, target) : heightHitModifier(battle.field, point, target);
       const safety = tileAt(battle.field, point.q, point.r).terrain === 'trees' ? 5 : 0;
       const quality = aim + safety;
       if (!goal || quality > goal.quality) goal = { path: point.path, cost: point.cost, quality };
@@ -1429,7 +1491,7 @@ function pathToTarget(battle, actor, target, range, keepRangedSpace = false) {
     for (const next of openNeighbors(battle, point, occupied)) {
       if (keepRangedSpace && nearestEnemyDistance(battle, actor, next) < 2) continue;
       const key = `${next.q},${next.r}`;
-      const cost = point.cost + movementCost(battle.field, point, next);
+      const cost = point.cost + battleMovementCost(battle, actor, point, next);
       if (cost < (best.get(key) ?? Infinity)) {
         best.set(key, cost);
         queue.push({ ...next, path: [...point.path, next], cost });
@@ -1445,7 +1507,7 @@ function archerRetreatOption(battle, actor, range) {
   if (nearest > 1) return null;
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   return openNeighbors(battle, actor, occupied)
-    .map(point => ({ ...point, cost: movementCost(battle.field, actor, point), safety: Math.min(...enemies.map(unit => hexDistance(point, unit))) }))
+    .map(point => ({ ...point, cost: battleMovementCost(battle, actor, actor, point), safety: Math.min(...enemies.map(unit => hexDistance(point, unit))) }))
     .filter(point => point.safety > nearest && enemies.some(unit => hexDistance(point, unit) <= range))
     .sort((a, b) => b.safety - a.safety || a.cost - b.cost || a.q - b.q || a.r - b.r)[0];
 }
@@ -1461,15 +1523,31 @@ function stepArcherBack(battle, actor, range) {
 
 function betterRangedPosition(battle, actor, target, range) {
   if (hexDistance(actor, target) > range) return null;
-  const current = heightHitModifier(battle.field, actor, target) + rangedCoverModifier(battle.field, actor, target);
+  const current = rangedTerrainModifier(battle, actor, actor, target);
   if (current > -12) return null;
   const safety = nearestEnemyDistance(battle, actor, actor);
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   return openNeighbors(battle, actor, occupied)
     .filter(point => hexDistance(point, target) <= range && nearestEnemyDistance(battle, actor, point) >= Math.max(2, safety))
-    .map(point => ({ point, cost: movementCost(battle.field, actor, point), quality: heightHitModifier(battle.field, point, target) + rangedCoverModifier(battle.field, point, target) }))
+    .map(point => ({ point, cost: battleMovementCost(battle, actor, actor, point), quality: rangedTerrainModifier(battle, actor, point, target) }))
     .filter(option => option.quality >= current + 10)
     .sort((a, b) => b.quality - a.quality || a.cost - b.cost || a.point.q - b.point.q || a.point.r - b.point.r)[0]?.point ?? null;
+}
+
+function isBow(weapon) {
+  return weapon?.ranged === true && !weapon.throwing && weapon.visual?.includes('bow') && !weapon.visual.includes('crossbow');
+}
+
+function isCrossbow(weapon) {
+  return weapon?.ranged === true && !weapon.throwing && weapon.visual?.includes('crossbow');
+}
+
+function effectiveWeaponRange(actor, weapon) {
+  return (weapon?.range ?? 1) + (isBow(weapon) && hasPerk(actor, 'bow-mastery') ? 1 : 0);
+}
+
+function moraleDamage(unit, amount) {
+  return hasPerk(unit, 'fortified-mind') ? Math.ceil(amount * .8) : amount;
 }
 
 function attackTarget(state, actor, target, weapon) {
@@ -1477,41 +1555,66 @@ function attackTarget(state, actor, target, weapon) {
   const ranged = weapon.ranged === true;
   if (ranged && actor.side === 'company') state.supplies.ammo -= 1;
   const skill = ranged ? actor.rangedSkill : actor.meleeSkill;
-  const defense = (ranged ? target.rangedDefense : target.meleeDefense) + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
-  const terrainHit = heightHitModifier(battle.field, actor, target) + (ranged ? rangedCoverModifier(battle.field, actor, target) : 0);
-  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - (ranged && hexDistance(actor, target) === 1 ? 12 : 0), 12, 90);
-  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (weapon.fatigueCost ?? (ranged ? 9 : 11)));
+  const dodgeDefense = hasPerk(target, 'dodge') ? Math.floor(Math.max(0, target.initiative - target.fatigue * .2) * .15) : 0;
+  const anticipationDefense = ranged && hasPerk(target, 'anticipation')
+    ? Math.max(10, Math.floor(target.rangedDefense * .1 * hexDistance(actor, target)))
+    : 0;
+  const defense = (ranged ? target.rangedDefense : target.meleeDefense) + dodgeDefense + anticipationDefense + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
+  const terrainHit = ranged ? rangedTerrainModifier(battle, actor, actor, target) : heightHitModifier(battle.field, actor, target);
+  const adjacentAllies = !ranged && hasPerk(actor, 'backstabber')
+    ? battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id && hexDistance(unit, target) <= 1).length
+    : 0;
+  const adaptationBonus = hasPerk(actor, 'fast-adaptation') ? actor.adaptation * 10 : 0;
+  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit + adjacentAllies * 5 + adaptationBonus + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - (ranged && hexDistance(actor, target) === 1 ? 12 : 0), 12, 90);
+  const mastered = isBow(weapon) && hasPerk(actor, 'bow-mastery') || isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery');
+  const fatigueCost = weapon.fatigueCost ?? (ranged ? 9 : 11);
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (mastered ? Math.ceil(fatigueCost * .75) : fatigueCost));
   if (weapon.reloadTurns) actor.reload = weapon.reloadTurns;
   actor.ap = 0;
   if (actor.side === 'company' || !ranged && hexDistance(actor, target) <= 1) battle.lastContactRound = battle.round;
   if (!ranged && hexDistance(actor, target) <= 1) battle.engaged = true;
   if (battleRoll(battle) * 100 >= chance) {
+    if (hasPerk(actor, 'fast-adaptation')) actor.adaptation += 1;
     const message = `${actor.name} misses ${target.name}.`;
     battle.lastEvent = makeBattleEvent(actor, target, 'miss', message, weapon);
     battleLog(battle, message);
     return;
   }
+  actor.adaptation = 0;
   const baseDamage = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
-  const raw = Math.round(baseDamage * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
+  const damageMultiplier = (hasPerk(actor, 'executioner') && target.hp < target.maxHp ? 1.2 : 1)
+    * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1);
+  const raw = Math.round(baseDamage * damageMultiplier * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
   const head = battleRoll(battle) < .22;
   const part = head ? 'headArmor' : 'bodyArmor';
   const armorBefore = target[part];
   const armorDamage = Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1) * (head ? 1.1 : 1)));
   target[part] = Math.max(0, armorBefore - armorDamage);
+  const armorPiercing = Math.min(1, (weapon.armorPiercing ?? .30) + (isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery') ? .2 : 0));
   let hpDamage = armorBefore > 0
-    ? Math.max(1, Math.floor(raw * (weapon.armorPiercing ?? .30) - armorBefore * .025) + Math.max(0, Math.floor((armorDamage - armorBefore) * .25)))
+    ? Math.max(1, Math.floor(raw * armorPiercing - armorBefore * .025) + Math.max(0, Math.floor((armorDamage - armorBefore) * .25)))
     : raw;
-  if (head) hpDamage = Math.round(hpDamage * 1.25);
+  if (head && !hasPerk(target, 'steel-brow')) hpDamage = Math.round(hpDamage * 1.25);
   target.hp = Math.max(0, target.hp - hpDamage);
-  target.morale = Math.max(0, target.morale - 3);
+  target.morale = Math.max(0, target.morale - moraleDamage(target, 3 + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0)));
   const fallen = target.hp === 0;
+  const perkProcs = [];
   if (fallen) {
     target.alive = false;
     target.ap = 0;
-    for (const ally of battle.units.filter(unit => unit.side === target.side && unit.alive)) ally.morale = Math.max(0, ally.morale - 12);
+    for (const ally of battle.units.filter(unit => unit.side === target.side && unit.alive)) ally.morale = Math.max(0, ally.morale - moraleDamage(ally, 12));
     if (actor.side === 'company') battle.xp[actor.id] = (battle.xp[actor.id] ?? 0) + 20;
+    if (hasPerk(actor, 'killing-frenzy')) {
+      actor.frenzyUntilRound = battle.round + 2;
+      perkProcs.push('Killing Frenzy: +25% damage.');
+    }
+    if (hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round) {
+      actor.ap = 2;
+      actor.berserkRound = battle.round;
+      perkProcs.push('Berserk: +2 AP.');
+    }
   }
-  const message = `${actor.name} hits ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.`;
+  const message = `${actor.name} hits ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}`;
   battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), fallen });
   battleLog(battle, message);
 }
@@ -1529,7 +1632,10 @@ export function advanceBattle(state) {
     finishBattlePhase(battle);
     return result(true, 'The battle is over.');
   }
-  actor.fatigue = Math.max(0, actor.fatigue - 6);
+  if (actor.turnStartedRound !== battle.round) {
+    actor.fatigue = Math.max(0, actor.fatigue - 6);
+    actor.turnStartedRound = battle.round;
+  }
   if (useBattleAccessory(state, actor, enemies)) return result(true, battle.lastEvent.message);
   if (chooseBattleWeapon(state, actor, enemies)) return result(true, battle.lastEvent.message);
   const equippedWeapon = getItem(actor.equipment.weapon);
@@ -1543,7 +1649,9 @@ export function advanceBattle(state) {
     return result(true, message);
   }
   if (actor.fatigue >= actor.maxFatigue - 10) {
-    actor.fatigue = Math.max(0, actor.fatigue - 22);
+    actor.fatigue = hasPerk(actor, 'recover')
+      ? Math.max(0, actor.fatigue - Math.max(22, Math.ceil(actor.fatigue / 2)))
+      : Math.max(0, actor.fatigue - 22);
     actor.ap = 0;
     const message = `${actor.name} catches their breath.`;
     battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equippedWeapon);
@@ -1553,28 +1661,28 @@ export function advanceBattle(state) {
   }
   const bowWithoutAmmo = equippedWeapon?.ranged && actor.side === 'company' && state.supplies.ammo < 1;
   const weapon = bowWithoutAmmo ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equippedWeapon ?? { damageMin: 8, damageMax: 12, hitBonus: -10, armorDamage: .4, range: 1 };
-  const range = weapon.range ?? 1;
+  const range = effectiveWeaponRange(actor, weapon);
   const initialPosition = { q: actor.q, r: actor.r };
   const retreated = weapon.ranged && stepArcherBack(battle, actor, range);
   const defenseKey = weapon.ranged ? 'rangedDefense' : 'meleeDefense';
   const vulnerability = target => target.hp + (target.bodyArmor + target.headArmor) * .15 + target[defenseKey] * .3;
   const targets = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range, weapon.ranged === true) }))
     .filter(entry => entry.path !== null)
-    .sort((a, b) => pathCost(battle, actor, a.path) - pathCost(battle, actor, b.path)
+    .sort((a, b) => pathCost(battle, actor, actor, a.path) - pathCost(battle, actor, actor, b.path)
       || vulnerability(a.target) - vulnerability(b.target)
-        - (weapon.ranged ? heightHitModifier(battle.field, actor, a.target) + rangedCoverModifier(battle.field, actor, a.target)
-          - heightHitModifier(battle.field, actor, b.target) - rangedCoverModifier(battle.field, actor, b.target) : 0)
+        - (weapon.ranged ? rangedTerrainModifier(battle, actor, actor, a.target)
+          - rangedTerrainModifier(battle, actor, actor, b.target) : 0)
       || hexDistance(actor, a.target) - hexDistance(actor, b.target) || a.target.id.localeCompare(b.target.id));
   if (actor.side === 'company' && battle.focusTargetId && !enemies.some(enemy => enemy.id === battle.focusTargetId)) battle.focusTargetId = null;
   const companyTactic = actor.side === 'company' ? battle.tactic : 'offense';
   let choice = targets[0];
   if (companyTactic === 'focus') {
     const shared = targets.find(entry => entry.target.id === battle.focusTargetId);
-    choice = shared ?? [...targets].sort((a, b) => vulnerability(a.target) + pathCost(battle, actor, a.path) * 3 - vulnerability(b.target) - pathCost(battle, actor, b.path) * 3 || a.target.id.localeCompare(b.target.id))[0];
+    choice = shared ?? [...targets].sort((a, b) => vulnerability(a.target) + pathCost(battle, actor, actor, a.path) * 3 - vulnerability(b.target) - pathCost(battle, actor, actor, b.path) * 3 || a.target.id.localeCompare(b.target.id))[0];
     if (choice) battle.focusTargetId = choice.target.id;
   } else if (companyTactic === 'defense') {
     choice = targets.find(entry => entry.path.length === 0);
-    if (!choice && !(battle.engaged && targets[0] && pathCost(battle, actor, targets[0].path) <= 3) && battle.round - battle.lastContactRound < 4) {
+    if (!choice && !(battle.engaged && targets[0] && pathCost(battle, actor, actor, targets[0].path) <= 3) && battle.round - battle.lastContactRound < 4) {
       actor.ap = 0;
       actor.fatigue = Math.max(0, actor.fatigue - 12);
       const message = `${actor.name} holds the line.`;
@@ -1609,7 +1717,7 @@ export function advanceBattle(state) {
     let used = 0;
     let destination = actor;
     for (const next of path) {
-      const cost = movementCost(battle.field, destination, next);
+      const cost = battleMovementCost(battle, actor, destination, next);
       if (used + cost > 2) break;
       used += cost;
       destination = next;
@@ -1628,7 +1736,7 @@ export function advanceBattle(state) {
     battle.lastEvent.targetId = target.id;
     battleLog(battle, message);
   }
-  if (!finishBattlePhase(battle)) nextBattleTurn(battle);
+  if (!finishBattlePhase(battle) && actor.ap <= 0) nextBattleTurn(battle);
   return result(true, battle.lastEvent.message);
 }
 
@@ -1647,7 +1755,7 @@ export function retreatBattle(state) {
   state.food = Math.max(0, state.food - 2);
   for (const unit of battle.units.filter(entry => entry.side === 'company' && entry.alive)) {
     unit.hp = Math.max(1, unit.hp - 5);
-    unit.morale = Math.max(0, unit.morale - 12);
+    unit.morale = Math.max(0, unit.morale - moraleDamage(unit, 12));
   }
   battle.lastEvent = makeBattleEvent(null, null, 'retreat', 'The company retreats, losing two provisions and taking wounds.');
   battleLog(battle, battle.lastEvent.message);
@@ -1684,7 +1792,8 @@ export function finishBattle(state) {
     person.morale = unit.morale;
     person.accessories = carriedAccessories;
     person.armorDurability = { body: unit.bodyArmor, head: unit.headArmor };
-    person.xp += battle.xp[person.id] ?? 0;
+    const earnedXp = battle.xp[person.id] ?? 0;
+    person.xp += hasPerk(person, 'student') ? Math.round(earnedXp * 1.2) : earnedXp;
     while (person.xp >= person.level * 50 && person.level < 20) {
       person.xp -= person.level * 50;
       person.level += 1;
@@ -1789,6 +1898,18 @@ function validateBattle(input, party, worldState) {
     assert(!getItem(unit.equipment.weapon)?.twoHanded || !unit.equipment.shield, 'battle two handed weapon');
     const reserveEquipment = unit.reserveEquipment ?? { weapon: null, shield: null };
     const accessories = unit.accessories ?? [null, null];
+    const partyMember = unit.side === 'company' ? party.find(person => person.id === unit.id) : null;
+    const perks = unit.perks ?? partyMember?.perks ?? [];
+    assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && PERK_BY_ID.has(id)) && new Set(perks).size === perks.length, 'battle perks');
+    assert(unit.side === 'enemy' ? perks.length === 0 : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
+    const adaptation = unit.adaptation ?? 0;
+    const berserkRound = unit.berserkRound ?? 0;
+    const frenzyUntilRound = unit.frenzyUntilRound ?? 0;
+    const turnStartedRound = unit.turnStartedRound ?? 0;
+    assert(validCount(adaptation) && adaptation <= 1000, 'battle adaptation');
+    assert(validCount(berserkRound) && berserkRound <= input.round, 'battle berserk round');
+    assert(validCount(frenzyUntilRound) && frenzyUntilRound <= input.round + 2, 'battle frenzy round');
+    assert(validCount(turnStartedRound) && turnStartedRound <= input.round, 'battle turn started round');
     assert(recordObject(reserveEquipment) && (reserveEquipment.weapon === null || getItem(reserveEquipment.weapon)?.slot === 'weapon') && (reserveEquipment.shield === null || getItem(reserveEquipment.shield)?.slot === 'shield') && (!getItem(reserveEquipment.weapon)?.twoHanded || reserveEquipment.shield === null), 'battle reserve equipment');
     assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'battle accessories');
     const pocketDrawnFrom = unit.pocketDrawnFrom ?? null;
@@ -1811,6 +1932,7 @@ function validateBattle(input, party, worldState) {
       reserveEquipment: { weapon: reserveEquipment.weapon, shield: reserveEquipment.shield }, accessories: [...accessories],
       pocketDrawnFrom, pocketStowedWeapon, pocketStowedReload: unit.pocketStowedReload ?? 0,
       pocketDrawnRound: unit.pocketDrawnRound ?? 0, reserveReload: unit.reserveReload ?? 0, meleePhase: unit.meleePhase ?? false,
+      perks: [...perks], adaptation, berserkRound, frenzyUntilRound, turnStartedRound,
       seed: unit.seed, alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap, reload: unit.reload ?? 0,
       meleeSkill: unit.meleeSkill, rangedSkill: unit.rangedSkill,
       meleeDefense: unit.meleeDefense, rangedDefense: unit.rangedDefense,
@@ -1937,6 +2059,8 @@ export function validateSave(input) {
     assert(person.level === undefined || Number.isSafeInteger(person.level) && person.level >= 1 && person.level <= 20, 'person level');
     assert(person.trainingPoints === undefined || validCount(person.trainingPoints) && person.trainingPoints <= 20, 'person training points');
     const earnedLevel = person.level ?? 1;
+    const perks = person.perks ?? [];
+    assert(Array.isArray(perks) && perks.length <= earnedLevel - 1 && perks.every(id => typeof id === 'string' && PERK_BY_ID.has(id) && PERK_BY_ID.get(id).minLevel <= earnedLevel) && new Set(perks).size === perks.length, 'person perks');
     if (person.pendingLevelUps === undefined) {
       assert((person.trainingPoints ?? 0) <= earnedLevel - 1, 'legacy training points');
     } else {
@@ -2007,6 +2131,7 @@ export function validateSave(input) {
     reserveEquipment: { weapon: person.reserveEquipment?.weapon ?? null, shield: person.reserveEquipment?.shield ?? null },
     accessories: [...(person.accessories ?? [null, null])],
     level: person.level, xp: person.xp, trainingPoints: person.trainingPoints,
+    perks: [...(person.perks ?? [])],
     pendingLevelUps: person.pendingLevelUps,
     attributes: person.attributes ? { ...person.attributes } : undefined,
     armorDurability: person.armorDurability ? { body: person.armorDurability.body, head: person.armorDurability.head } : undefined,

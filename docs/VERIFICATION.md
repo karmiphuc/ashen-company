@@ -1,6 +1,14 @@
-# Verification - version 0.12, 2026-09-27
+# Verification - version 0.13, 2026-09-27
 
-## v0.12 checks
+## v0.13 checks
+
+The full automated suite passes 141 tests. Perk coverage includes point budgets and level gates, duplicate/unknown/overspent rejection, legacy migration, stat rounding and wound-deficit preservation, terrain movement, cover and hit modifiers, every packaged bow/crossbow variant and famed copies, damage/morale/recovery/XP effects, and save/reload during a Berserk bonus action. A second kill cannot trigger Berserk again in the same round. All 19 perk images match their credited source hashes and are included with the perk module in the offline cache. Six historical fixtures retain equipment, purse, inventory and battle positions after migration.
+
+At 1024x768, a level-8 legacy fixture received seven perk points independently of its pending stat training. Colossus spent one point and raised maximum/current health from 100 to 125. Training a rolled +4 health then showed and applied 130/130 health. Completing three attribute choices opened the perk chooser. Learning Berserk and reloading preserved both learned perks and five remaining points. A level-1 fighter could inspect Berserk but could not learn it. Perk descriptions, learned state, icons and the fixed action footer were inspected in the browser.
+
+With the local server stopped and a direct HTTP request failing, a fresh browser tab restored the company. Learning Bullseye offline and reloading preserved it and four remaining points. In a staged offline battle, a kill visibly logged Killing Frenzy (+25% damage) and Berserk (+2 AP), leaving the captain active with 2 AP and 11 fatigue. Reloading preserved that exact state; the immediate bonus attack then spent the AP and raised fatigue to 22 without another recovery. Resolving the battle produced victory in four rounds with all three members alive. No JavaScript errors occurred in the offline tab. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+## Historical v0.12 checks
 
 The full automated suite passes 131 tests. New checks cover bulk purchase stock, affordability and storage caps, distinct famed armor conditions, invalid purchase atomicity, saved town/camp arrival actions, legacy save defaults, and double-tap timing, movement, cancellation and target matching. Generated offline cache consistency and `git diff --check` pass.
 
@@ -88,4 +96,4 @@ Earlier releases passed their recorded automated and browser checks for battle t
 
 ## Current limits
 
-Combat remains a simplified automatic simulation. Faction armies, perks, and a procedural campaign are not implemented. Overworld travel has no pathfinding, and wounds are represented by lost HP rather than Battle Brothers' full injury system. Physical iPad Safari installation, airplane-mode launch, and save retention have not been tested.
+Combat remains a simplified automatic simulation. The 19 perks use the exact effects described in the chooser; full class-specific trees, faction armies, and a procedural campaign are not implemented. Overworld travel has no pathfinding, and wounds are represented by lost HP rather than Battle Brothers' full injury system. Physical iPad Safari installation, airplane-mode launch, and save retention have not been tested.
