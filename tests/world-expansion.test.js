@@ -60,15 +60,15 @@ test('expanded map bounds contain all 16 reachable towns and have market rows', 
   assert.deepEqual(validateSave(edgeState), edgeState);
 });
 
-test('eight roaming bands preserve four nearby light patrols and add four stronger bands', () => {
+test('ten roaming bands preserve four nearby light patrols and cover the new trade roads', () => {
   const bands = getRoamingBands(createGame(814));
-  assert.equal(bands.length, 8);
+  assert.equal(bands.length, 10);
   const legacyIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
   const legacy = bands.filter(band => legacyIds.includes(band.id));
   const frontier = bands.filter(band => !legacyIds.includes(band.id));
   assert.equal(legacy.length, 4);
   assert.ok(legacy.every(band => band.difficulty === 0 && band.enemies.length <= 2));
-  assert.equal(frontier.length, 4);
+  assert.equal(frontier.length, 6);
   assert.ok(frontier.every(band => band.difficulty >= 1 && band.enemies.length >= 2));
   for (const band of bands) {
     assert.ok(band.x >= WORLD_BOUNDS.minX && band.x <= WORLD_BOUNDS.maxX, `${band.id} x is in bounds`);

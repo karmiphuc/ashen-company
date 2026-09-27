@@ -1,0 +1,73 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  SETTLEMENTS, createGame, finishBattle, getCaravans, getRoamingBands,
+  pursueBand, resolveBattle, tick, validateSave,
+} from '../src/engine.js';
+import { routeSegmentDistance } from '../src/caravans.js';
+
+const threatenedRoutes = [
+  ['ironford', 1, 10, 'barrowfield', 'river-raiders'],
+  ['redmere', 2, 8, 'ironford', 'river-raiders'],
+  ['blackfen', 6, 2, 'wheatmere', 'fen-reavers'],
+  ['highpass', 7, 2, 'greyhaven', 'forest-cutthroats'],
+  ['oakwatch', 8, 4, 'greyhaven', 'road-thieves'],
+  ['dunridge', 8, 2, 'pinecross', 'pinewood-poachers'],
+  ['eastmere', 13, 8, 'stonebridge', 'east-road-reavers'],
+  ['pinecross', 17, 2, 'thornwall', 'pinewood-poachers'],
+  ['wheatmere', 17, 8, 'blackfen', 'fen-reavers'],
+  ['thornwall', 21, 8, 'ironford', 'forest-cutthroats'],
+  ['barrowfield', 23, 6, 'ironford', 'river-raiders'],
+  ['southwatch', 28, 4, 'saltwick', 'saltmarsh-waylayers'],
+  ['saltwick', 33, 10, 'oakwatch', 'hungry-deserters'],
+  ['stonebridge', 42, 2, 'pinecross', 'pinewood-poachers'],
+  ['greyhaven', 43, 12, 'highpass', 'forest-cutthroats'],
+  ['farhold', 57, 12, 'stonebridge', 'east-road-reavers'],
+];
+
+function passHours(state, hours) {
+  while (hours > 0) {
+    const step = Math.min(hours, 72);
+    assert.equal(tick(state, step).ok, true);
+    hours -= step;
+  }
+}
+
+test('segment distance handles crossing, parallel, collinear disjoint, and point patrols', () => {
+  const a = { x: 0, y: 0 };
+  const b = { x: 10, y: 0 };
+  assert.equal(routeSegmentDistance(a, b, { x: 5, y: -5 }, { x: 5, y: 5 }), 0);
+  assert.equal(routeSegmentDistance(a, b, { x: 0, y: 3 }, { x: 10, y: 3 }), 3);
+  assert.equal(routeSegmentDistance(a, b, { x: 20, y: 0 }, { x: 30, y: 0 }), 10);
+  assert.equal(routeSegmentDistance(a, b, { x: 5, y: 5 }, { x: 5, y: 5 }), 5);
+});
+
+test('every settlement shipment route can be threatened by a nearby persistent patrol', () => {
+  assert.deepEqual(new Set(threatenedRoutes.map(row => row[0])), new Set(SETTLEMENTS.map(town => town.id)));
+  for (const [townId, seed, day, originId, attackerId] of threatenedRoutes) {
+    const state = createGame(seed);
+    passHours(state, (day - 1) * 24);
+    const wagon = getCaravans(state).find(row => row.destinationId === townId && row.status === 'en-route');
+    assert.equal(wagon?.originId, originId, `${townId} uses its intended road`);
+    assert.equal(wagon?.attackerId, attackerId, `${townId} has a band able to raid its road`);
+    assert.ok(getRoamingBands(state).some(band => band.id === attackerId), `${attackerId} is a visible patrol`);
+  }
+});
+
+test('clearing the new southern road before shipment launch prevents replacement attackers', () => {
+  const state = createGame(28);
+  passHours(state, 48);
+  const band = getRoamingBands(state).find(row => row.id === 'saltmarsh-waylayers');
+  state.position = { x: band.x, y: band.y };
+  assert.equal(pursueBand(state, band.id).ok, true);
+  assert.equal(resolveBattle(state).ok, true);
+  assert.equal(state.battle.status, 'victory');
+  assert.equal(finishBattle(state).ok, true);
+  passHours(state, 24);
+  const wagon = getCaravans(state).find(row => row.destinationId === 'southwatch');
+  assert.equal(wagon?.attackerId, null);
+  assert.equal(state.shipments.southwatch.attackerId, null);
+  passHours(state, wagon.etaHours);
+  assert.equal(getCaravans(state).find(row => row.id === wagon.id)?.status, 'delivered');
+  assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
+});

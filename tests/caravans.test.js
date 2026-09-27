@@ -57,21 +57,21 @@ function ordinaryRows(market) {
   return market.equipment.filter(row => !row.famed && !['bandages', 'net', 'antidote'].includes(row.itemId));
 }
 
-test('a scheduled armorer wagon stays en route until its 30-hour journey physically delivers finite stock', () => {
+test('a scheduled armorer wagon stays en route until its 60-hour journey physically delivers finite stock', () => {
   const state = createGame(16);
   atTown(state, 'eastmere');
   const before = getMarket(state);
   const snapshot = structuredClone(state);
   assert.equal(getTownEvent(state, 'eastmere')?.type, 'armorer-shipment-en-route');
-  assert.equal(getCaravans(state).find(row => row.id === 'shipment:eastmere:1')?.etaHours, 22);
+  assert.equal(getCaravans(state).find(row => row.id === 'shipment:eastmere:1')?.etaHours, 52);
   assert.deepEqual(state, snapshot, 'market and caravan getters are read-only before arrival');
 
-  assert.equal(tick(state, 22).ok, true);
+  assert.equal(tick(state, 52).ok, true);
   const after = getMarket(state);
   const caravan = getCaravans(state).find(row => row.id === 'shipment:eastmere:1');
   assert.deepEqual(
     { day: state.day, hour: state.hour, status: caravan?.status, etaHours: caravan?.etaHours, resolvedHour: caravan?.resolvedHour },
-    { day: 2, hour: 6, status: 'delivered', etaHours: 0, resolvedHour: 30 },
+    { day: 3, hour: 12, status: 'delivered', etaHours: 0, resolvedHour: 60 },
   );
   assert.equal(getTownEvent(state, 'eastmere')?.type, 'armorer-shipment');
   const beforeRows = Object.fromEntries(ordinaryRows(before).map(row => [row.itemId, row]));
@@ -99,10 +99,10 @@ test('raids warn for seven hours, victory rescues the wagon, and the same defeat
   assert.equal(rescued.attackerId, null);
   assert.equal(state.shipments.ironford.attackHour, null);
 
-  assert.equal(tick(state, 14).ok, true);
+  assert.equal(tick(state, 44).ok, true);
   const delivered = getCaravans(state).find(row => row.id === 'shipment:ironford:1');
   assert.equal(delivered.status, 'delivered');
-  assert.equal(delivered.resolvedHour, 30);
+  assert.equal(delivered.resolvedHour, 60);
   assert.equal(state.log.filter(entry => /turn toward the armorer wagon/.test(entry)).length, 1,
     'the original warning is recorded once and does not respawn after the victory');
 });
@@ -115,7 +115,7 @@ test('clearing the raiders before their attack window prevents the warning and p
   assert.equal(pursueBand(state, band.id).ok, true);
   assert.equal(resolveBattle(state).ok, true);
   assert.equal(finishBattle(state).ok, true);
-  assert.equal(tick(state, 15).ok, true);
+  assert.equal(tick(state, 53).ok, true);
   const caravan = getCaravans(state).find(row => row.id === 'shipment:ironford:1');
   assert.equal(caravan.status, 'delivered');
   assert.ok(!state.log.some(entry => /turn toward the armorer wagon/.test(entry)));
@@ -209,7 +209,7 @@ test('following a wagon survives camp and forage but ends cleanly when the wagon
   assert.equal(camp(state).ok, true);
   assert.equal(forage(state).ok, true);
   assert.deepEqual(state.destinationAction, { type: 'caravan', id });
-  assert.equal(tick(state, 11).ok, true);
+  assert.equal(tick(state, getCaravans(state).find(row => row.id === id).etaHours).ok, true);
   assert.equal(getCaravans(state).find(row => row.id === id)?.status, 'delivered');
   assert.equal(state.destinationAction, null);
   assert.equal(state.destination, null);
@@ -240,6 +240,8 @@ test('caravan getters and saved shipment records survive reload while legacy and
     save => { save.shipments.ironford.attackHour = Infinity; },
     save => { save.shipments.ironford.status = 'teleported'; },
     save => { save.shipments.ironford.attackerSpawnCycle = 1000001; },
+    save => { save.shipments.ironford.travelHours = 30; },
+    save => { save.shipments.ironford.travelStartHour = -31; },
     save => { save.shipments.ironford.extra = true; },
   ];
   for (const change of variants) {
@@ -247,4 +249,54 @@ test('caravan getters and saved shipment records survive reload while legacy and
     change(corrupted);
     assert.throws(() => validateSave(corrupted), /Invalid save/);
   }
+});
+
+test('old active wagons keep their position while remaining travel doubles; old outcomes remain final', () => {
+  const nearArrival = createGame(16);
+  assert.equal(tick(nearArrival, 21).ok, true);
+  delete nearArrival.shipments.eastmere.travelHours;
+  delete nearArrival.shipments.eastmere.travelStartHour;
+  const migrated = validateSave(nearArrival);
+  const wagon = getCaravans(migrated).find(row => row.id === 'shipment:eastmere:1');
+  const origin = town('stonebridge');
+  const destination = town('eastmere');
+  assert.equal(wagon.x, origin.x + (destination.x - origin.x) * 29 / 30);
+  assert.equal(wagon.y, origin.y + (destination.y - origin.y) * 29 / 30);
+  assert.equal(wagon.etaHours, 2);
+  assert.deepEqual(validateSave(JSON.parse(JSON.stringify(migrated))), migrated);
+  assert.equal(tick(migrated, 2).ok, true);
+  assert.equal(getCaravans(migrated).find(row => row.id === wagon.id)?.status, 'delivered');
+
+  const threatened = ironfordAttack();
+  delete threatened.shipments.ironford.travelHours;
+  delete threatened.shipments.ironford.travelStartHour;
+  const resumed = validateSave(threatened);
+  const warning = getCaravans(resumed).find(row => row.id === 'shipment:ironford:1');
+  assert.equal(warning.etaHours, 28);
+  assert.equal(warning.attackHoursRemaining, 7);
+  assert.deepEqual(validateSave(JSON.parse(JSON.stringify(resumed))), resumed);
+
+  const fighting = ironfordAttack();
+  const raider = getRoamingBands(fighting).find(row => row.id === 'river-raiders');
+  fighting.position = { x: raider.x, y: raider.y };
+  assert.equal(pursueBand(fighting, raider.id).ok, true);
+  delete fighting.shipments.ironford.travelHours;
+  delete fighting.shipments.ironford.travelStartHour;
+  assert.equal(validateSave(fighting).battle?.status, 'active', 'an old save can resume its caravan defense battle');
+
+  const legacyLost = loseIronfordShipment();
+  delete legacyLost.shipments.ironford.travelHours;
+  delete legacyLost.shipments.ironford.travelStartHour;
+  const settled = validateSave(legacyLost);
+  assert.deepEqual([settled.shipments.ironford.travelHours, settled.shipments.ironford.travelStartHour], [30, 0]);
+  assert.equal(getCaravans(settled).find(row => row.id === 'shipment:ironford:1')?.status, 'lost');
+
+  const legacyDelivered = createGame(16);
+  assert.equal(tick(legacyDelivered, 22).ok, true);
+  Object.assign(legacyDelivered.shipments.eastmere, { status: 'delivered', resolvedHour: 30 });
+  delete legacyDelivered.shipments.eastmere.travelHours;
+  delete legacyDelivered.shipments.eastmere.travelStartHour;
+  const arrived = validateSave(legacyDelivered);
+  assert.deepEqual([arrived.shipments.eastmere.travelHours, arrived.shipments.eastmere.travelStartHour], [30, 0]);
+  assert.equal(getCaravans(arrived).find(row => row.id === 'shipment:eastmere:1')?.status, 'delivered');
 });

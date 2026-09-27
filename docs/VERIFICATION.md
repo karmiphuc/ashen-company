@@ -1,6 +1,14 @@
-# Verification - version 0.17, 2026-09-27
+# Verification - version 0.18, 2026-09-27
 
-## v0.17 checks
+## v0.18 checks
+
+The full automated suite passes 172 tests. Coverage includes 60-hour wagon journeys at half the previous speed, active legacy-save migration without moving the wagon or extending its raid warning, resolved legacy outcomes, reload idempotence, patrol-route geometry, all 16 settlement shipment routes, and pre-emptive clearing without replacement attackers. Delivery discounts remain available for at least 48 hours after arrival, with equipment granted only once across reloads and weekly stock rotation. Six historical save fixtures retain equipment, purse, inventory, and battle positions. Offline cache consistency and diff checks pass.
+
+At 1024x768, importing the actual v0.16 Ironford raid fixture changed the remaining journey from 14 to 28 hours, preserved its position, and retained the seven-hour River Raiders warning. The new Saltmarsh Waylayers appeared in the destination list as a normal two-brigand patrol. Pursuing them entered a normal battle at day 2, 01:00.
+
+With the server stopped and direct HTTP unavailable, a fresh tab restored that active battle. Resolving it produced victory after five rounds with all three companions alive. Collecting loot increased crowns from 885 to 966, provisions from 27 to 29, tools from 8 to 9, medicine from 5 to 6, and ammunition from 16 to 19. Another offline reload retained these resources and the defeated patrol remained absent. No JavaScript errors occurred. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+## Historical v0.17 checks
 
 The full automated suite passes 167 tests. Four service tests cover pure quotes, exact individual and company bills, per-brother repair rounding, famed armor limits, equipped-only repairs, invalid/unavailable/fully restored/insufficient-funds rejection without mutation, shortage-independent pricing, and save reload. Six historical save fixtures retain equipment, purse, inventory, and battle positions. Cache consistency, syntax, and diff checks pass.
 

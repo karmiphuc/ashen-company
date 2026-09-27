@@ -23,17 +23,17 @@ function approachCamp(state) {
   return site;
 }
 
-test('eight visible patrols move with time and can be intercepted', () => {
+test('ten visible patrols move with time and can be intercepted', () => {
   const state = createGame(1);
   const first = getRoamingBands(state);
-  assert.equal(first.length, 8);
+  assert.equal(first.length, 10);
   const originalIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
   const original = first.filter(band => originalIds.includes(band.id));
   const frontier = first.filter(band => !originalIds.includes(band.id));
   assert.equal(original.length, 4);
   assert.equal(original.filter(band => Math.hypot(band.x - 350, band.y - 460) < 140).length, 2);
   assert.ok(original.every(band => band.kind === 'band' && band.difficulty === 0 && band.enemies.length <= 2));
-  assert.equal(frontier.length, 4);
+  assert.equal(frontier.length, 6);
   assert.ok(frontier.every(band => band.kind === 'band' && band.difficulty >= 1 && band.enemies.length >= 2));
   assert.equal(getEncounterSites(state).length, getCampSites(state).length + first.length);
   tick(state, 1);

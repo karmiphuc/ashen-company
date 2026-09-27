@@ -12,12 +12,12 @@ const roster = band => ({
 
 test('patrol strength and enemy roster vary by seed but stay bounded and preserve easy nearby bands', () => {
   const easyIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
-  const frontierIds = ['pinewood-poachers', 'southern-deserters', 'fen-reavers', 'frontier-veterans'];
+  const frontierIds = ['pinewood-poachers', 'east-road-reavers', 'saltmarsh-waylayers', 'southern-deserters', 'fen-reavers', 'frontier-veterans'];
   const strengthSamples = new Set();
 
   for (let seed = 1; seed <= 64; seed++) {
     const bands = getRoamingBands(createGame(seed));
-    assert.equal(bands.length, 8);
+    assert.equal(bands.length, 10);
     for (const id of easyIds) {
       const band = bands.find(entry => entry.id === id);
       assert.equal(band.difficulty, 0);

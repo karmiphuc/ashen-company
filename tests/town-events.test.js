@@ -211,7 +211,7 @@ test('a city shipment stays ungranted across reload until its physical arrival',
   assert.deepEqual(equipmentCounts(getMarket(restored)), projection,
     'an explicit null marker still permits the upcoming shipment after reload');
   assert.equal(getTownEvent(restored, 'eastmere')?.type, 'armorer-shipment-en-route');
-  assert.equal(tick(restored, 22).ok, true);
+  assert.equal(tick(restored, 52).ok, true);
   const delivered = getTownEvent(restored, 'eastmere');
   assert.equal(delivered?.type, 'armorer-shipment');
   assert.ok(Object.entries(equipmentCounts(getMarket(restored))).some(([id, count]) => count > projection[id]),
@@ -219,6 +219,34 @@ test('a city shipment stays ungranted across reload until its physical arrival',
   assert.equal(buyFood(restored, 1).ok, true);
   assert.equal(restored.marketStock.eastmere.appliedEventId, delivered.id);
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(restored))), restored);
+});
+
+test('delivered stock and discount remain for two days without replaying across armory rotation', () => {
+  const state = createGame(7);
+  atTown(state, 'eastmere');
+  assert.equal(tick(state, 72).ok, true);
+  assert.equal(tick(state, 72).ok, true);
+  assert.equal(tick(state, 4).ok, true);
+  const delivered = getTownEvent(state, 'eastmere');
+  assert.equal(delivered?.type, 'armorer-shipment');
+  assert.equal(delivered.endDay, 9, 'arrival on day seven extends the offer through day nine');
+  assert.equal(buyFood(state, 1).ok, true);
+  assert.equal(state.marketStock.eastmere.appliedEventId, delivered.id);
+
+  assert.equal(tick(state, 12).ok, true);
+  assert.equal(getTownEvent(state, 'eastmere')?.id, delivered.id, 'the offer survives the weekly stock rotation');
+  const normal = equipmentCounts(getMarket(state));
+  const replay = structuredClone(state);
+  replay.marketStock.eastmere.appliedEventId = null;
+  const replayed = equipmentCounts(getMarket(replay));
+  assert.ok(Object.keys(normal).some(id => replayed[id] > normal[id]), 'a missing marker would mint shipment stock again');
+  assert.equal(buyFood(state, 1).ok, true);
+  assert.equal(state.marketStock.eastmere.appliedEventId, delivered.id);
+  assert.deepEqual(equipmentCounts(getMarket(state)), normal, 'the real marker prevents a second grant');
+  assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
+
+  assert.equal(tick(state, 36).ok, true);
+  assert.notEqual(getTownEvent(state, 'eastmere')?.type, 'armorer-shipment');
 });
 
 test('courier market rewards have a stable roll, add at most one item, and apply once', () => {
