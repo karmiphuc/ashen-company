@@ -4,18 +4,25 @@ export const ITEMS = Object.freeze([
   { id: 'patched-coat', name: 'Patched Coat', slot: 'armor', visual: 'padded', price: 45, armor: 20, fatigue: 2, description: 'Worn cloth, still better than bare skin.' },
   { id: 'quilted-jack', name: 'Quilted Jack', slot: 'armor', visual: 'padded', price: 95, armor: 50, fatigue: 5, description: 'A practical layer for the road.' },
   { id: 'leather-vest', name: 'Leather Vest', slot: 'armor', visual: 'leather', price: 150, armor: 65, fatigue: 8, description: 'Tough leather over a padded lining.' },
+  { id: 'padded-gambeson', name: 'Padded Gambeson', slot: 'armor', visual: 'gambeson', price: 215, armor: 85, fatigue: 10, description: 'Thick layered cloth that softens a hard blow.' },
   { id: 'mail-shirt', name: 'Mail Shirt', slot: 'armor', visual: 'mail', price: 320, armor: 110, fatigue: 15, description: 'Heavy rings that turn a sharp edge.' },
+  { id: 'reinforced-mail', name: 'Reinforced Mail', slot: 'armor', visual: 'reinforcedmail', price: 405, armor: 160, fatigue: 20, description: 'Mail strengthened with plates at the vital points.' },
   { id: 'brigandine', name: 'Brigandine', slot: 'armor', visual: 'brigandine', price: 480, armor: 210, fatigue: 25, description: 'Riveted plates beneath stout cloth.' },
   { id: 'plate-harness', name: 'Plate Harness', slot: 'armor', visual: 'plate', price: 720, armor: 300, fatigue: 38, description: 'Full steel protection for a seasoned veteran.' },
   { id: 'cloth-hood', name: 'Cloth Hood', slot: 'helmet', visual: 'hood', price: 30, armor: 20, fatigue: 1, description: 'Keeps the rain from your eyes.' },
   { id: 'leather-cap', name: 'Leather Cap', slot: 'helmet', visual: 'hood', price: 65, armor: 40, fatigue: 3, description: 'A fitted cap with a firm brow.' },
   { id: 'iron-helm', name: 'Iron Helm', slot: 'helmet', visual: 'nasal', price: 180, armor: 105, fatigue: 9, description: 'Plain iron, forged to endure.' },
   { id: 'kettle-helm', name: 'Kettle Helm', slot: 'helmet', visual: 'kettle', price: 255, armor: 140, fatigue: 12, description: 'A broad brim turns rain and blades alike.' },
+  { id: 'bascinet', name: 'Bascinet', slot: 'helmet', visual: 'bascinet', price: 315, armor: 175, fatigue: 15, description: 'A close steel helm with a strong brow.' },
   { id: 'greathelm', name: 'Greathelm', slot: 'helmet', visual: 'greathelm', price: 390, armor: 210, fatigue: 20, description: 'A closed helm with narrow eye slits.' },
   { id: 'arming-sword', name: 'Arming Sword', slot: 'weapon', visual: 'sword', price: 145, power: 16, damageMin: 19, damageMax: 29, hitBonus: 5, armorDamage: 1, description: 'A balanced blade for a steady hand.' },
   { id: 'spear', name: 'Spear', slot: 'weapon', visual: 'spear', price: 85, power: 13, damageMin: 16, damageMax: 25, hitBonus: 10, armorDamage: .8, description: 'Simple reach, simple upkeep.' },
   { id: 'wood-axe', name: 'Wood Axe', slot: 'weapon', visual: 'axe', price: 75, power: 14, damageMin: 22, damageMax: 33, hitBonus: -5, armorDamage: 1.4, description: 'A working tool with an ugly second purpose.' },
-  { id: 'hunting-bow', name: 'Hunting Bow', slot: 'weapon', visual: 'bow', price: 185, power: 17, damageMin: 16, damageMax: 26, hitBonus: 0, armorDamage: .6, range: 4, twoHanded: true, description: 'A springy yew bow with a bundle of arrows.' },
+  { id: 'bludgeon', name: 'Bludgeon', slot: 'weapon', visual: 'mace', price: 105, power: 14, damageMin: 17, damageMax: 26, hitBonus: 5, armorDamage: 1.15, armorPiercing: .45, description: 'A weighted club that bruises through armor.' },
+  { id: 'rondel-dagger', name: 'Rondel Dagger', slot: 'weapon', visual: 'dagger', price: 135, power: 12, damageMin: 12, damageMax: 19, hitBonus: 12, armorDamage: .45, armorPiercing: .75, description: 'A narrow point seeking gaps in armor.' },
+  { id: 'billhook', name: 'Billhook', slot: 'weapon', visual: 'billhook', price: 235, power: 22, damageMin: 22, damageMax: 34, hitBonus: 0, armorDamage: 1.25, range: 2, twoHanded: true, fatigueCost: 15, description: 'A hooked polearm that strikes from behind the line.' },
+  { id: 'hunting-bow', name: 'Hunting Bow', slot: 'weapon', visual: 'bow', price: 185, power: 17, damageMin: 16, damageMax: 26, hitBonus: 0, armorDamage: .6, range: 4, ranged: true, twoHanded: true, description: 'A springy yew bow with a bundle of arrows.' },
+  { id: 'light-crossbow', name: 'Light Crossbow', slot: 'weapon', visual: 'crossbow', price: 285, power: 27, damageMin: 25, damageMax: 38, hitBonus: 8, armorDamage: 1.2, armorPiercing: .45, range: 5, ranged: true, twoHanded: true, reloadTurns: 1, description: 'A hard shot that must be reloaded after firing.' },
   { id: 'buckler', name: 'Buckler', slot: 'shield', visual: 'round', price: 60, armor: 6, defense: 8, fatigue: 2, description: 'Light protection for a quick fighter.' },
   { id: 'round-shield', name: 'Round Shield', slot: 'shield', visual: 'round', price: 120, armor: 12, defense: 13, fatigue: 5, description: 'Wood and iron across the forearm.' },
   { id: 'kite-shield', name: 'Kite Shield', slot: 'shield', visual: 'kite', price: 220, armor: 20, defense: 18, fatigue: 8, description: 'Broad cover for a crowded road.' },
@@ -80,6 +87,7 @@ const ROAMING_BANDS = Object.freeze([
 ]);
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet']);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
@@ -114,6 +122,7 @@ const SUPPLY_INFO = {
   ammo: { name: 'Ammunition', buyPrice: 4, stock: 30 },
 };
 const TRAINING_GAINS = { maxHp: 5, meleeSkill: 3, rangedSkill: 3, meleeDefense: 2, rangedDefense: 2, maxFatigue: 5, initiative: 4, resolve: 4 };
+const TACTICS = ['offense', 'defense', 'focus'];
 
 function hashSeed(seed) {
   if (typeof seed === 'number' && Number.isSafeInteger(seed)) return seed >>> 0;
@@ -206,6 +215,7 @@ export function createGame(seed = Date.now()) {
     camps: {},
     bands: {},
     pursuit: null,
+    tactic: 'offense',
     battle: null,
     gameOver: false,
     position: { x: 350, y: 460 },
@@ -784,6 +794,22 @@ export function getCampSites(state) {
   }));
 }
 
+export function setBattleTactic(state, tactic) {
+  if (!TACTICS.includes(tactic)) return result(false, 'Unknown battle tactic.');
+  if (state.gameOver) return result(false, 'The company has fallen.');
+  if (state.battle && state.battle.status !== 'active') return result(false, 'Finish the battle before changing tactics.');
+  if (state.tactic === tactic && (!state.battle || state.battle.tactic === tactic)) return result(true, `Company tactic remains ${tactic}.`);
+  state.tactic = tactic;
+  if (state.battle) {
+    state.battle.tactic = tactic;
+    state.battle.focusTargetId = null;
+    state.battle.lastContactRound = state.battle.round;
+  }
+  const message = `Company tactic set to ${tactic}.`;
+  record(state, message);
+  return result(true, message);
+}
+
 function hexDistance(a, b) {
   const dq = a.q - b.q;
   const dr = a.r - b.r;
@@ -798,6 +824,18 @@ function battleRoll(battle) {
 function battleLog(battle, message) {
   battle.log.push(`Round ${battle.round}: ${message}`);
   if (battle.log.length > 120) battle.log.shift();
+}
+
+function makeBattleEvent(actor, target, type, message, weapon = null, from = null, extra = {}) {
+  const ranged = weapon?.ranged === true;
+  return {
+    actorId: actor?.id ?? null, targetId: target?.id ?? null, type,
+    weaponId: weapon?.id ?? null, ranged,
+    projectile: ranged && (type === 'attack' || type === 'miss') ? weapon.visual === 'crossbow' ? 'bolt' : 'arrow' : null,
+    from: from ?? (actor ? { q: actor.q, r: actor.r } : null),
+    to: target ? { q: target.q, r: target.r } : actor ? { q: actor.q, r: actor.r } : null,
+    message, ...extra,
+  };
 }
 
 function sortTurnOrder(battle) {
@@ -826,7 +864,7 @@ export function startBattle(state, encounterId) {
       hp: person.hp, maxHp: stats.maxHp, bodyArmor: stats.bodyArmor, headArmor: stats.headArmor,
       maxBodyArmor: stats.maxBodyArmor, maxHeadArmor: stats.maxHeadArmor,
       equipment: { ...person.equipment }, seed: person.seed, alive: person.hp > 0,
-      morale: person.morale, fatigue: 0, ap: 2,
+      morale: person.morale, fatigue: 0, ap: 2, reload: 0,
       meleeSkill: stats.meleeSkill, rangedSkill: stats.rangedSkill,
       meleeDefense: stats.meleeDefense, rangedDefense: stats.rangedDefense,
       maxFatigue: stats.maxFatigue, initiative: stats.initiative, resolve: stats.resolve,
@@ -841,7 +879,7 @@ export function startBattle(state, encounterId) {
       hp, maxHp: hp, bodyArmor: armorMaximum(gear.armor), headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxHeadArmor: armorMaximum(gear.helmet),
       equipment: gear, seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
-      morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2,
+      morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2, reload: 0,
       meleeSkill: 30 + camp.difficulty * 6, rangedSkill: 28 + camp.difficulty * 6,
       meleeDefense: 2 + camp.difficulty * 2 + shieldDefense,
       rangedDefense: 2 + camp.difficulty * 2 + shieldDefense,
@@ -851,6 +889,7 @@ export function startBattle(state, encounterId) {
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
     encounterType, encounterName: camp.name,
+    tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     status: 'active', round: 1, activeId: null, units: [...company, ...enemies],
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     log: [], lastEvent: null,
@@ -963,16 +1002,19 @@ function stepArcherBack(battle, actor) {
 
 function attackTarget(state, actor, target, weapon) {
   const battle = state.battle;
-  const ranged = weapon.range > 1;
+  const ranged = weapon.ranged === true;
   if (ranged && actor.side === 'company') state.supplies.ammo -= 1;
   const skill = ranged ? actor.rangedSkill : actor.meleeSkill;
-  const defense = ranged ? target.rangedDefense : target.meleeDefense;
+  const defense = (ranged ? target.rangedDefense : target.meleeDefense) + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
   const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - (ranged && hexDistance(actor, target) === 1 ? 12 : 0), 12, 90);
-  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (ranged ? 9 : 11));
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (weapon.fatigueCost ?? (ranged ? 9 : 11)));
+  if (weapon.reloadTurns) actor.reload = weapon.reloadTurns;
   actor.ap = 0;
+  if (actor.side === 'company' || !ranged && hexDistance(actor, target) <= 1) battle.lastContactRound = battle.round;
+  if (!ranged && hexDistance(actor, target) <= 1) battle.engaged = true;
   if (battleRoll(battle) * 100 >= chance) {
     const message = `${actor.name} misses ${target.name}.`;
-    battle.lastEvent = { actorId: actor.id, targetId: target.id, type: 'miss', message };
+    battle.lastEvent = makeBattleEvent(actor, target, 'miss', message, weapon);
     battleLog(battle, message);
     return;
   }
@@ -983,7 +1025,7 @@ function attackTarget(state, actor, target, weapon) {
   const armorDamage = Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1) * (head ? 1.1 : 1)));
   target[part] = Math.max(0, armorBefore - armorDamage);
   let hpDamage = armorBefore > 0
-    ? Math.max(1, Math.floor(raw * .30 - armorBefore * .025) + Math.max(0, Math.floor((armorDamage - armorBefore) * .25)))
+    ? Math.max(1, Math.floor(raw * (weapon.armorPiercing ?? .30) - armorBefore * .025) + Math.max(0, Math.floor((armorDamage - armorBefore) * .25)))
     : raw;
   if (head) hpDamage = Math.round(hpDamage * 1.25);
   target.hp = Math.max(0, target.hp - hpDamage);
@@ -996,7 +1038,7 @@ function attackTarget(state, actor, target, weapon) {
     if (actor.side === 'company') battle.xp[actor.id] = (battle.xp[actor.id] ?? 0) + 20;
   }
   const message = `${actor.name} hits ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.`;
-  battle.lastEvent = { actorId: actor.id, targetId: target.id, type: fallen ? 'fall' : 'hit', head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), message };
+  battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), fallen });
   battleLog(battle, message);
 }
 
@@ -1014,38 +1056,67 @@ export function advanceBattle(state) {
     return result(true, 'The battle is over.');
   }
   actor.fatigue = Math.max(0, actor.fatigue - 6);
-  if (actor.fatigue >= actor.maxFatigue - 10) {
-    actor.fatigue = Math.max(0, actor.fatigue - 22);
+  const equippedWeapon = ITEM_BY_ID.get(actor.equipment.weapon);
+  if (actor.reload > 0) {
+    actor.reload -= 1;
     actor.ap = 0;
-    const message = `${actor.name} catches their breath.`;
-    battle.lastEvent = { actorId: actor.id, targetId: null, type: 'recover', message };
+    const message = `${actor.name} reloads ${equippedWeapon?.name ?? 'their weapon'}.`;
+    battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equippedWeapon);
     battleLog(battle, message);
     nextBattleTurn(battle);
     return result(true, message);
   }
-  const equippedWeapon = ITEM_BY_ID.get(actor.equipment.weapon);
-  const bowWithoutAmmo = equippedWeapon?.range > 1 && actor.side === 'company' && state.supplies.ammo < 1;
+  if (actor.fatigue >= actor.maxFatigue - 10) {
+    actor.fatigue = Math.max(0, actor.fatigue - 22);
+    actor.ap = 0;
+    const message = `${actor.name} catches their breath.`;
+    battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equippedWeapon);
+    battleLog(battle, message);
+    nextBattleTurn(battle);
+    return result(true, message);
+  }
+  const bowWithoutAmmo = equippedWeapon?.ranged && actor.side === 'company' && state.supplies.ammo < 1;
   const weapon = bowWithoutAmmo ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equippedWeapon ?? { damageMin: 8, damageMax: 12, hitBonus: -10, armorDamage: .4, range: 1 };
   const range = weapon.range ?? 1;
-  if (range > 1) stepArcherBack(battle, actor);
-  const defenseKey = range > 1 ? 'rangedDefense' : 'meleeDefense';
+  if (weapon.ranged) stepArcherBack(battle, actor);
+  const defenseKey = weapon.ranged ? 'rangedDefense' : 'meleeDefense';
   const vulnerability = target => target.hp + (target.bodyArmor + target.headArmor) * .15 + target[defenseKey] * .3;
   const targets = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range) }))
     .filter(entry => entry.path !== null)
     .sort((a, b) => a.path.length - b.path.length
       || vulnerability(a.target) - vulnerability(b.target)
       || hexDistance(actor, a.target) - hexDistance(actor, b.target) || a.target.id.localeCompare(b.target.id));
-  const choice = targets[0];
+  if (actor.side === 'company' && battle.focusTargetId && !enemies.some(enemy => enemy.id === battle.focusTargetId)) battle.focusTargetId = null;
+  const companyTactic = actor.side === 'company' ? battle.tactic : 'offense';
+  let choice = targets[0];
+  if (companyTactic === 'focus') {
+    const shared = targets.find(entry => entry.target.id === battle.focusTargetId);
+    choice = shared ?? [...targets].sort((a, b) => vulnerability(a.target) + a.path.length * 3 - vulnerability(b.target) - b.path.length * 3 || a.target.id.localeCompare(b.target.id))[0];
+    if (choice) battle.focusTargetId = choice.target.id;
+  } else if (companyTactic === 'defense') {
+    choice = targets.find(entry => entry.path.length === 0);
+    if (!choice && !(battle.engaged && targets[0]?.path.length <= 3) && battle.round - battle.lastContactRound < 4) {
+      actor.ap = 0;
+      actor.fatigue = Math.max(0, actor.fatigue - 12);
+      const message = `${actor.name} holds the line.`;
+      battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, equippedWeapon);
+      battleLog(battle, message);
+      nextBattleTurn(battle);
+      return result(true, message);
+    }
+    choice ??= targets[0];
+  }
   if (!choice) {
     actor.ap = 0;
     const message = `${actor.name} holds position and catches their breath.`;
     actor.fatigue = Math.max(0, actor.fatigue - 12);
-    battle.lastEvent = { actorId: actor.id, targetId: null, type: 'recover', message };
+    battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equippedWeapon);
     battleLog(battle, message);
     nextBattleTurn(battle);
     return result(true, message);
   }
   const { target, path } = choice;
+  const from = { q: actor.q, r: actor.r };
   if (path.length) {
     const destination = path[Math.min(2, path.length) - 1];
     actor.q = destination.q;
@@ -1057,7 +1128,8 @@ export function advanceBattle(state) {
   } else {
     actor.ap = 0;
     const message = `${actor.name} advances toward ${target.name}.`;
-    battle.lastEvent = { actorId: actor.id, targetId: target.id, type: 'move', message };
+    battle.lastEvent = makeBattleEvent(actor, null, 'move', message, equippedWeapon, from);
+    battle.lastEvent.targetId = target.id;
     battleLog(battle, message);
   }
   if (!finishBattlePhase(battle)) nextBattleTurn(battle);
@@ -1081,7 +1153,7 @@ export function retreatBattle(state) {
     unit.hp = Math.max(1, unit.hp - 5);
     unit.morale = Math.max(0, unit.morale - 12);
   }
-  battle.lastEvent = { actorId: null, targetId: null, type: 'retreat', message: 'The company retreats, losing two provisions and taking wounds.' };
+  battle.lastEvent = makeBattleEvent(null, null, 'retreat', 'The company retreats, losing two provisions and taking wounds.');
   battleLog(battle, battle.lastEvent.message);
   return result(true, battle.lastEvent.message);
 }
@@ -1142,6 +1214,7 @@ function assert(condition, message) { if (!condition) throw new TypeError(`Inval
 function validCount(value) { return Number.isSafeInteger(value) && value >= 0; }
 function validPoint(point) { return point && typeof point === 'object' && !Array.isArray(point) && inBounds(point.x, point.y); }
 function recordObject(value) { return value && typeof value === 'object' && !Array.isArray(value); }
+function validHex(point) { return recordObject(point) && Number.isSafeInteger(point.q) && point.q >= 0 && point.q < 10 && Number.isSafeInteger(point.r) && point.r >= 0 && point.r < 5; }
 
 function validateBattle(input, party) {
   if (input === undefined || input === null) return null;
@@ -1152,6 +1225,12 @@ function validateBattle(input, party) {
   assert(typeof input.id === 'string' && input.id.length <= 80 && input.id.startsWith('battle-'), 'battle id');
   assert(['active', 'victory', 'defeat', 'retreat'].includes(input.status), 'battle status');
   assert(Number.isSafeInteger(input.round) && input.round >= 1 && input.round <= 1000, 'battle round');
+  const tactic = input.tactic ?? 'offense';
+  assert(TACTICS.includes(tactic), 'battle tactic');
+  const lastContactRound = input.lastContactRound ?? 1;
+  assert(Number.isSafeInteger(lastContactRound) && lastContactRound >= 1 && lastContactRound <= input.round, 'battle contact round');
+  const engaged = input.engaged ?? false;
+  assert(typeof engaged === 'boolean', 'battle engaged');
   assert(validCount(input.rng) && input.rng <= 0xffffffff, 'battle random state');
   assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_COMPANY_SIZE + 6, 'battle units');
   const ids = new Set();
@@ -1171,19 +1250,22 @@ function validateBattle(input, party) {
     assert(validCount(unit.bodyArmor) && unit.bodyArmor <= unit.maxBodyArmor && validCount(unit.headArmor) && unit.headArmor <= unit.maxHeadArmor, 'battle armor');
     assert(validCount(unit.seed) && unit.seed <= 0xffffffff, 'battle unit seed');
     assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= 2, 'battle stamina');
+    assert(unit.reload === undefined || validCount(unit.reload) && unit.reload <= 2, 'battle reload');
     for (const key of ['meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve']) assert(validCount(unit[key]) && unit[key] <= 300, `battle ${key}`);
     return {
       id: unit.id, name: unit.name, side: unit.side, q: unit.q, r: unit.r,
       hp: unit.hp, maxHp: unit.maxHp, bodyArmor: unit.bodyArmor, headArmor: unit.headArmor,
       maxBodyArmor: unit.maxBodyArmor, maxHeadArmor: unit.maxHeadArmor,
       equipment: Object.fromEntries(SLOTS.map(slot => [slot, unit.equipment[slot]])),
-      seed: unit.seed, alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap,
+      seed: unit.seed, alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap, reload: unit.reload ?? 0,
       meleeSkill: unit.meleeSkill, rangedSkill: unit.rangedSkill,
       meleeDefense: unit.meleeDefense, rangedDefense: unit.rangedDefense,
       maxFatigue: unit.maxFatigue, initiative: unit.initiative, resolve: unit.resolve,
     };
   });
   assert(units.some(unit => unit.side === 'company') && units.some(unit => unit.side === 'enemy'), 'battle sides');
+  const focusTargetId = input.focusTargetId ?? null;
+  assert(focusTargetId === null || units.some(unit => unit.side === 'enemy' && unit.id === focusTargetId), 'battle focus target');
   assert(units.filter(unit => unit.side === 'company').length === party.length, 'battle company roster');
   assert(units.filter(unit => unit.side === 'company').every(unit => party.some(person => person.id === unit.id)), 'battle company roster');
   const companyAlive = units.some(unit => unit.side === 'company' && unit.alive);
@@ -1195,18 +1277,38 @@ function validateBattle(input, party) {
   assert(input.status === 'active' ? input.activeId === input.turnOrder[input.turnIndex] && units.some(unit => unit.id === input.activeId && unit.alive) : input.activeId === null, 'battle active unit');
   assert(Array.isArray(input.log) && input.log.length <= 120 && input.log.every(entry => typeof entry === 'string' && entry.length <= 300), 'battle log');
   const event = input.lastEvent;
-  assert(event === null || (recordObject(event) && ['move', 'hit', 'miss', 'fall', 'retreat', 'recover'].includes(event.type) && typeof event.message === 'string' && event.message.length <= 300 && (event.actorId === null || ids.has(event.actorId)) && (event.targetId === null || ids.has(event.targetId))), 'battle event');
+  assert(event === null || (recordObject(event) && ['attack', 'move', 'hit', 'miss', 'fall', 'retreat', 'recover', 'hold'].includes(event.type) && typeof event.message === 'string' && event.message.length <= 300 && (event.actorId === null || ids.has(event.actorId)) && (event.targetId === null || ids.has(event.targetId))), 'battle event');
   if (event?.head !== undefined) assert(typeof event.head === 'boolean', 'battle event head');
+  if (event?.fallen !== undefined) assert(typeof event.fallen === 'boolean', 'battle event fallen');
+  if (event?.weaponId !== undefined) assert(event.weaponId === null || ITEM_BY_ID.get(event.weaponId)?.slot === 'weapon', 'battle event weapon');
+  if (event?.ranged !== undefined) assert(typeof event.ranged === 'boolean', 'battle event ranged');
+  if (event?.projectile !== undefined) assert([null, 'arrow', 'bolt'].includes(event.projectile), 'battle event projectile');
+  for (const key of ['from', 'to']) if (event?.[key] !== undefined) assert(event[key] === null || validHex(event[key]), `battle event ${key}`);
   for (const key of ['hpDamage', 'armorDamage']) if (event?.[key] !== undefined) assert(validCount(event[key]) && event[key] <= 1000, `battle event ${key}`);
+  const actor = units.find(unit => unit.id === event?.actorId);
+  const target = units.find(unit => unit.id === event?.targetId);
+  const weaponId = event?.weaponId === undefined ? actor?.equipment.weapon ?? null : event.weaponId;
+  const ranged = event?.ranged ?? (ITEM_BY_ID.get(weaponId)?.ranged === true);
+  const normalizedEvent = event ? {
+    actorId: event.actorId, targetId: event.targetId, type: event.type === 'hit' || event.type === 'fall' ? 'attack' : event.type,
+    weaponId, ranged, projectile: event.projectile === undefined ? ranged && ['attack', 'miss', 'hit', 'fall'].includes(event.type) ? ITEM_BY_ID.get(weaponId)?.visual === 'crossbow' ? 'bolt' : 'arrow' : null : event.projectile,
+    from: event.from === undefined ? actor ? { q: actor.q, r: actor.r } : null : event.from === null ? null : { q: event.from.q, r: event.from.r },
+    to: event.to === undefined ? target ? { q: target.q, r: target.r } : actor ? { q: actor.q, r: actor.r } : null : event.to === null ? null : { q: event.to.q, r: event.to.r },
+    message: event.message,
+    ...(event.head !== undefined ? { head: event.head } : {}),
+    ...(event.hpDamage !== undefined ? { hpDamage: event.hpDamage } : {}),
+    ...(event.armorDamage !== undefined ? { armorDamage: event.armorDamage } : {}),
+    ...(event.fallen !== undefined || event.type === 'fall' ? { fallen: event.fallen ?? true } : {}),
+  } : null;
   const loot = input.loot;
   assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= 24 && loot.items.every(id => ITEM_BY_ID.has(id)), 'battle loot');
   for (const key of ['food', 'tools', 'medicine', 'ammo']) assert(validCount(loot[key]) && loot[key] <= 1000, `battle loot ${key}`);
   assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
-    id: input.id, campId: input.campId, encounterType, encounterName, status: input.status, round: input.round, activeId: input.activeId,
+    id: input.id, campId: input.campId, encounterType, encounterName, tactic, focusTargetId, lastContactRound, engaged, status: input.status, round: input.round, activeId: input.activeId,
     units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng,
-    log: [...input.log], lastEvent: event ? { actorId: event.actorId, targetId: event.targetId, type: event.type, message: event.message, ...(event.head !== undefined ? { head: event.head } : {}), ...(event.hpDamage !== undefined ? { hpDamage: event.hpDamage } : {}), ...(event.armorDamage !== undefined ? { armorDamage: event.armorDamage } : {}) } : null,
+    log: [...input.log], lastEvent: normalizedEvent,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items] },
     casualties: [...input.casualties], xp: { ...input.xp },
   };
@@ -1218,6 +1320,8 @@ export function validateSave(input) {
   assert(validCount(input.seed) && input.seed <= 0xffffffff, 'seed');
   assert(Number.isSafeInteger(input.day) && input.day >= 1 && input.day <= 1000000, 'day');
   assert(Number.isFinite(input.hour) && input.hour >= 0 && input.hour < 24, 'hour');
+  const tactic = input.tactic ?? 'offense';
+  assert(TACTICS.includes(tactic), 'tactic');
   for (const key of ['gold', 'food']) assert(validCount(input[key]) && input[key] <= 1000000000, key);
   for (const key of ['renown', 'contractSerial', 'recruitSerial']) assert(validCount(input[key]) && input[key] <= 1000000, key);
   assert(validPoint(input.position), 'position');
@@ -1239,7 +1343,7 @@ export function validateSave(input) {
   for (const market of Object.values(markets)) {
     assert(recordObject(market) && Number.isSafeInteger(market.day) && market.day >= 1 && market.day <= input.day && validCount(market.food) && market.food <= 100, 'market stock');
     assert(recordObject(market.goods) && GOODS.every(good => validCount(market.goods[good.id]) && market.goods[good.id] <= 100) && Object.keys(market.goods).length === GOODS.length, 'goods stock');
-    assert(recordObject(market.equipment) && ITEMS.every(item => validCount(market.equipment[item.id]) && market.equipment[item.id] <= 1024) && Object.keys(market.equipment).length === ITEMS.length, 'equipment stock');
+    assert(recordObject(market.equipment) && ITEMS.filter(item => !NEW_ITEM_IDS.has(item.id)).every(item => validCount(market.equipment[item.id]) && market.equipment[item.id] <= 1024) && Object.keys(market.equipment).every(id => ITEM_BY_ID.has(id) && validCount(market.equipment[id]) && market.equipment[id] <= 1024), 'equipment stock');
     if (market.supplies !== undefined) assert(recordObject(market.supplies) && Object.keys(market.supplies).length === 3 && Object.keys(SUPPLY_INFO).every(kind => validCount(market.supplies[kind]) && market.supplies[kind] <= 100), 'supplies stock');
   }
   const gameOver = input.gameOver === undefined ? false : input.gameOver;
@@ -1280,6 +1384,7 @@ export function validateSave(input) {
   const pursuit = input.pursuit === undefined ? null : input.pursuit;
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const battle = validateBattle(input.battle, input.party);
+  assert(!battle || battle.tactic === tactic, 'battle tactic');
   assert(!battle || input.destination === null && pursuit === null && (battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !camps[battle.campId]?.clearedDay), 'battle location');
   assert(!gameOver || input.party.length === 0 && battle === null, 'game over state');
   assert(Array.isArray(input.visited) && input.visited.length <= SETTLEMENTS.length && input.visited.every(id => TOWN_BY_ID.has(id)) && new Set(input.visited).size === input.visited.length, 'visited settlements');
@@ -1321,9 +1426,9 @@ export function validateSave(input) {
     gold: input.gold, food: input.food, renown: input.renown,
     party,
     inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
-    marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])) }])),
+    marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...defaultMarketStock({ seed: input.seed, day: market.day }, TOWN_BY_ID.get(id)).equipment, ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])) }])),
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay: entry.clearedDay }])),
-    bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil }])), pursuit,
+    bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil }])), pursuit, tactic,
     battle, gameOver,
     position: { x: input.position.x, y: input.position.y },
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,

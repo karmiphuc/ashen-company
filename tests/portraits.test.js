@@ -28,7 +28,22 @@ test('portrait output is deterministic and preserves authored raster draw order'
   const openHelm = portraitSVG(PERSON, { helmet: { id: 'iron-helm', visual: 'nasal' } });
   assert.ok(!openHelm.includes('data-layer="hair"'));
   assert.ok(openHelm.includes('data-layer="beard"'));
-  assert.match(one, /data-layer="weapon"[^>]*left:63px;top:53px;transform:rotate\(-30deg\);transform-origin:27px 42px/);
+  assert.match(one, /data-layer="weapon"[^>]*left:63px;top:53px;--layer-rest:rotate\(-30deg\);--layer-origin:27px 42px;--weapon-rest:rotate\(-30deg\);--weapon-origin:27px 42px;transform:rotate\(-30deg\);transform-origin:27px 42px/);
+});
+
+test('v0.5 visuals use their own authored layers and aligned head anchors', () => {
+  const expected = [
+    ['armor', 'gambeson', 'armor-gambeson.png'], ['armor', 'reinforcedmail', 'armor-reinforced-mail.png'],
+    ['helmet', 'bascinet', 'helmet-bascinet.png'], ['weapon', 'mace', 'weapon-mace.png'],
+    ['weapon', 'dagger', 'weapon-dagger.png'], ['weapon', 'crossbow', 'weapon-crossbow.png'],
+    ['weapon', 'billhook', 'weapon-billhook.png'],
+  ];
+  for (const [slot, visual, file] of expected) {
+    assert.match(portraitHTML(PERSON, equipped(slot, visual)), new RegExp(`assets/portraits/${file}`));
+  }
+  assert.match(portraitHTML(PERSON), /data-layer="body"[^>]*left:11px;top:50px/);
+  assert.match(portraitHTML(PERSON, equipped('helmet', 'nasal')), /helmet-nasal\.png"[^>]*left:-20px;top:-55px/);
+  assert.match(portraitHTML(PERSON, equipped('helmet', 'bascinet')), /helmet-bascinet\.png"[^>]*left:-26px;top:-53px/);
 });
 
 test('actual engine visuals select distinct authored body equipment layers', () => {

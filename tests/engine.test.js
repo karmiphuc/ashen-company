@@ -5,6 +5,7 @@ import {
   getMarket, buyFood, buyGood, sellGood, buyItem, sellItem, equipItem, unequipItem, recruit, camp, forage,
   getEquipment, terrainAt, validateSave,
 } from '../src/engine.js';
+import { VISUALS } from '../src/portraits.js';
 
 function ownedItems(state) {
   return [...state.inventory, ...state.party.flatMap(person => Object.values(person.equipment).filter(Boolean))].sort();
@@ -30,13 +31,7 @@ test('new games are deterministic and start in Oakwatch with valid saves', () =>
 });
 
 test('every item visual is supported by the portrait renderer', () => {
-  const supported = {
-    armor: new Set(['padded', 'leather', 'mail', 'brigandine', 'plate']),
-    helmet: new Set(['hood', 'nasal', 'kettle', 'greathelm']),
-    weapon: new Set(['sword', 'spear', 'axe', 'bow']),
-    shield: new Set(['round', 'kite']),
-  };
-  for (const item of ITEMS) assert.ok(supported[item.slot]?.has(item.visual), `${item.id} has unsupported art`);
+  for (const item of ITEMS) assert.ok(VISUALS[item.slot]?.[item.visual], `${item.id} has unsupported art`);
   for (const id of ['plate-harness', 'kettle-helm', 'greathelm', 'hunting-bow']) assert.ok(ITEMS.some(item => item.id === id));
 });
 

@@ -5,37 +5,47 @@ const PORTRAIT_ROOT = 'assets/portraits/';
 const ITEM_ROOT = 'assets/items/';
 const CANVAS = { width: 104, height: 142 };
 
-const PORTRAIT = {
+export const VISUALS = {
   armor: {
     padded: ['armor-padded.png', 5, 46],
+    gambeson: ['armor-gambeson.png', 5, 46],
     leather: ['armor-leather.png', 5, 46],
     mail: ['armor-mail.png', 5, 46],
+    reinforcedmail: ['armor-reinforced-mail.png', 5, 46],
     brigandine: ['armor-brigandine.png', 5, 46],
     plate: ['armor-plate.png', 5, 46],
   },
   helmet: {
-    hood: ['helmet-hood.png', -13, -59],
-    nasal: ['helmet-nasal.png', 3, -55],
-    kettle: ['helmet-kettle.png', -21, -59],
+    hood: ['helmet-hood.png', -16, -60],
+    nasal: ['helmet-nasal.png', -20, -55],
+    kettle: ['helmet-kettle.png', -23, -59],
     greathelm: ['helmet-greathelm.png', -20, -58],
+    bascinet: ['helmet-bascinet.png', -26, -53],
   },
   weapon: {
     spear: ['weapon-spear.png', 87, 33, 'rotate(-38deg)', '4px 70px'],
     sword: ['weapon-sword.png', 83, 57, 'rotate(-35deg)', '8px 46px'],
     axe: ['weapon-axe.png', 81, 65, 'rotate(-45deg)', '7px 38px'],
     bow: ['weapon-bow.png', 63, 53, 'rotate(-30deg)', '27px 42px'],
+    mace: ['weapon-mace.png', 83, 46, 'rotate(-35deg)', '8px 57px'],
+    dagger: ['weapon-dagger.png', 84, 60, 'rotate(-35deg)', '7px 43px'],
+    crossbow: ['weapon-crossbow.png', 45, 62, 'rotate(-25deg)', '28px 28px'],
+    billhook: ['weapon-billhook.png', 34, -2, 'scale(.8) rotate(30deg)', '58px 107px'],
   },
   shield: {
     round: ['shield-round.png', 8, 68],
     kite: ['shield-kite.png', 6, 54],
   },
 };
+const PORTRAIT = VISUALS;
 
 const ITEM_IMAGES = {
   'patched-coat': 'patched-coat.png',
   'quilted-jack': 'quilted-jack.png',
+  'padded-gambeson': 'padded-gambeson.png',
   'leather-vest': 'leather-vest.png',
   'mail-shirt': 'mail-shirt.png',
+  'reinforced-mail': 'reinforced-mail.png',
   brigandine: 'brigandine.png',
   'plate-harness': 'plate-harness.png',
   'cloth-hood': 'cloth-hood.png',
@@ -43,10 +53,15 @@ const ITEM_IMAGES = {
   'iron-helm': 'iron-helm.png',
   'kettle-helm': 'kettle-helm.png',
   greathelm: 'greathelm.png',
+  bascinet: 'bascinet.png',
   'arming-sword': 'arming-sword.png',
   spear: 'spear.png',
   'wood-axe': 'wood-axe.png',
   'hunting-bow': 'hunting-bow.png',
+  bludgeon: 'bludgeon.png',
+  'rondel-dagger': 'rondel-dagger.png',
+  'light-crossbow': 'light-crossbow.png',
+  billhook: 'billhook.png',
   buckler: 'buckler.png',
   'round-shield': 'round-shield.png',
   'kite-shield': 'kite-shield.png',
@@ -68,13 +83,15 @@ function visual(item) {
 function layer(name, spec) {
   if (!spec) return `<span data-layer="${name}" class="bb-layer bb-layer-${name}"></span>`;
   const [file, left, top, transform, transformOrigin] = spec;
-  const transformStyle = transform ? `transform:${transform};transform-origin:${transformOrigin ?? 'center'};` : '';
+  const origin = transformOrigin ?? 'center';
+  const weaponStyle = name === 'weapon' && transform ? `--layer-rest:${transform};--layer-origin:${origin};--weapon-rest:${transform};--weapon-origin:${origin};` : '';
+  const transformStyle = transform ? `${weaponStyle}transform:${transform};transform-origin:${origin};` : '';
   return `<img data-layer="${name}" class="bb-layer bb-layer-${name}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none">`;
 }
 
 function bodyLayer(file, armored) {
   const source = `${PORTRAIT_ROOT}${file}`;
-  if (!armored) return `<img data-layer="body" class="bb-layer bb-layer-body" src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:60px;max-width:none;pointer-events:none">`;
+  if (!armored) return `<img data-layer="body" class="bb-layer bb-layer-body" src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;max-width:none;pointer-events:none">`;
   return `<span data-layer="body" class="bb-layer bb-layer-body"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(0 0,22px 0,22px 60px,0 60px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(22px 0,60px 0,60px 34px,22px 34px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(60px 0,82px 0,82px 60px,60px 60px);max-width:none;pointer-events:none"></span>`;
 }
 

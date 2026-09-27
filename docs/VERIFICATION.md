@@ -1,10 +1,24 @@
-# Verification - version 0.4, 2026-09-27
+# Verification - version 0.5, 2026-09-27
 
 ## Automated checks
 
-`npm test` passes all 36 tests, including save migration and battle resume, encounter patrol/chase/respawn, tactical pathing and archer decisions, fatigue recovery, combat loot and progression, offline packaging, and service-worker cache consistency.
+The v0.5 suite passes all 47 tests. Coverage includes save migration and battle resume, combat decisions and tactics, the seven new inventory IDs (`padded-gambeson`, `reinforced-mail`, `bascinet`, `bludgeon`, `rondel-dagger`, `billhook`, and `light-crossbow`), portrait alignment, complete tactical-event serialization, offline asset packaging, and generated service-worker consistency.
 
-A deterministic replay used seeds 1-150, creating a fresh starter company for each encounter. Wounds are total company HP lost from its starting 300 HP, with fallen brothers at zero HP; rounds are the terminal battle round.
+Battle presentation now animates melee swings and thrusts, ranged aim and arrow/bolt flight, movement, hits, damage bars, and falls. Portrait-layer anchors align the new equipment with the existing head, body, and weapon positions. Renderer coverage checks paused/restored battles do not replay projectiles, tactic choices and disabled end-state controls, misses and older event records, and visual alignment for equipment layers. Tactical tests cover Offense, Defense, Thin them out, and weapon behavior.
+
+## v0.5 browser checks
+
+Executed in the Codex in-app browser. After the local origin server was stopped and HTTP requests failed, the same paused round-3 battle reopened in a fresh tab with its selected Focus tactic and 14 ammunition intact, and showed Offline ready. Changed to Offense, resumed at 3x, and watched the battle finish normally in four rounds with all three brothers alive. Claiming the reward raised crowns from 33 to 99 and updated provisions, tools, medicine, ammunition, and equipment; the defeated band left the encounter list.
+
+At a 1024x768 viewport, all three tactics and the speed, retreat, and resolve controls were visible. Checked 12 equipment combinations for correct helmet/neck alignment and observed the arrow's CSS transform while in flight. No JavaScript errors were observed in the exercised flows. Physical iPad Safari installation, airplane-mode launch, and save retention remain unverified.
+
+## Historical v0.4 checks
+
+The following checks describe the earlier v0.4 build and are not evidence for v0.5.
+
+The v0.4 automated suite passed all 36 tests, including save migration and battle resume, encounter patrol/chase/respawn, tactical pathing and archer decisions, fatigue recovery, combat loot and progression, offline packaging, and service-worker cache consistency.
+
+A deterministic replay used seeds 1-150, creating a fresh starter company for each encounter. Wounds were total company HP lost from its starting 300 HP, with fallen brothers at zero HP; rounds were the terminal battle round.
 
 | Encounter | Wins | All survive | Mean wounds | Mean rounds |
 |---|---:|---:|---:|---:|
@@ -16,25 +30,10 @@ A deterministic replay used seeds 1-150, creating a fresh starter company for ea
 | Forest Cutthroats | 100% | 100% | 14.71 | 3.07 |
 | River Raiders | 100% | 99.3% | 14.97 | 3.35 |
 
-The four patrol tests each began with a fresh company at Oakwatch and pursued that band. A separate 150-seed run equipped all three brothers at level 3 with mail shirts, iron helms, spears, and round shields using the equipment API. Against the Watchtower, this setup won 100% of fights, had 90% no-casualty fights, and averaged 53.77 wounds over 10.82 rounds. Against the Hideout it won 34%, had 3.3% no-casualty fights, and averaged 269.40 wounds over 23.64 rounds. These are bounded seeded samples, not proof of overall balance.
+The four patrol tests each began with a fresh company at Oakwatch and pursued that band. A separate 150-seed run equipped all three brothers at level 3 with mail shirts, iron helms, spears, and round shields using the equipment API. Against the Watchtower, this setup won 100% of fights, had 90% no-casualty fights, and averaged 53.77 wounds over 10.82 rounds. Against the Hideout it won 34%, had 3.3% no-casualty fights, and averaged 269.40 wounds over 23.64 rounds. These bounded seeded samples were not proof of overall balance and apply only to the v0.4 engine.
 
-## Browser checks - v0.4
+The v0.4 browser run covered loading an existing save, patrol selection and pursuit, paused battle reload, combat loot and experience, waiting-time advancement, band respawn, pursuit resume, and an offline reload after stopping the local origin server. No JavaScript errors were observed in those exercised flows. This is historical v0.4 evidence only.
 
-Executed in the Codex in-app browser:
+## Current limits
 
-- Loaded the existing v0.3 company without losing crowns, levels, equipment or resources. New bands appeared in the map and destination list.
-- Started a fresh local test company, selected Road Thieves, pursued the moving marker and stopped within striking distance. The sidebar changed from Pursue to Engage.
-- The one-enemy fight ended in two rounds with all three brothers alive. Reloaded its victory screen before claiming: individual XP and loot remained intact.
-- Claimed 47 crowns, three provisions, two tools, one medicine, three ammunition and an axe. Road Thieves disappeared from the encounter list; all three camps remained available.
-- Rested and pursued the two Hungry Deserters. Paused the battle in round 1 and reloaded it successfully.
-- Stopped the local origin server and confirmed a direct HTTP request failed. Closed the tab and reopened the game in a fresh tab: the same paused roadside encounter loaded with Offline ready.
-- While the server remained stopped, resolved the fight in four rounds and claimed 66 crowns plus equipment and supplies. All brothers survived. Toren reached level 2 with 30 XP toward the next level and an available attribute increase after the two fights.
-- Verified that 3x can advance world time while the company stands still, with the status correctly saying Waiting.
-- Defeated bands returned to the destination list as world time advanced, without a page reload. A paused pursuit retained its target and displayed Pursuit paused after reloading.
-- No browser JavaScript errors were observed in the exercised flows.
-
-## Limits
-
-These checks do not prove Safari installation or physical-iPad airplane-mode operation. On the device, add the game to the Home Screen, wait for Offline ready, export a save, then test closing and reopening in airplane mode before the flight.
-
-Combat is a simplified automatic simulation. There are three fixed camps and four renewable small roaming bands. Faction armies, perks and a procedural campaign are not implemented. Roads and the passing caravan remain scenery. Player travel crosses terrain directly. Wounds are represented by lost HP rather than Battle Brothers' full injury system.
+Battles remain a simplified automatic simulation. There are three fixed camps and four renewable small roaming bands. Faction armies, perks, and a procedural campaign are not implemented. Roads and the passing caravan are scenery. Player travel crosses terrain directly. Wounds are represented by lost HP rather than Battle Brothers' full injury system. iPad Safari installation, airplane-mode launch, and save retention have not been verified on a physical iPad.

@@ -1,8 +1,12 @@
 {
   "name": "ashen-company",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "An offline mercenary company game for iPad",
-  "scripts": { "start": "node tools/serve.js", "prepare-offline": "node tools/build-cache.mjs", "test": "node --test" }
+  "scripts": {
+    "start": "node tools/serve.js",
+    "prepare-offline": "node tools/build-cache.mjs",
+    "test": "node --test"
+  }
 }

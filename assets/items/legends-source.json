@@ -19,6 +19,13 @@
     { "file": "hunting-bow.png", "source": "gfx/ui/items/weapons/ranged/war_bow_02.png", "sha256": "744ab2e4c26e84503dbc2b3d46477d2269ae77e5a4c7c6d79dca344250985331" },
     { "file": "buckler.png", "source": "gfx/ui/items/shields/inventory_shield_round_101.png", "sha256": "a14c18bf6eec54c72cdb2f6ad686dc1f282443f307fd21e831e419b0b5fe49eb" },
     { "file": "round-shield.png", "source": "gfx/ui/items/shields/inventory_shield_round_101.png", "sha256": "a14c18bf6eec54c72cdb2f6ad686dc1f282443f307fd21e831e419b0b5fe49eb" },
-    { "file": "kite-shield.png", "source": "gfx/ui/items/shields/inventory_kite_shield_101.png", "sha256": "31ae2becf2e845c14f56571a4479d874ecb6958345392c1d528abae1aeab3b14" }
+    { "file": "kite-shield.png", "source": "gfx/ui/items/shields/inventory_kite_shield_101.png", "sha256": "31ae2becf2e845c14f56571a4479d874ecb6958345392c1d528abae1aeab3b14" },
+    { "file": "padded-gambeson.png", "source": "gfx/ui/items/legend_armor/inventory_gambeson_10.png", "sha256": "d141acc1db63d5de831c4c4e165978ca47c818a9c14e5c913a00c50d60ffcc89" },
+    { "file": "reinforced-mail.png", "source": "gfx/ui/items/legend_armor/inventory_reinforced_mail_01.png", "sha256": "f603fc9ca8cc63a260922f9a72dccf2eff7bd4ed17d03947d46a78df4a906d36" },
+    { "file": "bascinet.png", "source": "gfx/ui/items/legend_helmets/inventory_bascinet_01.png", "sha256": "eb311b32d03267fbb743d18b4e689467234e6119bb9b751ce95000acea63ac21" },
+    { "file": "bludgeon.png", "source": "gfx/ui/items/weapons/melee/mace_01_1.png", "sha256": "5b933168ca8895b8212d3428cd4466900ed00e9acc6ebe5fb00eb19a17cc7201" },
+    { "file": "rondel-dagger.png", "source": "gfx/ui/items/weapons/melee/dagger_01_1.png", "sha256": "d2f7d0c386ce83278f829c8627ae0ae9b0090050c0c2e7e666725a979fa02884" },
+    { "file": "light-crossbow.png", "source": "gfx/ui/items/weapons/ranged/crossbow_01_1.png", "sha256": "9e35a5c34dee40972e59df39b01e06e8e2717dac5055804961b03e5158d2a039" },
+    { "file": "billhook.png", "source": "gfx/ui/items/weapons/melee/bill_01_1.png", "sha256": "8f04083edfdb9f1c2e25747c1bd3f42e817e743f9e7a25398d67dc052ec8126c" }
   ]
 }

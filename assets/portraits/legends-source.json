@@ -25,6 +25,13 @@
     { "file": "weapon-axe.png", "source": "unpacked/legend_weapons/icons/icon_axe_01_1.png", "sha256": "ae79e0b1886247e8db053524083e7aebae7185f84e7db1a04bc777e39cb28958" },
     { "file": "weapon-bow.png", "source": "unpacked/legend_weapons/icons/icon_war_bow_02.png", "sha256": "c4c53f5ffd2bd65050413852bc31d90b4cf6bd8c7ac5e0c2cdb9e479795c9371" },
     { "file": "shield-round.png", "source": "unpacked/legend_weapons/icons/shield_round_101.png", "sha256": "9db3bf4dd60eefa51b65069bf8d437ae39909f3cc46ee07c7a5d44c801bb5570" },
-    { "file": "shield-kite.png", "source": "unpacked/legend_weapons/icons/shield_kite_101.png", "sha256": "c107adda0a2257bb9dabb8988947727234cab030614a862575f307dc00de8b9c" }
+    { "file": "shield-kite.png", "source": "unpacked/legend_weapons/icons/shield_kite_101.png", "sha256": "c107adda0a2257bb9dabb8988947727234cab030614a862575f307dc00de8b9c" },
+    { "file": "armor-gambeson.png", "source": "unpacked/legend_armor/entity/legend_armor/gambeson_10.png", "sha256": "8721792e7703bced81f48c00a7c16deac1a51def6dc5670d97bd610729ac975d" },
+    { "file": "armor-reinforced-mail.png", "source": "unpacked/legend_armor/entity/legend_armor/reinforced_mail_01.png", "sha256": "9c08e17d4818857210069c743de8078415e1b597200270b53e8c3953db499a8c" },
+    { "file": "helmet-bascinet.png", "source": "unpacked/legend_helmets/entity/legend_helmets/layers/bascinet_01.png", "sha256": "6e4ffd8495136c93e2cd579c3aadc88a29873a5ce364da679ad64407ee181b69" },
+    { "file": "weapon-mace.png", "source": "unpacked/legend_weapons/icons/icon_mace_01_1.png", "sha256": "c89bc304ce06e974daec99b40aafa964e25c3eb1c00617dd54abf1130df4007b" },
+    { "file": "weapon-dagger.png", "source": "unpacked/legend_weapons/icons/icon_dagger_01_1.png", "sha256": "da38942efc7fdfe98912945aa389ba896112c1b38f7a0f242a30bb216d9bdf1c" },
+    { "file": "weapon-crossbow.png", "source": "unpacked/legend_weapons/icons/icon_crossbow_01_1.png", "sha256": "5a7312b582fbc9566ec4d4254e6ef8736ae73e187b7092c68f8df461c7beea2f" },
+    { "file": "weapon-billhook.png", "source": "unpacked/legend_weapons/icons/icon_bill_01_1.png", "sha256": "4dd80603ce7644628b78155ebfc5b599b4021114cd6773d3d4946feea97079f5" }
   ]
 }
