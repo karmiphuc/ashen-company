@@ -23,7 +23,7 @@ async function runtimePngs(directory) {
 test('offline list contains every runtime image and required app file', async () => {
   const assets = await listOfflineAssets();
   assert.equal(new Set(assets).size, assets.length);
-  for (const path of ['./', './index.html', './src/app.js', './src/engine.js', './src/map.js', './src/portraits.js', './src/style.css', './manifest.webmanifest', './assets/icon.svg']) {
+  for (const path of ['./', './index.html', './src/app.js', './src/engine.js', './src/additional-items.js', './src/map.js', './src/portraits.js', './src/style.css', './manifest.webmanifest', './assets/icon.svg']) {
     assert.ok(assets.includes(path), `${path} is missing`);
   }
   assert.deepEqual(assets.filter(path => path.endsWith('.png')).sort(), await runtimePngs(join(ROOT, 'assets')));

@@ -34,6 +34,24 @@ test('attack effects support misses and remain safe when older events have no po
   assert.doesNotMatch(battleHTML({...battle,units:[]},1,true), /Arrow in flight/);
 });
 
+test('throwing weapons fly with their exact packaged icon while crossbows remain bolts', () => {
+  const projectile = (weapon, kind) => battleHTML({
+    ...battle,
+    units:[{...units[0],equipment:{...units[0].equipment,weapon}},units[1]],
+    lastEvent:{...battle.lastEvent,weaponId:weapon,projectile:kind},
+  },1,true);
+  const javelin=projectile('heavy-javelins','javelin');
+  assert.match(javelin,/class="battle-projectile is-javelin" aria-label="Javelin in flight"/);
+  assert.match(javelin,/src="assets\/items\/heavy-javelins\.png"/);
+  const axe=projectile('throwing-axes','axe');
+  assert.match(axe,/class="battle-projectile is-axe" aria-label="Throwing axe in flight"/);
+  assert.match(axe,/src="assets\/items\/throwing-axes\.png"/);
+  const bolt=projectile('heavy-crossbow','bolt');
+  assert.match(bolt,/class="battle-projectile is-bolt" aria-label="Crossbow bolt in flight"/);
+  assert.match(bolt,/class="battle-projectile is-bolt"[^>]*><span><\/span>/);
+  assert.match(battleCSS,/@keyframes thrown-spin/);
+});
+
 test('14 by 8 terrain fields render inspectable cover, height, and elevation-aligned units', () => {
   const tiles = Array.from({length:14},(_,q)=>Array.from({length:8},(_,r)=>({q,r,terrain:'open',height:0}))).flat();
   Object.assign(tiles.find(tile=>tile.q===2&&tile.r===2),{terrain:'trees',height:1});

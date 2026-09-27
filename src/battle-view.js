@@ -1,5 +1,5 @@
-import { getEquipment } from './engine.js';
-import { portraitHTML } from './portraits.js';
+import { getEquipment, getItem } from './engine.js';
+import { portraitHTML, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
 const TILE = { width: 76, height: 85, stepX: 76, stepY: 64, stagger: 38, elevation: 9, padX: 16, padY: 28, padBottom: 22 };
@@ -95,6 +95,14 @@ function equipmentFor(unit) {
   }
 }
 
+function battleKitHTML(unit) {
+  const reserve = [unit?.reserveEquipment?.weapon,unit?.reserveEquipment?.shield].filter(Boolean).length;
+  const accessories = Array.isArray(unit?.accessories) ? unit.accessories.filter(Boolean).length : 0;
+  if (!reserve && !accessories) return '';
+  const labels = [reserve ? `reserve set ${reserve === 2 ? 'ready' : 'partial'}` : '', accessories ? `${accessories} carried ${accessories === 1 ? 'accessory' : 'accessories'}` : ''].filter(Boolean);
+  return `<span class="battle-kit" aria-label="${esc(labels.join('; '))}">${reserve?'<i>Reserve</i>':''}${accessories?`<i>Bag ${accessories}</i>`:''}</span>`;
+}
+
 function unitHTML(unit, battle, animateEvent, field, grid) {
   const { x, y } = coordinates(unit, field, grid);
   const alive = unit.alive !== false && number(unit.hp, 1) > 0;
@@ -118,7 +126,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     event.targetId === unit.id ? 'is-target' : '',
     actor && attacking ? `action-${motion}` : '',
     actor && (event.type === 'move' || event.moveFrom) ? 'action-move' : '',
-    actor && ['recover', 'hold'].includes(event.type) ? 'action-hold' : '',
+    actor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? 'action-hold' : '',
     target && attacking && event.type !== 'miss' ? 'action-hit' : '',
     target && event.fallen ? 'action-fall' : '',
   ].filter(Boolean).join(' ');
@@ -137,10 +145,11 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
       <span class="battle-unit-bar battle-unit-health"><i style="width:${health}%;--before-width:${beforeHealth}%;--after-width:${health}%"></i></span>
     </div>
     <span class="battle-pawn">${portraitHTML(display, equipmentFor(unit), 64)}</span>
+    ${battleKitHTML(unit)}
     <strong>${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
     ${target && attacking ? `<span class="battle-impact" aria-hidden="true">${event.type === 'miss' ? 'Miss' : `${event.hpDamage || 0}${event.armorDamage ? ` / ${event.armorDamage}` : ''}`}</span>` : ''}
-    ${actor && ['recover', 'hold'].includes(event.type) ? `<span class="battle-order">${event.type === 'hold' ? 'Hold' : event.message?.includes(' reloads ') ? 'Reload' : 'Recover'}</span>` : ''}
+    ${actor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? `<span class="battle-order">${event.type === 'hold' ? 'Hold' : event.type === 'swap' ? 'Swap set' : event.type === 'use' ? 'Use item' : event.message?.includes(' reloads ') ? 'Reload' : 'Recover'}</span>` : ''}
   </article>`;
 }
 
@@ -155,7 +164,11 @@ function projectileHTML(battle, animateEvent, field, grid) {
   if (event.type === 'miss') { end.x += 20; end.y -= 12; }
   const dx = end.x - start.x, dy = end.y - start.y;
   const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-  return `<div class="battle-projectile ${event.projectile === 'bolt' ? 'is-bolt' : ''}" aria-label="${event.projectile === 'bolt' ? 'Crossbow bolt' : 'Arrow'} in flight" style="left:${start.x}px;top:${start.y}px;--flight-x:${dx}px;--flight-y:${dy}px;--flight-angle:${angle}deg"><span></span></div>`;
+  const kind = ['bolt','javelin','axe'].includes(event.projectile) ? event.projectile : 'arrow';
+  const thrownWeapon = kind === 'javelin' || kind === 'axe' ? getItem(event.weaponId) : null;
+  const thrownIcon = thrownWeapon ? itemImage(thrownWeapon) || `assets/items/${thrownWeapon.baseId || thrownWeapon.id}.png` : null;
+  const label = { arrow:'Arrow', bolt:'Crossbow bolt', javelin:'Javelin', axe:'Throwing axe' }[kind];
+  return `<div class="battle-projectile is-${kind}" aria-label="${label} in flight" style="left:${start.x}px;top:${start.y}px;--flight-x:${dx}px;--flight-y:${dy}px;--flight-angle:${angle}deg">${thrownIcon?`<img src="${thrownIcon}" alt="" draggable="false">`:'<span></span>'}</div>`;
 }
 
 function statusText(status) {

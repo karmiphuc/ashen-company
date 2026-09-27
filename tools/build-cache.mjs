@@ -17,6 +17,7 @@ const CORE = [
   './src/app.js',
   './src/item-details.js',
   './src/engine.js',
+  './src/additional-items.js',
   './src/map.js',
   './src/portraits.js',
   './manifest.webmanifest',

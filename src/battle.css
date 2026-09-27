@@ -44,3 +44,5 @@
 .battle-terrain-key .battle-key-height{background:linear-gradient(135deg,#b3a06f 50%,#443b2a 51%)}
 .battle-terrain-key small{color:#a99d7f;white-space:nowrap}
 @media(max-width:720px){.battle-scroll{max-height:62vh}.battle-terrain-key{min-width:760px}.battlefield{margin:0}.battle-log{max-height:170px;overflow:auto}}
+.battle-kit{position:absolute;z-index:6;right:1px;top:20px;display:grid;justify-items:end;gap:2px;pointer-events:none}.battle-kit i{display:block;padding:2px 3px;border:1px solid #79683f;background:#211d15e6;color:#dec98e;font:700 7px/1 Arial,sans-serif;font-style:normal;letter-spacing:.03em;text-shadow:0 1px #000}
+.battle-projectile.is-javelin>img,.battle-projectile.is-axe>img{display:block;width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 2px 1px #110c07);transform:translate(-50%,-50%) rotate(calc(var(--flight-angle) + 45deg))}.battle-projectile.is-axe>img{width:30px;height:30px;animation:thrown-spin var(--action-time) linear both}@keyframes thrown-spin{from{transform:translate(-50%,-50%) rotate(calc(var(--flight-angle) + 20deg))}to{transform:translate(-50%,-50%) rotate(calc(var(--flight-angle) + 380deg))}}

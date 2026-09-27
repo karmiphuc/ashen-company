@@ -1,6 +1,20 @@
-# Verification - version 0.10.1, 2026-09-27
+# Verification - version 0.11, 2026-09-27
 
-## v0.10.1 checks
+## v0.11 checks
+
+The full automated suite passes 118 tests, including new coverage for reserve sets, pocket daggers, safe consumable use, shield stats, crossbow reload preservation, casualty recovery, legacy famed rewards, and thrown-weapon rendering. Six saved fixtures from v0.9 through v0.10.1 migrate without changing their equipment, purse, inventory, or battle positions.
+
+In the browser, accessory filtering included the Qatal Dagger, exact-slot equipping replaced the chosen pocket, and Heavy Throwing Axes could be assigned to the reserve set. Swapping active and reserve sets persisted after reload. A Bandages marketplace tile sold immediately for 27 crowns; buying a Medical Satchel for 110 added a second copy to the stash.
+
+In staged battles, a greatsword fighter readied Javelins and Heater Shield on approach. A wounded captain used Bandages, healing from 35 to 59 HP, consuming one accessory and the full turn; the result persisted after reload. A trapped bow user drew the Qatal Dagger from a pocket and spent the turn, preserving the bow.
+
+A javelin attack displayed the packaged javelin icon in flight and dealt 10 health and 20 armor damage in the staged browser case. The renderer also has automated coverage for spinning throwing axes and heavy-crossbow bolts.
+
+At 1024x768, the equipment screen and a 35-item gallery were inspected. New weapon sprites use individual grip pivots; large blades and polearms stay visible at the portrait's right side. All 60 inventory icons exist, and the 67 new source assets match their pinned SHA-256 provenance manifest.
+
+With both local servers stopped and a direct HTTP request failing, a fresh tab loaded the saved company with its reserve and accessories. An offline set swap persisted after reload. A staged camp battle resolved offline in nine rounds with all three fighters alive; claiming loot and reloading restored Greatsword as the captain's active weapon and Javelins in reserve. No JavaScript errors occurred in that fresh offline tab. Physical iPad Safari installation and airplane-mode save retention remain untested.
+
+## Historical v0.10.1 checks
 
 The full automated suite passes 102 tests. Six new regressions cover ranged spacing across tactics, nearby non-target enemies, retreat with a distant focus target, crossbow reload, trapped/empty-ammo behavior, and seeded battle completion. Offline cache consistency and `git diff --check` pass.
 

@@ -89,7 +89,7 @@ test('earned famed loot keeps its exact ID through inspection, equip, stow, sale
   const camp = atCamp(state, 'quarry-camp');
   assert.equal(startBattle(state, camp.id).ok, true);
   const famedId = state.battle.famedDrop;
-  assert.equal(famedId, 'famed:arming-sword:2907154113');
+  assert.equal(famedId, 'famed:spear:2907154113');
   assert.equal(resolveBattle(state).ok, true);
   assert.ok(state.battle.loot.items.includes(famedId));
 

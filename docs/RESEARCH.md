@@ -1,5 +1,13 @@
 # Battle Brothers design references
 
+## v0.11 equipment and automatic loadouts
+
+The added families follow the original game's weapon roles rather than introducing a new fantasy setting. The developer describes throwing weapons as short-range secondary weapons, with better initial accuracy than bows and crossbows: [throwing weapon design](https://battlebrothersgame.com/dev-blog-48-progress-update-throwing-weapons-visual-makeover-continued/). The northern expansion supplies the heavy javelin/throwing axe, shamshir and long-reaching whip references: [Tools of Death](https://battlebrothersgame.com/dev-blog-123-tools-of-death/). Here, their damage, fatigue and range are scaled to this game's existing health and automatic-turn rules. Whips do not yet apply the original game's bleeding or disarm skills.
+
+The player's requested two accessory pockets carry small backup daggers or consumables. This is an adaptation of the original bag system: the developer moved combat consumables into bag slots in [Consumables](https://battlebrothersgame.com/dev-blog-108-consumables/), and later moved many potions to pre-battle use in [Alchemy](https://battlebrothersgame.com/dev-blog-126-alchemy/). Ashen Company's field dressings restore a bounded amount of health during a safe full-turn treatment, and stimulants restore fatigue; these are explicit automatic-combat adaptations, not a claim to reproduce Battle Brothers' medical rules.
+
+Weapon sets separate the player's equipment choices from individual battle decisions. Switching and using a consumable cost a turn. The intent is to support a shield-and-throwing opening before two-handed melee, and a ranged fighter's emergency dagger, without losing or duplicating any carried equipment. The combat log explains the automatic decisions. Starting loadouts and spent consumables persist through save and battle resolution.
+
 ## Direction
 
 For the next feature pass, use Battle Brothers as the direct reference for both campaign and combat rules. Keep Ashen Company's compact map and current settlements, but make combat, company upkeep, progression, contract difficulty, and equipment follow Battle Brothers' documented structure instead of adding unrelated systems. The cited posts are developer descriptions from different points in development; later posts revise earlier mechanics. They establish design and UI conventions, not a complete current rulebook or exact balance values.

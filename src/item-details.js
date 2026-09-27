@@ -32,7 +32,9 @@ function signed(value) { return value > 0 ? `+${value}` : String(value); }
 
 export function getItemDetails(item, condition) {
   const base = item?.baseId ? getItem(item.baseId) : item;
-  if (!item || !base || !Object.hasOwn(ROLES, base.id)) return null;
+  if (!item || !base) return null;
+  const baseRole = ROLES[base.id] || base.role;
+  if (!baseRole) return null;
   const stats = [];
   const notes = [];
   const bonuses = item.rarity === 'famed' && Array.isArray(item.bonuses) ? item.bonuses : [];
@@ -49,12 +51,19 @@ export function getItemDetails(item, condition) {
       { label: 'Hands', value: item.twoHanded ? 'Two; shield stowed' : 'One; shield allowed' },
     );
     if (ranged) {
-      stats.push({ label: 'Ammunition', value: '1 per shot' });
+      stats.push({ label: 'Ammunition', value: item.throwing ? '1 per attack' : '1 per shot' });
       if (item.reloadTurns) stats.push({ label: 'Reload', value: `${item.reloadTurns} turn after each shot` });
-      notes.push('Ranged attacks use ranged skill and ranged defense; firing next to an enemy has a 12-point hit penalty.');
-      notes.push('Without ammunition, the fighter falls back to an 8-12 damage unarmed melee attack.');
+      notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
+      notes.push('When an enemy closes or ammunition runs out, the AI draws an equipped pocket weapon first; otherwise it switches to the reserve melee set. Drawing or switching costs a full turn.');
+      if (item.throwing) notes.push('Throwing weapons are one-handed, can be paired with a shield, and spend one company ammunition per attack.');
+      if (item.ranged && !item.throwing && !item.twoHanded) notes.push('This ranged weapon leaves the other hand free for a shield.');
+      if (!item.throwing) notes.push('A bow or crossbow shot from an adjacent hex has a 12-point hit penalty if the fighter cannot reposition or switch to melee.');
+      notes.push('Without ammunition, the AI tries an equipped pocket weapon or reserve melee set first; if neither is available, the fighter can only make the basic unarmed attack.');
     } else if ((item.range ?? 1) > 1) {
       notes.push('Extra reach still uses melee skill and melee defense; it does not spend ammunition.');
+    }
+    if (item.pocketWeapon) {
+      notes.push('The battle AI draws this pocket weapon when a ranged fighter is forced into close combat and returns it to the pocket when range opens and ammunition remains. Drawing or returning it costs a full turn.');
     }
     notes.push('Hit modifier changes hit chance in percentage points before other bonuses and penalties.');
     notes.push('Remaining armor reduces direct health damage. Damage that breaks through armor can add more health damage.');
@@ -80,10 +89,21 @@ export function getItemDetails(item, condition) {
       : 'For every weapon, 22% of landed hits strike the head; this helmet absorbs those hits.');
     notes.push('Armor can still let reduced health damage through while durability remains.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
+  } else if (item.slot === 'accessory') {
+    if (item.consumable === 'heal') {
+      stats.push({ label: 'Effect', value: `Restores up to ${item.heal ?? 0} health` }, { label: 'Uses', value: 'One' });
+      notes.push(`At 55% health or lower, with at least ${Math.min(20, item.heal ?? 0)} health missing and enemies at least two hexes away, the battle AI may use it. Use consumes the item and the full turn; healing never repairs armor.`);
+    } else if (item.consumable === 'recover') {
+      stats.push({ label: 'Effect', value: `Reduces fatigue by ${item.recover ?? 0}` }, { label: 'Uses', value: 'One' });
+      notes.push('At 75% of maximum fatigue or higher, with enemies at least two hexes away, the battle AI may use it. Use consumes the item and the full turn.');
+    } else {
+      stats.push({ label: 'Uses', value: 'One' });
+    }
+    notes.push('A fighter can auto-use at most one consumable per turn.');
   }
   const role = item.rarity === 'famed'
     ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with the ordinary version.`
-    : ROLES[base.id];
+    : baseRole;
   return {
     description: item.description,
     role,

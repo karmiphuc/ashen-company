@@ -102,6 +102,19 @@ test('portrait provenance manifest hashes every packaged source raster', () => {
   }
 });
 
+test('v0.11 item art exists and matches its pinned-source manifest', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../assets/legends-v11-source.json', import.meta.url), 'utf8'));
+  for (const asset of manifest.assets) {
+    const bytes = readFileSync(new URL(`../${asset.local}`, import.meta.url));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256, asset.local);
+  }
+  for (const item of ITEMS) {
+    const image = itemImage(item);
+    assert.ok(image, `${item.id} has an item-image mapping`);
+    assert.doesNotThrow(() => readFileSync(new URL(`../${image}`, import.meta.url)), `${item.id} image exists`);
+  }
+});
+
 test('actual engine visuals select distinct authored body equipment layers', () => {
   for (const slot of ['armor', 'helmet', 'weapon', 'shield']) {
     const visuals = [...new Set(ITEMS.filter(item => item.slot === slot).map(item => item.visual))];
