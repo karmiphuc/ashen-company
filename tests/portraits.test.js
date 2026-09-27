@@ -4,7 +4,7 @@ import { ITEMS } from '../src/engine.js';
 import { itemImage, portraitHTML, portraitSVG } from '../src/portraits.js';
 
 const PERSON = { seed: 491, name: 'Mara Ash' };
-const LAYERS = ['weapon', 'body', 'armor', 'head', 'hair', 'beard', 'helmet', 'shield'];
+const LAYERS = ['body', 'armor', 'head', 'hair', 'beard', 'helmet', 'shield', 'weapon'];
 
 function equipped(slot, visual) {
   return { [slot]: { id: `${slot}-${visual}`, visual } };
@@ -28,6 +28,7 @@ test('portrait output is deterministic and preserves authored raster draw order'
   const openHelm = portraitSVG(PERSON, { helmet: { id: 'iron-helm', visual: 'nasal' } });
   assert.ok(!openHelm.includes('data-layer="hair"'));
   assert.ok(openHelm.includes('data-layer="beard"'));
+  assert.match(one, /data-layer="weapon"[^>]*left:63px;top:53px;transform:rotate\(-30deg\);transform-origin:27px 42px/);
 });
 
 test('actual engine visuals select distinct authored body equipment layers', () => {

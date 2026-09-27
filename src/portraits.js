@@ -20,14 +20,14 @@ const PORTRAIT = {
     greathelm: ['helmet-greathelm.png', -20, -58],
   },
   weapon: {
-    spear: ['weapon-spear.png', 44, 0],
-    sword: ['weapon-sword.png', 61, 4],
-    axe: ['weapon-axe.png', 0, 45],
-    bow: ['weapon-bow.png', 45, 0],
+    spear: ['weapon-spear.png', 87, 33, 'rotate(-38deg)', '4px 70px'],
+    sword: ['weapon-sword.png', 83, 57, 'rotate(-35deg)', '8px 46px'],
+    axe: ['weapon-axe.png', 81, 65, 'rotate(-45deg)', '7px 38px'],
+    bow: ['weapon-bow.png', 63, 53, 'rotate(-30deg)', '27px 42px'],
   },
   shield: {
-    round: ['shield-round.png', 60, 68],
-    kite: ['shield-kite.png', 58, 54],
+    round: ['shield-round.png', 8, 68],
+    kite: ['shield-kite.png', 6, 54],
   },
 };
 
@@ -67,8 +67,9 @@ function visual(item) {
 
 function layer(name, spec) {
   if (!spec) return `<span data-layer="${name}" class="bb-layer bb-layer-${name}"></span>`;
-  const [file, left, top] = spec;
-  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none">`;
+  const [file, left, top, transform, transformOrigin] = spec;
+  const transformStyle = transform ? `transform:${transform};transform-origin:${transformOrigin ?? 'center'};` : '';
+  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none">`;
 }
 
 function bodyLayer(file, armored) {
@@ -99,7 +100,6 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
 
   return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:hidden;vertical-align:middle;background:transparent">
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
-      ${layer('weapon', PORTRAIT.weapon[visual(equipment.weapon)])}
       ${bodyLayer(body, Boolean(armor))}
       ${layer('armor', armor)}
       <img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}head-34.png" alt="" draggable="false" style="position:absolute;left:27px;top:0;max-width:none;pointer-events:none">
@@ -107,6 +107,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
       ${closedHelmet ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;max-width:none;pointer-events:none">`}
       ${layer('helmet', helmet)}
       ${layer('shield', PORTRAIT.shield[visual(equipment.shield)])}
+      ${layer('weapon', PORTRAIT.weapon[visual(equipment.weapon)])}
     </span>
   </span>`;
 }
