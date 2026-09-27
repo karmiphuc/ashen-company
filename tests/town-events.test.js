@@ -172,10 +172,9 @@ test('harvest, caravan, fair, shipment, and muster change their advertised marke
           assert.ok(during.goods.some((row, index) => row.buyPrice < before.goods[index].buyPrice));
         } else if (event.type === 'market-fair') {
           assert.ok(during.goods.some((row, index) => row.sellPrice > before.goods[index].sellPrice));
-        } else if (event.type === 'armorer-shipment') {
-          assert.ok(pricedGear(during).buyPrice < pricedGear(before).buyPrice);
-          const count = market => market.equipment.filter(row => ITEMS.find(item => item.id === row.itemId)?.price >= 250 && row.stock > 0).length;
-          assert.ok(count(during) > count(before));
+        } else if (event.type === 'armorer-shipment-en-route') {
+          assert.equal(pricedGear(during).buyPrice, pricedGear(before).buyPrice,
+            'an unarrived wagon has not discounted gear yet');
         } else if (event.type === 'militia-muster') {
           assert.ok(pricedGear(during).buyPrice > pricedGear(before).buyPrice);
           const count = market => market.equipment.filter(row => ITEMS.find(item => item.id === row.itemId)?.price >= 250 && row.stock > 0).length;
@@ -198,42 +197,27 @@ test('harvest, caravan, fair, shipment, and muster change their advertised marke
     }
   }
   assert.deepEqual([...observed].sort(), [
-    'armorer-shipment', 'good-harvest', 'market-fair', 'militia-muster', 'poor-harvest', 'trade-caravan',
+    'armorer-shipment-en-route', 'good-harvest', 'market-fair', 'militia-muster', 'poor-harvest', 'trade-caravan',
   ]);
 });
 
-test('a city shipment survives reload before first grant and stays finite across a weekly rotation', () => {
-  let fixture;
-  for (let seed = 1; seed <= 100 && !fixture; seed++) {
-    const state = createGame(seed);
-    const event = getTownEvent({ ...state, day: 7 }, 'ironford');
-    if (event?.type === 'armorer-shipment' && event.startDay >= 2 && event.endDay >= 8) fixture = { seed, event };
-  }
-  assert.ok(fixture, 'found a shipment spanning the weekly armory rotation');
-  const state = createGame(fixture.seed);
-  atTown(state, 'ironford');
+test('a city shipment stays ungranted across reload until its physical arrival', () => {
+  const state = createGame(16);
+  atTown(state, 'eastmere');
   assert.equal(buyFood(state, 1).ok, true);
-  assert.equal(state.marketStock.ironford.appliedEventId, null);
-  advanceTo(state, fixture.event.startDay);
+  assert.equal(state.marketStock.eastmere.appliedEventId, null);
   const projection = equipmentCounts(getMarket(state));
   const restored = validateSave(JSON.parse(JSON.stringify(state)));
   assert.deepEqual(equipmentCounts(getMarket(restored)), projection,
     'an explicit null marker still permits the upcoming shipment after reload');
+  assert.equal(getTownEvent(restored, 'eastmere')?.type, 'armorer-shipment-en-route');
+  assert.equal(tick(restored, 22).ok, true);
+  const delivered = getTownEvent(restored, 'eastmere');
+  assert.equal(delivered?.type, 'armorer-shipment');
+  assert.ok(Object.entries(equipmentCounts(getMarket(restored))).some(([id, count]) => count > projection[id]),
+    'only the delivered wagon adds finite stock');
   assert.equal(buyFood(restored, 1).ok, true);
-  assert.equal(restored.marketStock.ironford.appliedEventId, fixture.event.id);
-  assert.deepEqual(equipmentCounts(getMarket(restored)), projection);
-  advanceTo(restored, 8);
-  assert.equal(getTownEvent(restored, 'ironford')?.id, fixture.event.id);
-  const afterRotation = getMarket(restored);
-  const qualityRows = afterRotation.equipment.filter(row => ITEMS.find(item => item.id === row.itemId)?.price >= 250 && row.stock > 0);
-  assert.ok(qualityRows.length <= 10, 'the same shipment is not granted again on the new weekly cycle');
-  assert.equal(buyFood(restored, 1).ok, true);
-  assert.equal(restored.marketStock.ironford.appliedEventId, fixture.event.id);
-  assert.deepEqual(equipmentCounts(getMarket(restored)), equipmentCounts(afterRotation));
-  advanceTo(restored, fixture.event.endDay + 1);
-  assert.equal(getTownEvent(restored, 'ironford'), null);
-  assert.deepEqual(equipmentCounts(getMarket(restored)), equipmentCounts(afterRotation),
-    'ending the event does not mint another shipment');
+  assert.equal(restored.marketStock.eastmere.appliedEventId, delivered.id);
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(restored))), restored);
 });
 
@@ -334,10 +318,10 @@ test('market save migration keeps depleted stock and famed buybacks; malformed e
   assert.equal(importedPreEvent.marketStock.ironford.appliedEventId, null,
     'a market saved before the shipment does not infer a future event marker');
   assert.deepEqual(equipmentCounts(getMarket(importedPreEvent)), projected);
-  assert.ok(Object.entries(projected).some(([id, count]) => count > 0 && beforeEvent.marketStock.ironford.equipment[id] === 0),
-    'the later shipment adds finite stock');
+  assert.equal(getTownEvent(beforeEvent, 'ironford')?.type, 'armorer-shipment-en-route');
   assert.equal(buyFood(importedPreEvent, 1).ok, true);
-  assert.equal(importedPreEvent.marketStock.ironford.appliedEventId, shipment.event.id);
+  assert.equal(importedPreEvent.marketStock.ironford.appliedEventId, null,
+    'an unarrived shipment is not marked as applied by a market write');
   assert.deepEqual(equipmentCounts(getMarket(importedPreEvent)), projected);
 
   const duringEvent = createGame(shipment.seed);
@@ -348,7 +332,8 @@ test('market save migration keeps depleted stock and famed buybacks; malformed e
   delete duringEvent.marketStock.ironford.armoryCycle;
   delete duringEvent.marketStock.ironford.appliedEventId;
   const importedSameDay = validateSave(duringEvent);
-  assert.equal(importedSameDay.marketStock.ironford.appliedEventId, shipment.event.id);
+  assert.equal(importedSameDay.marketStock.ironford.appliedEventId, null,
+    'a same-day new-format market does not invent a delivered marker');
   assert.deepEqual(equipmentCounts(getMarket(importedSameDay)), stockedDuringEvent,
     'a same-day legacy market keeps its stock without a second shipment');
 });

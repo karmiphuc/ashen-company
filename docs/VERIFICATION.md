@@ -1,6 +1,14 @@
-# Verification - version 0.15, 2026-09-27
+# Verification - version 0.16, 2026-09-27
 
-## v0.15 checks
+## v0.16 checks
+
+The full automated suite passes 163 tests. Caravan coverage checks physical arrival before stock and discounts, raid warnings, rescue by victory, pre-emptive clearing, ignored losses, consistent clock advancement, follow persistence, shortage expiry and trade spreads, read-only getters, migration, and malformed records. Six historical saves retain equipment, purse, inventory, and battle positions. Offline cache consistency and diff checks pass.
+
+At 1024x768, a staged Ironford wagon showed its route, 14-hour ETA, assigned River Raiders, and seven hours to intervene. Double-clicking its map marker started following. The pursuit button entered a normal battle, which ended in victory after four rounds with all companions alive. After collecting loot, Market news showed the rescued wagon on the road with no attacking band. Following it at fast speed ended at day 2, 06:00 with a Delivered report and paused travel.
+
+With the local server stopped and direct HTTP unavailable, a fresh tab restored an Ironford Arms Shortage. Selling a Mail Shirt offline paid 297 crowns, raising the purse from 900 to 1,197. Reloading preserved the shortage, purse, and removal of the shirt from the stash. No JavaScript errors occurred in this offline flow. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+## Historical v0.15 checks
 
 The full automated suite passes 155 tests. Seven town-economy cases cover deterministic schedules and expiry, all six advertised price/stock effects, scarce weekly equipment, purchase quotes and resale spreads, shipment grants across reload/expiry/week boundaries, bounded once-only courier rewards, legacy markets, famed buybacks, and malformed market markers. Reloading a saved market just as a shipment starts preserves its pending grant. Six historical fixtures still retain equipment, purse, inventory and battle positions. Offline cache consistency and diff checks pass.
 

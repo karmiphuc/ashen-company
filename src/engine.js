@@ -4,6 +4,7 @@ import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { PERKS, PERK_BY_ID, hasPerk } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile } from './recruits.js';
 import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-events.js';
+import { CARAVAN_ATTACK_WARNING_HOURS, CARAVAN_SHORTAGE_HOURS, shipmentId, shipmentPlan, shipmentPosition } from './caravans.js';
 
 export { PERKS } from './perks.js';
 
@@ -386,6 +387,8 @@ export function createGame(seed = Date.now()) {
     inventoryCondition: [itemCondition('cloth-hood'), itemCondition('buckler')],
     cargo: {},
     marketStock: {},
+    shipments: {},
+    shipmentLegacyThroughDay: 0,
     supplies: { tools: 8, medicine: 5, ammo: 16 },
     camps: {},
     bands: {},
@@ -405,6 +408,7 @@ export function createGame(seed = Date.now()) {
   };
   state.party = state.party.map(normalizeMember);
   state.formation = seedFormation(state.party);
+  advanceCaravans(state, worldHours(state));
   record(state, 'The Ashen Company gathers at Oakwatch. The road is yours.');
   return state;
 }
@@ -434,12 +438,29 @@ function armoryCycle(day) { return Math.floor((day - 1) / ARMORY_ROTATION_DAYS);
 
 export function getTownEvent(state, townId) {
   const town = TOWN_BY_ID.get(townId);
-  return town ? scheduledTownEvent(state, town) : null;
+  if (!town) return null;
+  const scheduled = scheduledTownEvent(state, town);
+  const shipment = state.shipments?.[town.id];
+  if (shipment?.status === 'lost' && worldHours(state) < shipment.resolvedHour + CARAVAN_SHORTAGE_HOURS) {
+    const hours = shipment.resolvedHour + CARAVAN_SHORTAGE_HOURS - worldHours(state);
+    const effects = ['Ordinary arms cost 20% more.', 'Armorers pay well for replacement arms, making imports profitable.', 'Armory stock is thin; basic supplies remain available.'];
+    return { id: `${shipmentId(town.id, shipment.startDay)}:shortage`, type: 'arms-shortage', name: 'Arms Shortage',
+      description: 'Raiders destroyed an incoming armorer wagon. Local smiths urgently need replacement gear.',
+      effects, effectText: effects.join(' '), startDay: Math.floor(shipment.resolvedHour / 24) + 1,
+      endDay: Math.floor((shipment.resolvedHour + CARAVAN_SHORTAGE_HOURS) / 24) + 1,
+      daysRemaining: Math.ceil(hours / 24) };
+  }
+  if (scheduled?.type !== 'armorer-shipment') return scheduled;
+  if ((shipment?.startDay === scheduled.startDay && shipment.status === 'delivered')
+    || (shipment?.startDay !== scheduled.startDay && (state.shipmentLegacyThroughDay ?? 0) >= scheduled.startDay)) return scheduled;
+  const effects = ['A friendly armorer wagon is on the road.', 'Extra stock and its 10% discount begin only if it arrives.'];
+  return { ...scheduled, type: 'armorer-shipment-en-route', name: 'Armorer Shipment En Route', description: 'A guarded wagon is carrying arms toward this settlement.',
+    effects, effectText: effects.join(' '), status: shipment?.status ?? 'en-route' };
 }
 
 export function getTownEconomy(state) {
   const events = SETTLEMENTS.flatMap(town => {
-    const event = scheduledTownEvent(state, town);
+    const event = getTownEvent(state, town.id);
     return event ? [{ town, ...event }] : [];
   });
   return {
@@ -459,10 +480,16 @@ function goodPrices(state, town, good) {
 }
 
 function equipmentPrices(state, town, item) {
-  const modifiers = townEventModifiers(scheduledTownEvent(state, town));
-  const eventFactor = item.rarity === 'famed' ? 1 : modifiers.equipmentBuy ?? 1;
-  const buyPrice = Math.max(1, Math.round(item.price * GEAR_FACTORS[town.id] * eventFactor));
-  return { buyPrice, sellPrice: Math.max(1, Math.floor(buyPrice / 2)) };
+  const modifiers = townEventModifiers(getTownEvent(state, town.id));
+  const ordinaryGear = item.rarity !== 'famed' && item.slot !== 'accessory';
+  const baseBuyPrice = Math.max(1, Math.round(item.price * GEAR_FACTORS[town.id]));
+  const buyPrice = Math.max(1, Math.round(baseBuyPrice * (ordinaryGear ? modifiers.equipmentBuy ?? 1 : 1)));
+  const sellPrice = ordinaryGear && modifiers.equipmentSell
+    ? Math.max(1, Math.min(buyPrice - 1, Math.max(
+      Math.floor(baseBuyPrice * modifiers.equipmentSell),
+      Math.ceil(Math.min(...SETTLEMENTS.filter(place => place.id !== town.id).map(place => Math.round(item.price * GEAR_FACTORS[place.id]))) * 1.05),
+    ))) : Math.max(1, Math.floor(buyPrice / 2));
+  return { buyPrice, sellPrice };
 }
 
 function rotatedItems(items, state, town, cycle, label) {
@@ -512,10 +539,11 @@ function projectedMarketStock(state, town) {
     : dailyMarketStock(state, town);
   const equipment = existing && existingCycle === cycle ? { ...existing.equipment } : defaultArmoryStock(state, town, cycle);
   let appliedEventId = existing?.appliedEventId ?? null;
-  const event = scheduledTownEvent(state, town);
-  if (event?.type === 'armorer-shipment' && appliedEventId !== event.id) {
-    addShipmentStock(equipment, state, town, event, cycle);
-    appliedEventId = event.id;
+  const event = getTownEvent(state, town.id);
+  const stockEvent = event?.type === 'armorer-shipment' ? event : null;
+  if (stockEvent && appliedEventId !== stockEvent.id) {
+    addShipmentStock(equipment, state, town, stockEvent, cycle);
+    appliedEventId = stockEvent.id;
   }
   return {
     day: state.day,
@@ -536,6 +564,8 @@ function writableMarketStock(state, town) {
 }
 
 function visibleEquipmentStock(state, town, item, stock, event) {
+  if (event?.type === 'arms-shortage' && item.rarity !== 'famed' && item.slot !== 'accessory' && item.price >= 250)
+    return Math.max(0, stock - 1);
   if (item.rarity === 'famed' || event?.type !== 'militia-muster' || item.price < 250) return stock;
   return townEventHash(`${event.id}:${item.id}:reserved`) % 2 === 0 ? 0 : stock;
 }
@@ -544,7 +574,7 @@ export function getMarket(state, townId) {
   const town = townAt(state);
   if (!town || (townId !== undefined && town.id !== townId)) return null;
   const stock = marketStock(state, town);
-  const event = scheduledTownEvent(state, town);
+  const event = getTownEvent(state, town.id);
   const cycle = armoryCycle(state.day);
   const famedIds = new Set([...(stock.buyback ?? []).map(entry => entry.itemId), ...state.inventory.filter(id => getItem(id)?.rarity === 'famed')]);
   return {
@@ -584,10 +614,104 @@ function actionBlocked(state) {
 
 function worldHours(state) { return (state.day - 1) * 24 + state.hour; }
 
+function bandSpawnCycle(state, id) {
+  const progress = state.bands?.[id];
+  return progress?.spawnCycle ?? (progress ? 1 : 0);
+}
+
+function shipmentAttackBand(state, town, origin, startDay) {
+  if (townEventHash(`${state.seed}:${town.id}:${startDay}:shipment-raid`) % 3 !== 0) return null;
+  const middle = { x: (town.x + origin.x) / 2, y: (town.y + origin.y) / 2 };
+  const assigned = new Set(Object.values(state.shipments ?? {})
+    .filter(shipment => shipment.status === 'en-route' || shipment.status === 'under-attack')
+    .map(shipment => shipment.attackerId));
+  const band = ROAMING_BANDS.filter(entry => !assigned.has(entry.id)).sort((a, b) =>
+    distance(middle, a.start) - distance(middle, b.start) || a.id.localeCompare(b.id))[0];
+  return band && distance(middle, band.start) < 420 && (state.bands?.[band.id]?.defeatedUntil ?? 0) <= worldHours(state) ? band : null;
+}
+
+function advanceCaravans(state, toHour) {
+  if (!state.shipments) state.shipments = {};
+  for (const town of SETTLEMENTS) {
+    const event = scheduledTownEvent(state, town);
+    if (event?.type !== 'armorer-shipment' || event.startDay <= (state.shipmentLegacyThroughDay ?? 0)
+      || state.shipments[town.id]?.startDay === event.startDay) continue;
+    const plan = shipmentPlan(town, SETTLEMENTS, event);
+    const origin = TOWN_BY_ID.get(plan.originId);
+    const attacker = shipmentAttackBand(state, town, origin, event.startDay);
+    state.shipments[town.id] = {
+      startDay: event.startDay, originId: origin.id, status: 'en-route',
+      attackerId: attacker?.id ?? null, attackerSpawnCycle: attacker ? bandSpawnCycle(state, attacker.id) : null,
+      attackHour: attacker ? plan.departureHour + 13 + townEventHash(`${state.seed}:${town.id}:${event.startDay}:attack-time`) % 4 : null,
+      resolvedHour: null,
+    };
+    record(state, `Armorer wagon leaves ${origin.name} for ${town.name}.`);
+  }
+  for (const [townId, shipment] of Object.entries(state.shipments)) {
+    if (shipment.status === 'delivered' || shipment.status === 'lost') continue;
+    const town = TOWN_BY_ID.get(townId);
+    const event = { startDay: shipment.startDay };
+    const plan = shipmentPlan(town, SETTLEMENTS, event);
+    if (shipment.status === 'under-attack' && bandSpawnCycle(state, shipment.attackerId) !== shipment.attackerSpawnCycle) {
+      shipment.status = 'en-route';
+      shipment.attackerId = null;
+      shipment.attackerSpawnCycle = null;
+      shipment.attackHour = null;
+      record(state, `The road to ${town.name} is safe again; its armorer wagon can continue.`);
+    }
+    if (shipment.status === 'en-route' && shipment.attackHour !== null && toHour >= shipment.attackHour) {
+      const progress = state.bands?.[shipment.attackerId];
+      if (bandSpawnCycle(state, shipment.attackerId) === shipment.attackerSpawnCycle
+        && (progress?.defeatedUntil ?? 0) <= shipment.attackHour) {
+        shipment.status = 'under-attack';
+        record(state, `${BAND_BY_ID.get(shipment.attackerId).name} turn toward the armorer wagon bound for ${town.name}. Intercept them within seven hours.`);
+      } else {
+        shipment.attackerId = null;
+        shipment.attackerSpawnCycle = null;
+        shipment.attackHour = null;
+      }
+    }
+    const deadline = shipment.attackHour === null ? null : shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS;
+    if (shipment.status === 'under-attack' && deadline !== null && toHour >= deadline) {
+      shipment.status = 'lost';
+      shipment.resolvedHour = deadline;
+      record(state, `Raiders destroy the armorer wagon bound for ${town.name}. Arms are scarce there for four days.`);
+    } else if (shipment.status === 'en-route' && toHour >= plan.arrivalHour) {
+      shipment.status = 'delivered';
+      shipment.resolvedHour = plan.arrivalHour;
+      record(state, `Armorer wagon reaches ${town.name}; new gear is available at a discount.`);
+    }
+  }
+}
+
+export function getCaravans(state) {
+  const now = worldHours(state);
+  return Object.entries(state.shipments ?? {}).flatMap(([townId, shipment]) => {
+    const town = TOWN_BY_ID.get(townId);
+    if (!town || (shipment.resolvedHour !== null && now >= shipment.resolvedHour + CARAVAN_SHORTAGE_HOURS)) return [];
+    const plan = shipmentPlan(town, SETTLEMENTS, { startDay: shipment.startDay });
+    const origin = TOWN_BY_ID.get(plan.originId);
+    const position = shipmentPosition(plan, origin, town, shipment.resolvedHour ?? now);
+    const active = shipment.status === 'en-route' || shipment.status === 'under-attack';
+    const attackerId = active && shipment.attackerId && bandSpawnCycle(state, shipment.attackerId) === shipment.attackerSpawnCycle
+      && (state.bands?.[shipment.attackerId]?.defeatedUntil ?? 0) <= now ? shipment.attackerId : null;
+    const attackHoursRemaining = shipment.status === 'under-attack' && attackerId
+      ? Math.max(0, shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS - now) : null;
+    const description = shipment.status === 'delivered' ? `Delivered from ${origin.name} to ${town.name}.${getTownEvent(state, town.id)?.type === 'armorer-shipment' ? ' The armory has fresh stock.' : ''}`
+      : shipment.status === 'lost' ? `Raiders destroyed the wagon bound for ${town.name}. Arms are scarce there.`
+      : attackerId ? `${BAND_BY_ID.get(attackerId).name} are targeting this wagon from ${origin.name} to ${town.name}.`
+      : `Friendly armorer wagon traveling from ${origin.name} to ${town.name}.`;
+    return [{ id: plan.id, kind: 'caravan', name: `${town.name} Armorer Wagon`, ...position,
+      originId: origin.id, destinationId: town.id, status: shipment.status,
+      etaHours: active ? Math.max(0, plan.arrivalHour - now) : 0,
+      attackerId, attackHoursRemaining, resolvedHour: shipment.resolvedHour, description }];
+  });
+}
+
 function roamingBand(state, band) {
   const progress = state.bands?.[band.id];
   if ((progress?.defeatedUntil ?? 0) > worldHours(state)) return null;
-  const spawnCycle = progress?.spawnCycle ?? (progress ? 1 : 0);
+  const spawnCycle = bandSpawnCycle(state, band.id);
   let rosterSeed = hashSeed(`${state.seed}:${band.id}:${spawnCycle}:roster`);
   const random = () => { rosterSeed = (Math.imul(rosterSeed, 1664525) + 1013904223) >>> 0; return rosterSeed / 4294967296; };
   const tier = band.difficulty ?? 0;
@@ -599,12 +723,17 @@ function roamingBand(state, band) {
   const period = length / 7;
   const phase = ((worldHours(state) + hashSeed(band.id) % 11) / period) % 2;
   const fraction = phase <= 1 ? phase : 2 - phase;
+  const target = getCaravans(state).find(caravan => caravan.attackerId === band.id && caravan.status === 'under-attack');
+  const diversion = target ? Math.max(0, Math.min(1, 1 - target.attackHoursRemaining / CARAVAN_ATTACK_WARNING_HOURS)) : 0;
+  const patrol = { x: band.start.x + (band.end.x - band.start.x) * fraction,
+    y: band.start.y + (band.end.y - band.start.y) * fraction };
   return {
     id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle,
-    x: band.start.x + (band.end.x - band.start.x) * fraction,
-    y: band.start.y + (band.end.y - band.start.y) * fraction,
+    x: patrol.x + ((target?.x ?? patrol.x) - patrol.x) * diversion,
+    y: patrol.y + ((target?.y ?? patrol.y) - patrol.y) * diversion,
     enemies,
-    description: tier ? `${enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${enemies.length} lightly equipped brigand${enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
+    description: target ? `These raiders are closing on the armorer wagon bound for ${TOWN_BY_ID.get(target.destinationId).name}. Defeat them before they reach it.`
+      : tier ? `${enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${enemies.length} lightly equipped brigand${enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
     reward: 0,
   };
 }
@@ -649,6 +778,16 @@ export function activateMapTarget(state, type, id) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   if (type === 'band') return pursueBand(state, id);
+  if (type === 'caravan') {
+    const caravan = getCaravans(state).find(entry => entry.id === id && (entry.status === 'en-route' || entry.status === 'under-attack'));
+    if (!caravan) return result(false, 'That wagon is no longer on the road.');
+    state.pursuit = null;
+    state.destination = { x: caravan.x, y: caravan.y };
+    state.destinationAction = { type: 'caravan', id };
+    const message = `Following the armorer wagon bound for ${TOWN_BY_ID.get(caravan.destinationId).name}.`;
+    record(state, message);
+    return result(true, message);
+  }
   const target = type === 'town' ? TOWN_BY_ID.get(id) : type === 'camp' ? getCampSites(state).find(site => site.id === id) : null;
   if (!target) return result(false, 'That destination is unavailable.');
   if (type === 'camp' && target.cleared) return result(false, 'This camp has already been cleared.');
@@ -742,9 +881,20 @@ function advanceClock(state, hours) {
     const step = Math.min(remaining, toMidnight);
     state.hour += step;
     remaining -= step;
+    advanceCaravans(state, worldHours(state));
     if (state.hour >= 24 - 1e-9) {
       state.hour = 0;
       atMidnight(state);
+      advanceCaravans(state, worldHours(state));
+    }
+    if (state.destinationAction?.type === 'caravan') {
+      const caravan = getCaravans(state).find(entry => entry.id === state.destinationAction.id && (entry.status === 'en-route' || entry.status === 'under-attack'));
+      if (caravan) state.destination = { x: caravan.x, y: caravan.y };
+      else {
+        state.destination = null;
+        state.destinationAction = null;
+        record(state, 'The wagon journey ends; the company stops following it.');
+      }
     }
   }
 }
@@ -758,6 +908,15 @@ export function tick(state, hours) {
   while (remaining > 1e-9) {
     const step = Math.min(remaining, 0.25);
     let arrivedAction = null;
+    if (state.destinationAction?.type === 'caravan') {
+      const caravan = getCaravans(state).find(entry => entry.id === state.destinationAction.id && (entry.status === 'en-route' || entry.status === 'under-attack'));
+      if (caravan) state.destination = { x: caravan.x, y: caravan.y };
+      else {
+        state.destinationAction = null;
+        state.destination = null;
+        record(state, 'The wagon has left the road; the company stops following it.');
+      }
+    }
     if (state.pursuit) {
       const target = getRoamingBands(state).find(band => band.id === state.pursuit);
       if (target) state.destination = { x: target.x, y: target.y };
@@ -771,7 +930,7 @@ export function tick(state, hours) {
         state.position.x += (state.destination.x - state.position.x) * movement / distanceLeft;
         state.position.y += (state.destination.y - state.position.y) * movement / distanceLeft;
       }
-      if (!state.pursuit && distance(state.position, state.destination) <= ARRIVAL_RADIUS) {
+      if (!state.pursuit && state.destinationAction?.type !== 'caravan' && distance(state.position, state.destination) <= ARRIVAL_RADIUS) {
         state.position = { ...state.destination };
         state.destination = null;
         onArrival(state);
@@ -2002,7 +2161,17 @@ export function finishBattle(state) {
     }
     if (battle.encounterType === 'band') {
       const previous = state.bands[battle.campId];
+      const defeatedCycle = bandSpawnCycle(state, battle.campId);
       state.bands[battle.campId] = { defeatedUntil: worldHours(state) + 48, spawnCycle: (previous?.spawnCycle ?? (previous ? 1 : 0)) + 1 };
+      for (const [townId, shipment] of Object.entries(state.shipments ?? {})) {
+        if ((shipment.status !== 'en-route' && shipment.status !== 'under-attack')
+          || shipment.attackerId !== battle.campId || shipment.attackerSpawnCycle !== defeatedCycle) continue;
+        shipment.status = 'en-route';
+        shipment.attackerId = null;
+        shipment.attackerSpawnCycle = null;
+        shipment.attackHour = null;
+        record(state, `The road to ${TOWN_BY_ID.get(townId).name} is safe again; its armorer wagon can continue.`);
+      }
     }
     else { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+(camp.random?72:120),generation:camp.generation }; }
   }
@@ -2225,6 +2394,39 @@ export function validateSave(input) {
       assert(match && match[1] === townId && match[3] === 'armorer-shipment' && event?.id === market.appliedEventId, 'market event');
     }
   }
+  const shipmentLegacyThroughDay = input.shipmentLegacyThroughDay ?? (input.shipments === undefined ? input.day : 0);
+  assert(validCount(shipmentLegacyThroughDay) && shipmentLegacyThroughDay <= input.day, 'shipment migration');
+  const shipments = input.shipments ?? {};
+  assert(recordObject(shipments) && Object.keys(shipments).length <= SETTLEMENTS.length
+    && Object.keys(shipments).every(id => TOWN_BY_ID.has(id)), 'shipments');
+  for (const [townId, shipment] of Object.entries(shipments)) {
+    assert(recordObject(shipment) && Object.keys(shipment).length === 7
+      && ['startDay', 'originId', 'status', 'attackerId', 'attackerSpawnCycle', 'attackHour', 'resolvedHour']
+        .every(key => Object.hasOwn(shipment, key)), 'shipment record');
+    assert(Number.isSafeInteger(shipment.startDay) && shipment.startDay >= 1 && shipment.startDay <= input.day
+      && shipment.startDay > shipmentLegacyThroughDay, 'shipment day');
+    const town = TOWN_BY_ID.get(townId);
+    const event = scheduledTownEvent({ seed: input.seed, day: shipment.startDay }, town);
+    assert(event?.type === 'armorer-shipment' && event.startDay === shipment.startDay, 'shipment schedule');
+    const plan = shipmentPlan(town, SETTLEMENTS, event);
+    assert(shipment.originId === plan.originId && ['en-route', 'under-attack', 'delivered', 'lost'].includes(shipment.status), 'shipment route');
+    assert(shipment.attackerId === null && shipment.attackerSpawnCycle === null && shipment.attackHour === null
+      || BAND_BY_ID.has(shipment.attackerId) && validCount(shipment.attackerSpawnCycle)
+        && shipment.attackerSpawnCycle <= 1000000
+        && shipment.attackHour === plan.departureHour + 13 + townEventHash(`${input.seed}:${townId}:${shipment.startDay}:attack-time`) % 4,
+    'shipment attacker');
+    const now = worldHours(input);
+    if (shipment.status === 'en-route') assert(shipment.resolvedHour === null && now < plan.arrivalHour
+      && (shipment.attackHour === null || now < shipment.attackHour), 'shipment travel');
+    if (shipment.status === 'under-attack') assert(shipment.attackerId !== null && shipment.resolvedHour === null
+      && now >= shipment.attackHour && now < shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS
+      && bandSpawnCycle(input, shipment.attackerId) === shipment.attackerSpawnCycle, 'shipment threat');
+    if (shipment.status === 'delivered') assert(shipment.attackerId === null
+      && shipment.resolvedHour === plan.arrivalHour && now >= shipment.resolvedHour, 'shipment delivery');
+    if (shipment.status === 'lost') assert(shipment.attackerId !== null
+      && shipment.resolvedHour === shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS
+      && now >= shipment.resolvedHour, 'shipment loss');
+  }
   const gameOver = input.gameOver === undefined ? false : input.gameOver;
   assert(typeof gameOver === 'boolean', 'game over');
   assert(Array.isArray(input.party) && input.party.length <= MAX_COMPANY_SIZE && (input.party.length > 0 || gameOver), 'party');
@@ -2296,9 +2498,12 @@ export function validateSave(input) {
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const destinationAction = input.destinationAction ?? null;
   if (destinationAction !== null) {
-    assert(recordObject(destinationAction) && ['town', 'camp'].includes(destinationAction.type), 'destination action');
-    const target = destinationAction.type === 'town' ? TOWN_BY_ID.get(destinationAction.id) : getCampSites(input).find(site => site.id === destinationAction.id);
-    assert(target && input.destination && pursuit === null && !input.battle && input.destination.x === target.x && input.destination.y === target.y, 'destination action target');
+    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan'].includes(destinationAction.type), 'destination action');
+    const target = destinationAction.type === 'town' ? TOWN_BY_ID.get(destinationAction.id)
+      : destinationAction.type === 'camp' ? getCampSites(input).find(site => site.id === destinationAction.id)
+      : getCaravans(input).find(caravan => caravan.id === destinationAction.id && (caravan.status === 'en-route' || caravan.status === 'under-attack'));
+    assert(target && input.destination && pursuit === null && !input.battle
+      && (destinationAction.type === 'caravan' || input.destination.x === target.x && input.destination.y === target.y), 'destination action target');
     if (destinationAction.type === 'camp') assert(!target.cleared && destinationAction.generation === target.generation, 'destination camp generation');
   }
   const battle = validateBattle(input.battle, input.party, input);
@@ -2360,10 +2565,15 @@ export function validateSave(input) {
         equipment: { ...defaultArmoryStock({ seed: input.seed, day: market.day }, town), ...market.equipment },
         supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])),
         armoryCycle: market.armoryCycle ?? armoryCycle(market.day),
-        appliedEventId: market.appliedEventId === undefined ? (marketEvent?.type === 'armorer-shipment' ? marketEvent.id : null) : market.appliedEventId,
+        appliedEventId: market.appliedEventId === undefined
+          ? (marketEvent?.type === 'armorer-shipment' && (input.shipments === undefined
+            || shipments[id]?.status === 'delivered' && shipments[id].startDay === marketEvent.startDay) ? marketEvent.id : null)
+          : market.appliedEventId,
         buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: entry.condition })),
       }];
     })),
+    shipments: Object.fromEntries(Object.entries(shipments).map(([id, shipment]) => [id, { ...shipment }])),
+    shipmentLegacyThroughDay,
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
     bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil, spawnCycle: entry.spawnCycle ?? 1 }])), pursuit, tactic,
     battle, gameOver,

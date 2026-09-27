@@ -1,4 +1,4 @@
-import { SETTLEMENTS, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, huntComplete, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy } from './engine.js';
+import { SETTLEMENTS, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, huntComplete, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands } from './engine.js';
 import { portraitHTML, itemImage } from './portraits.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -13,9 +13,24 @@ export function townEventHTML(state, townId, compact=false) {
   return `<section class="town-event ${compact?'compact':''}"><div class="town-event-heading"><strong>${esc(event.name)}</strong><small>Through day ${event.endDay} · ${event.daysRemaining} ${event.daysRemaining===1?'day':'days'} left</small></div>${compact?'':`<p>${esc(event.description)}</p>`}<p class="town-event-effects">${event.effects.map(esc).join(' · ')}</p></section>`;
 }
 
+const caravanStatus = { 'en-route':'On the road', 'under-attack':'Under attack', delivered:'Delivered', lost:'Shipment lost' };
+const caravanActive = caravan => caravan.status==='en-route'||caravan.status==='under-attack';
+const hoursText = hours => `${Math.max(0,Math.ceil(hours*10)/10)}h`;
+
+export function caravanSidebarHTML(state, caravan) {
+  const origin=town(caravan.originId), destination=town(caravan.destinationId), attacker=getRoamingBands(state).find(band=>band.id===caravan.attackerId);
+  return `<div class="location-header caravan-location"><div class="eyebrow">Friendly armory caravan</div><h2>${esc(caravan.name)}</h2><img class="caravan-portrait" src="./assets/world/figure_player_trader.png" alt=""><p class="caravan-status ${caravan.status}">${caravanStatus[caravan.status]}</p></div><p class="caravan-route">${esc(origin?.name)} &rarr; ${esc(destination?.name)}</p><p class="location-description">${esc(caravan.description)}</p>${caravanActive(caravan)?`<div class="caravan-report"><p><strong>Arrival in ${hoursText(caravan.etaHours)}</strong></p>${caravan.status==='under-attack'?`<p class="caravan-danger">${esc(attacker?.name||'Brigands')} are closing in. Defeat them within ${hoursText(caravan.attackHoursRemaining)} to save the shipment.</p>`:attacker?`<p class="caravan-danger">${esc(attacker.name)} are targeting this wagon.</p>`:'<p>No band is attacking this caravan.</p>'}</div><div class="stack">${attacker?`<button class="primary" data-caravan-attacker="${attacker.id}">Pursue ${esc(attacker.name)}</button>`:''}<button class="${attacker?'':'primary'}" data-follow-caravan="${caravan.id}">Follow caravan</button><button data-event-town="${caravan.destinationId}">Show destination</button><button data-action="market-news">Market news</button></div><p class="caravan-note">Clear the raiders to keep the shipment moving. Time pauses during battle.</p>`:`<div class="stack"><button data-event-town="${caravan.destinationId}">Show ${esc(destination?.name)} on map</button><button data-action="market-news">Market news</button></div>`}`;
+}
+
+export function caravanListHTML(state, compact=false) {
+  const caravans=getCaravans(state), visible=compact?caravans.filter(caravanActive):caravans;
+  if(!visible.length)return '';
+  return `<section class="caravan-list ${compact?'compact':''}"><h3>${compact?'Caravans on the road':'Armory caravans'}</h3>${visible.map(caravan=>`<button class="caravan-listing ${caravan.status}" data-select-caravan="${caravan.id}"><img src="./assets/world/figure_player_trader.png" alt=""><span><strong>${esc(town(caravan.destinationId)?.name)}</strong><small>${caravanStatus[caravan.status]}${caravan.status==='under-attack'?` · ${hoursText(caravan.attackHoursRemaining)} to intervene`:caravanActive(caravan)?` · ${hoursText(caravan.etaHours)} to arrive`:''}</small></span><span aria-hidden="true">&rarr;</span></button>`).join('')}</section>`;
+}
+
 export function marketNewsHTML(state) {
   const events=getTownEconomy(state).events;
-  return `<section class="market-news"><p class="market-news-intro">Word from the trade roads. These are current conditions; prices may change before you arrive. City armorer shipments return every 12 days. Better equipment rotates weekly and can sell out.</p><div class="market-news-grid">${events.map(event=>`<article class="market-news-card"><div class="eyebrow">${esc(event.town.kind)} · ${esc(event.town.name)}</div>${townEventHTML(state,event.town.id)}<button data-event-town="${event.town.id}">Show ${esc(event.town.name)} on map</button></article>`).join('')||'<p>The markets are quiet today. New local events arrive throughout the fortnight.</p>'}</div><p class="market-news-note">Completed courier jobs have a 50% chance to bring one extra piece of equipment to the destination market. Check the chronicle for arrivals.</p></section>`;
+  return `<section class="market-news"><p class="market-news-intro">Word from the trade roads. City armorer caravans depart every 12 days. Clear raiders to help them arrive; a lost shipment leaves a temporary shortage where equipment sells for more. Prices may change before you reach town.</p>${caravanListHTML(state)}<div class="market-news-grid">${events.map(event=>`<article class="market-news-card"><div class="eyebrow">${esc(event.town.kind)} · ${esc(event.town.name)}</div>${townEventHTML(state,event.town.id)}<button data-event-town="${event.town.id}">Show ${esc(event.town.name)} on map</button></article>`).join('')||'<p>The markets are quiet today. New local events arrive throughout the fortnight.</p>'}</div><p class="market-news-note">Completed courier jobs have a 50% chance to bring one extra piece of equipment to the destination market. Check the chronicle for arrivals.</p></section>`;
 }
 
 const bonusText = bonuses => Object.entries(bonuses || {}).map(([key,value])=>`${value>0?'+':''}${value} ${statLabels[key] || key}`).join(' · ');

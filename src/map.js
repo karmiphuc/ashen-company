@@ -1,4 +1,4 @@
-import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands } from './engine.js';
+import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getCaravans } from './engine.js';
 
 const names = [
   'world_grass_01', 'world_grass_02', 'world_grass_03', 'world_grass_04',
@@ -90,6 +90,11 @@ function townArt(town) {
 function bands() {
   const value = state ? getRoamingBands(state) : [];
   return Array.isArray(value) ? value : [];
+}
+
+function caravans() {
+  const value = state ? getCaravans(state) : [];
+  return Array.isArray(value) ? value.filter(item => item.status === 'en-route' || item.status === 'under-attack') : [];
 }
 
 function bandCount(band) {
@@ -298,11 +303,17 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const town = SETTLEMENTS.find(item => Math.hypot(item.x - world.x, item.y - world.y) < 48);
       const camp = getCampSites(state).find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
       const band = bands().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
-      const target = band ? { type: 'band', id: band.id, entity: { ...band, kind: 'band' } }
+      const caravan = caravans().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 24);
+      const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
+      const existingTarget = band ? { type: 'band', id: band.id, entity: { ...band, kind: 'band' } }
         : camp ? { type: 'camp', id: camp.id, entity: camp }
           : town ? { type: 'town', id: town.id, entity: town }
             : null;
-      if (target?.type === 'band' && campCallback) campCallback(target.entity);
+      const existingDistance = existingTarget ? Math.hypot(existingTarget.entity.x - world.x, existingTarget.entity.y - world.y) : Infinity;
+      const target = caravan && caravanDistance <= existingDistance
+        ? { type: 'caravan', id: caravan.id, entity: caravan }
+        : existingTarget;
+      if ((target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
       else if (!target) onTravel(world.x, world.y);
@@ -372,7 +383,44 @@ function draw() {
     context.restore();
   });
 
-  bands().forEach((band, index) => {
+  const activeBands = bands();
+  caravans().forEach(caravan => {
+    const chosen = selection === caravan.id;
+    const underAttack = caravan.status === 'under-attack';
+    const origin = SETTLEMENTS.find(town => town.id === caravan.originId);
+    const destination = SETTLEMENTS.find(town => town.id === caravan.destinationId);
+    context.save();
+    if (chosen && origin && destination) {
+      context.beginPath(); context.moveTo(origin.x, origin.y); context.lineTo(destination.x, destination.y);
+      context.strokeStyle = '#eed28a99'; context.lineWidth = 2 / camera.zoom; context.setLineDash([7 / camera.zoom, 8 / camera.zoom]); context.stroke(); context.setLineDash([]);
+    }
+    const attacker = underAttack ? activeBands.find(band => band.id === caravan.attackerId) : null;
+    if (attacker) {
+      const angle = Math.atan2(caravan.y - attacker.y, caravan.x - attacker.x);
+      const tipX = caravan.x - Math.cos(angle) * 20, tipY = caravan.y - Math.sin(angle) * 14;
+      context.beginPath(); context.moveTo(attacker.x, attacker.y); context.lineTo(tipX, tipY);
+      context.strokeStyle = '#d85d50'; context.lineWidth = 2.5 / camera.zoom; context.setLineDash([6 / camera.zoom, 5 / camera.zoom]); context.stroke(); context.setLineDash([]);
+      context.beginPath(); context.moveTo(tipX, tipY); context.lineTo(tipX - Math.cos(angle - .55) * 8, tipY - Math.sin(angle - .55) * 8);
+      context.lineTo(tipX - Math.cos(angle + .55) * 8, tipY - Math.sin(angle + .55) * 8); context.closePath();
+      context.fillStyle = '#d85d50'; context.fill();
+    }
+    context.beginPath(); context.ellipse(caravan.x, caravan.y + 8, 20, 7, 0, 0, Math.PI * 2);
+    context.fillStyle = '#14201688'; context.fill();
+    if (chosen || underAttack) {
+      context.beginPath(); context.ellipse(caravan.x, caravan.y + 4, chosen ? 27 : 24, chosen ? 11 : 9, 0, 0, Math.PI * 2);
+      context.strokeStyle = underAttack ? '#e46c5e' : '#f1d380'; context.lineWidth = 2 / camera.zoom; context.stroke();
+    }
+    sprite(context, 'figure_player_trader', caravan.x, caravan.y, 34, .72);
+    const eta = Math.max(0, Math.ceil(Number(caravan.etaHours) || 0));
+    const label = underAttack ? `${caravan.name} · Under attack${Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
+      : `${caravan.name} · ${eta}h`;
+    context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913dd';
+    context.strokeText(label, caravan.x, caravan.y + 25);
+    context.fillStyle = underAttack ? '#f08d7e' : chosen ? '#f0d998' : '#e3d8b7'; context.fillText(label, caravan.x, caravan.y + 25);
+    context.restore();
+  });
+
+  activeBands.forEach((band, index) => {
     const count = bandCount(band), selected = selection === band.id, hunted = state.pursuit === band.id;
     const art = ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
     context.save();

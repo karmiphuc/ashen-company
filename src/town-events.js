@@ -80,6 +80,7 @@ export function townEventModifiers(event) {
     case 'trade-caravan': return { goodsBuy: .9, goodsStock: 4 };
     case 'market-fair': return { goodsSell: 1.15 };
     case 'armorer-shipment': return { equipmentBuy: .9 };
+    case 'arms-shortage': return { equipmentBuy: 1.2, equipmentSell: .9 };
     case 'militia-muster': return { equipmentBuy: 1.15, militiaReserve: true };
     default: return {};
   }
