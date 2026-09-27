@@ -4,7 +4,7 @@ import {
   createGame, getCampSites, getContractOffers, acceptContract, travelTo, tick,
   startBattle, advanceBattle, resolveBattle, retreatBattle, finishBattle,
   getCompanyStats, getMarket, buyItem, buySupplies, equipItem, unequipItem,
-  camp, forage, trainAttribute, validateSave,
+  camp, forage, getLevelUp, trainAttributes, validateSave,
 } from '../src/engine.js';
 
 function approach(state, site) {
@@ -184,7 +184,7 @@ test('shields raise defense while armor absorbs damage in a real battle', () => 
   assert.ok(equipped.battle.units.some(unit => unit.side === 'company' && (unit.bodyArmor < unit.maxBodyArmor || unit.headArmor < unit.maxHeadArmor)));
 });
 
-test('camp spends medicine and tools, leveling grants a trainable attribute', () => {
+test('camp spends medicine and tools, leveling offers three rolled attributes', () => {
   const state = createGame(1);
   const captain = state.party[0];
   captain.hp = 50;
@@ -208,17 +208,21 @@ test('camp spends medicine and tools, leveling grants a trainable attribute', ()
   finishBattle(state);
   const trained = state.party.find(person => person.trainingPoints > 0);
   assert.ok(trained);
+  const levelUp = getLevelUp(trained);
   const oldSkill = getCompanyStats(trained).meleeSkill;
-  assert.equal(trainAttribute(state, trained.id, 'meleeSkill').ok, true);
-  assert.equal(getCompanyStats(trained).meleeSkill, oldSkill + 3);
+  const oldHp = trained.hp;
+  assert.equal(trainAttributes(state, trained.id, ['meleeSkill', 'maxHp', 'resolve']).ok, true);
+  assert.equal(getCompanyStats(trained).meleeSkill, oldSkill + levelUp.rolls.meleeSkill);
+  assert.equal(trained.hp, oldHp + levelUp.rolls.maxHp);
   assert.equal(trained.trainingPoints, 0);
+  assert.equal(getLevelUp(trained), null);
   assert.deepEqual(validateSave(state), state);
 });
 
 test('old saves gain defaults while malformed battle and resource records are rejected', () => {
   const old = createGame(7);
   for (const key of ['inventoryCondition', 'supplies', 'camps', 'battle', 'gameOver']) delete old[key];
-  for (const person of old.party) for (const key of ['level', 'xp', 'trainingPoints', 'attributes', 'armorDurability']) delete person[key];
+  for (const person of old.party) for (const key of ['level', 'xp', 'trainingPoints', 'pendingLevelUps', 'attributes', 'armorDurability']) delete person[key];
   const imported = validateSave(old);
   assert.deepEqual(imported.supplies, { tools: 8, medicine: 5, ammo: 16 });
   assert.equal(imported.party[0].armorDurability.body, getCompanyStats(imported.party[0]).maxBodyArmor);

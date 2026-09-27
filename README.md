@@ -9,7 +9,7 @@ Play at **https://karmiphuc.github.io/ashen-company/**. No account, server, exte
 - Drag the map to pan and pinch to zoom. Select a settlement, hostile camp, or roaming band, then travel or pursue it from the sidebar. Open ground can be tapped to set a destination.
 - Visit settlements to buy and sell equipment, trade goods, food, and campaign supplies; recruit up to 12 brothers; and take courier, supply, or brigand-hunt contracts.
 - The world has eight settlements, three fixed brigand camps, and four small hostile bands patrolling authored routes. Bands contain one or two brigands, can be pursued across the map, and return 48 hours after defeat. The map does not simulate factions or generate a changing campaign.
-- Inspect the company to equip armor, helmets, weapons, and shields. The armory now includes a padded gambeson, reinforced mail, bascinet, bludgeon, rondel dagger, billhook, and light crossbow. Head and body armor have separate durability. Backgrounds affect a brother's starting combat stats; battle experience grants levels and attribute increases. There are no perk trees yet.
+- Inspect the company to equip armor, helmets, weapons, and shields. The armory now includes a padded gambeson, reinforced mail, bascinet, bludgeon, rondel dagger, billhook, and light crossbow. Head and body armor have separate durability. Backgrounds affect a brother's starting combat stats. On level-up, choose three different attributes from eight; each has a saved +1 to +5 roll. You can defer the choice, and reloading preserves the same rolls. There are no perk trees yet.
 - Six deterministic face profiles vary head, hair, beard, and body. The same face stays with its brother as equipment changes, and helmets align with the face and meet the armor at the neck.
 - Tap equipment in the company slots or stash, marketplace, or battle spoils to inspect its role, exact combat stats, and handling notes. All 25 items have their own descriptions. Buy, sell, equip, and stow actions are available from the detail view; loot remains unclaimed until you choose to take it.
 - Engage a camp or roaming band for an automatic battle. Combatants act in initiative order; they route around allies, archers try to keep their distance, and fatigue prompts recovery. Choose Offense to advance, Defense to hold the line, or Thin them out to focus attacks. Use pause, speed, or retreat; you do not select each brother's moves or attacks. Melee attacks swing or thrust, ranged fighters aim and send an arrow or bolt, and hits show armor/health loss. Hitpoints, head/body armor, fatigue, morale, and ammunition affect the battle. This remains a simplified approximation of Battle Brothers' tactical combat, not its full ruleset.
@@ -30,7 +30,7 @@ These are the intended Safari steps; installation and airplane-mode play have no
 
 - The world has four authored roaming bands on fixed routes. They do not form roaming armies, factions, random encounters, or a procedural campaign.
 - Battles run on a small fixed hex field with simplified automatic behavior. Company tactics offer three broad AI orders, but there are no manual unit moves, full Battle Brothers skill trees, perks, or its complete combat simulation.
-- Attribute increases are available after level-ups, but traits and perk progression are not implemented.
+- Level-ups use a three-of-eight attribute chooser with saved rolls. Traits and perk progression are not implemented.
 - iPad Safari installation, airplane-mode launch, and save retention have not been verified on a physical iPad.
 
 ## Development

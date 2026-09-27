@@ -121,7 +121,7 @@ const SUPPLY_INFO = {
   medicine: { name: 'Medicine', buyPrice: 30, stock: 6 },
   ammo: { name: 'Ammunition', buyPrice: 4, stock: 30 },
 };
-const TRAINING_GAINS = { maxHp: 5, meleeSkill: 3, rangedSkill: 3, meleeDefense: 2, rangedDefense: 2, maxFatigue: 5, initiative: 4, resolve: 4 };
+const ATTRIBUTES = ['maxHp', 'meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve'];
 const TACTICS = ['offense', 'defense', 'focus'];
 
 function hashSeed(seed) {
@@ -130,6 +130,10 @@ function hashSeed(seed) {
   let hash = 2166136261;
   for (const char of seed) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return hash >>> 0;
+}
+
+function levelRolls(seed, level) {
+  return Object.fromEntries(ATTRIBUTES.map(key => [key, 1 + hashSeed(`${seed}:${level}:${key}`) % 5]));
 }
 
 function result(ok, message) { return { ok, message }; }
@@ -146,12 +150,21 @@ function personById(state, id) { return state.party.find(person => person.id ===
 function armorMaximum(itemId) { return ITEM_BY_ID.get(itemId)?.armor ?? 0; }
 function itemCondition(itemId) { return ['armor', 'helmet'].includes(ITEM_BY_ID.get(itemId)?.slot) ? armorMaximum(itemId) : null; }
 function normalizeMember(person) {
+  const level = person.level ?? 1;
+  const unspent = person.trainingPoints ?? 0;
+  const pendingLevelUps = person.pendingLevelUps === undefined
+    ? Array.from({ length: unspent }, (_, index) => {
+      const earnedLevel = level - unspent + index + 1;
+      return { level: earnedLevel, rolls: levelRolls(person.seed, earnedLevel) };
+    })
+    : person.pendingLevelUps.map(entry => ({ level: entry.level, rolls: { ...entry.rolls } }));
   return {
     ...person,
-    level: person.level ?? 1,
+    level,
     xp: person.xp ?? 0,
-    trainingPoints: person.trainingPoints ?? 0,
-    attributes: { ...Object.fromEntries(Object.keys(TRAINING_GAINS).map(key => [key, 0])), ...person.attributes },
+    trainingPoints: pendingLevelUps.length,
+    pendingLevelUps,
+    attributes: { ...Object.fromEntries(ATTRIBUTES.map(key => [key, 0])), ...person.attributes },
     armorDurability: {
       body: person.armorDurability?.body ?? armorMaximum(person.equipment.armor),
       head: person.armorDurability?.head ?? armorMaximum(person.equipment.helmet),
@@ -183,7 +196,7 @@ export function getCompanyStats(person) {
     level,
     xp: person.xp ?? 0,
     nextLevelXp: level * 50,
-    trainingPoints: person.trainingPoints ?? 0,
+    trainingPoints: person.pendingLevelUps?.length ?? person.trainingPoints ?? 0,
     dailyWage: 5 + level - 1,
     bodyArmor: person.armorDurability?.body ?? maxBodyArmor,
     headArmor: person.armorDurability?.head ?? maxHeadArmor,
@@ -720,19 +733,32 @@ export function recruit(state) {
   return result(true, message);
 }
 
-export function trainAttribute(state, personId, attribute) {
+export function getLevelUp(person) {
+  const next = person?.pendingLevelUps?.[0];
+  return next ? { level: next.level, rolls: { ...next.rolls } } : null;
+}
+
+export function trainAttributes(state, personId, keys) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   const person = personById(state, personId);
   if (!person) return result(false, 'Unknown company member.');
-  if (!Object.hasOwn(TRAINING_GAINS, attribute)) return result(false, 'Unknown attribute.');
-  if (person.trainingPoints < 1) return result(false, 'This member has no training points.');
-  person.trainingPoints -= 1;
-  person.attributes[attribute] += TRAINING_GAINS[attribute];
-  if (attribute === 'maxHp') person.hp += TRAINING_GAINS.maxHp;
-  const message = `${person.name} trained ${attribute} by ${TRAINING_GAINS[attribute]}.`;
+  const next = person.pendingLevelUps?.[0];
+  if (!next) return result(false, 'This member has no level-up to spend.');
+  if (!Array.isArray(keys) || keys.length !== 3 || new Set(keys).size !== 3 || !keys.every(key => ATTRIBUTES.includes(key))) {
+    return result(false, 'Choose three different attributes.');
+  }
+  for (const key of keys) person.attributes[key] += next.rolls[key];
+  if (keys.includes('maxHp')) person.hp += next.rolls.maxHp;
+  person.pendingLevelUps.shift();
+  person.trainingPoints = person.pendingLevelUps.length;
+  const message = `${person.name} trained three attributes at level ${next.level}.`;
   record(state, message);
   return result(true, message);
+}
+
+export function trainAttribute() {
+  return result(false, 'Choose three different attributes together to spend a level-up.');
 }
 
 export function camp(state) {
@@ -1185,8 +1211,10 @@ export function finishBattle(state) {
     while (person.xp >= person.level * 50 && person.level < 20) {
       person.xp -= person.level * 50;
       person.level += 1;
-      person.trainingPoints += 1;
+      person.pendingLevelUps.push({ level: person.level, rolls: levelRolls(person.seed, person.level) });
     }
+    if (person.level === 20) person.xp = Math.min(person.xp, person.level * 50 - 1);
+    person.trainingPoints = person.pendingLevelUps.length;
     survivors.push(person);
   }
   state.party = survivors;
@@ -1366,11 +1394,26 @@ export function validateSave(input) {
     assert(person.attributes === undefined || recordObject(person.attributes), 'person attributes');
     assert(person.armorDurability === undefined || recordObject(person.armorDurability), 'person armor durability');
     assert(person.level !== null && person.xp !== null && person.trainingPoints !== null, 'person progress');
+    assert(person.level === undefined || Number.isSafeInteger(person.level) && person.level >= 1 && person.level <= 20, 'person level');
+    assert(person.trainingPoints === undefined || validCount(person.trainingPoints) && person.trainingPoints <= 20, 'person training points');
+    const earnedLevel = person.level ?? 1;
+    if (person.pendingLevelUps === undefined) {
+      assert((person.trainingPoints ?? 0) <= earnedLevel - 1, 'legacy training points');
+    } else {
+      const pending = person.pendingLevelUps;
+      assert(Array.isArray(pending) && pending.length <= earnedLevel - 1 && (person.trainingPoints === undefined || person.trainingPoints === pending.length), 'pending level-ups');
+      for (let index = 0; index < pending.length; index++) {
+        const entry = pending[index];
+        const level = earnedLevel - pending.length + index + 1;
+        assert(recordObject(entry) && Object.keys(entry).length === 2 && entry.level === level && recordObject(entry.rolls), 'pending level');
+        assert(Object.keys(entry.rolls).length === ATTRIBUTES.length && ATTRIBUTES.every(key => Number.isSafeInteger(entry.rolls[key]) && entry.rolls[key] >= 1 && entry.rolls[key] <= 5 && entry.rolls[key] === levelRolls(person.seed, level)[key]), 'level rolls');
+      }
+    }
     const member = normalizeMember(person);
     assert(Number.isSafeInteger(member.level) && member.level >= 1 && member.level <= 20, 'person level');
     assert(validCount(member.xp) && member.xp < member.level * 50 && validCount(member.trainingPoints) && member.trainingPoints <= 20, 'person experience');
-    assert(recordObject(person.attributes ?? {}) && Object.keys(person.attributes ?? {}).every(key => Object.hasOwn(TRAINING_GAINS, key)), 'person attributes');
-    for (const key of Object.keys(TRAINING_GAINS)) assert(validCount(member.attributes[key]) && member.attributes[key] <= 1000, `person ${key}`);
+    assert(recordObject(person.attributes ?? {}) && Object.keys(person.attributes ?? {}).every(key => ATTRIBUTES.includes(key)), 'person attributes');
+    for (const key of ATTRIBUTES) assert(validCount(member.attributes[key]) && member.attributes[key] <= 1000, `person ${key}`);
     assert(validCount(member.armorDurability.body) && member.armorDurability.body <= armorMaximum(person.equipment.armor), 'body durability');
     assert(validCount(member.armorDurability.head) && member.armorDurability.head <= armorMaximum(person.equipment.helmet), 'head durability');
     assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
@@ -1409,6 +1452,7 @@ export function validateSave(input) {
     hp: person.hp, morale: person.morale,
     equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot]])),
     level: person.level, xp: person.xp, trainingPoints: person.trainingPoints,
+    pendingLevelUps: person.pendingLevelUps,
     attributes: person.attributes ? { ...person.attributes } : undefined,
     armorDurability: person.armorDurability ? { body: person.armorDurability.body, head: person.armorDurability.head } : undefined,
   }));
