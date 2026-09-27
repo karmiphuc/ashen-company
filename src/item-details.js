@@ -1,3 +1,5 @@
+import { getItem } from './engine.js';
+
 const ROLES = {
   'patched-coat': 'Very light body cover for a new recruit; its 20 armor wears out quickly.',
   'quilted-jack': 'Affordable early body armor with more staying power than a patched coat and little fatigue load.',
@@ -29,9 +31,11 @@ const ROLES = {
 function signed(value) { return value > 0 ? `+${value}` : String(value); }
 
 export function getItemDetails(item, condition) {
-  if (!item || !Object.hasOwn(ROLES, item.id)) return null;
+  const base = item?.baseId ? getItem(item.baseId) : item;
+  if (!item || !base || !Object.hasOwn(ROLES, base.id)) return null;
   const stats = [];
   const notes = [];
+  const bonuses = item.rarity === 'famed' && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;
     stats.push(
@@ -77,5 +81,16 @@ export function getItemDetails(item, condition) {
     notes.push('Armor can still let reduced health damage through while durability remains.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
   }
-  return { description: item.description, role: ROLES[item.id], stats, notes };
+  const role = item.rarity === 'famed'
+    ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with the ordinary version.`
+    : ROLES[base.id];
+  return {
+    description: item.description,
+    role,
+    rarity: item.rarity,
+    baseName: item.baseId ? base.name : null,
+    bonuses,
+    stats,
+    notes,
+  };
 }

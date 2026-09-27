@@ -89,13 +89,14 @@ function visual(item) {
   return String(item?.visual || '').toLowerCase();
 }
 
-function layer(name, spec) {
+function layer(name, spec, item) {
   if (!spec) return `<span data-layer="${name}" class="bb-layer bb-layer-${name}"></span>`;
   const [file, left, top, transform, transformOrigin] = spec;
   const origin = transformOrigin ?? 'center';
   const weaponStyle = name === 'weapon' && transform ? `--layer-rest:${transform};--layer-origin:${origin};--weapon-rest:${transform};--weapon-origin:${origin};` : '';
   const transformStyle = transform ? `${weaponStyle}transform:${transform};transform-origin:${origin};` : '';
-  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none">`;
+  const famed = item?.rarity === 'famed' ? ' bb-layer-famed' : '';
+  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none">`;
 }
 
 function bodyLayer(file, armored) {
@@ -129,13 +130,13 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
       <span class="bb-portrait-composition" style="display:block;position:absolute;left:0;top:${compositionTop}px;width:104px;height:142px">
         ${bodyLayer(appearance.body, Boolean(armor))}
-        ${layer('armor', armor)}
+        ${layer('armor', armor, equipment.armor)}
         <img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:0;${faceClip}max-width:none;pointer-events:none">
         ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:25px;top:0;max-width:none;pointer-events:none">`}
         ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none">`}
-        ${layer('helmet', helmet)}
-        ${layer('shield', PORTRAIT.shield[visual(equipment.shield)])}
-        ${layer('weapon', PORTRAIT.weapon[visual(equipment.weapon)])}
+        ${layer('helmet', helmet, equipment.helmet)}
+        ${layer('shield', PORTRAIT.shield[visual(equipment.shield)], equipment.shield)}
+        ${layer('weapon', PORTRAIT.weapon[visual(equipment.weapon)], equipment.weapon)}
       </span>
     </span>
   </span>`;
@@ -146,7 +147,8 @@ export const portraitSVG = portraitHTML;
 
 /** Return the locally packaged inventory icon for an engine item. */
 export function itemImage(item) {
-  return ITEM_IMAGES[item?.id] ? `${ITEM_ROOT}${ITEM_IMAGES[item.id]}` : null;
+  const id = item?.baseId || item?.id;
+  return ITEM_IMAGES[id] ? `${ITEM_ROOT}${ITEM_IMAGES[id]}` : null;
 }
 
 export default portraitHTML;

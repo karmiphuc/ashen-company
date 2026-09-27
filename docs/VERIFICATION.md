@@ -1,6 +1,16 @@
-# Verification - version 0.8, 2026-09-27
+# Verification - version 0.9, 2026-09-27
 
-## v0.8 checks
+## v0.9 checks
+
+The full automated suite passes 89 tests, including ten new cases for famed equipment and patrol variety. Offline asset/cache consistency and `git diff --check` pass. Checks cover malformed famed IDs, real camp drops, no reload/retreat reroll, legacy battle migration, item inspection, equipment, damaged armor, sell/buyback, combat saves, and stable bounded patrol rosters.
+
+Across 15,000 generated camps, observed famed drop rates were approximately 14.2%, 24.6%, and 39.8% for the three difficulty tiers (targets 15%, 25%, and 40%). An additional engine check exercised the four beginner bands across four spawn cycles and 100 seeds each: all fights were won, with 99-100 complete rosters surviving per batch. Duplicate famed armor instances retained their distinct 10/57 durability through sale, reload, and buyback.
+
+At 1024x768, a naturally generated seed-12 camp victory awarded a Grimwolf Arming Sword with 22-33 damage, +13 hit modifier, and 115% armor damage. The reward could be inspected before claiming, equipped, and reloaded. A separate equipment fixture verified gold silhouette outlines on stash, worn items, and equipped-slot icons; boosted body/head protection was 138/210, and the famed shield raised both defenses to 20. Selling the named shield for 144 crowns and buying it back for 288 preserved its name and bonuses.
+
+With the local server stopped and direct HTTP requests failing, a fresh browser tab restored the same famed loadout, 4,856-crown balance, and effective stats from cache. Equipping Oathkeeper Light Crossbow offline persisted across another reload. Camp scouting showed its 15% famed-item chance offline. No JavaScript errors occurred in these flows. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+## Historical v0.8 checks
 
 The full automated suite passes 79 tests. The offline asset list and generated service-worker cache are built consistently, and `git diff --check` passes.
 

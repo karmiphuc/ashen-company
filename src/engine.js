@@ -100,6 +100,52 @@ const ROAMING_BANDS = Object.freeze([
 ]);
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
+const FAMED_ID = /^famed:([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
+const FAMED_NAMES = ['Ashen', 'Blackthorn', 'Dawnward', 'Grimwolf', 'Ironbound', 'Oathkeeper', 'Ravenmark', 'Stormborn', 'Thornheart', 'Wolfguard'];
+
+export function createFamedItemId(baseId, seed) {
+  if (!ITEM_BY_ID.has(baseId) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
+  return `famed:${baseId}:${seed}`;
+}
+
+export function getItem(id) {
+  const base = ITEM_BY_ID.get(id);
+  if (base) return base;
+  if (typeof id !== 'string' || id.length > 80) return undefined;
+  const match = FAMED_ID.exec(id);
+  if (!match) return undefined;
+  const original = ITEM_BY_ID.get(match[1]);
+  const seed = Number(match[2]);
+  if (!original || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
+  const roll = shift => (seed >>> shift) & 15;
+  const bonuses = [];
+  const item = { ...original, id, baseId: original.id, rarity: 'famed' };
+  if (original.slot === 'armor' || original.slot === 'helmet') {
+    const gain = Math.max(8, Math.round(original.armor * (.15 + roll(0) / 100)));
+    item.armor = Math.min(500, original.armor + gain);
+    item.fatigue = Math.max(0, (original.fatigue ?? 0) - (1 + roll(4) % 3));
+    bonuses.push({ label: 'Protection', value: `+${item.armor - original.armor}` });
+    if (item.fatigue < original.fatigue) bonuses.push({ label: 'Fatigue cost', value: `-${original.fatigue - item.fatigue}` });
+  } else if (original.slot === 'shield') {
+    item.defense = (original.defense ?? 0) + 2 + roll(0) % 4;
+    item.fatigue = Math.max(0, (original.fatigue ?? 0) - (1 + roll(4) % 3));
+    bonuses.push({ label: 'Melee and ranged defense', value: `+${item.defense - original.defense}` });
+    if (item.fatigue < original.fatigue) bonuses.push({ label: 'Fatigue cost', value: `-${original.fatigue - item.fatigue}` });
+  } else {
+    const low = 2 + roll(0) % 5;
+    const high = low + 1 + roll(4) % 3;
+    item.damageMin = original.damageMin + low;
+    item.damageMax = original.damageMax + high;
+    item.hitBonus = (original.hitBonus ?? 0) + 2 + roll(8) % 7;
+    item.armorDamage = Math.round(((original.armorDamage ?? 1) + .1 + roll(12) % 3 * .05) * 100) / 100;
+    bonuses.push({ label: 'Damage', value: `+${low} to +${high}` }, { label: 'Hit modifier', value: `+${item.hitBonus - (original.hitBonus ?? 0)}` }, { label: 'Armor damage', value: `+${Math.round((item.armorDamage - (original.armorDamage ?? 1)) * 100)}%` });
+  }
+  item.price = Math.min(5000, Math.round(original.price * 2.4 + (original.slot === 'armor' || original.slot === 'helmet' ? item.armor - original.armor : 0)));
+  item.name = `${FAMED_NAMES[seed % FAMED_NAMES.length]} ${original.name}`;
+  item.description = `A rare, finely worked ${original.name.toLowerCase()}. ${original.description}`;
+  item.bonuses = Object.freeze(bonuses.map(bonus => Object.freeze(bonus)));
+  return Object.freeze(item);
+}
 const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet']);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
@@ -171,8 +217,8 @@ function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function inBounds(x, y) { return Number.isFinite(x) && Number.isFinite(y) && x >= BOUNDS.minX && x <= BOUNDS.maxX && y >= BOUNDS.minY && y <= BOUNDS.maxY; }
 function clamped(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function personById(state, id) { return state.party.find(person => person.id === id); }
-function armorMaximum(itemId) { return ITEM_BY_ID.get(itemId)?.armor ?? 0; }
-function itemCondition(itemId) { return ['armor', 'helmet'].includes(ITEM_BY_ID.get(itemId)?.slot) ? armorMaximum(itemId) : null; }
+function armorMaximum(itemId) { return getItem(itemId)?.armor ?? 0; }
+function itemCondition(itemId) { return ['armor', 'helmet'].includes(getItem(itemId)?.slot) ? armorMaximum(itemId) : null; }
 function normalizeMember(person) {
   const level = person.level ?? 1;
   const unspent = person.trainingPoints ?? 0;
@@ -310,7 +356,7 @@ function defaultMarketStock(state, town) {
   }));
   const food = 18 + (MARKET_FACTORS[town.id].grain <= .8 ? 12 : 0) + hashSeed(`${state.seed}:${state.day}:${town.id}:food`) % 6;
   const supplies = Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock + hashSeed(`${state.seed}:${state.day}:${town.id}:${kind}`) % 3]));
-  return { day: state.day, food, goods, equipment, supplies };
+  return { day: state.day, food, goods, equipment, supplies, buyback: (state.marketStock?.[town.id]?.buyback ?? []).map(entry => ({ ...entry })) };
 }
 
 function marketStock(state, town) {
@@ -328,10 +374,17 @@ export function getMarket(state, townId) {
   const town = townAt(state);
   if (!town || (townId !== undefined && town.id !== townId)) return null;
   const stock = marketStock(state, town);
+  const famedIds = new Set([...(stock.buyback ?? []).map(entry => entry.itemId), ...state.inventory.filter(id => getItem(id)?.rarity === 'famed')]);
   return {
     town,
     food: { buyPrice: Math.max(2, Math.round(5 * MARKET_FACTORS[town.id].grain)), stock: stock.food, owned: state.food },
-    equipment: ITEMS.map(item => ({ itemId: item.id, ...equipmentPrices(town, item), stock: stock.equipment[item.id], owned: state.inventory.filter(id => id === item.id).length })),
+    equipment: [
+      ...ITEMS.map(item => ({ itemId: item.id, ...equipmentPrices(town, item), stock: stock.equipment[item.id], owned: state.inventory.filter(id => id === item.id).length })),
+      ...[...famedIds].map(itemId => {
+        const offers = (stock.buyback ?? []).filter(entry => entry.itemId === itemId);
+        return { itemId, ...equipmentPrices(town, getItem(itemId)), stock: offers.length, owned: state.inventory.filter(id => id === itemId).length, condition: offers[0]?.condition ?? null, famed: true, buyback: offers.length > 0 };
+      }),
+    ],
     goods: GOODS.map(good => ({ goodId: good.id, name: good.name, description: good.description, ...goodPrices(town, good), stock: stock.goods[good.id], owned: state.cargo?.[good.id] ?? 0 })),
     supplies: Object.entries(SUPPLY_INFO).map(([kind, info]) => ({ kind, name: info.name, buyPrice: info.buyPrice, stock: stock.supplies?.[kind] ?? info.stock, owned: state.supplies?.[kind] ?? 0 })),
   };
@@ -353,17 +406,26 @@ function actionBlocked(state) {
 function worldHours(state) { return (state.day - 1) * 24 + state.hour; }
 
 function roamingBand(state, band) {
-  if ((state.bands?.[band.id]?.defeatedUntil ?? 0) > worldHours(state)) return null;
+  const progress = state.bands?.[band.id];
+  if ((progress?.defeatedUntil ?? 0) > worldHours(state)) return null;
+  const spawnCycle = progress?.spawnCycle ?? (progress ? 1 : 0);
+  let rosterSeed = hashSeed(`${state.seed}:${band.id}:${spawnCycle}:roster`);
+  const random = () => { rosterSeed = (Math.imul(rosterSeed, 1664525) + 1013904223) >>> 0; return rosterSeed / 4294967296; };
+  const tier = band.difficulty ?? 0;
+  const strength = 1 + Math.floor(random() * 3);
+  const count = tier === 0 ? strength === 1 ? 1 : 2 : tier === 1 ? 2 + Number(strength === 3) : tier === 2 ? 2 + strength : 3 + strength;
+  const offset = Math.floor(random() * band.enemies.length);
+  const enemies = Array.from({ length: count }, (_, index) => ({ ...band.enemies[(index + offset) % band.enemies.length] }));
   const length = distance(band.start, band.end);
   const period = length / 7;
   const phase = ((worldHours(state) + hashSeed(band.id) % 11) / period) % 2;
   const fraction = phase <= 1 ? phase : 2 - phase;
   return {
-    id: band.id, name: band.name, kind: 'band', difficulty: band.difficulty ?? 0,
+    id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle,
     x: band.start.x + (band.end.x - band.start.x) * fraction,
     y: band.start.y + (band.end.y - band.start.y) * fraction,
-    enemies: band.enemies.map(enemy => ({ ...enemy })),
-    description: band.difficulty ? `${band.enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${band.enemies.length} lightly equipped brigand${band.enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
+    enemies,
+    description: tier ? `${enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${enemies.length} lightly equipped brigand${enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
     reward: 0,
   };
 }
@@ -567,16 +629,23 @@ export function buyItem(state, itemId) {
   if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
-  const item = ITEM_BY_ID.get(itemId);
+  const item = getItem(itemId);
   if (!item) return result(false, 'Unknown item.');
   const offer = getMarket(state).equipment.find(entry => entry.itemId === itemId);
+  if (!offer) return result(false, 'This item is not for sale here.');
   if (offer.stock < 1) return result(false, 'This item is sold out until the next market day.');
   if (state.gold < offer.buyPrice) return result(false, 'The company cannot afford this item.');
   if (state.inventory.length >= MAX_INVENTORY) return result(false, 'The company pack is full.');
   state.gold -= offer.buyPrice;
   state.inventory.push(item.id);
-  state.inventoryCondition.push(itemCondition(item.id));
-  writableMarketStock(state, access.town).equipment[itemId] -= 1;
+  if (item.rarity === 'famed') {
+    const buyback = writableMarketStock(state, access.town).buyback;
+    const index = buyback.findIndex(entry => entry.itemId === itemId);
+    state.inventoryCondition.push(buyback.splice(index, 1)[0].condition);
+  } else {
+    state.inventoryCondition.push(itemCondition(item.id));
+    writableMarketStock(state, access.town).equipment[itemId] -= 1;
+  }
   const message = `Bought ${item.name} for ${offer.buyPrice} crowns.`;
   record(state, message);
   return result(true, message);
@@ -589,13 +658,16 @@ export function sellItem(state, itemId) {
   if (access.error) return access.error;
   const index = state.inventory.indexOf(itemId);
   if (index < 0) return result(false, 'That item is not in the company pack.');
-  const item = ITEM_BY_ID.get(itemId);
+  const item = getItem(itemId);
   const offer = getMarket(state).equipment.find(entry => entry.itemId === itemId);
+  const sellPrice = offer?.sellPrice ?? equipmentPrices(access.town, item).sellPrice;
+  if (item.rarity === 'famed' && (marketStock(state, access.town).buyback?.length ?? 0) >= MAX_INVENTORY) return result(false, 'The market cannot hold more famed gear.');
   state.inventory.splice(index, 1);
-  state.inventoryCondition.splice(index, 1);
-  state.gold += offer.sellPrice;
-  writableMarketStock(state, access.town).equipment[itemId] += 1;
-  const message = `Sold ${item.name} for ${offer.sellPrice} crowns.`;
+  const condition = state.inventoryCondition.splice(index, 1)[0];
+  state.gold += sellPrice;
+  if (item.rarity === 'famed') (writableMarketStock(state, access.town).buyback ??= []).push({ itemId, condition });
+  else writableMarketStock(state, access.town).equipment[itemId] += 1;
+  const message = `Sold ${item.name} for ${sellPrice} crowns.`;
   record(state, message);
   return result(true, message);
 }
@@ -686,13 +758,13 @@ export function equipItem(state, personId, itemId) {
   if (blocked) return blocked;
   const person = personById(state, personId);
   if (!person) return result(false, 'Unknown company member.');
-  const item = ITEM_BY_ID.get(itemId);
+  const item = getItem(itemId);
   if (!item) return result(false, 'Unknown item.');
   const index = state.inventory.indexOf(itemId);
   if (index < 0) return result(false, 'That item is not in the company pack.');
   const previous = person.equipment[item.slot];
   const displaced = item.twoHanded && person.equipment.shield ? person.equipment.shield
-    : item.slot === 'shield' && ITEM_BY_ID.get(person.equipment.weapon)?.twoHanded ? person.equipment.weapon : null;
+    : item.slot === 'shield' && getItem(person.equipment.weapon)?.twoHanded ? person.equipment.weapon : null;
   if (state.inventory.length - 1 + Number(Boolean(previous)) + Number(Boolean(displaced)) > MAX_INVENTORY) return result(false, 'The company pack is full.');
   const condition = state.inventoryCondition.splice(index, 1)[0];
   state.inventory.splice(index, 1);
@@ -727,13 +799,13 @@ export function unequipItem(state, personId, slot) {
   state.inventoryCondition.push(slot === 'armor' ? person.armorDurability.body : slot === 'helmet' ? person.armorDurability.head : null);
   if (slot === 'armor') person.armorDurability.body = 0;
   if (slot === 'helmet') person.armorDurability.head = 0;
-  const message = `${person.name} stowed ${ITEM_BY_ID.get(itemId).name}.`;
+  const message = `${person.name} stowed ${getItem(itemId).name}.`;
   record(state, message);
   return result(true, message);
 }
 
 export function getEquipment(person) {
-  return Object.fromEntries(SLOTS.map(slot => [slot, ITEM_BY_ID.get(person.equipment?.[slot]) ?? null]));
+  return Object.fromEntries(SLOTS.map(slot => [slot, getItem(person.equipment?.[slot]) ?? null]));
 }
 
 const RECRUITS = [
@@ -845,6 +917,21 @@ function campRecord(state, id) {
   return { cleared, respawnAt, generation: (entry?.generation ?? 0) + (respawnAt !== null && !cleared ? 1 : 0) };
 }
 
+const FAMED_CHANCES = [0, .15, .25, .40];
+const FAMED_BASES = {
+  1: ['spear', 'arming-sword', 'wood-axe', 'bludgeon', 'rondel-dagger', 'quilted-jack', 'leather-vest', 'padded-gambeson', 'leather-cap', 'iron-helm', 'round-shield'],
+  2: ['arming-sword', 'billhook', 'light-crossbow', 'mail-shirt', 'reinforced-mail', 'brigandine', 'kettle-helm', 'bascinet', 'kite-shield'],
+  3: ['billhook', 'light-crossbow', 'brigandine', 'plate-harness', 'reinforced-mail', 'bascinet', 'greathelm', 'kite-shield', 'arming-sword'],
+};
+
+function famedDropForCamp(seed, camp) {
+  const chance = FAMED_CHANCES[camp.difficulty] ?? 0;
+  if (hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-roll`) % 10000 >= chance * 10000) return null;
+  const bases = FAMED_BASES[camp.difficulty];
+  const baseId = bases[hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-base`) % bases.length];
+  return createFamedItemId(baseId, hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-item`));
+}
+
 function randomCamp(state, id, index, generation) {
   let seed = hashSeed(`${state.seed}:${id}:${generation}`);
   const random = () => { seed = (Math.imul(seed,1664525)+1013904223) >>> 0; return seed / 4294967296; };
@@ -870,7 +957,7 @@ export function getCampSites(state) {
   return [...CAMP_SITES.map(camp=>camp.id),...RANDOM_CAMP_IDS].map((id,index)=>{
     const progress = campRecord(state,id), fixed = CAMP_BY_ID.get(id);
     const camp = fixed || randomCamp(state,id,index-CAMP_SITES.length,progress.generation);
-    return {...camp,kind:'camp',generation:progress.generation,enemies:camp.enemies.map(enemy=>({...enemy})),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
+    return {...camp,kind:'camp',generation:progress.generation,famedChance:FAMED_CHANCES[camp.difficulty]??0,enemies:camp.enemies.map(enemy=>({...enemy})),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
   });
 }
 
@@ -933,8 +1020,8 @@ export function startBattle(state, encounterId) {
   if (!state.party.length) return result(false, 'No company members can fight.');
   const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y));
   const deployed = [...state.party].sort((a, b) => {
-    const bowA = ITEM_BY_ID.get(a.equipment.weapon)?.range > 1 ? 1 : 0;
-    const bowB = ITEM_BY_ID.get(b.equipment.weapon)?.range > 1 ? 1 : 0;
+    const bowA = getItem(a.equipment.weapon)?.range > 1 ? 1 : 0;
+    const bowB = getItem(b.equipment.weapon)?.range > 1 ? 1 : 0;
     return bowA - bowB || getCompanyStats(b).bodyArmor + getCompanyStats(b).headArmor - getCompanyStats(a).bodyArmor - getCompanyStats(a).headArmor;
   });
   const company = deployed.map((person, index) => {
@@ -952,10 +1039,10 @@ export function startBattle(state, encounterId) {
   });
   const enemies = camp.enemies.map((enemy, index) => {
     const gear = { armor: enemy.armor, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield };
-    const shieldDefense = ITEM_BY_ID.get(gear.shield)?.defense ?? 0;
+    const shieldDefense = getItem(gear.shield)?.defense ?? 0;
     const hp = 25 + camp.difficulty * 12 + (index === 0 && camp.difficulty === 3 ? 12 : 0);
     return {
-      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: ITEM_BY_ID.get(gear.weapon)?.range > 1 ? 12 : 11, r: 1 + index,
+      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.range > 1 ? 12 : 11, r: 1 + index,
       hp, maxHp: hp, bodyArmor: armorMaximum(gear.armor), headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxHeadArmor: armorMaximum(gear.helmet),
       equipment: gear, seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
@@ -968,7 +1055,8 @@ export function startBattle(state, encounterId) {
   });
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
-    encounterType, encounterName: camp.name, difficulty: camp.difficulty, field,
+    encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
+    famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     status: 'active', round: 1, activeId: null, units: [...company, ...enemies],
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
@@ -1030,7 +1118,7 @@ function finishBattlePhase(battle) {
       tools: 1 + camp.difficulty,
       medicine: camp.difficulty >= 2 ? 1 : 0,
       ammo: 2 + camp.difficulty,
-      items: [camp.enemies[0].weapon],
+      items: [...(battle.famedDrop ? [battle.famedDrop] : []), camp.enemies[0].weapon],
     };
     for (const unit of battle.units.filter(entry => entry.side === 'company' && entry.alive)) {
       battle.xp[unit.id] = (battle.xp[unit.id] ?? 0) + 30;
@@ -1169,7 +1257,7 @@ export function advanceBattle(state) {
     return result(true, 'The battle is over.');
   }
   actor.fatigue = Math.max(0, actor.fatigue - 6);
-  const equippedWeapon = ITEM_BY_ID.get(actor.equipment.weapon);
+  const equippedWeapon = getItem(actor.equipment.weapon);
   if (actor.reload > 0) {
     actor.reload -= 1;
     actor.ap = 0;
@@ -1330,7 +1418,10 @@ export function finishBattle(state) {
       state.inventory.push(itemId);
       state.inventoryCondition.push(itemCondition(itemId));
     }
-    if (battle.encounterType === 'band') state.bands[battle.campId] = { defeatedUntil: worldHours(state) + 48 };
+    if (battle.encounterType === 'band') {
+      const previous = state.bands[battle.campId];
+      state.bands[battle.campId] = { defeatedUntil: worldHours(state) + 48, spawnCycle: (previous?.spawnCycle ?? (previous ? 1 : 0)) + 1 };
+    }
     else { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+(camp.random?72:120),generation:camp.generation }; }
   }
   state.gameOver = state.party.length === 0;
@@ -1368,6 +1459,10 @@ function validateBattle(input, party, worldState) {
   const encounterName = encounter.name;
   const difficulty = input.difficulty ?? encounter.difficulty ?? 0;
   assert(Number.isSafeInteger(difficulty) && difficulty >= 0 && difficulty <= 3, 'battle difficulty');
+  const campGeneration = input.campGeneration ?? (encounterType === 'camp' ? encounter.generation : null);
+  assert(encounterType === 'band' ? campGeneration === null : validCount(campGeneration) && campGeneration <= 1000000 && campGeneration === encounter.generation, 'battle camp generation');
+  const famedDrop = input.famedDrop ?? null;
+  assert(famedDrop === null || encounterType === 'camp' && getItem(famedDrop)?.rarity === 'famed' && famedDrop === famedDropForCamp(worldState.seed, encounter), 'battle famed drop');
   assert(input.encounterName === undefined || input.encounterName === encounterName, 'battle encounter name');
   assert(typeof input.id === 'string' && input.id.length <= 80 && input.id.startsWith('battle-'), 'battle id');
   assert(['active', 'victory', 'defeat', 'retreat'].includes(input.status), 'battle status');
@@ -1392,8 +1487,8 @@ function validateBattle(input, party, worldState) {
     assert(validHex(unit, field), 'battle hex');
     assert(validCount(unit.maxHp) && unit.maxHp >= 1 && unit.maxHp <= 300 && validCount(unit.hp) && unit.hp <= unit.maxHp && unit.alive === (unit.hp > 0), 'battle health');
     assert(recordObject(unit.equipment), 'battle equipment');
-    for (const slot of SLOTS) assert(unit.equipment[slot] === null || ITEM_BY_ID.get(unit.equipment[slot])?.slot === slot, 'battle equipment');
-    assert(!ITEM_BY_ID.get(unit.equipment.weapon)?.twoHanded || !unit.equipment.shield, 'battle two handed weapon');
+    for (const slot of SLOTS) assert(unit.equipment[slot] === null || getItem(unit.equipment[slot])?.slot === slot, 'battle equipment');
+    assert(!getItem(unit.equipment.weapon)?.twoHanded || !unit.equipment.shield, 'battle two handed weapon');
     assert(unit.maxBodyArmor === armorMaximum(unit.equipment.armor) && unit.maxHeadArmor === armorMaximum(unit.equipment.helmet), 'battle armor maximum');
     assert(validCount(unit.bodyArmor) && unit.bodyArmor <= unit.maxBodyArmor && validCount(unit.headArmor) && unit.headArmor <= unit.maxHeadArmor, 'battle armor');
     assert(validCount(unit.seed) && unit.seed <= 0xffffffff, 'battle unit seed');
@@ -1429,7 +1524,7 @@ function validateBattle(input, party, worldState) {
   assert(event === null || (recordObject(event) && ['attack', 'move', 'hit', 'miss', 'fall', 'retreat', 'recover', 'hold'].includes(event.type) && typeof event.message === 'string' && event.message.length <= 300 && (event.actorId === null || ids.has(event.actorId)) && (event.targetId === null || ids.has(event.targetId))), 'battle event');
   if (event?.head !== undefined) assert(typeof event.head === 'boolean', 'battle event head');
   if (event?.fallen !== undefined) assert(typeof event.fallen === 'boolean', 'battle event fallen');
-  if (event?.weaponId !== undefined) assert(event.weaponId === null || ITEM_BY_ID.get(event.weaponId)?.slot === 'weapon', 'battle event weapon');
+  if (event?.weaponId !== undefined) assert(event.weaponId === null || getItem(event.weaponId)?.slot === 'weapon', 'battle event weapon');
   if (event?.ranged !== undefined) assert(typeof event.ranged === 'boolean', 'battle event ranged');
   if (event?.projectile !== undefined) assert([null, 'arrow', 'bolt'].includes(event.projectile), 'battle event projectile');
   for (const key of ['from', 'to', 'moveFrom']) if (event?.[key] !== undefined) assert(event[key] === null || validHex(event[key], field), `battle event ${key}`);
@@ -1437,10 +1532,10 @@ function validateBattle(input, party, worldState) {
   const actor = units.find(unit => unit.id === event?.actorId);
   const target = units.find(unit => unit.id === event?.targetId);
   const weaponId = event?.weaponId === undefined ? actor?.equipment.weapon ?? null : event.weaponId;
-  const ranged = event?.ranged ?? (ITEM_BY_ID.get(weaponId)?.ranged === true);
+  const ranged = event?.ranged ?? (getItem(weaponId)?.ranged === true);
   const normalizedEvent = event ? {
     actorId: event.actorId, targetId: event.targetId, type: event.type === 'hit' || event.type === 'fall' ? 'attack' : event.type,
-    weaponId, ranged, projectile: event.projectile === undefined ? ranged && ['attack', 'miss', 'hit', 'fall'].includes(event.type) ? ITEM_BY_ID.get(weaponId)?.visual === 'crossbow' ? 'bolt' : 'arrow' : null : event.projectile,
+    weaponId, ranged, projectile: event.projectile === undefined ? ranged && ['attack', 'miss', 'hit', 'fall'].includes(event.type) ? getItem(weaponId)?.visual === 'crossbow' ? 'bolt' : 'arrow' : null : event.projectile,
     from: event.from === undefined ? actor ? { q: actor.q, r: actor.r } : null : event.from === null ? null : { q: event.from.q, r: event.from.r },
     to: event.to === undefined ? target ? { q: target.q, r: target.r } : actor ? { q: actor.q, r: actor.r } : null : event.to === null ? null : { q: event.to.q, r: event.to.r },
     ...(event.moveFrom === undefined ? {} : { moveFrom: event.moveFrom === null ? null : { q: event.moveFrom.q, r: event.moveFrom.r } }),
@@ -1451,12 +1546,12 @@ function validateBattle(input, party, worldState) {
     ...(event.fallen !== undefined || event.type === 'fall' ? { fallen: event.fallen ?? true } : {}),
   } : null;
   const loot = input.loot;
-  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= 24 && loot.items.every(id => ITEM_BY_ID.has(id)), 'battle loot');
+  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= 24 && loot.items.every(id => getItem(id)), 'battle loot');
   for (const key of ['food', 'tools', 'medicine', 'ammo']) assert(validCount(loot[key]) && loot[key] <= 1000, `battle loot ${key}`);
   assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
-    id: input.id, campId: input.campId, encounterType, encounterName, difficulty, tactic, focusTargetId, lastContactRound, engaged, status: input.status, round: input.round, activeId: input.activeId,
+    id: input.id, campId: input.campId, encounterType, encounterName, difficulty, campGeneration, famedDrop, tactic, focusTargetId, lastContactRound, engaged, status: input.status, round: input.round, activeId: input.activeId,
     field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng,
     log: [...input.log], lastEvent: normalizedEvent,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items] },
@@ -1476,7 +1571,7 @@ export function validateSave(input) {
   for (const key of ['renown', 'contractSerial', 'recruitSerial']) assert(validCount(input[key]) && input[key] <= 1000000, key);
   assert(validPoint(input.position), 'position');
   assert(input.destination === null || validPoint(input.destination), 'destination');
-  assert(Array.isArray(input.inventory) && input.inventory.length <= MAX_INVENTORY && input.inventory.every(id => ITEM_BY_ID.has(id)), 'inventory');
+  assert(Array.isArray(input.inventory) && input.inventory.length <= MAX_INVENTORY && input.inventory.every(id => getItem(id)), 'inventory');
   const inventoryCondition = input.inventoryCondition === undefined ? input.inventory.map(itemCondition) : input.inventoryCondition;
   assert(Array.isArray(inventoryCondition) && inventoryCondition.length === input.inventory.length, 'inventory condition');
   for (let index = 0; index < input.inventory.length; index++) {
@@ -1494,6 +1589,7 @@ export function validateSave(input) {
     assert(recordObject(market) && Number.isSafeInteger(market.day) && market.day >= 1 && market.day <= input.day && validCount(market.food) && market.food <= 100, 'market stock');
     assert(recordObject(market.goods) && GOODS.every(good => validCount(market.goods[good.id]) && market.goods[good.id] <= 100) && Object.keys(market.goods).length === GOODS.length, 'goods stock');
     assert(recordObject(market.equipment) && ITEMS.filter(item => !NEW_ITEM_IDS.has(item.id)).every(item => validCount(market.equipment[item.id]) && market.equipment[item.id] <= 1024) && Object.keys(market.equipment).every(id => ITEM_BY_ID.has(id) && validCount(market.equipment[id]) && market.equipment[id] <= 1024), 'equipment stock');
+    if (market.buyback !== undefined) assert(Array.isArray(market.buyback) && market.buyback.length <= MAX_INVENTORY && market.buyback.every(entry => recordObject(entry) && getItem(entry.itemId)?.rarity === 'famed' && (itemCondition(entry.itemId) === null ? entry.condition === null : validCount(entry.condition) && entry.condition <= itemCondition(entry.itemId))), 'famed buyback');
     if (market.supplies !== undefined) assert(recordObject(market.supplies) && Object.keys(market.supplies).length === 3 && Object.keys(SUPPLY_INFO).every(kind => validCount(market.supplies[kind]) && market.supplies[kind] <= 100), 'supplies stock');
   }
   const gameOver = input.gameOver === undefined ? false : input.gameOver;
@@ -1511,7 +1607,7 @@ export function validateSave(input) {
     assert(person.equipment && typeof person.equipment === 'object' && !Array.isArray(person.equipment), 'equipment');
     for (const slot of SLOTS) {
       const itemId = person.equipment[slot];
-      assert(itemId === null || ITEM_BY_ID.get(itemId)?.slot === slot, `${slot} equipment`);
+      assert(itemId === null || getItem(itemId)?.slot === slot, `${slot} equipment`);
     }
     assert(person.attributes === undefined || recordObject(person.attributes), 'person attributes');
     assert(person.armorDurability === undefined || recordObject(person.armorDurability), 'person armor durability');
@@ -1549,7 +1645,7 @@ export function validateSave(input) {
   }
   const bands = input.bands === undefined ? {} : input.bands;
   assert(recordObject(bands) && Object.keys(bands).every(id => BAND_BY_ID.has(id)), 'bands');
-  for (const entry of Object.values(bands)) assert(recordObject(entry) && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0 && entry.defeatedUntil <= worldHours(input) + 48, 'band respawn');
+  for (const entry of Object.values(bands)) assert(recordObject(entry) && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0 && entry.defeatedUntil <= worldHours(input) + 48 && (entry.spawnCycle === undefined || validCount(entry.spawnCycle) && entry.spawnCycle >= 1 && entry.spawnCycle <= 1000000), 'band respawn');
   const pursuit = input.pursuit === undefined ? null : input.pursuit;
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const battle = validateBattle(input.battle, input.party, input);
@@ -1583,7 +1679,7 @@ export function validateSave(input) {
     armorDurability: person.armorDurability ? { body: person.armorDurability.body, head: person.armorDurability.head } : undefined,
   }));
   for (const person of party) {
-    if (ITEM_BY_ID.get(person.equipment.weapon)?.twoHanded && person.equipment.shield) {
+    if (getItem(person.equipment.weapon)?.twoHanded && person.equipment.shield) {
       assert(battle === null && inventory.length < MAX_INVENTORY, 'legacy bow and shield');
       inventory.push(person.equipment.shield);
       conditions.push(null);
@@ -1596,9 +1692,9 @@ export function validateSave(input) {
     gold: input.gold, food: input.food, renown: input.renown,
     party,
     inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
-    marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...defaultMarketStock({ seed: input.seed, day: market.day }, TOWN_BY_ID.get(id)).equipment, ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])) }])),
+    marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...defaultMarketStock({ seed: input.seed, day: market.day }, TOWN_BY_ID.get(id)).equipment, ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])), buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: entry.condition })) }])),
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
-    bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil }])), pursuit, tactic,
+    bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil, spawnCycle: entry.spawnCycle ?? 1 }])), pursuit, tactic,
     battle, gameOver,
     position: { x: input.position.x, y: input.position.y },
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,
