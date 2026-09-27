@@ -6,14 +6,14 @@ Play at **https://karmiphuc.github.io/ashen-company/**. No account, server, exte
 
 ## Play
 
-- Drag the map to pan and pinch to zoom. Select a settlement or hostile camp, then travel from the sidebar. Open ground can be tapped to set a destination.
+- Drag the map to pan and pinch to zoom. Select a settlement, hostile camp, or roaming band, then travel or pursue it from the sidebar. Open ground can be tapped to set a destination.
 - Visit settlements to buy and sell equipment, trade goods, food, and campaign supplies; recruit up to 12 brothers; and take courier, supply, or brigand-hunt contracts.
-- The current world has eight settlements and three fixed brigand camps. Camp difficulty is shown from one to three; other contract offers do not use a dynamic Battle Brothers-style skull rating. There are no roaming hostile parties or faction simulation.
+- The world has eight settlements, three fixed brigand camps, and four small hostile bands patrolling authored routes. Bands contain one or two brigands, can be pursued across the map, and return 48 hours after defeat. The map does not simulate factions or generate a changing campaign.
 - Inspect the company to equip armor, helmets, weapons, and shields. Head and body armor have separate durability. Backgrounds affect a brother's starting combat stats; battle experience grants levels and attribute increases. There are no perk trees yet.
-- Engage a camp for an automatic battle. Combatants act in initiative order and use simplified automatic movement and attacks. Use pause, speed, or retreat; you do not select each brother's moves or attacks. Hitpoints, head/body armor, fatigue, morale, and ammunition affect the battle. This is a compact approximation of Battle Brothers' tactical combat, not its full ruleset.
-- Survivors carry battle damage back to the campaign. Victories can award equipment, crowns, food, tools, medicine, ammunition, and experience. Brothers who fall are lost with their worn equipment. Camp for six hours to recover wounds and repair armor using supplies.
+- Engage a camp or roaming band for an automatic battle. Combatants act in initiative order; they route around allies, archers try to keep their distance, and fatigue prompts recovery. Use pause, speed, or retreat; you do not select each brother's moves or attacks. Hitpoints, head/body armor, fatigue, morale, and ammunition affect the battle. This remains a simplified approximation of Battle Brothers' tactical combat, not its full ruleset.
+- Survivors carry battle damage back to the campaign. Victories can award equipment, crowns, food, tools, medicine, ammunition, and experience. Brothers who fall stay dead; their worn equipment can be recovered after a victory if the stash has room. Camp for six hours to recover wounds and repair armor using supplies.
 
-The campaign also includes local market stocks and prices, five trade goods, wages and daily provisions, foraging, autosave, and JSON save export/import. Travel pauses on arrival, when menus are open, and when the app goes into the background. The world does not simulate while the app is closed.
+The campaign also includes local market stocks and prices, five trade goods, wages and daily provisions, foraging, autosave, and JSON save export/import. Choose 1× or 3× to advance world time while travelling or waiting; pause, menus, and backgrounding stop it. The world does not simulate while the app is closed.
 
 ## Install for offline play on iPad
 
@@ -26,7 +26,7 @@ These are the intended Safari steps; installation and airplane-mode play have no
 
 ## Current limits
 
-- The world contains three authored camps, not roaming armies, faction activity, random encounters, or a procedural campaign.
+- The world has four authored roaming bands on fixed routes. They do not form roaming armies, factions, random encounters, or a procedural campaign.
 - Battles run on a small fixed hex field with simplified automatic behavior. There are no manual tactics, full Battle Brothers skill trees, perks, or its complete combat simulation.
 - Attribute increases are available after level-ups, but traits and perk progression are not implemented.
 - iPad Safari installation, airplane-mode launch, and save retention have not been verified on a physical iPad.

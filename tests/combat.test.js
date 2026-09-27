@@ -94,6 +94,9 @@ test('casualties leave the roster, their gear is recovered on victory, and defea
   const site = getCampSites(state)[0];
   approach(state, site);
   startBattle(state, site.id);
+  const fallenGuard = state.battle.units.find(unit => unit.id === 'guard');
+  fallenGuard.hp = 0;
+  fallenGuard.alive = false;
   resolveBattle(state);
   assert.equal(state.battle.status, 'victory');
   assert.ok(state.battle.casualties.includes('guard'));

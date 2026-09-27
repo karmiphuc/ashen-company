@@ -61,10 +61,29 @@ const CAMP_SITES = Object.freeze([
   ] },
 ]);
 
+const ROAMING_BANDS = Object.freeze([
+  { id: 'road-thieves', name: 'Road Thieves', start: { x: 385, y: 430 }, end: { x: 430, y: 470 }, enemies: [
+    { name: 'Brigand Thug', weapon: 'wood-axe', armor: 'patched-coat', helmet: null, shield: null },
+  ] },
+  { id: 'hungry-deserters', name: 'Hungry Deserters', start: { x: 355, y: 545 }, end: { x: 410, y: 510 }, enemies: [
+    { name: 'Deserter', weapon: 'spear', armor: 'patched-coat', helmet: null, shield: null },
+    { name: 'Deserter', weapon: 'wood-axe', armor: null, helmet: null, shield: null },
+  ] },
+  { id: 'forest-cutthroats', name: 'Forest Cutthroats', start: { x: 570, y: 350 }, end: { x: 635, y: 380 }, enemies: [
+    { name: 'Cutthroat', weapon: 'arming-sword', armor: 'patched-coat', helmet: null, shield: 'buckler' },
+    { name: 'Cutthroat', weapon: 'spear', armor: null, helmet: 'cloth-hood', shield: null },
+  ] },
+  { id: 'river-raiders', name: 'River Raiders', start: { x: 755, y: 530 }, end: { x: 815, y: 560 }, enemies: [
+    { name: 'Brigand Thug', weapon: 'wood-axe', armor: 'quilted-jack', helmet: null, shield: null },
+    { name: 'Brigand Thug', weapon: 'spear', armor: 'patched-coat', helmet: null, shield: 'buckler' },
+  ] },
+]);
+
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
+const BAND_BY_ID = new Map(ROAMING_BANDS.map(band => [band.id, band]));
 // Low factors mark local supply; high factors mark demand. The market spread
 // always makes buying and selling in the same settlement a loss.
 const MARKET_FACTORS = {
@@ -88,6 +107,7 @@ const MAX_INVENTORY = 512;
 const MAX_CARGO = 30;
 export const MAX_COMPANY_SIZE = 12;
 const CAMP_RADIUS = 35;
+const BAND_RADIUS = 28;
 const SUPPLY_INFO = {
   tools: { name: 'Tools', buyPrice: 18, stock: 8 },
   medicine: { name: 'Medicine', buyPrice: 30, stock: 6 },
@@ -184,6 +204,8 @@ export function createGame(seed = Date.now()) {
     marketStock: {},
     supplies: { tools: 8, medicine: 5, ammo: 16 },
     camps: {},
+    bands: {},
+    pursuit: null,
     battle: null,
     gameOver: false,
     position: { x: 350, y: 460 },
@@ -278,11 +300,51 @@ function actionBlocked(state) {
   return null;
 }
 
+function worldHours(state) { return (state.day - 1) * 24 + state.hour; }
+
+function roamingBand(state, band) {
+  if ((state.bands?.[band.id]?.defeatedUntil ?? 0) > worldHours(state)) return null;
+  const length = distance(band.start, band.end);
+  const period = length / 7;
+  const phase = ((worldHours(state) + hashSeed(band.id) % 11) / period) % 2;
+  const fraction = phase <= 1 ? phase : 2 - phase;
+  return {
+    id: band.id, name: band.name, kind: 'band', difficulty: 0,
+    x: band.start.x + (band.end.x - band.start.x) * fraction,
+    y: band.start.y + (band.end.y - band.start.y) * fraction,
+    enemies: band.enemies.map(enemy => ({ ...enemy })),
+    description: `${band.enemies.length} lightly equipped brigand${band.enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
+    reward: 0,
+  };
+}
+
+export function getRoamingBands(state) { return ROAMING_BANDS.map(band => roamingBand(state, band)).filter(Boolean); }
+
+export function getEncounterSites(state) { return [...getCampSites(state), ...getRoamingBands(state)]; }
+
+export function pursueBand(state, id) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  const band = getRoamingBands(state).find(entry => entry.id === id);
+  if (!band) return result(false, 'That band is no longer on the road.');
+  if (distance(state.position, band) <= BAND_RADIUS) {
+    state.destination = null;
+    state.pursuit = null;
+    return result(true, `${band.name} is within striking distance.`);
+  }
+  state.pursuit = id;
+  state.destination = { x: band.x, y: band.y };
+  const message = `Pursuing ${band.name}.`;
+  record(state, message);
+  return result(true, message);
+}
+
 export function travelTo(state, x, y) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   if (!inBounds(x, y)) return result(false, 'Choose a reachable point on the mainland.');
   if (distance(state.position, { x, y }) <= ARRIVAL_RADIUS) return result(false, 'The company is already here.');
+  state.pursuit = null;
   state.destination = { x, y };
   const town = SETTLEMENTS.find(place => distance(place, state.destination) <= TOWN_RADIUS);
   const message = town ? `Traveling to ${town.name}.` : 'Traveling across the wilds.';
@@ -367,6 +429,11 @@ export function tick(state, hours) {
   let remaining = hours;
   while (remaining > 1e-9) {
     const step = Math.min(remaining, 0.25);
+    if (state.pursuit) {
+      const target = getRoamingBands(state).find(band => band.id === state.pursuit);
+      if (target) state.destination = { x: target.x, y: target.y };
+      else { state.pursuit = null; state.destination = null; }
+    }
     if (state.destination) {
       const distanceLeft = distance(state.position, state.destination);
       const speed = terrainSpeed(terrainAt(state.position.x, state.position.y));
@@ -375,14 +442,26 @@ export function tick(state, hours) {
         state.position.x += (state.destination.x - state.position.x) * movement / distanceLeft;
         state.position.y += (state.destination.y - state.position.y) * movement / distanceLeft;
       }
-      if (distance(state.position, state.destination) <= ARRIVAL_RADIUS) {
+      if (!state.pursuit && distance(state.position, state.destination) <= ARRIVAL_RADIUS) {
         state.position = { ...state.destination };
         state.destination = null;
         onArrival(state);
       }
     }
     advanceClock(state, step);
+    let intercepted = false;
+    if (state.pursuit) {
+      const target = getRoamingBands(state).find(band => band.id === state.pursuit);
+      if (!target) { state.pursuit = null; state.destination = null; }
+      else if (distance(state.position, target) <= BAND_RADIUS) {
+        state.destination = null;
+        state.pursuit = null;
+        intercepted = true;
+        record(state, `${target.name} is within striking distance.`);
+      } else state.destination = { x: target.x, y: target.y };
+    }
     remaining -= step;
+    if (intercepted) break;
   }
   return result(true, state.destination ? 'The company is on the road.' : 'Time passes.');
 }
@@ -650,6 +729,11 @@ export function camp(state) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   advanceClock(state, 6);
+  if (state.pursuit) {
+    const target = getRoamingBands(state).find(band => band.id === state.pursuit);
+    state.destination = target ? { x: target.x, y: target.y } : null;
+    if (!target) state.pursuit = null;
+  }
   const wounded = state.party.some(person => person.hp < getCompanyStats(person).maxHp);
   const medicated = wounded && state.supplies.medicine > 0;
   if (medicated) state.supplies.medicine -= 1;
@@ -677,6 +761,11 @@ export function forage(state) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   advanceClock(state, 4);
+  if (state.pursuit) {
+    const target = getRoamingBands(state).find(band => band.id === state.pursuit);
+    state.destination = target ? { x: target.x, y: target.y } : null;
+    if (!target) state.pursuit = null;
+  }
   const terrain = terrainAt(state.position.x, state.position.y);
   const bonus = terrain === 'forest' ? 2 : terrain === 'marsh' ? 1 : terrain === 'mountain' ? -1 : 0;
   const found = Math.max(3, 3 + Math.ceil(state.party.length / 2) + bonus);
@@ -689,6 +778,7 @@ export function forage(state) {
 export function getCampSites(state) {
   return CAMP_SITES.map(camp => ({
     ...camp,
+    kind: 'camp',
     enemies: camp.enemies.map(enemy => ({ ...enemy })),
     cleared: Boolean(state.camps?.[camp.id]?.clearedDay),
   }));
@@ -715,15 +805,21 @@ function sortTurnOrder(battle) {
     b.initiative - b.fatigue * .2 - (a.initiative - a.fatigue * .2) || a.id.localeCompare(b.id)).map(unit => unit.id);
 }
 
-export function startBattle(state, campId) {
+export function startBattle(state, encounterId) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
-  const camp = CAMP_BY_ID.get(campId);
-  if (!camp) return result(false, 'Unknown camp.');
-  if (state.camps[camp.id]?.clearedDay) return result(false, 'This camp has already been cleared.');
-  if (state.destination || distance(state.position, camp) > CAMP_RADIUS) return result(false, 'Approach the camp before engaging.');
+  const encounterType = BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
+  const camp = encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : CAMP_BY_ID.get(encounterId);
+  if (!camp) return result(false, 'That hostile group is no longer here.');
+  if (encounterType === 'camp' && state.camps[camp.id]?.clearedDay) return result(false, 'This camp has already been cleared.');
+  if (state.destination || distance(state.position, camp) > (encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
   if (!state.party.length) return result(false, 'No company members can fight.');
-  const company = state.party.map((person, index) => {
+  const deployed = [...state.party].sort((a, b) => {
+    const bowA = ITEM_BY_ID.get(a.equipment.weapon)?.range > 1 ? 1 : 0;
+    const bowB = ITEM_BY_ID.get(b.equipment.weapon)?.range > 1 ? 1 : 0;
+    return bowA - bowB || getCompanyStats(b).bodyArmor + getCompanyStats(b).headArmor - getCompanyStats(a).bodyArmor - getCompanyStats(a).headArmor;
+  });
+  const company = deployed.map((person, index) => {
     const stats = getCompanyStats(person);
     return {
       id: person.id, name: person.name, side: 'company', q: 2 - Math.floor(index / 4), r: index % 4,
@@ -741,12 +837,12 @@ export function startBattle(state, campId) {
     const shieldDefense = ITEM_BY_ID.get(gear.shield)?.defense ?? 0;
     const hp = 25 + camp.difficulty * 12 + (index === 0 && camp.difficulty === 3 ? 12 : 0);
     return {
-      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: 7 + Math.floor(index / 5), r: index % 5,
+      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: ITEM_BY_ID.get(gear.weapon)?.range > 1 ? 8 : 7, r: index % 5,
       hp, maxHp: hp, bodyArmor: armorMaximum(gear.armor), headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxHeadArmor: armorMaximum(gear.helmet),
       equipment: gear, seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
       morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2,
-      meleeSkill: 30 + camp.difficulty * 7, rangedSkill: 28 + camp.difficulty * 7,
+      meleeSkill: 30 + camp.difficulty * 6, rangedSkill: 28 + camp.difficulty * 6,
       meleeDefense: 2 + camp.difficulty * 2 + shieldDefense,
       rangedDefense: 2 + camp.difficulty * 2 + shieldDefense,
       maxFatigue: 85, initiative: 75 + camp.difficulty * 6, resolve: 32 + camp.difficulty * 8,
@@ -754,6 +850,7 @@ export function startBattle(state, campId) {
   });
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
+    encounterType, encounterName: camp.name,
     status: 'active', round: 1, activeId: null, units: [...company, ...enemies],
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     log: [], lastEvent: null,
@@ -764,6 +861,8 @@ export function startBattle(state, campId) {
   battle.activeId = battle.turnOrder[0];
   battleLog(battle, `The company engages ${camp.name}.`);
   state.battle = battle;
+  state.destination = null;
+  state.pursuit = null;
   const message = `Battle begins at ${camp.name}.`;
   record(state, message);
   return result(true, message);
@@ -796,8 +895,16 @@ function finishBattlePhase(battle) {
   battle.activeId = null;
   battle.casualties = battle.units.filter(unit => unit.side === 'company' && !unit.alive).map(unit => unit.id);
   if (companyAlive) {
-    const camp = CAMP_BY_ID.get(battle.campId);
-    battle.loot = {
+    const band = battle.encounterType === 'band' ? BAND_BY_ID.get(battle.campId) : null;
+    const camp = band ?? CAMP_BY_ID.get(battle.campId);
+    battle.loot = band ? {
+      gold: 28 + camp.enemies.length * 19,
+      food: 3,
+      tools: 2,
+      medicine: 1,
+      ammo: 3,
+      items: [camp.enemies[0].weapon],
+    } : {
       gold: 55 + camp.difficulty * 45,
       food: 2 + camp.difficulty,
       tools: 1 + camp.difficulty,
@@ -809,25 +916,49 @@ function finishBattlePhase(battle) {
       battle.xp[unit.id] = (battle.xp[unit.id] ?? 0) + 30;
     }
   }
-  battleLog(battle, companyAlive ? 'The brigands break. The camp is yours.' : 'The company is defeated.');
+  battleLog(battle, companyAlive ? battle.encounterType === 'band' ? 'The brigands break and flee the road.' : 'The brigands break. The camp is yours.' : 'The company is defeated.');
   return true;
 }
 
-function moveToward(battle, actor, target, steps) {
-  const directions = [[1, 0], [0, 1], [1, -1], [-1, 0], [0, -1], [-1, 1]];
-  let moved = false;
-  for (let step = 0; step < steps; step++) {
-    const current = hexDistance(actor, target);
-    const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
-    const options = directions.map(([dq, dr]) => ({ q: actor.q + dq, r: actor.r + dr }))
-      .filter(point => point.q >= 0 && point.q < 10 && point.r >= 0 && point.r < 5 && !occupied.has(`${point.q},${point.r}`))
-      .sort((a, b) => hexDistance(a, target) - hexDistance(b, target) || a.q - b.q || a.r - b.r);
-    if (!options.length || hexDistance(options[0], target) >= current) break;
-    actor.q = options[0].q;
-    actor.r = options[0].r;
-    moved = true;
+const HEX_DIRECTIONS = [[1, 0], [1, -1], [0, 1], [0, -1], [-1, 0], [-1, 1]];
+
+function openNeighbors(point, occupied) {
+  return HEX_DIRECTIONS.map(([dq, dr]) => ({ q: point.q + dq, r: point.r + dr }))
+    .filter(next => next.q >= 0 && next.q < 10 && next.r >= 0 && next.r < 5 && !occupied.has(`${next.q},${next.r}`));
+}
+
+function pathToTarget(battle, actor, target, range) {
+  const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  const queue = [{ q: actor.q, r: actor.r, path: [] }];
+  const visited = new Set([`${actor.q},${actor.r}`]);
+  for (let index = 0; index < queue.length; index++) {
+    const point = queue[index];
+    if (hexDistance(point, target) <= range) return point.path;
+    for (const next of openNeighbors(point, occupied)) {
+      const key = `${next.q},${next.r}`;
+      if (!visited.has(key)) {
+        visited.add(key);
+        queue.push({ ...next, path: [...point.path, next] });
+      }
+    }
   }
-  return moved;
+  return null;
+}
+
+function stepArcherBack(battle, actor) {
+  const enemies = battle.units.filter(unit => unit.alive && unit.side !== actor.side);
+  const nearest = Math.min(...enemies.map(unit => hexDistance(actor, unit)));
+  if (nearest > 1) return false;
+  const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  const option = openNeighbors(actor, occupied)
+    .map(point => ({ ...point, safety: Math.min(...enemies.map(unit => hexDistance(point, unit))) }))
+    .filter(point => point.safety > nearest && enemies.some(unit => hexDistance(point, unit) <= 4))
+    .sort((a, b) => b.safety - a.safety || a.q - b.q || a.r - b.r)[0];
+  if (!option) return false;
+  actor.q = option.q;
+  actor.r = option.r;
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + 3);
+  return true;
 }
 
 function attackTarget(state, actor, target, weapon) {
@@ -836,7 +967,7 @@ function attackTarget(state, actor, target, weapon) {
   if (ranged && actor.side === 'company') state.supplies.ammo -= 1;
   const skill = ranged ? actor.rangedSkill : actor.meleeSkill;
   const defense = ranged ? target.rangedDefense : target.meleeDefense;
-  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7), 12, 90);
+  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - (ranged && hexDistance(actor, target) === 1 ? 12 : 0), 12, 90);
   actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (ranged ? 9 : 11));
   actor.ap = 0;
   if (battleRoll(battle) * 100 >= chance) {
@@ -877,19 +1008,48 @@ export function advanceBattle(state) {
     nextBattleTurn(battle);
     return result(true, 'The next fighter takes their turn.');
   }
-  const targets = battle.units.filter(unit => unit.alive && unit.side !== actor.side)
-    .sort((a, b) => hexDistance(actor, a) - hexDistance(actor, b) || a.hp - b.hp || a.id.localeCompare(b.id));
-  if (!targets.length) {
+  const enemies = battle.units.filter(unit => unit.alive && unit.side !== actor.side);
+  if (!enemies.length) {
     finishBattlePhase(battle);
     return result(true, 'The battle is over.');
   }
-  const target = targets[0];
+  actor.fatigue = Math.max(0, actor.fatigue - 6);
+  if (actor.fatigue >= actor.maxFatigue - 10) {
+    actor.fatigue = Math.max(0, actor.fatigue - 22);
+    actor.ap = 0;
+    const message = `${actor.name} catches their breath.`;
+    battle.lastEvent = { actorId: actor.id, targetId: null, type: 'recover', message };
+    battleLog(battle, message);
+    nextBattleTurn(battle);
+    return result(true, message);
+  }
   const equippedWeapon = ITEM_BY_ID.get(actor.equipment.weapon);
   const bowWithoutAmmo = equippedWeapon?.range > 1 && actor.side === 'company' && state.supplies.ammo < 1;
   const weapon = bowWithoutAmmo ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equippedWeapon ?? { damageMin: 8, damageMax: 12, hitBonus: -10, armorDamage: .4, range: 1 };
   const range = weapon.range ?? 1;
-  if (hexDistance(actor, target) > range) {
-    moveToward(battle, actor, target, 2);
+  if (range > 1) stepArcherBack(battle, actor);
+  const defenseKey = range > 1 ? 'rangedDefense' : 'meleeDefense';
+  const vulnerability = target => target.hp + (target.bodyArmor + target.headArmor) * .15 + target[defenseKey] * .3;
+  const targets = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range) }))
+    .filter(entry => entry.path !== null)
+    .sort((a, b) => a.path.length - b.path.length
+      || vulnerability(a.target) - vulnerability(b.target)
+      || hexDistance(actor, a.target) - hexDistance(actor, b.target) || a.target.id.localeCompare(b.target.id));
+  const choice = targets[0];
+  if (!choice) {
+    actor.ap = 0;
+    const message = `${actor.name} holds position and catches their breath.`;
+    actor.fatigue = Math.max(0, actor.fatigue - 12);
+    battle.lastEvent = { actorId: actor.id, targetId: null, type: 'recover', message };
+    battleLog(battle, message);
+    nextBattleTurn(battle);
+    return result(true, message);
+  }
+  const { target, path } = choice;
+  if (path.length) {
+    const destination = path[Math.min(2, path.length) - 1];
+    actor.q = destination.q;
+    actor.r = destination.r;
     actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + 5);
   }
   if (hexDistance(actor, target) <= range) {
@@ -968,10 +1128,11 @@ export function finishBattle(state) {
       state.inventory.push(itemId);
       state.inventoryCondition.push(itemCondition(itemId));
     }
-    state.camps[battle.campId] = { clearedDay: state.day };
+    if (battle.encounterType === 'band') state.bands[battle.campId] = { defeatedUntil: worldHours(state) + 48 };
+    else state.camps[battle.campId] = { clearedDay: state.day };
   }
   state.gameOver = state.party.length === 0;
-  const message = victory ? `The company claims ${battle.loot.gold} crowns and clears ${CAMP_BY_ID.get(battle.campId).name}.` : state.gameOver ? 'The company has fallen.' : 'The company survives and leaves the camp behind.';
+  const message = victory ? `The company claims ${battle.loot.gold} crowns and defeats ${battle.encounterName}.` : state.gameOver ? 'The company has fallen.' : 'The company survives and leaves the battlefield behind.';
   record(state, message);
   state.battle = null;
   return result(true, message);
@@ -984,7 +1145,10 @@ function recordObject(value) { return value && typeof value === 'object' && !Arr
 
 function validateBattle(input, party) {
   if (input === undefined || input === null) return null;
-  assert(recordObject(input) && CAMP_BY_ID.has(input.campId), 'battle camp');
+  const encounterType = input.encounterType ?? 'camp';
+  assert(recordObject(input) && (encounterType === 'camp' ? CAMP_BY_ID.has(input.campId) : encounterType === 'band' && BAND_BY_ID.has(input.campId)), 'battle encounter');
+  const encounterName = encounterType === 'band' ? BAND_BY_ID.get(input.campId).name : CAMP_BY_ID.get(input.campId).name;
+  assert(input.encounterName === undefined || input.encounterName === encounterName, 'battle encounter name');
   assert(typeof input.id === 'string' && input.id.length <= 80 && input.id.startsWith('battle-'), 'battle id');
   assert(['active', 'victory', 'defeat', 'retreat'].includes(input.status), 'battle status');
   assert(Number.isSafeInteger(input.round) && input.round >= 1 && input.round <= 1000, 'battle round');
@@ -1031,7 +1195,7 @@ function validateBattle(input, party) {
   assert(input.status === 'active' ? input.activeId === input.turnOrder[input.turnIndex] && units.some(unit => unit.id === input.activeId && unit.alive) : input.activeId === null, 'battle active unit');
   assert(Array.isArray(input.log) && input.log.length <= 120 && input.log.every(entry => typeof entry === 'string' && entry.length <= 300), 'battle log');
   const event = input.lastEvent;
-  assert(event === null || (recordObject(event) && ['move', 'hit', 'miss', 'fall', 'retreat'].includes(event.type) && typeof event.message === 'string' && event.message.length <= 300 && (event.actorId === null || ids.has(event.actorId)) && (event.targetId === null || ids.has(event.targetId))), 'battle event');
+  assert(event === null || (recordObject(event) && ['move', 'hit', 'miss', 'fall', 'retreat', 'recover'].includes(event.type) && typeof event.message === 'string' && event.message.length <= 300 && (event.actorId === null || ids.has(event.actorId)) && (event.targetId === null || ids.has(event.targetId))), 'battle event');
   if (event?.head !== undefined) assert(typeof event.head === 'boolean', 'battle event head');
   for (const key of ['hpDamage', 'armorDamage']) if (event?.[key] !== undefined) assert(validCount(event[key]) && event[key] <= 1000, `battle event ${key}`);
   const loot = input.loot;
@@ -1040,7 +1204,7 @@ function validateBattle(input, party) {
   assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
-    id: input.id, campId: input.campId, status: input.status, round: input.round, activeId: input.activeId,
+    id: input.id, campId: input.campId, encounterType, encounterName, status: input.status, round: input.round, activeId: input.activeId,
     units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng,
     log: [...input.log], lastEvent: event ? { actorId: event.actorId, targetId: event.targetId, type: event.type, message: event.message, ...(event.head !== undefined ? { head: event.head } : {}), ...(event.hpDamage !== undefined ? { hpDamage: event.hpDamage } : {}), ...(event.armorDamage !== undefined ? { armorDamage: event.armorDamage } : {}) } : null,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items] },
@@ -1110,8 +1274,13 @@ export function validateSave(input) {
   const camps = input.camps === undefined ? {} : input.camps;
   assert(recordObject(camps) && Object.keys(camps).every(id => CAMP_BY_ID.has(id)), 'camps');
   for (const entry of Object.values(camps)) assert(recordObject(entry) && (entry.clearedDay === null || Number.isSafeInteger(entry.clearedDay) && entry.clearedDay >= 1 && entry.clearedDay <= input.day), 'camp state');
+  const bands = input.bands === undefined ? {} : input.bands;
+  assert(recordObject(bands) && Object.keys(bands).every(id => BAND_BY_ID.has(id)), 'bands');
+  for (const entry of Object.values(bands)) assert(recordObject(entry) && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0 && entry.defeatedUntil <= worldHours(input) + 48, 'band respawn');
+  const pursuit = input.pursuit === undefined ? null : input.pursuit;
+  assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const battle = validateBattle(input.battle, input.party);
-  assert(!battle || input.destination === null && !camps[battle.campId]?.clearedDay, 'battle location');
+  assert(!battle || input.destination === null && pursuit === null && (battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !camps[battle.campId]?.clearedDay), 'battle location');
   assert(!gameOver || input.party.length === 0 && battle === null, 'game over state');
   assert(Array.isArray(input.visited) && input.visited.length <= SETTLEMENTS.length && input.visited.every(id => TOWN_BY_ID.has(id)) && new Set(input.visited).size === input.visited.length, 'visited settlements');
   assert(Array.isArray(input.log) && input.log.length <= MAX_LOG && input.log.every(entry => typeof entry === 'string' && entry.length <= 500), 'log');
@@ -1154,6 +1323,7 @@ export function validateSave(input) {
     inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
     marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])) }])),
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay: entry.clearedDay }])),
+    bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil }])), pursuit,
     battle, gameOver,
     position: { x: input.position.x, y: input.position.y },
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,
