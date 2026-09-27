@@ -1,6 +1,18 @@
-# Verification - version 0.11, 2026-09-27
+# Verification - version 0.12, 2026-09-27
 
-## v0.11 checks
+## v0.12 checks
+
+The full automated suite passes 131 tests. New checks cover bulk purchase stock, affordability and storage caps, distinct famed armor conditions, invalid purchase atomicity, saved town/camp arrival actions, legacy save defaults, and double-tap timing, movement, cancellation and target matching. Generated offline cache consistency and `git diff --check` pass.
+
+The catalog contains 96 items. The 36 additions have 71 inventory and worn-layer PNGs, verified against their pinned source manifest. A browser gallery was inspected and weapon grips, rotations, scale and helmet offsets were corrected individually. At 1024x768, a v0.11 company save migrated to Sallet, Plate Cuirass, Bardiche, Composite Bow and other new equipment and rendered in the equipment screen.
+
+Browser double-clicks travelled to Greyhaven and opened its settlement menu, attacked a camp on arrival, and pursued a moving Hungry Deserters band directly into combat. Both battles completed. The shared pointer handler covers mouse and touch; physical iPad double-tapping remains untested.
+
+Buying all two Bandages spent 116 crowns and removed the trader listing. Buying all 31 ammunition spent 124 crowns, raised ammunition from 16 to 47, and removed its supply card. Buying all three Hand Axes spent 510 crowns and removed their trader listing while retaining three copies in the stash.
+
+With both local servers stopped and a direct HTTP request failing, a fresh tab restored the new equipped items, 9,490 crowns, three Hand Axes and the exhausted listing. Buying both Surgeon's Kits offline spent 360 crowns; reloading retained 9,130 crowns and both kits. No JavaScript errors occurred in that offline tab. Physical iPad Safari installation and airplane-mode save retention remain untested.
+
+## Historical v0.11 checks
 
 The full automated suite passes 118 tests, including new coverage for reserve sets, pocket daggers, safe consumable use, shield stats, crossbow reload preservation, casualty recovery, legacy famed rewards, and thrown-weapon rendering. Six saved fixtures from v0.9 through v0.10.1 migrate without changing their equipment, purse, inventory, or battle positions.
 

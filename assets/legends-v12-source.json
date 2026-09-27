@@ -1,0 +1,646 @@
+{
+  "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "purpose": "Ashen Company v0.12 equipment expansion",
+  "assets": [
+    {
+      "local": "assets/items/hand-axe.png",
+      "source": "unpacked/legend_weapons/icons/icon_axe_02_1.png",
+      "kind": "inventory",
+      "itemId": "hand-axe",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_axe_02_1.png",
+      "bytes": 1464,
+      "sha256": "bdb670353ff487aa56c6e56c84e0aefcfb643ac06e3d420e43c97caee7e01315"
+    },
+    {
+      "local": "assets/portraits/weapon-hand-axe.png",
+      "source": "unpacked/legend_weapons/icons/icon_axe_02_1.png",
+      "kind": "portrait",
+      "itemId": "hand-axe",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_axe_02_1.png",
+      "bytes": 1464,
+      "sha256": "bdb670353ff487aa56c6e56c84e0aefcfb643ac06e3d420e43c97caee7e01315"
+    },
+    {
+      "local": "assets/items/longaxe.png",
+      "source": "unpacked/legend_weapons/icons/icon_axe_two_handed_02_1.png",
+      "kind": "inventory",
+      "itemId": "longaxe",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_axe_two_handed_02_1.png",
+      "bytes": 2319,
+      "sha256": "95e3f827c60c29a98ccb071b7585ef8c7db6b496af19ab2536158c07380487c6"
+    },
+    {
+      "local": "assets/portraits/weapon-longaxe.png",
+      "source": "unpacked/legend_weapons/icons/icon_axe_two_handed_02_1.png",
+      "kind": "portrait",
+      "itemId": "longaxe",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_axe_two_handed_02_1.png",
+      "bytes": 2319,
+      "sha256": "95e3f827c60c29a98ccb071b7585ef8c7db6b496af19ab2536158c07380487c6"
+    },
+    {
+      "local": "assets/items/bardiche.png",
+      "source": "unpacked/legend_weapons/icons/icon_bardiche_01_1.png",
+      "kind": "inventory",
+      "itemId": "bardiche",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_bardiche_01_1.png",
+      "bytes": 3144,
+      "sha256": "c1e9151de582f116a7562fe1d957ba9b49c4b7100c28ec4938594879922ae39a"
+    },
+    {
+      "local": "assets/portraits/weapon-bardiche.png",
+      "source": "unpacked/legend_weapons/icons/icon_bardiche_01_1.png",
+      "kind": "portrait",
+      "itemId": "bardiche",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_bardiche_01_1.png",
+      "bytes": 3144,
+      "sha256": "c1e9151de582f116a7562fe1d957ba9b49c4b7100c28ec4938594879922ae39a"
+    },
+    {
+      "local": "assets/items/hooked-bill.png",
+      "source": "unpacked/legend_weapons/icons/icon_bill_01_1.png",
+      "kind": "inventory",
+      "itemId": "hooked-bill",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_bill_01_1.png",
+      "bytes": 2440,
+      "sha256": "4dd80603ce7644628b78155ebfc5b599b4021114cd6773d3d4946feea97079f5"
+    },
+    {
+      "local": "assets/portraits/weapon-hooked-bill.png",
+      "source": "unpacked/legend_weapons/icons/icon_bill_01_1.png",
+      "kind": "portrait",
+      "itemId": "hooked-bill",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_bill_01_1.png",
+      "bytes": 2440,
+      "sha256": "4dd80603ce7644628b78155ebfc5b599b4021114cd6773d3d4946feea97079f5"
+    },
+    {
+      "local": "assets/items/bladed-pike.png",
+      "source": "unpacked/legend_weapons/icons/icon_bladed_pike_01_1.png",
+      "kind": "inventory",
+      "itemId": "bladed-pike",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_bladed_pike_01_1.png",
+      "bytes": 2343,
+      "sha256": "a77cd9cafbf71296286a7e9eeff0fbd846c4cf94965ab16ed22e463bb019ae71"
+    },
+    {
+      "local": "assets/portraits/weapon-bladed-pike.png",
+      "source": "unpacked/legend_weapons/icons/icon_bladed_pike_01_1.png",
+      "kind": "portrait",
+      "itemId": "bladed-pike",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_bladed_pike_01_1.png",
+      "bytes": 2343,
+      "sha256": "a77cd9cafbf71296286a7e9eeff0fbd846c4cf94965ab16ed22e463bb019ae71"
+    },
+    {
+      "local": "assets/items/goedendag.png",
+      "source": "unpacked/legend_weapons/icons/icon_goedendag_01_1.png",
+      "kind": "inventory",
+      "itemId": "goedendag",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_goedendag_01_1.png",
+      "bytes": 2535,
+      "sha256": "4b5e5d3d345535669b2e80582473b478dad18864521b15642d6032b5819974fe"
+    },
+    {
+      "local": "assets/portraits/weapon-goedendag.png",
+      "source": "unpacked/legend_weapons/icons/icon_goedendag_01_1.png",
+      "kind": "portrait",
+      "itemId": "goedendag",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_goedendag_01_1.png",
+      "bytes": 2535,
+      "sha256": "4b5e5d3d345535669b2e80582473b478dad18864521b15642d6032b5819974fe"
+    },
+    {
+      "local": "assets/items/estoc.png",
+      "source": "unpacked/legend_weapons/icons/icon_estoc_02.png",
+      "kind": "inventory",
+      "itemId": "estoc",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_estoc_02.png",
+      "bytes": 2863,
+      "sha256": "5965b646397a991a6c75b6417c92f11b978c9b7ae3d32849785a3d45986aa029"
+    },
+    {
+      "local": "assets/portraits/weapon-estoc.png",
+      "source": "unpacked/legend_weapons/icons/icon_estoc_02.png",
+      "kind": "portrait",
+      "itemId": "estoc",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_estoc_02.png",
+      "bytes": 2863,
+      "sha256": "5965b646397a991a6c75b6417c92f11b978c9b7ae3d32849785a3d45986aa029"
+    },
+    {
+      "local": "assets/items/falx.png",
+      "source": "unpacked/legend_weapons/icons/icon_falx_01_1.png",
+      "kind": "inventory",
+      "itemId": "falx",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_falx_01_1.png",
+      "bytes": 1688,
+      "sha256": "f78b004762847d426b78165d55e732fceb5198ac5c28211d4d862174d05e6f91"
+    },
+    {
+      "local": "assets/portraits/weapon-falx.png",
+      "source": "unpacked/legend_weapons/icons/icon_falx_01_1.png",
+      "kind": "portrait",
+      "itemId": "falx",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_falx_01_1.png",
+      "bytes": 1688,
+      "sha256": "f78b004762847d426b78165d55e732fceb5198ac5c28211d4d862174d05e6f91"
+    },
+    {
+      "local": "assets/items/three-headed-flail.png",
+      "source": "unpacked/legend_weapons/icons/icon_flail_three_headed_01_1.png",
+      "kind": "inventory",
+      "itemId": "three-headed-flail",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_flail_three_headed_01_1.png",
+      "bytes": 2412,
+      "sha256": "a111eb83e06c77a30db5f77e7a1313a561058285bff410195790158d5eed7e2d"
+    },
+    {
+      "local": "assets/portraits/weapon-three-headed-flail.png",
+      "source": "unpacked/legend_weapons/icons/icon_flail_three_headed_01_1.png",
+      "kind": "portrait",
+      "itemId": "three-headed-flail",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_flail_three_headed_01_1.png",
+      "bytes": 2412,
+      "sha256": "a111eb83e06c77a30db5f77e7a1313a561058285bff410195790158d5eed7e2d"
+    },
+    {
+      "local": "assets/items/battle-glaive.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_battle_glaive_01.png",
+      "kind": "inventory",
+      "itemId": "battle-glaive",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_battle_glaive_01.png",
+      "bytes": 3976,
+      "sha256": "c03d991e9ac5e6659e115d40182aae1178a6e06a50fee58e26ed6d2674c8c353"
+    },
+    {
+      "local": "assets/portraits/weapon-battle-glaive.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_battle_glaive_01.png",
+      "kind": "portrait",
+      "itemId": "battle-glaive",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_battle_glaive_01.png",
+      "bytes": 3976,
+      "sha256": "c03d991e9ac5e6659e115d40182aae1178a6e06a50fee58e26ed6d2674c8c353"
+    },
+    {
+      "local": "assets/items/short-bow.png",
+      "source": "unpacked/legend_weapons/icons/icon_short_bow_1.png",
+      "kind": "inventory",
+      "itemId": "short-bow",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_short_bow_1.png",
+      "bytes": 2206,
+      "sha256": "b2c9611277a587eaa20bb4c4570ce26f5677590f37dabc8eebf1248775abf841"
+    },
+    {
+      "local": "assets/portraits/weapon-short-bow.png",
+      "source": "unpacked/legend_weapons/icons/icon_short_bow_1.png",
+      "kind": "portrait",
+      "itemId": "short-bow",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_short_bow_1.png",
+      "bytes": 2206,
+      "sha256": "b2c9611277a587eaa20bb4c4570ce26f5677590f37dabc8eebf1248775abf841"
+    },
+    {
+      "local": "assets/items/composite-bow.png",
+      "source": "unpacked/legend_weapons/icons/icon_composite_bow_01.png",
+      "kind": "inventory",
+      "itemId": "composite-bow",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_composite_bow_01.png",
+      "bytes": 6894,
+      "sha256": "71c571bc92d0fa369c935a6a51dabab247701ac41d516f22f99fb2ea82eb09a8"
+    },
+    {
+      "local": "assets/portraits/weapon-composite-bow.png",
+      "source": "unpacked/legend_weapons/icons/icon_composite_bow_01.png",
+      "kind": "portrait",
+      "itemId": "composite-bow",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_composite_bow_01.png",
+      "bytes": 6894,
+      "sha256": "71c571bc92d0fa369c935a6a51dabab247701ac41d516f22f99fb2ea82eb09a8"
+    },
+    {
+      "local": "assets/items/throwing-spears.png",
+      "source": "unpacked/legend_weapons/icons/icon_throwing_spear_01_1.png",
+      "kind": "inventory",
+      "itemId": "throwing-spears",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_throwing_spear_01_1.png",
+      "bytes": 1457,
+      "sha256": "b44396d6c29acd8e3212a34c14bbfbfeed0d22de9ebfc4d0dc9bad53b05745a6"
+    },
+    {
+      "local": "assets/portraits/weapon-throwing-spears.png",
+      "source": "unpacked/legend_weapons/icons/icon_throwing_spear_01_1.png",
+      "kind": "portrait",
+      "itemId": "throwing-spears",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_throwing_spear_01_1.png",
+      "bytes": 1457,
+      "sha256": "b44396d6c29acd8e3212a34c14bbfbfeed0d22de9ebfc4d0dc9bad53b05745a6"
+    },
+    {
+      "local": "assets/items/fighting-knife.png",
+      "source": "unpacked/legend_weapons/icons/icon_knife_01_1.png",
+      "kind": "inventory",
+      "itemId": "fighting-knife",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_knife_01_1.png",
+      "bytes": 857,
+      "sha256": "cfaf04d5cc6e0c9d7b7c3fc6aa41631a5018daeda98a4c6bfe0a27a55ff7604a"
+    },
+    {
+      "local": "assets/portraits/weapon-fighting-knife.png",
+      "source": "unpacked/legend_weapons/icons/icon_knife_01_1.png",
+      "kind": "portrait",
+      "itemId": "fighting-knife",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_knife_01_1.png",
+      "bytes": 857,
+      "sha256": "cfaf04d5cc6e0c9d7b7c3fc6aa41631a5018daeda98a4c6bfe0a27a55ff7604a"
+    },
+    {
+      "local": "assets/items/rhomphaia.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_decorated_rhompaia_01.png",
+      "kind": "inventory",
+      "itemId": "rhomphaia",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_decorated_rhompaia_01.png",
+      "bytes": 2441,
+      "sha256": "98188a473fb249ab7379031a4ab850d1230225f616f0fdebe328fdc1bed98dbf"
+    },
+    {
+      "local": "assets/portraits/weapon-rhomphaia.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_decorated_rhompaia_01.png",
+      "kind": "portrait",
+      "itemId": "rhomphaia",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_decorated_rhompaia_01.png",
+      "bytes": 2441,
+      "sha256": "98188a473fb249ab7379031a4ab850d1230225f616f0fdebe328fdc1bed98dbf"
+    },
+    {
+      "local": "assets/items/reinforced-crossbow.png",
+      "source": "unpacked/legend_weapons/icons/icon_crossbow_02_1.png",
+      "kind": "inventory",
+      "itemId": "reinforced-crossbow",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_crossbow_02_1.png",
+      "bytes": 2668,
+      "sha256": "4b678fd5a9031b8484929fc9529a58895ce06e23ad98602ff72225abea2089b4"
+    },
+    {
+      "local": "assets/portraits/weapon-reinforced-crossbow.png",
+      "source": "unpacked/legend_weapons/icons/icon_crossbow_02_1.png",
+      "kind": "portrait",
+      "itemId": "reinforced-crossbow",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_crossbow_02_1.png",
+      "bytes": 2668,
+      "sha256": "4b678fd5a9031b8484929fc9529a58895ce06e23ad98602ff72225abea2089b4"
+    },
+    {
+      "local": "assets/items/military-spear.png",
+      "source": "unpacked/legend_weapons/icons/icon_spear_03_1.png",
+      "kind": "inventory",
+      "itemId": "military-spear",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_spear_03_1.png",
+      "bytes": 1673,
+      "sha256": "58ea5c667306b3c6562d5be2504f73fa60297134f7bb85c77751c8a4d12871fd"
+    },
+    {
+      "local": "assets/portraits/weapon-military-spear.png",
+      "source": "unpacked/legend_weapons/icons/icon_spear_03_1.png",
+      "kind": "portrait",
+      "itemId": "military-spear",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_spear_03_1.png",
+      "bytes": 1673,
+      "sha256": "58ea5c667306b3c6562d5be2504f73fa60297134f7bb85c77751c8a4d12871fd"
+    },
+    {
+      "local": "assets/items/longsword.png",
+      "source": "unpacked/legend_weapons/icons/icon_sword_03_1.png",
+      "kind": "inventory",
+      "itemId": "longsword",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_sword_03_1.png",
+      "bytes": 1558,
+      "sha256": "e8795c308308b976ff86719ccae1c22438a3c81ee56dd53729a11686c2d80dc3"
+    },
+    {
+      "local": "assets/portraits/weapon-longsword.png",
+      "source": "unpacked/legend_weapons/icons/icon_sword_03_1.png",
+      "kind": "portrait",
+      "itemId": "longsword",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_sword_03_1.png",
+      "bytes": 1558,
+      "sha256": "e8795c308308b976ff86719ccae1c22438a3c81ee56dd53729a11686c2d80dc3"
+    },
+    {
+      "local": "assets/items/wolf-gambeson.png",
+      "source": "gfx/ui/items/legend_armor/inventory_gambeson_wolf_01.png",
+      "kind": "inventory",
+      "itemId": "wolf-gambeson",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_gambeson_wolf_01.png",
+      "bytes": 16032,
+      "sha256": "89ce5f637f9df7a3caad66d10d4e87b43444f2a13c686473b5e69b641d2436d1"
+    },
+    {
+      "local": "assets/portraits/armor-wolf-gambeson.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/gambeson_wolf_01.png",
+      "kind": "portrait",
+      "itemId": "wolf-gambeson",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/gambeson_wolf_01.png",
+      "bytes": 16218,
+      "sha256": "9e29e7989ff87a52e38fc2baf22334f075a93b830700fa647f80e3a54416fa24"
+    },
+    {
+      "local": "assets/items/riveted-leather.png",
+      "source": "gfx/ui/items/legend_armor/inventory_leather_riveted_01.png",
+      "kind": "inventory",
+      "itemId": "riveted-leather",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_leather_riveted_01.png",
+      "bytes": 16192,
+      "sha256": "971c9e6c076b8eb8b5c05e1fca78c2a9e5ffd8c124c0b070ec75bce0ffd03f7b"
+    },
+    {
+      "local": "assets/portraits/armor-riveted-leather.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/leather_riveted_01.png",
+      "kind": "portrait",
+      "itemId": "riveted-leather",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/leather_riveted_01.png",
+      "bytes": 11079,
+      "sha256": "60ec08c8ed4c51e90cbf1d9c78a98986ff2fc033f40de87cfd7ec69fd81026be"
+    },
+    {
+      "local": "assets/items/sleeveless-hauberk.png",
+      "source": "gfx/ui/items/legend_armor/inventory_hauberk_sleeveless_01.png",
+      "kind": "inventory",
+      "itemId": "sleeveless-hauberk",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_hauberk_sleeveless_01.png",
+      "bytes": 19634,
+      "sha256": "406aa4cfeb1407c8a15e5429db06fdee7e140d9d2d518457875646acc32fd997"
+    },
+    {
+      "local": "assets/portraits/armor-sleeveless-hauberk.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/hauberk_sleeveless_01.png",
+      "kind": "portrait",
+      "itemId": "sleeveless-hauberk",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/hauberk_sleeveless_01.png",
+      "bytes": 17232,
+      "sha256": "1c38aca6a24e663e49eefcb5ff824bf9a25028d1beaef47e8d4084528d893218"
+    },
+    {
+      "local": "assets/items/scale-shirt.png",
+      "source": "gfx/ui/items/legend_armor/inventory_scale_shirt_01.png",
+      "kind": "inventory",
+      "itemId": "scale-shirt",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_scale_shirt_01.png",
+      "bytes": 18956,
+      "sha256": "f83567fc67258cf2207053872b1e4b4138610ebb0841e31a12e4d0a433ce3c6e"
+    },
+    {
+      "local": "assets/portraits/armor-scale-shirt.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/scale_shirt_01.png",
+      "kind": "portrait",
+      "itemId": "scale-shirt",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/scale_shirt_01.png",
+      "bytes": 21509,
+      "sha256": "603b538ea371ecddc211a908ec861cce3788e11a62370ec9c4441d263513ad1e"
+    },
+    {
+      "local": "assets/items/reinforced-lamellar.png",
+      "source": "gfx/ui/items/legend_armor/inventory_leather_lamellar_harness_reinforced_01.png",
+      "kind": "inventory",
+      "itemId": "reinforced-lamellar",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_leather_lamellar_harness_reinforced_01.png",
+      "bytes": 12354,
+      "sha256": "3c3fdb49d9002517abb7f33ac6689c385dc0ba97a4606cb58f8a1505e47d1404"
+    },
+    {
+      "local": "assets/portraits/armor-reinforced-lamellar.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/leather_lamellar_harness_reinforced_01.png",
+      "kind": "portrait",
+      "itemId": "reinforced-lamellar",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/leather_lamellar_harness_reinforced_01.png",
+      "bytes": 13133,
+      "sha256": "3d76614d3f2af39890c463292ee9178d1c6cd7912a20bb9622b62ee015890ffb"
+    },
+    {
+      "local": "assets/items/riveted-mail.png",
+      "source": "gfx/ui/items/legend_armor/inventory_reinforced_mail_shirt_01.png",
+      "kind": "inventory",
+      "itemId": "riveted-mail",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_reinforced_mail_shirt_01.png",
+      "bytes": 14083,
+      "sha256": "519664235bf5b3e3003b860aa9c2e19a5f41443e14227ef48dfce72a814d5a74"
+    },
+    {
+      "local": "assets/portraits/armor-riveted-mail.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/reinforced_mail_shirt_01.png",
+      "kind": "portrait",
+      "itemId": "riveted-mail",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/reinforced_mail_shirt_01.png",
+      "bytes": 12902,
+      "sha256": "2f318f38c3dd8d001085445db35c1c1060d08a92c31a4aa6e5cabbb31ba4d146"
+    },
+    {
+      "local": "assets/items/plate-cuirass.png",
+      "source": "gfx/ui/items/legend_armor/inventory_plate_cuirass_01.png",
+      "kind": "inventory",
+      "itemId": "plate-cuirass",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_plate_cuirass_01.png",
+      "bytes": 14240,
+      "sha256": "07826232dd81e4664e1806d96bb014d94f7a021bb2d62022f8d68037eab204ac"
+    },
+    {
+      "local": "assets/portraits/armor-plate-cuirass.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/plate_cuirass_01.png",
+      "kind": "portrait",
+      "itemId": "plate-cuirass",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/plate_cuirass_01.png",
+      "bytes": 15056,
+      "sha256": "baf85d3d802f0ca9da508db2775fa8136af4e132e2d89ffa9fd43c9b3ea44b08"
+    },
+    {
+      "local": "assets/items/noble-tabard.png",
+      "source": "gfx/ui/items/legend_armor/inventory_tabard_noble_01.png",
+      "kind": "inventory",
+      "itemId": "noble-tabard",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_tabard_noble_01.png",
+      "bytes": 8244,
+      "sha256": "6f81ba275795a60346b8c5ac5a7f35ea99665f7fede50c962ffee160d7553152"
+    },
+    {
+      "local": "assets/portraits/armor-noble-tabard.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/tabard_noble_01.png",
+      "kind": "portrait",
+      "itemId": "noble-tabard",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/tabard_noble_01.png",
+      "bytes": 7170,
+      "sha256": "498d05d0614b3273493920591046335d6983945e764b752eafcaaefa8c997b79"
+    },
+    {
+      "local": "assets/items/sallet.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_sallet_01.png",
+      "kind": "inventory",
+      "itemId": "sallet",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_sallet_01.png",
+      "bytes": 7773,
+      "sha256": "90b4f48b8d1e8eeba47a26ec14a9f880b3072b7c2e64835cd91f10a5eeb02e52"
+    },
+    {
+      "local": "assets/portraits/helmet-sallet.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/sallet_01.png",
+      "kind": "portrait",
+      "itemId": "sallet",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/sallet_01.png",
+      "bytes": 4993,
+      "sha256": "cf91cacd6cc0947d43cb33c8379bfad9995eb90abfeef97864aaa1f12548f7be"
+    },
+    {
+      "local": "assets/items/barbute.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_barbute_01.png",
+      "kind": "inventory",
+      "itemId": "barbute",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_barbute_01.png",
+      "bytes": 13060,
+      "sha256": "bc0b6f879dab010969fe0dd7d13278a76f2ed07e54d66e26e01a1e4b7066457c"
+    },
+    {
+      "local": "assets/portraits/helmet-barbute.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/barbute_01.png",
+      "kind": "portrait",
+      "itemId": "barbute",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/barbute_01.png",
+      "bytes": 13863,
+      "sha256": "5d4f7c5956183f5d2f151dd4cc1810a9221cc5a04c5b60dbf6606fc122535ea6"
+    },
+    {
+      "local": "assets/items/flat-top-helm.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_flat_top_helm_01.png",
+      "kind": "inventory",
+      "itemId": "flat-top-helm",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_flat_top_helm_01.png",
+      "bytes": 5152,
+      "sha256": "e6d2d543e4a384550a07775c46895af90cab85532f686f5b26a6be02fb0d5873"
+    },
+    {
+      "local": "assets/portraits/helmet-flat-top-helm.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/flat_top_helm_01.png",
+      "kind": "portrait",
+      "itemId": "flat-top-helm",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/flat_top_helm_01.png",
+      "bytes": 9344,
+      "sha256": "693a31f2bfedb76a0507bb04b54c5b7e594ca1c9cb557df62e6e6e41da0b3d32"
+    },
+    {
+      "local": "assets/items/full-helm.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_full_helm_01.png",
+      "kind": "inventory",
+      "itemId": "full-helm",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_full_helm_01.png",
+      "bytes": 11192,
+      "sha256": "5bc8edb0ed4be6775a76ee1bc1468a47d41fa2917c5d44d9c65309fdbf2ceeae"
+    },
+    {
+      "local": "assets/portraits/helmet-full-helm.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/full_helm_01.png",
+      "kind": "portrait",
+      "itemId": "full-helm",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/full_helm_01.png",
+      "bytes": 12833,
+      "sha256": "e7bdcc11307e48ade711fb1b0755c681cd16de67583534d7b12849edb9ba8403"
+    },
+    {
+      "local": "assets/items/southern-turban.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_southern_turban_full_01.png",
+      "kind": "inventory",
+      "itemId": "southern-turban",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_southern_turban_full_01.png",
+      "bytes": 12075,
+      "sha256": "53a7676a4401d83636ca5fa18fe5a8b0653b540a83f36d02a7ece4eb1a6a0cfc"
+    },
+    {
+      "local": "assets/portraits/helmet-southern-turban.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/southern_turban_full_01.png",
+      "kind": "portrait",
+      "itemId": "southern-turban",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/southern_turban_full_01.png",
+      "bytes": 18662,
+      "sha256": "1add159fac72b72966f15053e58a4f026f811f4747d9a2ce3d682b17d1f374fe"
+    },
+    {
+      "local": "assets/items/high-kettle-helm.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_kettle_helm_high_01.png",
+      "kind": "inventory",
+      "itemId": "high-kettle-helm",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_kettle_helm_high_01.png",
+      "bytes": 5921,
+      "sha256": "f5c9ac8bd096d718efa71e3165f50a3e7f7af987e5d575b14d5829597b77893d"
+    },
+    {
+      "local": "assets/portraits/helmet-high-kettle-helm.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/kettle_helm_high_01.png",
+      "kind": "portrait",
+      "itemId": "high-kettle-helm",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/kettle_helm_high_01.png",
+      "bytes": 11482,
+      "sha256": "63bb6d5635c7aa700f2e91e678a566fb8fb9575dfe9c56de7b2bfcdb608ba0c6"
+    },
+    {
+      "local": "assets/items/painted-round-shield.png",
+      "source": "gfx/ui/items/shields/inventory_shield_round_104.png",
+      "kind": "inventory",
+      "itemId": "painted-round-shield",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/shields/inventory_shield_round_104.png",
+      "bytes": 12608,
+      "sha256": "764f56495935c322667e3289bd92521c7ac7c0f35f74d67dc6b2301739a045b6"
+    },
+    {
+      "local": "assets/portraits/shield-painted-round-shield.png",
+      "source": "unpacked/legend_weapons/icons/shield_round_104.png",
+      "kind": "portrait",
+      "itemId": "painted-round-shield",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/shield_round_104.png",
+      "bytes": 6939,
+      "sha256": "945aba188d7a8dae41227e8ea1b743fb99799b70117b29000baa22361921972e"
+    },
+    {
+      "local": "assets/items/painted-heater-shield.png",
+      "source": "gfx/ui/items/shields/inventory_heater_shield_104.png",
+      "kind": "inventory",
+      "itemId": "painted-heater-shield",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/shields/inventory_heater_shield_104.png",
+      "bytes": 11862,
+      "sha256": "6276fdac6a45cf72350ba96ade52e3e97f96ba7bc5145e2a7b989df6622c98c6"
+    },
+    {
+      "local": "assets/portraits/shield-painted-heater-shield.png",
+      "source": "unpacked/legend_weapons/icons/shield_heater_104.png",
+      "kind": "portrait",
+      "itemId": "painted-heater-shield",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/shield_heater_104.png",
+      "bytes": 7420,
+      "sha256": "a834eefc59c065f16feaa7ced6f77a66dd51484d37fc6cc3e7c9f5850d1f916f"
+    },
+    {
+      "local": "assets/items/painted-tower-shield.png",
+      "source": "gfx/ui/items/shields/inventory_towershield_104.png",
+      "kind": "inventory",
+      "itemId": "painted-tower-shield",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/shields/inventory_towershield_104.png",
+      "bytes": 18065,
+      "sha256": "1a1f97d61675dc970762b1ef54464e5405f381266a4cc2a80f845743098a0807"
+    },
+    {
+      "local": "assets/portraits/shield-painted-tower-shield.png",
+      "source": "unpacked/legend_weapons/icons/towershield_104.png",
+      "kind": "portrait",
+      "itemId": "painted-tower-shield",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/towershield_104.png",
+      "bytes": 31750,
+      "sha256": "102c00a52fdfcd6002dc7683a7da576c61ed09a7bd6c767a89a7022b620574dc"
+    },
+    {
+      "local": "assets/items/surgeons-kit.png",
+      "source": "gfx/ui/items/legend_armor/inventory_bandages_04.png",
+      "kind": "inventory",
+      "itemId": "surgeons-kit",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_bandages_04.png",
+      "bytes": 16674,
+      "sha256": "61b50413e5f46c4982008203f601837d502103ce305a9494bd432a14c2f5599d"
+    }
+  ]
+}

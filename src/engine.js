@@ -337,6 +337,7 @@ export function createGame(seed = Date.now()) {
     gameOver: false,
     position: { x: 350, y: 460 },
     destination: null,
+    destinationAction: null,
     contract: null,
     contractSerial: 0,
     recruitSerial: 0,
@@ -474,6 +475,7 @@ export function pursueBand(state, id) {
   if (blocked) return blocked;
   const band = getRoamingBands(state).find(entry => entry.id === id);
   if (!band) return result(false, 'That band is no longer on the road.');
+  state.destinationAction = null;
   if (distance(state.position, band) <= BAND_RADIUS) {
     state.destination = null;
     state.pursuit = null;
@@ -492,11 +494,32 @@ export function travelTo(state, x, y) {
   if (!inBounds(x, y)) return result(false, 'Choose a reachable point on the mainland.');
   if (distance(state.position, { x, y }) <= ARRIVAL_RADIUS) return result(false, 'The company is already here.');
   state.pursuit = null;
+  state.destinationAction = null;
   state.destination = { x, y };
   const town = SETTLEMENTS.find(place => distance(place, state.destination) <= TOWN_RADIUS);
   const message = town ? `Traveling to ${town.name}.` : 'Traveling across the wilds.';
   record(state, message);
   return result(true, message);
+}
+
+export function activateMapTarget(state, type, id) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  if (type === 'band') return pursueBand(state, id);
+  const target = type === 'town' ? TOWN_BY_ID.get(id) : type === 'camp' ? getCampSites(state).find(site => site.id === id) : null;
+  if (!target) return result(false, 'That destination is unavailable.');
+  if (type === 'camp' && target.cleared) return result(false, 'This camp has already been cleared.');
+  if (type === 'town' && townAt(state)?.id === id) {
+    state.destination = null; state.pursuit = null; state.destinationAction = null;
+    return { ...result(true, `Entering ${target.name}.`), openTown: id };
+  }
+  if (type === 'camp' && distance(state.position, target) <= CAMP_RADIUS) return startBattle(state, id);
+  const travel = travelTo(state, target.x, target.y);
+  if (travel.ok) {
+    state.destinationAction = { type, id, ...(type === 'camp' ? { generation: target.generation } : {}) };
+    return result(true, type === 'camp' ? `Marching to attack ${target.name}.` : `Traveling to enter ${target.name}.`);
+  }
+  return travel;
 }
 
 function onArrival(state) {
@@ -577,6 +600,7 @@ export function tick(state, hours) {
   let engagement = null;
   while (remaining > 1e-9) {
     const step = Math.min(remaining, 0.25);
+    let arrivedAction = null;
     if (state.pursuit) {
       const target = getRoamingBands(state).find(band => band.id === state.pursuit);
       if (target) state.destination = { x: target.x, y: target.y };
@@ -594,9 +618,17 @@ export function tick(state, hours) {
         state.position = { ...state.destination };
         state.destination = null;
         onArrival(state);
+        arrivedAction = state.destinationAction;
+        state.destinationAction = null;
       }
     }
     advanceClock(state, step);
+    if (arrivedAction?.type === 'town') engagement = { ...result(true, `Entering ${TOWN_BY_ID.get(arrivedAction.id).name}.`), openTown: arrivedAction.id };
+    else if (arrivedAction?.type === 'camp') {
+      const camp = getCampSites(state).find(site => site.id === arrivedAction.id);
+      engagement = camp && !camp.cleared && camp.generation === arrivedAction.generation
+        ? startBattle(state, arrivedAction.id) : result(false, 'That camp is no longer available to attack.');
+    }
     if (state.pursuit) {
       const target = getRoamingBands(state).find(band => band.id === state.pursuit);
       if (!target) { state.pursuit = null; state.destination = null; }
@@ -658,29 +690,56 @@ export function acceptContract(state, townId, offerId) {
   return result(true, message);
 }
 
-export function buyItem(state, itemId) {
+export function getPurchaseQuote(state, kind, id) {
+  const market = getMarket(state);
+  if (!market) return { quantity: 0, cost: 0 };
+  const offer = kind === 'equipment' ? market.equipment.find(row => row.itemId === id)
+    : kind === 'food' ? market.food : kind === 'goods' ? market.goods.find(row => row.goodId === id)
+    : kind === 'supplies' ? market.supplies.find(row => row.kind === id) : null;
+  if (!offer) return { quantity: 0, cost: 0 };
+  const capacity = kind === 'equipment' ? MAX_INVENTORY - state.inventory.length
+    : kind === 'food' ? 1000000000 - state.food : kind === 'goods' ? MAX_CARGO - cargoCount(state)
+    : 10000 - state.supplies[id];
+  const quantity = Math.max(0, Math.min(offer.stock, Math.floor(state.gold / offer.buyPrice), capacity));
+  return { quantity, cost: quantity * offer.buyPrice };
+}
+
+export function buyAll(state, kind, id) {
+  const { quantity } = getPurchaseQuote(state, kind, id);
+  if (!quantity) return result(false, 'Nothing can be bought: check stock, crowns and storage.');
+  if (kind === 'equipment') return buyItem(state, id, quantity);
+  if (kind === 'food') return buyFood(state, quantity);
+  if (kind === 'goods') return buyGood(state, id, quantity);
+  return buySupplies(state, id, quantity);
+}
+
+export function buyItem(state, itemId, quantity = 1) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
   const item = getItem(itemId);
   if (!item) return result(false, 'Unknown item.');
+  if (!validQuantity(quantity, MAX_INVENTORY)) return result(false, 'Choose a valid number of items.');
   const offer = getMarket(state).equipment.find(entry => entry.itemId === itemId);
   if (!offer) return result(false, 'This item is not for sale here.');
-  if (offer.stock < 1) return result(false, 'This item is sold out until the next market day.');
-  if (state.gold < offer.buyPrice) return result(false, 'The company cannot afford this item.');
-  if (state.inventory.length >= MAX_INVENTORY) return result(false, 'The company pack is full.');
-  state.gold -= offer.buyPrice;
-  state.inventory.push(item.id);
+  if (offer.stock < quantity) return result(false, 'The market does not have that many items today.');
+  const cost = offer.buyPrice * quantity;
+  if (state.gold < cost) return result(false, 'The company cannot afford this item.');
+  if (state.inventory.length + quantity > MAX_INVENTORY) return result(false, 'The company pack is full.');
+  state.gold -= cost;
+  state.inventory.push(...Array(quantity).fill(item.id));
   if (item.rarity === 'famed') {
     const buyback = writableMarketStock(state, access.town).buyback;
-    const index = buyback.findIndex(entry => entry.itemId === itemId);
-    state.inventoryCondition.push(buyback.splice(index, 1)[0].condition);
+    for (let count = 0; count < quantity; count++) {
+      const index = buyback.findIndex(entry => entry.itemId === itemId);
+      state.inventoryCondition.push(buyback.splice(index, 1)[0].condition);
+    }
   } else {
-    state.inventoryCondition.push(itemCondition(item.id));
-    writableMarketStock(state, access.town).equipment[itemId] -= 1;
+    state.inventoryCondition.push(...Array(quantity).fill(itemCondition(item.id)));
+    writableMarketStock(state, access.town).equipment[itemId] -= quantity;
   }
-  const message = `Bought ${item.name} for ${offer.buyPrice} crowns.`;
+  const message = `Bought ${quantity > 1 ? `${quantity} x ` : ''}${item.name} for ${cost} crowns.`;
   record(state, message);
   return result(true, message);
 }
@@ -711,7 +770,7 @@ export function buyFood(state, quantity = 5) {
   if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
-  if (!validQuantity(quantity, 50)) return result(false, 'Choose 1 to 50 provisions.');
+  if (!validQuantity(quantity, 100)) return result(false, 'Choose 1 to 100 provisions.');
   const offer = getMarket(state).food;
   const cost = offer.buyPrice * quantity;
   if (offer.stock < quantity) return result(false, 'The market does not have that many provisions today.');
@@ -773,7 +832,7 @@ export function buySupplies(state, kind, quantity = 1) {
   const access = requireTown(state);
   if (access.error) return access.error;
   if (!SUPPLY_INFO[kind]) return result(false, 'Unknown supply.');
-  if (!validQuantity(quantity, 50)) return result(false, 'Choose 1 to 50 supplies.');
+  if (!validQuantity(quantity, 100)) return result(false, 'Choose 1 to 100 supplies.');
   const offer = getMarket(state).supplies.find(entry => entry.kind === kind);
   const cost = offer.buyPrice * quantity;
   if (offer.stock < quantity) return result(false, 'The market does not have that many supplies today.');
@@ -1148,6 +1207,7 @@ export function startBattle(state, encounterId) {
   battleLog(battle, `The company engages ${camp.name}.`);
   state.battle = battle;
   state.destination = null;
+  state.destinationAction = null;
   state.pursuit = null;
   const message = `Battle begins at ${camp.name}.`;
   record(state, message);
@@ -1912,6 +1972,13 @@ export function validateSave(input) {
   for (const entry of Object.values(bands)) assert(recordObject(entry) && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0 && entry.defeatedUntil <= worldHours(input) + 48 && (entry.spawnCycle === undefined || validCount(entry.spawnCycle) && entry.spawnCycle >= 1 && entry.spawnCycle <= 1000000), 'band respawn');
   const pursuit = input.pursuit === undefined ? null : input.pursuit;
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
+  const destinationAction = input.destinationAction ?? null;
+  if (destinationAction !== null) {
+    assert(recordObject(destinationAction) && ['town', 'camp'].includes(destinationAction.type), 'destination action');
+    const target = destinationAction.type === 'town' ? TOWN_BY_ID.get(destinationAction.id) : getCampSites(input).find(site => site.id === destinationAction.id);
+    assert(target && input.destination && pursuit === null && !input.battle && input.destination.x === target.x && input.destination.y === target.y, 'destination action target');
+    if (destinationAction.type === 'camp') assert(!target.cleared && destinationAction.generation === target.generation, 'destination camp generation');
+  }
   const battle = validateBattle(input.battle, input.party, input);
   assert(!battle || battle.tactic === tactic, 'battle tactic');
   assert(!battle || input.destination === null && pursuit === null && (battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');
@@ -1964,6 +2031,7 @@ export function validateSave(input) {
     battle, gameOver,
     position: { x: input.position.x, y: input.position.y },
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,
+    destinationAction: destinationAction ? { type: destinationAction.type, id: destinationAction.id, ...(destinationAction.type === 'camp' ? { generation: destinationAction.generation } : {}) } : null,
     contract: input.contract ? { id: input.contract.id, type: input.contract.type ?? 'courier', from: input.contract.from, to: input.contract.to, reward: input.contract.reward, renown: input.contract.renown ?? 1, ...(input.contract.type === 'supply' ? { goodId: input.contract.goodId, quantity: input.contract.quantity } : {}), ...(input.contract.type === 'hunt' ? { campId: input.contract.campId, campGeneration: input.contract.campGeneration??0 } : {}), acceptedDay: input.contract.acceptedDay } : null,
     contractSerial: input.contractSerial, recruitSerial: input.recruitSerial,
     log: [...input.log], visited: [...input.visited],

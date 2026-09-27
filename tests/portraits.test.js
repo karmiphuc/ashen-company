@@ -115,6 +115,20 @@ test('v0.11 item art exists and matches its pinned-source manifest', () => {
   }
 });
 
+test('v0.12 expansion art exists and matches its pinned-source manifest', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../assets/legends-v12-source.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.commit, 'b014cdf8520e69b2383116d1654977e9dbb10d96');
+  assert.equal(manifest.assets.length, 71);
+  assert.equal(new Set(manifest.assets.map(asset => asset.local)).size, manifest.assets.length);
+  const itemIds = new Set(manifest.assets.map(asset => asset.itemId));
+  assert.equal(itemIds.size, 36);
+  for (const asset of manifest.assets) {
+    const bytes = readFileSync(new URL(`../${asset.local}`, import.meta.url));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256, asset.local);
+    assert.match(asset.url, new RegExp(`^https://raw\\.githubusercontent\\.com/Battle-Brothers-Legends/Legends-public/${manifest.commit}/`));
+  }
+});
+
 test('actual engine visuals select distinct authored body equipment layers', () => {
   for (const slot of ['armor', 'helmet', 'weapon', 'shield']) {
     const visuals = [...new Set(ITEMS.filter(item => item.slot === slot).map(item => item.visual))];

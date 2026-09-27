@@ -37,7 +37,7 @@ function battleWith(state) {
 }
 
 test('the additional catalog has valid slot types and only gear can be famed', () => {
-  assert.equal(ITEMS.length, 60);
+  assert.equal(ITEMS.length, 96);
   for (const item of ITEMS) {
     assert.equal(getItem(item.id), item);
     assert.ok(['armor', 'helmet', 'weapon', 'shield', 'accessory'].includes(item.slot));

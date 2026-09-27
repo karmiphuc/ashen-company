@@ -7,7 +7,7 @@ const item = id => ITEMS.find(entry => entry.id === id);
 const value = (details, label) => details.stats.find(stat => stat.label === label)?.value;
 
 test('every catalog item has useful details without changing the item', () => {
-  assert.equal(ITEMS.length, 60);
+  assert.equal(ITEMS.length, 96);
   for (const entry of ITEMS) {
     const before = structuredClone(entry);
     const details = getItemDetails(entry);

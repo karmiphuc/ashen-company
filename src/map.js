@@ -15,7 +15,7 @@ const names = [
   'banner_101', 'banner_102', 'banner_103',
 ];
 const images = new Map();
-const loaded = Promise.all(names.map(name => new Promise(resolve => {
+const loaded = typeof Image === 'undefined' ? Promise.resolve() : Promise.all(names.map(name => new Promise(resolve => {
   const image = new Image();
   image.onload = resolve;
   image.onerror = resolve;
@@ -29,6 +29,9 @@ const knownTownArt = {
 };
 const buildingByKind = { city: 'townhall_02', town: 'townhall_01', fort: 'stronghold_02', outpost: 'fortified_outpost_01', village: 'houses_03_01' };
 const WORLD_PAD = 170;
+const DOUBLE_TAP_DELAY = 350;
+const DOUBLE_TAP_DISTANCE = 24;
+const TAP_MOVEMENT_LIMIT = 7;
 const BACKGROUND_BOUNDS = {
   x: WORLD_BOUNDS.minX - WORLD_PAD,
   y: WORLD_BOUNDS.minY - WORLD_PAD,
@@ -42,10 +45,36 @@ const camera = {
   initialized: false,
 };
 
-let canvas, context, state, selection = null, townCallback, campCallback, background = null, resizeObserver;
+let canvas, context, state, selection = null, townCallback, campCallback, activationCallback, background = null, resizeObserver;
 let width = 0, height = 0, pointers = new Map(), dragOrigin = null, pinchStart = null, dragged = false;
+let activationTracker = createMapActivationTracker();
 
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+
+export function isMapTapGesture(start, end) {
+  return Boolean(start && end && Math.hypot(end.x - start.x, end.y - start.y) <= TAP_MOVEMENT_LIMIT);
+}
+
+export function createMapActivationTracker() {
+  let previous = null;
+  return {
+    tap(target, point, time) {
+      if (!target || target.id == null || !Number.isFinite(point?.x) || !Number.isFinite(point?.y) || !Number.isFinite(time)) {
+        previous = null;
+        return null;
+      }
+      const matches = previous
+        && previous.type === target.type
+        && previous.id === target.id
+        && time >= previous.time
+        && time - previous.time <= DOUBLE_TAP_DELAY
+        && Math.hypot(point.x - previous.x, point.y - previous.y) <= DOUBLE_TAP_DISTANCE;
+      previous = matches ? null : { type: target.type, id: target.id, x: point.x, y: point.y, time };
+      return matches ? target : null;
+    },
+    cancel() { previous = null; },
+  };
+}
 
 function sprite(target, name, x, y, spriteWidth, anchor = .83) {
   const image = images.get(name);
@@ -195,13 +224,14 @@ export function mapHTML() {
 
 export const mapSVG = mapHTML;
 
-export function mountMap(game, onChooseTown, onTravel, onChooseCamp) {
+export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate) {
   resizeObserver?.disconnect();
   pointers.clear(); dragOrigin = null; pinchStart = null;
+  activationTracker = createMapActivationTracker();
   canvas = document.querySelector('#world-map');
   if (!canvas) return;
   context = canvas.getContext('2d');
-  state = game; townCallback = onChooseTown; campCallback = onChooseCamp;
+  state = game; townCallback = onChooseTown; campCallback = onChooseCamp; activationCallback = onActivate;
   const resize = () => {
     const rectangle = canvas.getBoundingClientRect();
     width = rectangle.width; height = rectangle.height;
@@ -226,25 +256,31 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp) {
   canvas.onpointerdown = event => {
     canvas.setPointerCapture(event.pointerId);
     const current = point(event);
-    pointers.set(event.pointerId, current);
+    pointers.set(event.pointerId, { ...current, startX: current.x, startY: current.y });
     dragOrigin = { ...current, cameraX: camera.x, cameraY: camera.y };
     dragged = false;
     if (pointers.size === 2) {
       const [first, second] = [...pointers.values()];
       pinchStart = { distance: Math.hypot(first.x - second.x, first.y - second.y), zoom: camera.zoom };
       dragged = true;
+      activationTracker.cancel();
     }
   };
   canvas.onpointermove = event => {
-    if (!pointers.has(event.pointerId)) return;
-    const current = point(event);
+    const active = pointers.get(event.pointerId);
+    if (!active) return;
+    const current = { ...point(event), startX: active.startX, startY: active.startY };
     pointers.set(event.pointerId, current);
     if (pointers.size === 2 && pinchStart) {
       const [first, second] = [...pointers.values()];
       setZoom(pinchStart.zoom * Math.hypot(first.x - second.x, first.y - second.y) / Math.max(1, pinchStart.distance));
       dragged = true;
+      activationTracker.cancel();
     } else if (dragOrigin) {
-      if (Math.hypot(current.x - dragOrigin.x, current.y - dragOrigin.y) > 7) dragged = true;
+      if (!isMapTapGesture({ x: active.startX, y: active.startY }, current)) {
+        dragged = true;
+        activationTracker.cancel();
+      }
       if (dragged) {
         camera.x = dragOrigin.cameraX - (current.x - dragOrigin.x) / camera.zoom;
         camera.y = dragOrigin.cameraY - (current.y - dragOrigin.y) / camera.zoom;
@@ -254,25 +290,35 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp) {
     draw();
   };
   canvas.onpointerup = event => {
+    const active = pointers.get(event.pointerId);
     const current = point(event);
     pointers.delete(event.pointerId);
-    if (!dragged && !pinchStart) {
+    if (!dragged && !pinchStart && isMapTapGesture(active && { x: active.startX, y: active.startY }, current)) {
       const world = { x: camera.x + (current.x - width / 2) / camera.zoom, y: camera.y + (current.y - height / 2) / camera.zoom };
       const town = SETTLEMENTS.find(item => Math.hypot(item.x - world.x, item.y - world.y) < 48);
       const camp = getCampSites(state).find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
       const band = bands().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
-      if (band && campCallback) campCallback({ ...band, kind: 'band' });
-      else if (camp && campCallback) campCallback(camp);
-      else if (town) townCallback(town);
-      else onTravel(world.x, world.y);
-    }
+      const target = band ? { type: 'band', id: band.id, entity: { ...band, kind: 'band' } }
+        : camp ? { type: 'camp', id: camp.id, entity: camp }
+          : town ? { type: 'town', id: town.id, entity: town }
+            : null;
+      if (target?.type === 'band' && campCallback) campCallback(target.entity);
+      else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
+      else if (target?.type === 'town' && townCallback) townCallback(target.entity);
+      else if (!target) onTravel(world.x, world.y);
+      const activation = activationTracker.tap(target, current, Number(event.timeStamp));
+      if (activation && activationCallback) activationCallback(activation);
+    } else activationTracker.cancel();
     if (!pointers.size) { dragOrigin = null; pinchStart = null; }
     else {
       const remaining = [...pointers.values()][0];
       dragOrigin = { ...remaining, cameraX: camera.x, cameraY: camera.y };
     }
   };
-  canvas.onpointercancel = () => { pointers.clear(); dragOrigin = null; pinchStart = null; };
+  canvas.onpointercancel = () => {
+    pointers.clear(); dragOrigin = null; pinchStart = null;
+    activationTracker.cancel();
+  };
   canvas.onwheel = event => { event.preventDefault(); setZoom(camera.zoom * (event.deltaY > 0 ? .9 : 1.1)); draw(); };
   loaded.then(() => {
     if (!background) buildBackground();
