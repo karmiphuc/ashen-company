@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#202b29">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Gather your company. Take the long road. An offline mercenary adventure.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icon-192.png">
+  <link rel="stylesheet" href="./src/style.css">
+  <title>Ashen Company</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Ashen Company home"><span class="crest">♜</span><span>ASHEN COMPANY<small>A MERCENARY CHRONICLE</small></span></a>
+    <div id="resources" class="resources" aria-label="Company resources"></div>
+    <button id="settings-button" class="icon-button" aria-label="Save and offline settings">⚙</button>
+  </header>
+  <nav class="main-nav" aria-label="Main navigation">
+    <div class="nav-tabs"><button data-tab="world" class="active">◇ <span>World map</span></button><button data-tab="company">♙ <span>The company</span></button><button data-tab="journal">▤ <span>Chronicle</span></button></div>
+    <span id="offline-status" class="offline-status">Preparing offline…</span>
+  </nav>
+  <main id="main"></main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <dialog id="modal"><div id="modal-content"></div></dialog>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
