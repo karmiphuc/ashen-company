@@ -1191,7 +1191,11 @@ function pathCost(battle, origin, path) {
   return total;
 }
 
-function pathToTarget(battle, actor, target, range) {
+function nearestEnemyDistance(battle, actor, point) {
+  return Math.min(...battle.units.filter(unit => unit.alive && unit.side !== actor.side).map(unit => hexDistance(point, unit)));
+}
+
+function pathToTarget(battle, actor, target, range, keepRangedSpace = false) {
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   const queue = [{ q: actor.q, r: actor.r, path: [], cost: 0 }];
   const best = new Map([[`${actor.q},${actor.r}`, 0]]);
@@ -1201,7 +1205,7 @@ function pathToTarget(battle, actor, target, range) {
     const point = queue.shift();
     if (point.cost > best.get(`${point.q},${point.r}`)) continue;
     if (goal && point.cost > goal.cost) break;
-    if (hexDistance(point, target) <= range) {
+    if (hexDistance(point, target) <= range && (!keepRangedSpace || nearestEnemyDistance(battle, actor, point) >= 2)) {
       const aim = heightHitModifier(battle.field, point, target) + (range > 2 ? rangedCoverModifier(battle.field, point, target) : 0);
       const safety = tileAt(battle.field, point.q, point.r).terrain === 'trees' ? 5 : 0;
       const quality = aim + safety;
@@ -1209,6 +1213,7 @@ function pathToTarget(battle, actor, target, range) {
       continue;
     }
     for (const next of openNeighbors(battle, point, occupied)) {
+      if (keepRangedSpace && nearestEnemyDistance(battle, actor, next) < 2) continue;
       const key = `${next.q},${next.r}`;
       const cost = point.cost + movementCost(battle.field, point, next);
       if (cost < (best.get(key) ?? Infinity)) {
@@ -1217,17 +1222,17 @@ function pathToTarget(battle, actor, target, range) {
       }
     }
   }
-  return goal?.path ?? null;
+  return goal?.path ?? (keepRangedSpace && hexDistance(actor, target) <= range ? [] : null);
 }
 
-function stepArcherBack(battle, actor) {
+function stepArcherBack(battle, actor, range) {
   const enemies = battle.units.filter(unit => unit.alive && unit.side !== actor.side);
   const nearest = Math.min(...enemies.map(unit => hexDistance(actor, unit)));
   if (nearest > 1) return false;
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   const option = openNeighbors(battle, actor, occupied)
     .map(point => ({ ...point, cost: movementCost(battle.field, actor, point), safety: Math.min(...enemies.map(unit => hexDistance(point, unit))) }))
-    .filter(point => point.safety > nearest && enemies.some(unit => hexDistance(point, unit) <= 4))
+    .filter(point => point.safety > nearest && enemies.some(unit => hexDistance(point, unit) <= range))
     .sort((a, b) => b.safety - a.safety || a.cost - b.cost || a.q - b.q || a.r - b.r)[0];
   if (!option) return false;
   actor.q = option.q;
@@ -1240,9 +1245,10 @@ function betterRangedPosition(battle, actor, target, range) {
   if (hexDistance(actor, target) > range) return null;
   const current = heightHitModifier(battle.field, actor, target) + rangedCoverModifier(battle.field, actor, target);
   if (current > -12) return null;
+  const safety = nearestEnemyDistance(battle, actor, actor);
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   return openNeighbors(battle, actor, occupied)
-    .filter(point => hexDistance(point, target) <= range)
+    .filter(point => hexDistance(point, target) <= range && nearestEnemyDistance(battle, actor, point) >= Math.max(2, safety))
     .map(point => ({ point, cost: movementCost(battle.field, actor, point), quality: heightHitModifier(battle.field, point, target) + rangedCoverModifier(battle.field, point, target) }))
     .filter(option => option.quality >= current + 10)
     .sort((a, b) => b.quality - a.quality || a.cost - b.cost || a.point.q - b.point.q || a.point.r - b.point.r)[0]?.point ?? null;
@@ -1329,10 +1335,10 @@ export function advanceBattle(state) {
   const weapon = bowWithoutAmmo ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equippedWeapon ?? { damageMin: 8, damageMax: 12, hitBonus: -10, armorDamage: .4, range: 1 };
   const range = weapon.range ?? 1;
   const initialPosition = { q: actor.q, r: actor.r };
-  if (weapon.ranged) stepArcherBack(battle, actor);
+  const retreated = weapon.ranged && stepArcherBack(battle, actor, range);
   const defenseKey = weapon.ranged ? 'rangedDefense' : 'meleeDefense';
   const vulnerability = target => target.hp + (target.bodyArmor + target.headArmor) * .15 + target[defenseKey] * .3;
-  const targets = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range) }))
+  const targets = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range, weapon.ranged === true) }))
     .filter(entry => entry.path !== null)
     .sort((a, b) => pathCost(battle, actor, a.path) - pathCost(battle, actor, b.path)
       || vulnerability(a.target) - vulnerability(b.target)
@@ -1368,12 +1374,17 @@ export function advanceBattle(state) {
     nextBattleTurn(battle);
     return result(true, message);
   }
+  if (retreated) {
+    const ready = targets.filter(entry => hexDistance(actor, entry.target) <= range);
+    choice = ready.find(entry => entry.target.id === battle.focusTargetId) ?? ready[0] ?? choice;
+  }
   const { target } = choice;
   let { path } = choice;
-  if (weapon.ranged && path.length === 0) {
+  if (weapon.ranged && !retreated && path.length === 0) {
     const better = betterRangedPosition(battle, actor, target, range);
     if (better) path = [better];
   }
+  if (retreated) path = [];
   if (path.length) {
     let used = 0;
     let destination = actor;
@@ -1392,7 +1403,7 @@ export function advanceBattle(state) {
     if (initialPosition.q !== actor.q || initialPosition.r !== actor.r) battle.lastEvent.moveFrom = initialPosition;
   } else {
     actor.ap = 0;
-    const message = `${actor.name} advances toward ${target.name}.`;
+    const message = retreated ? `${actor.name} falls back from ${target.name}.` : `${actor.name} advances toward ${target.name}.`;
     battle.lastEvent = makeBattleEvent(actor, null, 'move', message, equippedWeapon, initialPosition);
     battle.lastEvent.targetId = target.id;
     battleLog(battle, message);

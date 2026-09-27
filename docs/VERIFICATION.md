@@ -1,6 +1,16 @@
-# Verification - version 0.10, 2026-09-27
+# Verification - version 0.10.1, 2026-09-27
 
-## v0.10 checks
+## v0.10.1 checks
+
+The full automated suite passes 102 tests. Six new regressions cover ranged spacing across tactics, nearby non-target enemies, retreat with a distant focus target, crossbow reload, trapped/empty-ammo behavior, and seeded battle completion. Offline cache consistency and `git diff --check` pass.
+
+At 1024x768, tapping a Cloth Hood in the marketplace sold one of two copies immediately: the balance changed from 4,520 to 4,535 crowns while the marketplace remained open. A second tap sold the remaining copy, removed its stash tile, and raised the balance to 4,550. Reloading preserved the sales. Trader inventory still opened item details before purchase.
+
+In a reproduced terrain case, a bow-equipped captain at (2,2) previously stepped into adjacent melee at (3,2) to gain elevation against an enemy at (4,2). In the browser, the fixed actor stayed at (2,2), fired, and consumed one arrow (16 to 15). Equipment-screen armor inspection remained available.
+
+With the local server stopped and direct HTTP requests failing, a fresh tab restored that battle with 15 arrows and the same actor position. Resolving offline produced a five-round victory with all brothers alive and 12 arrows remaining; another reload preserved the result. No JavaScript errors occurred. Physical iPad Safari remains untested.
+
+## Historical v0.10 checks
 
 The full automated suite passes 96 tests, including seven new cases for mixed salvage with exact durability, saved formation deployment, automatic pursuit combat, and legacy save migration. Offline asset/cache consistency and `git diff --check` pass.
 
