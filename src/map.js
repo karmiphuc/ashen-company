@@ -1,88 +1,367 @@
-import { SETTLEMENTS, terrainAt, getCampSites, getRoamingBands } from './engine.js';
+import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands } from './engine.js';
 
-const names=['world_grass_01','world_grass_02','world_grass_03','world_grass_04','world_plains_01','world_plains_02','world_plains_03','world_highlands_01','world_highlands_02','world_highlands_03','world_forest_01','world_forest_02','world_swamp_01','world_snow_01','world_ocean_00','world_detail_forest_green_01','world_detail_forest_green_02','world_detail_forest_green_03','world_detail_forest_green_04','world_detail_autumn_green_01','world_detail_autumn_green_02','legend_world_grass_hill_01','legend_world_grass_hill_02','legend_world_grass_hill_03','houses_01_01','houses_02_01','houses_03_01','townhall_01','townhall_02','stronghold_01','stronghold_02','fortified_outpost_01','wheat_farm_01','wheat_field_01','harbor_sw','stone_watchtower_01','figure_player_party','figure_player_trader','figure_player_ranger','figure_player_beggar','figure_player_berserker','figure_player_assassin','figure_player_slave','banner_101','banner_102','banner_103'];
-const images=new Map();
-const loaded=Promise.all(names.map(name=>new Promise(resolve=>{const img=new Image();img.onload=resolve;img.onerror=resolve;img.src=new URL(`../assets/world/${name}.png`,import.meta.url).href;images.set(name,img);})));
-const townArt={oakwatch:'houses_02_01',greyhaven:'townhall_02',ironford:'stronghold_01',thornwall:'stronghold_02',redmere:'townhall_01',highpass:'fortified_outpost_01',saltwick:'houses_01_01',barrowfield:'houses_03_01'};
-const roads=[[0,1],[1,2],[2,3],[2,4],[1,5],[0,6],[0,7],[7,4],[7,2]];
-let canvas,ctx,state,selection=null,callback,campCallback,background=null,resizeObserver;
-const camera={x:570,y:430,zoom:1.1,initialized:false};
-let width=0,height=0,pointers=new Map(),dragOrigin=null,pinchStart=null,dragged=false;
-const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-function sprite(target,name,x,y,w,anchor=.83){const img=images.get(name);if(!img?.naturalWidth)return;const h=w*img.naturalHeight/img.naturalWidth;target.drawImage(img,x-w/2,y-h*anchor,w,h);}
-function bands(){const value=state?getRoamingBands(state):[];return Array.isArray(value)?value:[];}
-function bandCount(band){return Math.max(1,Number(band.enemyCount??band.enemies?.length??band.count??1)||1);}
-function bandHunted(band){return state?.pursuit===band.id;}
-function buildBackground(){
- const bg=document.createElement('canvas');bg.width=2700;bg.height=2100;const b=bg.getContext('2d');b.scale(1.5,1.5);b.translate(300,300);b.fillStyle='#244b47';b.fillRect(-300,-300,1800,1400);
- let seed=71491;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
- for(let row=-9;row<30;row++)for(let col=0;col<19;col++){
-  const x=130+col*80+(row%2)*40,y=row*40;const t=terrainAt(x,y);
-  const set=t==='mountain'?['world_highlands_01','world_highlands_02','world_highlands_03']:t==='forest'?['world_forest_01','world_forest_02']:t==='marsh'?['world_swamp_01']:['world_grass_01','world_grass_02','world_grass_03','world_grass_04','world_plains_01','world_plains_02'];
-  sprite(b,set[Math.floor(rand()*set.length)],x,y,210,.5);
- }
- b.lineCap='round';
- roads.forEach(([a,c])=>{const p=SETTLEMENTS[a],q=SETTLEMENTS[c];b.beginPath();b.moveTo(p.x,p.y);b.quadraticCurveTo((p.x+q.x)/2+15,(p.y+q.y)/2+20,q.x,q.y);b.strokeStyle='#514c32';b.lineWidth=7;b.stroke();b.strokeStyle='#b1a16b';b.lineWidth=4;b.stroke();b.strokeStyle='#ccbb85aa';b.lineWidth=1;b.stroke();});
- const objects=[];
- for(let i=0;i<300;i++){
-  const x=190+rand()*1020,y=30+rand()*760;
-  if(SETTLEMENTS.some(t=>Math.hypot(x-t.x,y-t.y)<66))continue;
-  const terrain=terrainAt(x,y);
-  if(terrain==='forest')objects.push({x,y,name:`world_detail_forest_green_0${1+Math.floor(rand()*4)}`,w:65+rand()*30});
-  else if(terrain==='mountain')objects.push({x,y,name:`legend_world_grass_hill_0${1+Math.floor(rand()*3)}`,w:100+rand()*70});
-  else if(rand()<.1)objects.push({x,y,name:`world_detail_autumn_green_0${1+Math.floor(rand()*2)}`,w:45+rand()*28});
- }
- SETTLEMENTS.forEach((t,i)=>{objects.push({x:t.x,y:t.y,name:townArt[t.id],w:t.kind==='village'?100:122});if(i===0||i===7)objects.push({x:t.x-60,y:t.y+40,name:'wheat_field_01',w:100});if(i===6)objects.push({x:t.x-68,y:t.y+32,name:'harbor_sw',w:83});});
- objects.sort((a,b)=>a.y-b.y).forEach(o=>sprite(b,o.name,o.x,o.y,o.w));background=bg;
+const names = [
+  'world_grass_01', 'world_grass_02', 'world_grass_03', 'world_grass_04',
+  'world_plains_01', 'world_plains_02', 'world_plains_03',
+  'world_highlands_01', 'world_highlands_02', 'world_highlands_03',
+  'world_forest_01', 'world_forest_02', 'world_swamp_01', 'world_snow_01', 'world_snow_02', 'world_ocean_00',
+  'world_detail_forest_green_01', 'world_detail_forest_green_02', 'world_detail_forest_green_03', 'world_detail_forest_green_04',
+  'world_detail_autumn_green_01', 'world_detail_autumn_green_02',
+  'legend_world_grass_hill_01', 'legend_world_grass_hill_02', 'legend_world_grass_hill_03',
+  'houses_01_01', 'houses_02_01', 'houses_03_01', 'townhall_01', 'townhall_02',
+  'stronghold_01', 'stronghold_02', 'fortified_outpost_01', 'wheat_farm_01', 'wheat_field_01', 'harbor_sw', 'stone_watchtower_01',
+  'figure_player_party', 'figure_player_trader', 'figure_player_ranger', 'figure_player_beggar',
+  'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave',
+  'banner_101', 'banner_102', 'banner_103',
+];
+const images = new Map();
+const loaded = Promise.all(names.map(name => new Promise(resolve => {
+  const image = new Image();
+  image.onload = resolve;
+  image.onerror = resolve;
+  image.src = new URL(`../assets/world/${name}.png`, import.meta.url).href;
+  images.set(name, image);
+})));
+
+const knownTownArt = {
+  oakwatch: 'houses_02_01', greyhaven: 'townhall_02', ironford: 'stronghold_01', thornwall: 'stronghold_02',
+  redmere: 'townhall_01', highpass: 'fortified_outpost_01', saltwick: 'houses_01_01', barrowfield: 'houses_03_01',
+};
+const buildingByKind = { city: 'townhall_02', town: 'townhall_01', fort: 'stronghold_02', outpost: 'fortified_outpost_01', village: 'houses_03_01' };
+const WORLD_PAD = 170;
+const BACKGROUND_BOUNDS = {
+  x: WORLD_BOUNDS.minX - WORLD_PAD,
+  y: WORLD_BOUNDS.minY - WORLD_PAD,
+  width: Math.ceil(WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX + WORLD_PAD * 2),
+  height: Math.ceil(WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY + WORLD_PAD * 2),
+};
+const camera = {
+  x: (WORLD_BOUNDS.minX + WORLD_BOUNDS.maxX) / 2,
+  y: (WORLD_BOUNDS.minY + WORLD_BOUNDS.maxY) / 2,
+  zoom: 1,
+  initialized: false,
+};
+
+let canvas, context, state, selection = null, townCallback, campCallback, background = null, resizeObserver;
+let width = 0, height = 0, pointers = new Map(), dragOrigin = null, pinchStart = null, dragged = false;
+
+const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+
+function sprite(target, name, x, y, spriteWidth, anchor = .83) {
+  const image = images.get(name);
+  if (!image?.naturalWidth) return;
+  const spriteHeight = spriteWidth * image.naturalHeight / image.naturalWidth;
+  target.drawImage(image, x - spriteWidth / 2, y - spriteHeight * anchor, spriteWidth, spriteHeight);
 }
-export function mapHTML(){return `<canvas id="world-map" role="img" aria-label="World map. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-loading">Preparing the Marches…</div>`;}
-export const mapSVG=mapHTML;
-export function mountMap(game,onChooseTown,onTravel,onChooseCamp){
- resizeObserver?.disconnect();pointers.clear();dragOrigin=null;pinchStart=null;canvas=document.querySelector('#world-map');if(!canvas)return;
- ctx=canvas.getContext('2d');state=game;callback=onChooseTown;campCallback=onChooseCamp;
- const resize=()=>{const r=canvas.getBoundingClientRect();width=r.width;height=r.height;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);if(!camera.initialized){camera.zoom=clamp(Math.max(width/1120,height/820),.65,1.4);camera.initialized=true;}draw();};
- resizeObserver=new ResizeObserver(resize);resizeObserver.observe(canvas);resize();
- const point=e=>{const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
- canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);const p=point(e);pointers.set(e.pointerId,p);dragOrigin={...p,cx:camera.x,cy:camera.y};dragged=false;if(pointers.size===2){const [a,b]=[...pointers.values()];pinchStart={distance:Math.hypot(a.x-b.x,a.y-b.y),zoom:camera.zoom};dragged=true;}};
- canvas.onpointermove=e=>{if(!pointers.has(e.pointerId))return;const p=point(e);pointers.set(e.pointerId,p);if(pointers.size===2&&pinchStart){const [a,b]=[...pointers.values()];camera.zoom=clamp(pinchStart.zoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart.distance,.55,2.5);dragged=true;}else if(dragOrigin){if(Math.hypot(p.x-dragOrigin.x,p.y-dragOrigin.y)>7)dragged=true;if(dragged){camera.x=clamp(dragOrigin.cx-(p.x-dragOrigin.x)/camera.zoom,120,1150);camera.y=clamp(dragOrigin.cy-(p.y-dragOrigin.y)/camera.zoom,70,730);}}draw();};
- canvas.onpointerup=e=>{const p=point(e);pointers.delete(e.pointerId);if(!dragged&&!pinchStart){const world={x:camera.x+(p.x-width/2)/camera.zoom,y:camera.y+(p.y-height/2)/camera.zoom};const town=SETTLEMENTS.find(t=>Math.hypot(t.x-world.x,t.y-world.y)<48);const camp=getCampSites(state).find(c=>Math.hypot(c.x-world.x,c.y-world.y)<34);const band=bands().find(b=>Math.hypot(b.x-world.x,b.y-world.y)<34);if(band&&campCallback)campCallback({...band,kind:'band'});else if(camp&&campCallback)campCallback(camp);else if(town)callback(town);else onTravel(world.x,world.y);}if(!pointers.size){dragOrigin=null;pinchStart=null;}else{const remaining=[...pointers.values()][0];dragOrigin={...remaining,cx:camera.x,cy:camera.y};}};
- canvas.onpointercancel=()=>{pointers.clear();dragOrigin=null;pinchStart=null;};
- canvas.onwheel=e=>{e.preventDefault();camera.zoom=clamp(camera.zoom*(e.deltaY>0?.9:1.1),.55,2.5);draw();};
- loaded.then(()=>{if(!background)buildBackground();document.querySelector('.map-loading')?.remove();draw();});
+
+function townArt(town) {
+  return knownTownArt[town.id] || buildingByKind[town.kind] || 'houses_02_01';
 }
-export function focusMap(position){camera.x=position.x;camera.y=position.y;draw();}
-export function zoomMap(factor){camera.zoom=clamp(camera.zoom*factor,.55,2.5);draw();}
-export function selectMapTown(town){selection=town?.id||null;draw();}
-export function selectMapCamp(id){selection=id;draw();}
-export function updateMap(game){state=game;if(canvas?.isConnected)draw();}
-function draw(){
- if(!ctx||!width||!height||!state)return;
- ctx.clearRect(0,0,width,height);ctx.save();ctx.translate(width/2,height/2);ctx.scale(camera.zoom,camera.zoom);ctx.translate(-camera.x,-camera.y);
- ctx.fillStyle='#244b47';ctx.fillRect(camera.x-width/camera.zoom,camera.y-height/camera.zoom,width*2/camera.zoom,height*2/camera.zoom);
- if(background)ctx.drawImage(background,-300,-300,1800,1400);
- const darkness=state.hour<5||state.hour>21?.20:state.hour<7||state.hour>19?.10:0;
- if(darkness){ctx.fillStyle=`rgba(14,23,43,${darkness})`;ctx.fillRect(-300,-300,1800,1400);}
- getCampSites(state).forEach(c=>{
-  const cleared=c.cleared||c.clearedDay;ctx.save();if(cleared)ctx.globalAlpha=.45;
-  if(selection===c.id||state.contract?.campId===c.id){ctx.strokeStyle='#dca673';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(c.x,c.y+2,33,13,0,0,Math.PI*2);ctx.stroke();}
-  sprite(ctx,'fortified_outpost_01',c.x,c.y,70);
-  ctx.font='bold 12px Georgia';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#241a14';ctx.strokeText(c.name,c.x,c.y+20);ctx.fillStyle=cleared?'#b4a78a':'#e5b493';ctx.fillText(c.name,c.x,c.y+20);ctx.restore();
- });
- bands().forEach((band,index)=>{
-  const count=bandCount(band),selected=selection===band.id,hunted=bandHunted(band),art=['figure_player_beggar','figure_player_berserker','figure_player_assassin','figure_player_slave'][index%4];
-  ctx.save();
-  if(selected||hunted){ctx.lineWidth=2;ctx.strokeStyle=selected?'#f1d380':'#c46d57';ctx.setLineDash(hunted?[3,3]:[]);ctx.beginPath();ctx.ellipse(band.x,band.y+7,25,10,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
-  ctx.beginPath();ctx.ellipse(band.x,band.y+8,16,6,0,0,Math.PI*2);ctx.fillStyle='#14201688';ctx.fill();
-  if(count>1)sprite(ctx,['figure_player_berserker','figure_player_ranger','figure_player_slave'][index%3],band.x-8,band.y+1,25,.72);
-  sprite(ctx,art,band.x+(count>1?7:0),band.y,29,.72);sprite(ctx,`banner_10${1+index%3}`,band.x+16,band.y-20,17,.82);
-  const label=`${band.name||'Wandering Brigands'} · ${count} brigand${count===1?'':'s'}`;ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#1c1913cc';ctx.strokeText(label,band.x,band.y+24);ctx.fillStyle=selected?'#f0d998':hunted?'#e8a389':'#d8cfad';ctx.fillText(label,band.x,band.y+24);ctx.restore();
- });
- if(state.destination){ctx.strokeStyle='#f0d783';ctx.lineWidth=2/camera.zoom;ctx.setLineDash([5/camera.zoom,7/camera.zoom]);ctx.beginPath();ctx.moveTo(state.position.x,state.position.y);ctx.lineTo(state.destination.x,state.destination.y);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(state.destination.x,state.destination.y,12,0,Math.PI*2);ctx.stroke();}
- SETTLEMENTS.forEach((t,i)=>{
-  if(selection===t.id||state.contract?.to===t.id){ctx.strokeStyle=selection===t.id?'#f4d78f':'#dfcb73';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(t.x,t.y+3,45,17,0,0,Math.PI*2);ctx.stroke();}
-  sprite(ctx,`banner_10${1+i%3}`,t.x+43,t.y-29,22,.9);
-  ctx.font='bold 17px Georgia';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#29291edd';ctx.strokeText(t.name,t.x,t.y+25);ctx.fillStyle='#f0e4bd';ctx.fillText(t.name,t.x,t.y+25);
- });
- const progress=(state.day*24+state.hour)/17,t=(Math.sin(progress)+1)/2,a=SETTLEMENTS[1],b=SETTLEMENTS[2];sprite(ctx,'figure_player_trader',a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,30);
- ctx.beginPath();ctx.ellipse(state.position.x,state.position.y+9,20,8,0,0,Math.PI*2);ctx.fillStyle='#15201666';ctx.fill();sprite(ctx,'figure_player_party',state.position.x,state.position.y,36,.7);sprite(ctx,'banner_101',state.position.x+14,state.position.y-23,25,.8);ctx.restore();
+
+function bands() {
+  const value = state ? getRoamingBands(state) : [];
+  return Array.isArray(value) ? value : [];
+}
+
+function bandCount(band) {
+  return Math.max(1, Number(band.enemyCount ?? band.enemies?.length ?? band.count ?? 1) || 1);
+}
+
+function roadPairs() {
+  const edges = new Set();
+  const pairs = [];
+  const add = (a, b) => {
+    if (a === b || !SETTLEMENTS[a] || !SETTLEMENTS[b]) return;
+    const key = a < b ? `${a}:${b}` : `${b}:${a}`;
+    if (edges.has(key)) return;
+    edges.add(key);
+    pairs.push([a, b]);
+  };
+  [[0, 1], [1, 2], [2, 3], [2, 4], [1, 5], [0, 6], [0, 7], [7, 4], [7, 2]].forEach(([a, b]) => add(a, b));
+  const connected = new Set([0]);
+  while (connected.size < SETTLEMENTS.length) {
+    let shortest = null;
+    for (const a of connected) for (let b = 0; b < SETTLEMENTS.length; b++) {
+      if (connected.has(b)) continue;
+      const first = SETTLEMENTS[a], second = SETTLEMENTS[b];
+      const distance = Math.hypot(first.x - second.x, first.y - second.y);
+      if (!shortest || distance < shortest.distance) shortest = { a, b, distance };
+    }
+    if (!shortest) break;
+    add(shortest.a, shortest.b);
+    connected.add(shortest.b);
+  }
+  return pairs;
+}
+
+function terrainSprites(terrain) {
+  if (terrain === 'sea') return ['world_ocean_00'];
+  if (terrain === 'mountain') return ['world_highlands_01', 'world_highlands_02', 'world_highlands_03'];
+  if (terrain === 'forest') return ['world_forest_01', 'world_forest_02'];
+  if (terrain === 'marsh') return ['world_swamp_01'];
+  return ['world_grass_01', 'world_grass_02', 'world_grass_03', 'world_grass_04', 'world_plains_01', 'world_plains_02', 'world_plains_03'];
+}
+
+function buildBackground() {
+  const surface = document.createElement('canvas');
+  surface.width = BACKGROUND_BOUNDS.width;
+  surface.height = BACKGROUND_BOUNDS.height;
+  const target = surface.getContext('2d');
+  target.translate(-BACKGROUND_BOUNDS.x, -BACKGROUND_BOUNDS.y);
+  target.fillStyle = '#244b47';
+  target.fillRect(BACKGROUND_BOUNDS.x, BACKGROUND_BOUNDS.y, BACKGROUND_BOUNDS.width, BACKGROUND_BOUNDS.height);
+  let seed = 71491;
+  const random = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const rows = Math.ceil(BACKGROUND_BOUNDS.height / 40) + 3;
+  const columns = Math.ceil(BACKGROUND_BOUNDS.width / 80) + 3;
+  for (let row = -1; row < rows; row++) for (let column = -1; column < columns; column++) {
+    const x = BACKGROUND_BOUNDS.x + 80 + column * 80 + (row % 2) * 40;
+    const y = BACKGROUND_BOUNDS.y + row * 40;
+    const choices = terrainSprites(terrainAt(x, y));
+    sprite(target, choices[Math.floor(random() * choices.length)], x, y, 210, .5);
+  }
+
+  target.lineCap = 'round';
+  for (const [a, b] of roadPairs()) {
+    const first = SETTLEMENTS[a], second = SETTLEMENTS[b];
+    target.beginPath();
+    target.moveTo(first.x, first.y);
+    target.quadraticCurveTo((first.x + second.x) / 2 + 15, (first.y + second.y) / 2 + 20, second.x, second.y);
+    target.strokeStyle = '#514c32'; target.lineWidth = 7; target.stroke();
+    target.strokeStyle = '#b1a16b'; target.lineWidth = 4; target.stroke();
+    target.strokeStyle = '#ccbb85aa'; target.lineWidth = 1; target.stroke();
+  }
+
+  const objects = [];
+  const objectCount = Math.min(720, Math.round(BACKGROUND_BOUNDS.width * BACKGROUND_BOUNDS.height / 5200));
+  for (let index = 0; index < objectCount; index++) {
+    const x = WORLD_BOUNDS.minX + random() * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
+    const y = WORLD_BOUNDS.minY + random() * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
+    if (SETTLEMENTS.some(town => Math.hypot(x - town.x, y - town.y) < 66)) continue;
+    const terrain = terrainAt(x, y);
+    if (terrain === 'forest') objects.push({ x, y, name: `world_detail_forest_green_0${1 + Math.floor(random() * 4)}`, width: 65 + random() * 30 });
+    else if (terrain === 'mountain') objects.push({ x, y, name: `legend_world_grass_hill_0${1 + Math.floor(random() * 3)}`, width: 100 + random() * 70 });
+    else if (random() < .1) objects.push({ x, y, name: `world_detail_autumn_green_0${1 + Math.floor(random() * 2)}`, width: 45 + random() * 28 });
+  }
+  SETTLEMENTS.forEach((town, index) => {
+    objects.push({ x: town.x, y: town.y, name: townArt(town), width: town.kind === 'village' ? 100 : 122 });
+    if (town.kind === 'village') objects.push({ x: town.x - 60, y: town.y + 40, name: index % 2 ? 'wheat_farm_01' : 'wheat_field_01', width: 100 });
+    if (town.id === 'saltwick') objects.push({ x: town.x - 68, y: town.y + 32, name: 'harbor_sw', width: 83 });
+  });
+  objects.sort((a, b) => a.y - b.y).forEach(object => sprite(target, object.name, object.x, object.y, object.width));
+  background = { canvas: surface, ...BACKGROUND_BOUNDS };
+}
+
+function minimumZoom() {
+  if (!width || !height) return .2;
+  const spanX = WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX + 120;
+  const spanY = WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY + 120;
+  return clamp(Math.min(width / spanX, height / spanY), .16, 1);
+}
+
+function constrainCamera() {
+  if (!width || !height) return;
+  const halfWidth = width / (2 * camera.zoom), halfHeight = height / (2 * camera.zoom);
+  const centerX = (WORLD_BOUNDS.minX + WORLD_BOUNDS.maxX) / 2;
+  const centerY = (WORLD_BOUNDS.minY + WORLD_BOUNDS.maxY) / 2;
+  camera.x = halfWidth * 2 >= WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX
+    ? centerX
+    : clamp(camera.x, WORLD_BOUNDS.minX + halfWidth, WORLD_BOUNDS.maxX - halfWidth);
+  camera.y = halfHeight * 2 >= WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY
+    ? centerY
+    : clamp(camera.y, WORLD_BOUNDS.minY + halfHeight, WORLD_BOUNDS.maxY - halfHeight);
+}
+
+function setZoom(value) {
+  camera.zoom = clamp(value, minimumZoom(), 2.5);
+  constrainCamera();
+}
+
+function campDifficulty(camp) {
+  return clamp(Math.round(Number(camp.difficulty) || Math.ceil((camp.enemies?.length || 2) / 2)), 1, 3);
+}
+
+function campLabel(camp) {
+  if (camp.cleared && camp.respawnHours > 0) return `${camp.name} · returns in ${camp.respawnHours}h`;
+  return `${camp.name} · ${['', 'Low', 'Medium', 'High'][campDifficulty(camp)]}`;
+}
+
+export function mapHTML() {
+  return `<canvas id="world-map" role="img" aria-label="World map. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-loading">Preparing the Marches…</div>`;
+}
+
+export const mapSVG = mapHTML;
+
+export function mountMap(game, onChooseTown, onTravel, onChooseCamp) {
+  resizeObserver?.disconnect();
+  pointers.clear(); dragOrigin = null; pinchStart = null;
+  canvas = document.querySelector('#world-map');
+  if (!canvas) return;
+  context = canvas.getContext('2d');
+  state = game; townCallback = onChooseTown; campCallback = onChooseCamp;
+  const resize = () => {
+    const rectangle = canvas.getBoundingClientRect();
+    width = rectangle.width; height = rectangle.height;
+    const density = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.round(width * density); canvas.height = Math.round(height * density);
+    context.setTransform(density, 0, 0, density, 0, 0);
+    if (!camera.initialized) {
+      camera.x = game.position?.x ?? camera.x; camera.y = game.position?.y ?? camera.y;
+      camera.zoom = clamp(Math.max(width / 1180, height / 820), minimumZoom(), 1.4);
+      camera.initialized = true;
+    } else setZoom(camera.zoom);
+    constrainCamera(); draw();
+  };
+  resizeObserver = new ResizeObserver(resize);
+  resizeObserver.observe(canvas);
+  resize();
+
+  const point = event => {
+    const rectangle = canvas.getBoundingClientRect();
+    return { x: event.clientX - rectangle.left, y: event.clientY - rectangle.top };
+  };
+  canvas.onpointerdown = event => {
+    canvas.setPointerCapture(event.pointerId);
+    const current = point(event);
+    pointers.set(event.pointerId, current);
+    dragOrigin = { ...current, cameraX: camera.x, cameraY: camera.y };
+    dragged = false;
+    if (pointers.size === 2) {
+      const [first, second] = [...pointers.values()];
+      pinchStart = { distance: Math.hypot(first.x - second.x, first.y - second.y), zoom: camera.zoom };
+      dragged = true;
+    }
+  };
+  canvas.onpointermove = event => {
+    if (!pointers.has(event.pointerId)) return;
+    const current = point(event);
+    pointers.set(event.pointerId, current);
+    if (pointers.size === 2 && pinchStart) {
+      const [first, second] = [...pointers.values()];
+      setZoom(pinchStart.zoom * Math.hypot(first.x - second.x, first.y - second.y) / Math.max(1, pinchStart.distance));
+      dragged = true;
+    } else if (dragOrigin) {
+      if (Math.hypot(current.x - dragOrigin.x, current.y - dragOrigin.y) > 7) dragged = true;
+      if (dragged) {
+        camera.x = dragOrigin.cameraX - (current.x - dragOrigin.x) / camera.zoom;
+        camera.y = dragOrigin.cameraY - (current.y - dragOrigin.y) / camera.zoom;
+        constrainCamera();
+      }
+    }
+    draw();
+  };
+  canvas.onpointerup = event => {
+    const current = point(event);
+    pointers.delete(event.pointerId);
+    if (!dragged && !pinchStart) {
+      const world = { x: camera.x + (current.x - width / 2) / camera.zoom, y: camera.y + (current.y - height / 2) / camera.zoom };
+      const town = SETTLEMENTS.find(item => Math.hypot(item.x - world.x, item.y - world.y) < 48);
+      const camp = getCampSites(state).find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
+      const band = bands().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
+      if (band && campCallback) campCallback({ ...band, kind: 'band' });
+      else if (camp && campCallback) campCallback(camp);
+      else if (town) townCallback(town);
+      else onTravel(world.x, world.y);
+    }
+    if (!pointers.size) { dragOrigin = null; pinchStart = null; }
+    else {
+      const remaining = [...pointers.values()][0];
+      dragOrigin = { ...remaining, cameraX: camera.x, cameraY: camera.y };
+    }
+  };
+  canvas.onpointercancel = () => { pointers.clear(); dragOrigin = null; pinchStart = null; };
+  canvas.onwheel = event => { event.preventDefault(); setZoom(camera.zoom * (event.deltaY > 0 ? .9 : 1.1)); draw(); };
+  loaded.then(() => {
+    if (!background) buildBackground();
+    document.querySelector('.map-loading')?.remove();
+    draw();
+  });
+}
+
+export function focusMap(position) {
+  camera.x = position.x; camera.y = position.y;
+  constrainCamera(); draw();
+}
+
+export function zoomMap(factor) {
+  setZoom(camera.zoom * factor); draw();
+}
+
+export function selectMapTown(town) { selection = town?.id || null; draw(); }
+export function selectMapCamp(id) { selection = id; draw(); }
+export function updateMap(game) { state = game; if (canvas?.isConnected) draw(); }
+
+function draw() {
+  if (!context || !width || !height || !state) return;
+  context.clearRect(0, 0, width, height);
+  context.save();
+  context.translate(width / 2, height / 2);
+  context.scale(camera.zoom, camera.zoom);
+  context.translate(-camera.x, -camera.y);
+  const viewX = camera.x - width / (2 * camera.zoom), viewY = camera.y - height / (2 * camera.zoom);
+  context.fillStyle = '#244b47';
+  context.fillRect(viewX, viewY, width / camera.zoom, height / camera.zoom);
+  if (background) context.drawImage(background.canvas, background.x, background.y, background.width, background.height);
+  const darkness = state.hour < 5 || state.hour > 21 ? .20 : state.hour < 7 || state.hour > 19 ? .10 : 0;
+  if (darkness) {
+    context.fillStyle = `rgba(14,23,43,${darkness})`;
+    context.fillRect(viewX, viewY, width / camera.zoom, height / camera.zoom);
+  }
+
+  getCampSites(state).forEach((camp, index) => {
+    context.save();
+    if (camp.cleared) context.globalAlpha = .48;
+    if (selection === camp.id || state.contract?.campId === camp.id) {
+      context.strokeStyle = '#dca673'; context.lineWidth = 2;
+      context.beginPath(); context.ellipse(camp.x, camp.y + 2, 33, 13, 0, 0, Math.PI * 2); context.stroke();
+    }
+    sprite(context, index % 3 === 1 ? 'stone_watchtower_01' : 'fortified_outpost_01', camp.x, camp.y, 70);
+    sprite(context, `banner_10${campDifficulty(camp)}`, camp.x + 25, camp.y - 27, 18, .86);
+    context.font = 'bold 12px Georgia'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#241a14';
+    context.strokeText(campLabel(camp), camp.x, camp.y + 20);
+    context.fillStyle = camp.cleared ? '#b4a78a' : '#e5b493'; context.fillText(campLabel(camp), camp.x, camp.y + 20);
+    context.restore();
+  });
+
+  bands().forEach((band, index) => {
+    const count = bandCount(band), selected = selection === band.id, hunted = state.pursuit === band.id;
+    const art = ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
+    context.save();
+    if (selected || hunted) {
+      context.lineWidth = 2; context.strokeStyle = selected ? '#f1d380' : '#c46d57'; context.setLineDash(hunted ? [3, 3] : []);
+      context.beginPath(); context.ellipse(band.x, band.y + 7, 25, 10, 0, 0, Math.PI * 2); context.stroke(); context.setLineDash([]);
+    }
+    context.beginPath(); context.ellipse(band.x, band.y + 8, 16, 6, 0, 0, Math.PI * 2); context.fillStyle = '#14201688'; context.fill();
+    if (count > 1) sprite(context, ['figure_player_berserker', 'figure_player_ranger', 'figure_player_slave'][index % 3], band.x - 8, band.y + 1, 25, .72);
+    sprite(context, art, band.x + (count > 1 ? 7 : 0), band.y, 29, .72);
+    sprite(context, `banner_10${clamp(Number(band.difficulty) || Math.ceil(count / 2), 1, 3)}`, band.x + 16, band.y - 20, 17, .82);
+    const label = `${band.name || 'Wandering Brigands'} · ${count} brigand${count === 1 ? '' : 's'}`;
+    context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913cc'; context.strokeText(label, band.x, band.y + 24);
+    context.fillStyle = selected ? '#f0d998' : hunted ? '#e8a389' : '#d8cfad'; context.fillText(label, band.x, band.y + 24); context.restore();
+  });
+
+  if (state.destination) {
+    context.strokeStyle = '#f0d783'; context.lineWidth = 2 / camera.zoom; context.setLineDash([5 / camera.zoom, 7 / camera.zoom]);
+    context.beginPath(); context.moveTo(state.position.x, state.position.y); context.lineTo(state.destination.x, state.destination.y); context.stroke(); context.setLineDash([]);
+    context.beginPath(); context.arc(state.destination.x, state.destination.y, 12, 0, Math.PI * 2); context.stroke();
+  }
+  SETTLEMENTS.forEach((town, index) => {
+    if (selection === town.id || state.contract?.to === town.id) {
+      context.strokeStyle = selection === town.id ? '#f4d78f' : '#dfcb73'; context.lineWidth = 2;
+      context.beginPath(); context.ellipse(town.x, town.y + 3, 45, 17, 0, 0, Math.PI * 2); context.stroke();
+    }
+    sprite(context, `banner_10${1 + index % 3}`, town.x + 43, town.y - 29, 22, .9);
+    context.font = 'bold 17px Georgia'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#29291edd'; context.strokeText(town.name, town.x, town.y + 25);
+    context.fillStyle = '#f0e4bd'; context.fillText(town.name, town.x, town.y + 25);
+  });
+  const progress = (state.day * 24 + state.hour) / 17, position = (Math.sin(progress) + 1) / 2;
+  const first = SETTLEMENTS[1], second = SETTLEMENTS[2];
+  sprite(context, 'figure_player_trader', first.x + (second.x - first.x) * position, first.y + (second.y - first.y) * position, 30);
+  context.beginPath(); context.ellipse(state.position.x, state.position.y + 9, 20, 8, 0, 0, Math.PI * 2); context.fillStyle = '#15201666'; context.fill();
+  sprite(context, 'figure_player_party', state.position.x, state.position.y, 36, .7);
+  sprite(context, 'banner_101', state.position.x + 14, state.position.y - 23, 25, .8);
+  context.restore();
 }

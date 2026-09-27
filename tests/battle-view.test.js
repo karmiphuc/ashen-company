@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {battleHTML, tacticsHTML} from '../src/battle-view.js';
+
+const battleCSS=readFileSync(new URL('../src/battle.css',import.meta.url),'utf8');
 
 const units = [
   {id:'captain',name:'Mara',side:'company',q:2,r:2,hp:100,maxHp:100,equipment:{weapon:'hunting-bow',armor:'mail-shirt',helmet:'iron-helm'}},
@@ -29,4 +32,59 @@ test('attack effects support misses and remain safe when older events have no po
   assert.match(battleHTML(old,3,true), /Arrow in flight/);
   assert.match(battleHTML(old,3,true), />Miss<\/span>/);
   assert.doesNotMatch(battleHTML({...battle,units:[]},1,true), /Arrow in flight/);
+});
+
+test('14 by 8 terrain fields render inspectable cover, height, and elevation-aligned units', () => {
+  const tiles = Array.from({length:14},(_,q)=>Array.from({length:8},(_,r)=>({q,r,terrain:'open',height:0}))).flat();
+  Object.assign(tiles.find(tile=>tile.q===2&&tile.r===2),{terrain:'trees',height:1});
+  Object.assign(tiles.find(tile=>tile.q===13&&tile.r===7),{terrain:'rock',height:2});
+  const expanded = {
+    ...battle,
+    field:{columns:14,rows:8,biome:'forest',tiles},
+    units:[
+      {...units[0],q:2,r:2},
+      {...units[1],q:13,r:7},
+    ],
+    lastEvent:{...battle.lastEvent,to:{q:13,r:7}},
+  };
+  const html=battleHTML(expanded,1,true);
+  assert.equal((html.match(/class="battle-hex /g)||[]).length,112);
+  assert.match(html,/--field-width:1362px;--field-height:620px/);
+  assert.match(html,/battle-biome-forest/);
+  assert.match(html,/data-action="inspect-terrain" data-q="2" data-r="2" data-terrain="trees" data-height="1"/);
+  assert.match(html,/Trees, Height 1; high-ground attacks gain 10 hit per level\. 20 percentage points ranged protection · 2 AP to enter/);
+  assert.match(html,/data-unit-id="captain" style="left:282px;top:149px/);
+  assert.match(html,/data-unit-id="enemy" style="left:1308px;top:460px/);
+  assert.match(html,/forest · 14 × 8/);
+  assert.doesNotMatch(html,/NaN|undefined/);
+});
+
+test('fieldless legacy battles keep a flat 10 by 5 battlefield', () => {
+  const html=battleHTML(battle,0);
+  assert.equal((html.match(/class="battle-hex /g)||[]).length,50);
+  assert.match(html,/--field-width:944px;--field-height:428px/);
+  assert.match(html,/grassland · 10 × 5/);
+  assert.doesNotMatch(html,/battle-height-[12]/);
+});
+
+test('attack events with a movement origin animate from the matching raised tile', () => {
+  const tiles=Array.from({length:14},(_,q)=>Array.from({length:8},(_,r)=>({q,r,terrain:'open',height:q===1&&r===1?2:0}))).flat();
+  const moved={
+    ...battle,
+    field:{columns:14,rows:8,biome:'plains',tiles},
+    units:[{...units[0],q:2,r:1},units[1]],
+    lastEvent:{...battle.lastEvent,from:{q:2,r:1},moveFrom:{q:1,r:1}},
+  };
+  const html=battleHTML(moved,1,true);
+  const captainTag=(html.match(/<article\b[^>]*>/g)||[]).find(tag=>tag.includes('data-unit-id="captain"'));
+  assert.ok(captainTag,'captain unit article is rendered');
+  const captainClasses=captainTag.match(/\bclass="([^"]*)"/)?.[1].split(/\s+/)??[];
+  assert.ok(captainClasses.includes('action-shoot'));
+  assert.ok(captainClasses.includes('action-move'));
+  assert.match(html,/--move-x:-76px;--move-y:-18px/);
+});
+
+test('terrain tiles remain tappable below the pointer-transparent pawn layer', () => {
+  assert.match(battleCSS,/\.battle-terrain\{top:0;z-index:0\}/);
+  assert.match(battleCSS,/\.battle-units\{top:0;z-index:1;pointer-events:none\}/);
 });

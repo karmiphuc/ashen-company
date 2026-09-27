@@ -13,3 +13,34 @@
 .action-hit .battle-unit-bar i{animation:impact-bar var(--action-time) both}.battle-projectile>span{transform:rotate(var(--flight-angle)) translateX(-100%);transform-origin:left center}
 @keyframes impact-bar{0%,65%{width:var(--before-width)}75%,100%{width:var(--after-width)}}
 @media(prefers-reduced-motion:reduce){.battle-view *{animation-duration:.01ms!important}.battle-projectile{display:none}}
+
+/* Variable-size terrain fields. The scroll surface stays bounded on tablets. */
+.battle-scroll{position:relative;max-height:min(68vh,720px);overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+.battlefield{width:var(--field-width,930px);height:var(--field-height,430px);margin:0 auto;background:#475333;isolation:isolate}
+.battle-terrain,.battle-units{position:absolute;inset:0;width:100%;height:100%}
+.battle-terrain{top:0;z-index:0}
+.battle-units{top:0;z-index:1;pointer-events:none}
+.battle-hex{appearance:none;display:block;width:76px;height:85px;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;color:inherit;cursor:pointer;z-index:calc(1 + var(--tile-row) + var(--tile-height));filter:drop-shadow(0 calc(var(--tile-height) * 3px) 1px rgba(14,13,9,.58));background-color:#566636;background-repeat:repeat;background-position:center;background-size:200% 200%}
+.battle-hex::after{pointer-events:none}
+.battle-hex:focus-visible{outline:3px solid #f0cf78;outline-offset:2px;filter:drop-shadow(0 0 5px #f0cf78) drop-shadow(0 calc(var(--tile-height) * 3px) 1px rgba(14,13,9,.58))}
+.battle-height-1{box-shadow:inset 0 -7px rgba(50,42,27,.34)}
+.battle-height-2{box-shadow:inset 0 -12px rgba(45,37,24,.46)}
+.battle-terrain-open{background-image:url('../assets/battle/grass-01.png')}
+.battle-terrain-brush{background-image:url('../assets/world/world_detail_autumn_green_01.png'),url('../assets/battle/grass-02.png');background-repeat:no-repeat,repeat;background-position:center 55%,center;background-size:72% auto,200% 200%}
+.battle-terrain-trees{background-image:url('../assets/world/world_detail_forest_green_01.png'),url('../assets/battle/grass-01.png');background-repeat:no-repeat,repeat;background-position:center 58%,center;background-size:86% auto,200% 200%}
+.battle-terrain-mud{background-image:url('../assets/battle/earth-01.png');filter:saturate(.62) brightness(.72) drop-shadow(0 calc(var(--tile-height) * 3px) 1px rgba(14,13,9,.58))}
+.battle-terrain-rock{background-image:url('../assets/world/legend_world_grass_hill_01.png'),url('../assets/battle/earth-01.png');background-repeat:no-repeat,repeat;background-position:center 54%,center;background-size:88% auto,200% 200%;filter:saturate(.72) brightness(.88) drop-shadow(0 calc(var(--tile-height) * 3px) 1px rgba(14,13,9,.58))}
+.battle-biome-forest{background-color:#3d4d30}
+.battle-biome-mountain{background-color:#4c4c3d}
+.battle-biome-marsh{background-color:#3d5044}
+.battle-terrain-key{position:sticky;z-index:40;left:0;top:0;display:flex;align-items:center;gap:9px;width:max-content;min-width:min(100%,900px);box-sizing:border-box;margin:0 0 7px;padding:6px 9px;border:1px solid #625b43;background:rgba(24,23,18,.95);color:#d7c9a6;font:10px/1.2 Arial,sans-serif;letter-spacing:.02em}
+.battle-terrain-key strong{color:#efd89e;text-transform:capitalize;letter-spacing:.08em}
+.battle-terrain-key span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.battle-terrain-key i{display:inline-block;width:13px;height:13px;border:1px solid #817451;background:#66754b}
+.battle-terrain-key .battle-key-trees{background:#385237}
+.battle-terrain-key .battle-key-brush{background:#7d6540}
+.battle-terrain-key .battle-key-mud{background:#5b4632}
+.battle-terrain-key .battle-key-rock{background:#777464}
+.battle-terrain-key .battle-key-height{background:linear-gradient(135deg,#b3a06f 50%,#443b2a 51%)}
+.battle-terrain-key small{color:#a99d7f;white-space:nowrap}
+@media(max-width:720px){.battle-scroll{max-height:62vh}.battle-terrain-key{min-width:760px}.battlefield{margin:0}.battle-log{max-height:170px;overflow:auto}}

@@ -1,7 +1,15 @@
 import { getEquipment } from './engine.js';
 import { portraitHTML } from './portraits.js';
 
-const GRID = { columns: 10, rows: 5, width: 76, height: 85, stepX: 76, stepY: 64, stagger: 38 };
+const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
+const TILE = { width: 76, height: 85, stepX: 76, stepY: 64, stagger: 38, elevation: 9, padX: 16, padY: 28, padBottom: 22 };
+const TERRAIN = {
+  open: ['Open ground', '1 AP to enter · no cover'],
+  trees: ['Trees', '20 percentage points ranged protection · 2 AP to enter'],
+  brush: ['Brush', '10 percentage points ranged protection · 1 AP to enter'],
+  mud: ['Mud', '2 AP to enter · no cover'],
+  rock: ['Rock', '1 AP to enter · no height advantage unless raised'],
+};
 const TACTICS = [
   ['offense', 'Offense', 'Advance and engage the nearest reachable enemy.'],
   ['defense', 'Defense', 'Hold the line and shoot. Advance if the enemy refuses to close.'],
@@ -28,16 +36,50 @@ function percent(value, maximum) {
   return Math.max(0, Math.min(100, Math.round(number(value) / Math.max(1, number(maximum, 1)) * 100)));
 }
 
-function tileHTML(q, r) {
-  const x = q * GRID.stepX + r * GRID.stagger;
-  const y = r * GRID.stepY;
-  return `<span class="battle-hex" style="left:${x}px;top:${y}px" aria-hidden="true"></span>`;
+function fieldModel(battle) {
+  const source = battle?.field && typeof battle.field === 'object' ? battle.field : LEGACY_FIELD;
+  const columns = Math.max(4, Math.min(20, Math.floor(number(source.columns, 10))));
+  const rows = Math.max(3, Math.min(12, Math.floor(number(source.rows, 5))));
+  const supplied = Array.isArray(source.tiles) ? source.tiles : [];
+  const byCoordinate = new Map();
+  for (const tile of supplied) {
+    const q = Math.floor(number(tile?.q, -1)), r = Math.floor(number(tile?.r, -1));
+    if (q < 0 || q >= columns || r < 0 || r >= rows) continue;
+    const terrain = Object.hasOwn(TERRAIN, tile?.terrain) ? tile.terrain : 'open';
+    byCoordinate.set(`${q},${r}`, { q, r, terrain, height: Math.max(0, Math.min(2, Math.floor(number(tile?.height)))) });
+  }
+  const tiles = [];
+  for (let r = 0; r < rows; r++) for (let q = 0; q < columns; q++) tiles.push(byCoordinate.get(`${q},${r}`) || { q, r, terrain: 'open', height: 0 });
+  return { columns, rows, biome: String(source.biome || 'grassland').toLowerCase().replace(/[^a-z0-9-]/g, ''), tiles };
 }
 
-function coordinates(unit) {
-  const q = Math.max(0, Math.min(GRID.columns - 1, Math.floor(number(unit.q))));
-  const r = Math.max(0, Math.min(GRID.rows - 1, Math.floor(number(unit.r))));
-  return { x: q * GRID.stepX + r * GRID.stagger + GRID.width / 2, y: r * GRID.stepY + 2 };
+function gridModel(field) {
+  return {
+    ...TILE,
+    fieldWidth: TILE.padX * 2 + (field.columns - 1) * TILE.stepX + (field.rows - 1) * TILE.stagger + TILE.width,
+    fieldHeight: TILE.padY + (field.rows - 1) * TILE.stepY + Math.max(TILE.height, 122) + TILE.padBottom,
+  };
+}
+
+function fieldTile(field, q, r) {
+  return field.tiles[r * field.columns + q] || { q, r, terrain: 'open', height: 0 };
+}
+
+function tileHTML(tile, grid) {
+  const [name, effect] = TERRAIN[tile.terrain];
+  const elevation = tile.height ? `Height ${tile.height}; high-ground attacks gain 10 hit per level` : 'Ground level';
+  const detail = `${name}, ${elevation}. ${effect}`;
+  const x = grid.padX + tile.q * grid.stepX + tile.r * grid.stagger;
+  const y = grid.padY + tile.r * grid.stepY - tile.height * grid.elevation;
+  const variant = tile.terrain === 'open' && (tile.q + tile.r) % 3 === 1 ? ' battle-hex-grass-alt' : '';
+  return `<button type="button" class="battle-hex battle-terrain-${tile.terrain} battle-height-${tile.height}${variant}" style="left:${x}px;top:${y}px;--tile-row:${tile.r};--tile-height:${tile.height}" data-action="inspect-terrain" data-q="${tile.q}" data-r="${tile.r}" data-terrain="${tile.terrain}" data-height="${tile.height}" data-detail="${esc(detail)}" title="${esc(detail)}" aria-label="Column ${tile.q + 1}, row ${tile.r + 1}: ${esc(detail)}"></button>`;
+}
+
+function coordinates(unit, field, grid) {
+  const q = Math.max(0, Math.min(field.columns - 1, Math.floor(number(unit?.q))));
+  const r = Math.max(0, Math.min(field.rows - 1, Math.floor(number(unit?.r))));
+  const height = fieldTile(field, q, r).height;
+  return { x: grid.padX + q * grid.stepX + r * grid.stagger + grid.width / 2, y: grid.padY + r * grid.stepY - height * grid.elevation + 2 };
 }
 
 function pawnName(unit) {
@@ -53,15 +95,16 @@ function equipmentFor(unit) {
   }
 }
 
-function unitHTML(unit, battle, animateEvent) {
-  const { x, y } = coordinates(unit);
+function unitHTML(unit, battle, animateEvent, field, grid) {
+  const { x, y } = coordinates(unit, field, grid);
   const alive = unit.alive !== false && number(unit.hp, 1) > 0;
   const event = animateEvent ? battle.lastEvent || {} : {};
   const attacking = ['attack', 'hit', 'fall', 'miss'].includes(event.type);
   const actor = event.actorId === unit.id;
   const target = event.targetId === unit.id;
-  const origin = coordinates(event.from || unit);
-  const destination = coordinates(event.to || unit);
+  const origin = coordinates(event.from || unit, field, grid);
+  const moveOrigin = coordinates(actor && event.moveFrom ? event.moveFrom : event.from || unit, field, grid);
+  const destination = coordinates(event.to || unit, field, grid);
   const dx = destination.x - origin.x, dy = destination.y - origin.y;
   const length = Math.max(1, Math.hypot(dx, dy));
   const weapon = equipmentFor(unit).weapon;
@@ -74,7 +117,7 @@ function unitHTML(unit, battle, animateEvent) {
     event.actorId === unit.id ? 'is-acting' : '',
     event.targetId === unit.id ? 'is-target' : '',
     actor && attacking ? `action-${motion}` : '',
-    actor && event.type === 'move' ? 'action-move' : '',
+    actor && (event.type === 'move' || event.moveFrom) ? 'action-move' : '',
     actor && ['recover', 'hold'].includes(event.type) ? 'action-hold' : '',
     target && attacking && event.type !== 'miss' ? 'action-hit' : '',
     target && event.fallen ? 'action-fall' : '',
@@ -87,7 +130,7 @@ function unitHTML(unit, battle, animateEvent) {
   const beforeHead = target && attacking && event.head ? percent(number(unit.headArmor) + number(event.armorDamage), unit.maxHeadArmor || 1) : head;
   const display = { seed: unit.seed ?? unit.id ?? 0, name: unit.name ?? 'Unknown' };
 
-  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--move-x:${origin.x - x}px;--move-y:${origin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${esc(unit.name)}: ${Math.round(number(unit.hp))} health">
+  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${esc(unit.name)}: ${Math.round(number(unit.hp))} health">
     <div class="battle-unit-bars" aria-hidden="true">
       <span class="battle-unit-bar battle-unit-head"><i style="width:${head}%;--before-width:${beforeHead}%;--after-width:${head}%"></i></span>
       <span class="battle-unit-bar battle-unit-body"><i style="width:${body}%;--before-width:${beforeBody}%;--after-width:${body}%"></i></span>
@@ -101,13 +144,13 @@ function unitHTML(unit, battle, animateEvent) {
   </article>`;
 }
 
-function projectileHTML(battle, animateEvent) {
+function projectileHTML(battle, animateEvent, field, grid) {
   const event = battle.lastEvent;
   if (!animateEvent || !event?.ranged || !['attack', 'hit', 'fall', 'miss'].includes(event.type)) return '';
   const actor = battle.units.find(unit => unit.id === event.actorId);
   const target = battle.units.find(unit => unit.id === event.targetId);
   if (!actor || !target) return '';
-  const start = coordinates(event.from || actor), end = coordinates(event.to || target);
+  const start = coordinates(event.from || actor, field, grid), end = coordinates(event.to || target, field, grid);
   start.x += 18; start.y += 52; end.y += event.head ? 29 : 50;
   if (event.type === 'miss') { end.x += 20; end.y -= 12; }
   const dx = end.x - start.x, dy = end.y - start.y;
@@ -119,11 +162,18 @@ function statusText(status) {
   return ({ victory: 'Victory', defeat: 'Defeat', retreat: 'Retreat' }[status] || 'Engaged');
 }
 
-/** Render a compact tactical battle surface from battle state. */
+function terrainLegend(field) {
+  const terrain = [...new Set(field.tiles.map(tile => tile.terrain))];
+  return `<div class="battle-terrain-key" aria-label="Terrain legend"><strong>${esc(field.biome || 'Battlefield')} · ${field.columns} × ${field.rows}</strong>${terrain.map(kind => `<span><i class="battle-key-${kind}"></i>${esc(TERRAIN[kind][0])}</span>`).join('')}<span><i class="battle-key-height"></i>Raised</span><small>Tap a tile for terrain and height.</small></div>`;
+}
+
+/** Render a scrollable tactical battle surface from battle state. */
 export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
   const units = Array.isArray(battle.units) ? battle.units : [];
   const active = units.find(unit => unit.id === (animateEvent && battle.lastEvent?.actorId ? battle.lastEvent.actorId : battle.activeId));
-  const tiles = Array.from({ length: GRID.rows }, (_, r) => Array.from({ length: GRID.columns }, (_, q) => tileHTML(q, r)).join('')).join('');
+  const field = fieldModel(battle);
+  const grid = gridModel(field);
+  const tiles = field.tiles.map(tile => tileHTML(tile, grid)).join('');
   const log = Array.isArray(battle.log) ? battle.log.slice(-6).reverse() : [];
   const selectedSpeed = [0, 1, 3].includes(Number(speed)) ? Number(speed) : 1;
   const status = String(battle.status || 'active');
@@ -136,9 +186,10 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
     </header>
     <div class="battle-layout">
       <div class="battle-scroll" tabindex="0" aria-label="Battlefield scroll area">
-        <div class="battlefield" role="img" aria-label="Hex battlefield with ${units.filter(unit => unit.side === 'company').length} company fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
+        ${terrainLegend(field)}
+        <div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company').length} company fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
           <div class="battle-terrain">${tiles}</div>
-          <div class="battle-units">${units.map(unit => unitHTML(unit, battle, animateEvent)).join('')}${projectileHTML(battle, animateEvent)}</div>
+          <div class="battle-units">${units.map(unit => unitHTML(unit, battle, animateEvent, field, grid)).join('')}${projectileHTML(battle, animateEvent, field, grid)}</div>
         </div>
       </div>
       <aside class="battle-log" aria-label="Battle event log">

@@ -73,6 +73,7 @@ test('focus survives an enemy turn and keeps attacks on a shared target', () => 
   setBattleTactic(state, 'focus');
   approach(state);
   const byId = id => state.battle.units.find(unit => unit.id === id);
+  Object.assign(byId('guard'), { q: 1, r: 1 });
   Object.assign(byId('captain'), { q: 2, r: 2 });
   Object.assign(byId('scout'), { q: 2, r: 3 });
   Object.assign(byId('enemy-1'), { q: 3, r: 2, hp: 37, bodyArmor: 20 });
@@ -122,6 +123,7 @@ test('new weapons have working reach, piercing, bolts, reload, and town stock', 
   approach(crossbow);
   const archer = crossbow.battle.units.find(unit => unit.id === 'captain');
   const target = crossbow.battle.units.find(unit => unit.id === 'enemy-1');
+  Object.assign(crossbow.battle.units.find(unit => unit.id === 'guard'), { q: 1, r: 1 });
   Object.assign(archer, { q: 2, r: 2 });
   Object.assign(target, { q: 6, r: 2 });
   activate(crossbow.battle, 'captain');

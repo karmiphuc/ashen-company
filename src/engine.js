@@ -1,4 +1,5 @@
 // Pure game rules for the offline overworld. The UI owns rendering and real time.
+import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
 
 export const ITEMS = Object.freeze([
   { id: 'patched-coat', name: 'Patched Coat', slot: 'armor', visual: 'padded', price: 45, armor: 20, fatigue: 2, description: 'Worn cloth, still better than bare skin.' },
@@ -45,6 +46,14 @@ export const SETTLEMENTS = Object.freeze([
   { id: 'highpass', name: 'Highpass', x: 615, y: 130, kind: 'outpost', description: 'A cold refuge on the mountain road.', color: '#b9c4ce' },
   { id: 'saltwick', name: 'Saltwick', x: 265, y: 660, kind: 'village', description: 'Fisherfolk and salt traders share its quiet harbor.', color: '#81b9b3' },
   { id: 'barrowfield', name: 'Barrowfield', x: 625, y: 605, kind: 'village', description: 'Farmland scattered among ancient burial mounds.', color: '#b8c282' },
+  { id: 'pinecross', name: 'Pinecross', x: 1290, y: 350, kind: 'town', description: 'A timber market at the edge of the eastern pinewoods.', color: '#a9bb87' },
+  { id: 'dunridge', name: 'Dunridge', x: 1660, y: 175, kind: 'fort', description: 'A fortified pass above the northern trade road.', color: '#bab6a6' },
+  { id: 'eastmere', name: 'Eastmere', x: 1960, y: 560, kind: 'city', description: 'A busy caravan city beyond the reed marshes.', color: '#d1ae72' },
+  { id: 'stonebridge', name: 'Stonebridge', x: 1440, y: 735, kind: 'town', description: 'Smiths and toll keepers share the old stone crossing.', color: '#b7ae99' },
+  { id: 'southwatch', name: 'Southwatch', x: 420, y: 1010, kind: 'fort', description: 'A southern refuge among the wooded hills.', color: '#aaa98b' },
+  { id: 'wheatmere', name: 'Wheatmere', x: 820, y: 1230, kind: 'village', description: 'Wide grain fields feed the southern frontier.', color: '#d5bf78' },
+  { id: 'blackfen', name: 'Blackfen', x: 1230, y: 1135, kind: 'village', description: 'Reed cutters and hunters live above the black water.', color: '#9cae84' },
+  { id: 'farhold', name: 'Farhold', x: 1860, y: 1180, kind: 'fort', description: 'The last stronghold on a road haunted by veteran raiders.', color: '#c9a28e' },
 ]);
 
 const CAMP_SITES = Object.freeze([
@@ -84,6 +93,10 @@ const ROAMING_BANDS = Object.freeze([
     { name: 'Brigand Thug', weapon: 'wood-axe', armor: 'quilted-jack', helmet: null, shield: null },
     { name: 'Brigand Thug', weapon: 'spear', armor: 'patched-coat', helmet: null, shield: 'buckler' },
   ] },
+  { id: 'pinewood-poachers', name: 'Pinewood Poachers', difficulty: 1, start: { x: 1200, y: 410 }, end: { x: 1410, y: 550 }, enemies: CAMP_SITES[0].enemies },
+  { id: 'southern-deserters', name: 'Southern Deserters', difficulty: 1, start: { x: 520, y: 920 }, end: { x: 740, y: 1100 }, enemies: CAMP_SITES[0].enemies },
+  { id: 'fen-reavers', name: 'Fen Reavers', difficulty: 2, start: { x: 1130, y: 1020 }, end: { x: 1430, y: 1220 }, enemies: CAMP_SITES[1].enemies },
+  { id: 'frontier-veterans', name: 'Frontier Veterans', difficulty: 3, start: { x: 1740, y: 900 }, end: { x: 1990, y: 1130 }, enemies: CAMP_SITES[2].enemies.slice(0,4) },
 ]);
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
@@ -91,6 +104,8 @@ const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'bi
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
+const RANDOM_CAMP_IDS = Array.from({ length: 12 }, (_, index) => `wild-camp-${index + 1}`);
+const isCampId = id => CAMP_BY_ID.has(id) || RANDOM_CAMP_IDS.includes(id);
 const BAND_BY_ID = new Map(ROAMING_BANDS.map(band => [band.id, band]));
 // Low factors mark local supply; high factors mark demand. The market spread
 // always makes buying and selling in the same settlement a loss.
@@ -103,10 +118,19 @@ const MARKET_FACTORS = {
   highpass:   { grain: 1.50, timber: 1.40, iron: .85, salt: 1.50, wool: 1.35 },
   saltwick:   { grain: 1.15, timber: 1.30, iron: 1.50, salt: .58, wool: 1.10 },
   barrowfield:{ grain: .65, timber: .90, iron: 1.30, salt: 1.20, wool: .70 },
+  pinecross:  { grain: 1.05, timber: .60, iron: 1.35, salt: 1.20, wool: 1.10 },
+  dunridge:   { grain: 1.45, timber: 1.30, iron: .78, salt: 1.40, wool: 1.20 },
+  eastmere:   { grain: 1.20, timber: 1.35, iron: 1.10, salt: .75, wool: .85 },
+  stonebridge:{ grain: 1.15, timber: 1.05, iron: .72, salt: 1.15, wool: 1.20 },
+  southwatch: { grain: 1.25, timber: .82, iron: 1.15, salt: 1.35, wool: 1.10 },
+  wheatmere:  { grain: .60, timber: 1.15, iron: 1.40, salt: 1.25, wool: .75 },
+  blackfen:   { grain: 1.10, timber: .80, iron: 1.30, salt: .70, wool: 1.30 },
+  farhold:    { grain: 1.50, timber: 1.35, iron: 1.25, salt: 1.40, wool: 1.45 },
 };
-const GEAR_FACTORS = { oakwatch: 1, greyhaven: 1.05, ironford: .84, thornwall: 1.16, redmere: 1.08, highpass: 1.20, saltwick: 1.12, barrowfield: .96 };
+const GEAR_FACTORS = { oakwatch: 1, greyhaven: 1.05, ironford: .84, thornwall: 1.16, redmere: 1.08, highpass: 1.20, saltwick: 1.12, barrowfield: .96, pinecross:1.04, dunridge:1.12, eastmere:.98, stonebridge:.88, southwatch:1.08, wheatmere:1.02, blackfen:1.15, farhold:1.22 };
 const SLOTS = ['armor', 'helmet', 'weapon', 'shield'];
-const BOUNDS = { minX: 180, maxX: 1150, minY: 80, maxY: 730 };
+export const WORLD_BOUNDS = Object.freeze({ minX: 180, maxX: 2120, minY: 80, maxY: 1380 });
+const BOUNDS = WORLD_BOUNDS;
 const TOWN_RADIUS = 28;
 const ARRIVAL_RADIUS = 2;
 const SPEED = 55;
@@ -245,10 +269,13 @@ export function createGame(seed = Date.now()) {
 }
 
 export function terrainAt(x, y) {
-  if (!Number.isFinite(x) || !Number.isFinite(y) || x < BOUNDS.minX) return 'sea';
+  if (!inBounds(x, y)) return 'sea';
   if (Math.hypot(x - 615, y - 145) < 100 || Math.hypot(x - 1080, y - 455) < 85) return 'mountain';
   if (Math.hypot(x - 475, y - 445) < 95 || Math.hypot(x - 840, y - 235) < 120) return 'forest';
   if (Math.hypot(x - 865, y - 555) < 88) return 'marsh';
+  if (Math.hypot((x - 1640) / 1.6, y - 290) < 145 || Math.hypot(x - 1660, (y - 1100) / 1.5) < 155 || Math.hypot(x - 590, y - 900) < 95) return 'mountain';
+  if (Math.hypot(x - 1330, (y - 450) / 1.5) < 160 || Math.hypot((x - 640) / 1.5, y - 1050) < 150 || Math.hypot(x - 1870, y - 880) < 185) return 'forest';
+  if (Math.hypot((x - 1230) / 1.4, y - 1120) < 155 || Math.hypot(x - 1920, y - 500) < 120) return 'marsh';
   return 'plains';
 }
 
@@ -332,11 +359,11 @@ function roamingBand(state, band) {
   const phase = ((worldHours(state) + hashSeed(band.id) % 11) / period) % 2;
   const fraction = phase <= 1 ? phase : 2 - phase;
   return {
-    id: band.id, name: band.name, kind: 'band', difficulty: 0,
+    id: band.id, name: band.name, kind: 'band', difficulty: band.difficulty ?? 0,
     x: band.start.x + (band.end.x - band.start.x) * fraction,
     y: band.start.y + (band.end.y - band.start.y) * fraction,
     enemies: band.enemies.map(enemy => ({ ...enemy })),
-    description: `${band.enemies.length} lightly equipped brigand${band.enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
+    description: band.difficulty ? `${band.enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${band.enemies.length} lightly equipped brigand${band.enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
     reward: 0,
   };
 }
@@ -395,7 +422,7 @@ function onArrival(state) {
 function completeContract(state, town) {
   const contract = state.contract;
   if (!contract || contract.to !== town.id) return false;
-  if (contract.type === 'hunt' && !state.camps[contract.campId]?.clearedDay) return false;
+  if (contract.type === 'hunt' && !huntComplete(state, contract)) return false;
   if (contract.type === 'supply') {
     if ((state.cargo[contract.goodId] ?? 0) < contract.quantity) return false;
     state.cargo[contract.goodId] -= contract.quantity;
@@ -403,7 +430,7 @@ function completeContract(state, town) {
   }
   state.gold += contract.reward;
   state.renown += contract.renown ?? 1;
-  const description = contract.type === 'hunt' ? `${CAMP_BY_ID.get(contract.campId).name} cleared` : contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
+  const description = contract.type === 'hunt' ? 'Brigand hunt completed' : contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
   record(state, `${description} at ${town.name}. Earned ${contract.reward} crowns and ${contract.renown ?? 1} renown.`);
   state.contract = null;
   return true;
@@ -509,7 +536,7 @@ export function getContractOffers(state, townId) {
     { id: `supply-${serial}`, type: 'supply', from: town.id, to: supplyTarget.id, reward: supplyReward, renown: 2, goodId: good.id, quantity },
   ];
   const camp = getCampSites(state).filter(site => !site.cleared).sort((a, b) => distance(a, town) - distance(b, town))[0];
-  if (camp) offers.push({ id: `hunt-${serial}`, type: 'hunt', from: town.id, to: town.id, campId: camp.id, reward: camp.reward + Math.round(distance(camp, town) * .15 / 5) * 5, renown: 2 });
+  if (camp) offers.push({ id: `hunt-${serial}`, type: 'hunt', from: town.id, to: town.id, campId: camp.id, campGeneration:camp.generation, reward: camp.reward + Math.round(distance(camp, town) * .15 / 5) * 5, renown: 2 });
   return offers;
 }
 
@@ -529,7 +556,7 @@ export function acceptContract(state, townId, offerId) {
   const message = offer.type === 'supply'
     ? `Deliver ${offer.quantity} ${GOOD_BY_ID.get(offer.goodId).name.toLowerCase()} to ${destination.name} for ${offer.reward} crowns.`
     : offer.type === 'hunt'
-      ? `Clear ${CAMP_BY_ID.get(offer.campId).name} and return to ${town.name} for ${offer.reward} crowns.`
+      ? `Clear ${getCampSites(state).find(camp=>camp.id===offer.campId).name} and return to ${town.name} for ${offer.reward} crowns.`
     : `Carry sealed dispatches to ${destination.name} for ${offer.reward} crowns.`;
   record(state, message);
   return result(true, message);
@@ -811,13 +838,45 @@ export function forage(state) {
   return result(true, message);
 }
 
+function campRecord(state, id) {
+  const entry = state.camps?.[id];
+  const respawnAt = entry?.respawnAt ?? (entry?.clearedDay ? (entry.clearedDay - 1) * 24 + (CAMP_BY_ID.has(id) ? 120 : 72) : null);
+  const cleared = respawnAt !== null && respawnAt > worldHours(state);
+  return { cleared, respawnAt, generation: (entry?.generation ?? 0) + (respawnAt !== null && !cleared ? 1 : 0) };
+}
+
+function randomCamp(state, id, index, generation) {
+  let seed = hashSeed(`${state.seed}:${id}:${generation}`);
+  const random = () => { seed = (Math.imul(seed,1664525)+1013904223) >>> 0; return seed / 4294967296; };
+  const column = index % 4, row = Math.floor(index / 4);
+  let x, y;
+  for (let attempt=0;attempt<60;attempt++) {
+    x = Math.round(BOUNDS.minX + column * 485 + 65 + random() * 355);
+    y = Math.round(BOUNDS.minY + row * (1300/3) + 65 + random() * (1300/3-130));
+    if (!SETTLEMENTS.some(town => Math.hypot(town.x-x,town.y-y)<90) && !CAMP_SITES.some(camp => Math.hypot(camp.x-x,camp.y-y)<85)) break;
+  }
+  const difficulty = column === 0 && row < 2 ? 1 : 1 + Math.floor(random() * 3);
+  const pool = [...CAMP_SITES[difficulty-1].enemies,
+    { name: difficulty===1?'Brigand Cutthroat':'Brigand Marksman', weapon:difficulty===1?'rondel-dagger':'light-crossbow', armor:difficulty===1?'patched-coat':'leather-vest', helmet:'cloth-hood', shield:null },
+    { name:'Brigand Pikeman',weapon:difficulty===1?'spear':'billhook',armor:difficulty===3?'reinforced-mail':'quilted-jack',helmet:difficulty===3?'bascinet':'leather-cap',shield:null },
+  ];
+  const enemies = Array.from({length:2+difficulty+Math.floor(random()*2)},()=>({...pool[Math.floor(random()*pool.length)]}));
+  const biome = terrainAt(x,y);
+  const names = {forest:'Woodland Hideout',mountain:'Ridge Encampment',marsh:'Reed Camp',plains:'Outlaw Encampment'};
+  return {id,name:`${names[biome]||'Outlaw Camp'} ${index+1}`,x,y,difficulty,enemies,reward:100+difficulty*95,random:true,description:`${enemies.length} brigands occupy this ${biome} camp. Survivors may establish another camp after three days.`};
+}
+
 export function getCampSites(state) {
-  return CAMP_SITES.map(camp => ({
-    ...camp,
-    kind: 'camp',
-    enemies: camp.enemies.map(enemy => ({ ...enemy })),
-    cleared: Boolean(state.camps?.[camp.id]?.clearedDay),
-  }));
+  return [...CAMP_SITES.map(camp=>camp.id),...RANDOM_CAMP_IDS].map((id,index)=>{
+    const progress = campRecord(state,id), fixed = CAMP_BY_ID.get(id);
+    const camp = fixed || randomCamp(state,id,index-CAMP_SITES.length,progress.generation);
+    return {...camp,kind:'camp',generation:progress.generation,enemies:camp.enemies.map(enemy=>({...enemy})),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
+  });
+}
+
+export function huntComplete(state, contract=state.contract) {
+  const entry=state.camps?.[contract?.campId];
+  return contract?.type==='hunt' && Boolean(entry?.clearedDay) && entry.clearedDay>=contract.acceptedDay && (entry.generation??0)>=(contract.campGeneration??0);
 }
 
 export function setBattleTactic(state, tactic) {
@@ -834,12 +893,6 @@ export function setBattleTactic(state, tactic) {
   const message = `Company tactic set to ${tactic}.`;
   record(state, message);
   return result(true, message);
-}
-
-function hexDistance(a, b) {
-  const dq = a.q - b.q;
-  const dr = a.r - b.r;
-  return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
 }
 
 function battleRoll(battle) {
@@ -873,11 +926,12 @@ export function startBattle(state, encounterId) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   const encounterType = BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
-  const camp = encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : CAMP_BY_ID.get(encounterId);
+  const camp = encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId);
   if (!camp) return result(false, 'That hostile group is no longer here.');
-  if (encounterType === 'camp' && state.camps[camp.id]?.clearedDay) return result(false, 'This camp has already been cleared.');
+  if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${camp.respawnHours} hours.`);
   if (state.destination || distance(state.position, camp) > (encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
   if (!state.party.length) return result(false, 'No company members can fight.');
+  const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y));
   const deployed = [...state.party].sort((a, b) => {
     const bowA = ITEM_BY_ID.get(a.equipment.weapon)?.range > 1 ? 1 : 0;
     const bowB = ITEM_BY_ID.get(b.equipment.weapon)?.range > 1 ? 1 : 0;
@@ -886,7 +940,7 @@ export function startBattle(state, encounterId) {
   const company = deployed.map((person, index) => {
     const stats = getCompanyStats(person);
     return {
-      id: person.id, name: person.name, side: 'company', q: 2 - Math.floor(index / 4), r: index % 4,
+      id: person.id, name: person.name, side: 'company', q: 2 - Math.floor(index / 4), r: 1 + index % 4,
       hp: person.hp, maxHp: stats.maxHp, bodyArmor: stats.bodyArmor, headArmor: stats.headArmor,
       maxBodyArmor: stats.maxBodyArmor, maxHeadArmor: stats.maxHeadArmor,
       equipment: { ...person.equipment }, seed: person.seed, alive: person.hp > 0,
@@ -901,7 +955,7 @@ export function startBattle(state, encounterId) {
     const shieldDefense = ITEM_BY_ID.get(gear.shield)?.defense ?? 0;
     const hp = 25 + camp.difficulty * 12 + (index === 0 && camp.difficulty === 3 ? 12 : 0);
     return {
-      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: ITEM_BY_ID.get(gear.weapon)?.range > 1 ? 8 : 7, r: index % 5,
+      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: ITEM_BY_ID.get(gear.weapon)?.range > 1 ? 12 : 11, r: 1 + index,
       hp, maxHp: hp, bodyArmor: armorMaximum(gear.armor), headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxHeadArmor: armorMaximum(gear.helmet),
       equipment: gear, seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
@@ -914,7 +968,7 @@ export function startBattle(state, encounterId) {
   });
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
-    encounterType, encounterName: camp.name,
+    encounterType, encounterName: camp.name, difficulty: camp.difficulty, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     status: 'active', round: 1, activeId: null, units: [...company, ...enemies],
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
@@ -960,8 +1014,9 @@ function finishBattlePhase(battle) {
   battle.activeId = null;
   battle.casualties = battle.units.filter(unit => unit.side === 'company' && !unit.alive).map(unit => unit.id);
   if (companyAlive) {
-    const band = battle.encounterType === 'band' ? BAND_BY_ID.get(battle.campId) : null;
-    const camp = band ?? CAMP_BY_ID.get(battle.campId);
+    const band = battle.encounterType === 'band';
+    const enemies = battle.units.filter(unit=>unit.side==='enemy');
+    const camp = { difficulty:battle.difficulty??CAMP_BY_ID.get(battle.campId)?.difficulty??0, enemies:enemies.map(unit=>({weapon:unit.equipment.weapon})) };
     battle.loot = band ? {
       gold: 28 + camp.enemies.length * 19,
       food: 3,
@@ -985,29 +1040,47 @@ function finishBattlePhase(battle) {
   return true;
 }
 
-const HEX_DIRECTIONS = [[1, 0], [1, -1], [0, 1], [0, -1], [-1, 0], [-1, 1]];
+function openNeighbors(battle, point, occupied) {
+  return hexNeighbors(battle.field, point).filter(next => !occupied.has(`${next.q},${next.r}`));
+}
 
-function openNeighbors(point, occupied) {
-  return HEX_DIRECTIONS.map(([dq, dr]) => ({ q: point.q + dq, r: point.r + dr }))
-    .filter(next => next.q >= 0 && next.q < 10 && next.r >= 0 && next.r < 5 && !occupied.has(`${next.q},${next.r}`));
+function pathCost(battle, origin, path) {
+  let total = 0;
+  let point = origin;
+  for (const next of path) {
+    total += movementCost(battle.field, point, next);
+    point = next;
+  }
+  return total;
 }
 
 function pathToTarget(battle, actor, target, range) {
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
-  const queue = [{ q: actor.q, r: actor.r, path: [] }];
-  const visited = new Set([`${actor.q},${actor.r}`]);
-  for (let index = 0; index < queue.length; index++) {
-    const point = queue[index];
-    if (hexDistance(point, target) <= range) return point.path;
-    for (const next of openNeighbors(point, occupied)) {
+  const queue = [{ q: actor.q, r: actor.r, path: [], cost: 0 }];
+  const best = new Map([[`${actor.q},${actor.r}`, 0]]);
+  let goal = null;
+  while (queue.length) {
+    queue.sort((a, b) => a.cost - b.cost || a.q - b.q || a.r - b.r);
+    const point = queue.shift();
+    if (point.cost > best.get(`${point.q},${point.r}`)) continue;
+    if (goal && point.cost > goal.cost) break;
+    if (hexDistance(point, target) <= range) {
+      const aim = heightHitModifier(battle.field, point, target) + (range > 2 ? rangedCoverModifier(battle.field, point, target) : 0);
+      const safety = tileAt(battle.field, point.q, point.r).terrain === 'trees' ? 5 : 0;
+      const quality = aim + safety;
+      if (!goal || quality > goal.quality) goal = { path: point.path, cost: point.cost, quality };
+      continue;
+    }
+    for (const next of openNeighbors(battle, point, occupied)) {
       const key = `${next.q},${next.r}`;
-      if (!visited.has(key)) {
-        visited.add(key);
-        queue.push({ ...next, path: [...point.path, next] });
+      const cost = point.cost + movementCost(battle.field, point, next);
+      if (cost < (best.get(key) ?? Infinity)) {
+        best.set(key, cost);
+        queue.push({ ...next, path: [...point.path, next], cost });
       }
     }
   }
-  return null;
+  return goal?.path ?? null;
 }
 
 function stepArcherBack(battle, actor) {
@@ -1015,15 +1088,27 @@ function stepArcherBack(battle, actor) {
   const nearest = Math.min(...enemies.map(unit => hexDistance(actor, unit)));
   if (nearest > 1) return false;
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
-  const option = openNeighbors(actor, occupied)
-    .map(point => ({ ...point, safety: Math.min(...enemies.map(unit => hexDistance(point, unit))) }))
+  const option = openNeighbors(battle, actor, occupied)
+    .map(point => ({ ...point, cost: movementCost(battle.field, actor, point), safety: Math.min(...enemies.map(unit => hexDistance(point, unit))) }))
     .filter(point => point.safety > nearest && enemies.some(unit => hexDistance(point, unit) <= 4))
-    .sort((a, b) => b.safety - a.safety || a.q - b.q || a.r - b.r)[0];
+    .sort((a, b) => b.safety - a.safety || a.cost - b.cost || a.q - b.q || a.r - b.r)[0];
   if (!option) return false;
   actor.q = option.q;
   actor.r = option.r;
-  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + 3);
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + option.cost * 3);
   return true;
+}
+
+function betterRangedPosition(battle, actor, target, range) {
+  if (hexDistance(actor, target) > range) return null;
+  const current = heightHitModifier(battle.field, actor, target) + rangedCoverModifier(battle.field, actor, target);
+  if (current > -12) return null;
+  const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  return openNeighbors(battle, actor, occupied)
+    .filter(point => hexDistance(point, target) <= range)
+    .map(point => ({ point, cost: movementCost(battle.field, actor, point), quality: heightHitModifier(battle.field, point, target) + rangedCoverModifier(battle.field, point, target) }))
+    .filter(option => option.quality >= current + 10)
+    .sort((a, b) => b.quality - a.quality || a.cost - b.cost || a.point.q - b.point.q || a.point.r - b.point.r)[0]?.point ?? null;
 }
 
 function attackTarget(state, actor, target, weapon) {
@@ -1032,7 +1117,8 @@ function attackTarget(state, actor, target, weapon) {
   if (ranged && actor.side === 'company') state.supplies.ammo -= 1;
   const skill = ranged ? actor.rangedSkill : actor.meleeSkill;
   const defense = (ranged ? target.rangedDefense : target.meleeDefense) + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
-  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - (ranged && hexDistance(actor, target) === 1 ? 12 : 0), 12, 90);
+  const terrainHit = heightHitModifier(battle.field, actor, target) + (ranged ? rangedCoverModifier(battle.field, actor, target) : 0);
+  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - (ranged && hexDistance(actor, target) === 1 ? 12 : 0), 12, 90);
   actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (weapon.fatigueCost ?? (ranged ? 9 : 11)));
   if (weapon.reloadTurns) actor.reload = weapon.reloadTurns;
   actor.ap = 0;
@@ -1044,7 +1130,8 @@ function attackTarget(state, actor, target, weapon) {
     battleLog(battle, message);
     return;
   }
-  const raw = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
+  const baseDamage = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
+  const raw = Math.round(baseDamage * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
   const head = battleRoll(battle) < .22;
   const part = head ? 'headArmor' : 'bodyArmor';
   const armorBefore = target[part];
@@ -1104,24 +1191,27 @@ export function advanceBattle(state) {
   const bowWithoutAmmo = equippedWeapon?.ranged && actor.side === 'company' && state.supplies.ammo < 1;
   const weapon = bowWithoutAmmo ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equippedWeapon ?? { damageMin: 8, damageMax: 12, hitBonus: -10, armorDamage: .4, range: 1 };
   const range = weapon.range ?? 1;
+  const initialPosition = { q: actor.q, r: actor.r };
   if (weapon.ranged) stepArcherBack(battle, actor);
   const defenseKey = weapon.ranged ? 'rangedDefense' : 'meleeDefense';
   const vulnerability = target => target.hp + (target.bodyArmor + target.headArmor) * .15 + target[defenseKey] * .3;
   const targets = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range) }))
     .filter(entry => entry.path !== null)
-    .sort((a, b) => a.path.length - b.path.length
+    .sort((a, b) => pathCost(battle, actor, a.path) - pathCost(battle, actor, b.path)
       || vulnerability(a.target) - vulnerability(b.target)
+        - (weapon.ranged ? heightHitModifier(battle.field, actor, a.target) + rangedCoverModifier(battle.field, actor, a.target)
+          - heightHitModifier(battle.field, actor, b.target) - rangedCoverModifier(battle.field, actor, b.target) : 0)
       || hexDistance(actor, a.target) - hexDistance(actor, b.target) || a.target.id.localeCompare(b.target.id));
   if (actor.side === 'company' && battle.focusTargetId && !enemies.some(enemy => enemy.id === battle.focusTargetId)) battle.focusTargetId = null;
   const companyTactic = actor.side === 'company' ? battle.tactic : 'offense';
   let choice = targets[0];
   if (companyTactic === 'focus') {
     const shared = targets.find(entry => entry.target.id === battle.focusTargetId);
-    choice = shared ?? [...targets].sort((a, b) => vulnerability(a.target) + a.path.length * 3 - vulnerability(b.target) - b.path.length * 3 || a.target.id.localeCompare(b.target.id))[0];
+    choice = shared ?? [...targets].sort((a, b) => vulnerability(a.target) + pathCost(battle, actor, a.path) * 3 - vulnerability(b.target) - pathCost(battle, actor, b.path) * 3 || a.target.id.localeCompare(b.target.id))[0];
     if (choice) battle.focusTargetId = choice.target.id;
   } else if (companyTactic === 'defense') {
     choice = targets.find(entry => entry.path.length === 0);
-    if (!choice && !(battle.engaged && targets[0]?.path.length <= 3) && battle.round - battle.lastContactRound < 4) {
+    if (!choice && !(battle.engaged && targets[0] && pathCost(battle, actor, targets[0].path) <= 3) && battle.round - battle.lastContactRound < 4) {
       actor.ap = 0;
       actor.fatigue = Math.max(0, actor.fatigue - 12);
       const message = `${actor.name} holds the line.`;
@@ -1141,20 +1231,32 @@ export function advanceBattle(state) {
     nextBattleTurn(battle);
     return result(true, message);
   }
-  const { target, path } = choice;
-  const from = { q: actor.q, r: actor.r };
+  const { target } = choice;
+  let { path } = choice;
+  if (weapon.ranged && path.length === 0) {
+    const better = betterRangedPosition(battle, actor, target, range);
+    if (better) path = [better];
+  }
   if (path.length) {
-    const destination = path[Math.min(2, path.length) - 1];
+    let used = 0;
+    let destination = actor;
+    for (const next of path) {
+      const cost = movementCost(battle.field, destination, next);
+      if (used + cost > 2) break;
+      used += cost;
+      destination = next;
+    }
     actor.q = destination.q;
     actor.r = destination.r;
-    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + 5);
+    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + used * 3);
   }
   if (hexDistance(actor, target) <= range) {
     attackTarget(state, actor, target, weapon);
+    if (initialPosition.q !== actor.q || initialPosition.r !== actor.r) battle.lastEvent.moveFrom = initialPosition;
   } else {
     actor.ap = 0;
     const message = `${actor.name} advances toward ${target.name}.`;
-    battle.lastEvent = makeBattleEvent(actor, null, 'move', message, equippedWeapon, from);
+    battle.lastEvent = makeBattleEvent(actor, null, 'move', message, equippedWeapon, initialPosition);
     battle.lastEvent.targetId = target.id;
     battleLog(battle, message);
   }
@@ -1229,7 +1331,7 @@ export function finishBattle(state) {
       state.inventoryCondition.push(itemCondition(itemId));
     }
     if (battle.encounterType === 'band') state.bands[battle.campId] = { defeatedUntil: worldHours(state) + 48 };
-    else state.camps[battle.campId] = { clearedDay: state.day };
+    else { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+(camp.random?72:120),generation:camp.generation }; }
   }
   state.gameOver = state.party.length === 0;
   const message = victory ? `The company claims ${battle.loot.gold} crowns and defeats ${battle.encounterName}.` : state.gameOver ? 'The company has fallen.' : 'The company survives and leaves the battlefield behind.';
@@ -1242,13 +1344,30 @@ function assert(condition, message) { if (!condition) throw new TypeError(`Inval
 function validCount(value) { return Number.isSafeInteger(value) && value >= 0; }
 function validPoint(point) { return point && typeof point === 'object' && !Array.isArray(point) && inBounds(point.x, point.y); }
 function recordObject(value) { return value && typeof value === 'object' && !Array.isArray(value); }
-function validHex(point) { return recordObject(point) && Number.isSafeInteger(point.q) && point.q >= 0 && point.q < 10 && Number.isSafeInteger(point.r) && point.r >= 0 && point.r < 5; }
+function validHex(point, field) { return recordObject(point) && Number.isSafeInteger(point.q) && point.q >= 0 && point.q < field.columns && Number.isSafeInteger(point.r) && point.r >= 0 && point.r < field.rows; }
 
-function validateBattle(input, party) {
+function validateBattleField(input) {
+  if (input === undefined) return legacyBattleField();
+  assert(recordObject(input) && (input.columns === 14 && input.rows === 8 || input.columns === 10 && input.rows === 5), 'battle field size');
+  assert(['plains', 'forest', 'mountain', 'marsh'].includes(input.biome), 'battle field biome');
+  assert(Array.isArray(input.tiles) && input.tiles.length === input.columns * input.rows, 'battle field tiles');
+  const tiles = input.tiles.map((tile, index) => {
+    const q = Math.floor(index / input.rows);
+    const r = index % input.rows;
+    assert(recordObject(tile) && tile.q === q && tile.r === r && ['open', 'trees', 'brush', 'mud', 'rock'].includes(tile.terrain) && Number.isSafeInteger(tile.height) && tile.height >= 0 && tile.height <= 2, 'battle field tile');
+    return { q, r, terrain: tile.terrain, height: tile.height };
+  });
+  return { columns: input.columns, rows: input.rows, biome: input.biome, tiles };
+}
+
+function validateBattle(input, party, worldState) {
   if (input === undefined || input === null) return null;
   const encounterType = input.encounterType ?? 'camp';
-  assert(recordObject(input) && (encounterType === 'camp' ? CAMP_BY_ID.has(input.campId) : encounterType === 'band' && BAND_BY_ID.has(input.campId)), 'battle encounter');
-  const encounterName = encounterType === 'band' ? BAND_BY_ID.get(input.campId).name : CAMP_BY_ID.get(input.campId).name;
+  assert(recordObject(input) && (encounterType === 'camp' ? isCampId(input.campId) : encounterType === 'band' && BAND_BY_ID.has(input.campId)), 'battle encounter');
+  const encounter = encounterType === 'band' ? BAND_BY_ID.get(input.campId) : getCampSites(worldState).find(camp=>camp.id===input.campId);
+  const encounterName = encounter.name;
+  const difficulty = input.difficulty ?? encounter.difficulty ?? 0;
+  assert(Number.isSafeInteger(difficulty) && difficulty >= 0 && difficulty <= 3, 'battle difficulty');
   assert(input.encounterName === undefined || input.encounterName === encounterName, 'battle encounter name');
   assert(typeof input.id === 'string' && input.id.length <= 80 && input.id.startsWith('battle-'), 'battle id');
   assert(['active', 'victory', 'defeat', 'retreat'].includes(input.status), 'battle status');
@@ -1260,6 +1379,7 @@ function validateBattle(input, party) {
   const engaged = input.engaged ?? false;
   assert(typeof engaged === 'boolean', 'battle engaged');
   assert(validCount(input.rng) && input.rng <= 0xffffffff, 'battle random state');
+  const field = validateBattleField(input.field);
   assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_COMPANY_SIZE + 6, 'battle units');
   const ids = new Set();
   const partyIds = new Set(party.map(person => person.id));
@@ -1269,7 +1389,7 @@ function validateBattle(input, party) {
     assert(unit.side === 'company' || unit.side === 'enemy', 'battle side');
     assert(unit.side === 'company' ? partyIds.has(unit.id) : /^enemy-[1-6]$/.test(unit.id), 'battle unit ownership');
     assert(typeof unit.name === 'string' && unit.name.length > 0 && unit.name.length <= 80, 'battle unit name');
-    assert(Number.isSafeInteger(unit.q) && unit.q >= 0 && unit.q < 10 && Number.isSafeInteger(unit.r) && unit.r >= 0 && unit.r < 5, 'battle hex');
+    assert(validHex(unit, field), 'battle hex');
     assert(validCount(unit.maxHp) && unit.maxHp >= 1 && unit.maxHp <= 300 && validCount(unit.hp) && unit.hp <= unit.maxHp && unit.alive === (unit.hp > 0), 'battle health');
     assert(recordObject(unit.equipment), 'battle equipment');
     for (const slot of SLOTS) assert(unit.equipment[slot] === null || ITEM_BY_ID.get(unit.equipment[slot])?.slot === slot, 'battle equipment');
@@ -1292,6 +1412,7 @@ function validateBattle(input, party) {
     };
   });
   assert(units.some(unit => unit.side === 'company') && units.some(unit => unit.side === 'enemy'), 'battle sides');
+  assert(new Set(units.filter(unit => unit.alive).map(unit => `${unit.q},${unit.r}`)).size === units.filter(unit => unit.alive).length, 'battle occupied hexes');
   const focusTargetId = input.focusTargetId ?? null;
   assert(focusTargetId === null || units.some(unit => unit.side === 'enemy' && unit.id === focusTargetId), 'battle focus target');
   assert(units.filter(unit => unit.side === 'company').length === party.length, 'battle company roster');
@@ -1311,7 +1432,7 @@ function validateBattle(input, party) {
   if (event?.weaponId !== undefined) assert(event.weaponId === null || ITEM_BY_ID.get(event.weaponId)?.slot === 'weapon', 'battle event weapon');
   if (event?.ranged !== undefined) assert(typeof event.ranged === 'boolean', 'battle event ranged');
   if (event?.projectile !== undefined) assert([null, 'arrow', 'bolt'].includes(event.projectile), 'battle event projectile');
-  for (const key of ['from', 'to']) if (event?.[key] !== undefined) assert(event[key] === null || validHex(event[key]), `battle event ${key}`);
+  for (const key of ['from', 'to', 'moveFrom']) if (event?.[key] !== undefined) assert(event[key] === null || validHex(event[key], field), `battle event ${key}`);
   for (const key of ['hpDamage', 'armorDamage']) if (event?.[key] !== undefined) assert(validCount(event[key]) && event[key] <= 1000, `battle event ${key}`);
   const actor = units.find(unit => unit.id === event?.actorId);
   const target = units.find(unit => unit.id === event?.targetId);
@@ -1322,6 +1443,7 @@ function validateBattle(input, party) {
     weaponId, ranged, projectile: event.projectile === undefined ? ranged && ['attack', 'miss', 'hit', 'fall'].includes(event.type) ? ITEM_BY_ID.get(weaponId)?.visual === 'crossbow' ? 'bolt' : 'arrow' : null : event.projectile,
     from: event.from === undefined ? actor ? { q: actor.q, r: actor.r } : null : event.from === null ? null : { q: event.from.q, r: event.from.r },
     to: event.to === undefined ? target ? { q: target.q, r: target.r } : actor ? { q: actor.q, r: actor.r } : null : event.to === null ? null : { q: event.to.q, r: event.to.r },
+    ...(event.moveFrom === undefined ? {} : { moveFrom: event.moveFrom === null ? null : { q: event.moveFrom.q, r: event.moveFrom.r } }),
     message: event.message,
     ...(event.head !== undefined ? { head: event.head } : {}),
     ...(event.hpDamage !== undefined ? { hpDamage: event.hpDamage } : {}),
@@ -1334,8 +1456,8 @@ function validateBattle(input, party) {
   assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
-    id: input.id, campId: input.campId, encounterType, encounterName, tactic, focusTargetId, lastContactRound, engaged, status: input.status, round: input.round, activeId: input.activeId,
-    units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng,
+    id: input.id, campId: input.campId, encounterType, encounterName, difficulty, tactic, focusTargetId, lastContactRound, engaged, status: input.status, round: input.round, activeId: input.activeId,
+    field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng,
     log: [...input.log], lastEvent: normalizedEvent,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items] },
     casualties: [...input.casualties], xp: { ...input.xp },
@@ -1419,16 +1541,20 @@ export function validateSave(input) {
     assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
   }
   const camps = input.camps === undefined ? {} : input.camps;
-  assert(recordObject(camps) && Object.keys(camps).every(id => CAMP_BY_ID.has(id)), 'camps');
-  for (const entry of Object.values(camps)) assert(recordObject(entry) && (entry.clearedDay === null || Number.isSafeInteger(entry.clearedDay) && entry.clearedDay >= 1 && entry.clearedDay <= input.day), 'camp state');
+  assert(recordObject(camps) && Object.keys(camps).every(isCampId), 'camps');
+  for (const [id,entry] of Object.entries(camps)) {
+    assert(recordObject(entry) && (entry.clearedDay === null || Number.isSafeInteger(entry.clearedDay) && entry.clearedDay >= 1 && entry.clearedDay <= input.day), 'camp state');
+    assert(entry.generation===undefined || validCount(entry.generation) && entry.generation<=1000000,'camp generation');
+    assert(entry.respawnAt===undefined || entry.respawnAt===null && entry.clearedDay===null || Number.isFinite(entry.respawnAt) && entry.clearedDay!==null && entry.respawnAt>=(entry.clearedDay-1)*24 && entry.respawnAt<=worldHours(input)+(CAMP_BY_ID.has(id)?120:72),'camp respawn');
+  }
   const bands = input.bands === undefined ? {} : input.bands;
   assert(recordObject(bands) && Object.keys(bands).every(id => BAND_BY_ID.has(id)), 'bands');
   for (const entry of Object.values(bands)) assert(recordObject(entry) && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0 && entry.defeatedUntil <= worldHours(input) + 48, 'band respawn');
   const pursuit = input.pursuit === undefined ? null : input.pursuit;
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
-  const battle = validateBattle(input.battle, input.party);
+  const battle = validateBattle(input.battle, input.party, input);
   assert(!battle || battle.tactic === tactic, 'battle tactic');
-  assert(!battle || input.destination === null && pursuit === null && (battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !camps[battle.campId]?.clearedDay), 'battle location');
+  assert(!battle || input.destination === null && pursuit === null && (battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');
   assert(!gameOver || input.party.length === 0 && battle === null, 'game over state');
   assert(Array.isArray(input.visited) && input.visited.length <= SETTLEMENTS.length && input.visited.every(id => TOWN_BY_ID.has(id)) && new Set(input.visited).size === input.visited.length, 'visited settlements');
   assert(Array.isArray(input.log) && input.log.length <= MAX_LOG && input.log.every(entry => typeof entry === 'string' && entry.length <= 500), 'log');
@@ -1442,7 +1568,7 @@ export function validateSave(input) {
     assert(contract.type === undefined || ['courier', 'supply', 'hunt'].includes(contract.type), 'contract type');
     assert(contract.renown === undefined || contract.renown === 1 || contract.renown === 2, 'contract renown');
     if (contract.type === 'supply') assert(GOOD_BY_ID.has(contract.goodId) && validQuantity(contract.quantity, MAX_CARGO), 'supply requirement');
-    if (contract.type === 'hunt') assert(CAMP_BY_ID.has(contract.campId) && contract.from === contract.to, 'hunt requirement');
+    if (contract.type === 'hunt') assert(isCampId(contract.campId) && contract.from === contract.to && (contract.campGeneration===undefined || validCount(contract.campGeneration) && contract.campGeneration<=1000000), 'hunt requirement');
     else assert(contract.from !== contract.to, 'contract route');
   }
   const inventory = [...input.inventory];
@@ -1471,12 +1597,12 @@ export function validateSave(input) {
     party,
     inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
     marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...defaultMarketStock({ seed: input.seed, day: market.day }, TOWN_BY_ID.get(id)).equipment, ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])) }])),
-    camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay: entry.clearedDay }])),
+    camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
     bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil }])), pursuit, tactic,
     battle, gameOver,
     position: { x: input.position.x, y: input.position.y },
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,
-    contract: input.contract ? { id: input.contract.id, type: input.contract.type ?? 'courier', from: input.contract.from, to: input.contract.to, reward: input.contract.reward, renown: input.contract.renown ?? 1, ...(input.contract.type === 'supply' ? { goodId: input.contract.goodId, quantity: input.contract.quantity } : {}), ...(input.contract.type === 'hunt' ? { campId: input.contract.campId } : {}), acceptedDay: input.contract.acceptedDay } : null,
+    contract: input.contract ? { id: input.contract.id, type: input.contract.type ?? 'courier', from: input.contract.from, to: input.contract.to, reward: input.contract.reward, renown: input.contract.renown ?? 1, ...(input.contract.type === 'supply' ? { goodId: input.contract.goodId, quantity: input.contract.quantity } : {}), ...(input.contract.type === 'hunt' ? { campId: input.contract.campId, campGeneration: input.contract.campGeneration??0 } : {}), acceptedDay: input.contract.acceptedDay } : null,
     contractSerial: input.contractSerial, recruitSerial: input.recruitSerial,
     log: [...input.log], visited: [...input.visited],
   };
