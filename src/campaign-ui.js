@@ -7,6 +7,16 @@ const town = id => SETTLEMENTS.find(entry => entry.id === id);
 const itemIcon = (entry, alt=entry?.name) => `<img class="equipment-icon${entry?.rarity === 'famed' ? ' famed-item-icon' : ''}" src="${itemImage(entry)}" alt="${esc(alt)}">`;
 export const statLabels = {maxHp:'Hitpoints',maxFatigue:'Maximum Fatigue',resolve:'Resolve',initiative:'Initiative',meleeSkill:'Melee Skill',rangedSkill:'Ranged Skill',meleeDefense:'Melee Defense',rangedDefense:'Ranged Defense'};
 
+export function townServiceHTML(state, quote) {
+  const doctor=quote.service==='doctor', verb=doctor?'Heal':'Repair';
+  const description=doctor?'Restore missing hitpoints. 1 crown per hitpoint.':'Restore equipped body armor and helmets. 1 crown per 2 durability, rounded up per brother.';
+  return `<section class="town-service"><div class="service-summary"><div><span class="supply-symbol ${doctor?'supply-medicine':'supply-tools'}" aria-hidden="true"></span><p>${description}<br>Immediate service. Your ${doctor?'medicine is':'tools are'} not consumed.</p></div><strong>${state.gold} crowns</strong></div><div class="service-roster">${quote.entries.map(entry=>{
+    const person=state.party.find(member=>member.id===entry.memberId), needsWork=entry.amount>0, affordable=state.gold>=entry.cost;
+    const details=doctor?`<p class="service-condition"><strong>${entry.currentHp} / ${entry.maxHp}</strong> hitpoints${needsWork?` <span>+${entry.amount} to restore</span>`:''}</p>`:entry.repairs.map(repair=>`<div class="service-gear">${itemIcon(item(repair.itemId),'')}<span>${esc(item(repair.itemId)?.name)}<small>${repair.current} / ${repair.max} durability${repair.missing?` · +${repair.missing} to restore`:''}</small></span></div>`).join('')||'<p class="service-condition">No armor or helmet equipped.</p>';
+    return `<article class="service-brother">${portraitHTML(person,getEquipment(person),72)}<div class="service-details"><h3>${esc(entry.name)}</h3>${details}</div><div class="service-payment"><button data-town-service="${quote.service}" data-service-member="${esc(entry.memberId)}" aria-label="${verb} ${esc(entry.name)} for ${entry.cost} crowns" ${!needsWork||!affordable?'disabled':''}>${needsWork?`${verb} · ${entry.cost} crowns`:doctor?'Fully healed':'Gear ready'}</button>${needsWork&&!affordable?`<small>Need ${entry.cost-state.gold} more crowns</small>`:''}</div></article>`;
+  }).join('')}</div><div class="service-total"><div><strong>${quote.totalAmount?`${quote.totalAmount} ${doctor?'hitpoints':'durability'} to restore`:doctor?'Everyone is fully healed.':'All equipped armor is ready.'}</strong><p>${quote.totalAmount?`Company total: ${quote.totalCost} crowns`:'No charge needed.'}</p>${quote.totalAmount&&state.gold<quote.totalCost?`<small>Need ${quote.totalCost-state.gold} more crowns for everyone. You can ${doctor?'heal':'repair for'} individual brothers above.</small>`:''}</div><button class="primary" data-town-service="${quote.service}" ${!quote.ok?'disabled':''}>${doctor?'Heal everyone':'Repair all equipped'} · ${quote.totalCost} crowns</button></div><p class="service-note">${doctor?'Fallen brothers cannot be revived.':'Weapons and shields do not wear down. Stashed items are not included.'}</p></section>`;
+}
+
 export function townEventHTML(state, townId, compact=false) {
   const event=getTownEvent(state,townId);
   if(!event)return '';

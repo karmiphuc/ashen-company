@@ -1,6 +1,14 @@
-# Verification - version 0.16, 2026-09-27
+# Verification - version 0.17, 2026-09-27
 
-## v0.16 checks
+## v0.17 checks
+
+The full automated suite passes 167 tests. Four service tests cover pure quotes, exact individual and company bills, per-brother repair rounding, famed armor limits, equipped-only repairs, invalid/unavailable/fully restored/insufficient-funds rejection without mutation, shortage-independent pricing, and save reload. Six historical save fixtures retain equipment, purse, inventory, and battle positions. Cache consistency, syntax, and diff checks pass.
+
+At 1024x768, every town service entrance fits the existing settlement layout. A wounded Ironford company displayed a 39-crown Doctor bill. Healing Mara individually spent 12 crowns, restored 100/100 HP, and reduced the remaining bill to 27. Healing everyone then restored Toren to 100/100 and Bryn to 105/105, leaving 861 crowns. The Smithy displayed each armor piece's current and maximum durability. Repairing Mara cost 12 crowns and restored her vest to 65/65 and cap to 40/40, leaving a 15-crown company bill. These changes survived reload. The Smithy layout was also inspected at 390 pixels.
+
+With the server stopped and direct HTTP unavailable, a fresh tab restored that company. Repairing all remaining equipped armor offline spent 15 crowns; another reload retained 834 crowns and full durability on all six equipped armor pieces. The day and hour, 8 tools, and 5 medicine remained unchanged. No JavaScript errors occurred. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+## Historical v0.16 checks
 
 The full automated suite passes 163 tests. Caravan coverage checks physical arrival before stock and discounts, raid warnings, rescue by victory, pre-emptive clearing, ignored losses, consistent clock advancement, follow persistence, shortage expiry and trade spreads, read-only getters, migration, and malformed records. Six historical saves retain equipment, purse, inventory, and battle positions. Offline cache consistency and diff checks pass.
 

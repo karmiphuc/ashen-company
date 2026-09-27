@@ -1163,6 +1163,56 @@ export function buySupplies(state, kind, quantity = 1) {
   return result(true, message);
 }
 
+export function getTownServiceQuote(state, service, memberId = null) {
+  const town = townAt(state);
+  const quote = { ok: false, service, townId: town?.id ?? null, entries: [], totalCost: 0, totalAmount: 0 };
+  if (service !== 'doctor' && service !== 'smithy') return { ...quote, message: 'Choose Doctor or Smithy.' };
+  const blocked = actionBlocked(state);
+  if (blocked) return { ...quote, message: blocked.message };
+  if (!town) return { ...quote, message: 'Visit a settlement to use the Doctor or Smithy.' };
+  const members = memberId === null ? state.party : state.party.filter(person => person.id === memberId);
+  if (!members.length) return { ...quote, message: 'Unknown company member.' };
+  quote.entries = members.map(person => {
+    if (service === 'doctor') {
+      const maxHp = getCompanyStats(person).maxHp;
+      const hpMissing = Math.max(0, maxHp - person.hp);
+      return { memberId: person.id, name: person.name, currentHp: person.hp, maxHp,
+        hpMissing, amount: hpMissing, cost: hpMissing };
+    }
+    const repairs = [['armor', 'body'], ['helmet', 'head']].flatMap(([slot, part]) => {
+      const itemId = person.equipment[slot];
+      if (!itemId) return [];
+      const max = armorMaximum(itemId);
+      const current = person.armorDurability[part];
+      return [{ slot, itemId, current, max, missing: Math.max(0, max - current) }];
+    });
+    const amount = repairs.reduce((total, repair) => total + repair.missing, 0);
+    return { memberId: person.id, name: person.name, repairs, amount, cost: Math.ceil(amount / 2) };
+  });
+  quote.totalAmount = quote.entries.reduce((total, entry) => total + entry.amount, 0);
+  quote.totalCost = quote.entries.reduce((total, entry) => total + entry.cost, 0);
+  if (!quote.totalAmount) return { ...quote, message: service === 'doctor' ? 'No healing is needed.' : 'No equipped armor needs repairs.' };
+  if (state.gold < quote.totalCost) return { ...quote, message: `The company needs ${quote.totalCost} crowns for this service.` };
+  return { ...quote, ok: true };
+}
+
+export function useTownService(state, service, memberId = null) {
+  const quote = getTownServiceQuote(state, service, memberId);
+  if (!quote.ok) return result(false, quote.message);
+  state.gold -= quote.totalCost;
+  for (const entry of quote.entries) {
+    if (!entry.amount) continue;
+    const person = state.party.find(member => member.id === entry.memberId);
+    if (service === 'doctor') person.hp = entry.maxHp;
+    else for (const repair of entry.repairs) person.armorDurability[repair.slot === 'armor' ? 'body' : 'head'] = repair.max;
+  }
+  const message = service === 'doctor'
+    ? `Doctor restores ${quote.totalAmount} HP for ${quote.totalCost} crowns at ${TOWN_BY_ID.get(quote.townId).name}.`
+    : `Smithy restores ${quote.totalAmount} armor for ${quote.totalCost} crowns at ${TOWN_BY_ID.get(quote.townId).name}.`;
+  record(state, message);
+  return result(true, message);
+}
+
 function accessoryIndex(destination) {
   return destination === 'accessory-1' ? 0 : destination === 'accessory-2' ? 1 : -1;
 }
