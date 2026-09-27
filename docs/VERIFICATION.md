@@ -1,24 +1,26 @@
-# Verification - version 0.2, 2026-09-27
+# Verification - version 0.3, 2026-09-27
 
 ## Automated checks
 
-`npm run prepare-offline`, `npm test`, and `git diff --check` pass. Eighteen Node tests cover game startup, inventory conservation, capacity, settlement access, local markets and stock renewal, cross-town profit, supply deliveries, migration of version 1 saves, travel and upkeep, malformed-save rejection, portrait layer selection, item artwork, and offline asset completeness. The generated service worker precaches 118 local files and is checked against a content-derived hash.
+`npm test` passes all 28 tests. Coverage includes deterministic battle resume, every-turn save validation, active-battle action guards, retreat, casualties and defeat, one-time loot, hunt payment, two-handed equipment, persistent armor condition, supply recovery, training, old-save migration, markets, travel, asset packaging and generated service-worker consistency. All 133 runtime files are packaged offline. A separate review simulated 450 battles (150 seeds across three camps); all resolved, with a maximum of 29 rounds.
 
-## Browser checks for this version
+## Browser checks
 
-Executed in the Codex in-app browser:
+Executed in the Codex in-app browser against the local build:
 
-- Bought mail armor for 320 crowns, five provisions for 20 crowns, and one timber for 20 crowns; balances and stocks updated.
-- Equipped the mail shirt; the old leather vest returned to baggage and protection rose from 32 to 44.
-- Accepted the Oakwatch courier job, travelled to Barrowfield at 3x, and received 185 crowns and one renown on arrival.
-- Selected a destination from the settlement list and exercised camera zoom.
-- Inspected the painted map, equipment inventory and raster portraits at tablet landscape, 834 x 1194 portrait, and 390 x 844 narrow dimensions. Fixed portrait cropping and the narrow equipment grid during this pass.
-- Stopped the local origin server and confirmed a direct HTTP request failed. Closed the game tab and opened a new tab at the same address. The cached game loaded with the saved balances, equipment and destination intact.
-- With the origin still stopped, opened the marketplace, bought a kettle helmet for 245 crowns, and equipped it; armor rose to 63 and the character image changed.
-- No missing DOM images or browser JavaScript errors were observed in the exercised flows.
+- Bought five tools for 90 crowns; tools rose from 8 to 13 and crowns fell from 900 to 810.
+- Accepted Oakwatch's brigand contract, selected the camp, travelled at 3x, and started the encounter.
+- Paused the battle in round 2 and reloaded the saved battle. A stale development cache initially rejected the save; preservation kept the original intact, and the refreshed build restored it successfully.
+- Won in six rounds. The result displayed individual XP (30, 50, 70), surviving HP (100, 100, 70), 100 crowns, three food, two tools, three ammunition and a wood axe. Claiming returned to the cleared camp.
+- Rested for six hours, consuming one tool and one medicine. Bryn recovered to 94/105 HP. Returning to Oakwatch paid the 125-crown contract, bringing the balance to 1,035.
+- Spent Bryn's earned attribute increase: melee defense rose from 21 to 23 and the training controls disappeared.
+- Inspected contracts, market supplies, the company sheet, settlement services and battle rendering. Tested 1194 x 834 landscape and 834 x 1194 portrait dimensions; no document horizontal overflow or missing DOM images in the inspected company view.
+- Selected a second hostile camp through the destination list, travelled there, began a battle and paused in round 2.
+- Stopped the origin server and confirmed direct HTTP access failed. Closed the tab and opened a new one at the same address. The cached game reopened the same battle with 1,018 crowns, 14 tools, four medicine and 19 ammunition.
+- With the server still stopped, retreated, settled the result and reloaded. Resource changes and company state persisted. No browser JavaScript errors appeared in the exercised flows.
 
 ## Limits
 
-Browser-sized previews and an origin-stopped check do not prove Safari installation or real iPad airplane-mode behavior. On the device, add the game to the Home Screen, wait for Offline ready, export a save, and test closing/reopening in airplane mode before the flight. Storage may be removed by the browser or operating system.
+These checks do not prove Safari installation or physical-iPad airplane-mode operation. On the device, add the game to the Home Screen, wait for Offline ready, export a save, then test closing and reopening in airplane mode before the flight.
 
-The app has no combat, enemies, loot loop, factions, or procedural campaign yet. Equipment combat values are displayed groundwork for phase 2. Roads and the passing caravan are scenery; player travel is directly across terrain.
+Combat is a simplified automatic simulation. There are three fixed camps; roving armies, factions, perks and a procedural campaign are not implemented. Roads and the passing caravan remain scenery. Player travel crosses terrain directly. Wounds are represented by lost HP rather than Battle Brothers' full injury system.

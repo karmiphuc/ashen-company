@@ -1,24 +1,24 @@
 // Pure game rules for the offline overworld. The UI owns rendering and real time.
 
 export const ITEMS = Object.freeze([
-  { id: 'patched-coat', name: 'Patched Coat', slot: 'armor', visual: 'padded', price: 45, armor: 6, fatigue: 1, description: 'Worn cloth, still better than bare skin.' },
-  { id: 'quilted-jack', name: 'Quilted Jack', slot: 'armor', visual: 'padded', price: 95, armor: 12, fatigue: 2, description: 'A practical layer for the road.' },
-  { id: 'leather-vest', name: 'Leather Vest', slot: 'armor', visual: 'leather', price: 150, armor: 18, fatigue: 3, description: 'Tough leather over a padded lining.' },
-  { id: 'mail-shirt', name: 'Mail Shirt', slot: 'armor', visual: 'mail', price: 320, armor: 30, fatigue: 6, description: 'Heavy rings that turn a sharp edge.' },
-  { id: 'brigandine', name: 'Brigandine', slot: 'armor', visual: 'brigandine', price: 480, armor: 40, fatigue: 8, description: 'Riveted plates beneath stout cloth.' },
-  { id: 'plate-harness', name: 'Plate Harness', slot: 'armor', visual: 'plate', price: 720, armor: 54, fatigue: 12, description: 'Full steel protection for a seasoned veteran.' },
-  { id: 'cloth-hood', name: 'Cloth Hood', slot: 'helmet', visual: 'hood', price: 30, armor: 3, fatigue: 0, description: 'Keeps the rain from your eyes.' },
-  { id: 'leather-cap', name: 'Leather Cap', slot: 'helmet', visual: 'hood', price: 65, armor: 8, fatigue: 1, description: 'A fitted cap with a firm brow.' },
-  { id: 'iron-helm', name: 'Iron Helm', slot: 'helmet', visual: 'nasal', price: 180, armor: 20, fatigue: 3, description: 'Plain iron, forged to endure.' },
-  { id: 'kettle-helm', name: 'Kettle Helm', slot: 'helmet', visual: 'kettle', price: 255, armor: 27, fatigue: 4, description: 'A broad brim turns rain and blades alike.' },
-  { id: 'greathelm', name: 'Greathelm', slot: 'helmet', visual: 'greathelm', price: 390, armor: 36, fatigue: 6, description: 'A closed helm with narrow eye slits.' },
-  { id: 'arming-sword', name: 'Arming Sword', slot: 'weapon', visual: 'sword', price: 145, power: 16, description: 'A balanced blade for a steady hand.' },
-  { id: 'spear', name: 'Spear', slot: 'weapon', visual: 'spear', price: 85, power: 13, description: 'Simple reach, simple upkeep.' },
-  { id: 'wood-axe', name: 'Wood Axe', slot: 'weapon', visual: 'axe', price: 75, power: 14, description: 'A working tool with an ugly second purpose.' },
-  { id: 'hunting-bow', name: 'Hunting Bow', slot: 'weapon', visual: 'bow', price: 185, power: 17, description: 'A springy yew bow with a bundle of arrows.' },
-  { id: 'buckler', name: 'Buckler', slot: 'shield', visual: 'round', price: 60, armor: 6, fatigue: 1, description: 'Light protection for a quick fighter.' },
-  { id: 'round-shield', name: 'Round Shield', slot: 'shield', visual: 'round', price: 120, armor: 12, fatigue: 2, description: 'Wood and iron across the forearm.' },
-  { id: 'kite-shield', name: 'Kite Shield', slot: 'shield', visual: 'kite', price: 220, armor: 20, fatigue: 4, description: 'Broad cover for a crowded road.' },
+  { id: 'patched-coat', name: 'Patched Coat', slot: 'armor', visual: 'padded', price: 45, armor: 20, fatigue: 2, description: 'Worn cloth, still better than bare skin.' },
+  { id: 'quilted-jack', name: 'Quilted Jack', slot: 'armor', visual: 'padded', price: 95, armor: 50, fatigue: 5, description: 'A practical layer for the road.' },
+  { id: 'leather-vest', name: 'Leather Vest', slot: 'armor', visual: 'leather', price: 150, armor: 65, fatigue: 8, description: 'Tough leather over a padded lining.' },
+  { id: 'mail-shirt', name: 'Mail Shirt', slot: 'armor', visual: 'mail', price: 320, armor: 110, fatigue: 15, description: 'Heavy rings that turn a sharp edge.' },
+  { id: 'brigandine', name: 'Brigandine', slot: 'armor', visual: 'brigandine', price: 480, armor: 210, fatigue: 25, description: 'Riveted plates beneath stout cloth.' },
+  { id: 'plate-harness', name: 'Plate Harness', slot: 'armor', visual: 'plate', price: 720, armor: 300, fatigue: 38, description: 'Full steel protection for a seasoned veteran.' },
+  { id: 'cloth-hood', name: 'Cloth Hood', slot: 'helmet', visual: 'hood', price: 30, armor: 20, fatigue: 1, description: 'Keeps the rain from your eyes.' },
+  { id: 'leather-cap', name: 'Leather Cap', slot: 'helmet', visual: 'hood', price: 65, armor: 40, fatigue: 3, description: 'A fitted cap with a firm brow.' },
+  { id: 'iron-helm', name: 'Iron Helm', slot: 'helmet', visual: 'nasal', price: 180, armor: 105, fatigue: 9, description: 'Plain iron, forged to endure.' },
+  { id: 'kettle-helm', name: 'Kettle Helm', slot: 'helmet', visual: 'kettle', price: 255, armor: 140, fatigue: 12, description: 'A broad brim turns rain and blades alike.' },
+  { id: 'greathelm', name: 'Greathelm', slot: 'helmet', visual: 'greathelm', price: 390, armor: 210, fatigue: 20, description: 'A closed helm with narrow eye slits.' },
+  { id: 'arming-sword', name: 'Arming Sword', slot: 'weapon', visual: 'sword', price: 145, power: 16, damageMin: 19, damageMax: 29, hitBonus: 5, armorDamage: 1, description: 'A balanced blade for a steady hand.' },
+  { id: 'spear', name: 'Spear', slot: 'weapon', visual: 'spear', price: 85, power: 13, damageMin: 16, damageMax: 25, hitBonus: 10, armorDamage: .8, description: 'Simple reach, simple upkeep.' },
+  { id: 'wood-axe', name: 'Wood Axe', slot: 'weapon', visual: 'axe', price: 75, power: 14, damageMin: 22, damageMax: 33, hitBonus: -5, armorDamage: 1.4, description: 'A working tool with an ugly second purpose.' },
+  { id: 'hunting-bow', name: 'Hunting Bow', slot: 'weapon', visual: 'bow', price: 185, power: 17, damageMin: 16, damageMax: 26, hitBonus: 0, armorDamage: .6, range: 4, twoHanded: true, description: 'A springy yew bow with a bundle of arrows.' },
+  { id: 'buckler', name: 'Buckler', slot: 'shield', visual: 'round', price: 60, armor: 6, defense: 8, fatigue: 2, description: 'Light protection for a quick fighter.' },
+  { id: 'round-shield', name: 'Round Shield', slot: 'shield', visual: 'round', price: 120, armor: 12, defense: 13, fatigue: 5, description: 'Wood and iron across the forearm.' },
+  { id: 'kite-shield', name: 'Kite Shield', slot: 'shield', visual: 'kite', price: 220, armor: 20, defense: 18, fatigue: 8, description: 'Broad cover for a crowded road.' },
 ]);
 
 export const GOODS = Object.freeze([
@@ -40,9 +40,31 @@ export const SETTLEMENTS = Object.freeze([
   { id: 'barrowfield', name: 'Barrowfield', x: 625, y: 605, kind: 'village', description: 'Farmland scattered among ancient burial mounds.', color: '#b8c282' },
 ]);
 
+const CAMP_SITES = Object.freeze([
+  { id: 'quarry-camp', name: 'Brigand Camp', x: 440, y: 520, difficulty: 1, description: 'Three desperate raiders shelter in an abandoned quarry.', reward: 110, enemies: [
+    { name: 'Brigand Thug', weapon: 'wood-axe', armor: 'patched-coat', helmet: null, shield: null },
+    { name: 'Brigand Thug', weapon: 'spear', armor: 'patched-coat', helmet: null, shield: null },
+    { name: 'Brigand Poacher', weapon: 'hunting-bow', armor: null, helmet: 'cloth-hood', shield: null },
+  ] },
+  { id: 'watchtower-camp', name: 'Ruined Watchtower', x: 820, y: 285, difficulty: 2, description: 'A band of raiders holds the broken tower above the road.', reward: 210, enemies: [
+    { name: 'Brigand Raider', weapon: 'arming-sword', armor: 'leather-vest', helmet: 'leather-cap', shield: 'buckler' },
+    { name: 'Brigand Raider', weapon: 'wood-axe', armor: 'quilted-jack', helmet: null, shield: 'round-shield' },
+    { name: 'Brigand Thug', weapon: 'spear', armor: 'patched-coat', helmet: null, shield: null },
+    { name: 'Brigand Poacher', weapon: 'hunting-bow', armor: 'patched-coat', helmet: 'cloth-hood', shield: null },
+  ] },
+  { id: 'hideout', name: 'Brigand Hideout', x: 1040, y: 550, difficulty: 3, description: 'Veteran raiders have fortified the old timber works.', reward: 360, enemies: [
+    { name: 'Brigand Leader', weapon: 'arming-sword', armor: 'mail-shirt', helmet: 'iron-helm', shield: 'kite-shield' },
+    { name: 'Brigand Raider', weapon: 'wood-axe', armor: 'leather-vest', helmet: 'leather-cap', shield: 'round-shield' },
+    { name: 'Brigand Raider', weapon: 'spear', armor: 'quilted-jack', helmet: 'cloth-hood', shield: 'buckler' },
+    { name: 'Brigand Poacher', weapon: 'hunting-bow', armor: 'patched-coat', helmet: 'cloth-hood', shield: null },
+    { name: 'Brigand Poacher', weapon: 'hunting-bow', armor: 'patched-coat', helmet: null, shield: null },
+  ] },
+]);
+
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
+const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
 // Low factors mark local supply; high factors mark demand. The market spread
 // always makes buying and selling in the same settlement a loss.
 const MARKET_FACTORS = {
@@ -64,6 +86,14 @@ const SPEED = 55;
 const MAX_LOG = 30;
 const MAX_INVENTORY = 512;
 const MAX_CARGO = 30;
+export const MAX_COMPANY_SIZE = 12;
+const CAMP_RADIUS = 35;
+const SUPPLY_INFO = {
+  tools: { name: 'Tools', buyPrice: 18, stock: 8 },
+  medicine: { name: 'Medicine', buyPrice: 30, stock: 6 },
+  ammo: { name: 'Ammunition', buyPrice: 4, stock: 30 },
+};
+const TRAINING_GAINS = { maxHp: 5, meleeSkill: 3, rangedSkill: 3, meleeDefense: 2, rangedDefense: 2, maxFatigue: 5, initiative: 4, resolve: 4 };
 
 function hashSeed(seed) {
   if (typeof seed === 'number' && Number.isSafeInteger(seed)) return seed >>> 0;
@@ -84,6 +114,54 @@ function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function inBounds(x, y) { return Number.isFinite(x) && Number.isFinite(y) && x >= BOUNDS.minX && x <= BOUNDS.maxX && y >= BOUNDS.minY && y <= BOUNDS.maxY; }
 function clamped(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function personById(state, id) { return state.party.find(person => person.id === id); }
+function armorMaximum(itemId) { return ITEM_BY_ID.get(itemId)?.armor ?? 0; }
+function itemCondition(itemId) { return ['armor', 'helmet'].includes(ITEM_BY_ID.get(itemId)?.slot) ? armorMaximum(itemId) : null; }
+function normalizeMember(person) {
+  return {
+    ...person,
+    level: person.level ?? 1,
+    xp: person.xp ?? 0,
+    trainingPoints: person.trainingPoints ?? 0,
+    attributes: { ...Object.fromEntries(Object.keys(TRAINING_GAINS).map(key => [key, 0])), ...person.attributes },
+    armorDurability: {
+      body: person.armorDurability?.body ?? armorMaximum(person.equipment.armor),
+      head: person.armorDurability?.head ?? armorMaximum(person.equipment.helmet),
+    },
+  };
+}
+
+export function getCompanyStats(person) {
+  const attributes = person.attributes ?? {};
+  const level = person.level ?? 1;
+  const background = person.background ?? '';
+  const equipped = getEquipment(person);
+  const fatigue = Object.values(equipped).reduce((total, item) => total + (item?.fatigue ?? 0), 0);
+  const guard = background === 'Guard' || background === 'Caravan Guard';
+  const scout = background === 'Scout' || background === 'Hunter' || background === 'Outrider';
+  const captain = background === 'Captain';
+  const maxHp = 100 + (guard ? 5 : 0) + (attributes.maxHp ?? 0);
+  const maxBodyArmor = armorMaximum(person.equipment?.armor);
+  const maxHeadArmor = armorMaximum(person.equipment?.helmet);
+  return {
+    maxHp,
+    meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0),
+    rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0),
+    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (equipped.shield?.defense ?? 0),
+    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (equipped.shield?.defense ?? 0),
+    maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) - fatigue),
+    initiative: Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) - fatigue),
+    resolve: 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0),
+    level,
+    xp: person.xp ?? 0,
+    nextLevelXp: level * 50,
+    trainingPoints: person.trainingPoints ?? 0,
+    dailyWage: 5 + level - 1,
+    bodyArmor: person.armorDurability?.body ?? maxBodyArmor,
+    headArmor: person.armorDurability?.head ?? maxHeadArmor,
+    maxBodyArmor,
+    maxHeadArmor,
+  };
+}
 
 export function createGame(seed = Date.now()) {
   const numericSeed = hashSeed(seed);
@@ -101,8 +179,13 @@ export function createGame(seed = Date.now()) {
       { id: 'guard', name: 'Bryn Calder', background: 'Guard', seed: (numericSeed ^ 0x3c63) >>> 0, hp: 100, morale: 76, equipment: { armor: 'patched-coat', helmet: null, weapon: 'wood-axe', shield: 'round-shield' } },
     ],
     inventory: ['cloth-hood', 'buckler'],
+    inventoryCondition: [itemCondition('cloth-hood'), itemCondition('buckler')],
     cargo: {},
     marketStock: {},
+    supplies: { tools: 8, medicine: 5, ammo: 16 },
+    camps: {},
+    battle: null,
+    gameOver: false,
     position: { x: 350, y: 460 },
     destination: null,
     contract: null,
@@ -111,6 +194,7 @@ export function createGame(seed = Date.now()) {
     log: [],
     visited: ['oakwatch'],
   };
+  state.party = state.party.map(normalizeMember);
   record(state, 'The Ashen Company gathers at Oakwatch. The road is yours.');
   return state;
 }
@@ -153,7 +237,8 @@ function defaultMarketStock(state, town) {
     return [item.id, available ? 1 + hashSeed(`${state.seed}:${state.day}:${town.id}:${item.id}`) % (item.price < 250 ? 3 : 2) : 0];
   }));
   const food = 18 + (MARKET_FACTORS[town.id].grain <= .8 ? 12 : 0) + hashSeed(`${state.seed}:${state.day}:${town.id}:food`) % 6;
-  return { day: state.day, food, goods, equipment };
+  const supplies = Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock + hashSeed(`${state.seed}:${state.day}:${town.id}:${kind}`) % 3]));
+  return { day: state.day, food, goods, equipment, supplies };
 }
 
 function marketStock(state, town) {
@@ -176,6 +261,7 @@ export function getMarket(state, townId) {
     food: { buyPrice: Math.max(2, Math.round(5 * MARKET_FACTORS[town.id].grain)), stock: stock.food, owned: state.food },
     equipment: ITEMS.map(item => ({ itemId: item.id, ...equipmentPrices(town, item), stock: stock.equipment[item.id], owned: state.inventory.filter(id => id === item.id).length })),
     goods: GOODS.map(good => ({ goodId: good.id, name: good.name, description: good.description, ...goodPrices(town, good), stock: stock.goods[good.id], owned: state.cargo?.[good.id] ?? 0 })),
+    supplies: Object.entries(SUPPLY_INFO).map(([kind, info]) => ({ kind, name: info.name, buyPrice: info.buyPrice, stock: stock.supplies?.[kind] ?? info.stock, owned: state.supplies?.[kind] ?? 0 })),
   };
 }
 
@@ -186,8 +272,15 @@ function requireTown(state) {
   const town = townAt(state);
   return town ? { town } : { error: result(false, 'Visit a settlement to trade or recruit.') };
 }
+function actionBlocked(state) {
+  if (state.battle) return result(false, 'Finish the battle before taking another action.');
+  if (state.gameOver) return result(false, 'The company has fallen. Start a new company to play again.');
+  return null;
+}
 
 export function travelTo(state, x, y) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   if (!inBounds(x, y)) return result(false, 'Choose a reachable point on the mainland.');
   if (distance(state.position, { x, y }) <= ARRIVAL_RADIUS) return result(false, 'The company is already here.');
   state.destination = { x, y };
@@ -206,15 +299,18 @@ function onArrival(state) {
   if (!state.visited.includes(town.id)) state.visited.push(town.id);
   record(state, `The company arrives at ${town.name}.`);
   if (state.contract?.to === town.id && !completeContract(state, town)) {
-    const good = GOOD_BY_ID.get(state.contract.goodId);
-    const needed = state.contract.quantity - (state.cargo[state.contract.goodId] ?? 0);
-    record(state, `${town.name} still needs ${needed} ${good.name.toLowerCase()} before it can pay.`);
+    if (state.contract.type === 'supply') {
+      const good = GOOD_BY_ID.get(state.contract.goodId);
+      const needed = state.contract.quantity - (state.cargo[state.contract.goodId] ?? 0);
+      record(state, `${town.name} still needs ${needed} ${good.name.toLowerCase()} before it can pay.`);
+    }
   }
 }
 
 function completeContract(state, town) {
   const contract = state.contract;
   if (!contract || contract.to !== town.id) return false;
+  if (contract.type === 'hunt' && !state.camps[contract.campId]?.clearedDay) return false;
   if (contract.type === 'supply') {
     if ((state.cargo[contract.goodId] ?? 0) < contract.quantity) return false;
     state.cargo[contract.goodId] -= contract.quantity;
@@ -222,7 +318,7 @@ function completeContract(state, town) {
   }
   state.gold += contract.reward;
   state.renown += contract.renown ?? 1;
-  const description = contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
+  const description = contract.type === 'hunt' ? `${CAMP_BY_ID.get(contract.campId).name} cleared` : contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
   record(state, `${description} at ${town.name}. Earned ${contract.reward} crowns and ${contract.renown ?? 1} renown.`);
   state.contract = null;
   return true;
@@ -231,7 +327,7 @@ function completeContract(state, town) {
 function atMidnight(state) {
   state.day += 1;
   const foodNeeded = state.party.length;
-  const wages = state.party.length * 5;
+  const wages = state.party.reduce((total, person) => total + getCompanyStats(person).dailyWage, 0);
   const foodShort = Math.max(0, foodNeeded - state.food);
   const wagesShort = Math.max(0, wages - state.gold);
   state.food = Math.max(0, state.food - foodNeeded);
@@ -265,6 +361,8 @@ function advanceClock(state, hours) {
 }
 
 export function tick(state, hours) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   if (!Number.isFinite(hours) || hours <= 0 || hours > 72) return result(false, 'Time must advance by more than zero and at most 72 hours.');
   let remaining = hours;
   while (remaining > 1e-9) {
@@ -290,6 +388,7 @@ export function tick(state, hours) {
 }
 
 export function getContractOffers(state, townId) {
+  if (state.battle || state.gameOver) return [];
   const town = townAt(state);
   if (!town || town.id !== townId) return [];
   const candidates = SETTLEMENTS.filter(place => place.id !== townId);
@@ -303,13 +402,18 @@ export function getContractOffers(state, townId) {
   const quantity = 4 + state.contractSerial % 2;
   const supplyReward = Math.round((quantity * goodPrices(town, good).buyPrice + 60 + distance(town, supplyTarget) * .38) / 5) * 5;
   const serial = state.contractSerial + 1;
-  return [
+  const offers = [
     { id: `courier-${serial}`, type: 'courier', from: town.id, to: courierTarget.id, reward: courierReward, renown: 1 },
     { id: `supply-${serial}`, type: 'supply', from: town.id, to: supplyTarget.id, reward: supplyReward, renown: 2, goodId: good.id, quantity },
   ];
+  const camp = getCampSites(state).filter(site => !site.cleared).sort((a, b) => distance(a, town) - distance(b, town))[0];
+  if (camp) offers.push({ id: `hunt-${serial}`, type: 'hunt', from: town.id, to: town.id, campId: camp.id, reward: camp.reward + Math.round(distance(camp, town) * .15 / 5) * 5, renown: 2 });
+  return offers;
 }
 
 export function acceptContract(state, townId, offerId) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const town = townAt(state);
   if (!town || town.id !== townId) return result(false, 'Visit the issuing settlement to take its contract.');
   if (state.contract) return result(false, 'Finish the current delivery before taking another.');
@@ -322,12 +426,16 @@ export function acceptContract(state, townId, offerId) {
   const destination = TOWN_BY_ID.get(offer.to);
   const message = offer.type === 'supply'
     ? `Deliver ${offer.quantity} ${GOOD_BY_ID.get(offer.goodId).name.toLowerCase()} to ${destination.name} for ${offer.reward} crowns.`
+    : offer.type === 'hunt'
+      ? `Clear ${CAMP_BY_ID.get(offer.campId).name} and return to ${town.name} for ${offer.reward} crowns.`
     : `Carry sealed dispatches to ${destination.name} for ${offer.reward} crowns.`;
   record(state, message);
   return result(true, message);
 }
 
 export function buyItem(state, itemId) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
   const item = ITEM_BY_ID.get(itemId);
@@ -338,6 +446,7 @@ export function buyItem(state, itemId) {
   if (state.inventory.length >= MAX_INVENTORY) return result(false, 'The company pack is full.');
   state.gold -= offer.buyPrice;
   state.inventory.push(item.id);
+  state.inventoryCondition.push(itemCondition(item.id));
   writableMarketStock(state, access.town).equipment[itemId] -= 1;
   const message = `Bought ${item.name} for ${offer.buyPrice} crowns.`;
   record(state, message);
@@ -345,6 +454,8 @@ export function buyItem(state, itemId) {
 }
 
 export function sellItem(state, itemId) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
   const index = state.inventory.indexOf(itemId);
@@ -352,6 +463,7 @@ export function sellItem(state, itemId) {
   const item = ITEM_BY_ID.get(itemId);
   const offer = getMarket(state).equipment.find(entry => entry.itemId === itemId);
   state.inventory.splice(index, 1);
+  state.inventoryCondition.splice(index, 1);
   state.gold += offer.sellPrice;
   writableMarketStock(state, access.town).equipment[itemId] += 1;
   const message = `Sold ${item.name} for ${offer.sellPrice} crowns.`;
@@ -360,6 +472,8 @@ export function sellItem(state, itemId) {
 }
 
 export function buyFood(state, quantity = 5) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
   if (!validQuantity(quantity, 50)) return result(false, 'Choose 1 to 50 provisions.');
@@ -377,6 +491,8 @@ export function buyFood(state, quantity = 5) {
 }
 
 export function buyGood(state, goodId, quantity = 1) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
   const good = GOOD_BY_ID.get(goodId);
@@ -396,6 +512,8 @@ export function buyGood(state, goodId, quantity = 1) {
 }
 
 export function sellGood(state, goodId, quantity = 1) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
   const good = GOOD_BY_ID.get(goodId);
@@ -414,7 +532,29 @@ export function sellGood(state, goodId, quantity = 1) {
   return result(true, message);
 }
 
+export function buySupplies(state, kind, quantity = 1) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  const access = requireTown(state);
+  if (access.error) return access.error;
+  if (!SUPPLY_INFO[kind]) return result(false, 'Unknown supply.');
+  if (!validQuantity(quantity, 50)) return result(false, 'Choose 1 to 50 supplies.');
+  const offer = getMarket(state).supplies.find(entry => entry.kind === kind);
+  const cost = offer.buyPrice * quantity;
+  if (offer.stock < quantity) return result(false, 'The market does not have that many supplies today.');
+  if (state.gold < cost) return result(false, 'The company cannot afford those supplies.');
+  if (state.supplies[kind] + quantity > 10000) return result(false, 'The company cannot carry more supplies.');
+  state.gold -= cost;
+  state.supplies[kind] += quantity;
+  writableMarketStock(state, access.town).supplies[kind] -= quantity;
+  const message = `Bought ${quantity} ${SUPPLY_INFO[kind].name.toLowerCase()} for ${cost} crowns.`;
+  record(state, message);
+  return result(true, message);
+}
+
 export function equipItem(state, personId, itemId) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const person = personById(state, personId);
   if (!person) return result(false, 'Unknown company member.');
   const item = ITEM_BY_ID.get(itemId);
@@ -422,15 +562,31 @@ export function equipItem(state, personId, itemId) {
   const index = state.inventory.indexOf(itemId);
   if (index < 0) return result(false, 'That item is not in the company pack.');
   const previous = person.equipment[item.slot];
+  const displaced = item.twoHanded && person.equipment.shield ? person.equipment.shield
+    : item.slot === 'shield' && ITEM_BY_ID.get(person.equipment.weapon)?.twoHanded ? person.equipment.weapon : null;
+  if (state.inventory.length - 1 + Number(Boolean(previous)) + Number(Boolean(displaced)) > MAX_INVENTORY) return result(false, 'The company pack is full.');
+  const condition = state.inventoryCondition.splice(index, 1)[0];
   state.inventory.splice(index, 1);
-  if (previous) state.inventory.push(previous);
+  if (previous) {
+    state.inventory.push(previous);
+    state.inventoryCondition.push(item.slot === 'armor' ? person.armorDurability.body : item.slot === 'helmet' ? person.armorDurability.head : null);
+  }
+  if (displaced) {
+    state.inventory.push(displaced);
+    state.inventoryCondition.push(null);
+    person.equipment[item.twoHanded ? 'shield' : 'weapon'] = null;
+  }
   person.equipment[item.slot] = itemId;
+  if (item.slot === 'armor') person.armorDurability.body = condition;
+  if (item.slot === 'helmet') person.armorDurability.head = condition;
   const message = `${person.name} equipped ${item.name}.`;
   record(state, message);
   return result(true, message);
 }
 
 export function unequipItem(state, personId, slot) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const person = personById(state, personId);
   if (!person) return result(false, 'Unknown company member.');
   if (!SLOTS.includes(slot)) return result(false, 'Unknown equipment slot.');
@@ -439,6 +595,9 @@ export function unequipItem(state, personId, slot) {
   if (state.inventory.length >= MAX_INVENTORY) return result(false, 'The company pack is full.');
   person.equipment[slot] = null;
   state.inventory.push(itemId);
+  state.inventoryCondition.push(slot === 'armor' ? person.armorDurability.body : slot === 'helmet' ? person.armorDurability.head : null);
+  if (slot === 'armor') person.armorDurability.body = 0;
+  if (slot === 'helmet') person.armorDurability.head = 0;
   const message = `${person.name} stowed ${ITEM_BY_ID.get(itemId).name}.`;
   record(state, message);
   return result(true, message);
@@ -455,14 +614,16 @@ const RECRUITS = [
 ];
 
 export function recruit(state) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
-  if (state.party.length >= 8) return result(false, 'The company has room for only eight members.');
+  if (state.party.length >= MAX_COMPANY_SIZE) return result(false, 'The company has room for only twelve members.');
   const cost = 160;
   if (state.gold < cost) return result(false, 'Recruitment costs 160 crowns.');
   const serial = state.recruitSerial++;
   const [name, background] = RECRUITS[(state.seed + serial) % RECRUITS.length];
-  const person = { id: `recruit-${serial + 1}`, name, background, seed: (state.seed ^ Math.imul(serial + 1, 2654435761)) >>> 0, hp: 100, morale: 70, equipment: { armor: null, helmet: null, weapon: null, shield: null } };
+  const person = normalizeMember({ id: `recruit-${serial + 1}`, name, background, seed: (state.seed ^ Math.imul(serial + 1, 2654435761)) >>> 0, hp: 100, morale: 70, equipment: { armor: null, helmet: null, weapon: null, shield: null } });
   state.party.push(person);
   state.gold -= cost;
   const message = `${name} joins the Ashen Company for ${cost} crowns.`;
@@ -470,18 +631,51 @@ export function recruit(state) {
   return result(true, message);
 }
 
+export function trainAttribute(state, personId, attribute) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  const person = personById(state, personId);
+  if (!person) return result(false, 'Unknown company member.');
+  if (!Object.hasOwn(TRAINING_GAINS, attribute)) return result(false, 'Unknown attribute.');
+  if (person.trainingPoints < 1) return result(false, 'This member has no training points.');
+  person.trainingPoints -= 1;
+  person.attributes[attribute] += TRAINING_GAINS[attribute];
+  if (attribute === 'maxHp') person.hp += TRAINING_GAINS.maxHp;
+  const message = `${person.name} trained ${attribute} by ${TRAINING_GAINS[attribute]}.`;
+  record(state, message);
+  return result(true, message);
+}
+
 export function camp(state) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   advanceClock(state, 6);
+  const wounded = state.party.some(person => person.hp < getCompanyStats(person).maxHp);
+  const medicated = wounded && state.supplies.medicine > 0;
+  if (medicated) state.supplies.medicine -= 1;
   for (const person of state.party) {
-    person.hp = clamped(person.hp + 24, 1, 100);
+    person.hp = clamped(person.hp + (medicated ? 24 : 8), 1, getCompanyStats(person).maxHp);
     person.morale = clamped(person.morale + 9, 0, 100);
   }
-  const message = 'The company rests for six hours and tends its wounds.';
+  let repairs = 0;
+  for (const person of state.party) {
+    for (const [part, slot] of [['body', 'armor'], ['head', 'helmet']]) {
+      const maximum = armorMaximum(person.equipment[slot]);
+      while (person.armorDurability[part] < maximum && state.supplies.tools > 0) {
+        person.armorDurability[part] = Math.min(maximum, person.armorDurability[part] + 25);
+        state.supplies.tools -= 1;
+        repairs += 1;
+      }
+    }
+  }
+  const message = `The company rests for six hours${medicated ? ' with medicine' : ''}${repairs ? ` and uses ${repairs} tools for repairs` : ''}.`;
   record(state, message);
   return result(true, message);
 }
 
 export function forage(state) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
   advanceClock(state, 4);
   const terrain = terrainAt(state.position.x, state.position.y);
   const bonus = terrain === 'forest' ? 2 : terrain === 'marsh' ? 1 : terrain === 'mountain' ? -1 : 0;
@@ -492,10 +686,367 @@ export function forage(state) {
   return result(true, message);
 }
 
+export function getCampSites(state) {
+  return CAMP_SITES.map(camp => ({
+    ...camp,
+    enemies: camp.enemies.map(enemy => ({ ...enemy })),
+    cleared: Boolean(state.camps?.[camp.id]?.clearedDay),
+  }));
+}
+
+function hexDistance(a, b) {
+  const dq = a.q - b.q;
+  const dr = a.r - b.r;
+  return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
+}
+
+function battleRoll(battle) {
+  battle.rng = (Math.imul(battle.rng, 1664525) + 1013904223) >>> 0;
+  return battle.rng / 4294967296;
+}
+
+function battleLog(battle, message) {
+  battle.log.push(`Round ${battle.round}: ${message}`);
+  if (battle.log.length > 120) battle.log.shift();
+}
+
+function sortTurnOrder(battle) {
+  return battle.units.filter(unit => unit.alive).sort((a, b) =>
+    b.initiative - b.fatigue * .2 - (a.initiative - a.fatigue * .2) || a.id.localeCompare(b.id)).map(unit => unit.id);
+}
+
+export function startBattle(state, campId) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  const camp = CAMP_BY_ID.get(campId);
+  if (!camp) return result(false, 'Unknown camp.');
+  if (state.camps[camp.id]?.clearedDay) return result(false, 'This camp has already been cleared.');
+  if (state.destination || distance(state.position, camp) > CAMP_RADIUS) return result(false, 'Approach the camp before engaging.');
+  if (!state.party.length) return result(false, 'No company members can fight.');
+  const company = state.party.map((person, index) => {
+    const stats = getCompanyStats(person);
+    return {
+      id: person.id, name: person.name, side: 'company', q: 2 - Math.floor(index / 4), r: index % 4,
+      hp: person.hp, maxHp: stats.maxHp, bodyArmor: stats.bodyArmor, headArmor: stats.headArmor,
+      maxBodyArmor: stats.maxBodyArmor, maxHeadArmor: stats.maxHeadArmor,
+      equipment: { ...person.equipment }, seed: person.seed, alive: person.hp > 0,
+      morale: person.morale, fatigue: 0, ap: 2,
+      meleeSkill: stats.meleeSkill, rangedSkill: stats.rangedSkill,
+      meleeDefense: stats.meleeDefense, rangedDefense: stats.rangedDefense,
+      maxFatigue: stats.maxFatigue, initiative: stats.initiative, resolve: stats.resolve,
+    };
+  });
+  const enemies = camp.enemies.map((enemy, index) => {
+    const gear = { armor: enemy.armor, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield };
+    const shieldDefense = ITEM_BY_ID.get(gear.shield)?.defense ?? 0;
+    const hp = 25 + camp.difficulty * 12 + (index === 0 && camp.difficulty === 3 ? 12 : 0);
+    return {
+      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: 7 + Math.floor(index / 5), r: index % 5,
+      hp, maxHp: hp, bodyArmor: armorMaximum(gear.armor), headArmor: armorMaximum(gear.helmet),
+      maxBodyArmor: armorMaximum(gear.armor), maxHeadArmor: armorMaximum(gear.helmet),
+      equipment: gear, seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
+      morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2,
+      meleeSkill: 30 + camp.difficulty * 7, rangedSkill: 28 + camp.difficulty * 7,
+      meleeDefense: 2 + camp.difficulty * 2 + shieldDefense,
+      rangedDefense: 2 + camp.difficulty * 2 + shieldDefense,
+      maxFatigue: 85, initiative: 75 + camp.difficulty * 6, resolve: 32 + camp.difficulty * 8,
+    };
+  });
+  const battle = {
+    id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
+    status: 'active', round: 1, activeId: null, units: [...company, ...enemies],
+    turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
+    log: [], lastEvent: null,
+    loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [] },
+    casualties: [], xp: {},
+  };
+  battle.turnOrder = sortTurnOrder(battle);
+  battle.activeId = battle.turnOrder[0];
+  battleLog(battle, `The company engages ${camp.name}.`);
+  state.battle = battle;
+  const message = `Battle begins at ${camp.name}.`;
+  record(state, message);
+  return result(true, message);
+}
+
+function nextBattleTurn(battle) {
+  let next = battle.turnIndex + 1;
+  while (true) {
+    if (next >= battle.turnOrder.length) {
+      battle.round += 1;
+      battle.turnOrder = sortTurnOrder(battle);
+      next = 0;
+    }
+    const unit = battle.units.find(entry => entry.id === battle.turnOrder[next]);
+    if (unit?.alive) {
+      battle.turnIndex = next;
+      battle.activeId = unit.id;
+      unit.ap = 2;
+      return;
+    }
+    next += 1;
+  }
+}
+
+function finishBattlePhase(battle) {
+  const companyAlive = battle.units.some(unit => unit.side === 'company' && unit.alive);
+  const enemiesAlive = battle.units.some(unit => unit.side === 'enemy' && unit.alive);
+  if (companyAlive && enemiesAlive) return false;
+  battle.status = companyAlive ? 'victory' : 'defeat';
+  battle.activeId = null;
+  battle.casualties = battle.units.filter(unit => unit.side === 'company' && !unit.alive).map(unit => unit.id);
+  if (companyAlive) {
+    const camp = CAMP_BY_ID.get(battle.campId);
+    battle.loot = {
+      gold: 55 + camp.difficulty * 45,
+      food: 2 + camp.difficulty,
+      tools: 1 + camp.difficulty,
+      medicine: camp.difficulty >= 2 ? 1 : 0,
+      ammo: 2 + camp.difficulty,
+      items: [camp.enemies[0].weapon],
+    };
+    for (const unit of battle.units.filter(entry => entry.side === 'company' && entry.alive)) {
+      battle.xp[unit.id] = (battle.xp[unit.id] ?? 0) + 30;
+    }
+  }
+  battleLog(battle, companyAlive ? 'The brigands break. The camp is yours.' : 'The company is defeated.');
+  return true;
+}
+
+function moveToward(battle, actor, target, steps) {
+  const directions = [[1, 0], [0, 1], [1, -1], [-1, 0], [0, -1], [-1, 1]];
+  let moved = false;
+  for (let step = 0; step < steps; step++) {
+    const current = hexDistance(actor, target);
+    const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+    const options = directions.map(([dq, dr]) => ({ q: actor.q + dq, r: actor.r + dr }))
+      .filter(point => point.q >= 0 && point.q < 10 && point.r >= 0 && point.r < 5 && !occupied.has(`${point.q},${point.r}`))
+      .sort((a, b) => hexDistance(a, target) - hexDistance(b, target) || a.q - b.q || a.r - b.r);
+    if (!options.length || hexDistance(options[0], target) >= current) break;
+    actor.q = options[0].q;
+    actor.r = options[0].r;
+    moved = true;
+  }
+  return moved;
+}
+
+function attackTarget(state, actor, target, weapon) {
+  const battle = state.battle;
+  const ranged = weapon.range > 1;
+  if (ranged && actor.side === 'company') state.supplies.ammo -= 1;
+  const skill = ranged ? actor.rangedSkill : actor.meleeSkill;
+  const defense = ranged ? target.rangedDefense : target.meleeDefense;
+  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7), 12, 90);
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (ranged ? 9 : 11));
+  actor.ap = 0;
+  if (battleRoll(battle) * 100 >= chance) {
+    const message = `${actor.name} misses ${target.name}.`;
+    battle.lastEvent = { actorId: actor.id, targetId: target.id, type: 'miss', message };
+    battleLog(battle, message);
+    return;
+  }
+  const raw = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
+  const head = battleRoll(battle) < .22;
+  const part = head ? 'headArmor' : 'bodyArmor';
+  const armorBefore = target[part];
+  const armorDamage = Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1) * (head ? 1.1 : 1)));
+  target[part] = Math.max(0, armorBefore - armorDamage);
+  let hpDamage = armorBefore > 0
+    ? Math.max(1, Math.floor(raw * .30 - armorBefore * .025) + Math.max(0, Math.floor((armorDamage - armorBefore) * .25)))
+    : raw;
+  if (head) hpDamage = Math.round(hpDamage * 1.25);
+  target.hp = Math.max(0, target.hp - hpDamage);
+  target.morale = Math.max(0, target.morale - 3);
+  const fallen = target.hp === 0;
+  if (fallen) {
+    target.alive = false;
+    target.ap = 0;
+    for (const ally of battle.units.filter(unit => unit.side === target.side && unit.alive)) ally.morale = Math.max(0, ally.morale - 12);
+    if (actor.side === 'company') battle.xp[actor.id] = (battle.xp[actor.id] ?? 0) + 20;
+  }
+  const message = `${actor.name} hits ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.`;
+  battle.lastEvent = { actorId: actor.id, targetId: target.id, type: fallen ? 'fall' : 'hit', head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), message };
+  battleLog(battle, message);
+}
+
+export function advanceBattle(state) {
+  const battle = state.battle;
+  if (!battle || battle.status !== 'active') return result(false, 'There is no active battle.');
+  const actor = battle.units.find(unit => unit.id === battle.activeId);
+  if (!actor?.alive) {
+    nextBattleTurn(battle);
+    return result(true, 'The next fighter takes their turn.');
+  }
+  const targets = battle.units.filter(unit => unit.alive && unit.side !== actor.side)
+    .sort((a, b) => hexDistance(actor, a) - hexDistance(actor, b) || a.hp - b.hp || a.id.localeCompare(b.id));
+  if (!targets.length) {
+    finishBattlePhase(battle);
+    return result(true, 'The battle is over.');
+  }
+  const target = targets[0];
+  const equippedWeapon = ITEM_BY_ID.get(actor.equipment.weapon);
+  const bowWithoutAmmo = equippedWeapon?.range > 1 && actor.side === 'company' && state.supplies.ammo < 1;
+  const weapon = bowWithoutAmmo ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equippedWeapon ?? { damageMin: 8, damageMax: 12, hitBonus: -10, armorDamage: .4, range: 1 };
+  const range = weapon.range ?? 1;
+  if (hexDistance(actor, target) > range) {
+    moveToward(battle, actor, target, 2);
+    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + 5);
+  }
+  if (hexDistance(actor, target) <= range) {
+    attackTarget(state, actor, target, weapon);
+  } else {
+    actor.ap = 0;
+    const message = `${actor.name} advances toward ${target.name}.`;
+    battle.lastEvent = { actorId: actor.id, targetId: target.id, type: 'move', message };
+    battleLog(battle, message);
+  }
+  if (!finishBattlePhase(battle)) nextBattleTurn(battle);
+  return result(true, battle.lastEvent.message);
+}
+
+export function resolveBattle(state) {
+  if (!state.battle || state.battle.status !== 'active') return result(false, 'There is no active battle.');
+  for (let turn = 0; turn < 500 && state.battle.status === 'active'; turn++) advanceBattle(state);
+  return state.battle.status === 'active' ? result(false, 'The battle is still underway.') : result(true, `Battle ended in ${state.battle.status}.`);
+}
+
+export function retreatBattle(state) {
+  const battle = state.battle;
+  if (!battle || battle.status !== 'active') return result(false, 'There is no active battle.');
+  battle.status = 'retreat';
+  battle.activeId = null;
+  battle.casualties = battle.units.filter(unit => unit.side === 'company' && !unit.alive).map(unit => unit.id);
+  state.food = Math.max(0, state.food - 2);
+  for (const unit of battle.units.filter(entry => entry.side === 'company' && entry.alive)) {
+    unit.hp = Math.max(1, unit.hp - 5);
+    unit.morale = Math.max(0, unit.morale - 12);
+  }
+  battle.lastEvent = { actorId: null, targetId: null, type: 'retreat', message: 'The company retreats, losing two provisions and taking wounds.' };
+  battleLog(battle, battle.lastEvent.message);
+  return result(true, battle.lastEvent.message);
+}
+
+export function finishBattle(state) {
+  const battle = state.battle;
+  if (!battle || battle.status === 'active') return result(false, 'Finish the fight before claiming its result.');
+  const victory = battle.status === 'victory';
+  const survivors = [];
+  for (const person of state.party) {
+    const unit = battle.units.find(entry => entry.id === person.id);
+    if (!unit) continue;
+    if (!unit.alive) {
+      if (victory) {
+        for (const slot of SLOTS) {
+          const itemId = person.equipment[slot];
+          if (itemId && state.inventory.length < MAX_INVENTORY) {
+            state.inventory.push(itemId);
+            state.inventoryCondition.push(slot === 'armor' ? unit.bodyArmor : slot === 'helmet' ? unit.headArmor : null);
+          }
+        }
+      }
+      continue;
+    }
+    person.hp = unit.hp;
+    person.morale = unit.morale;
+    person.armorDurability = { body: unit.bodyArmor, head: unit.headArmor };
+    person.xp += battle.xp[person.id] ?? 0;
+    while (person.xp >= person.level * 50 && person.level < 20) {
+      person.xp -= person.level * 50;
+      person.level += 1;
+      person.trainingPoints += 1;
+    }
+    survivors.push(person);
+  }
+  state.party = survivors;
+  if (victory) {
+    const loot = battle.loot;
+    state.gold += loot.gold;
+    state.food += loot.food;
+    for (const kind of ['tools', 'medicine', 'ammo']) state.supplies[kind] += loot[kind];
+    for (const itemId of loot.items) {
+      if (state.inventory.length >= MAX_INVENTORY) break;
+      state.inventory.push(itemId);
+      state.inventoryCondition.push(itemCondition(itemId));
+    }
+    state.camps[battle.campId] = { clearedDay: state.day };
+  }
+  state.gameOver = state.party.length === 0;
+  const message = victory ? `The company claims ${battle.loot.gold} crowns and clears ${CAMP_BY_ID.get(battle.campId).name}.` : state.gameOver ? 'The company has fallen.' : 'The company survives and leaves the camp behind.';
+  record(state, message);
+  state.battle = null;
+  return result(true, message);
+}
+
 function assert(condition, message) { if (!condition) throw new TypeError(`Invalid save: ${message}`); }
 function validCount(value) { return Number.isSafeInteger(value) && value >= 0; }
 function validPoint(point) { return point && typeof point === 'object' && !Array.isArray(point) && inBounds(point.x, point.y); }
 function recordObject(value) { return value && typeof value === 'object' && !Array.isArray(value); }
+
+function validateBattle(input, party) {
+  if (input === undefined || input === null) return null;
+  assert(recordObject(input) && CAMP_BY_ID.has(input.campId), 'battle camp');
+  assert(typeof input.id === 'string' && input.id.length <= 80 && input.id.startsWith('battle-'), 'battle id');
+  assert(['active', 'victory', 'defeat', 'retreat'].includes(input.status), 'battle status');
+  assert(Number.isSafeInteger(input.round) && input.round >= 1 && input.round <= 1000, 'battle round');
+  assert(validCount(input.rng) && input.rng <= 0xffffffff, 'battle random state');
+  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_COMPANY_SIZE + 6, 'battle units');
+  const ids = new Set();
+  const partyIds = new Set(party.map(person => person.id));
+  const units = input.units.map(unit => {
+    assert(recordObject(unit) && typeof unit.id === 'string' && unit.id.length <= 40 && !ids.has(unit.id), 'battle unit id');
+    ids.add(unit.id);
+    assert(unit.side === 'company' || unit.side === 'enemy', 'battle side');
+    assert(unit.side === 'company' ? partyIds.has(unit.id) : /^enemy-[1-6]$/.test(unit.id), 'battle unit ownership');
+    assert(typeof unit.name === 'string' && unit.name.length > 0 && unit.name.length <= 80, 'battle unit name');
+    assert(Number.isSafeInteger(unit.q) && unit.q >= 0 && unit.q < 10 && Number.isSafeInteger(unit.r) && unit.r >= 0 && unit.r < 5, 'battle hex');
+    assert(validCount(unit.maxHp) && unit.maxHp >= 1 && unit.maxHp <= 300 && validCount(unit.hp) && unit.hp <= unit.maxHp && unit.alive === (unit.hp > 0), 'battle health');
+    assert(recordObject(unit.equipment), 'battle equipment');
+    for (const slot of SLOTS) assert(unit.equipment[slot] === null || ITEM_BY_ID.get(unit.equipment[slot])?.slot === slot, 'battle equipment');
+    assert(!ITEM_BY_ID.get(unit.equipment.weapon)?.twoHanded || !unit.equipment.shield, 'battle two handed weapon');
+    assert(unit.maxBodyArmor === armorMaximum(unit.equipment.armor) && unit.maxHeadArmor === armorMaximum(unit.equipment.helmet), 'battle armor maximum');
+    assert(validCount(unit.bodyArmor) && unit.bodyArmor <= unit.maxBodyArmor && validCount(unit.headArmor) && unit.headArmor <= unit.maxHeadArmor, 'battle armor');
+    assert(validCount(unit.seed) && unit.seed <= 0xffffffff, 'battle unit seed');
+    assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= 2, 'battle stamina');
+    for (const key of ['meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve']) assert(validCount(unit[key]) && unit[key] <= 300, `battle ${key}`);
+    return {
+      id: unit.id, name: unit.name, side: unit.side, q: unit.q, r: unit.r,
+      hp: unit.hp, maxHp: unit.maxHp, bodyArmor: unit.bodyArmor, headArmor: unit.headArmor,
+      maxBodyArmor: unit.maxBodyArmor, maxHeadArmor: unit.maxHeadArmor,
+      equipment: Object.fromEntries(SLOTS.map(slot => [slot, unit.equipment[slot]])),
+      seed: unit.seed, alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap,
+      meleeSkill: unit.meleeSkill, rangedSkill: unit.rangedSkill,
+      meleeDefense: unit.meleeDefense, rangedDefense: unit.rangedDefense,
+      maxFatigue: unit.maxFatigue, initiative: unit.initiative, resolve: unit.resolve,
+    };
+  });
+  assert(units.some(unit => unit.side === 'company') && units.some(unit => unit.side === 'enemy'), 'battle sides');
+  assert(units.filter(unit => unit.side === 'company').length === party.length, 'battle company roster');
+  assert(units.filter(unit => unit.side === 'company').every(unit => party.some(person => person.id === unit.id)), 'battle company roster');
+  const companyAlive = units.some(unit => unit.side === 'company' && unit.alive);
+  const enemyAlive = units.some(unit => unit.side === 'enemy' && unit.alive);
+  assert(input.status === 'active' ? companyAlive && enemyAlive : input.status === 'victory' ? companyAlive && !enemyAlive : input.status === 'defeat' ? !companyAlive : companyAlive, 'battle outcome');
+  assert(Array.isArray(input.turnOrder) && input.turnOrder.length >= 1 && input.turnOrder.length <= units.length && input.turnOrder.every(id => ids.has(id)) && new Set(input.turnOrder).size === input.turnOrder.length, 'battle turn order');
+  assert(units.filter(unit => unit.alive).every(unit => input.turnOrder.includes(unit.id)), 'battle living turns');
+  assert(Number.isSafeInteger(input.turnIndex) && input.turnIndex >= 0 && input.turnIndex < input.turnOrder.length, 'battle turn index');
+  assert(input.status === 'active' ? input.activeId === input.turnOrder[input.turnIndex] && units.some(unit => unit.id === input.activeId && unit.alive) : input.activeId === null, 'battle active unit');
+  assert(Array.isArray(input.log) && input.log.length <= 120 && input.log.every(entry => typeof entry === 'string' && entry.length <= 300), 'battle log');
+  const event = input.lastEvent;
+  assert(event === null || (recordObject(event) && ['move', 'hit', 'miss', 'fall', 'retreat'].includes(event.type) && typeof event.message === 'string' && event.message.length <= 300 && (event.actorId === null || ids.has(event.actorId)) && (event.targetId === null || ids.has(event.targetId))), 'battle event');
+  if (event?.head !== undefined) assert(typeof event.head === 'boolean', 'battle event head');
+  for (const key of ['hpDamage', 'armorDamage']) if (event?.[key] !== undefined) assert(validCount(event[key]) && event[key] <= 1000, `battle event ${key}`);
+  const loot = input.loot;
+  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= 24 && loot.items.every(id => ITEM_BY_ID.has(id)), 'battle loot');
+  for (const key of ['food', 'tools', 'medicine', 'ammo']) assert(validCount(loot[key]) && loot[key] <= 1000, `battle loot ${key}`);
+  assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
+  assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
+  return {
+    id: input.id, campId: input.campId, status: input.status, round: input.round, activeId: input.activeId,
+    units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng,
+    log: [...input.log], lastEvent: event ? { actorId: event.actorId, targetId: event.targetId, type: event.type, message: event.message, ...(event.head !== undefined ? { head: event.head } : {}), ...(event.hpDamage !== undefined ? { hpDamage: event.hpDamage } : {}), ...(event.armorDamage !== undefined ? { armorDamage: event.armorDamage } : {}) } : null,
+    loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items] },
+    casualties: [...input.casualties], xp: { ...input.xp },
+  };
+}
 
 export function validateSave(input) {
   assert(input && typeof input === 'object' && !Array.isArray(input), 'expected an object');
@@ -508,6 +1059,15 @@ export function validateSave(input) {
   assert(validPoint(input.position), 'position');
   assert(input.destination === null || validPoint(input.destination), 'destination');
   assert(Array.isArray(input.inventory) && input.inventory.length <= MAX_INVENTORY && input.inventory.every(id => ITEM_BY_ID.has(id)), 'inventory');
+  const inventoryCondition = input.inventoryCondition === undefined ? input.inventory.map(itemCondition) : input.inventoryCondition;
+  assert(Array.isArray(inventoryCondition) && inventoryCondition.length === input.inventory.length, 'inventory condition');
+  for (let index = 0; index < input.inventory.length; index++) {
+    const maximum = itemCondition(input.inventory[index]);
+    assert(maximum === null ? inventoryCondition[index] === null : validCount(inventoryCondition[index]) && inventoryCondition[index] <= maximum, 'inventory condition');
+  }
+  const supplies = input.supplies === undefined ? { tools: 8, medicine: 5, ammo: 16 } : input.supplies;
+  assert(recordObject(supplies) && Object.keys(supplies).length === 3, 'supplies');
+  for (const kind of Object.keys(SUPPLY_INFO)) assert(validCount(supplies[kind]) && supplies[kind] <= 10000, `supplies ${kind}`);
   const cargo = input.cargo === undefined ? {} : input.cargo;
   assert(recordObject(cargo) && Object.keys(cargo).every(id => GOOD_BY_ID.has(id) && validCount(cargo[id]) && cargo[id] <= MAX_CARGO) && Object.values(cargo).reduce((total, count) => total + count, 0) <= MAX_CARGO, 'cargo');
   const markets = input.marketStock === undefined ? {} : input.marketStock;
@@ -516,8 +1076,11 @@ export function validateSave(input) {
     assert(recordObject(market) && Number.isSafeInteger(market.day) && market.day >= 1 && market.day <= input.day && validCount(market.food) && market.food <= 100, 'market stock');
     assert(recordObject(market.goods) && GOODS.every(good => validCount(market.goods[good.id]) && market.goods[good.id] <= 100) && Object.keys(market.goods).length === GOODS.length, 'goods stock');
     assert(recordObject(market.equipment) && ITEMS.every(item => validCount(market.equipment[item.id]) && market.equipment[item.id] <= 1024) && Object.keys(market.equipment).length === ITEMS.length, 'equipment stock');
+    if (market.supplies !== undefined) assert(recordObject(market.supplies) && Object.keys(market.supplies).length === 3 && Object.keys(SUPPLY_INFO).every(kind => validCount(market.supplies[kind]) && market.supplies[kind] <= 100), 'supplies stock');
   }
-  assert(Array.isArray(input.party) && input.party.length >= 1 && input.party.length <= 8, 'party');
+  const gameOver = input.gameOver === undefined ? false : input.gameOver;
+  assert(typeof gameOver === 'boolean', 'game over');
+  assert(Array.isArray(input.party) && input.party.length <= MAX_COMPANY_SIZE && (input.party.length > 0 || gameOver), 'party');
   const ids = new Set();
   for (const person of input.party) {
     assert(person && typeof person === 'object' && !Array.isArray(person), 'person');
@@ -526,37 +1089,75 @@ export function validateSave(input) {
     assert(typeof person.name === 'string' && person.name.length > 0 && person.name.length <= 80, 'person name');
     assert(typeof person.background === 'string' && person.background.length > 0 && person.background.length <= 80, 'person background');
     assert(validCount(person.seed) && person.seed <= 0xffffffff, 'person seed');
-    assert(Number.isFinite(person.hp) && person.hp >= 1 && person.hp <= 100, 'person hp');
     assert(Number.isFinite(person.morale) && person.morale >= 0 && person.morale <= 100, 'person morale');
     assert(person.equipment && typeof person.equipment === 'object' && !Array.isArray(person.equipment), 'equipment');
     for (const slot of SLOTS) {
       const itemId = person.equipment[slot];
       assert(itemId === null || ITEM_BY_ID.get(itemId)?.slot === slot, `${slot} equipment`);
     }
+    assert(person.attributes === undefined || recordObject(person.attributes), 'person attributes');
+    assert(person.armorDurability === undefined || recordObject(person.armorDurability), 'person armor durability');
+    assert(person.level !== null && person.xp !== null && person.trainingPoints !== null, 'person progress');
+    const member = normalizeMember(person);
+    assert(Number.isSafeInteger(member.level) && member.level >= 1 && member.level <= 20, 'person level');
+    assert(validCount(member.xp) && member.xp < member.level * 50 && validCount(member.trainingPoints) && member.trainingPoints <= 20, 'person experience');
+    assert(recordObject(person.attributes ?? {}) && Object.keys(person.attributes ?? {}).every(key => Object.hasOwn(TRAINING_GAINS, key)), 'person attributes');
+    for (const key of Object.keys(TRAINING_GAINS)) assert(validCount(member.attributes[key]) && member.attributes[key] <= 1000, `person ${key}`);
+    assert(validCount(member.armorDurability.body) && member.armorDurability.body <= armorMaximum(person.equipment.armor), 'body durability');
+    assert(validCount(member.armorDurability.head) && member.armorDurability.head <= armorMaximum(person.equipment.helmet), 'head durability');
+    assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
   }
+  const camps = input.camps === undefined ? {} : input.camps;
+  assert(recordObject(camps) && Object.keys(camps).every(id => CAMP_BY_ID.has(id)), 'camps');
+  for (const entry of Object.values(camps)) assert(recordObject(entry) && (entry.clearedDay === null || Number.isSafeInteger(entry.clearedDay) && entry.clearedDay >= 1 && entry.clearedDay <= input.day), 'camp state');
+  const battle = validateBattle(input.battle, input.party);
+  assert(!battle || input.destination === null && !camps[battle.campId]?.clearedDay, 'battle location');
+  assert(!gameOver || input.party.length === 0 && battle === null, 'game over state');
   assert(Array.isArray(input.visited) && input.visited.length <= SETTLEMENTS.length && input.visited.every(id => TOWN_BY_ID.has(id)) && new Set(input.visited).size === input.visited.length, 'visited settlements');
   assert(Array.isArray(input.log) && input.log.length <= MAX_LOG && input.log.every(entry => typeof entry === 'string' && entry.length <= 500), 'log');
   if (input.contract !== null) {
     const contract = input.contract;
     assert(contract && typeof contract === 'object' && !Array.isArray(contract), 'contract');
     assert(typeof contract.id === 'string' && contract.id.length <= 24 && /^delivery-[1-9]\d*$/.test(contract.id) && Number(contract.id.slice(9)) <= input.contractSerial, 'contract id');
-    assert(TOWN_BY_ID.has(contract.from) && TOWN_BY_ID.has(contract.to) && contract.from !== contract.to, 'contract route');
+    assert(TOWN_BY_ID.has(contract.from) && TOWN_BY_ID.has(contract.to), 'contract route');
     assert(validCount(contract.reward) && contract.reward > 0 && contract.reward <= 5000, 'contract reward');
     assert(Number.isSafeInteger(contract.acceptedDay) && contract.acceptedDay >= 1 && contract.acceptedDay <= input.day, 'contract day');
-    assert(contract.type === undefined || contract.type === 'courier' || contract.type === 'supply', 'contract type');
+    assert(contract.type === undefined || ['courier', 'supply', 'hunt'].includes(contract.type), 'contract type');
     assert(contract.renown === undefined || contract.renown === 1 || contract.renown === 2, 'contract renown');
     if (contract.type === 'supply') assert(GOOD_BY_ID.has(contract.goodId) && validQuantity(contract.quantity, MAX_CARGO), 'supply requirement');
+    if (contract.type === 'hunt') assert(CAMP_BY_ID.has(contract.campId) && contract.from === contract.to, 'hunt requirement');
+    else assert(contract.from !== contract.to, 'contract route');
+  }
+  const inventory = [...input.inventory];
+  const conditions = [...inventoryCondition];
+  const party = input.party.map(person => normalizeMember({
+    id: person.id, name: person.name, background: person.background, seed: person.seed,
+    hp: person.hp, morale: person.morale,
+    equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot]])),
+    level: person.level, xp: person.xp, trainingPoints: person.trainingPoints,
+    attributes: person.attributes ? { ...person.attributes } : undefined,
+    armorDurability: person.armorDurability ? { body: person.armorDurability.body, head: person.armorDurability.head } : undefined,
+  }));
+  for (const person of party) {
+    if (ITEM_BY_ID.get(person.equipment.weapon)?.twoHanded && person.equipment.shield) {
+      assert(battle === null && inventory.length < MAX_INVENTORY, 'legacy bow and shield');
+      inventory.push(person.equipment.shield);
+      conditions.push(null);
+      person.equipment.shield = null;
+    }
   }
   // Return a new plain state so callers cannot mutate the imported object through aliases.
   return {
     version: 1, seed: input.seed, day: input.day, hour: input.hour,
     gold: input.gold, food: input.food, renown: input.renown,
-    party: input.party.map(person => ({ id: person.id, name: person.name, background: person.background, seed: person.seed, hp: person.hp, morale: person.morale, equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot]])) })),
-    inventory: [...input.inventory], cargo: { ...cargo },
-    marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...market.equipment } }])),
+    party,
+    inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
+    marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => [id, { day: market.day, food: market.food, goods: { ...market.goods }, equipment: { ...market.equipment }, supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])) }])),
+    camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay: entry.clearedDay }])),
+    battle, gameOver,
     position: { x: input.position.x, y: input.position.y },
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,
-    contract: input.contract ? { id: input.contract.id, type: input.contract.type ?? 'courier', from: input.contract.from, to: input.contract.to, reward: input.contract.reward, renown: input.contract.renown ?? 1, ...(input.contract.type === 'supply' ? { goodId: input.contract.goodId, quantity: input.contract.quantity } : {}), acceptedDay: input.contract.acceptedDay } : null,
+    contract: input.contract ? { id: input.contract.id, type: input.contract.type ?? 'courier', from: input.contract.from, to: input.contract.to, reward: input.contract.reward, renown: input.contract.renown ?? 1, ...(input.contract.type === 'supply' ? { goodId: input.contract.goodId, quantity: input.contract.quantity } : {}), ...(input.contract.type === 'hunt' ? { campId: input.contract.campId } : {}), acceptedDay: input.contract.acceptedDay } : null,
     contractSerial: input.contractSerial, recruitSerial: input.recruitSerial,
     log: [...input.log], visited: [...input.visited],
   };

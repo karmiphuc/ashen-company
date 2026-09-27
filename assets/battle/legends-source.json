@@ -1,0 +1,26 @@
+{
+  "repository": "Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "assets": [
+    {
+      "file": "grass-01.png",
+      "source": "unpacked/terrain/tactical_tiles/grass_01.png",
+      "sha256": "65b44c1530f8e692fbf31d91f0a43a191ef98a5cf1337e0bc71b5b7aa338d7e5"
+    },
+    {
+      "file": "grass-02.png",
+      "source": "unpacked/terrain/tactical_tiles/grass_02.png",
+      "sha256": "92a963d1da82252be14ab91b37e804d09e86cf1259f1d6eec0378e8d6c0a9850"
+    },
+    {
+      "file": "earth-01.png",
+      "source": "unpacked/terrain/tactical_tiles/earth_01.png",
+      "sha256": "ba1bfb32e87c7acdab52adb4cc7b7da798dc2ecd17e6edd2f91b60e00719f6a0"
+    },
+    {
+      "file": "dirt-road.png",
+      "source": "unpacked/terrain/tactical_tiles/tile_road_dirt.png",
+      "sha256": "82e4f45b92a02cb8158edcc1f20b7449eb1a406182731dbcdeea2a098947c658"
+    }
+  ]
+}

@@ -1,41 +1,35 @@
 # Ashen Company
 
-An offline mercenary-company overworld game for iPad and desktop browsers. Travel between settlements, trade local goods, provision the company, fulfil contracts, recruit companions, and outfit them with layered armor, helmets, weapons, and shields. The art includes Battle Brothers / Legends assets; see [asset credits](docs/ASSET-CREDITS.md).
+An offline mercenary-company campaign game for desktop and tablet browsers. Lead a band across the Grey Marches, take delivery and brigand-hunt contracts, recruit and outfit companions, and fight automatic tactical battles. Ashen Company uses adapted *Battle Brothers* / Legends artwork; see [asset credits](docs/ASSET-CREDITS.md).
 
 Play at **https://karmiphuc.github.io/ashen-company/**. No account, server, external fonts, or runtime dependencies are required.
 
 ## Play
 
-- Drag the map to pan and pinch to zoom. Tap a settlement to select it, then use the sidebar to travel there. Tapping open ground starts travel directly. Travel can be paused or run at 1x or 3x speed.
-- At settlements, recruit companions and use the marketplace to buy or sell equipment, trade goods, and provisions. Local stock and prices vary.
-- Take courier jobs for a delivery payment, or buy the requested cargo for a supply contract. Supply goods are consumed on delivery. Good routes include Oakwatch timber to Highpass, Saltwick salt to Thornwall, and Ironford iron to Saltwick.
-- Equip the company from the Equipment view. Tap a companion portrait to select them; choose a carried item to equip it or return equipment to baggage.
-- Camp to heal or forage for food. Each companion eats one provision and costs five crowns per day. Carrying capacity for trade cargo is 30 items.
+- Drag the map to pan and pinch to zoom. Select a settlement or hostile camp, then travel from the sidebar. Open ground can be tapped to set a destination.
+- Visit settlements to buy and sell equipment, trade goods, food, and campaign supplies; recruit up to 12 brothers; and take courier, supply, or brigand-hunt contracts.
+- The current world has eight settlements and three fixed brigand camps. Camp difficulty is shown from one to three; other contract offers do not use a dynamic Battle Brothers-style skull rating. There are no roaming hostile parties or faction simulation.
+- Inspect the company to equip armor, helmets, weapons, and shields. Head and body armor have separate durability. Backgrounds affect a brother's starting combat stats; battle experience grants levels and attribute increases. There are no perk trees yet.
+- Engage a camp for an automatic battle. Combatants act in initiative order and use simplified automatic movement and attacks. Use pause, speed, or retreat; you do not select each brother's moves or attacks. Hitpoints, head/body armor, fatigue, morale, and ammunition affect the battle. This is a compact approximation of Battle Brothers' tactical combat, not its full ruleset.
+- Survivors carry battle damage back to the campaign. Victories can award equipment, crowns, food, tools, medicine, ammunition, and experience. Brothers who fall are lost with their worn equipment. Camp for six hours to recover wounds and repair armor using supplies.
 
-Travel pauses at arrival, when a menu is open, and when the app goes into the background. The world does not simulate while the app is closed.
+The campaign also includes local market stocks and prices, five trade goods, wages and daily provisions, foraging, autosave, and JSON save export/import. Travel pauses on arrival, when menus are open, and when the app goes into the background. The world does not simulate while the app is closed.
 
 ## Install for offline play on iPad
 
 1. Open the game in Safari while online.
 2. Choose **Share > Add to Home Screen**. Enable **Open as Web App** if Safari shows that option, then add it.
-3. Launch the new Home Screen icon and wait for **Offline ready**.
-4. Turn on airplane mode, close the app, reopen it from the icon, and confirm the company loads.
+3. Launch the Home Screen icon and wait for **Offline ready**.
+4. Turn on airplane mode, close the app, relaunch it, and confirm your company loads.
 
-Progress is saved on this device and does not sync. Browser storage can be removed by iPadOS, so use **Save / Menu > Export save** and keep the file in Files before travelling. Use **Import save** to restore it. The offline indicator checks whether required app files are cached; it does not guarantee the device will retain the save.
+These are the intended Safari steps; installation and airplane-mode play have not yet been tested on a physical iPad. Verify them before relying on the game during travel. Progress is saved on the device and does not sync. iPadOS may remove browser storage, so use **Save / Menu > Export save** and keep a backup in Files. **Import save** restores it. The offline indicator confirms app files are cached; it does not guarantee save retention.
 
-## Current scope
+## Current limits
 
-- Eight settlements on an original continuous map, with map drag/pinch controls, terrain-adjusted travel, pause, and speed controls.
-- Courier and supply contracts, local market prices and stocks, five trade goods, provisions, recruiting, camping, and foraging.
-- Eighteen equipment items across body armor, helmets, weapons, and shields, shown on layered companion portraits.
-- Local autosave, validated JSON save import/export, and a service worker for offline launch.
-- Responsive tablet landscape, portrait, and phone layouts.
-
-This is a playable overworld prototype. There is no combat yet. Protection, weapon power, and fatigue are displayed groundwork for phase 2; they do not currently drive battles. Tactical formations, enemies, loot drops, procedural campaigns, and faction simulation are not implemented.
-
-## Phase 2: automated battles
-
-Add encounters and an auto-resolved battle scene where equipped companions fight without manual turn control. Carry armor, weapon power, fatigue, injuries, and loot back into the campaign.
+- The world contains three authored camps, not roaming armies, faction activity, random encounters, or a procedural campaign.
+- Battles run on a small fixed hex field with simplified automatic behavior. There are no manual tactics, full Battle Brothers skill trees, perks, or its complete combat simulation.
+- Attribute increases are available after level-ups, but traits and perk progression are not implemented.
+- iPad Safari installation, airplane-mode launch, and save retention have not been verified on a physical iPad.
 
 ## Development
 
@@ -47,8 +41,8 @@ npm run prepare-offline
 npm test
 ```
 
-Open `http://127.0.0.1:4173`. The site is static and can be hosted from the main branch root on GitHub Pages. URLs are relative to support project subpaths. After changing app files or artwork, run `npm run prepare-offline` to rebuild the complete offline list and content-derived cache version, then reload the preview after its new worker activates.
+Open `http://127.0.0.1:4173`. The site is static and can be hosted from the main branch root on GitHub Pages. URLs are relative to support project subpaths. After changing app files or artwork, run `npm run prepare-offline` to rebuild the offline list and content-derived cache version, then reload after the new worker activates.
 
-`src/engine.js` holds game rules. `src/app.js` binds the UI and local save. `src/portraits.js` assembles the character and equipment layers. `src/map.js` draws and navigates the world map. Portrait layers share fixed anchors so equipment remains aligned as it is added.
+`src/engine.js` holds campaign and combat rules. `src/app.js` binds the interface and local save. `src/battle-view.js` renders the battle, `src/campaign-ui.js` renders company and campaign screens, and `src/portraits.js` assembles character and equipment layers.
 
 See [asset credits](docs/ASSET-CREDITS.md), [research notes](docs/RESEARCH.md), and [verification notes](docs/VERIFICATION.md).

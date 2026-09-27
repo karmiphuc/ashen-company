@@ -1,0 +1,41 @@
+{
+  "repository": "Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "assets": [
+    {
+      "file": "asset_ammo_icon.png",
+      "source": "gfx/ui/icons/asset_ammo_icon.png",
+      "sha256": "835df1e502f7c557f7e6e0e5b03215681904037b5ad43f1d60d1f5a601dcb12b"
+    },
+    {
+      "file": "asset_medicine_icon.png",
+      "source": "gfx/ui/icons/asset_medicine_icon.png",
+      "sha256": "2a1005b72dce139ff27c9281ccb0310505b91318d725a36403c402350b53591b"
+    },
+    {
+      "file": "asset_supplies_icon.png",
+      "source": "gfx/ui/icons/asset_supplies_icon.png",
+      "sha256": "e52d941ebd6b8690482231254fd8a46d19bed7bb16401e40ab25784b9379d245"
+    },
+    {
+      "file": "difficulty_legend.png",
+      "source": "gfx/ui/icons/difficulty_legend.png",
+      "sha256": "13ee9aabfbe90c707013a1274d4ed057617c0dff5ab68a83bbecf6618f121ff4"
+    },
+    {
+      "file": "asset_food_up.png",
+      "source": "gfx/ui/buttons/asset_food_up.png",
+      "sha256": "66b696bad42f7bf0d20beb833b4a2b90657828f5903067926c6d9d243977cd16"
+    },
+    {
+      "file": "mini_food_circle.png",
+      "source": "unpacked/legend_ui/skills/mini/mini_food_circle.png",
+      "sha256": "d4af8e0ee7a841f4a93d890f2b77d21ac65590a45187ac10af5a5ab1ddfb1d13"
+    },
+    {
+      "file": "camp_bg_01.jpg",
+      "source": "gfx/ui/settlements/camp_bg_01.jpg",
+      "sha256": "191da4ddf67268de924f1f5e15d4a33dd93bbadb775642ad646b6d444b5dc2ab"
+    }
+  ]
+}

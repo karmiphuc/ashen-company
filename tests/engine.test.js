@@ -56,6 +56,7 @@ test('equipping and stowing preserve every owned item', () => {
 test('a full pack cannot grow beyond the save limit', () => {
   const state = createGame(8);
   state.inventory = Array(512).fill('buckler');
+  state.inventoryCondition = Array(512).fill(null);
   assert.equal(buyItem(state, 'spear').ok, false);
   assert.equal(unequipItem(state, 'captain', 'helmet').ok, false);
   assert.equal(state.inventory.length, 512);
@@ -127,7 +128,7 @@ test('supply contracts require and consume cargo, while old courier saves migrat
   const beforeOffers = structuredClone(state);
   const offers = getContractOffers(state, 'oakwatch');
   assert.deepEqual(state, beforeOffers);
-  assert.deepEqual(offers.map(offer => offer.type), ['courier', 'supply']);
+  assert.deepEqual(offers.map(offer => offer.type), ['courier', 'supply', 'hunt']);
   const supply = offers[1];
   assert.equal(acceptContract(state, 'oakwatch', supply.id).ok, true);
   assert.equal(state.contract.goodId, supply.goodId);

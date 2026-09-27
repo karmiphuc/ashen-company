@@ -9,6 +9,10 @@ const CORE = [
   './',
   './index.html',
   './src/style.css',
+  './src/campaign.css',
+  './src/battle.css',
+  './src/campaign-ui.js',
+  './src/battle-view.js',
   './src/app.js',
   './src/engine.js',
   './src/map.js',
@@ -17,19 +21,19 @@ const CORE = [
   './assets/icon.svg',
 ];
 
-async function pngFiles(directory) {
+async function imageFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async entry => {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) return pngFiles(path);
-    if (entry.isFile() && entry.name.toLowerCase().endsWith('.png') && !/^contact[-_]sheet/i.test(entry.name)) return [path];
+    if (entry.isDirectory()) return imageFiles(path);
+    if (entry.isFile() && /\.(png|jpg)$/i.test(entry.name) && !/^contact[-_]sheet/i.test(entry.name)) return [path];
     return [];
   }));
   return nested.flat();
 }
 
 export async function listOfflineAssets() {
-  const images = (await pngFiles(join(ROOT, 'assets')))
+  const images = (await imageFiles(join(ROOT, 'assets')))
     .map(path => './' + relative(ROOT, path).split(sep).join('/'))
     .sort();
   return [...CORE, ...images];
