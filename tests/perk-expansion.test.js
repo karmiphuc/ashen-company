@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  PERKS, createGame, getCompanyStats, getCompanyTravelBonus, getDailyFood,
+  ITEMS, PERKS, createGame, getCompanyStats, getCompanyTravelBonus, getDailyFood,
   getCampSites, startBattle, advanceBattle, validateSave, camp, forage, tick,
 } from '../src/engine.js';
 import { hexDistance } from '../src/battle-terrain.js';
@@ -20,7 +20,7 @@ function battleWith(weapon, perks = [], distance = 1) {
   person.level = 20;
   person.perks = [...perks];
   person.equipment.weapon = weapon;
-  if (['billhook', 'hunting-bow', 'light-crossbow'].includes(weapon)) person.equipment.shield = null;
+  if (ITEMS.find(item => item.id === weapon)?.twoHanded) person.equipment.shield = null;
   const site = getCampSites(state)[0];
   state.position = { x: site.x, y: site.y };
   assert.equal(startBattle(state, site.id).ok, true);
@@ -161,7 +161,9 @@ test('accuracy perks and last stand change hit outcomes at the same roll', () =>
   const conditions = [
     { perk: 'sword-training', weapon: 'arming-sword', distance: 1 },
     { perk: 'sword-training', weapon: 'falchion', distance: 1 },
+    { perk: 'sword-training', weapon: 'northern-warcleaver', distance: 1 },
     { perk: 'spear-training', weapon: 'spear', distance: 1 },
+    { perk: 'spear-training', weapon: 'northern-broadhead-spear', distance: 1 },
     { perk: 'throwing-training', weapon: 'javelins', distance: 3 },
     { perk: 'marksman', weapon: 'hunting-bow', distance: 3 },
     { perk: 'point-blank', weapon: 'hunting-bow', distance: 1, setup: fight => {
@@ -192,4 +194,25 @@ test('accuracy perks and last stand change hit outcomes at the same roll', () =>
     }
     assert.equal(changed, true, condition.perk);
   }
+});
+
+test('northern melee weapons inherit training families while slings remain separate from bows', () => {
+  for (const [perk, weapon, field, armored] of [
+    ['axe-training', 'northern-serrated-axe', 'armorDamage', true],
+    ['mace-training', 'northern-crude-club', 'hpDamage', false],
+    ['mace-training', 'northern-heavy-flail', 'hpDamage', false],
+  ]) {
+    const result = compareAttack({ perk, weapon, armored });
+    assert.ok(result.perk[field] > result.plain[field], weapon);
+  }
+  const slinger = battleWith('northern-sling', ['bow-mastery'], 3);
+  Object.assign(slinger.battle.units.find(unit => unit.id === 'scout'), { q: 0, r: 0 });
+  Object.assign(slinger.battle.units.find(unit => unit.id === 'guard'), { q: 0, r: 1 });
+  const plain = structuredClone(slinger.state);
+  plain.battle.units.find(unit => unit.id === 'captain').perks = [];
+  advanceBattle(slinger.state);
+  advanceBattle(plain);
+  assert.equal(slinger.battle.lastEvent.projectile, 'stone');
+  assert.equal(slinger.actor.fatigue, plain.battle.units.find(unit => unit.id === 'captain').fatigue);
+  assert.deepEqual(validateSave(JSON.parse(JSON.stringify(slinger.state))), slinger.state);
 });

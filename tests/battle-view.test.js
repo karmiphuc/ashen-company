@@ -31,6 +31,16 @@ test('tactic choice is clear and results disable further changes', () => {
   assert.equal((tacticsHTML('offense',true).match(/disabled/g)||[]).length,5);
 });
 
+test('body bar includes attachment protection and sling stones render distinctly', () => {
+  const layered = structuredClone(battle);
+  Object.assign(layered.units[1], { attachmentArmor: 25, maxAttachmentArmor: 50 });
+  layered.lastEvent.projectile = 'stone';
+  layered.lastEvent.weaponId = 'northern-sling';
+  const html = battleHTML(layered, 1, true);
+  assert.match(html, /width:50%;--before-width:75%;--after-width:50%/);
+  assert.match(html, /class="battle-projectile is-stone" aria-label="Sling stone in flight"/);
+});
+
 test('attack effects support misses and remain safe when older events have no positions', () => {
   const old = {...battle,lastEvent:{actorId:'captain',targetId:'enemy',type:'miss',ranged:true}};
   assert.match(battleHTML(old,3,true), /Arrow in flight/);

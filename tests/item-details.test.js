@@ -7,7 +7,7 @@ const item = id => ITEMS.find(entry => entry.id === id);
 const value = (details, label) => details.stats.find(stat => stat.label === label)?.value;
 
 test('every catalog item has useful details without changing the item', () => {
-  assert.equal(ITEMS.length, 99);
+  assert.equal(ITEMS.length, 124);
   for (const entry of ITEMS) {
     const before = structuredClone(entry);
     const details = getItemDetails(entry);
@@ -80,4 +80,13 @@ test('shields give defense rather than armor, while gear shows current durabilit
   assert.equal(value(getItemDetails(item('bascinet'), 70), 'Head armor'), '70 / 175');
   assert.ok(getItemDetails(item('bascinet')).notes.some(note => note.includes('22% of landed hits')));
   assert.equal(value(getItemDetails(item('greathelm'), -10), 'Head armor'), '0 / 210');
+});
+
+test('armor attachments explain fit, damage order, weight and repair', () => {
+  const details = getItemDetails(item('fur-mantle'), 9);
+  assert.equal(value(details, 'Attachment armor'), '9 / 25');
+  assert.equal(value(details, 'Fatigue load'), '2');
+  assert.ok(details.notes.some(note => note.includes('requires body armor')));
+  assert.ok(details.notes.some(note => note.includes('before the main suit')));
+  assert.ok(details.notes.some(note => note.includes('Smithy')));
 });

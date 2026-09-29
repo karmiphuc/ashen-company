@@ -1,0 +1,367 @@
+{
+  "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "purpose": "Ashen Company northern equipment",
+  "assets": [
+    {
+      "itemId": "northern-crude-club",
+      "kind": "inventory",
+      "local": "assets/items/northern-crude-club.png",
+      "source": "unpacked/legend_weapons/icons/icon_club_01_1.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_club_01_1.png",
+      "bytes": 987,
+      "sha256": "cf37214034089d9aab2c4edf13411fb2e26d4dda863a16f32b0f0aa8d0aa8b69"
+    },
+    {
+      "itemId": "northern-crude-club",
+      "kind": "portrait",
+      "local": "assets/portraits/weapon-northern-crude-club.png",
+      "source": "unpacked/legend_weapons/icons/icon_club_01_1.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_club_01_1.png",
+      "bytes": 987,
+      "sha256": "cf37214034089d9aab2c4edf13411fb2e26d4dda863a16f32b0f0aa8d0aa8b69"
+    },
+    {
+      "itemId": "northern-serrated-axe",
+      "kind": "inventory",
+      "local": "assets/items/northern-serrated-axe.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_named_rusty_serrated_axe_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_named_rusty_serrated_axe_01.png",
+      "bytes": 10148,
+      "sha256": "3e9c9a7376d7bb1fe71e1722628ffc82a980f9a69d13e77eaee8cc91446c172d"
+    },
+    {
+      "itemId": "northern-serrated-axe",
+      "kind": "portrait",
+      "local": "assets/portraits/weapon-northern-serrated-axe.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_named_rusty_serrated_axe_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_named_rusty_serrated_axe_01.png",
+      "bytes": 10148,
+      "sha256": "3e9c9a7376d7bb1fe71e1722628ffc82a980f9a69d13e77eaee8cc91446c172d"
+    },
+    {
+      "itemId": "northern-warcleaver",
+      "kind": "inventory",
+      "local": "assets/items/northern-warcleaver.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_named_rusty_warcleaver_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_named_rusty_warcleaver_01.png",
+      "bytes": 8706,
+      "sha256": "575a1cdfa385af8841ce73e5ad608ddf210762871148c1ad03c6fc0b02f3651e"
+    },
+    {
+      "itemId": "northern-warcleaver",
+      "kind": "portrait",
+      "local": "assets/portraits/weapon-northern-warcleaver.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_named_rusty_warcleaver_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_named_rusty_warcleaver_01.png",
+      "bytes": 8706,
+      "sha256": "575a1cdfa385af8841ce73e5ad608ddf210762871148c1ad03c6fc0b02f3651e"
+    },
+    {
+      "itemId": "northern-rusty-greatsword",
+      "kind": "inventory",
+      "local": "assets/items/northern-rusty-greatsword.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_named_rusty_greatsword_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_named_rusty_greatsword_01.png",
+      "bytes": 10576,
+      "sha256": "9b34e49f8df6083f88b2d5acfd6ff011739fe111b248a9ab6910586144b4c8eb"
+    },
+    {
+      "itemId": "northern-rusty-greatsword",
+      "kind": "portrait",
+      "local": "assets/portraits/weapon-northern-rusty-greatsword.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_named_rusty_greatsword_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_named_rusty_greatsword_01.png",
+      "bytes": 10576,
+      "sha256": "9b34e49f8df6083f88b2d5acfd6ff011739fe111b248a9ab6910586144b4c8eb"
+    },
+    {
+      "itemId": "northern-heavy-flail",
+      "kind": "inventory",
+      "local": "assets/items/northern-heavy-flail.png",
+      "source": "unpacked/legend_weapons/icons/icon_flail_two_handed_01_1.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_flail_two_handed_01_1.png",
+      "bytes": 3245,
+      "sha256": "d84248bdb95a0844eb271b24a280e2702ef0ebd1180672c9c55f6d9325da32d6"
+    },
+    {
+      "itemId": "northern-heavy-flail",
+      "kind": "portrait",
+      "local": "assets/portraits/weapon-northern-heavy-flail.png",
+      "source": "unpacked/legend_weapons/icons/icon_flail_two_handed_01_1.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_flail_two_handed_01_1.png",
+      "bytes": 3245,
+      "sha256": "d84248bdb95a0844eb271b24a280e2702ef0ebd1180672c9c55f6d9325da32d6"
+    },
+    {
+      "itemId": "northern-broadhead-spear",
+      "kind": "inventory",
+      "local": "assets/items/northern-broadhead-spear.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_broadhead_spear_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_broadhead_spear_01.png",
+      "bytes": 1498,
+      "sha256": "29c44fbcab94cfbd498dd44fe5ba2f0162585fc23d986941343872e9ab312289"
+    },
+    {
+      "itemId": "northern-broadhead-spear",
+      "kind": "portrait",
+      "local": "assets/portraits/weapon-northern-broadhead-spear.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_broadhead_spear_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_broadhead_spear_01.png",
+      "bytes": 1498,
+      "sha256": "29c44fbcab94cfbd498dd44fe5ba2f0162585fc23d986941343872e9ab312289"
+    },
+    {
+      "itemId": "northern-sling",
+      "kind": "inventory",
+      "local": "assets/items/northern-sling.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_northern_sling_01_1.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_northern_sling_01_1.png",
+      "bytes": 2327,
+      "sha256": "811e03caec283a82d6dc7d16967c552b9164300a4e15f1bb037ae692ebbc22b6"
+    },
+    {
+      "itemId": "northern-sling",
+      "kind": "portrait",
+      "local": "assets/portraits/weapon-northern-sling.png",
+      "source": "unpacked/legend_weapons/icons/icon_legend_northern_sling_01_1.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_northern_sling_01_1.png",
+      "bytes": 2327,
+      "sha256": "811e03caec283a82d6dc7d16967c552b9164300a4e15f1bb037ae692ebbc22b6"
+    },
+    {
+      "itemId": "northern-fur-coat",
+      "kind": "inventory",
+      "local": "assets/items/northern-fur-coat.png",
+      "source": "gfx/ui/items/legend_armor/inventory_fur_rabble_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_fur_rabble_01.png",
+      "bytes": 16786,
+      "sha256": "d27add290161044ec3b93785e96258cf095464f32e564fa8d260ef64c377b122"
+    },
+    {
+      "itemId": "northern-fur-coat",
+      "kind": "portrait",
+      "local": "assets/portraits/armor-northern-fur-coat.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/fur_rabble_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/fur_rabble_01.png",
+      "bytes": 20003,
+      "sha256": "1d26d7c48b41ef13a3bd8c53d202ed9ef988dd4dbf0dd63e0359c0a9f565ff9c"
+    },
+    {
+      "itemId": "northern-animal-pelt",
+      "kind": "inventory",
+      "local": "assets/items/northern-animal-pelt.png",
+      "source": "gfx/ui/items/legend_armor/inventory_cloak_fur_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_cloak_fur_01.png",
+      "bytes": 10331,
+      "sha256": "fc0cf6817e6dafa46c38af08b9242e6ab6feccc78dfb7149b40132c50d403152"
+    },
+    {
+      "itemId": "northern-animal-pelt",
+      "kind": "portrait",
+      "local": "assets/portraits/armor-northern-animal-pelt.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/cloak_fur_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/cloak_fur_01.png",
+      "bytes": 15064,
+      "sha256": "5351735fc976e947ccb757f6d03f5f8ec7e2ed64b430a7b3d2976f55733f1105"
+    },
+    {
+      "itemId": "northern-rusty-mail",
+      "kind": "inventory",
+      "local": "assets/items/northern-rusty-mail.png",
+      "source": "gfx/ui/items/legend_armor/inventory_rusty_mail_shirt_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_rusty_mail_shirt_01.png",
+      "bytes": 10987,
+      "sha256": "f6dd48280a51081a1d781c181fded91b5bc04b7fdb6477b5ab4c37e76187a5bf"
+    },
+    {
+      "itemId": "northern-rusty-mail",
+      "kind": "portrait",
+      "local": "assets/portraits/armor-northern-rusty-mail.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/rusty_mail_shirt_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/rusty_mail_shirt_01.png",
+      "bytes": 10399,
+      "sha256": "fb7df0552106972574fa6161c51db8325e417a686fb750afb35194de93efa5fb"
+    },
+    {
+      "itemId": "northern-rusted-hauberk",
+      "kind": "inventory",
+      "local": "assets/items/northern-rusted-hauberk.png",
+      "source": "gfx/ui/items/legend_armor/inventory_hauberk_full_rusted_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_hauberk_full_rusted_01.png",
+      "bytes": 25400,
+      "sha256": "d7f0861c41f71c96d84b6b5be9ca210bda91cbe7890b2d62c679a4b1c53ead39"
+    },
+    {
+      "itemId": "northern-rusted-hauberk",
+      "kind": "portrait",
+      "local": "assets/portraits/armor-northern-rusted-hauberk.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/hauberk_full_rusted_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/hauberk_full_rusted_01.png",
+      "bytes": 21935,
+      "sha256": "1af6a443b4e1c31e80994ea30b94c8b61a58699a21c8ddc688bd899aa18a4346"
+    },
+    {
+      "itemId": "northern-heavy-lamellar",
+      "kind": "inventory",
+      "local": "assets/items/northern-heavy-lamellar.png",
+      "source": "gfx/ui/items/legend_armor/inventory_leather_lamellar_harness_heavy_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_leather_lamellar_harness_heavy_01.png",
+      "bytes": 8998,
+      "sha256": "6385fc40ce9aaccf679e244ed3d79636e9ca0b8dd5f80423d8ce88a66c3c6db7"
+    },
+    {
+      "itemId": "northern-heavy-lamellar",
+      "kind": "portrait",
+      "local": "assets/portraits/armor-northern-heavy-lamellar.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/leather_lamellar_harness_heavy_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/leather_lamellar_harness_heavy_01.png",
+      "bytes": 6948,
+      "sha256": "12a39bad5284d35d28f07dc20a251439ec812c10daa4915acfcb5d181b514a17"
+    },
+    {
+      "itemId": "northern-horned-plate",
+      "kind": "inventory",
+      "local": "assets/items/northern-horned-plate.png",
+      "source": "gfx/ui/items/legend_armor/inventory_horn_plate_named_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_horn_plate_named_01.png",
+      "bytes": 15348,
+      "sha256": "1165ecdf398a9e99f2f2d818410cb980a1dedb0d4d17b112d2f2d91ccb2eb75f"
+    },
+    {
+      "itemId": "northern-horned-plate",
+      "kind": "portrait",
+      "local": "assets/portraits/armor-northern-horned-plate.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/horn_plate_named_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/horn_plate_named_01.png",
+      "bytes": 16031,
+      "sha256": "3afb46d53eeb69e3fab63610034421d4b6205af06867971e72e79a696dd3297d"
+    },
+    {
+      "itemId": "northern-leather-hood",
+      "kind": "inventory",
+      "local": "assets/items/northern-leather-hood.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_barb_hood_leather_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_barb_hood_leather_01.png",
+      "bytes": 12492,
+      "sha256": "9620ed9d64bf9f6f433ee704dc7d7668a62a0aaecfe2163d22b962fd9505d995"
+    },
+    {
+      "itemId": "northern-leather-hood",
+      "kind": "portrait",
+      "local": "assets/portraits/helmet-northern-leather-hood.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/barb_hood_leather_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/barb_hood_leather_01.png",
+      "bytes": 13303,
+      "sha256": "bbe3659822ac079e0553eb85fb651919ec282196bb73f47f0daa0bf5e561b53d"
+    },
+    {
+      "itemId": "northern-metal-cap",
+      "kind": "inventory",
+      "local": "assets/items/northern-metal-cap.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_barb_metal_cap_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_barb_metal_cap_01.png",
+      "bytes": 3457,
+      "sha256": "ea95332ac98d41311e9567f668da3310fd17cd14672264cca28a343727d0587f"
+    },
+    {
+      "itemId": "northern-metal-cap",
+      "kind": "portrait",
+      "local": "assets/portraits/helmet-northern-metal-cap.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/barb_metal_cap_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/barb_metal_cap_01.png",
+      "bytes": 7309,
+      "sha256": "e35d2260081e3bf75456ef8f46140eea13bd94a523c51e927cdd2d53dde5a8ce"
+    },
+    {
+      "itemId": "northern-ritual-helm",
+      "kind": "inventory",
+      "local": "assets/items/northern-ritual-helm.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_barb_ritual_helm_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_barb_ritual_helm_01.png",
+      "bytes": 8821,
+      "sha256": "96f00cdc9eb1e56eab4b19fa1006dcb226d3be0cdbe76df7185207d1629d1a78"
+    },
+    {
+      "itemId": "northern-ritual-helm",
+      "kind": "portrait",
+      "local": "assets/portraits/helmet-northern-ritual-helm.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/barb_ritual_helm_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/barb_ritual_helm_01.png",
+      "bytes": 12925,
+      "sha256": "39f46ec5e7c3df57eb162d62955a750fe7d9f9a733c870bd272b4e7a38cb53ca"
+    },
+    {
+      "itemId": "northern-skull-helm",
+      "kind": "inventory",
+      "local": "assets/items/northern-skull-helm.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_crude_skull_helm_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_crude_skull_helm_01.png",
+      "bytes": 12728,
+      "sha256": "8e8fd5e07a7d8d19f0e2c59160b1499615391c02d8bddc6df880ee982e93ab47"
+    },
+    {
+      "itemId": "northern-skull-helm",
+      "kind": "portrait",
+      "local": "assets/portraits/helmet-northern-skull-helm.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/crude_skull_helm_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/crude_skull_helm_01.png",
+      "bytes": 11000,
+      "sha256": "215b0413abca81260d63399a5cee5ee3abe9742367c0425ee3cfd95f75b27f5e"
+    },
+    {
+      "itemId": "northern-bear-head",
+      "kind": "inventory",
+      "local": "assets/items/northern-bear-head.png",
+      "source": "gfx/ui/items/legend_helmets/inventory_bear_head_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_helmets/inventory_bear_head_01.png",
+      "bytes": 8951,
+      "sha256": "22299a73f0ecf7654284d55c71071aeb389c32cc5866ce20e7d76625d98ef019"
+    },
+    {
+      "itemId": "northern-bear-head",
+      "kind": "portrait",
+      "local": "assets/portraits/helmet-northern-bear-head.png",
+      "source": "unpacked/legend_helmets/entity/legend_helmets/layers/bear_head_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_helmets/entity/legend_helmets/layers/bear_head_01.png",
+      "bytes": 9866,
+      "sha256": "31882687c9fd96cf70d3e23d09ca78254d65f1e967997872292a71d3067d03db"
+    },
+    {
+      "itemId": "northern-heartwood-shield",
+      "kind": "inventory",
+      "local": "assets/items/northern-heartwood-shield.png",
+      "source": "gfx/ui/items/shields/inventory_heartwood_shield.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/shields/inventory_heartwood_shield.png",
+      "bytes": 12669,
+      "sha256": "3f4a9ac4672cc64c5da77601435229ce6397c1a6f1dbaf449a0d3147d3e245c3"
+    },
+    {
+      "itemId": "northern-heartwood-shield",
+      "kind": "portrait",
+      "local": "assets/portraits/shield-northern-heartwood-shield.png",
+      "source": "unpacked/legend_weapons/icons/shield_heartwood.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/shield_heartwood.png",
+      "bytes": 9208,
+      "sha256": "ec4f905b9866f2ad0cd881125826c8a5e8a6a9dbf6b899b2f998503c718c2ba4"
+    },
+    {
+      "itemId": "northern-iron-round-shield",
+      "kind": "inventory",
+      "local": "assets/items/northern-iron-round-shield.png",
+      "source": "gfx/ui/items/shields/inventory_metal_round_shield_03_named_03.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/shields/inventory_metal_round_shield_03_named_03.png",
+      "bytes": 15603,
+      "sha256": "bd9e9f48058fcc4997d7e3b81713875e4a0b5614a23441af5235208d111d802e"
+    },
+    {
+      "itemId": "northern-iron-round-shield",
+      "kind": "portrait",
+      "local": "assets/portraits/shield-northern-iron-round-shield.png",
+      "source": "unpacked/legend_weapons/icons/shield_metal_round_03_named_03.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/shield_metal_round_03_named_03.png",
+      "bytes": 7816,
+      "sha256": "53bf9d779307167bbb0703ee57fe31ca9f99f009fd0f98030aeec5a5b0c21958"
+    }
+  ]
+}

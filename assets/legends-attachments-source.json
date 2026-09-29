@@ -1,0 +1,88 @@
+{
+  "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "purpose": "Ashen Company armor attachments",
+  "assets": [
+    {
+      "itemId": "padded-lining",
+      "kind": "inventory",
+      "local": "assets/items/padded-lining.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_padding_light_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_padding_light_01.png",
+      "bytes": 7048,
+      "sha256": "a3c6b366406e7673250077a8ccd1ddbf853dd367ed4ebb7edc96a1cccfc1bc7f"
+    },
+    {
+      "itemId": "leather-reinforcement",
+      "kind": "inventory",
+      "local": "assets/items/leather-reinforcement.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_leather_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_leather_01.png",
+      "bytes": 4849,
+      "sha256": "31c6dd5dffd502a59c7e6b1c0a4f5bf5873a9d82d8c2732b4571ab99841e150c"
+    },
+    {
+      "itemId": "fur-mantle",
+      "kind": "inventory",
+      "local": "assets/items/fur-mantle.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_padding_fur_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_padding_fur_01.png",
+      "bytes": 9617,
+      "sha256": "27907a61001c3d2fbcfbdf4c72dbc5c1e65f10977211095bfcbbc370d5ed01b2"
+    },
+    {
+      "itemId": "iron-pauldrons",
+      "kind": "inventory",
+      "local": "assets/items/iron-pauldrons.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_metal_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_metal_01.png",
+      "bytes": 5461,
+      "sha256": "1f255f403d4336e0ee34207d149ef7e66e28b55929d212f42711b8c5d6229cd9"
+    },
+    {
+      "itemId": "scale-mantle",
+      "kind": "inventory",
+      "local": "assets/items/scale-mantle.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_metal_plates_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_metal_plates_01.png",
+      "bytes": 7171,
+      "sha256": "bb6117395036ddb3a8ce0f5dc245b207869afaf0b4907ba769d29504cbd459c0"
+    },
+    {
+      "itemId": "fur-mantle",
+      "kind": "portrait-back",
+      "local": "assets/portraits/attachment-fur-mantle-back.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_padding_fur_01_back.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_padding_fur_01_back.png",
+      "bytes": 5575,
+      "sha256": "4bc73d0596b8e189f8e39167c01d8f573ed5c16929a01f77110f1bfe5b04cffa"
+    },
+    {
+      "itemId": "fur-mantle",
+      "kind": "portrait-front",
+      "local": "assets/portraits/attachment-fur-mantle-front.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_padding_fur_01_front.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_padding_fur_01_front.png",
+      "bytes": 9122,
+      "sha256": "b49ed12eb9aa3565a96328d1083ffc27e7414e68e22b8b6a50fd3c290c05724f"
+    },
+    {
+      "itemId": "iron-pauldrons",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-iron-pauldrons.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_metal_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_metal_01.png",
+      "bytes": 8772,
+      "sha256": "934751b436d9c3ad8ab4d7e7ee8225a5052aed98390f0a2deacedfc4ec80f961"
+    },
+    {
+      "itemId": "scale-mantle",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-scale-mantle.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_metal_plates_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_metal_plates_01.png",
+      "bytes": 16014,
+      "sha256": "104f6af0f847b750d03fc764b713ed85dcc86e9d10b9f72187361cda97f23c8a"
+    }
+  ]
+}

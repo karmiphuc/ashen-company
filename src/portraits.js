@@ -36,6 +36,12 @@ export const VISUALS = {
     'riveted-mail': ['armor-riveted-mail.png', 5, 46],
     'plate-cuirass': ['armor-plate-cuirass.png', 5, 46],
     'noble-tabard': ['armor-noble-tabard.png', 5, 46],
+    'northern-fur-coat': ['armor-northern-fur-coat.png', 10, 46],
+    'northern-animal-pelt': ['armor-northern-animal-pelt.png', 5, 46],
+    'northern-rusty-mail': ['armor-northern-rusty-mail.png', 5, 46],
+    'northern-rusted-hauberk': ['armor-northern-rusted-hauberk.png', 5, 46],
+    'northern-heavy-lamellar': ['armor-northern-heavy-lamellar.png', 5, 46],
+    'northern-horned-plate': ['armor-northern-horned-plate.png', 5, 46],
   },
   helmet: {
     hood: ['helmet-hood.png', -16, -60],
@@ -53,6 +59,11 @@ export const VISUALS = {
     'full-helm': ['helmet-full-helm.png', -20, -55],
     'southern-turban': ['helmet-southern-turban.png', -20, -55],
     'high-kettle-helm': ['helmet-high-kettle-helm.png', -20, -57],
+    'northern-leather-hood': ['helmet-northern-leather-hood.png', -20, -55],
+    'northern-metal-cap': ['helmet-northern-metal-cap.png', -20, -55],
+    'northern-ritual-helm': ['helmet-northern-ritual-helm.png', -20, -55],
+    'northern-skull-helm': ['helmet-northern-skull-helm.png', -20, -76],
+    'northern-bear-head': ['helmet-northern-bear-head.png', -20, -55],
   },
   weapon: {
     spear: ['weapon-spear.png', 87, 33, 'rotate(-38deg)', '4px 70px'],
@@ -112,6 +123,13 @@ export const VISUALS = {
     'reinforced-crossbow': ['weapon-reinforced-crossbow.png', 65, 81, 'rotate(-25deg)', '23px 22px'],
     'military-spear': ['weapon-military-spear.png', 89, 23, 'rotate(-32deg)', '1px 80px'],
     longsword: ['weapon-longsword.png', 80, 46, 'rotate(-30deg)', '10px 57px'],
+    'northern-crude-club': ['weapon-northern-crude-club.png', 77, 57, 'rotate(-35deg)', '10px 45px'],
+    'northern-serrated-axe': ['weapon-northern-serrated-axe.png', 16, 5, 'scale(.65) rotate(32deg)', '75px 105px'],
+    'northern-warcleaver': ['weapon-northern-warcleaver.png', 20, 3, 'scale(.65) rotate(30deg)', '78px 103px'],
+    'northern-rusty-greatsword': ['weapon-northern-rusty-greatsword.png', 14, 0, 'scale(.65) rotate(32deg)', '78px 103px'],
+    'northern-heavy-flail': ['weapon-northern-heavy-flail.png', 40, 10, 'scale(.8) rotate(20deg)', '55px 95px'],
+    'northern-broadhead-spear': ['weapon-northern-broadhead-spear.png', 60, 31, 'rotate(-25deg)', '15px 70px'],
+    'northern-sling': ['weapon-northern-sling.png', 73, 57, 'rotate(-25deg)', '5px 60px'],
   },
   shield: {
     round: ['shield-round.png', 8, 68],
@@ -121,12 +139,24 @@ export const VISUALS = {
     'painted-round-shield': ['shield-painted-round-shield.png', 8, 68],
     'painted-heater-shield': ['shield-painted-heater-shield.png', 6, 54],
     'painted-tower-shield': ['shield-painted-tower-shield.png', 2, 28, 'scale(.65)', '0 0'],
+    'northern-heartwood-shield': ['shield-northern-heartwood-shield.png', 5, 54],
+    'northern-iron-round-shield': ['shield-northern-iron-round-shield.png', 8, 68],
   },
   accessory: {
     bandages: ['../items/bandages.png'],
     medical: ['../items/medical-satchel.png'],
     stimulant: ['../items/stimulant.png'],
     'surgeons-kit': ['../items/surgeons-kit.png'],
+  },
+  attachment: {
+    'padded-lining': {},
+    'leather-reinforcement': {},
+    'fur-mantle': {
+      back: ['attachment-fur-mantle-back.png', 59, 48],
+      front: ['attachment-fur-mantle-front.png', 2, 46],
+    },
+    'iron-pauldrons': { front: ['attachment-iron-pauldrons.png', 5, 46] },
+    'scale-mantle': { front: ['attachment-scale-mantle.png', 5, 46] },
   },
   mount: {
     horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 57, 52, 35, null, 1],
@@ -236,6 +266,31 @@ const ITEM_IMAGES = {
   'painted-heater-shield': 'painted-heater-shield.png',
   'painted-tower-shield': 'painted-tower-shield.png',
   'surgeons-kit': 'surgeons-kit.png',
+  'northern-crude-club': 'northern-crude-club.png',
+  'northern-serrated-axe': 'northern-serrated-axe.png',
+  'northern-warcleaver': 'northern-warcleaver.png',
+  'northern-rusty-greatsword': 'northern-rusty-greatsword.png',
+  'northern-heavy-flail': 'northern-heavy-flail.png',
+  'northern-broadhead-spear': 'northern-broadhead-spear.png',
+  'northern-sling': 'northern-sling.png',
+  'northern-fur-coat': 'northern-fur-coat.png',
+  'northern-animal-pelt': 'northern-animal-pelt.png',
+  'northern-rusty-mail': 'northern-rusty-mail.png',
+  'northern-rusted-hauberk': 'northern-rusted-hauberk.png',
+  'northern-heavy-lamellar': 'northern-heavy-lamellar.png',
+  'northern-horned-plate': 'northern-horned-plate.png',
+  'northern-leather-hood': 'northern-leather-hood.png',
+  'northern-metal-cap': 'northern-metal-cap.png',
+  'northern-ritual-helm': 'northern-ritual-helm.png',
+  'northern-skull-helm': 'northern-skull-helm.png',
+  'northern-bear-head': 'northern-bear-head.png',
+  'northern-heartwood-shield': 'northern-heartwood-shield.png',
+  'northern-iron-round-shield': 'northern-iron-round-shield.png',
+  'padded-lining': 'padded-lining.png',
+  'leather-reinforcement': 'leather-reinforcement.png',
+  'fur-mantle': 'fur-mantle.png',
+  'iron-pauldrons': 'iron-pauldrons.png',
+  'scale-mantle': 'scale-mantle.png',
 };
 
 function hash(value) {
@@ -273,6 +328,13 @@ function bodyLayer(file, armored) {
   return `<span data-layer="body" class="bb-layer bb-layer-body"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(0 0,22px 0,22px 60px,0 60px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(22px 0,60px 0,60px 34px,22px 34px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(60px 0,82px 0,82px 60px,60px 60px);max-width:none;pointer-events:none"></span>`;
 }
 
+function attachmentLayer(spec, part) {
+  const layerSpec = spec?.[part];
+  if (!layerSpec) return '';
+  const [file, left, top] = layerSpec;
+  return `<img data-layer="attachment-${part}" class="bb-layer bb-layer-attachment" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none">`;
+}
+
 function mountLayer(spec, part) {
   if (!spec) return '';
   const [body, head, bodyLeft, bodyTop, headLeft, headTop, filter, facing = -1] = spec;
@@ -296,6 +358,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const height = Math.round(width * CANVAS.height / CANVAS.width);
   const scale = Number((width / CANVAS.width).toFixed(6));
   const armor = layerSpec('armor', equipment.armor);
+  const attachment = layerSpec('attachment', equipment.attachment);
   const mount = layerSpec('mount', equipment.mount);
   const helmet = layerSpec('helmet', equipment.helmet);
   const helmetVisual = visual(equipment.helmet);
@@ -304,7 +367,9 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
   const compositionTop = helmetVisual === 'bascinet' ? 13 : 0;
   const rider = `${bodyLayer(appearance.body, Boolean(armor))}
+        ${attachmentLayer(attachment, 'back')}
         ${layer('armor', armor, equipment.armor)}
+        ${attachmentLayer(attachment, 'front')}
         <img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:0;${faceClip}max-width:none;pointer-events:none">
         ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:25px;top:0;max-width:none;pointer-events:none">`}
         ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none">`}

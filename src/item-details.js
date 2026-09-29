@@ -77,6 +77,16 @@ export function getItemDetails(item, condition) {
     notes.push('A shield makes attacks less likely to hit. It does not provide body or head armor durability.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
     notes.push('A two-handed weapon stows the shield before combat.');
+  } else if (item.slot === 'attachment') {
+    const maximum = item.armor ?? 0;
+    const current = Number.isFinite(condition) ? Math.max(0, Math.min(maximum, Math.floor(condition))) : maximum;
+    stats.push(
+      { label: 'Attachment armor', value: `${current} / ${maximum}` },
+      { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
+    );
+    notes.push('Fits one dedicated attachment slot and requires body armor. It absorbs body armor damage before the main suit; head hits still use the helmet.');
+    notes.push('Swapping body armor keeps the attachment fitted. Stowing body armor also stows its attachment, preserving both items and their condition.');
+    notes.push('Its weight lowers maximum fatigue and initiative. Camp tools and the Smithy repair its durability. Padding and leather reinforcement sit beneath the armor; outer mantles and pauldrons appear on the portrait.');
   } else if (item.slot === 'armor' || item.slot === 'helmet') {
     const maximum = item.armor ?? 0;
     const current = Number.isFinite(condition) ? Math.max(0, Math.min(maximum, Math.floor(condition))) : maximum;

@@ -119,7 +119,7 @@ test('victory salvage retains damaged armor condition, excludes ruined armor, an
     for (let index = 0; index < items.length; index++) {
       const item = getItem(items[index]);
       const condition = itemConditions[index];
-      if (item.slot === 'armor' || item.slot === 'helmet') {
+      if (item.slot === 'armor' || item.slot === 'attachment' || item.slot === 'helmet') {
         assert.ok(Number.isInteger(condition) && condition >= 0 && condition <= item.armor);
       } else assert.equal(condition, null);
     }

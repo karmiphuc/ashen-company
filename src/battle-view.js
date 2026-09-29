@@ -133,10 +133,12 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     target && event.fallen ? 'action-fall' : '',
   ].filter(Boolean).join(' ');
   const health = percent(unit.hp, unit.maxHp ?? 100);
-  const body = percent(unit.bodyArmor, unit.maxBodyArmor ?? Math.max(number(unit.bodyArmor), 1));
+  const bodyArmor = number(unit.bodyArmor) + number(unit.attachmentArmor);
+  const maxBodyArmor = number(unit.maxBodyArmor ?? unit.bodyArmor) + number(unit.maxAttachmentArmor);
+  const body = percent(bodyArmor, Math.max(maxBodyArmor, 1));
   const head = percent(unit.headArmor, unit.maxHeadArmor ?? Math.max(number(unit.headArmor), 1));
   const beforeHealth = target && attacking ? percent(number(unit.hp) + number(event.hpDamage), unit.maxHp ?? 100) : health;
-  const beforeBody = target && attacking && !event.head ? percent(number(unit.bodyArmor) + number(event.armorDamage), unit.maxBodyArmor || 1) : body;
+  const beforeBody = target && attacking && !event.head ? percent(bodyArmor + number(event.armorDamage), maxBodyArmor || 1) : body;
   const beforeHead = target && attacking && event.head ? percent(number(unit.headArmor) + number(event.armorDamage), unit.maxHeadArmor || 1) : head;
   const display = { seed: unit.seed ?? unit.id ?? 0, name: unit.name ?? 'Unknown' };
 
@@ -166,10 +168,10 @@ function projectileHTML(battle, animateEvent, field, grid) {
   if (event.type === 'miss') { end.x += 20; end.y -= 12; }
   const dx = end.x - start.x, dy = end.y - start.y;
   const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-  const kind = ['bolt','javelin','axe'].includes(event.projectile) ? event.projectile : 'arrow';
+  const kind = ['bolt','javelin','axe','stone'].includes(event.projectile) ? event.projectile : 'arrow';
   const thrownWeapon = kind === 'javelin' || kind === 'axe' ? getItem(event.weaponId) : null;
   const thrownIcon = thrownWeapon ? itemImage(thrownWeapon) || `assets/items/${thrownWeapon.baseId || thrownWeapon.id}.png` : null;
-  const label = { arrow:'Arrow', bolt:'Crossbow bolt', javelin:'Javelin', axe:'Throwing axe' }[kind];
+  const label = { arrow:'Arrow', bolt:'Crossbow bolt', javelin:'Javelin', axe:'Throwing axe', stone:'Sling stone' }[kind];
   return `<div class="battle-projectile is-${kind}" aria-label="${label} in flight" style="left:${start.x}px;top:${start.y}px;--flight-x:${dx}px;--flight-y:${dy}px;--flight-angle:${angle}deg">${thrownIcon?`<img src="${thrownIcon}" alt="" draggable="false">`:'<span></span>'}</div>`;
 }
 

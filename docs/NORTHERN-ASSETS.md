@@ -1,0 +1,7 @@
+# Northern equipment and attachment art
+
+All 40 northern equipment PNGs and 9 armor attachment PNGs are unchanged files from [Battle Brothers Legends](https://github.com/Battle-Brothers-Legends/Legends-public) at commit `b014cdf8520e69b2383116d1654977e9dbb10d96`, the same source revision as Ashen Company's earlier equipment art. The exact source path, raw URL, byte count, and SHA-256 for every file are recorded in [`assets/legends-north-source.json`](../assets/legends-north-source.json) and [`assets/legends-attachments-source.json`](../assets/legends-attachments-source.json). The repository README credits the original Legends artists.
+
+The northern set includes seven weapons, six body armor pieces, five helmets, and two shields. Each item has a separate inventory icon and portrait raster. The weapon portraits reuse the source icon as a positioned layer, consistent with the existing equipment. The source images are preserved at their original resolution; the portrait renderer only positions, scales, or rotates them with CSS.
+
+Padded lining and leather reinforcement show an inventory icon without a portrait overlay because their protection sits beneath body armor. Fur mantle uses the source's separate back and front shoulder layers. Iron pauldrons use `pauldrons_metal_01.png`; scale mantle uses the interlocking metal plate layer `pauldrons_metal_plates_01.png`. These overlays appear above equipped body armor in the portrait renderer.

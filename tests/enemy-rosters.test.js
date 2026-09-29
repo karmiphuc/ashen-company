@@ -7,6 +7,7 @@ import {
   getRegionalEnemyFaction,
   getRegionalEnemyTemplates,
 } from '../src/enemy-rosters.js';
+import { NORTHERN_ITEMS } from '../src/northern-items.js';
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
 
@@ -53,6 +54,19 @@ test('southern tiers use southern weapons, shields, lamellar armor, and turbans'
   assert.ok(southern.some(entry => entry.name.includes('Cutthroat')));
   assert.ok(southern.some(entry => entry.name.includes('Archer')));
   assert.ok(southern.some(entry => entry.name.includes('Skirmisher')));
+});
+
+test('northern gear appears across tiers without elite armor on early enemies', () => {
+  const tiers = [1, 2, 3].map(difficulty => getRegionalEnemyTemplates(800, 200, difficulty));
+  const usedIds = new Set(tiers.flatMap(entries => entries.flatMap(entry => [entry.weapon, entry.armor, entry.helmet, entry.shield])));
+  for (const item of NORTHERN_ITEMS) assert.ok(usedIds.has(item.id), item.id);
+  for (const entry of tiers[0]) {
+    assert.ok(ITEM_BY_ID.get(entry.armor).armor <= 85, entry.name);
+    assert.ok(ITEM_BY_ID.get(entry.helmet).armor <= 95, entry.name);
+  }
+  for (const entry of tiers[1]) assert.ok(ITEM_BY_ID.get(entry.armor).armor <= 175, entry.name);
+  assert.ok(tiers[2].some(entry => entry.armor === 'northern-horned-plate'));
+  assert.ok(tiers[0].some(entry => entry.weapon === 'northern-sling'));
 });
 
 test('higher tiers preserve ranged and lightly armored roles', () => {

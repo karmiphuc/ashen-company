@@ -1,6 +1,16 @@
-# Verification - version 0.22.0, 2026-09-30
+# Verification - version 0.23.0, 2026-09-30
 
-## v0.22.0 checks
+## v0.23.0 checks
+
+The full automated suite passes 245 tests after regenerating the offline cache. Twenty northern weapons, armor, helmets and shields join five armor attachments. Northern armories favor local better/premium gear without changing the 50% stock reduction. Northern enemy equipment remains tiered; early body armor caps at 85 and middle-tier armor at 175. Weapon-family perks recognize the new weapons; slings emit stones and do not gain bow bonuses. The pinned source manifests verify 49 added PNG files.
+
+Named armor and helmets retain their protection rolls and saved IDs, gain 1.5-2 times the former fatigue relief before rounding/capping, and roll one additional defense, resolve or maximum-fatigue bonus. Tests cover deterministic rolls and exact stat application. Attachments require body armor, absorb body armor damage first, keep their own condition, participate in fatigue perks, and support repair, trading, loot and casualty recovery. Tests cover atomic stowing with full-pack rejection and migrating/resuming older active battles. A separate integration review found no material correctness issue.
+
+Browser checks at 1024x768 inspected the new protection slot and named item details. Stowing body armor also stowed the damaged 9/25 fur mantle; refitting it onto named mail preserved its condition after reload. The mail increased melee defense from 13 to 15. Smithy repair restored the mantle to 25/25 for eight crowns, preserving the helmet and body armor. No JavaScript errors occurred in these exercised flows. Galleries verified all northern helmet anchors and fur, iron and scale attachments over light, mail, heavy and mounted bodies. Padding and leather reinforcement remain visually hidden.
+
+With the unmodified production preview server stopped and direct HTTP refused, a fresh browser tab reopened the game with Offline ready. The marketplace displayed new northern gear and attachments; Padded Lining's new icon, description, stats and purchase controls loaded offline. Physical iPad Safari installation, airplane-mode launch and save retention remain untested.
+
+## Historical v0.22.0 checks
 
 The full automated suite passes 225 tests after regenerating the offline cache. The catalog contains 45 perks, including 26 new weapon, defense, ranged, mobility and support choices. Focused comparisons exercise every new effect, including weapon hit bonuses, armor/health damage, shield defenses after swaps, lightweight movement, reload recovery, healing, foraging, wages and travel. Save tests retain new perk IDs and points; UI tests verify six groups, every card and bundled icon. Existing ranged AI, formation, mounted combat and historical perk tests remain passing.
 
@@ -190,4 +200,4 @@ Earlier releases passed their recorded automated and browser checks for battle t
 
 ## Current limits
 
-Combat remains a simplified automatic simulation. The 19 perks use the exact effects described in the chooser; full class-specific trees, faction armies, and a procedural campaign are not implemented. Overworld travel has no pathfinding, and wounds are represented by lost HP rather than Battle Brothers' full injury system. Physical iPad Safari installation, airplane-mode launch, and save retention have not been tested.
+Combat remains a simplified automatic simulation. The 45 perks use the exact effects described in the chooser; full class-specific trees, faction armies, and a procedural campaign are not implemented. Overworld travel has no pathfinding, and wounds are represented by lost HP rather than Battle Brothers' full injury system. Physical iPad Safari installation, airplane-mode launch, and save retention have not been tested.

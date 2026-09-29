@@ -40,7 +40,7 @@ test('the additional catalog has valid slot types and only gear can be famed', (
   assert.ok(ITEMS.length >= 96);
   for (const item of ITEMS) {
     assert.equal(getItem(item.id), item);
-    assert.ok(['armor', 'helmet', 'weapon', 'shield', 'accessory', 'mount'].includes(item.slot));
+    assert.ok(['armor', 'attachment', 'helmet', 'weapon', 'shield', 'accessory', 'mount'].includes(item.slot));
     if (item.slot === 'accessory' || item.slot === 'mount') assert.throws(() => createFamedItemId(item.id, 1));
   }
   const famed = getItem(createFamedItemId('javelins', 7));

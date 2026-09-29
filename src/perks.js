@@ -66,3 +66,7 @@ export const PERK_BY_ID = new Map(PERKS.map(perk => [perk.id, perk]));
 export function hasPerk(person, perkId) {
   return person?.perks?.includes(perkId) ?? false;
 }
+
+export function weaponTrainingVisual(weapon) {
+  return weapon?.trainingVisual ?? weapon?.visual;
+}
