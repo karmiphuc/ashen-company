@@ -1819,11 +1819,18 @@ function switchBattleSet(state, actor, message) {
   return true;
 }
 
+function companyArcherWeapon(state, actor) {
+  const weapon = actor.side === 'company' ? getItem(personById(state, actor.id)?.equipment.weapon) : null;
+  return weapon?.ranged && !weapon.throwing ? weapon : null;
+}
+
 function chooseBattleWeapon(state, actor, enemies) {
   if (actor.side !== 'company') return false;
   const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
+  const archer = companyArcherWeapon(state, actor);
   if (actor.pocketDrawnFrom !== null) {
-    if (state.supplies.ammo > 0 && nearest >= 3 && state.battle.round >= actor.pocketDrawnRound + 2 && getItem(actor.pocketStowedWeapon)?.ranged) {
+    const readyToShoot = archer ? nearest >= 2 : nearest >= 3 && state.battle.round >= actor.pocketDrawnRound + 2;
+    if (state.supplies.ammo > 0 && readyToShoot && getItem(actor.pocketStowedWeapon)?.ranged) {
       const pocket = actor.equipment.weapon;
       changeBattleWeapon(actor, actor.pocketStowedWeapon, actor.equipment.shield);
       actor.reload = actor.pocketStowedReload;
@@ -1844,9 +1851,9 @@ function chooseBattleWeapon(state, actor, enemies) {
   const active = getItem(actor.equipment.weapon);
   const reserve = getItem(actor.reserveEquipment.weapon);
   const outOfAmmo = state.supplies.ammo === 0;
-  if (active?.ranged && (nearest <= 1 || outOfAmmo)) {
+  if (active?.ranged && (nearest <= 1 || outOfAmmo && !archer)) {
     if (active.throwing && reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
-    if (!outOfAmmo && archerRetreatOption(state.battle, actor, effectiveWeaponRange(actor, active))) return false;
+    if ((!outOfAmmo || archer) && archerRetreatOption(state.battle, actor, effectiveWeaponRange(actor, active))) return false;
     const pocketIndex = actor.accessories.findIndex(id => getItem(id)?.pocketWeapon);
     if (pocketIndex >= 0) {
       actor.pocketStowedWeapon = actor.equipment.weapon;
@@ -1865,7 +1872,7 @@ function chooseBattleWeapon(state, actor, enemies) {
     }
     if (reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
   }
-  if (!active?.ranged && reserve?.ranged && !outOfAmmo && nearest >= (actor.meleePhase ? 4 : 3)) {
+  if (!active?.ranged && reserve?.ranged && !outOfAmmo && nearest >= (archer ? 2 : actor.meleePhase ? 4 : 3)) {
     return switchBattleSet(state, actor, `${actor.name} readies ${reserve.name} behind ${getItem(actor.reserveEquipment.shield)?.name ?? 'the line'}.`);
   }
   return false;
@@ -2068,7 +2075,23 @@ export function advanceBattle(state) {
   const weapon = bowWithoutAmmo ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equippedWeapon ?? { damageMin: 8, damageMax: 12, hitBonus: -10, armorDamage: .4, range: 1 };
   const range = effectiveWeaponRange(actor, weapon);
   const initialPosition = { q: actor.q, r: actor.r };
-  const retreated = weapon.ranged && stepArcherBack(battle, actor, range);
+  const archerBackup = !weapon.ranged && companyArcherWeapon(state, actor);
+  const retreated = (weapon.ranged || archerBackup) && stepArcherBack(battle, actor, archerBackup ? effectiveWeaponRange(actor, archerBackup) : range);
+  if (archerBackup) {
+    const target = enemies.filter(enemy => hexDistance(actor, enemy) <= range)
+      .sort((a, b) => a.hp - b.hp || a.id.localeCompare(b.id))[0];
+    if (!retreated && target) attackTarget(state, actor, target, weapon);
+    else {
+      actor.ap = 0;
+      if (!retreated) actor.fatigue = Math.max(0, actor.fatigue - 12);
+      const message = retreated ? `${actor.name} falls back from close combat.`
+        : `${actor.name} holds position${state.supplies.ammo === 0 ? '; the company is out of ammunition' : ' with a backup weapon ready'}.`;
+      battle.lastEvent = makeBattleEvent(actor, null, retreated ? 'move' : 'hold', message, equippedWeapon, retreated ? initialPosition : null);
+      battleLog(battle, message);
+    }
+    if (!finishBattlePhase(battle) && actor.ap <= 0) nextBattleTurn(battle);
+    return result(true, battle.lastEvent.message);
+  }
   const defenseKey = weapon.ranged ? 'rangedDefense' : 'meleeDefense';
   const vulnerability = target => target.hp + (target.bodyArmor + target.headArmor) * .15 + target[defenseKey] * .3;
   const targets = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range, weapon.ranged === true) }))

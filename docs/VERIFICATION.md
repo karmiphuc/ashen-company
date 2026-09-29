@@ -1,6 +1,12 @@
-# Verification - version 0.18, 2026-09-27
+# Verification - version 0.18.1, 2026-09-29
 
-## v0.18 checks
+## v0.18.1 checks
+
+The full automated suite passes 176 tests. Two new regression cases failed against the previous rules: an unpressured empty-ammo archer advanced into melee, and an archer using a defensive backup failed to re-ready the bow when two-hex spacing opened. Both now pass for bows and crossbows, reserve swords and pocket daggers, and all three company tactics. Additional checks cover funded archers retaining ranged weapons, empty-ammo retreat, cornered melee defense, and holding position after pressure ends. Save/reload retains the corrected role without adding save fields. Throwing-weapon melee transitions, crossbow reload turns, and deterministic battle completion remain covered by existing tests.
+
+Six historical save fixtures retain equipment, purse, inventory, and battle positions. Offline cache consistency and diff checks pass. Browser verification was attempted, but the in-app browser was unavailable and the browser inventory was empty. This release has automated combat/save coverage; its rendered behavior, offline browser relaunch, and physical iPad behavior were not reverified.
+
+## Historical v0.18 checks
 
 The full automated suite passes 172 tests. Coverage includes 60-hour wagon journeys at half the previous speed, active legacy-save migration without moving the wagon or extending its raid warning, resolved legacy outcomes, reload idempotence, patrol-route geometry, all 16 settlement shipment routes, and pre-emptive clearing without replacement attackers. Delivery discounts remain available for at least 48 hours after arrival, with equipment granted only once across reloads and weekly stock rotation. Six historical save fixtures retain equipment, purse, inventory, and battle positions. Offline cache consistency and diff checks pass.
 

@@ -135,7 +135,7 @@ test('archers finish exposed foes while melee fighters hold adjacent enemies', (
   assert.equal(melee.battle.lastEvent.targetId, 'enemy-1');
 });
 
-test('archers step out of melee, empty quivers switch to melee, and exhaustion recovers', () => {
+test('archers step out of melee even with empty quivers, and exhaustion recovers', () => {
   const state = createGame(12);
   state.party[0].equipment.weapon = 'hunting-bow';
   state.party[0].equipment.shield = null;
@@ -157,7 +157,8 @@ test('archers step out of melee, empty quivers switch to melee, and exhaustion r
   state.battle.activeId = 'captain';
   advanceBattle(state);
   assert.equal(state.supplies.ammo, 0);
-  assert.equal(state.battle.lastEvent.targetId, 'enemy-1');
+  assert.equal(state.battle.lastEvent.type, 'move');
+  assert.ok(Math.abs(fighter.q - enemy.q) + Math.abs(fighter.r - enemy.r) > 1);
 
   fighter.fatigue = fighter.maxFatigue;
   state.battle.turnIndex = state.battle.turnOrder.indexOf('captain');

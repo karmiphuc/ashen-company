@@ -34,7 +34,7 @@ test('bow and crossbow explain actual ranged costs and differences', () => {
   assert.equal(value(bow, 'Ammunition'), '1 per shot');
   assert.equal(value(bow, 'Reload'), undefined);
   assert.ok(bow.notes.some(note => note.includes('12-point hit penalty')));
-  assert.ok(bow.notes.some(note => note.includes('Without ammunition')));
+  assert.ok(bow.notes.some(note => note.includes('hold position when ammunition runs out')));
   assert.ok(bow.notes.some(note => note.includes('percentage points')));
   assert.ok(bow.notes.some(note => note.includes('22% of landed hits')));
 

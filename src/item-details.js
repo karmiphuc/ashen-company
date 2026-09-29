@@ -54,11 +54,11 @@ export function getItemDetails(item, condition) {
       stats.push({ label: 'Ammunition', value: item.throwing ? '1 per attack' : '1 per shot' });
       if (item.reloadTurns) stats.push({ label: 'Reload', value: `${item.reloadTurns} turn after each shot` });
       notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
-      notes.push('When an enemy closes or ammunition runs out, the AI draws an equipped pocket weapon first; otherwise it switches to the reserve melee set. Drawing or switching costs a full turn.');
+      notes.push('Bow and crossbow fighters keep their distance and hold position when ammunition runs out. Only when cornered do they draw a pocket weapon or switch to their reserve melee set. With ammunition, they return to ranged weapons as soon as two hexes of space open. Drawing or switching costs a full turn.');
       if (item.throwing) notes.push('Throwing weapons are one-handed, can be paired with a shield, and spend one company ammunition per attack.');
       if (item.ranged && !item.throwing && !item.twoHanded) notes.push('This ranged weapon leaves the other hand free for a shield.');
       if (!item.throwing) notes.push('A bow or crossbow shot from an adjacent hex has a 12-point hit penalty if the fighter cannot reposition or switch to melee.');
-      notes.push('Without ammunition, the AI tries an equipped pocket weapon or reserve melee set first; if neither is available, the fighter can only make the basic unarmed attack.');
+      notes.push('Throwers switch to a melee backup when enemies close or ammunition runs out. A fighter trapped without a usable weapon can only make the basic unarmed attack.');
     } else if ((item.range ?? 1) > 1) {
       notes.push('Extra reach still uses melee skill and melee defense; it does not spend ammunition.');
     }
