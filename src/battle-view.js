@@ -18,7 +18,7 @@ const TACTICS = [
   ['shield-wall', 'Shield Wall', 'Shielded melee fighters and skirmishers form the front. Archers and unshielded two-handers stay behind.'],
 ];
 
-export function battleActionDuration(speed = 1) { return speed === 3 ? .38 : 1.1; }
+export function battleActionDuration(speed = 1) { return speed === 3 ? .275 : speed === 1 ? .55 : 1.1; }
 
 export function tacticsHTML(tactic = 'offense', disabled = false) {
   const current = TACTICS.find(entry => entry[0] === tactic) || TACTICS[0];
