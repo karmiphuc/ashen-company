@@ -24,7 +24,11 @@ test('restored or paused battle renders without replaying the last projectile', 
 test('tactic choice is clear and results disable further changes', () => {
   assert.match(tacticsHTML('defense'), /data-tactic="defense" aria-pressed="true"/);
   assert.match(tacticsHTML('focus'), /Thin them out/);
-  assert.equal((tacticsHTML('offense',true).match(/disabled/g)||[]).length,3);
+  assert.match(tacticsHTML('advance-formation'), /data-tactic="advance-formation" aria-pressed="true"/);
+  assert.match(tacticsHTML('advance-formation'), /one hex at a time/);
+  assert.match(tacticsHTML('shield-wall'), /data-tactic="shield-wall" aria-pressed="true"/);
+  assert.match(tacticsHTML('shield-wall'), /unshielded two-handers stay behind/);
+  assert.equal((tacticsHTML('offense',true).match(/disabled/g)||[]).length,5);
 });
 
 test('attack effects support misses and remain safe when older events have no positions', () => {

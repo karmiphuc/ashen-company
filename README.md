@@ -29,6 +29,8 @@ The campaign also includes local market stocks and prices, five trade goods, wag
 
 Use **Battle formation** to arrange six front-line and six rear-line slots. Tap an occupied slot, then another slot to move or swap the fighters. The formation is saved and determines their starting battle positions. Arrange it before pursuing a roaming band: catching a pursued band starts combat directly. A camp's sidebar action retains its encounter preview; double-tapping the camp bypasses that preview.
 
+Two additional battle orders are available before or during combat. **Advance in Formation** moves the company in coordinated one-hex steps, waiting for the current step to finish before starting another and attacking without individual pursuit. **Shield Wall** places shielded melee fighters and throwing skirmishers ahead of archers and unshielded two-handers. During battle, fighters move into their ranks normally; the order does not teleport them or overwrite the saved company formation. Bowmen with a backup shield remain archers.
+
 Victories recover a mix of crowns, supplies, and enemy equipment. Salvaged body armor and helmets retain their remaining durability; destroyed or badly ruined pieces are not recovered. Inspect the condition of each individual loot item before collecting it, then repair worn armor in camp with tools.
 
 ## Install for offline play on iPad
@@ -43,7 +45,7 @@ These are the intended Safari steps; installation and airplane-mode play have no
 ## Current limits
 
 - The world has ten authored roaming bands and 12 seeded camps that relocate after defeat. They do not form roaming armies, factions, random encounters, or a procedural campaign.
-- Battles use generated terrain on a fixed-size hex field with simplified automatic behavior. Company tactics offer three broad AI orders, but there are no manual unit moves, the full Battle Brothers skill trees or its complete combat simulation.
+- Battles use generated terrain on a fixed-size hex field with simplified automatic behavior. Company tactics offer five broad AI orders, but there are no manual unit moves, the full Battle Brothers skill trees or its complete combat simulation.
 - Level-ups use a three-of-eight attribute chooser with saved rolls. A separate perk chooser grants one permanent choice per earned level. Backgrounds and traits provide small stat modifiers; class-specific perk trees and background events are not implemented.
 - iPad Safari installation, airplane-mode launch, and save retention have not been verified on a physical iPad.
 

@@ -14,6 +14,8 @@ const TACTICS = [
   ['offense', 'Offense', 'Advance and engage the nearest reachable enemy.'],
   ['defense', 'Defense', 'Hold the line and shoot. Advance if the enemy refuses to close.'],
   ['focus', 'Thin them out', 'Concentrate fire and attacks on one reachable enemy at a time.'],
+  ['advance-formation', 'Advance in Formation', 'Advance together one hex at a time. Keep ranks and attack without chasing ahead.'],
+  ['shield-wall', 'Shield Wall', 'Shielded melee fighters and skirmishers form the front. Archers and unshielded two-handers stay behind.'],
 ];
 
 export function battleActionDuration(speed = 1) { return speed === 3 ? .38 : 1.1; }

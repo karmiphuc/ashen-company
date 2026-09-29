@@ -202,7 +202,8 @@ const SUPPLY_INFO = {
   ammo: { name: 'Ammunition', buyPrice: 4, stock: 30 },
 };
 const ATTRIBUTES = ['maxHp', 'meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve'];
-const TACTICS = ['offense', 'defense', 'focus'];
+const TACTICS = ['offense', 'defense', 'focus', 'advance-formation', 'shield-wall'];
+const FORMATION_DIRECTIONS = { e: [1, 0], ne: [1, -1], se: [0, 1], w: [-1, 0], sw: [-1, 1], nw: [0, -1] };
 
 function hashSeed(seed) {
   if (typeof seed === 'number' && Number.isSafeInteger(seed)) return seed >>> 0;
@@ -1555,6 +1556,7 @@ export function setBattleTactic(state, tactic) {
     state.battle.tactic = tactic;
     state.battle.focusTargetId = null;
     state.battle.lastContactRound = state.battle.round;
+    state.battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(tactic) ? makeFormationAdvancePlan(state.battle) : null;
   }
   const message = `Company tactic set to ${tactic}.`;
   record(state, message);
@@ -1594,6 +1596,65 @@ function sortTurnOrder(battle) {
     b.initiative - b.fatigue * .2 - (a.initiative - a.fatigue * .2) || a.id.localeCompare(b.id)).map(unit => unit.id);
 }
 
+function hasShieldSet(unit) {
+  if (unit.equipment.shield && !getItem(unit.equipment.weapon)?.twoHanded) return true;
+  return Boolean(unit.reserveEquipment.shield && !getItem(unit.reserveEquipment.weapon)?.twoHanded);
+}
+
+function isPureRangedUnit(unit) {
+  const active = getItem(unit.equipment.weapon);
+  return Boolean(active?.ranged && !active.throwing);
+}
+
+function isShieldWallFront(unit) {
+  return hasShieldSet(unit) && !isPureRangedUnit(unit);
+}
+
+function orderCompanyTurnsForFormation(battle) {
+  if (!['advance-formation', 'shield-wall'].includes(battle.tactic)) return;
+  const companySlots = battle.turnOrder.map((id, index) => ({ id, index }))
+    .filter(entry => battle.units.find(unit => unit.id === entry.id)?.side === 'company');
+  const ordered = companySlots.map(entry => battle.units.find(unit => unit.id === entry.id))
+    .sort((a, b) => b.q - a.q || a.r - b.r || a.id.localeCompare(b.id));
+  companySlots.forEach((entry, index) => { battle.turnOrder[entry.index] = ordered[index].id; });
+}
+
+function makeFormationAdvancePlan(battle) {
+  const company = battle.units.filter(unit => unit.alive && unit.side === 'company');
+  return {
+    step: 1, direction: chooseFormationDirection(battle, company), completedRound: 0,
+    startedRound: battle.round,
+    origins: Object.fromEntries(battle.units.filter(unit => unit.side === 'company').map(unit => [unit.id, { q: unit.q, r: unit.r }])),
+  };
+}
+
+function chooseFormationDirection(battle, company) {
+  const enemies = battle.units.filter(unit => unit.alive && unit.side === 'enemy');
+  const companyCenter = { q: company.reduce((sum, unit) => sum + unit.q, 0) / company.length, r: company.reduce((sum, unit) => sum + unit.r, 0) / company.length };
+  const enemyCenter = { q: enemies.reduce((sum, unit) => sum + unit.q, 0) / enemies.length, r: enemies.reduce((sum, unit) => sum + unit.r, 0) / enemies.length };
+  return Object.entries(FORMATION_DIRECTIONS)
+    .filter(([, [dq, dr]]) => company.every(unit => tileAt(battle.field, unit.q + dq, unit.r + dr)))
+    .map(([id, [dq, dr]]) => ({ id, distance: hexDistance({ q: companyCenter.q + dq, r: companyCenter.r + dr }, enemyCenter) }))
+    .sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id))[0]?.id ?? 'e';
+}
+
+function shieldWallDeployment(company) {
+  const shields = company.filter(isShieldWallFront);
+  if (!shields.length) return;
+  const rear = company.filter(unit => !shields.includes(unit)).sort((a, b) => Number(isPureRangedUnit(b)) - Number(isPureRangedUnit(a)) || a.r - b.r || a.id.localeCompare(b.id));
+  shields.sort((a, b) => a.r - b.r || a.id.localeCompare(b.id));
+  const occupied = new Set();
+  const place = (unit, candidates) => {
+    const point = candidates.find(entry => !occupied.has(`${entry.q},${entry.r}`));
+    Object.assign(unit, point);
+    occupied.add(`${point.q},${point.r}`);
+  };
+  const cells = columns => columns.flatMap(q => Array.from({ length: 6 }, (_, index) => ({ q, r: index + 1 })));
+  for (const unit of shields) place(unit, cells([2, 1, 0]));
+  const rearColumns = shields.some(unit => unit.q === 1) ? [0, 1, 2] : [1, 0, 2];
+  for (const unit of rear) place(unit, cells(rearColumns));
+}
+
 export function startBattle(state, encounterId) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
@@ -1623,6 +1684,7 @@ export function startBattle(state, encounterId) {
       maxFatigue: stats.maxFatigue, initiative: stats.initiative, resolve: stats.resolve,
     }];
   });
+  if ((state.tactic ?? 'offense') === 'shield-wall') shieldWallDeployment(company);
   const enemies = camp.enemies.map((enemy, index) => {
     const gear = { armor: enemy.armor, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield };
     const shieldDefense = getItem(gear.shield)?.defense ?? 0;
@@ -1654,7 +1716,9 @@ export function startBattle(state, encounterId) {
     loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [], itemConditions: [] },
     casualties: [], xp: {},
   };
+  battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(battle.tactic) ? makeFormationAdvancePlan(battle) : null;
   battle.turnOrder = sortTurnOrder(battle);
+  orderCompanyTurnsForFormation(battle);
   battle.activeId = battle.turnOrder[0];
   battleLog(battle, `The company engages ${camp.name}.`);
   state.battle = battle;
@@ -1672,6 +1736,7 @@ function nextBattleTurn(battle) {
     if (next >= battle.turnOrder.length) {
       battle.round += 1;
       battle.turnOrder = sortTurnOrder(battle);
+      orderCompanyTurnsForFormation(battle);
       next = 0;
     }
     const unit = battle.units.find(entry => entry.id === battle.turnOrder[next]);
@@ -1850,6 +1915,7 @@ function chooseBattleWeapon(state, actor, enemies) {
   }
   const active = getItem(actor.equipment.weapon);
   const reserve = getItem(actor.reserveEquipment.weapon);
+  if (state.battle.tactic === 'shield-wall' && actor.equipment.shield) return false;
   const outOfAmmo = state.supplies.ammo === 0;
   if (active?.ranged && (nearest <= 1 || outOfAmmo && !archer)) {
     if (active.throwing && reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
@@ -1876,6 +1942,81 @@ function chooseBattleWeapon(state, actor, enemies) {
     return switchBattleSet(state, actor, `${actor.name} readies ${reserve.name} behind ${getItem(actor.reserveEquipment.shield)?.name ?? 'the line'}.`);
   }
   return false;
+}
+
+function readyShieldWallSet(state, actor) {
+  if (state.battle.tactic !== 'shield-wall' || actor.side !== 'company' || actor.equipment.shield
+    || companyArcherWeapon(state, actor) || !actor.reserveEquipment.shield || getItem(actor.reserveEquipment.weapon)?.twoHanded) return false;
+  return switchBattleSet(state, actor, `${actor.name} readies ${getItem(actor.reserveEquipment.shield).name} for the shield wall.`);
+}
+
+function companyInMeleeContact(battle) {
+  const company = battle.units.filter(unit => unit.alive && unit.side === 'company');
+  const enemies = battle.units.filter(unit => unit.alive && unit.side === 'enemy');
+  return company.some(unit => enemies.some(enemy => hexDistance(unit, enemy) <= 1));
+}
+
+function formationStep(battle, actor, direction) {
+  const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  return hexNeighbors(battle.field, actor)
+    .filter(point => direction > 0 ? point.q === actor.q + 1 : point.q === actor.q - 1)
+    .filter(point => !occupied.has(`${point.q},${point.r}`))
+    .sort((a, b) => Math.abs(a.r - actor.r) - Math.abs(b.r - actor.r) || a.r - b.r)[0] ?? null;
+}
+
+function advanceFormationStep(battle, actor) {
+  const plan = battle.formationAdvance;
+  if (!plan || actor.side !== 'company') return null;
+  const living = battle.units.filter(unit => unit.alive && unit.side === 'company');
+  const [dq, dr] = FORMATION_DIRECTIONS[plan.direction];
+  const reached = unit => unit.q === plan.origins[unit.id].q + dq * plan.step
+    && unit.r === plan.origins[unit.id].r + dr * plan.step;
+  if (living.every(reached)) {
+    if (plan.completedRound === 0) plan.completedRound = battle.round;
+    if (companyInMeleeContact(battle) || plan.completedRound >= battle.round) return null;
+    plan.origins = Object.fromEntries(battle.units.filter(unit => unit.side === 'company').map(unit => [unit.id, { q: unit.q, r: unit.r }]));
+    plan.step = 1;
+    plan.direction = chooseFormationDirection(battle, living);
+    plan.startedRound = battle.round;
+    plan.completedRound = 0;
+  }
+  if (reached(actor)) return null;
+  const [moveQ, moveR] = FORMATION_DIRECTIONS[plan.direction];
+  const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  const destination = { q: actor.q + moveQ, r: actor.r + moveR };
+  if (!tileAt(battle.field, destination.q, destination.r) || occupied.has(`${destination.q},${destination.r}`)) return null;
+  const from = { q: actor.q, r: actor.r };
+  const cost = battleMovementCost(battle, actor, actor, destination);
+  actor.q = destination.q;
+  actor.r = destination.r;
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + cost * 3);
+  if (living.every(reached)) plan.completedRound = battle.round;
+  return from;
+}
+
+function moveOneFormationHex(battle, actor, destination, message) {
+  const from = { q: actor.q, r: actor.r };
+  const cost = battleMovementCost(battle, actor, actor, destination);
+  actor.q = destination.q;
+  actor.r = destination.r;
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + cost * 3);
+  actor.ap = 0;
+  battle.lastEvent = makeBattleEvent(actor, null, 'move', message, getItem(actor.equipment.weapon), from);
+  battleLog(battle, message);
+  nextBattleTurn(battle);
+}
+
+function shieldWallReformStep(state, actor) {
+  const battle = state.battle;
+  const company = battle.units.filter(unit => unit.alive && unit.side === 'company');
+  const shields = company.filter(unit => hasShieldSet(unit) && !companyArcherWeapon(state, unit));
+  if (!shields.length) return null;
+  const shieldDuty = shields.includes(actor);
+  const rear = company.filter(unit => !shields.includes(unit));
+  const shieldFrontQ = Math.max(...shields.map(unit => unit.q));
+  if (shieldDuty && rear.some(unit => unit.q >= actor.q)) return formationStep(battle, actor, 1);
+  if (!shieldDuty && actor.q >= shieldFrontQ) return formationStep(battle, actor, -1);
+  return null;
 }
 
 function rangedTerrainModifier(battle, actor, from, target) {
@@ -2048,14 +2189,23 @@ export function advanceBattle(state) {
     actor.fatigue = Math.max(0, actor.fatigue - 6);
     actor.turnStartedRound = battle.round;
   }
-  if (useBattleAccessory(state, actor, enemies)) return result(true, battle.lastEvent.message);
-  if (chooseBattleWeapon(state, actor, enemies)) return result(true, battle.lastEvent.message);
+  const formationMoveFrom = battle.tactic === 'advance-formation' ? advanceFormationStep(battle, actor) : null;
+  if (readyShieldWallSet(state, actor)) return result(true, battle.lastEvent.message);
+  if (useBattleAccessory(state, actor, enemies)) {
+    if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
+    return result(true, battle.lastEvent.message);
+  }
+  if (chooseBattleWeapon(state, actor, enemies)) {
+    if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
+    return result(true, battle.lastEvent.message);
+  }
   const equippedWeapon = getItem(actor.equipment.weapon);
   if (actor.reload > 0) {
     actor.reload -= 1;
     actor.ap = 0;
     const message = `${actor.name} reloads ${equippedWeapon?.name ?? 'their weapon'}.`;
     battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equippedWeapon);
+    if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
     battleLog(battle, message);
     nextBattleTurn(battle);
     return result(true, message);
@@ -2067,6 +2217,7 @@ export function advanceBattle(state) {
     actor.ap = 0;
     const message = `${actor.name} catches their breath.`;
     battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equippedWeapon);
+    if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
     battleLog(battle, message);
     nextBattleTurn(battle);
     return result(true, message);
@@ -2076,7 +2227,8 @@ export function advanceBattle(state) {
   const range = effectiveWeaponRange(actor, weapon);
   const initialPosition = { q: actor.q, r: actor.r };
   const archerBackup = !weapon.ranged && companyArcherWeapon(state, actor);
-  const retreated = (weapon.ranged || archerBackup) && stepArcherBack(battle, actor, archerBackup ? effectiveWeaponRange(actor, archerBackup) : range);
+  const retreated = battle.tactic !== 'advance-formation' && (weapon.ranged || archerBackup) && stepArcherBack(battle, actor, archerBackup ? effectiveWeaponRange(actor, archerBackup) : range);
+  if (retreated && battle.tactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
   if (archerBackup) {
     const target = enemies.filter(enemy => hexDistance(actor, enemy) <= range)
       .sort((a, b) => a.hp - b.hp || a.id.localeCompare(b.id))[0];
@@ -2089,6 +2241,7 @@ export function advanceBattle(state) {
       battle.lastEvent = makeBattleEvent(actor, null, retreated ? 'move' : 'hold', message, equippedWeapon, retreated ? initialPosition : null);
       battleLog(battle, message);
     }
+    if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
     if (!finishBattlePhase(battle) && actor.ap <= 0) nextBattleTurn(battle);
     return result(true, battle.lastEvent.message);
   }
@@ -2121,11 +2274,63 @@ export function advanceBattle(state) {
     }
     choice ??= targets[0];
   }
+  if (actor.side === 'company' && companyTactic === 'advance-formation' && choice) {
+    const { target } = choice;
+    if (hexDistance(actor, target) <= range) {
+      attackTarget(state, actor, target, weapon);
+      if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
+      if (!finishBattlePhase(battle) && actor.ap <= 0) nextBattleTurn(battle);
+      return result(true, battle.lastEvent.message);
+    }
+    actor.ap = 0;
+    const message = formationMoveFrom ? `${actor.name} advances one step with the formation.` : `${actor.name} holds formation.`;
+    battle.lastEvent = makeBattleEvent(actor, null, formationMoveFrom ? 'move' : 'hold', message, equippedWeapon, formationMoveFrom);
+    battle.lastEvent.targetId = target.id;
+    battleLog(battle, message);
+    if (!finishBattlePhase(battle) && actor.ap <= 0) nextBattleTurn(battle);
+    return result(true, battle.lastEvent.message);
+  }
+  if (actor.side === 'company' && companyTactic === 'shield-wall' && choice) {
+    const reform = shieldWallReformStep(state, actor);
+    if (reform) {
+      moveOneFormationHex(battle, actor, reform, `${actor.name} reforms the shield wall.`);
+      battle.formationAdvance = makeFormationAdvancePlan(battle);
+      return result(true, battle.lastEvent.message);
+    }
+    if (choice.path.length === 0) {
+      attackTarget(state, actor, choice.target, weapon);
+      if (!finishBattlePhase(battle) && actor.ap <= 0) nextBattleTurn(battle);
+      return result(true, battle.lastEvent.message);
+    }
+    const shields = battle.units.filter(unit => unit.alive && unit.side === 'company' && hasShieldSet(unit));
+    const timedAdvance = battle.round - battle.lastContactRound >= 4;
+    const wallMoveFrom = timedAdvance ? advanceFormationStep(battle, actor) : null;
+    if (wallMoveFrom) {
+      actor.ap = 0;
+      const message = `${actor.name} advances with the shield wall.`;
+      battle.lastEvent = makeBattleEvent(actor, null, 'move', message, equippedWeapon, wallMoveFrom);
+      battleLog(battle, message);
+      nextBattleTurn(battle);
+      return result(true, battle.lastEvent.message);
+    }
+    const immediateGap = !isPureRangedUnit(actor) && !hasShieldSet(actor) && (getItem(actor.equipment.weapon)?.range ?? 1) <= 2
+      && shields.length && choice.path.length === 1 && actor.q < Math.max(...shields.map(unit => unit.q));
+    if (!immediateGap) {
+      actor.ap = 0;
+      actor.fatigue = Math.max(0, actor.fatigue - 12);
+      const message = `${actor.name} holds behind the shield wall.`;
+      battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, equippedWeapon);
+      battleLog(battle, message);
+      nextBattleTurn(battle);
+      return result(true, message);
+    }
+  }
   if (!choice) {
     actor.ap = 0;
     const message = `${actor.name} holds position and catches their breath.`;
     actor.fatigue = Math.max(0, actor.fatigue - 12);
     battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equippedWeapon);
+    if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
     battleLog(battle, message);
     nextBattleTurn(battle);
     return result(true, message);
@@ -2153,6 +2358,7 @@ export function advanceBattle(state) {
     actor.q = destination.q;
     actor.r = destination.r;
     actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + used * 3);
+    if (companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
   }
   if (hexDistance(actor, target) <= range) {
     attackTarget(state, actor, target, weapon);
@@ -2383,6 +2589,26 @@ function validateBattle(input, party, worldState) {
   assert(focusTargetId === null || units.some(unit => unit.side === 'enemy' && unit.id === focusTargetId), 'battle focus target');
   assert(units.filter(unit => unit.side === 'company').length === party.length, 'battle company roster');
   assert(units.filter(unit => unit.side === 'company').every(unit => party.some(person => person.id === unit.id)), 'battle company roster');
+  const formationAdvanceInput = input.formationAdvance ?? null;
+  assert(['advance-formation', 'shield-wall'].includes(tactic) ? recordObject(formationAdvanceInput) : formationAdvanceInput === null, 'battle formation advance');
+  let formationAdvance = null;
+  if (formationAdvanceInput) {
+    const companyIds = units.filter(unit => unit.side === 'company').map(unit => unit.id);
+    assert(formationAdvanceInput.step === 1
+      && Object.hasOwn(FORMATION_DIRECTIONS, formationAdvanceInput.direction)
+      && Number.isSafeInteger(formationAdvanceInput.startedRound) && formationAdvanceInput.startedRound >= 1 && formationAdvanceInput.startedRound <= input.round
+      && validCount(formationAdvanceInput.completedRound) && formationAdvanceInput.completedRound <= input.round
+      && recordObject(formationAdvanceInput.origins) && Object.keys(formationAdvanceInput.origins).length === companyIds.length
+      && companyIds.every(id => validHex(formationAdvanceInput.origins[id], field))
+      && new Set(units.filter(unit => unit.side === 'company' && unit.alive).map(unit => `${formationAdvanceInput.origins[unit.id].q},${formationAdvanceInput.origins[unit.id].r}`)).size === units.filter(unit => unit.side === 'company' && unit.alive).length
+      && units.filter(unit => unit.side === 'company' && unit.alive).every(unit => {
+        const [dq, dr] = FORMATION_DIRECTIONS[formationAdvanceInput.direction];
+        const origin = formationAdvanceInput.origins[unit.id];
+        return tileAt(field, origin.q + dq, origin.r + dr);
+      }), 'battle formation advance plan');
+    formationAdvance = { step: formationAdvanceInput.step, direction: formationAdvanceInput.direction, completedRound: formationAdvanceInput.completedRound, startedRound: formationAdvanceInput.startedRound,
+      origins: Object.fromEntries(companyIds.map(id => [id, { q: formationAdvanceInput.origins[id].q, r: formationAdvanceInput.origins[id].r }])) };
+  }
   const companyAlive = units.some(unit => unit.side === 'company' && unit.alive);
   const enemyAlive = units.some(unit => unit.side === 'enemy' && unit.alive);
   assert(input.status === 'active' ? companyAlive && enemyAlive : input.status === 'victory' ? companyAlive && !enemyAlive : input.status === 'defeat' ? !companyAlive : companyAlive, 'battle outcome');
@@ -2429,7 +2655,7 @@ function validateBattle(input, party, worldState) {
   assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
-    id: input.id, campId: input.campId, encounterType, encounterName, difficulty, campGeneration, famedDrop, tactic, focusTargetId, lastContactRound, engaged, status: input.status, round: input.round, activeId: input.activeId,
+    id: input.id, campId: input.campId, encounterType, encounterName, difficulty, campGeneration, famedDrop, tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
     field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng, lootSeed,
     log: [...input.log], lastEvent: normalizedEvent,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items], itemConditions: [...itemConditions] },

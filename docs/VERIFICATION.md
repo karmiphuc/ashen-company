@@ -1,6 +1,14 @@
-# Verification - version 0.18.1, 2026-09-29
+# Verification - version 0.19, 2026-09-29
 
-## v0.18.1 checks
+## v0.19 checks
+
+The full automated suite passes 183 tests. Formation coverage checks coordinated one-hex bounds, contact holds, reload turns, late-bound completion with Berserk, shield and reserve-shield deployment, pure bow/crossbow rear safety, twelve-unit deployment bounds, legal mid-battle reformation, no-shield fallback, tactic switching, saved movement progress, and ranged standoff completion. A regression reproduces an archer retreat off the wall's planned row, verifies regrouping and save/reload, and completes the battle. Six historical save fixtures retain equipment, purse, inventory, and battle positions. Generated offline cache consistency and diff checks pass.
+
+At 1024x768 and 390x844, all five tactic controls fit and retain 44-pixel touch targets. In a normal camp battle, Advance in Formation visibly logged coordinated steps, and switching to Shield Wall moved the unshielded fighter behind the shield bearers. The saved company formation remains separate from battle-only positioning. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+With the local server stopped and direct HTTP unavailable, a fresh tab restored the paused round-four battle with Shield Wall selected and the same unit positions. Resolving offline ended in victory after 22 rounds with all three companions alive. Collecting loot and reloading retained 1,025 crowns, 34 provisions, 10 tools, 6 medicine, and 20 ammunition. No JavaScript errors occurred.
+
+## Historical v0.18.1 checks
 
 The full automated suite passes 176 tests. Two new regression cases failed against the previous rules: an unpressured empty-ammo archer advanced into melee, and an archer using a defensive backup failed to re-ready the bow when two-hex spacing opened. Both now pass for bows and crossbows, reserve swords and pocket daggers, and all three company tactics. Additional checks cover funded archers retaining ranged weapons, empty-ammo retreat, cornered melee defense, and holding position after pressure ends. Save/reload retains the corrected role without adding save fields. Throwing-weapon melee transitions, crossbow reload turns, and deterministic battle completion remain covered by existing tests.
 
