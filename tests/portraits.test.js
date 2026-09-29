@@ -53,11 +53,32 @@ test('equipment visuals use their own authored layers and aligned head anchors',
   }
   assert.match(portraitHTML(PERSON), /data-layer="body"[^>]*left:11px;top:50px/);
   assert.match(portraitHTML(PERSON, equipped('helmet', 'nasal')), /helmet-nasal\.png"[^>]*left:-20px;top:-55px/);
+  assert.match(portraitHTML(PERSON, equipped('helmet', 'headwrap')), /helmet-headwrap\.png"[^>]*left:-20px;top:-63px/);
+  assert.match(portraitHTML(PERSON, equipped('helmet', 'southernhelm')), /helmet-southern\.png"[^>]*left:-20px;top:-63px/);
   const bascinet = portraitHTML(PERSON, equipped('helmet', 'bascinet'));
   assert.match(bascinet, /bb-portrait-composition"[^>]*top:13px/);
   assert.match(bascinet, /helmet-bascinet\.png"[^>]*left:17px;top:-13px/);
   assert.match(bascinet, /data-layer="head"[^>]*clip-path:polygon\(9px 17px,49px 17px,49px 54px,10px 58px\)/);
   assert.match(bascinet, /data-layer="beard"[^>]*clip-path:polygon\(9px 17px,49px 17px,49px 54px,10px 58px\)/);
+});
+
+test('mounts place authored animal layers around the rider without changing unmounted portraits', () => {
+  const bare = portraitHTML(PERSON);
+  assert.doesNotMatch(bare, /data-layer="mount-/);
+  for (const [id, visual, body, head] of [
+    ['riding-horse', 'horse', 'mount-horse-body.png', 'mount-horse-head.png'],
+    ['warg-mount', 'warg', 'mount-wolf-body.png', 'mount-wolf-head.png'],
+    ['dire-wolf-mount', 'wolf', 'mount-wolf-body.png', 'mount-wolf-head.png'],
+  ]) {
+    const html = portraitHTML(PERSON, { mount: { id, visual } });
+    assert.equal(layerSource(html, 'mount-body'), `assets/portraits/${body}`);
+    assert.equal(layerSource(html, 'mount-head'), `assets/portraits/${head}`);
+    assert.ok(html.indexOf('data-layer="mount-body"') < html.indexOf('data-layer="body"'));
+    assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="body"'));
+    assert.match(html, /bb-portrait-rider"[^>]*transform:translate\(2px,0\) scale\(\.76\)/);
+    assert.match(html, /data-layer="mount-head"[^>]*transform:scaleX\(-1\)/);
+    assert.match(itemImage({ id }), new RegExp(`^assets/items/${id}\\.png$`));
+  }
 });
 
 test('six authored heads remain deterministic across equipment, scale, and battle-style display objects', () => {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createGame, getCampSites, getContractOffers, acceptContract, travelTo, tick,
   startBattle, advanceBattle, resolveBattle, retreatBattle, finishBattle,
-  getCompanyStats, getMarket, buyItem, buySupplies, equipItem, unequipItem,
+  getCompanyStats, getMarket, buyItem, buyFood, buySupplies, equipItem, unequipItem,
   camp, forage, getLevelUp, trainAttributes, validateSave,
 } from '../src/engine.js';
 
@@ -148,6 +148,8 @@ test('hunt rewards require clearing the camp and returning to the issuer', () =>
 
 test('bow equipment stows shields atomically and armor condition survives swapping', () => {
   const state = createGame(6);
+  assert.equal(buyFood(state, 1).ok, true);
+  state.marketStock.oakwatch.equipment['hunting-bow'] = 1;
   assert.equal(buyItem(state, 'hunting-bow').ok, true);
   const ownedBefore = [...state.inventory, ...state.party.flatMap(person => Object.values(person.equipment).filter(Boolean))].sort();
   assert.equal(equipItem(state, 'captain', 'hunting-bow').ok, true);

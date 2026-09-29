@@ -44,8 +44,8 @@ export const VISUALS = {
     greathelm: ['helmet-greathelm.png', -20, -58],
     bascinet: ['helmet-bascinet.png', 17, -13],
     mailcoif: ['helmet-mailcoif.png', -20, -55],
-    headwrap: ['helmet-headwrap.png', -20, -55],
-    southernhelm: ['helmet-southern.png', -20, -55],
+    headwrap: ['helmet-headwrap.png', -20, -63],
+    southernhelm: ['helmet-southern.png', -20, -63],
     barbarianhelm: ['helmet-barbarian.png', -20, -55],
     sallet: ['helmet-sallet.png', -20, -61],
     barbute: ['helmet-barbute.png', -20, -55],
@@ -127,6 +127,11 @@ export const VISUALS = {
     medical: ['../items/medical-satchel.png'],
     stimulant: ['../items/stimulant.png'],
     'surgeons-kit': ['../items/surgeons-kit.png'],
+  },
+  mount: {
+    horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 57, 52, 66],
+    warg: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71, 'sepia(.85) saturate(.7) brightness(.7)'],
+    wolf: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71],
   },
 };
 const PORTRAIT = VISUALS;
@@ -224,6 +229,9 @@ const ITEM_IMAGES = {
   'full-helm': 'full-helm.png',
   'southern-turban': 'southern-turban.png',
   'high-kettle-helm': 'high-kettle-helm.png',
+  'riding-horse': 'riding-horse.png',
+  'warg-mount': 'warg-mount.png',
+  'dire-wolf-mount': 'dire-wolf-mount.png',
   'painted-round-shield': 'painted-round-shield.png',
   'painted-heater-shield': 'painted-heater-shield.png',
   'painted-tower-shield': 'painted-tower-shield.png',
@@ -265,6 +273,15 @@ function bodyLayer(file, armored) {
   return `<span data-layer="body" class="bb-layer bb-layer-body"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(0 0,22px 0,22px 60px,0 60px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(22px 0,60px 0,60px 34px,22px 34px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(60px 0,82px 0,82px 60px,60px 60px);max-width:none;pointer-events:none"></span>`;
 }
 
+function mountLayer(spec, part) {
+  if (!spec) return '';
+  const [body, head, bodyLeft, bodyTop, headLeft, headTop, filter] = spec;
+  const file = part === 'body' ? body : head;
+  const left = part === 'body' ? bodyLeft : headLeft;
+  const top = part === 'body' ? bodyTop : headTop;
+  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:scaleX(-1);${filter ? `filter:${filter};` : ''}max-width:none;pointer-events:none">`;
+}
+
 function portraitSize(size) {
   const parsed = Number(size);
   return Number.isFinite(parsed) ? Math.max(1, Math.min(1000, Math.round(parsed))) : 160;
@@ -279,24 +296,28 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const height = Math.round(width * CANVAS.height / CANVAS.width);
   const scale = Number((width / CANVAS.width).toFixed(6));
   const armor = layerSpec('armor', equipment.armor);
+  const mount = layerSpec('mount', equipment.mount);
   const helmet = layerSpec('helmet', equipment.helmet);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
   const closedHelmet = helmetVisual === 'greathelm' || helmetVisual === 'full-helm';
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
   const compositionTop = helmetVisual === 'bascinet' ? 13 : 0;
-
-  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:hidden;vertical-align:middle;background:transparent">
-    <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
-      <span class="bb-portrait-composition" style="display:block;position:absolute;left:0;top:${compositionTop}px;width:104px;height:142px">
-        ${bodyLayer(appearance.body, Boolean(armor))}
+  const rider = `${bodyLayer(appearance.body, Boolean(armor))}
         ${layer('armor', armor, equipment.armor)}
         <img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:0;${faceClip}max-width:none;pointer-events:none">
         ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:25px;top:0;max-width:none;pointer-events:none">`}
         ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none">`}
         ${layer('helmet', helmet, equipment.helmet)}
         ${layer('shield', layerSpec('shield', equipment.shield), equipment.shield)}
-        ${layer('weapon', layerSpec('weapon', equipment.weapon), equipment.weapon)}
+        ${layer('weapon', layerSpec('weapon', equipment.weapon), equipment.weapon)}`;
+
+  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:hidden;vertical-align:middle;background:transparent">
+    <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
+      <span class="bb-portrait-composition" style="display:block;position:absolute;left:0;top:${compositionTop}px;width:104px;height:142px">
+        ${mountLayer(mount, 'body')}
+        ${mountLayer(mount, 'head')}
+        ${mount ? `<span class="bb-portrait-rider" style="display:block;position:absolute;left:0;top:0;width:104px;height:142px;transform:translate(2px,0) scale(.76);transform-origin:top left">${rider}</span>` : rider}
       </span>
     </span>
   </span>`;

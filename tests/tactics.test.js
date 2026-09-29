@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ITEMS, createGame, getCampSites, getRoamingBands, getMarket, buyItem,
+  ITEMS, createGame, getCampSites, getRoamingBands, getMarket, buyItem, buyFood,
   travelTo, tick, pursueBand, startBattle, advanceBattle, resolveBattle,
   setBattleTactic, validateSave,
 } from '../src/engine.js';
@@ -163,6 +163,8 @@ test('new weapons have working reach, piercing, bolts, reload, and town stock', 
 
 test('legacy markets and active battles migrate; malformed tactical records fail', () => {
   const old = createGame(6);
+  buyFood(old, 1);
+  old.marketStock.oakwatch.equipment.spear = 1;
   buyItem(old, 'spear');
   for (const id of ['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet']) delete old.marketStock.oakwatch.equipment[id];
   delete old.tactic;

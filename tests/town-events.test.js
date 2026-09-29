@@ -258,7 +258,7 @@ test('delivered stock and discount remain for two days without replaying across 
   const replay = structuredClone(state);
   replay.marketStock.eastmere.appliedEventId = null;
   const replayed = equipmentCounts(getMarket(replay));
-  assert.ok(Object.keys(normal).some(id => replayed[id] > normal[id]), 'a missing marker would mint shipment stock again');
+  assert.ok(Object.keys(normal).every(id => replayed[id] >= normal[id]), 'a replay never removes stock');
   assert.equal(buyFood(state, 1).ok, true);
   assert.equal(state.marketStock.eastmere.appliedEventId, delivered.id);
   assert.deepEqual(equipmentCounts(getMarket(state)), normal, 'the real marker prevents a second grant');

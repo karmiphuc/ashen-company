@@ -54,7 +54,7 @@ export function getItemDetails(item, condition) {
       stats.push({ label: 'Ammunition', value: item.throwing ? '1 per attack' : '1 per shot' });
       if (item.reloadTurns) stats.push({ label: 'Reload', value: `${item.reloadTurns} turn after each shot` });
       notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
-      notes.push('Bow and crossbow fighters keep their distance and hold position when ammunition runs out. Only when cornered do they draw a pocket weapon or switch to their reserve melee set. With ammunition, they return to ranged weapons as soon as two hexes of space open. Drawing or switching costs a full turn.');
+      notes.push('Bow and crossbow fighters keep their distance while ammunition remains. When ammunition runs out, they draw a pocket weapon or reserve melee set and fight according to the selected tactic. With ammunition, they return to ranged weapons as soon as two hexes of space open. Drawing or switching costs a full turn.');
       if (item.throwing) notes.push('Throwing weapons are one-handed, can be paired with a shield, and spend one company ammunition per attack.');
       if (item.ranged && !item.throwing && !item.twoHanded) notes.push('This ranged weapon leaves the other hand free for a shield.');
       if (!item.throwing) notes.push('A bow or crossbow shot from an adjacent hex has a 12-point hit penalty if the fighter cannot reposition or switch to melee.');
@@ -89,6 +89,17 @@ export function getItemDetails(item, condition) {
       : 'For every weapon, 22% of landed hits strike the head; this helmet absorbs those hits.');
     notes.push('Armor can still let reduced health damage through while durability remains.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
+  } else if (item.slot === 'mount') {
+    stats.push(
+      { label: 'Company travel speed', value: `+${Math.round(item.travelBonus * 100)}% while equipped` },
+      { label: 'Hit chance', value: `+${item.hitBonus} percentage points` },
+      { label: 'Attack damage', value: `+${Math.round(item.damageBonus * 100)}%` },
+      { label: 'Combat movement', value: `+${item.movementBonus} movement point per turn` },
+      { label: 'Extra daily food', value: String(item.foodUpkeep) },
+    );
+    notes.push('One mount fits the dedicated mount slot. Each living mounted brother adds 10% to company travel speed; three mounts give +30%. Stashed mounts give no bonus and consume no food.');
+    notes.push('The movement bonus only helps movement, never grants another attack, and still respects terrain, occupied hexes, and your formation tactic. Mounted attacks retain normal range and ammunition costs.');
+    notes.push('Mounts are extremely rare in city and fort markets. A defeated mounted enemy may leave a surviving mount to capture.');
   } else if (item.slot === 'accessory') {
     if (item.consumable === 'heal') {
       stats.push({ label: 'Effect', value: `Restores up to ${item.heal ?? 0} health` }, { label: 'Uses', value: 'One' });

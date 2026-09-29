@@ -32,7 +32,7 @@ test('daily recruit offers are deterministic, varied, visible, and pure', () => 
     assert.equal(offer.cost, offer.background.cost);
     assert.equal(offer.person.hp, offer.stats.maxHp);
     assert.equal(offer.person.level, 1);
-    assert.deepEqual(offer.person.equipment, { armor: null, helmet: null, weapon: null, shield: null });
+    assert.deepEqual(offer.person.equipment, { armor: null, helmet: null, weapon: null, shield: null, mount: null });
     assert.equal(offer.traits[0].kind, 'positive');
     assert.ok(offer.traits.length === 1 || offer.traits[1].kind === 'tradeoff');
     assert.deepEqual(getBackground(offer.person), offer.background);

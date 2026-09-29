@@ -1,6 +1,16 @@
-# Verification - version 0.20.1, 2026-09-29
+# Verification - version 0.21.0, 2026-09-30
 
-## v0.20.1 checks
+## v0.21.0 checks
+
+The full automated suite passes 210 tests after regenerating the offline cache. New coverage checks 72 regional enemy loadouts and valid item references, stable regional routing, mount ownership and old-save migration, additive travel speed, daily food, combat hit/damage/movement bonuses, scout-visible mounted elites, rare mount sales and capture, and statistically halved common shop stock. Mount equipment and inspection UI tests cover slots, filters, food-days and descriptions. Portrait tests cover raised southern headgear and all three mounted compositions. A separate bounded engine review found no serious correctness issues.
+
+Local browser checks equipped a horse, warg and dire wolf, confirmed +30% travel and nine food per day for three brothers, reloaded successfully, and crossed midnight to verify nine provisions consumed. Stowing the horse reduced travel to +20%, food to eight per day, and the rider's hit skills by five. A mounted company won a normal Road Thieves encounter in five rounds and collected its loot. Equipment controls were inspected at 1024x768; a portrait gallery verified the raised Nomad Head Wrap and Southern Helmet, smaller riders and forward-facing animals. Southern scouting and map markers display nomad equipment and faction art. No JavaScript errors were recorded in the mounted-company session.
+
+With the unmodified production preview server stopped and direct HTTP unavailable, a fresh browser tab loaded the game, displayed Offline ready, and rendered the new Southern Nomads scouting portraits and map. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+Existing rolled shop inventories are preserved until weekly rotation. New ordinary equipment stock and shipment extras have half their prior expected availability; courier stock bonuses fall from 50% to 25%. Enemy equipment loot rates are unchanged. Mount offers are separately rare: a 2% weekly city/fort roll, at most one mount. Tier-three encounters have a 2% mounted-leader roll, visible before combat, with a 50% capture chance after victory. Each equipped living rider adds 10% company travel, five hit-skill points, 15% damage and one movement point; horse/warg/dire wolf upkeep adds one/two/three food per day. Terrain costs and formation constraints still apply.
+
+## Historical v0.20.1 checks
 
 The full automated suite passes 193 tests after regenerating the offline cache. Empty-ammo bow/crossbow regressions cover immediate reserve or pocket-blade selection, no unusable ranged swap-back after save/reload, all five tactics, and unarmed fallback when no spare gear exists. Supplied-archer spacing and throwing-weapon behavior remain covered. Enemy projectile tests verify the mirrored weapon-hand origin and travel toward the company.
 

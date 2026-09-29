@@ -11,7 +11,7 @@ const names = [
   'houses_01_01', 'houses_02_01', 'houses_03_01', 'townhall_01', 'townhall_02',
   'stronghold_01', 'stronghold_02', 'fortified_outpost_01', 'wheat_farm_01', 'wheat_field_01', 'harbor_sw', 'stone_watchtower_01',
   'figure_player_party', 'figure_player_trader', 'figure_player_ranger', 'figure_player_beggar',
-  'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave',
+  'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave', 'figure_player_nomad',
   'banner_101', 'banner_102', 'banner_103',
 ];
 const images = new Map();
@@ -439,7 +439,7 @@ function draw() {
 
   activeBands.forEach((band, index) => {
     const count = bandCount(band), selected = selection === band.id, hunted = state.pursuit === band.id;
-    const art = ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
+    const art = { south: 'figure_player_nomad', north: 'figure_player_berserker', east: 'figure_player_assassin', forest: 'figure_player_ranger' }[band.factionId] || ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
     context.save();
     if (band.behavior === 'hunting-company') {
       const angle = Math.atan2(state.position.y - band.y, state.position.x - band.x);

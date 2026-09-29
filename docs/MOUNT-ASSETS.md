@@ -1,0 +1,15 @@
+# Mount art sources
+
+The mounted portraits and inventory icons use unchanged PNG files from [Battle Brothers Legends](https://github.com/Battle-Brothers-Legends/Legends-public) at commit `b014cdf8520e69b2383116d1654977e9dbb10d96`, the same pinned source as the existing portrait art. The Warg portrait reuses the white direwolf layers with a CSS brown tint; no new raster was generated. CSS mirrors each animal to face the same direction as the rider, and mounted portraits scale the rider to sit above the animal.
+
+| Local file | Source path in Legends | SHA-256 |
+| --- | --- | --- |
+| `assets/portraits/mount-horse-body.png` | [`unpacked/legend_horses/entity/bodies/bust_naked_body_100.png`](https://github.com/Battle-Brothers-Legends/Legends-public/blob/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_horses/entity/bodies/bust_naked_body_100.png) | `e9aebfb67ff08afc63e4fa9751d846760b02bd18f22d19179c1d3a613e0564d2` |
+| `assets/portraits/mount-horse-head.png` | [`unpacked/legend_horses/entity/heads/bust_head_100.png`](https://github.com/Battle-Brothers-Legends/Legends-public/blob/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_horses/entity/heads/bust_head_100.png) | `97cb72be1ea29312b95d584ddc7a237b8e8aa69f4811bca7414c0f43ab6f3c23` |
+| `assets/portraits/mount-wolf-body.png` | [`unpacked/legend_enemies/entity/beasts/bust_direwolf_white_01_body.png`](https://github.com/Battle-Brothers-Legends/Legends-public/blob/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_enemies/entity/beasts/bust_direwolf_white_01_body.png) | `1e9c22e9e22ff9457a603341cde20daab5b8503f5cc6cc120869efb2914b7cec` |
+| `assets/portraits/mount-wolf-head.png` | [`unpacked/legend_enemies/entity/beasts/bust_direwolf_white_01_head.png`](https://github.com/Battle-Brothers-Legends/Legends-public/blob/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_enemies/entity/beasts/bust_direwolf_white_01_head.png) | `b3e40e16b0988c7248ff6d8421f6e45a1fee4e8bb483d1d4aac78522703c2f1d` |
+| `assets/items/riding-horse.png` | [`gfx/ui/orientation/horse_orientation.png`](https://github.com/Battle-Brothers-Legends/Legends-public/blob/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/orientation/horse_orientation.png) | `24cf415861945a0ba2fd84b565b7b3735e53bdc3288aeb72a899d1c1ffc03287` |
+| `assets/items/warg-mount.png` | [`gfx/skills/wolf_square.png`](https://github.com/Battle-Brothers-Legends/Legends-public/blob/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/skills/wolf_square.png) | `19f406c8fc4bec447f2de234327d8975a2b8ccd9d4a608576e6c99c7e840f03c` |
+| `assets/items/dire-wolf-mount.png` | [`gfx/ui/items/tools/legend_direwolf_white_tame_01_70x70.png`](https://github.com/Battle-Brothers-Legends/Legends-public/blob/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/tools/legend_direwolf_white_tame_01_70x70.png) | `979d5da16bbe474871fe7985117f833c3561477af208602dbffdeb9fc35fe8c0` |
+
+The Legends repository credits its contributing artists in its README. These source links and hashes identify the exact original files used here.

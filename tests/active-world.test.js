@@ -32,9 +32,8 @@ test('the overworld has 24 persistent patrols with four weak starters and varied
   assert.ok(starters.every(id => bands.find(band => band.id === id)?.difficulty === 0));
   assert.ok(bands.filter(band => band.difficulty === 3).every(band => band.enemies.length >= 4 && band.enemies.length <= 6));
   const frontierWeapons = new Set(bands.filter(band => band.difficulty > 0).flatMap(band => band.enemies.map(enemy => enemy.weapon)));
-  for (const weapon of ['light-crossbow', 'billhook', 'polehammer', 'greatsword', 'greataxe', 'heavy-crossbow']) {
-    assert.ok(frontierWeapons.has(weapon), `${weapon} appears in a frontier force`);
-  }
+  assert.ok(frontierWeapons.size >= 8, 'frontier forces use varied regional weapons');
+  assert.ok(bands.filter(band => band.difficulty > 0).some(band => band.enemies.some(enemy => enemy.name.includes('Nomad'))));
   assert.ok(bands.every(band => band.behavior === 'patrolling' || band.behavior === 'raiding-caravan'));
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
 });

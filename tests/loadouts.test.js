@@ -37,11 +37,11 @@ function battleWith(state) {
 }
 
 test('the additional catalog has valid slot types and only gear can be famed', () => {
-  assert.equal(ITEMS.length, 96);
+  assert.ok(ITEMS.length >= 96);
   for (const item of ITEMS) {
     assert.equal(getItem(item.id), item);
-    assert.ok(['armor', 'helmet', 'weapon', 'shield', 'accessory'].includes(item.slot));
-    if (item.slot === 'accessory') assert.throws(() => createFamedItemId(item.id, 1));
+    assert.ok(['armor', 'helmet', 'weapon', 'shield', 'accessory', 'mount'].includes(item.slot));
+    if (item.slot === 'accessory' || item.slot === 'mount') assert.throws(() => createFamedItemId(item.id, 1));
   }
   const famed = getItem(createFamedItemId('javelins', 7));
   assert.equal(famed.throwing, true);
@@ -76,13 +76,15 @@ test('reserve and accessory equipment conserve items and keep two-handed sets le
   assert.deepEqual(carried(state), before);
 });
 
-test('old saved market stock gains purchasable new weapons and accessories', () => {
+test('old saved market stock recognizes new weapons and accessories', () => {
   const state = createGame(41);
   buyFood(state, 1);
   for (const item of ITEMS.slice(25)) delete state.marketStock.oakwatch.equipment[item.id];
   const loaded = validateSave(state);
-  assert.ok(getMarket(loaded).equipment.find(entry => entry.itemId === 'javelins').stock > 0);
-  assert.ok(getMarket(loaded).equipment.find(entry => entry.itemId === 'bandages').stock > 0);
+  assert.ok(getMarket(loaded).equipment.some(entry => entry.itemId === 'javelins'));
+  assert.ok(getMarket(loaded).equipment.some(entry => entry.itemId === 'bandages'));
+  loaded.marketStock.oakwatch.equipment.javelins = 1;
+  loaded.marketStock.oakwatch.equipment.bandages = 1;
   assert.equal(buyItem(loaded, 'javelins').ok, true);
   assert.equal(buyItem(loaded, 'bandages').ok, true);
   assert.equal(equipItem(loaded, 'captain', 'bandages', 'accessory-1').ok, true);

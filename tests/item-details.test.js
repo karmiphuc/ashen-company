@@ -7,7 +7,7 @@ const item = id => ITEMS.find(entry => entry.id === id);
 const value = (details, label) => details.stats.find(stat => stat.label === label)?.value;
 
 test('every catalog item has useful details without changing the item', () => {
-  assert.equal(ITEMS.length, 96);
+  assert.equal(ITEMS.length, 99);
   for (const entry of ITEMS) {
     const before = structuredClone(entry);
     const details = getItemDetails(entry);
@@ -34,7 +34,7 @@ test('bow and crossbow explain actual ranged costs and differences', () => {
   assert.equal(value(bow, 'Ammunition'), '1 per shot');
   assert.equal(value(bow, 'Reload'), undefined);
   assert.ok(bow.notes.some(note => note.includes('12-point hit penalty')));
-  assert.ok(bow.notes.some(note => note.includes('hold position when ammunition runs out')));
+  assert.ok(bow.notes.some(note => note.includes('When ammunition runs out, they draw a pocket weapon')));
   assert.ok(bow.notes.some(note => note.includes('percentage points')));
   assert.ok(bow.notes.some(note => note.includes('22% of landed hits')));
 

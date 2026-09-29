@@ -1,6 +1,8 @@
 // Pure game rules for the offline overworld. The UI owns rendering and real time.
 import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
+import { MOUNTS } from './mounts.js';
+import { getRegionalEnemyFaction, getRegionalEnemyTemplates, getRegionalCampText } from './enemy-rosters.js';
 import { PERKS, PERK_BY_ID, hasPerk } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile } from './recruits.js';
 import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-events.js';
@@ -35,6 +37,7 @@ export const ITEMS = Object.freeze([
   { id: 'round-shield', name: 'Round Shield', slot: 'shield', visual: 'round', price: 120, armor: 12, defense: 13, fatigue: 5, description: 'Wood and iron across the forearm.' },
   { id: 'kite-shield', name: 'Kite Shield', slot: 'shield', visual: 'kite', price: 220, armor: 20, defense: 18, fatigue: 8, description: 'Broad cover for a crowded road.' },
   ...ADDITIONAL_ITEMS,
+  ...MOUNTS,
 ]);
 
 export const GOODS = Object.freeze([
@@ -85,28 +88,6 @@ const CAMP_SITES = Object.freeze([
   ] },
 ]);
 
-const LIGHT_FRONTIER_ENEMIES = Object.freeze([
-  { name: 'Frontier Skirmisher', weapon: 'javelins', armor: 'quilted-jack', helmet: 'cloth-hood', shield: 'buckler' },
-  { name: 'Frontier Spear', weapon: 'fighting-spear', armor: 'leather-vest', helmet: 'leather-cap', shield: 'round-shield' },
-  { name: 'Frontier Marksman', weapon: 'light-crossbow', armor: 'patched-coat', helmet: 'cloth-hood', shield: null },
-  { name: 'Frontier Billman', weapon: 'billhook', armor: 'quilted-jack', helmet: null, shield: null },
-]);
-const HARDENED_FRONTIER_ENEMIES = Object.freeze([
-  { name: 'Raider Shieldbearer', weapon: 'fighting-spear', armor: 'mail-shirt', helmet: 'iron-helm', shield: 'kite-shield' },
-  { name: 'Raider Marksman', weapon: 'light-crossbow', armor: 'reinforced-mail', helmet: 'kettle-helm', shield: null },
-  { name: 'Raider Billman', weapon: 'billhook', armor: 'mail-shirt', helmet: 'leather-cap', shield: null },
-  { name: 'Raider Hammer', weapon: 'warhammer', armor: 'brigandine', helmet: 'bascinet', shield: 'round-shield' },
-  { name: 'Raider Pikeman', weapon: 'polehammer', armor: 'southern-mail', helmet: 'iron-helm', shield: null },
-]);
-const VETERAN_FRONTIER_ENEMIES = Object.freeze([
-  { name: 'Veteran Captain', weapon: 'warhammer', armor: 'coat-of-scales', helmet: 'greathelm', shield: 'kite-shield' },
-  { name: 'Veteran Greatsword', weapon: 'greatsword', armor: 'reinforced-mail', helmet: 'bascinet', shield: null },
-  { name: 'Veteran Arbalester', weapon: 'heavy-crossbow', armor: 'mail-shirt', helmet: 'kettle-helm', shield: null },
-  { name: 'Veteran Polehammer', weapon: 'polehammer', armor: 'brigandine', helmet: 'iron-helm', shield: null },
-  { name: 'Veteran Greataxe', weapon: 'greataxe', armor: 'southern-mail', helmet: 'bascinet', shield: null },
-  { name: 'Veteran Shieldbearer', weapon: 'fighting-spear', armor: 'coat-of-scales', helmet: 'greathelm', shield: 'kite-shield' },
-]);
-
 const ROAMING_BANDS = Object.freeze([
   { id: 'road-thieves', name: 'Road Thieves', start: { x: 385, y: 430 }, end: { x: 430, y: 470 }, enemies: [
     { name: 'Brigand Thug', weapon: 'wood-axe', armor: 'patched-coat', helmet: null, shield: null },
@@ -123,26 +104,26 @@ const ROAMING_BANDS = Object.freeze([
     { name: 'Brigand Thug', weapon: 'wood-axe', armor: 'quilted-jack', helmet: null, shield: null },
     { name: 'Brigand Thug', weapon: 'spear', armor: 'patched-coat', helmet: null, shield: 'buckler' },
   ] },
-  { id: 'pinewood-poachers', name: 'Pinewood Poachers', difficulty: 1, start: { x: 1200, y: 410 }, end: { x: 1410, y: 550 }, enemies: LIGHT_FRONTIER_ENEMIES },
-  { id: 'east-road-reavers', name: 'East Road Reavers', difficulty: 2, start: { x: 1500, y: 715 }, end: { x: 1810, y: 610 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'saltmarsh-waylayers', name: 'Saltmarsh Waylayers', difficulty: 1, start: { x: 300, y: 735 }, end: { x: 400, y: 960 }, enemies: LIGHT_FRONTIER_ENEMIES },
-  { id: 'southern-deserters', name: 'Southern Deserters', difficulty: 1, start: { x: 520, y: 920 }, end: { x: 740, y: 1100 }, enemies: LIGHT_FRONTIER_ENEMIES },
-  { id: 'fen-reavers', name: 'Fen Reavers', difficulty: 2, start: { x: 1130, y: 1020 }, end: { x: 1430, y: 1220 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'frontier-veterans', name: 'Frontier Veterans', difficulty: 3, start: { x: 1740, y: 900 }, end: { x: 1990, y: 1130 }, enemies: VETERAN_FRONTIER_ENEMIES },
-  { id: 'greyhaven-rabble', name: 'Greyhaven Rabble', difficulty: 1, start: { x: 455, y: 235 }, end: { x: 690, y: 245 }, enemies: LIGHT_FRONTIER_ENEMIES },
-  { id: 'ironford-extortionists', name: 'Ironford Extortionists', difficulty: 2, start: { x: 720, y: 330 }, end: { x: 940, y: 345 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'redmere-skirmishers', name: 'Redmere Skirmishers', difficulty: 2, start: { x: 820, y: 675 }, end: { x: 1080, y: 700 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'thornwall-outlaws', name: 'Thornwall Outlaws', difficulty: 2, start: { x: 950, y: 180 }, end: { x: 1210, y: 235 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'highpass-marauders', name: 'Highpass Marauders', difficulty: 3, start: { x: 650, y: 95 }, end: { x: 930, y: 135 }, enemies: VETERAN_FRONTIER_ENEMIES },
-  { id: 'barrowfield-robbers', name: 'Barrowfield Robbers', difficulty: 1, start: { x: 540, y: 680 }, end: { x: 740, y: 790 }, enemies: LIGHT_FRONTIER_ENEMIES },
-  { id: 'pinecross-deserters', name: 'Pinecross Deserters', difficulty: 2, start: { x: 1120, y: 300 }, end: { x: 1450, y: 265 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'dunridge-lancers', name: 'Dunridge Lancers', difficulty: 3, start: { x: 1440, y: 125 }, end: { x: 1810, y: 255 }, enemies: VETERAN_FRONTIER_ENEMIES },
-  { id: 'eastmere-freeblades', name: 'Eastmere Freeblades', difficulty: 3, start: { x: 1740, y: 440 }, end: { x: 2050, y: 690 }, enemies: VETERAN_FRONTIER_ENEMIES },
-  { id: 'stonebridge-tollmen', name: 'Stonebridge Tollmen', difficulty: 2, start: { x: 1280, y: 690 }, end: { x: 1600, y: 790 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'southwatch-raiders', name: 'Southwatch Raiders', difficulty: 2, start: { x: 280, y: 900 }, end: { x: 560, y: 1120 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'wheatmere-pillagers', name: 'Wheatmere Pillagers', difficulty: 2, start: { x: 680, y: 1140 }, end: { x: 1030, y: 1300 }, enemies: HARDENED_FRONTIER_ENEMIES },
-  { id: 'blackfen-stalkers', name: 'Blackfen Stalkers', difficulty: 3, start: { x: 1060, y: 1040 }, end: { x: 1390, y: 1300 }, enemies: VETERAN_FRONTIER_ENEMIES },
-  { id: 'farhold-warbands', name: 'Farhold Warband', difficulty: 3, start: { x: 1580, y: 1080 }, end: { x: 2070, y: 1280 }, enemies: VETERAN_FRONTIER_ENEMIES },
+  { id: 'pinewood-poachers', name: 'Pinewood Poachers', difficulty: 1, start: { x: 1200, y: 410 }, end: { x: 1410, y: 550 } },
+  { id: 'east-road-reavers', name: 'East Road Reavers', difficulty: 2, start: { x: 1500, y: 715 }, end: { x: 1810, y: 610 } },
+  { id: 'saltmarsh-waylayers', name: 'Saltmarsh Waylayers', difficulty: 1, start: { x: 300, y: 735 }, end: { x: 400, y: 960 } },
+  { id: 'southern-deserters', name: 'Southern Deserters', difficulty: 1, start: { x: 520, y: 920 }, end: { x: 740, y: 1100 } },
+  { id: 'fen-reavers', name: 'Fen Reavers', difficulty: 2, start: { x: 1130, y: 1020 }, end: { x: 1430, y: 1220 } },
+  { id: 'frontier-veterans', name: 'Frontier Veterans', difficulty: 3, start: { x: 1740, y: 900 }, end: { x: 1990, y: 1130 } },
+  { id: 'greyhaven-rabble', name: 'Greyhaven Rabble', difficulty: 1, start: { x: 455, y: 235 }, end: { x: 690, y: 245 } },
+  { id: 'ironford-extortionists', name: 'Ironford Extortionists', difficulty: 2, start: { x: 720, y: 330 }, end: { x: 940, y: 345 } },
+  { id: 'redmere-skirmishers', name: 'Redmere Skirmishers', difficulty: 2, start: { x: 820, y: 675 }, end: { x: 1080, y: 700 } },
+  { id: 'thornwall-outlaws', name: 'Thornwall Outlaws', difficulty: 2, start: { x: 950, y: 180 }, end: { x: 1210, y: 235 } },
+  { id: 'highpass-marauders', name: 'Highpass Marauders', difficulty: 3, start: { x: 650, y: 95 }, end: { x: 930, y: 135 } },
+  { id: 'barrowfield-robbers', name: 'Barrowfield Robbers', difficulty: 1, start: { x: 540, y: 680 }, end: { x: 740, y: 790 } },
+  { id: 'pinecross-deserters', name: 'Pinecross Deserters', difficulty: 2, start: { x: 1120, y: 300 }, end: { x: 1450, y: 265 } },
+  { id: 'dunridge-lancers', name: 'Dunridge Lancers', difficulty: 3, start: { x: 1440, y: 125 }, end: { x: 1810, y: 255 } },
+  { id: 'eastmere-freeblades', name: 'Eastmere Freeblades', difficulty: 3, start: { x: 1740, y: 440 }, end: { x: 2050, y: 690 } },
+  { id: 'stonebridge-tollmen', name: 'Stonebridge Tollmen', difficulty: 2, start: { x: 1280, y: 690 }, end: { x: 1600, y: 790 } },
+  { id: 'southwatch-raiders', name: 'Southwatch Raiders', difficulty: 2, start: { x: 280, y: 900 }, end: { x: 560, y: 1120 } },
+  { id: 'wheatmere-pillagers', name: 'Wheatmere Pillagers', difficulty: 2, start: { x: 680, y: 1140 }, end: { x: 1030, y: 1300 } },
+  { id: 'blackfen-stalkers', name: 'Blackfen Stalkers', difficulty: 3, start: { x: 1060, y: 1040 }, end: { x: 1390, y: 1300 } },
+  { id: 'farhold-warbands', name: 'Farhold Warband', difficulty: 3, start: { x: 1580, y: 1080 }, end: { x: 2070, y: 1280 } },
 ]);
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
@@ -150,7 +131,7 @@ const FAMED_ID = /^famed:([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
 const FAMED_NAMES = ['Ashen', 'Blackthorn', 'Dawnward', 'Grimwolf', 'Ironbound', 'Oathkeeper', 'Ravenmark', 'Stormborn', 'Thornheart', 'Wolfguard'];
 
 export function createFamedItemId(baseId, seed) {
-  if (!ITEM_BY_ID.has(baseId) || ITEM_BY_ID.get(baseId).slot === 'accessory' || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
+  if (!ITEM_BY_ID.has(baseId) || ['accessory', 'mount'].includes(ITEM_BY_ID.get(baseId).slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
   return `famed:${baseId}:${seed}`;
 }
 
@@ -162,7 +143,7 @@ export function getItem(id) {
   if (!match) return undefined;
   const original = ITEM_BY_ID.get(match[1]);
   const seed = Number(match[2]);
-  if (!original || original.slot === 'accessory' || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
+  if (!original || ['accessory', 'mount'].includes(original.slot) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
   const roll = shift => (seed >>> shift) & 15;
   const bonuses = [];
   const item = { ...original, id, baseId: original.id, rarity: 'famed' };
@@ -192,7 +173,7 @@ export function getItem(id) {
   item.bonuses = Object.freeze(bonuses.map(bonus => Object.freeze(bonus)));
   return Object.freeze(item);
 }
-const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id)]);
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
@@ -220,7 +201,7 @@ const MARKET_FACTORS = {
   farhold:    { grain: 1.50, timber: 1.35, iron: 1.25, salt: 1.40, wool: 1.45 },
 };
 const GEAR_FACTORS = { oakwatch: 1, greyhaven: 1.05, ironford: .84, thornwall: 1.16, redmere: 1.08, highpass: 1.20, saltwick: 1.12, barrowfield: .96, pinecross:1.04, dunridge:1.12, eastmere:.98, stonebridge:.88, southwatch:1.08, wheatmere:1.02, blackfen:1.15, farhold:1.22 };
-const SLOTS = ['armor', 'helmet', 'weapon', 'shield'];
+const SLOTS = ['armor', 'helmet', 'weapon', 'shield', 'mount'];
 export const WORLD_BOUNDS = Object.freeze({ minX: 180, maxX: 2120, minY: 80, maxY: 1380 });
 const BOUNDS = WORLD_BOUNDS;
 const TOWN_RADIUS = 28;
@@ -315,6 +296,7 @@ function normalizeMember(person) {
     : person.pendingLevelUps.map(entry => ({ level: entry.level, rolls: { ...entry.rolls } }));
   return {
     ...person,
+    equipment: { ...person.equipment, mount: person.equipment.mount ?? null },
     traits: [...(person.traits ?? [])],
     reserveEquipment: { weapon: person.reserveEquipment?.weapon ?? null, shield: person.reserveEquipment?.shield ?? null },
     accessories: [...(person.accessories ?? [null, null])],
@@ -378,6 +360,7 @@ export function getCompanyStats(person) {
   const background = person.background ?? '';
   const recruit = recruitBonuses(person);
   const equipped = getEquipment(person);
+  const mountHit = person.hp > 0 ? equipped.mount?.hitBonus ?? 0 : 0;
   const armorFatigue = (equipped.armor?.fatigue ?? 0) + (equipped.helmet?.fatigue ?? 0);
   const otherFatigue = (equipped.weapon?.fatigue ?? 0) + (equipped.shield?.fatigue ?? 0);
   const fatigue = otherFatigue + (hasPerk(person, 'brawny') ? Math.floor(armorFatigue * .7) : armorFatigue);
@@ -396,8 +379,8 @@ export function getCompanyStats(person) {
   const baseResolve = 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0) + (recruit.resolve ?? 0);
   return {
     maxHp,
-    meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0),
-    rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0),
+    meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0) + mountHit,
+    rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0) + mountHit,
     meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
     rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
     maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue),
@@ -413,6 +396,14 @@ export function getCompanyStats(person) {
     maxBodyArmor,
     maxHeadArmor,
   };
+}
+
+export function getDailyFood(state) {
+  return state.party.reduce((total, person) => total + 1 + (person.hp > 0 ? getItem(person.equipment?.mount)?.foodUpkeep ?? 0 : 0), 0);
+}
+
+export function getCompanyTravelBonus(state) {
+  return state.party.reduce((total, person) => total + (person.hp > 0 ? getItem(person.equipment?.mount)?.travelBonus ?? 0 : 0), 0);
 }
 
 export function createGame(seed = Date.now()) {
@@ -555,14 +546,26 @@ function rotatedItems(items, state, town, cycle, label) {
 
 function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
   const equipment = Object.fromEntries(ITEMS.map(item => [item.id, 0]));
-  const common = ITEMS.filter(item => item.price < 250);
-  const better = ITEMS.filter(item => item.price >= 250 && item.price < 450);
-  const premium = ITEMS.filter(item => item.price >= 450);
-  for (const item of common) equipment[item.id] = 1 + Number(townEventHash(`${state.seed}:${town.id}:${cycle}:common:${item.id}`) % 4 === 0);
+  const gear = ITEMS.filter(item => item.slot !== 'mount');
+  const halfStock = (item, count, source) => Array.from({ length: count }, (_, copy) => {
+    let roll = townEventHash(`${state.seed}:${town.id}:${cycle}:${source}:${item.id}:${copy}`);
+    roll ^= roll >>> 16;
+    roll = Math.imul(roll, 0x7feb352d);
+    roll ^= roll >>> 15;
+    return roll & 1;
+  }).reduce((total, kept) => total + kept, 0);
+  const common = gear.filter(item => item.price < 250);
+  const better = gear.filter(item => item.price >= 250 && item.price < 450);
+  const premium = gear.filter(item => item.price >= 450);
+  for (const item of common) equipment[item.id] = halfStock(item, 1 + Number(townEventHash(`${state.seed}:${town.id}:${cycle}:common:${item.id}`) % 4 === 0), 'base');
   const betterSlots = town.kind === 'city' || town.kind === 'fort' ? 4 : town.kind === 'town' ? 3 : 2;
   const premiumSlots = town.kind === 'city' || town.kind === 'fort' ? 2 : town.kind === 'town' ? 1 : 0;
-  for (const item of rotatedItems(better, state, town, cycle, 'better').slice(0, betterSlots)) equipment[item.id] = 1;
-  for (const item of rotatedItems(premium, state, town, cycle, 'premium').slice(0, premiumSlots)) equipment[item.id] = 1;
+  for (const item of rotatedItems(better, state, town, cycle, 'better').slice(0, betterSlots)) equipment[item.id] = halfStock(item, 1, 'better');
+  for (const item of rotatedItems(premium, state, town, cycle, 'premium').slice(0, premiumSlots)) equipment[item.id] = halfStock(item, 1, 'premium');
+  if (['city', 'fort'].includes(town.kind) && townEventHash(`${state.seed}:${town.id}:${cycle}:mount-offer`) % 100 < 2) {
+    const mount = MOUNTS[townEventHash(`${state.seed}:${town.id}:${cycle}:mount-kind`) % MOUNTS.length];
+    equipment[mount.id] = 1;
+  }
   return equipment;
 }
 
@@ -582,9 +585,11 @@ function dailyMarketStock(state, town) {
 }
 
 function addShipmentStock(equipment, state, town, event, cycle) {
-  const candidates = ITEMS.filter(item => item.price >= 250 && equipment[item.id] === 0);
+  const candidates = ITEMS.filter(item => item.slot !== 'mount' && item.price >= 250 && equipment[item.id] === 0);
   const count = town.kind === 'city' ? 4 : town.kind === 'fort' ? 3 : 2;
-  for (const item of rotatedItems(candidates, state, town, cycle, event.id).slice(0, count)) equipment[item.id] += 1;
+  for (const item of rotatedItems(candidates, state, town, cycle, event.id).slice(0, count)) {
+    if (townEventHash(`${state.seed}:${town.id}:${event.id}:shipment:${item.id}`) % 2 === 0) equipment[item.id] += 1;
+  }
 }
 
 function projectedMarketStock(state, town) {
@@ -594,7 +599,10 @@ function projectedMarketStock(state, town) {
   const daily = existing?.day === state.day
     ? { food: existing.food, goods: { ...existing.goods }, supplies: { ...(existing.supplies ?? Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock]))) } }
     : dailyMarketStock(state, town);
-  const equipment = existing && existingCycle === cycle ? { ...existing.equipment } : defaultArmoryStock(state, town, cycle);
+  const replenished = defaultArmoryStock(state, town, cycle);
+  const equipment = existing && existingCycle === cycle
+    ? { ...Object.fromEntries(MOUNTS.map(item => [item.id, replenished[item.id]])), ...existing.equipment }
+    : replenished;
   let appliedEventId = existing?.appliedEventId ?? null;
   const event = getTownEvent(state, town.id);
   const stockEvent = event?.type === 'armorer-shipment' ? event : null;
@@ -826,14 +834,17 @@ function roamingBand(state, band) {
   const tier = band.difficulty ?? 0;
   const strength = 1 + Math.floor(random() * 3);
   const count = tier === 0 ? strength === 1 ? 1 : 2 : tier === 1 ? 2 + Number(strength === 3) : tier === 2 ? 2 + strength : 3 + strength;
-  const offset = Math.floor(random() * band.enemies.length);
-  const enemies = Array.from({ length: count }, (_, index) => ({ ...band.enemies[(index + offset) % band.enemies.length] }));
+  const pool = tier ? getRegionalEnemyTemplates(band.start.x, band.start.y, tier) : band.enemies;
+  const offset = Math.floor(random() * pool.length);
+  const enemies = Array.from({ length: count }, (_, index) => ({ ...pool[(index + offset) % pool.length] }));
+  if (tier === 3 && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, band.id, spawnCycle);
   const position = activeBandProgress(state, band);
   const target = position.behavior === 'raiding-caravan' ? getCaravans(state).find(caravan => caravan.id === position.targetId
     && (caravan.status === 'en-route' || caravan.status === 'under-attack')) : null;
   const behavior = position.behavior === 'raiding-caravan' && !target ? 'patrolling' : position.behavior ?? 'patrolling';
   return {
     id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle,
+    ...(tier ? { factionId: getRegionalEnemyFaction(band.start.x, band.start.y).id, factionLabel: getRegionalEnemyFaction(band.start.x, band.start.y).label } : {}),
     x: position.x, y: position.y, behavior, targetId: behavior === 'raiding-caravan' ? position.targetId : null,
     enemies,
     description: target ? `These raiders are closing on the armorer wagon bound for ${TOWN_BY_ID.get(target.destinationId).name}. Defeat them before they reach it.`
@@ -1030,13 +1041,13 @@ function completeContract(state, town) {
   state.renown += contract.renown ?? 1;
   const description = contract.type === 'hunt' ? 'Brigand hunt completed' : contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
   record(state, `${description} at ${town.name}. Earned ${contract.reward} crowns and ${contract.renown ?? 1} renown.`);
-  if ((contract.type === undefined || contract.type === 'courier') && townEventHash(`${state.seed}:${contract.id}:${town.id}:courier-item`) % 2 === 0) {
+  if ((contract.type === undefined || contract.type === 'courier') && townEventHash(`${state.seed}:${contract.id}:${town.id}:courier-item`) % 4 === 0) {
     const better = townEventHash(`${state.seed}:${contract.id}:${town.id}:courier-quality`) % 3 === 0;
     const stock = writableMarketStock(state, town);
     const event = scheduledTownEvent(state, town);
     const candidates = ITEMS.filter(item => {
       const rightTier = better ? item.price >= 250 && item.price < 450 : item.price < 250;
-      return rightTier && stock.equipment[item.id] < 1024 && visibleEquipmentStock(state, town, item, stock.equipment[item.id] + 1, event) > 0;
+      return item.slot !== 'mount' && rightTier && stock.equipment[item.id] < 1024 && visibleEquipmentStock(state, town, item, stock.equipment[item.id] + 1, event) > 0;
     });
     if (candidates.length) {
       const item = candidates[townEventHash(`${state.seed}:${contract.id}:${town.id}:courier-choice`) % candidates.length];
@@ -1050,7 +1061,7 @@ function completeContract(state, town) {
 
 function atMidnight(state) {
   state.day += 1;
-  const foodNeeded = state.party.length;
+  const foodNeeded = getDailyFood(state);
   const wages = state.party.reduce((total, person) => total + getCompanyStats(person).dailyWage, 0);
   const foodShort = Math.max(0, foodNeeded - state.food);
   const wagesShort = Math.max(0, wages - state.gold);
@@ -1120,7 +1131,7 @@ export function tick(state, hours) {
     }
     if (state.destination) {
       const distanceLeft = distance(state.position, state.destination);
-      const speed = terrainSpeed(terrainAt(state.position.x, state.position.y));
+      const speed = terrainSpeed(terrainAt(state.position.x, state.position.y)) * (1 + getCompanyTravelBonus(state));
       const movement = Math.min(distanceLeft, speed * step);
       if (distanceLeft > 0) {
         state.position.x += (state.destination.x - state.position.x) * movement / distanceLeft;
@@ -1720,6 +1731,11 @@ function famedDropForCamp(seed, camp) {
   return createFamedItemId(baseId, hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-item`));
 }
 
+function rareEnemyMount(seed, encounterId, cycle) {
+  if (hashSeed(`${seed}:${encounterId}:${cycle}:mounted-elite`) % 100 >= 2) return null;
+  return MOUNTS[hashSeed(`${seed}:${encounterId}:elite-mount-kind`) % MOUNTS.length].id;
+}
+
 function randomCamp(state, id, index, generation) {
   let seed = hashSeed(`${state.seed}:${id}:${generation}`);
   const random = () => { seed = (Math.imul(seed,1664525)+1013904223) >>> 0; return seed / 4294967296; };
@@ -1731,25 +1747,21 @@ function randomCamp(state, id, index, generation) {
     if (!SETTLEMENTS.some(town => Math.hypot(town.x-x,town.y-y)<90) && !CAMP_SITES.some(camp => Math.hypot(camp.x-x,camp.y-y)<85)) break;
   }
   const difficulty = column === 0 && row < 2 ? 1 : 1 + Math.floor(random() * 3);
-  const pool = [...CAMP_SITES[difficulty-1].enemies,
-    { name: difficulty===1?'Brigand Cutthroat':'Brigand Marksman', weapon:difficulty===1?'rondel-dagger':'light-crossbow', armor:difficulty===1?'patched-coat':'leather-vest', helmet:'cloth-hood', shield:null },
-    { name:'Brigand Pikeman',weapon:difficulty===1?'spear':'billhook',armor:difficulty===3?'reinforced-mail':'quilted-jack',helmet:difficulty===3?'bascinet':'leather-cap',shield:null },
-    ...(difficulty >= 2 ? [
-      { name: 'Brigand Skirmisher', weapon: difficulty === 3 ? 'heavy-javelins' : 'javelins', armor: 'quilted-jack', helmet: 'cloth-hood', shield: 'buckler' },
-      { name: 'Brigand Hammerman', weapon: difficulty === 3 ? 'warhammer' : 'fighting-spear', armor: difficulty === 3 ? 'mail-shirt' : 'leather-vest', helmet: 'leather-cap', shield: null },
-    ] : []),
-  ];
-  const enemies = Array.from({length:2+difficulty+Math.floor(random()*2)},()=>({...pool[Math.floor(random()*pool.length)]}));
-  const biome = terrainAt(x,y);
-  const names = {forest:'Woodland Hideout',mountain:'Ridge Encampment',marsh:'Reed Camp',plains:'Outlaw Encampment'};
-  return {id,name:`${names[biome]||'Outlaw Camp'} ${index+1}`,x,y,difficulty,enemies,reward:100+difficulty*95,random:true,description:`${enemies.length} brigands occupy this ${biome} camp. Survivors may establish another camp after three days.`};
+  const pool = getRegionalEnemyTemplates(x, y, difficulty);
+  const count = 2 + difficulty + Math.floor(random() * 2);
+  const offset = Math.floor(random() * pool.length);
+  const enemies = Array.from({ length: count }, (_, enemyIndex) => ({ ...pool[(offset + enemyIndex) % pool.length] }));
+  const text = getRegionalCampText(x, y, difficulty, enemies.length, index);
+  return {id,...text,x,y,difficulty,enemies,reward:100+difficulty*95,random:true};
 }
 
 export function getCampSites(state) {
   return [...CAMP_SITES.map(camp=>camp.id),...RANDOM_CAMP_IDS].map((id,index)=>{
     const progress = campRecord(state,id), fixed = CAMP_BY_ID.get(id);
     const camp = fixed || randomCamp(state,id,index-CAMP_SITES.length,progress.generation);
-    return {...camp,kind:'camp',generation:progress.generation,famedChance:FAMED_CHANCES[camp.difficulty]??0,enemies:camp.enemies.map(enemy=>({...enemy})),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
+    const enemies = camp.enemies.map(enemy => ({ ...enemy }));
+    if (camp.difficulty === 3 && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation);
+    return {...camp,kind:'camp',generation:progress.generation,famedChance:FAMED_CHANCES[camp.difficulty]??0,enemies,cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
   });
 }
 
@@ -1898,7 +1910,8 @@ export function startBattle(state, encounterId) {
   });
   if ((state.tactic ?? 'offense') === 'shield-wall') shieldWallDeployment(company);
   const enemies = camp.enemies.map((enemy, index) => {
-    const gear = { armor: enemy.armor, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield };
+    const rareMount = getItem(enemy.mount);
+    const gear = { armor: enemy.armor, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield, mount: rareMount?.id ?? null };
     const shieldDefense = getItem(gear.shield)?.defense ?? 0;
     const hp = 25 + camp.difficulty * 12 + (index === 0 && camp.difficulty === 3 ? 12 : 0);
     return {
@@ -1910,7 +1923,7 @@ export function startBattle(state, encounterId) {
       perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0,
       seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
       morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2, reload: 0,
-      meleeSkill: 30 + camp.difficulty * 6, rangedSkill: 28 + camp.difficulty * 6,
+      meleeSkill: 30 + camp.difficulty * 6 + (rareMount?.hitBonus ?? 0), rangedSkill: 28 + camp.difficulty * 6 + (rareMount?.hitBonus ?? 0),
       meleeDefense: 2 + camp.difficulty * 2 + shieldDefense,
       rangedDefense: 2 + camp.difficulty * 2 + shieldDefense,
       maxFatigue: 85, initiative: 75 + camp.difficulty * 6, resolve: 32 + camp.difficulty * 8,
@@ -1983,6 +1996,7 @@ function victoryLoot(battle, enemies) {
       const chance = slot === 'weapon' ? 70 : slot === 'shield' ? 55 : 40;
       if (roll(`${enemy.id}:${slot}`, 100) < chance) addItem(id, condition);
     }
+    if (enemy.equipment.mount && roll(`${enemy.id}:mount-capture`, 2) === 0) addItem(enemy.equipment.mount);
   }
   if (!items.length || items.length === 1 && items[0] === battle.famedDrop) addItem(enemies[0]?.equipment.weapon);
   return {
@@ -2349,7 +2363,7 @@ function attackTarget(state, actor, target, weapon) {
   const baseDamage = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
   const damageMultiplier = (hasPerk(actor, 'executioner') && target.hp < target.maxHp ? 1.2 : 1)
     * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1);
-  const raw = Math.round(baseDamage * damageMultiplier * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
+  const raw = Math.round(baseDamage * damageMultiplier * (1 + (getItem(actor.equipment.mount)?.damageBonus ?? 0)) * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
   const head = battleRoll(battle) < .22;
   const part = head ? 'headArmor' : 'bodyArmor';
   const armorBefore = target[part];
@@ -2563,7 +2577,7 @@ export function advanceBattle(state) {
     let destination = actor;
     for (const next of path) {
       const cost = battleMovementCost(battle, actor, destination, next);
-      if (used + cost > 2) break;
+      if (used + cost > 2 + (getItem(actor.equipment.mount)?.movementBonus ?? 0)) break;
       used += cost;
       destination = next;
     }
@@ -2757,11 +2771,12 @@ function validateBattle(input, party, worldState) {
     assert(validHex(unit, field), 'battle hex');
     assert(validCount(unit.maxHp) && unit.maxHp >= 1 && unit.maxHp <= 300 && validCount(unit.hp) && unit.hp <= unit.maxHp && unit.alive === (unit.hp > 0), 'battle health');
     assert(recordObject(unit.equipment), 'battle equipment');
-    for (const slot of SLOTS) assert(unit.equipment[slot] === null || getItem(unit.equipment[slot])?.slot === slot, 'battle equipment');
+    for (const slot of SLOTS) assert(unit.equipment[slot] === null || slot === 'mount' && unit.equipment[slot] === undefined || getItem(unit.equipment[slot])?.slot === slot, 'battle equipment');
     assert(!getItem(unit.equipment.weapon)?.twoHanded || !unit.equipment.shield, 'battle two handed weapon');
     const reserveEquipment = unit.reserveEquipment ?? { weapon: null, shield: null };
     const accessories = unit.accessories ?? [null, null];
     const partyMember = unit.side === 'company' ? party.find(person => person.id === unit.id) : null;
+    if (partyMember) assert((unit.equipment.mount ?? null) === (partyMember.equipment.mount ?? null), 'battle mount owner');
     const perks = unit.perks ?? partyMember?.perks ?? [];
     assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && PERK_BY_ID.has(id)) && new Set(perks).size === perks.length, 'battle perks');
     assert(unit.side === 'enemy' ? perks.length === 0 : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
@@ -2791,7 +2806,7 @@ function validateBattle(input, party, worldState) {
       id: unit.id, name: unit.name, side: unit.side, q: unit.q, r: unit.r,
       hp: unit.hp, maxHp: unit.maxHp, bodyArmor: unit.bodyArmor, headArmor: unit.headArmor,
       maxBodyArmor: unit.maxBodyArmor, maxHeadArmor: unit.maxHeadArmor,
-      equipment: Object.fromEntries(SLOTS.map(slot => [slot, unit.equipment[slot]])),
+      equipment: Object.fromEntries(SLOTS.map(slot => [slot, unit.equipment[slot] ?? null])),
       reserveEquipment: { weapon: reserveEquipment.weapon, shield: reserveEquipment.shield }, accessories: [...accessories],
       pocketDrawnFrom, pocketStowedWeapon, pocketStowedReload: unit.pocketStowedReload ?? 0,
       pocketDrawnRound: unit.pocketDrawnRound ?? 0, reserveReload: unit.reserveReload ?? 0, meleePhase: unit.meleePhase ?? false,
@@ -2999,7 +3014,7 @@ export function validateSave(input) {
     assert(Number.isFinite(person.morale) && person.morale >= 0 && person.morale <= 100, 'person morale');
     assert(person.equipment && typeof person.equipment === 'object' && !Array.isArray(person.equipment), 'equipment');
     for (const slot of SLOTS) {
-      const itemId = person.equipment[slot];
+      const itemId = slot === 'mount' ? person.equipment[slot] ?? null : person.equipment[slot];
       assert(itemId === null || getItem(itemId)?.slot === slot, `${slot} equipment`);
     }
     const reserve = person.reserveEquipment ?? { weapon: null, shield: null };
@@ -3124,7 +3139,7 @@ export function validateSave(input) {
     ...(person.backgroundId === undefined ? {} : { backgroundId: person.backgroundId }),
     traits: [...(person.traits ?? [])],
     hp: person.hp, morale: person.morale,
-    equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot]])),
+    equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot] ?? null])),
     reserveEquipment: { weapon: person.reserveEquipment?.weapon ?? null, shield: person.reserveEquipment?.shield ?? null },
     accessories: [...(person.accessories ?? [null, null])],
     level: person.level, xp: person.xp, trainingPoints: person.trainingPoints,
