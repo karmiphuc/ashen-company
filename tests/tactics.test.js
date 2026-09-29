@@ -7,6 +7,11 @@ import {
 } from '../src/engine.js';
 
 function approach(state, id = 'quarry-camp') {
+  const until = (state.day - 1) * 24 + state.hour + 48;
+  for (const [bandId, progress] of Object.entries(state.bands)) {
+    if (bandId !== id) progress.defeatedUntil = until;
+  }
+  if (state.bands[id]) state.bands[id].defeatedUntil = 0;
   if (id === 'quarry-camp') {
     const site = getCampSites(state)[0];
     assert.equal(travelTo(state, site.x, site.y).ok, true);

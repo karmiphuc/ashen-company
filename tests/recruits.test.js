@@ -9,6 +9,8 @@ import {
 const STAT_KEYS = ['maxHp', 'meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve'];
 
 function approach(state, place) {
+  const until = (state.day - 1) * 24 + state.hour + 48;
+  for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   assert.equal(travelTo(state, place.x, place.y).ok, true);
   for (let index = 0; index < 8 && state.destination; index++) tick(state, 12);
   assert.equal(state.destination, null);

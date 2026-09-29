@@ -7,22 +7,22 @@ import {
 import { routeSegmentDistance } from '../src/caravans.js';
 
 const threatenedRoutes = [
-  ['ironford', 1, 10, 'barrowfield', 'river-raiders'],
+  ['ironford', 1, 10, 'barrowfield', 'ironford-extortionists'],
   ['redmere', 2, 8, 'ironford', 'river-raiders'],
-  ['blackfen', 6, 2, 'wheatmere', 'fen-reavers'],
-  ['highpass', 7, 2, 'greyhaven', 'forest-cutthroats'],
+  ['blackfen', 6, 2, 'wheatmere', 'wheatmere-pillagers'],
+  ['highpass', 7, 2, 'greyhaven', 'greyhaven-rabble'],
   ['oakwatch', 8, 4, 'greyhaven', 'road-thieves'],
-  ['dunridge', 8, 2, 'pinecross', 'pinewood-poachers'],
+  ['dunridge', 8, 2, 'pinecross', 'dunridge-lancers'],
   ['eastmere', 13, 8, 'stonebridge', 'east-road-reavers'],
-  ['pinecross', 17, 2, 'thornwall', 'pinewood-poachers'],
-  ['wheatmere', 17, 8, 'blackfen', 'fen-reavers'],
-  ['thornwall', 21, 8, 'ironford', 'forest-cutthroats'],
-  ['barrowfield', 23, 6, 'ironford', 'river-raiders'],
-  ['southwatch', 28, 4, 'saltwick', 'saltmarsh-waylayers'],
+  ['pinecross', 17, 2, 'thornwall', 'pinecross-deserters'],
+  ['wheatmere', 17, 8, 'blackfen', 'blackfen-stalkers'],
+  ['thornwall', 21, 8, 'ironford', 'ironford-extortionists'],
+  ['barrowfield', 23, 6, 'ironford', 'ironford-extortionists'],
+  ['southwatch', 28, 4, 'saltwick', 'southwatch-raiders'],
   ['saltwick', 33, 10, 'oakwatch', 'hungry-deserters'],
   ['stonebridge', 42, 2, 'pinecross', 'pinewood-poachers'],
-  ['greyhaven', 43, 12, 'highpass', 'forest-cutthroats'],
-  ['farhold', 57, 12, 'stonebridge', 'east-road-reavers'],
+  ['greyhaven', 43, 12, 'highpass', 'greyhaven-rabble'],
+  ['farhold', 57, 12, 'stonebridge', 'stonebridge-tollmen'],
 ];
 
 function passHours(state, hours) {
@@ -46,7 +46,7 @@ test('every settlement shipment route can be threatened by a nearby persistent p
   assert.deepEqual(new Set(threatenedRoutes.map(row => row[0])), new Set(SETTLEMENTS.map(town => town.id)));
   for (const [townId, seed, day, originId, attackerId] of threatenedRoutes) {
     const state = createGame(seed);
-    passHours(state, (day - 1) * 24);
+    passHours(state, (day - 1) * 24 - 8);
     const wagon = getCaravans(state).find(row => row.destinationId === townId && row.status === 'en-route');
     assert.equal(wagon?.originId, originId, `${townId} uses its intended road`);
     assert.equal(wagon?.attackerId, attackerId, `${townId} has a band able to raid its road`);
@@ -54,7 +54,7 @@ test('every settlement shipment route can be threatened by a nearby persistent p
   }
 });
 
-test('clearing the new southern road before shipment launch prevents replacement attackers', () => {
+test('a blocked nearest raider makes shipment launch choose another available road band', () => {
   const state = createGame(28);
   passHours(state, 48);
   const band = getRoamingBands(state).find(row => row.id === 'saltmarsh-waylayers');
@@ -65,9 +65,8 @@ test('clearing the new southern road before shipment launch prevents replacement
   assert.equal(finishBattle(state).ok, true);
   passHours(state, 24);
   const wagon = getCaravans(state).find(row => row.destinationId === 'southwatch');
-  assert.equal(wagon?.attackerId, null);
-  assert.equal(state.shipments.southwatch.attackerId, null);
-  passHours(state, wagon.etaHours);
-  assert.equal(getCaravans(state).find(row => row.id === wagon.id)?.status, 'delivered');
+  assert.equal(wagon?.attackerId, 'southwatch-raiders');
+  assert.notEqual(wagon?.attackerId, band.id);
+  assert.equal(state.shipments.southwatch.attackerId, 'southwatch-raiders');
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
 });

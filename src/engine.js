@@ -85,6 +85,28 @@ const CAMP_SITES = Object.freeze([
   ] },
 ]);
 
+const LIGHT_FRONTIER_ENEMIES = Object.freeze([
+  { name: 'Frontier Skirmisher', weapon: 'javelins', armor: 'quilted-jack', helmet: 'cloth-hood', shield: 'buckler' },
+  { name: 'Frontier Spear', weapon: 'fighting-spear', armor: 'leather-vest', helmet: 'leather-cap', shield: 'round-shield' },
+  { name: 'Frontier Marksman', weapon: 'light-crossbow', armor: 'patched-coat', helmet: 'cloth-hood', shield: null },
+  { name: 'Frontier Billman', weapon: 'billhook', armor: 'quilted-jack', helmet: null, shield: null },
+]);
+const HARDENED_FRONTIER_ENEMIES = Object.freeze([
+  { name: 'Raider Shieldbearer', weapon: 'fighting-spear', armor: 'mail-shirt', helmet: 'iron-helm', shield: 'kite-shield' },
+  { name: 'Raider Marksman', weapon: 'light-crossbow', armor: 'reinforced-mail', helmet: 'kettle-helm', shield: null },
+  { name: 'Raider Billman', weapon: 'billhook', armor: 'mail-shirt', helmet: 'leather-cap', shield: null },
+  { name: 'Raider Hammer', weapon: 'warhammer', armor: 'brigandine', helmet: 'bascinet', shield: 'round-shield' },
+  { name: 'Raider Pikeman', weapon: 'polehammer', armor: 'southern-mail', helmet: 'iron-helm', shield: null },
+]);
+const VETERAN_FRONTIER_ENEMIES = Object.freeze([
+  { name: 'Veteran Captain', weapon: 'warhammer', armor: 'coat-of-scales', helmet: 'greathelm', shield: 'kite-shield' },
+  { name: 'Veteran Greatsword', weapon: 'greatsword', armor: 'reinforced-mail', helmet: 'bascinet', shield: null },
+  { name: 'Veteran Arbalester', weapon: 'heavy-crossbow', armor: 'mail-shirt', helmet: 'kettle-helm', shield: null },
+  { name: 'Veteran Polehammer', weapon: 'polehammer', armor: 'brigandine', helmet: 'iron-helm', shield: null },
+  { name: 'Veteran Greataxe', weapon: 'greataxe', armor: 'southern-mail', helmet: 'bascinet', shield: null },
+  { name: 'Veteran Shieldbearer', weapon: 'fighting-spear', armor: 'coat-of-scales', helmet: 'greathelm', shield: 'kite-shield' },
+]);
+
 const ROAMING_BANDS = Object.freeze([
   { id: 'road-thieves', name: 'Road Thieves', start: { x: 385, y: 430 }, end: { x: 430, y: 470 }, enemies: [
     { name: 'Brigand Thug', weapon: 'wood-axe', armor: 'patched-coat', helmet: null, shield: null },
@@ -101,12 +123,26 @@ const ROAMING_BANDS = Object.freeze([
     { name: 'Brigand Thug', weapon: 'wood-axe', armor: 'quilted-jack', helmet: null, shield: null },
     { name: 'Brigand Thug', weapon: 'spear', armor: 'patched-coat', helmet: null, shield: 'buckler' },
   ] },
-  { id: 'pinewood-poachers', name: 'Pinewood Poachers', difficulty: 1, start: { x: 1200, y: 410 }, end: { x: 1410, y: 550 }, enemies: CAMP_SITES[0].enemies },
-  { id: 'east-road-reavers', name: 'East Road Reavers', difficulty: 2, start: { x: 1500, y: 715 }, end: { x: 1810, y: 610 }, enemies: CAMP_SITES[1].enemies },
-  { id: 'saltmarsh-waylayers', name: 'Saltmarsh Waylayers', difficulty: 1, start: { x: 300, y: 735 }, end: { x: 400, y: 960 }, enemies: CAMP_SITES[0].enemies },
-  { id: 'southern-deserters', name: 'Southern Deserters', difficulty: 1, start: { x: 520, y: 920 }, end: { x: 740, y: 1100 }, enemies: CAMP_SITES[0].enemies },
-  { id: 'fen-reavers', name: 'Fen Reavers', difficulty: 2, start: { x: 1130, y: 1020 }, end: { x: 1430, y: 1220 }, enemies: CAMP_SITES[1].enemies },
-  { id: 'frontier-veterans', name: 'Frontier Veterans', difficulty: 3, start: { x: 1740, y: 900 }, end: { x: 1990, y: 1130 }, enemies: CAMP_SITES[2].enemies.slice(0,4) },
+  { id: 'pinewood-poachers', name: 'Pinewood Poachers', difficulty: 1, start: { x: 1200, y: 410 }, end: { x: 1410, y: 550 }, enemies: LIGHT_FRONTIER_ENEMIES },
+  { id: 'east-road-reavers', name: 'East Road Reavers', difficulty: 2, start: { x: 1500, y: 715 }, end: { x: 1810, y: 610 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'saltmarsh-waylayers', name: 'Saltmarsh Waylayers', difficulty: 1, start: { x: 300, y: 735 }, end: { x: 400, y: 960 }, enemies: LIGHT_FRONTIER_ENEMIES },
+  { id: 'southern-deserters', name: 'Southern Deserters', difficulty: 1, start: { x: 520, y: 920 }, end: { x: 740, y: 1100 }, enemies: LIGHT_FRONTIER_ENEMIES },
+  { id: 'fen-reavers', name: 'Fen Reavers', difficulty: 2, start: { x: 1130, y: 1020 }, end: { x: 1430, y: 1220 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'frontier-veterans', name: 'Frontier Veterans', difficulty: 3, start: { x: 1740, y: 900 }, end: { x: 1990, y: 1130 }, enemies: VETERAN_FRONTIER_ENEMIES },
+  { id: 'greyhaven-rabble', name: 'Greyhaven Rabble', difficulty: 1, start: { x: 455, y: 235 }, end: { x: 690, y: 245 }, enemies: LIGHT_FRONTIER_ENEMIES },
+  { id: 'ironford-extortionists', name: 'Ironford Extortionists', difficulty: 2, start: { x: 720, y: 330 }, end: { x: 940, y: 345 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'redmere-skirmishers', name: 'Redmere Skirmishers', difficulty: 2, start: { x: 820, y: 675 }, end: { x: 1080, y: 700 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'thornwall-outlaws', name: 'Thornwall Outlaws', difficulty: 2, start: { x: 950, y: 180 }, end: { x: 1210, y: 235 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'highpass-marauders', name: 'Highpass Marauders', difficulty: 3, start: { x: 650, y: 95 }, end: { x: 930, y: 135 }, enemies: VETERAN_FRONTIER_ENEMIES },
+  { id: 'barrowfield-robbers', name: 'Barrowfield Robbers', difficulty: 1, start: { x: 540, y: 680 }, end: { x: 740, y: 790 }, enemies: LIGHT_FRONTIER_ENEMIES },
+  { id: 'pinecross-deserters', name: 'Pinecross Deserters', difficulty: 2, start: { x: 1120, y: 300 }, end: { x: 1450, y: 265 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'dunridge-lancers', name: 'Dunridge Lancers', difficulty: 3, start: { x: 1440, y: 125 }, end: { x: 1810, y: 255 }, enemies: VETERAN_FRONTIER_ENEMIES },
+  { id: 'eastmere-freeblades', name: 'Eastmere Freeblades', difficulty: 3, start: { x: 1740, y: 440 }, end: { x: 2050, y: 690 }, enemies: VETERAN_FRONTIER_ENEMIES },
+  { id: 'stonebridge-tollmen', name: 'Stonebridge Tollmen', difficulty: 2, start: { x: 1280, y: 690 }, end: { x: 1600, y: 790 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'southwatch-raiders', name: 'Southwatch Raiders', difficulty: 2, start: { x: 280, y: 900 }, end: { x: 560, y: 1120 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'wheatmere-pillagers', name: 'Wheatmere Pillagers', difficulty: 2, start: { x: 680, y: 1140 }, end: { x: 1030, y: 1300 }, enemies: HARDENED_FRONTIER_ENEMIES },
+  { id: 'blackfen-stalkers', name: 'Blackfen Stalkers', difficulty: 3, start: { x: 1060, y: 1040 }, end: { x: 1390, y: 1300 }, enemies: VETERAN_FRONTIER_ENEMIES },
+  { id: 'farhold-warbands', name: 'Farhold Warband', difficulty: 3, start: { x: 1580, y: 1080 }, end: { x: 2070, y: 1280 }, enemies: VETERAN_FRONTIER_ENEMIES },
 ]);
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
@@ -196,6 +232,14 @@ const MAX_CARGO = 30;
 export const MAX_COMPANY_SIZE = 12;
 const CAMP_RADIUS = 35;
 const BAND_RADIUS = 28;
+const BAND_AGGRO_RADIUS = 120;
+const BAND_CHASE_LEASH = 260;
+const BAND_PATROL_SPEED = 7;
+const BAND_CHASE_SPEED = 42;
+const BAND_RAID_SPEED = 36;
+const CARAVAN_CONTACT_RADIUS = 10;
+const ENCOUNTER_GRACE_HOURS = 1.5;
+const WORLD_STEP_HOURS = .25;
 const SUPPLY_INFO = {
   tools: { name: 'Tools', buyPrice: 18, stock: 8 },
   medicine: { name: 'Medicine', buyPrice: 30, stock: 6 },
@@ -396,6 +440,7 @@ export function createGame(seed = Date.now()) {
     camps: {},
     bands: {},
     pursuit: null,
+    encounterGraceUntil: 0,
     tactic: 'offense',
     battle: null,
     gameOver: false,
@@ -409,6 +454,7 @@ export function createGame(seed = Date.now()) {
     log: [],
     visited: ['oakwatch'],
   };
+  state.bands = Object.fromEntries(ROAMING_BANDS.map(band => [band.id, initialBandProgress(state, band)]));
   state.party = state.party.map(normalizeMember);
   state.formation = seedFormation(state.party);
   advanceCaravans(state, worldHours(state));
@@ -625,24 +671,72 @@ function actionBlocked(state) {
 
 function worldHours(state) { return (state.day - 1) * 24 + state.hour; }
 
+function snapWorldStepClock(state) {
+  const absolute = Math.round(worldHours(state) / WORLD_STEP_HOURS) * WORLD_STEP_HOURS;
+  state.day = Math.floor(absolute / 24) + 1;
+  state.hour = absolute - (state.day - 1) * 24;
+}
+
 function bandSpawnCycle(state, id) {
   const progress = state.bands?.[id];
   return progress?.spawnCycle ?? (progress ? 1 : 0);
 }
 
+function patrolProgressAt(state, band, now = worldHours(state)) {
+  const length = distance(band.start, band.end);
+  const period = length / BAND_PATROL_SPEED;
+  const phase = ((now + hashSeed(band.id) % 11) / period) % 2;
+  const fraction = phase <= 1 ? phase : 2 - phase;
+  return {
+    defeatedUntil: 0,
+    spawnCycle: 0,
+    x: band.start.x + (band.end.x - band.start.x) * fraction,
+    y: band.start.y + (band.end.y - band.start.y) * fraction,
+    direction: phase < 1 ? 1 : -1,
+    behavior: 'patrolling',
+    targetId: null,
+  };
+}
+
+function initialBandProgress(state, band) {
+  return patrolProgressAt(state, band);
+}
+
+function activeBandProgress(state, band) {
+  return state.bands?.[band.id] ?? initialBandProgress(state, band);
+}
+
 function shipmentAttackBand(state, town, origin, startDay) {
-  if (townEventHash(`${state.seed}:${town.id}:${startDay}:shipment-raid`) % 3 !== 0) return null;
+  if (townEventHash(`${state.seed}:${town.id}:${startDay}:shipment-raid`) % 3 === 2) return null;
   const assigned = new Set(Object.values(state.shipments ?? {})
     .filter(shipment => shipment.status === 'en-route' || shipment.status === 'under-attack')
     .map(shipment => shipment.attackerId));
-  const band = [...ROAMING_BANDS].sort((a, b) =>
-    routeSegmentDistance(origin, town, a.start, a.end) - routeSegmentDistance(origin, town, b.start, b.end)
-      || a.id.localeCompare(b.id))[0];
-  return band && routeSegmentDistance(origin, town, band.start, band.end) <= 125 && !assigned.has(band.id)
-    && (state.bands?.[band.id]?.defeatedUntil ?? 0) <= worldHours(state) ? band : null;
+  return [...ROAMING_BANDS]
+    .filter(band => routeSegmentDistance(origin, town, band.start, band.end) <= 180
+      && !assigned.has(band.id)
+      && (activeBandProgress(state, band).defeatedUntil ?? 0) <= worldHours(state)
+      && activeBandProgress(state, band).behavior !== 'raiding-caravan')
+    .sort((a, b) => routeSegmentDistance(origin, town, a.start, a.end) - routeSegmentDistance(origin, town, b.start, b.end)
+      || distance(activeBandProgress(state, a), origin) - distance(activeBandProgress(state, b), origin)
+      || a.id.localeCompare(b.id))[0] ?? null;
 }
 
-function advanceCaravans(state, toHour) {
+function caravanPositionFor(state, townId, shipment, hour = worldHours(state)) {
+  const town = TOWN_BY_ID.get(townId);
+  const plan = shipmentPlan(town, SETTLEMENTS, { startDay: shipment.startDay }, shipment.travelHours, shipment.travelStartHour);
+  const origin = TOWN_BY_ID.get(plan.originId);
+  return { ...shipmentPosition(plan, origin, town, shipment.resolvedHour ?? hour), plan, origin, town };
+}
+
+function caravanInContact(state, townId, shipment, hour = worldHours(state)) {
+  if (!shipment.attackerId || bandSpawnCycle(state, shipment.attackerId) !== shipment.attackerSpawnCycle) return false;
+  const band = BAND_BY_ID.get(shipment.attackerId);
+  const progress = band && activeBandProgress(state, band);
+  if (!progress || progress.defeatedUntil > hour) return false;
+  return distance(progress, caravanPositionFor(state, townId, shipment, hour)) <= CARAVAN_CONTACT_RADIUS;
+}
+
+function advanceCaravans(state, toHour = worldHours(state)) {
   if (!state.shipments) state.shipments = {};
   for (const town of SETTLEMENTS) {
     const event = scheduledTownEvent(state, town);
@@ -655,43 +749,42 @@ function advanceCaravans(state, toHour) {
       startDay: event.startDay, originId: origin.id, status: 'en-route',
       travelHours: CARAVAN_TRAVEL_HOURS, travelStartHour: plan.departureHour,
       attackerId: attacker?.id ?? null, attackerSpawnCycle: attacker ? bandSpawnCycle(state, attacker.id) : null,
-      attackHour: attacker ? plan.departureHour + 13 + townEventHash(`${state.seed}:${town.id}:${event.startDay}:attack-time`) % 4 : null,
+      attackHour: null,
       resolvedHour: null,
+      raidCleared: false,
     };
+    if (attacker) {
+      const progress = activeBandProgress(state, attacker);
+      progress.behavior = 'raiding-caravan';
+      progress.targetId = plan.id;
+    }
     record(state, `Armorer wagon leaves ${origin.name} for ${town.name}.`);
   }
   for (const [townId, shipment] of Object.entries(state.shipments)) {
     if (shipment.status === 'delivered' || shipment.status === 'lost') continue;
     const town = TOWN_BY_ID.get(townId);
-    const event = { startDay: shipment.startDay };
-    const plan = shipmentPlan(town, SETTLEMENTS, event, shipment.travelHours, shipment.travelStartHour);
-    if (shipment.status === 'under-attack' && bandSpawnCycle(state, shipment.attackerId) !== shipment.attackerSpawnCycle) {
+    const { plan } = caravanPositionFor(state, townId, shipment, toHour);
+    if (shipment.attackerId && (bandSpawnCycle(state, shipment.attackerId) !== shipment.attackerSpawnCycle
+      || (state.bands?.[shipment.attackerId]?.defeatedUntil ?? 0) > toHour)) {
       shipment.status = 'en-route';
       shipment.attackerId = null;
       shipment.attackerSpawnCycle = null;
       shipment.attackHour = null;
+      shipment.raidCleared = true;
       record(state, `The road to ${town.name} is safe again; its armorer wagon can continue.`);
     }
-    if (shipment.status === 'en-route' && shipment.attackHour !== null && toHour >= shipment.attackHour) {
-      const progress = state.bands?.[shipment.attackerId];
-      if (bandSpawnCycle(state, shipment.attackerId) === shipment.attackerSpawnCycle
-        && (progress?.defeatedUntil ?? 0) <= shipment.attackHour) {
-        shipment.status = 'under-attack';
-        record(state, `${BAND_BY_ID.get(shipment.attackerId).name} turn toward the armorer wagon bound for ${town.name}. Intercept them within seven hours.`);
-      } else {
-        shipment.attackerId = null;
-        shipment.attackerSpawnCycle = null;
-        shipment.attackHour = null;
-      }
-    }
     const deadline = shipment.attackHour === null ? null : shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS;
-    if (shipment.status === 'under-attack' && deadline !== null && toHour >= deadline) {
+    const contact = shipment.status === 'under-attack' && caravanInContact(state, townId, shipment, toHour);
+    if (shipment.status === 'under-attack' && deadline !== null && toHour >= deadline && contact) {
       shipment.status = 'lost';
-      shipment.resolvedHour = deadline;
+      shipment.resolvedHour = toHour;
       record(state, `Raiders destroy the armorer wagon bound for ${town.name}. Arms are scarce there for four days.`);
-    } else if (shipment.status === 'en-route' && toHour >= plan.arrivalHour) {
+    } else if ((shipment.status === 'en-route' || shipment.status === 'under-attack' && !contact) && toHour >= plan.arrivalHour) {
       shipment.status = 'delivered';
       shipment.resolvedHour = plan.arrivalHour;
+      shipment.attackerId = null;
+      shipment.attackerSpawnCycle = null;
+      shipment.attackHour = null;
       record(state, `Armorer wagon reaches ${town.name}; new gear is available at a discount.`);
     }
   }
@@ -702,8 +795,9 @@ export function getCaravans(state) {
   return Object.entries(state.shipments ?? {}).flatMap(([townId, shipment]) => {
     const town = TOWN_BY_ID.get(townId);
     if (!town || (shipment.resolvedHour !== null && now >= shipment.resolvedHour + CARAVAN_SHORTAGE_HOURS)) return [];
-    const plan = shipmentPlan(town, SETTLEMENTS, { startDay: shipment.startDay }, shipment.travelHours ?? 30,
-      shipment.travelStartHour ?? (shipment.startDay - 1) * 24);
+    const travelHours = shipment.travelHours ?? 30;
+    const travelStartHour = shipment.travelStartHour ?? (shipment.startDay - 1) * 24;
+    const plan = shipmentPlan(town, SETTLEMENTS, { startDay: shipment.startDay }, travelHours, travelStartHour);
     const origin = TOWN_BY_ID.get(plan.originId);
     const position = shipmentPosition(plan, origin, town, shipment.resolvedHour ?? now);
     const active = shipment.status === 'en-route' || shipment.status === 'under-attack';
@@ -711,6 +805,7 @@ export function getCaravans(state) {
       && (state.bands?.[shipment.attackerId]?.defeatedUntil ?? 0) <= now ? shipment.attackerId : null;
     const attackHoursRemaining = shipment.status === 'under-attack' && attackerId
       ? Math.max(0, shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS - now) : null;
+    const contact = active && attackerId ? caravanInContact(state, townId, { ...shipment, travelHours, travelStartHour }, now) : false;
     const description = shipment.status === 'delivered' ? `Delivered from ${origin.name} to ${town.name}.${getTownEvent(state, town.id)?.type === 'armorer-shipment' ? ' The armory has fresh stock.' : ''}`
       : shipment.status === 'lost' ? `Raiders destroyed the wagon bound for ${town.name}. Arms are scarce there.`
       : attackerId ? `${BAND_BY_ID.get(attackerId).name} are targeting this wagon from ${origin.name} to ${town.name}.`
@@ -718,7 +813,7 @@ export function getCaravans(state) {
     return [{ id: plan.id, kind: 'caravan', name: `${town.name} Armorer Wagon`, ...position,
       originId: origin.id, destinationId: town.id, status: shipment.status,
       etaHours: active ? Math.max(0, plan.arrivalHour - now) : 0,
-      attackerId, attackHoursRemaining, resolvedHour: shipment.resolvedHour, description }];
+      attackerId, attackHoursRemaining, contact, resolvedHour: shipment.resolvedHour, description }];
   });
 }
 
@@ -733,26 +828,113 @@ function roamingBand(state, band) {
   const count = tier === 0 ? strength === 1 ? 1 : 2 : tier === 1 ? 2 + Number(strength === 3) : tier === 2 ? 2 + strength : 3 + strength;
   const offset = Math.floor(random() * band.enemies.length);
   const enemies = Array.from({ length: count }, (_, index) => ({ ...band.enemies[(index + offset) % band.enemies.length] }));
-  const length = distance(band.start, band.end);
-  const period = length / 7;
-  const phase = ((worldHours(state) + hashSeed(band.id) % 11) / period) % 2;
-  const fraction = phase <= 1 ? phase : 2 - phase;
-  const target = getCaravans(state).find(caravan => caravan.attackerId === band.id && caravan.status === 'under-attack');
-  const diversion = target ? Math.max(0, Math.min(1, 1 - target.attackHoursRemaining / CARAVAN_ATTACK_WARNING_HOURS)) : 0;
-  const patrol = { x: band.start.x + (band.end.x - band.start.x) * fraction,
-    y: band.start.y + (band.end.y - band.start.y) * fraction };
+  const position = activeBandProgress(state, band);
+  const target = position.behavior === 'raiding-caravan' ? getCaravans(state).find(caravan => caravan.id === position.targetId
+    && (caravan.status === 'en-route' || caravan.status === 'under-attack')) : null;
+  const behavior = position.behavior === 'raiding-caravan' && !target ? 'patrolling' : position.behavior ?? 'patrolling';
   return {
     id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle,
-    x: patrol.x + ((target?.x ?? patrol.x) - patrol.x) * diversion,
-    y: patrol.y + ((target?.y ?? patrol.y) - patrol.y) * diversion,
+    x: position.x, y: position.y, behavior, targetId: behavior === 'raiding-caravan' ? position.targetId : null,
     enemies,
     description: target ? `These raiders are closing on the armorer wagon bound for ${TOWN_BY_ID.get(target.destinationId).name}. Defeat them before they reach it.`
+      : position.behavior === 'hunting-company' ? 'These raiders have spotted the Ashen Company and are giving chase.'
       : tier ? `${enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${enemies.length} lightly equipped brigand${enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
     reward: 0,
   };
 }
 
 export function getRoamingBands(state) { return ROAMING_BANDS.map(band => roamingBand(state, band)).filter(Boolean); }
+
+function moveTowardPoint(progress, target, maximum) {
+  const remaining = distance(progress, target);
+  if (remaining <= maximum || remaining <= 1e-9) {
+    progress.x = target.x;
+    progress.y = target.y;
+    return;
+  }
+  progress.x += (target.x - progress.x) * maximum / remaining;
+  progress.y += (target.y - progress.y) * maximum / remaining;
+}
+
+function moveAlongPatrol(progress, band, maximum) {
+  const dx = band.end.x - band.start.x;
+  const dy = band.end.y - band.start.y;
+  const length = Math.hypot(dx, dy);
+  let fraction = Math.max(0, Math.min(1, ((progress.x - band.start.x) * dx + (progress.y - band.start.y) * dy) / (length * length)));
+  let direction = progress.direction === -1 ? -1 : 1;
+  const patrolPoint = { x: band.start.x + dx * fraction, y: band.start.y + dy * fraction };
+  const returnDistance = distance(progress, patrolPoint);
+  if (returnDistance > 1e-9) {
+    moveTowardPoint(progress, patrolPoint, maximum);
+    if (returnDistance >= maximum) return;
+    maximum -= returnDistance;
+  }
+  fraction += direction * maximum / length;
+  while (fraction < 0 || fraction > 1) {
+    if (fraction > 1) { fraction = 2 - fraction; direction = -1; }
+    else { fraction = -fraction; direction = 1; }
+  }
+  progress.x = band.start.x + dx * fraction;
+  progress.y = band.start.y + dy * fraction;
+  progress.direction = direction;
+}
+
+function companyInSanctuary(state) {
+  return SETTLEMENTS.some(town => distance(state.position, town) <= TOWN_RADIUS);
+}
+
+function assignedShipment(state, bandId) {
+  return Object.entries(state.shipments ?? {}).find(([, shipment]) =>
+    (shipment.status === 'en-route' || shipment.status === 'under-attack')
+      && shipment.attackerId === bandId
+      && shipment.attackerSpawnCycle === bandSpawnCycle(state, bandId)) ?? null;
+}
+
+function advanceRoamingBands(state) {
+  const now = worldHours(state);
+  const sanctuary = companyInSanctuary(state);
+  let contactId = null;
+  for (const band of ROAMING_BANDS) {
+    const progress = activeBandProgress(state, band);
+    if (!state.bands?.[band.id]) state.bands[band.id] = progress;
+    if (progress.defeatedUntil > now) continue;
+    const shipmentEntry = assignedShipment(state, band.id);
+    if (shipmentEntry) {
+      const [townId, shipment] = shipmentEntry;
+      const caravan = caravanPositionFor(state, townId, shipment, now);
+      progress.behavior = 'raiding-caravan';
+      progress.targetId = shipmentId(townId, shipment.startDay);
+      moveTowardPoint(progress, caravan, BAND_RAID_SPEED * WORLD_STEP_HOURS);
+      if (distance(progress, caravan) <= CARAVAN_CONTACT_RADIUS && shipment.attackHour === null) {
+        shipment.status = 'under-attack';
+        shipment.attackHour = now;
+        record(state, `${band.name} reach the armorer wagon bound for ${caravan.town.name}. Intercept them within seven hours.`);
+      }
+      continue;
+    }
+    const separation = distance(progress, state.position);
+    const canHunt = !sanctuary && now >= (state.encounterGraceUntil ?? 0)
+      && (separation <= BAND_AGGRO_RADIUS || progress.behavior === 'hunting-company' && separation <= BAND_CHASE_LEASH);
+    if (canHunt) {
+      progress.behavior = 'hunting-company';
+      progress.targetId = null;
+      moveTowardPoint(progress, state.position, BAND_CHASE_SPEED * WORLD_STEP_HOURS);
+      if (distance(progress, state.position) <= BAND_RADIUS && contactId === null) contactId = band.id;
+    } else {
+      progress.behavior = 'patrolling';
+      progress.targetId = null;
+      moveAlongPatrol(progress, band, BAND_PATROL_SPEED * WORLD_STEP_HOURS);
+    }
+  }
+  return contactId;
+}
+
+function startHostileContact(state, bandId) {
+  state.destination = null;
+  state.destinationAction = null;
+  state.pursuit = null;
+  return startBattle(state, bandId);
+}
 
 export function getEncounterSites(state) { return [...getCampSites(state), ...getRoamingBands(state)]; }
 
@@ -895,11 +1077,9 @@ function advanceClock(state, hours) {
     const step = Math.min(remaining, toMidnight);
     state.hour += step;
     remaining -= step;
-    advanceCaravans(state, worldHours(state));
     if (state.hour >= 24 - 1e-9) {
       state.hour = 0;
       atMidnight(state);
-      advanceCaravans(state, worldHours(state));
     }
     if (state.destinationAction?.type === 'caravan') {
       const caravan = getCaravans(state).find(entry => entry.id === state.destinationAction.id && (entry.status === 'en-route' || entry.status === 'under-attack'));
@@ -920,7 +1100,9 @@ export function tick(state, hours) {
   let remaining = hours;
   let engagement = null;
   while (remaining > 1e-9) {
-    const step = Math.min(remaining, 0.25);
+    const now = worldHours(state);
+    const nextWorldStep = (Math.floor((now + 1e-9) / WORLD_STEP_HOURS) + 1) * WORLD_STEP_HOURS;
+    const step = Math.min(remaining, Math.max(1e-9, nextWorldStep - now));
     let arrivedAction = null;
     if (state.destinationAction?.type === 'caravan') {
       const caravan = getCaravans(state).find(entry => entry.id === state.destinationAction.id && (entry.status === 'en-route' || entry.status === 'under-attack'));
@@ -953,13 +1135,22 @@ export function tick(state, hours) {
       }
     }
     advanceClock(state, step);
+    const reachedWorldStep = Math.abs(worldHours(state) / WORLD_STEP_HOURS - Math.round(worldHours(state) / WORLD_STEP_HOURS)) < 1e-7;
+    if (reachedWorldStep) { snapWorldStepClock(state); advanceCaravans(state, worldHours(state)); }
+    const hostileContact = reachedWorldStep ? advanceRoamingBands(state) : null;
+    if (reachedWorldStep && state.destinationAction?.type === 'caravan') {
+      const caravan = getCaravans(state).find(entry => entry.id === state.destinationAction.id
+        && (entry.status === 'en-route' || entry.status === 'under-attack'));
+      if (!caravan) { state.destination = null; state.destinationAction = null; }
+    }
     if (arrivedAction?.type === 'town') engagement = { ...result(true, `Entering ${TOWN_BY_ID.get(arrivedAction.id).name}.`), openTown: arrivedAction.id };
     else if (arrivedAction?.type === 'camp') {
       const camp = getCampSites(state).find(site => site.id === arrivedAction.id);
       engagement = camp && !camp.cleared && camp.generation === arrivedAction.generation
         ? startBattle(state, arrivedAction.id) : result(false, 'That camp is no longer available to attack.');
     }
-    if (state.pursuit) {
+    if (!engagement && hostileContact) engagement = startHostileContact(state, hostileContact);
+    if (!engagement && state.pursuit) {
       const target = getRoamingBands(state).find(band => band.id === state.pursuit);
       if (!target) { state.pursuit = null; state.destination = null; }
       else if (distance(state.position, target) <= BAND_RADIUS) {
@@ -1436,15 +1627,40 @@ export function trainAttribute() {
   return result(false, 'Choose three different attributes together to spend a level-up.');
 }
 
-export function camp(state) {
-  const blocked = actionBlocked(state);
-  if (blocked) return blocked;
-  advanceClock(state, 6);
+function advanceStationaryTime(state, hours) {
+  let remaining = hours;
+  while (remaining > 1e-9) {
+    const now = worldHours(state);
+    const nextWorldStep = (Math.floor((now + 1e-9) / WORLD_STEP_HOURS) + 1) * WORLD_STEP_HOURS;
+    const step = Math.min(remaining, Math.max(1e-9, nextWorldStep - now));
+    advanceClock(state, step);
+    remaining -= step;
+    const reachedWorldStep = Math.abs(worldHours(state) / WORLD_STEP_HOURS - Math.round(worldHours(state) / WORLD_STEP_HOURS)) < 1e-7;
+    if (reachedWorldStep) {
+      snapWorldStepClock(state);
+      advanceCaravans(state, worldHours(state));
+      if (state.destinationAction?.type === 'caravan') {
+        const caravan = getCaravans(state).find(entry => entry.id === state.destinationAction.id
+          && (entry.status === 'en-route' || entry.status === 'under-attack'));
+        if (!caravan) { state.destination = null; state.destinationAction = null; }
+      }
+      const hostileContact = advanceRoamingBands(state);
+      if (hostileContact) return startHostileContact(state, hostileContact);
+    }
+  }
   if (state.pursuit) {
     const target = getRoamingBands(state).find(band => band.id === state.pursuit);
     state.destination = target ? { x: target.x, y: target.y } : null;
     if (!target) state.pursuit = null;
   }
+  return null;
+}
+
+export function camp(state) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  const interrupted = advanceStationaryTime(state, 6);
+  if (interrupted) return interrupted;
   const wounded = state.party.some(person => person.hp < getCompanyStats(person).maxHp);
   const medicated = wounded && state.supplies.medicine > 0;
   if (medicated) state.supplies.medicine -= 1;
@@ -1471,12 +1687,8 @@ export function camp(state) {
 export function forage(state) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
-  advanceClock(state, 4);
-  if (state.pursuit) {
-    const target = getRoamingBands(state).find(band => band.id === state.pursuit);
-    state.destination = target ? { x: target.x, y: target.y } : null;
-    if (!target) state.pursuit = null;
-  }
+  const interrupted = advanceStationaryTime(state, 4);
+  if (interrupted) return interrupted;
   const terrain = terrainAt(state.position.x, state.position.y);
   const bonus = terrain === 'forest' ? 2 : terrain === 'marsh' ? 1 : terrain === 'mountain' ? -1 : 0;
   const found = Math.max(3, 3 + Math.ceil(state.party.length / 2) + bonus);
@@ -2454,7 +2666,8 @@ export function finishBattle(state) {
     if (battle.encounterType === 'band') {
       const previous = state.bands[battle.campId];
       const defeatedCycle = bandSpawnCycle(state, battle.campId);
-      state.bands[battle.campId] = { defeatedUntil: worldHours(state) + 48, spawnCycle: (previous?.spawnCycle ?? (previous ? 1 : 0)) + 1 };
+      state.bands[battle.campId] = { ...previous, defeatedUntil: worldHours(state) + 48,
+        spawnCycle: (previous?.spawnCycle ?? (previous ? 1 : 0)) + 1, behavior: 'patrolling', targetId: null };
       for (const [townId, shipment] of Object.entries(state.shipments ?? {})) {
         if ((shipment.status !== 'en-route' && shipment.status !== 'under-attack')
           || shipment.attackerId !== battle.campId || shipment.attackerSpawnCycle !== defeatedCycle) continue;
@@ -2462,12 +2675,18 @@ export function finishBattle(state) {
         shipment.attackerId = null;
         shipment.attackerSpawnCycle = null;
         shipment.attackHour = null;
+        shipment.raidCleared = true;
         record(state, `The road to ${TOWN_BY_ID.get(townId).name} is safe again; its armorer wagon can continue.`);
       }
     }
     else { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+(camp.random?72:120),generation:camp.generation }; }
   }
   state.gameOver = state.party.length === 0;
+  state.encounterGraceUntil = Math.max(state.encounterGraceUntil ?? 0, worldHours(state) + ENCOUNTER_GRACE_HOURS);
+  if (!victory && battle.encounterType === 'band' && state.bands[battle.campId]) {
+    state.bands[battle.campId].behavior = 'patrolling';
+    state.bands[battle.campId].targetId = null;
+  }
   const message = victory ? `The company claims ${battle.loot.gold} crowns and defeats ${battle.encounterName}.` : state.gameOver ? 'The company has fallen.' : 'The company survives and leaves the battlefield behind.';
   record(state, message);
   state.battle = null;
@@ -2713,11 +2932,15 @@ export function validateSave(input) {
     && Object.keys(shipments).every(id => TOWN_BY_ID.has(id)), 'shipments');
   const normalizedShipments = {};
   for (const [townId, shipment] of Object.entries(shipments)) {
-    const legacyTiming = recordObject(shipment) && Object.keys(shipment).length === 7;
-    assert(recordObject(shipment) && (legacyTiming || Object.keys(shipment).length === 9)
+    const legacyTiming = recordObject(shipment) && (Object.keys(shipment).length === 7
+      || Object.keys(shipment).length === 8 && typeof shipment.raidCleared === 'boolean');
+    const legacyRaid = recordObject(shipment) && Object.keys(shipment).length === 9;
+    const currentRaid = recordObject(shipment) && Object.keys(shipment).length === 10;
+    assert(recordObject(shipment) && (legacyTiming || legacyRaid || currentRaid)
       && ['startDay', 'originId', 'status', 'attackerId', 'attackerSpawnCycle', 'attackHour', 'resolvedHour']
         .every(key => Object.hasOwn(shipment, key))
-      && (legacyTiming || ['travelHours', 'travelStartHour'].every(key => Object.hasOwn(shipment, key))), 'shipment record');
+      && (legacyTiming || ['travelHours', 'travelStartHour'].every(key => Object.hasOwn(shipment, key)))
+      && (!currentRaid || Object.hasOwn(shipment, 'raidCleared') && typeof shipment.raidCleared === 'boolean'), 'shipment record');
     assert(Number.isSafeInteger(shipment.startDay) && shipment.startDay >= 1 && shipment.startDay <= input.day
       && shipment.startDay > shipmentLegacyThroughDay, 'shipment day');
     const town = TOWN_BY_ID.get(townId);
@@ -2733,22 +2956,29 @@ export function validateSave(input) {
       && travelStartHour <= departureHour && (travelHours !== 30 || travelStartHour === departureHour), 'shipment timing');
     const plan = shipmentPlan(town, SETTLEMENTS, event, travelHours, travelStartHour);
     assert(shipment.originId === plan.originId && ['en-route', 'under-attack', 'delivered', 'lost'].includes(shipment.status), 'shipment route');
+    const oldAttackHour = plan.departureHour + 13 + townEventHash(`${input.seed}:${townId}:${shipment.startDay}:attack-time`) % 4;
     assert(shipment.attackerId === null && shipment.attackerSpawnCycle === null && shipment.attackHour === null
       || BAND_BY_ID.has(shipment.attackerId) && validCount(shipment.attackerSpawnCycle)
         && shipment.attackerSpawnCycle <= 1000000
-        && shipment.attackHour === plan.departureHour + 13 + townEventHash(`${input.seed}:${townId}:${shipment.startDay}:attack-time`) % 4,
+        && ((legacyRaid || legacyTiming) && shipment.attackHour === oldAttackHour
+          || currentRaid && (shipment.attackHour === null || Number.isFinite(shipment.attackHour)
+            && shipment.attackHour >= plan.departureHour && shipment.attackHour <= now)),
     'shipment attacker');
     if (shipment.status === 'en-route') assert(shipment.resolvedHour === null && now < (legacyTiming ? departureHour + 30 : plan.arrivalHour)
-      && (shipment.attackHour === null || now < shipment.attackHour), 'shipment travel');
+      && (currentRaid ? shipment.attackHour === null : shipment.attackHour === null || now < shipment.attackHour), 'shipment travel');
     if (shipment.status === 'under-attack') assert(shipment.attackerId !== null && shipment.resolvedHour === null
-      && now >= shipment.attackHour && now < shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS
+      && shipment.attackHour !== null && now >= shipment.attackHour
+      && (currentRaid || now < shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS)
       && bandSpawnCycle(input, shipment.attackerId) === shipment.attackerSpawnCycle, 'shipment threat');
     if (shipment.status === 'delivered') assert(shipment.attackerId === null
       && shipment.resolvedHour === plan.arrivalHour && now >= shipment.resolvedHour, 'shipment delivery');
     if (shipment.status === 'lost') assert(shipment.attackerId !== null
-      && shipment.resolvedHour === shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS
+      && (currentRaid ? shipment.resolvedHour >= shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS
+        : shipment.resolvedHour === shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS)
       && now >= shipment.resolvedHour, 'shipment loss');
-    normalizedShipments[townId] = { ...shipment, travelHours, travelStartHour };
+    normalizedShipments[townId] = { ...shipment, travelHours, travelStartHour,
+      attackHour: (legacyTiming || legacyRaid) && shipment.status === 'en-route' ? null : shipment.attackHour,
+      raidCleared: shipment.raidCleared ?? false };
   }
   const gameOver = input.gameOver === undefined ? false : input.gameOver;
   assert(typeof gameOver === 'boolean', 'game over');
@@ -2816,7 +3046,46 @@ export function validateSave(input) {
   }
   const bands = input.bands === undefined ? {} : input.bands;
   assert(recordObject(bands) && Object.keys(bands).every(id => BAND_BY_ID.has(id)), 'bands');
-  for (const entry of Object.values(bands)) assert(recordObject(entry) && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0 && entry.defeatedUntil <= worldHours(input) + 48 && (entry.spawnCycle === undefined || validCount(entry.spawnCycle) && entry.spawnCycle >= 1 && entry.spawnCycle <= 1000000), 'band respawn');
+  const normalizedBands = {};
+  for (const band of ROAMING_BANDS) {
+    const entry = bands[band.id];
+    const legacy = entry === undefined || recordObject(entry) && entry.x === undefined;
+    const base = patrolProgressAt(input, band);
+    if (legacy) {
+      if (entry !== undefined) assert(recordObject(entry) && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0
+        && entry.defeatedUntil <= worldHours(input) + 48
+        && (entry.spawnCycle === undefined || validCount(entry.spawnCycle) && entry.spawnCycle >= 1 && entry.spawnCycle <= 1000000), 'band respawn');
+      const threat = Object.entries(normalizedShipments).find(([, shipment]) => shipment.attackerId === band.id
+        && (shipment.status === 'en-route' || shipment.status === 'under-attack'));
+      if (threat) {
+        const [townId, shipment] = threat;
+        if (shipment.status === 'under-attack') {
+          const caravan = caravanPositionFor(input, townId, shipment, worldHours(input));
+          const remaining = Math.max(0, shipment.attackHour + CARAVAN_ATTACK_WARNING_HOURS - worldHours(input));
+          const diversion = Math.max(0, Math.min(1, 1 - remaining / CARAVAN_ATTACK_WARNING_HOURS));
+          base.x += (caravan.x - base.x) * diversion;
+          base.y += (caravan.y - base.y) * diversion;
+        }
+        base.behavior = 'raiding-caravan';
+        base.targetId = shipmentId(townId, shipment.startDay);
+      }
+      normalizedBands[band.id] = { ...base, defeatedUntil: entry?.defeatedUntil ?? 0,
+        spawnCycle: entry?.spawnCycle ?? (entry ? 1 : 0) };
+      continue;
+    }
+    assert(recordObject(entry) && Object.keys(entry).length === 7
+      && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0 && entry.defeatedUntil <= worldHours(input) + 48
+      && validCount(entry.spawnCycle) && entry.spawnCycle <= 1000000
+      && inBounds(entry.x, entry.y) && (entry.direction === 1 || entry.direction === -1)
+      && ['patrolling', 'hunting-company', 'raiding-caravan'].includes(entry.behavior)
+      && (entry.targetId === null || typeof entry.targetId === 'string' && entry.targetId.length <= 80)
+      && (entry.behavior === 'raiding-caravan') === (entry.targetId !== null), 'band state');
+    normalizedBands[band.id] = { defeatedUntil: entry.defeatedUntil, spawnCycle: entry.spawnCycle,
+      x: entry.x, y: entry.y, direction: entry.direction, behavior: entry.behavior, targetId: entry.targetId };
+  }
+  const encounterGraceUntil = input.encounterGraceUntil ?? 0;
+  assert(Number.isFinite(encounterGraceUntil) && encounterGraceUntil >= 0
+    && encounterGraceUntil <= worldHours(input) + ENCOUNTER_GRACE_HOURS, 'encounter grace');
   const pursuit = input.pursuit === undefined ? null : input.pursuit;
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const destinationAction = input.destinationAction ?? null;
@@ -2898,7 +3167,7 @@ export function validateSave(input) {
     shipments: normalizedShipments,
     shipmentLegacyThroughDay,
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
-    bands: Object.fromEntries(Object.entries(bands).map(([id, entry]) => [id, { defeatedUntil: entry.defeatedUntil, spawnCycle: entry.spawnCycle ?? 1 }])), pursuit, tactic,
+    bands: normalizedBands, pursuit, encounterGraceUntil, tactic,
     battle, gameOver,
     position: { x: input.position.x, y: input.position.y },
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,

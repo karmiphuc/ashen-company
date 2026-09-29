@@ -2,6 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, getMarket, getPurchaseQuote, buyAll, buyItem, buyFood, sellItem, createFamedItemId, validateSave, activateMapTarget, getCampSites, getRoamingBands, SETTLEMENTS, tick, travelTo } from '../src/engine.js';
 
+function quietBands(state, except = null) {
+  for (const [id, progress] of Object.entries(state.bands)) if (id !== except) progress.defeatedUntil = 48;
+}
+
 function trader() {
   const state = createGame(7391);
   assert.equal(buyFood(state, 1).ok, true);
@@ -74,6 +78,7 @@ test('invalid or impossible purchases never partially mutate the campaign', () =
 
 test('town activation opens locally or travels and opens once after saved arrival', () => {
   let state = createGame(7391);
+  quietBands(state);
   assert.equal(activateMapTarget(state, 'town', 'oakwatch').openTown, 'oakwatch');
   assert.equal(activateMapTarget(state, 'town', 'greyhaven').ok, true);
   assert.deepEqual(state.destinationAction, { type: 'town', id: 'greyhaven' });
@@ -86,6 +91,7 @@ test('town activation opens locally or travels and opens once after saved arriva
 test('camp activation attacks nearby or travels directly into combat without a preview', () => {
   for (const nearby of [true, false]) {
     let state = createGame(7391), camp = getCampSites(state)[0];
+    quietBands(state);
     if (nearby) state.position = { x: camp.x, y: camp.y };
     assert.equal(activateMapTarget(state, 'camp', camp.id).ok, true);
     if (!nearby) { assert.equal(state.battle, null); state = validateSave(JSON.parse(JSON.stringify(state))); tick(state, 72); }
@@ -97,10 +103,12 @@ test('camp activation attacks nearby or travels directly into combat without a p
 
 test('band activation pursues the moving target and new travel cancels queued camp action', () => {
   const state = createGame(7391), camp = getCampSites(state)[0];
+  quietBands(state);
   activateMapTarget(state, 'camp', camp.id);
   const target = SETTLEMENTS.find(town => town.id === 'greyhaven');
   travelTo(state, target.x, target.y);
   assert.equal(state.destinationAction, null);
+  state.bands['road-thieves'].defeatedUntil = 0;
   const band = getRoamingBands(state)[0];
   activateMapTarget(state, 'band', band.id);
   if (!state.battle) { assert.equal(state.pursuit, band.id); tick(state, 72); }

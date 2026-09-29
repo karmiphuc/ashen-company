@@ -28,6 +28,26 @@ function equipmentCounts(market) {
   return Object.fromEntries(market.equipment.filter(row => !row.famed).map(row => [row.itemId, row.stock]));
 }
 
+function protectShipments(state) {
+  for (const shipment of Object.values(state.shipments)) {
+    if (shipment.status !== 'en-route') continue;
+    if (shipment.attackerId) {
+      state.bands[shipment.attackerId].behavior = 'patrolling';
+      state.bands[shipment.attackerId].targetId = null;
+    }
+    Object.assign(shipment, { attackerId: null, attackerSpawnCycle: null, attackHour: null, raidCleared: true });
+  }
+}
+
+function advanceProtected(state, hours) {
+  while (hours > 0) {
+    const step = Math.min(.25, hours);
+    assert.equal(tick(state, step).ok, true);
+    protectShipments(state);
+    hours -= step;
+  }
+}
+
 test('town events are deterministic, local, finite, and read without changing a save', () => {
   const state = createGame(7391);
   const events = [];
@@ -203,6 +223,7 @@ test('harvest, caravan, fair, shipment, and muster change their advertised marke
 
 test('a city shipment stays ungranted across reload until its physical arrival', () => {
   const state = createGame(16);
+  protectShipments(state);
   atTown(state, 'eastmere');
   assert.equal(buyFood(state, 1).ok, true);
   assert.equal(state.marketStock.eastmere.appliedEventId, null);
@@ -224,9 +245,7 @@ test('a city shipment stays ungranted across reload until its physical arrival',
 test('delivered stock and discount remain for two days without replaying across armory rotation', () => {
   const state = createGame(7);
   atTown(state, 'eastmere');
-  assert.equal(tick(state, 72).ok, true);
-  assert.equal(tick(state, 72).ok, true);
-  assert.equal(tick(state, 4).ok, true);
+  advanceProtected(state, 148);
   const delivered = getTownEvent(state, 'eastmere');
   assert.equal(delivered?.type, 'armorer-shipment');
   assert.equal(delivered.endDay, 9, 'arrival on day seven extends the offer through day nine');

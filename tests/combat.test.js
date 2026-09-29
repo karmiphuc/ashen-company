@@ -8,6 +8,8 @@ import {
 } from '../src/engine.js';
 
 function approach(state, site) {
+  const until = (state.day - 1) * 24 + state.hour + 48;
+  for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   assert.equal(travelTo(state, site.x, site.y).ok, true);
   for (let i = 0; i < 8 && state.destination; i++) tick(state, 12);
   assert.equal(state.destination, null);

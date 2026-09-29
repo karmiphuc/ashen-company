@@ -12,12 +12,12 @@ const roster = band => ({
 
 test('patrol strength and enemy roster vary by seed but stay bounded and preserve easy nearby bands', () => {
   const easyIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
-  const frontierIds = ['pinewood-poachers', 'east-road-reavers', 'saltmarsh-waylayers', 'southern-deserters', 'fen-reavers', 'frontier-veterans'];
+  const frontierIds = getRoamingBands(createGame(1)).map(band => band.id).filter(id => !easyIds.includes(id));
   const strengthSamples = new Set();
 
   for (let seed = 1; seed <= 64; seed++) {
     const bands = getRoamingBands(createGame(seed));
-    assert.equal(bands.length, 10);
+    assert.equal(bands.length, 24);
     for (const id of easyIds) {
       const band = bands.find(entry => entry.id === id);
       assert.equal(band.difficulty, 0);
@@ -53,6 +53,7 @@ test('a patrol roster stays stable while moving and after save/reload in the sam
 
 test('a defeated easy patrol returns as a deterministic new spawn cycle', () => {
   const state = createGame(2);
+  for (const [id, progress] of Object.entries(state.bands)) if (id !== 'road-thieves') progress.defeatedUntil = worldHours(state) + 48;
   const first = getRoamingBands(state).find(band => band.id === 'road-thieves');
   assert.equal(first.strength, 1);
   assert.equal(first.enemies.length, 1);

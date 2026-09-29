@@ -97,8 +97,22 @@ function caravans() {
   return Array.isArray(value) ? value.filter(item => item.status === 'en-route' || item.status === 'under-attack') : [];
 }
 
+function caravanContact(caravan) {
+  return caravan.contact === true || (caravan.contact == null && caravan.status === 'under-attack');
+}
+
 function bandCount(band) {
   return Math.max(1, Number(band.enemyCount ?? band.enemies?.length ?? band.count ?? 1) || 1);
+}
+
+function bandActivity(band) {
+  if (band.behavior === 'hunting-company') return 'Hunting company';
+  if (band.behavior === 'raiding-caravan') {
+    const caravan = caravans().find(item => item.id === band.targetId);
+    const destination = SETTLEMENTS.find(town => town.id === caravan?.destinationId);
+    return destination ? `Raiding ${destination.name} wagon` : 'Raiding a wagon';
+  }
+  return '';
 }
 
 function roadPairs() {
@@ -387,6 +401,7 @@ function draw() {
   caravans().forEach(caravan => {
     const chosen = selection === caravan.id;
     const underAttack = caravan.status === 'under-attack';
+    const inContact = caravanContact(caravan);
     const origin = SETTLEMENTS.find(town => town.id === caravan.originId);
     const destination = SETTLEMENTS.find(town => town.id === caravan.destinationId);
     context.save();
@@ -394,29 +409,31 @@ function draw() {
       context.beginPath(); context.moveTo(origin.x, origin.y); context.lineTo(destination.x, destination.y);
       context.strokeStyle = '#eed28a99'; context.lineWidth = 2 / camera.zoom; context.setLineDash([7 / camera.zoom, 8 / camera.zoom]); context.stroke(); context.setLineDash([]);
     }
-    const attacker = underAttack ? activeBands.find(band => band.id === caravan.attackerId) : null;
+    const attacker = activeBands.find(band => band.behavior === 'raiding-caravan' && band.targetId === caravan.id)
+      || (underAttack ? activeBands.find(band => band.id === caravan.attackerId) : null);
     if (attacker) {
       const angle = Math.atan2(caravan.y - attacker.y, caravan.x - attacker.x);
       const tipX = caravan.x - Math.cos(angle) * 20, tipY = caravan.y - Math.sin(angle) * 14;
       context.beginPath(); context.moveTo(attacker.x, attacker.y); context.lineTo(tipX, tipY);
-      context.strokeStyle = '#d85d50'; context.lineWidth = 2.5 / camera.zoom; context.setLineDash([6 / camera.zoom, 5 / camera.zoom]); context.stroke(); context.setLineDash([]);
+      context.strokeStyle = inContact ? '#f06455' : '#dd9860'; context.lineWidth = 2.5 / camera.zoom; context.setLineDash([6 / camera.zoom, 5 / camera.zoom]); context.stroke(); context.setLineDash([]);
       context.beginPath(); context.moveTo(tipX, tipY); context.lineTo(tipX - Math.cos(angle - .55) * 8, tipY - Math.sin(angle - .55) * 8);
       context.lineTo(tipX - Math.cos(angle + .55) * 8, tipY - Math.sin(angle + .55) * 8); context.closePath();
-      context.fillStyle = '#d85d50'; context.fill();
+      context.fillStyle = inContact ? '#f06455' : '#dd9860'; context.fill();
     }
     context.beginPath(); context.ellipse(caravan.x, caravan.y + 8, 20, 7, 0, 0, Math.PI * 2);
     context.fillStyle = '#14201688'; context.fill();
     if (chosen || underAttack) {
       context.beginPath(); context.ellipse(caravan.x, caravan.y + 4, chosen ? 27 : 24, chosen ? 11 : 9, 0, 0, Math.PI * 2);
-      context.strokeStyle = underAttack ? '#e46c5e' : '#f1d380'; context.lineWidth = 2 / camera.zoom; context.stroke();
+      context.strokeStyle = underAttack ? (inContact ? '#e46c5e' : '#dd9860') : '#f1d380'; context.lineWidth = 2 / camera.zoom; context.stroke();
     }
     sprite(context, 'figure_player_trader', caravan.x, caravan.y, 34, .72);
     const eta = Math.max(0, Math.ceil(Number(caravan.etaHours) || 0));
-    const label = underAttack ? `${caravan.name} · Under attack${Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
+    const label = attacker ? `${caravan.name} · ${inContact ? 'Wagon intercepted' : 'Raiders closing'}${inContact && Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
+      : underAttack ? `${caravan.name} · ${inContact ? 'Wagon intercepted' : 'Raiders closing'}${inContact && Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
       : `${caravan.name} · ${eta}h`;
     context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913dd';
     context.strokeText(label, caravan.x, caravan.y + 25);
-    context.fillStyle = underAttack ? '#f08d7e' : chosen ? '#f0d998' : '#e3d8b7'; context.fillText(label, caravan.x, caravan.y + 25);
+    context.fillStyle = underAttack ? (inContact ? '#f08d7e' : '#e5ad78') : chosen ? '#f0d998' : '#e3d8b7'; context.fillText(label, caravan.x, caravan.y + 25);
     context.restore();
   });
 
@@ -424,6 +441,15 @@ function draw() {
     const count = bandCount(band), selected = selection === band.id, hunted = state.pursuit === band.id;
     const art = ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
     context.save();
+    if (band.behavior === 'hunting-company') {
+      const angle = Math.atan2(state.position.y - band.y, state.position.x - band.x);
+      const tipX = state.position.x - Math.cos(angle) * 19, tipY = state.position.y - Math.sin(angle) * 15;
+      context.beginPath(); context.moveTo(band.x, band.y); context.lineTo(tipX, tipY);
+      context.strokeStyle = '#ed6558'; context.lineWidth = 2.5 / camera.zoom; context.setLineDash([6 / camera.zoom, 5 / camera.zoom]); context.stroke(); context.setLineDash([]);
+      context.beginPath(); context.moveTo(tipX, tipY); context.lineTo(tipX - Math.cos(angle - .55) * 8, tipY - Math.sin(angle - .55) * 8);
+      context.lineTo(tipX - Math.cos(angle + .55) * 8, tipY - Math.sin(angle + .55) * 8); context.closePath();
+      context.fillStyle = '#ed6558'; context.fill();
+    }
     if (selected || hunted) {
       context.lineWidth = 2; context.strokeStyle = selected ? '#f1d380' : '#c46d57'; context.setLineDash(hunted ? [3, 3] : []);
       context.beginPath(); context.ellipse(band.x, band.y + 7, 25, 10, 0, 0, Math.PI * 2); context.stroke(); context.setLineDash([]);
@@ -434,7 +460,13 @@ function draw() {
     sprite(context, `banner_10${clamp(Number(band.difficulty) || Math.ceil(count / 2), 1, 3)}`, band.x + 16, band.y - 20, 17, .82);
     const label = `${band.name || 'Wandering Brigands'} · ${count} brigand${count === 1 ? '' : 's'}`;
     context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913cc'; context.strokeText(label, band.x, band.y + 24);
-    context.fillStyle = selected ? '#f0d998' : hunted ? '#e8a389' : '#d8cfad'; context.fillText(label, band.x, band.y + 24); context.restore();
+    context.fillStyle = selected ? '#f0d998' : hunted ? '#e8a389' : '#d8cfad'; context.fillText(label, band.x, band.y + 24);
+    const activity = bandActivity(band);
+    if (activity) {
+      context.font = 'bold 9px Arial'; context.strokeStyle = '#1c1913cc'; context.strokeText(activity, band.x, band.y + 36);
+      context.fillStyle = band.behavior === 'hunting-company' ? '#f08072' : '#e3a267'; context.fillText(activity, band.x, band.y + 36);
+    }
+    context.restore();
   });
 
   if (state.destination) {

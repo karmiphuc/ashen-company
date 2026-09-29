@@ -7,6 +7,9 @@ import {
 } from '../src/engine.js';
 
 function catchBand(state, id) {
+  const until = (state.day - 1) * 24 + state.hour + 48;
+  for (const [bandId, progress] of Object.entries(state.bands)) if (bandId !== id) progress.defeatedUntil = until;
+  state.bands[id].defeatedUntil = 0;
   assert.equal(pursueBand(state, id).ok, true);
   for (let step = 0; step < 12 && state.destination; step++) tick(state, 12);
   assert.equal(state.destination, null);
@@ -16,6 +19,8 @@ function catchBand(state, id) {
 }
 
 function approachCamp(state) {
+  const until = (state.day - 1) * 24 + state.hour + 48;
+  for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   const site = getCampSites(state)[0];
   assert.equal(travelTo(state, site.x, site.y).ok, true);
   for (let step = 0; step < 12 && state.destination; step++) tick(state, 12);
@@ -23,17 +28,17 @@ function approachCamp(state) {
   return site;
 }
 
-test('ten visible patrols move with time and can be intercepted', () => {
+test('twenty-four visible patrols move with time and can be intercepted', () => {
   const state = createGame(1);
   const first = getRoamingBands(state);
-  assert.equal(first.length, 10);
+  assert.equal(first.length, 24);
   const originalIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
   const original = first.filter(band => originalIds.includes(band.id));
   const frontier = first.filter(band => !originalIds.includes(band.id));
   assert.equal(original.length, 4);
   assert.equal(original.filter(band => Math.hypot(band.x - 350, band.y - 460) < 140).length, 2);
   assert.ok(original.every(band => band.kind === 'band' && band.difficulty === 0 && band.enemies.length <= 2));
-  assert.equal(frontier.length, 6);
+  assert.equal(frontier.length, 20);
   assert.ok(frontier.every(band => band.kind === 'band' && band.difficulty >= 1 && band.enemies.length >= 2));
   assert.equal(getEncounterSites(state).length, getCampSites(state).length + first.length);
   tick(state, 1);
@@ -172,7 +177,7 @@ test('old saves migrate and malformed pursuit or band records are rejected', () 
   const old = createGame(4);
   delete old.bands;
   delete old.pursuit;
-  assert.deepEqual(validateSave(old).bands, {});
+  assert.equal(Object.keys(validateSave(old).bands).length, 24);
   assert.equal(validateSave(old).pursuit, null);
   const state = createGame(4);
   for (const change of [

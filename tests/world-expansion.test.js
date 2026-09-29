@@ -11,7 +11,9 @@ const campById = (state, id) => getCampSites(state).find(camp => camp.id === id)
 
 function passHours(state, amount) {
   while (amount > 0) {
-    const step = Math.min(amount, 72);
+    const current = hours(state);
+    for (const progress of Object.values(state.bands)) progress.defeatedUntil = Math.max(progress.defeatedUntil, current + 48);
+    const step = Math.min(amount, 48);
     assert.equal(tick(state, step).ok, true);
     amount -= step;
   }
@@ -31,6 +33,8 @@ function defeatCamp(state, id) {
 
 function reachTown(state, town) {
   if (townAt(state)?.id === town.id) return;
+  const until = hours(state) + 48;
+  for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   assert.equal(travelTo(state, town.x, town.y).ok, true);
   for (let step = 0; state.destination && step < 8; step++) assert.equal(tick(state, 12).ok, true);
   assert.equal(state.destination, null, `${town.name} is reachable`);
@@ -60,15 +64,15 @@ test('expanded map bounds contain all 16 reachable towns and have market rows', 
   assert.deepEqual(validateSave(edgeState), edgeState);
 });
 
-test('ten roaming bands preserve four nearby light patrols and cover the new trade roads', () => {
+test('twenty-four roaming bands preserve four nearby light patrols and cover the new trade roads', () => {
   const bands = getRoamingBands(createGame(814));
-  assert.equal(bands.length, 10);
+  assert.equal(bands.length, 24);
   const legacyIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
   const legacy = bands.filter(band => legacyIds.includes(band.id));
   const frontier = bands.filter(band => !legacyIds.includes(band.id));
   assert.equal(legacy.length, 4);
   assert.ok(legacy.every(band => band.difficulty === 0 && band.enemies.length <= 2));
-  assert.equal(frontier.length, 6);
+  assert.equal(frontier.length, 20);
   assert.ok(frontier.every(band => band.difficulty >= 1 && band.enemies.length >= 2));
   for (const band of bands) {
     assert.ok(band.x >= WORLD_BOUNDS.minX && band.x <= WORLD_BOUNDS.maxX, `${band.id} x is in bounds`);

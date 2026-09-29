@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ITEMS, GOODS, SETTLEMENTS, createGame, travelTo, tick, townAt, getContractOffers, acceptContract,
   getMarket, buyFood, buyGood, sellGood, buyItem, sellItem, equipItem, unequipItem, recruit, camp, forage,
-  getEquipment, terrainAt, validateSave,
+  getEquipment, terrainAt, validateSave, retreatBattle, finishBattle,
 } from '../src/engine.js';
 import { VISUALS } from '../src/portraits.js';
 
@@ -14,7 +14,14 @@ function ownedItems(state) {
 function reach(state, townId) {
   const town = SETTLEMENTS.find(entry => entry.id === townId);
   assert.equal(travelTo(state, town.x, town.y).ok, true);
-  for (let i = 0; i < 8 && state.destination; i++) tick(state, 12);
+  for (let i = 0; i < 40 && (state.destination || state.battle); i++) {
+    tick(state, 12);
+    if (state.battle) {
+      assert.equal(retreatBattle(state).ok, true);
+      assert.equal(finishBattle(state).ok, true);
+      assert.equal(travelTo(state, town.x, town.y).ok, true);
+    }
+  }
   assert.equal(state.destination, null);
   assert.equal(townAt(state)?.id, townId);
 }
@@ -197,8 +204,7 @@ test('delivery pays on arrival and another can be taken', () => {
   assert.equal(acceptContract(state, 'oakwatch').ok, true);
   const contract = { ...state.contract };
   const target = SETTLEMENTS.find(town => town.id === contract.to);
-  assert.equal(travelTo(state, target.x, target.y).ok, true);
-  for (let i = 0; i < 8 && state.destination; i++) tick(state, 12);
+  reach(state, target.id);
   assert.equal(state.destination, null);
   assert.equal(state.contract, null);
   assert.equal(state.renown, 1);

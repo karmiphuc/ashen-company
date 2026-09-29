@@ -1,6 +1,14 @@
-# Verification - version 0.19, 2026-09-29
+# Verification - version 0.20, 2026-09-29
 
-## v0.19 checks
+## v0.20 checks
+
+The full automated suite passes 189 tests. New coverage checks 24 persistent bands, varied enemy equipment, company pursuit and automatic contact battles, settlement safety, post-battle escape time, interrupted camp/forage rewards, and frame-independent world updates. Caravan checks cover physical interception, the seven-hour rescue window, rescue without replacement attackers, late-contact loss timestamps, out-of-contact arrival, and legacy migration. Six historical company/battle fixtures preserve equipment, purse, inventory, and battle positions; five shipment fixtures validate through repeated migration. A 64-seed, 72-hour simulation validates world saves. An independent review passed all 29 targeted world, caravan, roaming, and expansion tests. Generated offline cache consistency and diff checks pass.
+
+Browser checks at 1024x768 confirmed automatic Road Thieves contact during travel, a visible company-pursuit arrow and warning, camp interruption into battle, and a second hostile encounter on the return journey. Ten six-hour rests at Oakwatch remained safe. A naturally dispatched Redmere wagon first showed River Raiders closing, then showed Wagon intercepted with 4.4 hours left after physical contact. The map and sidebar distinguish pursuit, approach, and interception.
+
+With the preview server terminated and direct HTTP unavailable, a fresh browser tab restored Day 4 at 05:00, the intercepted wagon, its 4.4-hour window, and the same resources. Resting six hours offline allowed the raiders to destroy the wagon and created Redmere's Arms Shortage through day 8, including the 20% ordinary-arms price increase and replacement-gear selling opportunity. Reloading offline retained the loss and shortage. No JavaScript errors were recorded. Physical iPad Safari installation and airplane-mode retention remain untested.
+
+## Historical v0.19 checks
 
 The full automated suite passes 183 tests. Formation coverage checks coordinated one-hex bounds, contact holds, reload turns, late-bound completion with Berserk, shield and reserve-shield deployment, pure bow/crossbow rear safety, twelve-unit deployment bounds, legal mid-battle reformation, no-shield fallback, tactic switching, saved movement progress, and ranged standoff completion. A regression reproduces an archer retreat off the wall's planned row, verifies regrouping and save/reload, and completes the battle. Six historical save fixtures retain equipment, purse, inventory, and battle positions. Generated offline cache consistency and diff checks pass.
 

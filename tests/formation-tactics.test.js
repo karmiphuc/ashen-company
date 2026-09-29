@@ -6,6 +6,8 @@ import {
 } from '../src/engine.js';
 
 function start(state) {
+  const until = (state.day - 1) * 24 + state.hour + 48;
+  for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   const site = getCampSites(state)[0];
   assert.equal(travelTo(state, site.x, site.y).ok, true);
   while (state.destination) tick(state, 12);
