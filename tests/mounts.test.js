@@ -138,6 +138,10 @@ test('rare mounted elites are visible while scouting and keep their mount in bat
   let encounter = null;
   for (let seed = 1; seed <= 300 && !encounter; seed++) {
     const state = createGame(seed);
+    state.day = 35;
+    state.shipments = {};
+    state.shipmentLegacyThroughDay = 35;
+    for (const person of state.party) person.level = 9;
     const band = getRoamingBands(state).find(entry => entry.difficulty === 3 && entry.enemies[0].mount);
     if (band) encounter = { state, band };
   }

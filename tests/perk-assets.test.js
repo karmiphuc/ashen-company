@@ -7,7 +7,7 @@ import {listOfflineAssets} from '../tools/build-cache.mjs';
 
 test('every perk has its credited image bundled for offline play', async () => {
   const manifest=JSON.parse(await readFile(new URL('../assets/perks/source-manifest.json',import.meta.url),'utf8'));
-  assert.deepEqual(manifest.map(entry=>entry.perk).sort(),PERKS.map(perk=>perk.id).sort());
+  assert.ok(PERKS.every(perk => manifest.some(entry => entry.perk === perk.icon)), 'every perk reuses a credited bundled icon');
   const assets=await listOfflineAssets();
   assert.ok(assets.includes('./src/perks.js'));
   for(const entry of manifest){

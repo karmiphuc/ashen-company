@@ -2,6 +2,7 @@
 import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { MOUNTS } from './mounts.js';
+import { enemyProgression } from './enemy-progression.js';
 import { getRegionalEnemyFaction, getRegionalEnemyTemplates, getRegionalCampText } from './enemy-rosters.js';
 import { PERKS, PERK_BY_ID, hasPerk } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile } from './recruits.js';
@@ -373,16 +374,18 @@ export function getCompanyStats(person) {
   const maxBodyArmor = armorMaximum(person.equipment?.armor);
   const maxHeadArmor = armorMaximum(person.equipment?.helmet);
   const shieldDefense = equipped.shield?.defense ?? 0;
-  const effectiveShieldDefense = hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense;
+  const effectiveShieldDefense = (hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense)
+    + (shieldDefense && hasPerk(person, 'shield-bearer') ? 5 : 0);
   const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) - fatigue);
   const dodgeDefense = hasPerk(person, 'dodge') ? Math.floor(initiative * .15) : 0;
+  const nimbleDefense = armorFatigue <= 10 && hasPerk(person, 'nimble') ? 5 : 0;
   const baseResolve = 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0) + (recruit.resolve ?? 0);
   return {
     maxHp,
     meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0) + mountHit,
     rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0) + mountHit,
-    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
-    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense,
+    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense,
+    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense,
     maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue),
     initiative,
     resolve: hasPerk(person, 'fortified-mind') ? Math.ceil(baseResolve * 1.25) : baseResolve,
@@ -390,7 +393,7 @@ export function getCompanyStats(person) {
     xp: person.xp ?? 0,
     nextLevelXp: level * 50,
     trainingPoints: person.pendingLevelUps?.length ?? person.trainingPoints ?? 0,
-    dailyWage: 5 + level - 1,
+    dailyWage: Math.max(1, 5 + level - 1 - Number(hasPerk(person, 'paymaster'))),
     bodyArmor: person.armorDurability?.body ?? maxBodyArmor,
     headArmor: person.armorDurability?.head ?? maxHeadArmor,
     maxBodyArmor,
@@ -403,7 +406,8 @@ export function getDailyFood(state) {
 }
 
 export function getCompanyTravelBonus(state) {
-  return state.party.reduce((total, person) => total + (person.hp > 0 ? getItem(person.equipment?.mount)?.travelBonus ?? 0 : 0), 0);
+  return state.party.reduce((total, person) => total + (person.hp > 0
+    ? (getItem(person.equipment?.mount)?.travelBonus ?? 0) + (hasPerk(person, 'trailblazer') ? .05 : 0) : 0), 0);
 }
 
 export function createGame(seed = Date.now()) {
@@ -832,18 +836,19 @@ function roamingBand(state, band) {
   let rosterSeed = hashSeed(`${state.seed}:${band.id}:${spawnCycle}:roster`);
   const random = () => { rosterSeed = (Math.imul(rosterSeed, 1664525) + 1013904223) >>> 0; return rosterSeed / 4294967296; };
   const tier = band.difficulty ?? 0;
+  const progression = enemyProgression(state, tier);
   const strength = 1 + Math.floor(random() * 3);
   const count = tier === 0 ? strength === 1 ? 1 : 2 : tier === 1 ? 2 + Number(strength === 3) : tier === 2 ? 2 + strength : 3 + strength;
   const pool = tier ? getRegionalEnemyTemplates(band.start.x, band.start.y, tier) : band.enemies;
   const offset = Math.floor(random() * pool.length);
-  const enemies = Array.from({ length: count }, (_, index) => ({ ...pool[(index + offset) % pool.length] }));
-  if (tier === 3 && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, band.id, spawnCycle);
+  const enemies = Array.from({ length: Math.min(12, count + progression.reinforcements) }, (_, index) => ({ ...pool[(index + offset) % pool.length] }));
+  if (progression.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, band.id, spawnCycle);
   const position = activeBandProgress(state, band);
   const target = position.behavior === 'raiding-caravan' ? getCaravans(state).find(caravan => caravan.id === position.targetId
     && (caravan.status === 'en-route' || caravan.status === 'under-attack')) : null;
   const behavior = position.behavior === 'raiding-caravan' && !target ? 'patrolling' : position.behavior ?? 'patrolling';
   return {
-    id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle,
+    id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle, veteranRank: progression.rank,
     ...(tier ? { factionId: getRegionalEnemyFaction(band.start.x, band.start.y).id, factionLabel: getRegionalEnemyFaction(band.start.x, band.start.y).label } : {}),
     x: position.x, y: position.y, behavior, targetId: behavior === 'raiding-caravan' ? position.targetId : null,
     enemies,
@@ -1676,7 +1681,7 @@ export function camp(state) {
   const medicated = wounded && state.supplies.medicine > 0;
   if (medicated) state.supplies.medicine -= 1;
   for (const person of state.party) {
-    person.hp = clamped(person.hp + (medicated ? 24 : 8), 1, getCompanyStats(person).maxHp);
+    person.hp = clamped(person.hp + (medicated ? 24 : 8) + (hasPerk(person, 'field-medic') ? 8 : 0), 1, getCompanyStats(person).maxHp);
     person.morale = clamped(person.morale + 9, 0, 100);
   }
   let repairs = 0;
@@ -1702,7 +1707,7 @@ export function forage(state) {
   if (interrupted) return interrupted;
   const terrain = terrainAt(state.position.x, state.position.y);
   const bonus = terrain === 'forest' ? 2 : terrain === 'marsh' ? 1 : terrain === 'mountain' ? -1 : 0;
-  const found = Math.max(3, 3 + Math.ceil(state.party.length / 2) + bonus);
+  const found = Math.max(3, 3 + Math.ceil(state.party.length / 2) + bonus) + state.party.filter(person => person.hp > 0 && hasPerk(person, 'forager')).length * 2;
   state.food += found;
   const message = `The company forages for four hours and finds ${found} provisions.`;
   record(state, message);
@@ -1759,9 +1764,10 @@ export function getCampSites(state) {
   return [...CAMP_SITES.map(camp=>camp.id),...RANDOM_CAMP_IDS].map((id,index)=>{
     const progress = campRecord(state,id), fixed = CAMP_BY_ID.get(id);
     const camp = fixed || randomCamp(state,id,index-CAMP_SITES.length,progress.generation);
-    const enemies = camp.enemies.map(enemy => ({ ...enemy }));
-    if (camp.difficulty === 3 && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation);
-    return {...camp,kind:'camp',generation:progress.generation,famedChance:FAMED_CHANCES[camp.difficulty]??0,enemies,cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
+    const scaling = enemyProgression(state, camp.difficulty);
+    const enemies = Array.from({ length: Math.min(12, camp.enemies.length + scaling.reinforcements) }, (_, enemyIndex) => ({ ...camp.enemies[enemyIndex % camp.enemies.length] }));
+    if (scaling.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation);
+    return {...camp,description:scaling.reinforcements?`${enemies.length} fighters hold this position. Veteran reinforcements have gathered as your company has grown.`:camp.description,kind:'camp',generation:progress.generation,veteranRank:scaling.rank,famedChance:FAMED_CHANCES[camp.difficulty]??0,enemies,cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
   });
 }
 
@@ -1910,12 +1916,13 @@ export function startBattle(state, encounterId) {
   });
   if ((state.tactic ?? 'offense') === 'shield-wall') shieldWallDeployment(company);
   const enemies = camp.enemies.map((enemy, index) => {
+    const rank = camp.veteranRank ?? 0;
     const rareMount = getItem(enemy.mount);
     const gear = { armor: enemy.armor, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield, mount: rareMount?.id ?? null };
     const shieldDefense = getItem(gear.shield)?.defense ?? 0;
-    const hp = 25 + camp.difficulty * 12 + (index === 0 && camp.difficulty === 3 ? 12 : 0);
+    const hp = 25 + camp.difficulty * 12 + rank * 8 + (index === 0 && camp.difficulty === 3 ? 12 : 0);
     return {
-      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 : 11, r: 1 + index,
+      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 6) : 11 - Math.floor(index / 6), r: 1 + index % 6,
       hp, maxHp: hp, bodyArmor: armorMaximum(gear.armor), headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxHeadArmor: armorMaximum(gear.helmet),
       equipment: gear, reserveEquipment: { weapon: null, shield: null }, accessories: [null, null],
@@ -1923,10 +1930,10 @@ export function startBattle(state, encounterId) {
       perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0,
       seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
       morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2, reload: 0,
-      meleeSkill: 30 + camp.difficulty * 6 + (rareMount?.hitBonus ?? 0), rangedSkill: 28 + camp.difficulty * 6 + (rareMount?.hitBonus ?? 0),
-      meleeDefense: 2 + camp.difficulty * 2 + shieldDefense,
-      rangedDefense: 2 + camp.difficulty * 2 + shieldDefense,
-      maxFatigue: 85, initiative: 75 + camp.difficulty * 6, resolve: 32 + camp.difficulty * 8,
+      meleeSkill: 30 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0), rangedSkill: 28 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0),
+      meleeDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense,
+      rangedDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense,
+      maxFatigue: 85, initiative: 75 + camp.difficulty * 6 + rank * 3, resolve: 32 + camp.difficulty * 8 + rank * 4,
     };
   });
   const battle = {
@@ -2036,6 +2043,15 @@ function battleMovementCost(battle, actor, from, to) {
   return hasPerk(actor, 'pathfinder') ? Math.max(1, cost - 1) : cost;
 }
 
+function movementFatigue(actor, cost) {
+  return cost * (hasPerk(actor, 'marathoner') ? 2 : 3);
+}
+
+function movementBudget(actor) {
+  const lightArmor = (getItem(actor.equipment.armor)?.fatigue ?? 0) + (getItem(actor.equipment.helmet)?.fatigue ?? 0) <= 10;
+  return 2 + (getItem(actor.equipment.mount)?.movementBonus ?? 0) + Number(lightArmor && hasPerk(actor, 'fleet-footed'));
+}
+
 function pathCost(battle, actor, origin, path) {
   let total = 0;
   let point = origin;
@@ -2056,7 +2072,8 @@ function battleGearFatigue(equipment) {
 
 function shieldDefenseFor(actor, shieldId) {
   const defense = getItem(shieldId)?.defense ?? 0;
-  return hasPerk(actor, 'shield-expert') ? Math.ceil(defense * 1.25) : defense;
+  return (hasPerk(actor, 'shield-expert') ? Math.ceil(defense * 1.25) : defense)
+    + (defense && hasPerk(actor, 'shield-bearer') ? 5 : 0);
 }
 
 function changeBattleWeapon(actor, weaponId, shieldId) {
@@ -2215,7 +2232,7 @@ function advanceFormationStep(battle, actor) {
   const cost = battleMovementCost(battle, actor, actor, destination);
   actor.q = destination.q;
   actor.r = destination.r;
-  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + cost * 3);
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, cost));
   if (living.every(reached)) plan.completedRound = battle.round;
   return from;
 }
@@ -2225,7 +2242,7 @@ function moveOneFormationHex(battle, actor, destination, message) {
   const cost = battleMovementCost(battle, actor, actor, destination);
   actor.q = destination.q;
   actor.r = destination.r;
-  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + cost * 3);
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, cost));
   actor.ap = 0;
   battle.lastEvent = makeBattleEvent(actor, null, 'move', message, getItem(actor.equipment.weapon), from);
   battleLog(battle, message);
@@ -2296,7 +2313,7 @@ function stepArcherBack(battle, actor, range) {
   if (!option) return false;
   actor.q = option.q;
   actor.r = option.r;
-  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + option.cost * 3);
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, option.cost));
   return true;
 }
 
@@ -2321,6 +2338,18 @@ function isCrossbow(weapon) {
   return weapon?.ranged === true && !weapon.throwing && weapon.visual?.includes('crossbow');
 }
 
+const SWORD_VISUALS = new Set(['sword', 'longsword', 'greatsword', 'shamshir', 'estoc', 'cleaver', 'falx']);
+const AXE_VISUALS = new Set(['axe', 'greataxe', 'hand-axe', 'longaxe', 'bardiche', 'throwingaxe', 'heavythrowingaxe']);
+const MACE_VISUALS = new Set(['mace', 'hammer', 'heavyhammer', 'polehammer', 'flail', 'three-headed-flail', 'goedendag']);
+const DAGGER_VISUALS = new Set(['dagger', 'fighting-knife', 'qatal']);
+
+function weaponTrainingHit(actor, weapon) {
+  if (hasPerk(actor, 'sword-training') && SWORD_VISUALS.has(weapon.visual)) return 8;
+  if (hasPerk(actor, 'spear-training') && !weapon.throwing && /spear|pike/.test(weapon.visual ?? '')) return 8;
+  if (hasPerk(actor, 'throwing-training') && weapon.throwing) return 8;
+  return 0;
+}
+
 function effectiveWeaponRange(actor, weapon) {
   return (weapon?.range ?? 1) + (isBow(weapon) && hasPerk(actor, 'bow-mastery') ? 1 : 0);
 }
@@ -2338,13 +2367,20 @@ function attackTarget(state, actor, target, weapon) {
   const anticipationDefense = ranged && hasPerk(target, 'anticipation')
     ? Math.max(10, Math.floor(target.rangedDefense * .1 * hexDistance(actor, target)))
     : 0;
-  const defense = (ranged ? target.rangedDefense : target.meleeDefense) + dodgeDefense + anticipationDefense + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
+  const defense = (ranged ? target.rangedDefense : target.meleeDefense) + dodgeDefense + anticipationDefense
+    + (hasPerk(target, 'last-stand') && target.hp * 2 <= target.maxHp ? 8 : 0)
+    + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
   const terrainHit = ranged ? rangedTerrainModifier(battle, actor, actor, target) : heightHitModifier(battle.field, actor, target);
   const adjacentAllies = !ranged && hasPerk(actor, 'backstabber')
     ? battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id && hexDistance(unit, target) <= 1).length
     : 0;
   const adaptationBonus = hasPerk(actor, 'fast-adaptation') ? actor.adaptation * 10 : 0;
-  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit + adjacentAllies * 5 + adaptationBonus + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - (ranged && hexDistance(actor, target) === 1 ? 12 : 0), 12, 90);
+  const distance = hexDistance(actor, target);
+  const higher = tileAt(battle.field, actor.q, actor.r).height > tileAt(battle.field, target.q, target.r).height;
+  const perkHit = weaponTrainingHit(actor, weapon) + (hasPerk(actor, 'high-ground') && higher ? 8 : 0)
+    + (ranged && distance >= 3 && hasPerk(actor, 'marksman') ? 8 : 0);
+  const adjacentShotPenalty = ranged && distance === 1 && !hasPerk(actor, 'point-blank') ? 12 : 0;
+  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit + adjacentAllies * 5 + adaptationBonus + perkHit + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - adjacentShotPenalty, 12, 90);
   const mastered = isBow(weapon) && hasPerk(actor, 'bow-mastery') || isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery');
   const fatigueCost = weapon.fatigueCost ?? (ranged ? 9 : 11);
   actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (mastered ? Math.ceil(fatigueCost * .75) : fatigueCost));
@@ -2362,18 +2398,28 @@ function attackTarget(state, actor, target, weapon) {
   actor.adaptation = 0;
   const baseDamage = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
   const damageMultiplier = (hasPerk(actor, 'executioner') && target.hp < target.maxHp ? 1.2 : 1)
-    * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1);
+    * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1)
+    * (hasPerk(actor, 'polearm-training') && !ranged && (weapon.range ?? 1) >= 2 ? 1.1 : 1)
+    * (hasPerk(actor, 'shield-strike') && !ranged && actor.equipment.shield ? 1.1 : 1)
+    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && !actor.equipment.shield ? 1.12 : 1)
+    * (hasPerk(actor, 'opportunist') && !ranged && !target.equipment.shield ? 1.1 : 1)
+    * (hasPerk(actor, 'volley-fire') && ranged && distance >= 3 ? 1.1 : 1);
   const raw = Math.round(baseDamage * damageMultiplier * (1 + (getItem(actor.equipment.mount)?.damageBonus ?? 0)) * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
   const head = battleRoll(battle) < .22;
   const part = head ? 'headArmor' : 'bodyArmor';
   const armorBefore = target[part];
-  const armorDamage = Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1) * (head ? 1.1 : 1)));
+  const armorDamage = Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1) * (head ? 1.1 : 1)
+    * (hasPerk(actor, 'axe-training') && AXE_VISUALS.has(weapon.visual) ? 1.15 : 1)
+    * (hasPerk(target, 'battle-forged') && armorBefore > 0 ? .85 : 1)));
   target[part] = Math.max(0, armorBefore - armorDamage);
-  const armorPiercing = Math.min(1, (weapon.armorPiercing ?? .30) + (isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery') ? .2 : 0));
+  const armorPiercing = Math.min(1, (weapon.armorPiercing ?? .30) + (isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery') ? .2 : 0)
+    + (hasPerk(actor, 'dagger-training') && DAGGER_VISUALS.has(weapon.visual) ? .15 : 0));
   let hpDamage = armorBefore > 0
     ? Math.max(1, Math.floor(raw * armorPiercing - armorBefore * .025) + Math.max(0, Math.floor((armorDamage - armorBefore) * .25)))
     : raw;
   if (head && !hasPerk(target, 'steel-brow')) hpDamage = Math.round(hpDamage * 1.25);
+  if (hasPerk(actor, 'mace-training') && MACE_VISUALS.has(weapon.visual)) hpDamage = Math.round(hpDamage * 1.1);
+  if (hasPerk(target, 'iron-jaw')) hpDamage = Math.max(1, Math.round(hpDamage * .8));
   target.hp = Math.max(0, target.hp - hpDamage);
   target.morale = Math.max(0, target.morale - moraleDamage(target, 3 + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0)));
   const fallen = target.hp === 0;
@@ -2429,6 +2475,7 @@ export function advanceBattle(state) {
   if (actor.reload > 0) {
     actor.reload -= 1;
     actor.ap = 0;
+    if (hasPerk(actor, 'reload-drill')) actor.fatigue = Math.max(0, actor.fatigue - 12);
     const message = `${actor.name} reloads ${equippedWeapon?.name ?? 'their weapon'}.`;
     battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equippedWeapon);
     if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
@@ -2577,13 +2624,13 @@ export function advanceBattle(state) {
     let destination = actor;
     for (const next of path) {
       const cost = battleMovementCost(battle, actor, destination, next);
-      if (used + cost > 2 + (getItem(actor.equipment.mount)?.movementBonus ?? 0)) break;
+      if (used + cost > movementBudget(actor)) break;
       used += cost;
       destination = next;
     }
     actor.q = destination.q;
     actor.r = destination.r;
-    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + used * 3);
+    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, used));
     if (companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
   }
   if (hexDistance(actor, target) <= range) {
@@ -2759,14 +2806,14 @@ function validateBattle(input, party, worldState) {
   const lootSeed = input.lootSeed ?? hashSeed(input.id);
   assert(validCount(lootSeed) && lootSeed <= 0xffffffff, 'battle loot seed');
   const field = validateBattleField(input.field);
-  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_COMPANY_SIZE + 6, 'battle units');
+  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_COMPANY_SIZE + 12, 'battle units');
   const ids = new Set();
   const partyIds = new Set(party.map(person => person.id));
   const units = input.units.map(unit => {
     assert(recordObject(unit) && typeof unit.id === 'string' && unit.id.length <= 40 && !ids.has(unit.id), 'battle unit id');
     ids.add(unit.id);
     assert(unit.side === 'company' || unit.side === 'enemy', 'battle side');
-    assert(unit.side === 'company' ? partyIds.has(unit.id) : /^enemy-[1-6]$/.test(unit.id), 'battle unit ownership');
+    assert(unit.side === 'company' ? partyIds.has(unit.id) : /^enemy-([1-9]|1[0-2])$/.test(unit.id), 'battle unit ownership');
     assert(typeof unit.name === 'string' && unit.name.length > 0 && unit.name.length <= 80, 'battle unit name');
     assert(validHex(unit, field), 'battle hex');
     assert(validCount(unit.maxHp) && unit.maxHp >= 1 && unit.maxHp <= 300 && validCount(unit.hp) && unit.hp <= unit.maxHp && unit.alive === (unit.hp > 0), 'battle health');

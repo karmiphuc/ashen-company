@@ -1,6 +1,18 @@
-# Verification - version 0.21.0, 2026-09-30
+# Verification - version 0.22.0, 2026-09-30
 
-## v0.21.0 checks
+## v0.22.0 checks
+
+The full automated suite passes 225 tests after regenerating the offline cache. The catalog contains 45 perks, including 26 new weapon, defense, ranged, mobility and support choices. Focused comparisons exercise every new effect, including weapon hit bonuses, armor/health damage, shield defenses after swaps, lightweight movement, reload recovery, healing, foraging, wages and travel. Save tests retain new perk IDs and points; UI tests verify six groups, every card and bundled icon. Existing ranged AI, formation, mounted combat and historical perk tests remain passing.
+
+Enemy progression is gated by both campaign age and the average level of up to six strongest living brothers. Tier 0/1 fights remain unchanged. Tier 2 caps at veteran rank 3, tier 3 at rank 5; ranks require average levels 5/7/9/11/13 and days 14/21/28/35/42 respectively. Each rank grants 8 health, 4 hit skill, 2 defense, 3 initiative and 4 resolve. Experienced larger companies draw reinforcements, capped at twelve enemies. Tests cover both gates, recruit dilution, casualty handling, preserved training fights, twelve-enemy placement, reload and invalid enemy IDs. Existing active battle snapshots retain their original stats.
+
+Enemy cavalry now additionally requires tier 3, day 35 or later, and an experienced core averaging level 9 or higher, before its existing 2% leader roll. A 100-seed initial-world check finds no enemy mounts; the late-game test retains the scout-visible mount in battle. A separate bounded review confirmed progression bounds, legal deployment and old-save compatibility.
+
+Browser checks learned Shield Bearer and Trailblazer, spent exactly two points, increased shield defense from 13 to 18, and retained both perks and +5% travel after reload. At 1024x768 the grouped perk cards and learn control remain readable. Scouting a rank-five hideout showed its seven fighters and explicit +40 health/+20 hit/+10 defense warning before engagement. No JavaScript errors were recorded in that session. Physical iPad Safari behavior remains untested.
+
+With the unmodified production preview server stopped and direct HTTP refused, a fresh tab launched the game and opened the new perk picker. Offline ready was shown and all 45 perk-card images loaded. The new Marksman card retained its level-three lock and description offline.
+
+## Historical v0.21.0 checks
 
 Horse portrait correction: raised the horse head independently of the neck and drew it in front of the rider, so the face is visible instead of buried beneath the torso. The horse's authored layers face right without mirroring; only the wolf assets need their individual horizontal flip. A rendered comparison confirms the company horse faces right and the enemy portrait's existing whole-composition mirror faces left. Wolf mounts and unmounted headgear retain their existing layout. Portrait and offline-cache checks pass.
 
