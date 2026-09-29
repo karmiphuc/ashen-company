@@ -1,6 +1,16 @@
-# Verification - version 0.23.0, 2026-09-30
+# Verification - version 0.24.0, 2026-09-30
 
-## v0.23.0 checks
+## v0.24.0 checks
+
+The full automated suite passes 247 tests after regenerating the offline cache. The attachment catalog now has fifteen items: thirteen visible outer pieces plus two hidden inner reinforcements. Ten new styles add bone, horned, chain, heraldic, gladiator, skull, spiked, stag and kraken looks, using 22 additional pinned source PNGs. The original five stat rows remain unchanged. All item descriptions and inventory icons resolve; the attachment manifest verifies all 31 attachment images.
+
+Across 500 seeded Ironford markets, every attachment appeared and each of the ten new pieces was bought successfully. Existing market records migrate to include new catalog entries. Nine additions use the existing capped better/premium equipment slots; the single common addition keeps the existing 50% per-copy stock roll. No shop-rule or combat-rule changes were needed.
+
+Browser galleries verified all ten new styles with matching armor and helmets, plus forty comparisons across light, mail, heavy and mounted bodies with weapons and shields. The horse body layer moved from y=57 to y=42 on its 104x142 composition, closing the visible neck gap and bringing it closer to the rider. The head anchor and right-facing company orientation are unchanged; the mirrored enemy comparison remains left-facing. Wolf mounts retain their existing anchors.
+
+With the unmodified local preview server stopped and direct HTTP refused, a fresh tab reopened the game, displayed Offline ready and version 0.24, and loaded the newly cached Kraken Mantle portrait PNG. Physical iPad Safari remains untested.
+
+## Historical v0.23.0 checks
 
 The full automated suite passes 245 tests after regenerating the offline cache. Twenty northern weapons, armor, helmets and shields join five armor attachments. Northern armories favor local better/premium gear without changing the 50% stock reduction. Northern enemy equipment remains tiered; early body armor caps at 85 and middle-tier armor at 175. Weapon-family perks recognize the new weapons; slings emit stones and do not gain bow bonuses. The pinned source manifests verify 49 added PNG files.
 

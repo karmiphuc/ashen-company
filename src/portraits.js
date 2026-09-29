@@ -157,9 +157,25 @@ export const VISUALS = {
     },
     'iron-pauldrons': { front: ['attachment-iron-pauldrons.png', 5, 46] },
     'scale-mantle': { front: ['attachment-scale-mantle.png', 5, 46] },
+    'bone-platings': { front: ['attachment-bone-platings.png', 5, 46] },
+    'horned-pauldrons': {
+      back: ['attachment-horned-pauldrons-back.png', 59, 48],
+      front: ['attachment-horned-pauldrons-front.png', 2, 46],
+    },
+    'chain-mantle': { front: ['attachment-chain-mantle.png', 5, 46] },
+    'heraldic-plates': { front: ['attachment-heraldic-plates.png', 5, 46] },
+    'gladiator-pauldrons': { front: ['attachment-gladiator-pauldrons.png', 5, 46] },
+    'skull-chain': { front: ['attachment-skull-chain.png', 5, 46] },
+    'spiked-chain': { front: ['attachment-spiked-chain.png', 5, 46] },
+    'stag-plates': { front: ['attachment-stag-plates.png', 5, 46] },
+    'heraldic-shoulders': {
+      back: ['attachment-heraldic-shoulders-back.png', 65, 53],
+      front: ['attachment-heraldic-shoulders-front.png', 5, 51],
+    },
+    'kraken-mantle': { front: ['attachment-kraken-mantle.png', 5, 46] },
   },
   mount: {
-    horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 57, 52, 35, null, 1],
+    horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 42, 52, 35, null, 1],
     warg: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71, 'sepia(.85) saturate(.7) brightness(.7)'],
     wolf: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71],
   },
@@ -291,6 +307,16 @@ const ITEM_IMAGES = {
   'fur-mantle': 'fur-mantle.png',
   'iron-pauldrons': 'iron-pauldrons.png',
   'scale-mantle': 'scale-mantle.png',
+  'bone-platings': 'bone-platings.png',
+  'horned-pauldrons': 'horned-pauldrons.png',
+  'chain-mantle': 'chain-mantle.png',
+  'heraldic-plates': 'heraldic-plates.png',
+  'gladiator-pauldrons': 'gladiator-pauldrons.png',
+  'skull-chain': 'skull-chain.png',
+  'spiked-chain': 'spiked-chain.png',
+  'stag-plates': 'stag-plates.png',
+  'heraldic-shoulders': 'heraldic-shoulders.png',
+  'kraken-mantle': 'kraken-mantle.png',
 };
 
 function hash(value) {

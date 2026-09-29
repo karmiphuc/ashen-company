@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ITEMS, camp, createFamedItemId, createGame, equipItem, getCompanyStats, getItem,
+  ITEMS, SETTLEMENTS, buyItem, camp, createFamedItemId, createGame, equipItem, getCompanyStats, getItem, getMarket,
   finishBattle, getTownServiceQuote, startBattle, advanceBattle, unequipItem, useTownService, validateSave,
 } from '../src/engine.js';
 import { ARMOR_ATTACHMENTS } from '../src/armor-attachments.js';
@@ -30,7 +30,8 @@ function beginAttack(seed, attachment = 'scale-mantle') {
 }
 
 test('attachment catalog uses the independent slot and is not famed', () => {
-  assert.deepEqual(ARMOR_ATTACHMENTS.map(item => [item.id, item.armor, item.fatigue, item.price]), [
+  assert.equal(ARMOR_ATTACHMENTS.length, 15);
+  assert.deepEqual(ARMOR_ATTACHMENTS.slice(0, 5).map(item => [item.id, item.armor, item.fatigue, item.price]), [
     ['padded-lining', 15, 1, 80],
     ['fur-mantle', 25, 2, 130],
     ['leather-reinforcement', 35, 4, 200],
@@ -43,6 +44,58 @@ test('attachment catalog uses the independent slot and is not famed', () => {
     assert.equal(ITEMS.find(entry => entry.id === item.id), item);
     assert.throws(() => createFamedItemId(item.id, 1));
   }
+});
+
+test('all attachments appear in rotating shop stock without bypassing half-stock scarcity', () => {
+  const town = SETTLEMENTS.find(entry => entry.id === 'ironford');
+  const attachmentIds = new Set(ARMOR_ATTACHMENTS.map(item => item.id));
+  const newIds = new Set(ARMOR_ATTACHMENTS.slice(5).map(item => item.id));
+  const seen = new Set();
+  const purchased = new Set();
+  let total = 0;
+  let bonePlatings = 0;
+  for (let seed = 1; seed <= 500; seed++) {
+    const state = createGame(seed);
+    state.position = { x: town.x, y: town.y };
+    state.gold = 100000;
+    for (const row of getMarket(state).equipment) {
+      if (!attachmentIds.has(row.itemId)) continue;
+      assert.ok(Number.isSafeInteger(row.stock) && row.stock >= 0);
+      if (row.stock > 0) seen.add(row.itemId);
+      if (row.stock > 0 && newIds.has(row.itemId) && !purchased.has(row.itemId)) {
+        assert.equal(buyItem(state, row.itemId).ok, true, row.itemId);
+        assert.ok(state.inventory.includes(row.itemId));
+        purchased.add(row.itemId);
+      }
+      total += row.stock;
+      if (row.itemId === 'bone-platings') bonePlatings += row.stock;
+    }
+  }
+  assert.deepEqual(seen, attachmentIds, 'every attachment can enter the city armory rotation');
+  assert.deepEqual(purchased, newIds, 'every new attachment can be bought');
+  assert.ok(total < 500 * 4, 'the expanded catalog does not fill every attachment slot each week');
+  assert.ok(bonePlatings > 200 && bonePlatings < 400, 'the new common piece keeps a half-stock roll per copy');
+});
+
+test('saved markets from before the attachment expansion gain valid new stock', () => {
+  const state = createGame(91);
+  const market = getMarket(state);
+  const newIds = new Set(ARMOR_ATTACHMENTS.slice(5).map(item => item.id));
+  const oldEquipment = Object.fromEntries(market.equipment.filter(row => !newIds.has(row.itemId)).map(row => [row.itemId, row.stock]));
+  state.marketStock.oakwatch = {
+    day: state.day,
+    food: market.food.stock,
+    goods: Object.fromEntries(market.goods.map(row => [row.goodId, row.stock])),
+    supplies: Object.fromEntries(market.supplies.map(row => [row.kind, row.stock])),
+    equipment: oldEquipment,
+    armoryCycle: 0,
+    appliedEventId: null,
+    buyback: [],
+  };
+  const restored = validateSave(JSON.parse(JSON.stringify(state)));
+  for (const [id, stock] of Object.entries(oldEquipment)) assert.equal(restored.marketStock.oakwatch.equipment[id], stock, id);
+  for (const id of newIds) assert.ok(Number.isSafeInteger(restored.marketStock.oakwatch.equipment[id]), id);
+  assert.ok(getMarket(restored).equipment.filter(row => newIds.has(row.itemId)).every(row => Number.isSafeInteger(row.stock)));
 });
 
 test('attachments require body armor and stow atomically with it while preserving damage', () => {

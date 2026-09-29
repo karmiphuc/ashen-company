@@ -9,7 +9,8 @@ const PERSON = { seed: 8, name: 'Mara Ash' };
 const ARMOR = { id: 'mail-shirt', visual: 'mail' };
 
 test('every attachment has its source icon and fitted overlays only where visible', () => {
-  assert.equal(ARMOR_ATTACHMENTS.length, 5);
+  assert.equal(ARMOR_ATTACHMENTS.length, 15);
+  const visibleSources = [];
   for (const item of ARMOR_ATTACHMENTS) {
     assert.equal(itemImage(item), `assets/items/${item.id}.png`);
     assert.doesNotThrow(() => readFileSync(new URL(`../assets/items/${item.id}.png`, import.meta.url)));
@@ -19,18 +20,22 @@ test('every attachment has its source icon and fitted overlays only where visibl
     } else {
       assert.match(html, /data-layer="attachment-front"/);
       assert.ok(html.indexOf('data-layer="armor"') < html.indexOf('data-layer="attachment-front"'));
+      visibleSources.push(html.match(/data-layer="attachment-front"[^>]*src="([^"]+)"/)?.[1]);
     }
-    if (item.id === 'fur-mantle') {
+    if (['fur-mantle', 'horned-pauldrons', 'heraldic-shoulders'].includes(item.id)) {
       assert.match(html, /data-layer="attachment-back"/);
       assert.ok(html.indexOf('data-layer="attachment-back"') < html.indexOf('data-layer="armor"'));
     }
   }
+  assert.equal(visibleSources.length, 13);
+  assert.equal(new Set(visibleSources).size, visibleSources.length);
 });
 
 test('attachment art matches the pinned Legends source manifest', () => {
   const manifest = JSON.parse(readFileSync(new URL('../assets/legends-attachments-source.json', import.meta.url), 'utf8'));
   assert.equal(manifest.commit, 'b014cdf8520e69b2383116d1654977e9dbb10d96');
-  assert.equal(manifest.assets.length, 9);
+  assert.equal(manifest.assets.length, 31);
+  assert.equal(new Set(manifest.assets.map(asset => asset.local)).size, manifest.assets.length);
   for (const asset of manifest.assets) {
     const bytes = readFileSync(new URL(`../${asset.local}`, import.meta.url));
     assert.equal(bytes.length, asset.bytes, asset.local);

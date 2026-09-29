@@ -83,6 +83,204 @@
       "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_metal_plates_01.png",
       "bytes": 16014,
       "sha256": "104f6af0f847b750d03fc764b713ed85dcc86e9d10b9f72187361cda97f23c8a"
+    },
+    {
+      "itemId": "bone-platings",
+      "kind": "inventory",
+      "local": "assets/items/bone-platings.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_bone_platings_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_bone_platings_01.png",
+      "bytes": 8924,
+      "sha256": "d56c086c4a6e1654f45f9d51444cf6ca05eec693d6bdeccdc78226ea841045e0"
+    },
+    {
+      "itemId": "bone-platings",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-bone-platings.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_bone_platings_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_bone_platings_01.png",
+      "bytes": 21806,
+      "sha256": "7bffb83157d233186ead4173512e48da843d4e778e7762df11cd28620ab1271f"
+    },
+    {
+      "itemId": "horned-pauldrons",
+      "kind": "inventory",
+      "local": "assets/items/horned-pauldrons.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_barbarian_horn_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_barbarian_horn_01.png",
+      "bytes": 10629,
+      "sha256": "8c807ccd0181c4a0b2dc5d2158de09868d445cfbba6e0b389a3dc4d65fa7a119"
+    },
+    {
+      "itemId": "horned-pauldrons",
+      "kind": "portrait-back",
+      "local": "assets/portraits/attachment-horned-pauldrons-back.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_barbarian_horn_01_back.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_barbarian_horn_01_back.png",
+      "bytes": 9689,
+      "sha256": "df0d8363e76c8d8e9d47d725698f5fba8ab0322a7946060ccb51631982bf4793"
+    },
+    {
+      "itemId": "horned-pauldrons",
+      "kind": "portrait-front",
+      "local": "assets/portraits/attachment-horned-pauldrons-front.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_barbarian_horn_01_front.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_barbarian_horn_01_front.png",
+      "bytes": 15697,
+      "sha256": "b97782e9123a48be12a4fd1469c837553c4818f69e78514e044620745ffde78d"
+    },
+    {
+      "itemId": "chain-mantle",
+      "kind": "inventory",
+      "local": "assets/items/chain-mantle.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_chain_and_mail_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_chain_and_mail_01.png",
+      "bytes": 8591,
+      "sha256": "725403b83764bcbaf767a14fca2b26e7bb4e64def46f28ce9eb9b52e51e51a8f"
+    },
+    {
+      "itemId": "chain-mantle",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-chain-mantle.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_chain_and_mail_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_chain_and_mail_01.png",
+      "bytes": 16013,
+      "sha256": "db7d7174dcc340105da6a18ceaa6dfcf2a17f000c3cda2b06518978c970c91ae"
+    },
+    {
+      "itemId": "heraldic-plates",
+      "kind": "inventory",
+      "local": "assets/items/heraldic-plates.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_heraldic_plates_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_heraldic_plates_01.png",
+      "bytes": 15449,
+      "sha256": "346ef644fc8fc2fc54b0ac48ff00b16f909c0c6a55e3c259ef90c69f7ca3db75"
+    },
+    {
+      "itemId": "heraldic-plates",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-heraldic-plates.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_heraldic_plates_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_heraldic_plates_01.png",
+      "bytes": 7971,
+      "sha256": "3105371e01f4fcec5f225fb8b9c79604b8999011edd10c5903fe9ccefc89e8f4"
+    },
+    {
+      "itemId": "gladiator-pauldrons",
+      "kind": "inventory",
+      "local": "assets/items/gladiator-pauldrons.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_gladiator_heavy_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_gladiator_heavy_01.png",
+      "bytes": 11145,
+      "sha256": "813e95f3c0612d9322a1d21a000450e8695af95823dc182f7334b52eee7d9304"
+    },
+    {
+      "itemId": "gladiator-pauldrons",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-gladiator-pauldrons.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_gladiator_heavy_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_gladiator_heavy_01.png",
+      "bytes": 14823,
+      "sha256": "00dbd742985145426109867a2bfccf9d87660e4eadf4f6e1918378b953d5e451"
+    },
+    {
+      "itemId": "skull-chain",
+      "kind": "inventory",
+      "local": "assets/items/skull-chain.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_skull_chain_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_skull_chain_01.png",
+      "bytes": 9984,
+      "sha256": "9b4d249e4d4e3d24a47b03f35c6a0f4f1cfed278852f67fa55d1d39ce54aebdd"
+    },
+    {
+      "itemId": "skull-chain",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-skull-chain.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_skull_chain_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_skull_chain_01.png",
+      "bytes": 14775,
+      "sha256": "f06f0eaa7b57f98a2ca9f617039de183070f83d4a298007da0b062189c3b67e2"
+    },
+    {
+      "itemId": "spiked-chain",
+      "kind": "inventory",
+      "local": "assets/items/spiked-chain.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_spiked_chain_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_spiked_chain_01.png",
+      "bytes": 10331,
+      "sha256": "abd42d11945cca2db27d15c777b8d01ff7d92c7668949d5740f4e0bc2b192492"
+    },
+    {
+      "itemId": "spiked-chain",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-spiked-chain.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_spiked_chain_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_spiked_chain_01.png",
+      "bytes": 17871,
+      "sha256": "7545e889f93f9af23978394f1ae98fa8269499791148d617b9363854daa9105e"
+    },
+    {
+      "itemId": "stag-plates",
+      "kind": "inventory",
+      "local": "assets/items/stag-plates.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_stag_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_stag_01.png",
+      "bytes": 10210,
+      "sha256": "ac384f8d57b9d176053e8b10a920ffcd2ebcb16765c2adc856ad5a2afc94f429"
+    },
+    {
+      "itemId": "stag-plates",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-stag-plates.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_stag_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_stag_01.png",
+      "bytes": 18247,
+      "sha256": "99cd8235a384510e96e69e0f0ae6ceb65910578b4428794d1533dc0f6fb57135"
+    },
+    {
+      "itemId": "heraldic-shoulders",
+      "kind": "inventory",
+      "local": "assets/items/heraldic-shoulders.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_shoulderplates_heraldic_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_shoulderplates_heraldic_01.png",
+      "bytes": 4409,
+      "sha256": "ba190a519852512c67ed8b0db524804acc0261949a30d03ab1c1cac37c82d1a1"
+    },
+    {
+      "itemId": "heraldic-shoulders",
+      "kind": "portrait-back",
+      "local": "assets/portraits/attachment-heraldic-shoulders-back.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_shoulderplates_heraldic_01_back.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_shoulderplates_heraldic_01_back.png",
+      "bytes": 1986,
+      "sha256": "9bb8d80de6c4ba9d50b50721cb06ea59a1de6996675c6b7e33f22fbc491be78a"
+    },
+    {
+      "itemId": "heraldic-shoulders",
+      "kind": "portrait-front",
+      "local": "assets/portraits/attachment-heraldic-shoulders-front.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_shoulderplates_heraldic_01_front.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/pauldrons_shoulderplates_heraldic_01_front.png",
+      "bytes": 3505,
+      "sha256": "99f8a81f9b9d3d2d0c1f0a8efd2ca837005224c114cdbaea9b696813ad5ab02d"
+    },
+    {
+      "itemId": "kraken-mantle",
+      "kind": "inventory",
+      "local": "assets/items/kraken-mantle.png",
+      "source": "gfx/ui/items/legend_armor/inventory_pauldrons_kraken_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_pauldrons_kraken_01.png",
+      "bytes": 9024,
+      "sha256": "12e2f1beaf8a6dab9ee3d05166582a0022829437cfc936c4d569ed820f92dc16"
+    },
+    {
+      "itemId": "kraken-mantle",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-kraken-mantle.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/pauldrons_kraken_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/pauldrons_kraken_01.png",
+      "bytes": 16646,
+      "sha256": "2fa005537bdb7a248150a858a159acc8dc2d1f5901cbfdaf67a597dd9f8f6036"
     }
   ]
 }
