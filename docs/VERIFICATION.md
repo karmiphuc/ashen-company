@@ -2,7 +2,7 @@
 
 ## v0.21.0 checks
 
-Horse portrait correction: raised the horse head independently of the neck and drew it in front of the rider, so the face is visible instead of buried beneath the torso. The local rendered gallery was rechecked; wolf mounts and unmounted headgear retain their existing layout. Portrait and offline-cache checks pass.
+Horse portrait correction: raised the horse head independently of the neck and drew it in front of the rider, so the face is visible instead of buried beneath the torso. The horse's authored layers face right without mirroring; only the wolf assets need their individual horizontal flip. A rendered comparison confirms the company horse faces right and the enemy portrait's existing whole-composition mirror faces left. Wolf mounts and unmounted headgear retain their existing layout. Portrait and offline-cache checks pass.
 
 The full automated suite passes 210 tests after regenerating the offline cache. New coverage checks 72 regional enemy loadouts and valid item references, stable regional routing, mount ownership and old-save migration, additive travel speed, daily food, combat hit/damage/movement bonuses, scout-visible mounted elites, rare mount sales and capture, and statistically halved common shop stock. Mount equipment and inspection UI tests cover slots, filters, food-days and descriptions. Portrait tests cover raised southern headgear and all three mounted compositions. A separate bounded engine review found no serious correctness issues.
 

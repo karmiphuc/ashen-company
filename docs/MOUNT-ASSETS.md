@@ -1,6 +1,6 @@
 # Mount art sources
 
-The mounted portraits and inventory icons use unchanged PNG files from [Battle Brothers Legends](https://github.com/Battle-Brothers-Legends/Legends-public) at commit `b014cdf8520e69b2383116d1654977e9dbb10d96`, the same pinned source as the existing portrait art. The Warg portrait reuses the white direwolf layers with a CSS brown tint; no new raster was generated. CSS mirrors each animal to face the same direction as the rider, and mounted portraits scale the rider to sit above the animal.
+The mounted portraits and inventory icons use unchanged PNG files from [Battle Brothers Legends](https://github.com/Battle-Brothers-Legends/Legends-public) at commit `b014cdf8520e69b2383116d1654977e9dbb10d96`, the same pinned source as the existing portrait art. The Warg portrait reuses the white direwolf layers with a CSS brown tint; no new raster was generated. Horse layers retain their authored right-facing orientation; wolf layers are mirrored to face right. Enemy portraits mirror the complete rider and mount together. Mounted portraits scale the rider to sit above the animal.
 
 | Local file | Source path in Legends | SHA-256 |
 | --- | --- | --- |

@@ -129,7 +129,7 @@ export const VISUALS = {
     'surgeons-kit': ['../items/surgeons-kit.png'],
   },
   mount: {
-    horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 57, 52, 35],
+    horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 57, 52, 35, null, 1],
     warg: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71, 'sepia(.85) saturate(.7) brightness(.7)'],
     wolf: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71],
   },
@@ -275,11 +275,11 @@ function bodyLayer(file, armored) {
 
 function mountLayer(spec, part) {
   if (!spec) return '';
-  const [body, head, bodyLeft, bodyTop, headLeft, headTop, filter] = spec;
+  const [body, head, bodyLeft, bodyTop, headLeft, headTop, filter, facing = -1] = spec;
   const file = part === 'body' ? body : head;
   const left = part === 'body' ? bodyLeft : headLeft;
   const top = part === 'body' ? bodyTop : headTop;
-  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:scaleX(-1);${filter ? `filter:${filter};` : ''}max-width:none;pointer-events:none">`;
+  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:scaleX(${facing});${filter ? `filter:${filter};` : ''}max-width:none;pointer-events:none">`;
 }
 
 function portraitSize(size) {

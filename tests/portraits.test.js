@@ -79,7 +79,9 @@ test('mounts place authored animal layers around the rider without changing unmo
       assert.match(html, /data-layer="mount-head"[^>]*left:52px;top:35px/);
     } else assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="body"'));
     assert.match(html, /bb-portrait-rider"[^>]*transform:translate\(2px,0\) scale\(\.76\)/);
-    assert.match(html, /data-layer="mount-head"[^>]*transform:scaleX\(-1\)/);
+    for (const part of ['body', 'head']) {
+      assert.match(html, new RegExp(`data-layer="mount-${part}"[^>]*transform:scaleX\\(${visual === 'horse' ? 1 : -1}\\)`));
+    }
     assert.match(itemImage({ id }), new RegExp(`^assets/items/${id}\\.png$`));
   }
 });
