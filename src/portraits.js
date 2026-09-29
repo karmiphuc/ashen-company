@@ -129,7 +129,7 @@ export const VISUALS = {
     'surgeons-kit': ['../items/surgeons-kit.png'],
   },
   mount: {
-    horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 57, 52, 66],
+    horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 57, 52, 35],
     warg: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71, 'sepia(.85) saturate(.7) brightness(.7)'],
     wolf: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71],
   },
@@ -316,8 +316,9 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
       <span class="bb-portrait-composition" style="display:block;position:absolute;left:0;top:${compositionTop}px;width:104px;height:142px">
         ${mountLayer(mount, 'body')}
-        ${mountLayer(mount, 'head')}
+        ${visual(equipment.mount) === 'horse' ? '' : mountLayer(mount, 'head')}
         ${mount ? `<span class="bb-portrait-rider" style="display:block;position:absolute;left:0;top:0;width:104px;height:142px;transform:translate(2px,0) scale(.76);transform-origin:top left">${rider}</span>` : rider}
+        ${visual(equipment.mount) === 'horse' ? mountLayer(mount, 'head') : ''}
       </span>
     </span>
   </span>`;

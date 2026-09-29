@@ -74,7 +74,10 @@ test('mounts place authored animal layers around the rider without changing unmo
     assert.equal(layerSource(html, 'mount-body'), `assets/portraits/${body}`);
     assert.equal(layerSource(html, 'mount-head'), `assets/portraits/${head}`);
     assert.ok(html.indexOf('data-layer="mount-body"') < html.indexOf('data-layer="body"'));
-    assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="body"'));
+    if (visual === 'horse') {
+      assert.ok(html.indexOf('data-layer="mount-head"') > html.indexOf('data-layer="head"'));
+      assert.match(html, /data-layer="mount-head"[^>]*left:52px;top:35px/);
+    } else assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="body"'));
     assert.match(html, /bb-portrait-rider"[^>]*transform:translate\(2px,0\) scale\(\.76\)/);
     assert.match(html, /data-layer="mount-head"[^>]*transform:scaleX\(-1\)/);
     assert.match(itemImage({ id }), new RegExp(`^assets/items/${id}\\.png$`));

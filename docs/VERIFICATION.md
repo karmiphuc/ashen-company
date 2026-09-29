@@ -2,6 +2,8 @@
 
 ## v0.21.0 checks
 
+Horse portrait correction: raised the horse head independently of the neck and drew it in front of the rider, so the face is visible instead of buried beneath the torso. The local rendered gallery was rechecked; wolf mounts and unmounted headgear retain their existing layout. Portrait and offline-cache checks pass.
+
 The full automated suite passes 210 tests after regenerating the offline cache. New coverage checks 72 regional enemy loadouts and valid item references, stable regional routing, mount ownership and old-save migration, additive travel speed, daily food, combat hit/damage/movement bonuses, scout-visible mounted elites, rare mount sales and capture, and statistically halved common shop stock. Mount equipment and inspection UI tests cover slots, filters, food-days and descriptions. Portrait tests cover raised southern headgear and all three mounted compositions. A separate bounded engine review found no serious correctness issues.
 
 Local browser checks equipped a horse, warg and dire wolf, confirmed +30% travel and nine food per day for three brothers, reloaded successfully, and crossed midnight to verify nine provisions consumed. Stowing the horse reduced travel to +20%, food to eight per day, and the rider's hit skills by five. A mounted company won a normal Road Thieves encounter in five rounds and collected its loot. Equipment controls were inspected at 1024x768; a portrait gallery verified the raised Nomad Head Wrap and Southern Helmet, smaller riders and forward-facing animals. Southern scouting and map markers display nomad equipment and faction art. No JavaScript errors were recorded in the mounted-company session.
