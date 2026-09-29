@@ -2129,9 +2129,9 @@ function chooseBattleWeapon(state, actor, enemies) {
   const reserve = getItem(actor.reserveEquipment.weapon);
   if (state.battle.tactic === 'shield-wall' && actor.equipment.shield) return false;
   const outOfAmmo = state.supplies.ammo === 0;
-  if (active?.ranged && (nearest <= 1 || outOfAmmo && !archer)) {
+  if (active?.ranged && (nearest <= 1 || outOfAmmo)) {
     if (active.throwing && reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
-    if ((!outOfAmmo || archer) && archerRetreatOption(state.battle, actor, effectiveWeaponRange(actor, active))) return false;
+    if (!outOfAmmo && archerRetreatOption(state.battle, actor, effectiveWeaponRange(actor, active))) return false;
     const pocketIndex = actor.accessories.findIndex(id => getItem(id)?.pocketWeapon);
     if (pocketIndex >= 0) {
       actor.pocketStowedWeapon = actor.equipment.weapon;
@@ -2438,7 +2438,7 @@ export function advanceBattle(state) {
   const weapon = bowWithoutAmmo ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equippedWeapon ?? { damageMin: 8, damageMax: 12, hitBonus: -10, armorDamage: .4, range: 1 };
   const range = effectiveWeaponRange(actor, weapon);
   const initialPosition = { q: actor.q, r: actor.r };
-  const archerBackup = !weapon.ranged && companyArcherWeapon(state, actor);
+  const archerBackup = state.supplies.ammo > 0 && !weapon.ranged && companyArcherWeapon(state, actor);
   const retreated = battle.tactic !== 'advance-formation' && (weapon.ranged || archerBackup) && stepArcherBack(battle, actor, archerBackup ? effectiveWeaponRange(actor, archerBackup) : range);
   if (retreated && battle.tactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
   if (archerBackup) {

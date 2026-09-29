@@ -37,7 +37,7 @@ function minimumEnemyDistance(battle, actor) {
   return Math.min(...battle.units.filter(unit => unit.side === 'enemy' && unit.alive).map(enemy => hexDistance(actor, enemy)));
 }
 
-test('unpressured archers with empty ammo hold position instead of swapping and charging', () => {
+test('unpressured empty-ammo archers use backups or follow their melee tactic', () => {
   for (const weapon of ['hunting-bow', 'light-crossbow']) {
     for (const backup of [null, 'arming-sword', 'pocket']) {
       for (const tactic of ['offense', 'focus', 'defense']) {
@@ -45,14 +45,17 @@ test('unpressured archers with empty ammo hold position instead of swapping and 
         setBattleTactic(state, tactic);
         at('enemy-1', 6, 2);
         state.supplies.ammo = 0;
-        for (let turn = 0; turn < 3; turn++) {
-          battle.activeId = actor.id;
-          battle.turnIndex = battle.turnOrder.indexOf(actor.id);
-          advanceBattle(state);
-          assert.equal(actor.equipment.weapon, weapon, `${weapon}/${backup}/${tactic} swapped without pressure`);
-          assert.deepEqual({ q: actor.q, r: actor.r }, { q: 2, r: 2 });
-          assert.equal(state.supplies.ammo, 0);
+        advanceBattle(state);
+        if (backup) {
+          assert.equal(battle.lastEvent.type, 'swap', `${weapon}/${backup}/${tactic}`);
+          assert.equal(actor.equipment.weapon, backup === 'pocket' ? 'rondel-dagger' : backup);
+        } else if (tactic === 'defense') {
+          assert.equal(battle.lastEvent.type, 'hold');
+        } else {
+          assert.equal(battle.lastEvent.type, 'move');
+          assert.ok(actor.q > 2, `${weapon}/${tactic} did not close for unarmed combat`);
         }
+        assert.equal(state.supplies.ammo, 0);
         assert.deepEqual(validateSave(state), state);
       }
     }
@@ -122,29 +125,19 @@ test('funded archers keep their ranged weapon despite carrying a melee reserve o
   }
 });
 
-test('empty-ammo archers retreat if possible and only draw melee when trapped', () => {
+test('empty-ammo archers draw melee backups immediately and join close combat', () => {
   for (const backup of ['arming-sword', 'pocket']) {
     const { state, battle, actor, at } = setup('hunting-bow', 51, backup);
     state.supplies.ammo = 0;
     at('enemy-1', 3, 2);
     advanceBattle(state);
-    assert.equal(battle.lastEvent.type, 'move');
-    assert.equal(actor.equipment.weapon, 'hunting-bow');
-    assert.ok(minimumEnemyDistance(battle, actor) >= 2);
-    at('captain', 0, 0);
-    at('guard', 0, 1);
-    at('enemy-1', 1, 0);
-    battle.activeId = actor.id;
-    battle.turnIndex = battle.turnOrder.indexOf(actor.id);
-    advanceBattle(state);
     assert.equal(battle.lastEvent.type, 'swap');
     assert.equal(actor.equipment.weapon, backup === 'pocket' ? 'rondel-dagger' : backup);
-    at('enemy-1', 2, 0);
     battle.activeId = actor.id;
     battle.turnIndex = battle.turnOrder.indexOf(actor.id);
     advanceBattle(state);
-    assert.equal(battle.lastEvent.type, 'hold');
-    assert.deepEqual({ q: actor.q, r: actor.r }, { q: 0, r: 0 });
+    assert.ok(['attack', 'miss'].includes(battle.lastEvent.type));
+    assert.equal(battle.lastEvent.ranged, false);
     assert.deepEqual(validateSave(state), state);
   }
 });

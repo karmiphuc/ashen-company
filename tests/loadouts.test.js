@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ITEMS, createGame, createFamedItemId, getItem, getCampSites, getCompanyStats, getMarket, buyItem, buyFood,
   equipItem, unequipItem, swapWeaponSet, startBattle, advanceBattle, resolveBattle,
-  retreatBattle, finishBattle, validateSave,
+  retreatBattle, finishBattle, setBattleTactic, validateSave,
 } from '../src/engine.js';
 
 function addItem(state, id) {
@@ -212,6 +212,78 @@ test('trapped archers draw a pocket dagger, then return to bow without gear loss
   retreatBattle(state);
   finishBattle(state);
   assert.deepEqual(carried(state), before);
+});
+
+test('empty-ammo archers draw a melee reserve under every tactic and do not swap back after reload', () => {
+  for (const tactic of ['offense', 'defense', 'focus', 'advance-formation', 'shield-wall']) {
+    const state = createGame(`empty-ammo-${tactic}`);
+    addItem(state, 'light-crossbow');
+    equipItem(state, 'captain', 'light-crossbow');
+    equipItem(state, 'captain', 'arming-sword', 'reserve');
+    state.supplies.ammo = 0;
+    setBattleTactic(state, tactic);
+    let { battle, actor, activate } = battleWith(state);
+    actor.reload = 1;
+    activate();
+    advanceBattle(state);
+    assert.equal(battle.lastEvent.type, 'swap', tactic);
+    assert.equal(actor.equipment.weapon, 'arming-sword', tactic);
+    assert.equal(actor.reserveEquipment.weapon, 'light-crossbow', tactic);
+    assert.equal(actor.reserveReload, 1, tactic);
+
+    const restored = validateSave(JSON.parse(JSON.stringify(state)));
+    battle = restored.battle;
+    actor = battle.units.find(unit => unit.id === 'captain');
+    battle.turnIndex = battle.turnOrder.indexOf('captain');
+    battle.activeId = 'captain';
+    advanceBattle(restored);
+    assert.equal(actor.equipment.weapon, 'arming-sword', `${tactic} stays on melee without ammunition`);
+    assert.notEqual(battle.lastEvent.type, 'swap', `${tactic} does not swap back to an unusable ranged weapon`);
+  }
+});
+
+test('an empty-ammo archer draws a pocket dagger, while a supplied archer keeps shooting', () => {
+  const empty = createGame('empty-pocket');
+  addItem(empty, 'hunting-bow');
+  addItem(empty, 'qatal-dagger');
+  equipItem(empty, 'captain', 'hunting-bow');
+  equipItem(empty, 'captain', 'qatal-dagger', 'accessory-1');
+  empty.supplies.ammo = 0;
+  const emptyBattle = battleWith(empty);
+  emptyBattle.activate();
+  advanceBattle(empty);
+  assert.equal(emptyBattle.battle.lastEvent.type, 'swap');
+  assert.equal(emptyBattle.actor.equipment.weapon, 'qatal-dagger');
+  assert.equal(emptyBattle.actor.pocketStowedWeapon, 'hunting-bow');
+
+  const supplied = createGame('supplied-archer');
+  addItem(supplied, 'hunting-bow');
+  equipItem(supplied, 'captain', 'hunting-bow');
+  equipItem(supplied, 'captain', 'arming-sword', 'reserve');
+  const suppliedBattle = battleWith(supplied);
+  suppliedBattle.at('captain', 2, 2);
+  suppliedBattle.at('enemy-1', 4, 2);
+  suppliedBattle.activate();
+  const ammo = supplied.supplies.ammo;
+  advanceBattle(supplied);
+  assert.equal(suppliedBattle.actor.equipment.weapon, 'hunting-bow');
+  assert.ok(['attack', 'miss'].includes(suppliedBattle.battle.lastEvent.type));
+  assert.equal(supplied.supplies.ammo, ammo - 1);
+});
+
+test('an empty-ammo archer without spare gear closes and fights unarmed', () => {
+  const state = createGame('empty-unarmed');
+  addItem(state, 'hunting-bow');
+  equipItem(state, 'captain', 'hunting-bow');
+  state.supplies.ammo = 0;
+  const { battle, actor, at, activate } = battleWith(state);
+  at('captain', 2, 2);
+  at('enemy-1', 3, 2);
+  activate();
+  advanceBattle(state);
+  assert.equal(actor.equipment.weapon, 'hunting-bow');
+  assert.ok(['attack', 'miss'].includes(battle.lastEvent.type));
+  assert.equal(battle.lastEvent.ranged, false);
 });
 
 test('a shielded thrower keeps the shield while drawing and stowing a pocket blade', () => {

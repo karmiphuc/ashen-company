@@ -162,7 +162,7 @@ function projectileHTML(battle, animateEvent, field, grid) {
   const target = battle.units.find(unit => unit.id === event.targetId);
   if (!actor || !target) return '';
   const start = coordinates(event.from || actor, field, grid), end = coordinates(event.to || target, field, grid);
-  start.x += 18; start.y += 52; end.y += event.head ? 29 : 50;
+  start.x += actor.side === 'enemy' ? -18 : 18; start.y += 52; end.y += event.head ? 29 : 50;
   if (event.type === 'miss') { end.x += 20; end.y -= 12; }
   const dx = end.x - start.x, dy = end.y - start.y;
   const angle = Math.atan2(dy, dx) * 180 / Math.PI;

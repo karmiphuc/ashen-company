@@ -38,6 +38,15 @@ test('attack effects support misses and remain safe when older events have no po
   assert.doesNotMatch(battleHTML({...battle,units:[]},1,true), /Arrow in flight/);
 });
 
+test('enemy projectiles start at the mirrored weapon hand and travel toward the company', () => {
+  const html = battleHTML({
+    ...battle,
+    lastEvent: {...battle.lastEvent, actorId:'enemy', targetId:'captain', from:{q:7,r:2}, to:{q:2,r:2}},
+  },1,true);
+  assert.match(html, /class="battle-projectile is-arrow"[^>]*left:644px;top:210px;--flight-x:-362px;--flight-y:-2px/);
+  assert.match(html, /--strike-x:-13.00px;--strike-y:0.00px/);
+});
+
 test('throwing weapons fly with their exact packaged icon while crossbows remain bolts', () => {
   const projectile = (weapon, kind) => battleHTML({
     ...battle,

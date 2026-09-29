@@ -1,6 +1,12 @@
-# Verification - version 0.20, 2026-09-29
+# Verification - version 0.20.1, 2026-09-29
 
-## v0.20 checks
+## v0.20.1 checks
+
+The full automated suite passes 193 tests after regenerating the offline cache. Empty-ammo bow/crossbow regressions cover immediate reserve or pocket-blade selection, no unusable ranged swap-back after save/reload, all five tactics, and unarmed fallback when no spare gear exists. Supplied-archer spacing and throwing-weapon behavior remain covered. Enemy projectile tests verify the mirrored weapon-hand origin and travel toward the company.
+
+A local browser fixture using the actual engine and battle renderer showed an empty-ammo bowman drawing an Arming Sword, advancing, and landing a melee hit. With ammunition available, the same fighter kept the Hunting Bow and fired instead. Enemy portraits face the company with their entire equipment composition mirrored; names and health bars remain readable. Enemy arrow flight starts on the mirrored side. No JavaScript errors were recorded. This release's physical iPad behavior and a fresh offline relaunch were not rechecked; the preceding v0.20 offline check remains recorded below.
+
+## Historical v0.20 checks
 
 The full automated suite passes 189 tests. New coverage checks 24 persistent bands, varied enemy equipment, company pursuit and automatic contact battles, settlement safety, post-battle escape time, interrupted camp/forage rewards, and frame-independent world updates. Caravan checks cover physical interception, the seven-hour rescue window, rescue without replacement attackers, late-contact loss timestamps, out-of-contact arrival, and legacy migration. Six historical company/battle fixtures preserve equipment, purse, inventory, and battle positions; five shipment fixtures validate through repeated migration. A 64-seed, 72-hour simulation validates world saves. An independent review passed all 29 targeted world, caravan, roaming, and expansion tests. Generated offline cache consistency and diff checks pass.
 
