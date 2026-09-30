@@ -428,7 +428,7 @@ function draw() {
     }
     sprite(context, 'figure_player_trader', caravan.x, caravan.y, 34, .72);
     const eta = Math.max(0, Math.ceil(Number(caravan.etaHours) || 0));
-    const label = attacker ? `${caravan.name} · ${inContact ? 'Wagon intercepted' : 'Raiders closing'}${inContact && Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
+    const label = caravan.quest ? `${caravan.name} · Awaiting rescue` : attacker ? `${caravan.name} · ${inContact ? 'Wagon intercepted' : 'Raiders closing'}${inContact && Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
       : underAttack ? `${caravan.name} · ${inContact ? 'Wagon intercepted' : 'Raiders closing'}${inContact && Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
       : `${caravan.name} · ${eta}h`;
     context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913dd';

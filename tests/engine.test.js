@@ -131,7 +131,7 @@ test('supply contracts require and consume cargo, while old courier saves migrat
   const beforeOffers = structuredClone(state);
   const offers = getContractOffers(state, 'oakwatch');
   assert.deepEqual(state, beforeOffers);
-  assert.deepEqual(offers.map(offer => offer.type), ['courier', 'supply', 'hunt']);
+  assert.deepEqual(offers.map(offer => offer.type), ['courier', 'supply', 'hunt', 'assault', 'rescue']);
   const supply = offers[1];
   assert.equal(acceptContract(state, 'oakwatch', supply.id).ok, true);
   assert.equal(state.contract.goodId, supply.goodId);

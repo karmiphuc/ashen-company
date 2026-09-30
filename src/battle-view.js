@@ -89,7 +89,7 @@ function coordinates(unit, field, grid) {
 
 function pawnName(unit) {
   const words = String(unit.name || 'Unknown').trim().split(/\s+/).filter(word => !/^\d+$/.test(word));
-  return unit.side === 'company' ? words[0] || 'Companion' : words.at(-1) || 'Enemy';
+  return unit.ally ? words.at(-1) || 'Ally' : unit.side === 'company' ? words[0] || 'Companion' : words.at(-1) || 'Enemy';
 }
 
 function equipmentFor(unit) {
@@ -109,9 +109,9 @@ function shieldCondition(unit) {
 function battleKitHTML(unit) {
   const reserve = [unit?.reserveEquipment?.weapon,unit?.reserveEquipment?.shield].filter(Boolean).length;
   const accessories = Array.isArray(unit?.accessories) ? unit.accessories.filter(Boolean).length : 0;
-  if (!reserve && !accessories) return '';
-  const labels = [reserve ? `reserve set ${reserve === 2 ? 'ready' : 'partial'}` : '', accessories ? `${accessories} carried ${accessories === 1 ? 'accessory' : 'accessories'}` : ''].filter(Boolean);
-  return `<span class="battle-kit" aria-label="${esc(labels.join('; '))}">${reserve?'<i>Reserve</i>':''}${accessories?`<i>Bag ${accessories}</i>`:''}</span>`;
+  if (!reserve && !accessories && !unit.ally) return '';
+  const labels = [unit.ally ? 'Allied fighter' : '', reserve ? `reserve set ${reserve === 2 ? 'ready' : 'partial'}` : '', accessories ? `${accessories} carried ${accessories === 1 ? 'accessory' : 'accessories'}` : ''].filter(Boolean);
+  return `<span class="battle-kit" aria-label="${esc(labels.join('; '))}">${unit.ally?'<i>Ally</i>':''}${reserve?'<i>Reserve</i>':''}${accessories?`<i>Bag ${accessories}</i>`:''}</span>`;
 }
 
 function unitHTML(unit, battle, animateEvent, field, grid) {
@@ -131,6 +131,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const classes = [
     'battle-unit',
     unit.side === 'company' ? 'battle-unit-company' : 'battle-unit-enemy',
+    unit.ally ? 'battle-unit-ally' : '',
     alive ? 'battle-unit-alive' : 'battle-unit-down',
     (animateEvent && event.actorId ? event.actorId : battle.activeId) === unit.id ? 'is-active' : '',
     event.actorId === unit.id ? 'is-acting' : '',
@@ -154,7 +155,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const morale = getMoraleEffects(unit);
   const moraleLabel = `${morale.name} morale: ${Math.round(number(unit.morale, 50))}/100; resolve ${Math.round(number(unit.resolve, 50))}`;
 
-  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${esc(unit.name)}: ${Math.round(number(unit.hp))} health">
+  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${unit.ally?'Allied fighter, ':''}${esc(unit.name)}: ${Math.round(number(unit.hp))} health">
     <div class="battle-unit-bars" aria-hidden="true">
       <span class="battle-unit-bar battle-unit-head"><i style="width:${head}%;--before-width:${beforeHead}%;--after-width:${head}%"></i></span>
       <span class="battle-unit-bar battle-unit-body"><i style="width:${body}%;--before-width:${beforeBody}%;--after-width:${body}%"></i></span>
@@ -220,7 +221,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
     <div class="battle-layout">
       <div class="battle-scroll" tabindex="0" aria-label="Battlefield scroll area">
         ${terrainLegend(field)}
-        <div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company').length} company fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
+        <div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company' && !unit.ally).length} company fighters, ${units.filter(unit => unit.ally).length} allied fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
           <div class="battle-terrain">${tiles}</div>
           <div class="battle-units">${units.map(unit => unitHTML(unit, battle, animateEvent, field, grid)).join('')}${projectileHTML(battle, animateEvent, field, grid)}</div>
         </div>
