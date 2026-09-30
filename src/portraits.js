@@ -349,7 +349,8 @@ function layer(name, spec, item) {
   const weaponStyle = name === 'weapon' && transform ? `--layer-rest:${transform};--layer-origin:${origin};--weapon-rest:${transform};--weapon-origin:${origin};` : '';
   const transformStyle = transform ? `${weaponStyle}transform:${transform};transform-origin:${origin};` : '';
   const famed = item?.rarity === 'famed' ? ' bb-layer-famed' : '';
-  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none">`;
+  const zIndex = { armor: 1, ear: 4, helmet: 5, shield: 6, weapon: 7 }[name] ?? 0;
+  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none;z-index:${zIndex}">`;
 }
 
 function bodyLayer(file, armored, left = 11, top = 50) {
@@ -362,7 +363,7 @@ function attachmentLayer(spec, part) {
   const layerSpec = spec?.[part];
   if (!layerSpec) return '';
   const [file, left, top] = layerSpec;
-  return `<img data-layer="attachment-${part}" class="bb-layer bb-layer-attachment" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none">`;
+  return `<img data-layer="attachment-${part}" class="bb-layer bb-layer-attachment" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none;z-index:${part === 'back' ? 2 : 3}">`;
 }
 
 function mountLayer(spec, part) {
@@ -402,10 +403,10 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
         ${attachmentLayer(attachment, 'back')}
         ${layer('armor', armor, equipment.armor)}
         ${attachmentLayer(attachment, 'front')}
-        ${hiddenHead ? '' : `<img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:${appearance.headTop ?? 0}px;${faceClip}max-width:none;pointer-events:none">`}
+        ${hiddenHead ? '' : `<img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:${appearance.headTop ?? 0}px;${faceClip}max-width:none;pointer-events:none;z-index:4">`}
         ${coveredHead || !appearance.ear ? '' : layer('ear', appearance.ear)}
-        ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:${appearance.hairLeft ?? 25}px;top:${appearance.hairTop ?? 0}px;max-width:none;pointer-events:none">`}
-        ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none">`}
+        ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:${appearance.hairLeft ?? 25}px;top:${appearance.hairTop ?? 0}px;max-width:none;pointer-events:none;z-index:4">`}
+        ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none;z-index:4">`}
         ${layer('helmet', helmet, equipment.helmet)}
         ${layer('shield', layerSpec('shield', equipment.shield), equipment.shield)}
         ${layer('weapon', layerSpec('weapon', equipment.weapon), equipment.weapon)}`;

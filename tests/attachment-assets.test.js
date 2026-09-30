@@ -7,6 +7,7 @@ import { itemImage, portraitHTML } from '../src/portraits.js';
 
 const PERSON = { seed: 8, name: 'Mara Ash' };
 const ARMOR = { id: 'mail-shirt', visual: 'mail' };
+const layerIndex = (html, name) => Number(html.match(new RegExp(`data-layer="${name}"[^>]*z-index:(\\d+)`))?.[1]);
 
 test('every attachment has its source icon and fitted overlays only where visible', () => {
   assert.equal(ARMOR_ATTACHMENTS.length, 15);
@@ -20,11 +21,14 @@ test('every attachment has its source icon and fitted overlays only where visibl
     } else {
       assert.match(html, /data-layer="attachment-front"/);
       assert.ok(html.indexOf('data-layer="armor"') < html.indexOf('data-layer="attachment-front"'));
+      assert.ok(layerIndex(html, 'attachment-front') > layerIndex(html, 'armor'));
+      assert.ok(layerIndex(html, 'head') > layerIndex(html, 'attachment-front'));
       visibleSources.push(html.match(/data-layer="attachment-front"[^>]*src="([^"]+)"/)?.[1]);
     }
     if (['fur-mantle', 'horned-pauldrons', 'heraldic-shoulders'].includes(item.id)) {
       assert.match(html, /data-layer="attachment-back"/);
       assert.ok(html.indexOf('data-layer="attachment-back"') < html.indexOf('data-layer="armor"'));
+      assert.ok(layerIndex(html, 'attachment-back') > layerIndex(html, 'armor'));
     }
   }
   assert.equal(visibleSources.length, 13);
