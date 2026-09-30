@@ -187,6 +187,30 @@ test('the deterministic catalog reaches every background and trait without cance
   assert.equal(traits.size, 12);
 });
 
+test('special backgrounds offer distinct, modest combat roles', () => {
+  const specials = RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220);
+  const byId = Object.fromEntries(specials.map(background => [background.id, background.bonuses]));
+  assert.equal(specials.length, 8);
+  assert.equal(new Set(specials.map(background => JSON.stringify(background.bonuses))).size, specials.length);
+  for (const background of specials) {
+    assert.ok(Object.keys(background.bonuses).every(key => STAT_KEYS.includes(key)), background.id);
+    const total = Object.values(background.bonuses).reduce((sum, value) => sum + value, 0);
+    assert.ok(total >= 8 && total <= 16, `${background.id} bonus total: ${total}`);
+  }
+
+  assert.ok(byId['elf-wanderer'].rangedSkill > byId['goblin-scout'].rangedSkill);
+  assert.ok(byId['goblin-scout'].initiative > byId['elf-wanderer'].initiative);
+  assert.ok(byId['half-orc-mercenary'].maxHp > byId['dwarf-guard'].maxHp);
+  assert.ok(byId['half-orc-mercenary'].maxFatigue > 0);
+  assert.ok(byId['dwarf-guard'].resolve > 0 && byId['dwarf-guard'].meleeDefense > 0);
+  assert.ok(byId.samurai.meleeSkill > byId.ronin.meleeSkill);
+  assert.ok(byId.samurai.meleeDefense > byId.ronin.meleeDefense);
+  assert.ok(byId.ronin.initiative > byId.samurai.initiative);
+  assert.ok(byId.ninja.rangedSkill > 0 && byId.ninja.rangedDefense > 0);
+  assert.ok(byId.ninja.initiative > byId['elf-wanderer'].initiative);
+  assert.ok(byId['warrior-monk'].resolve > 0 && byId['warrior-monk'].maxFatigue > 0);
+});
+
 test('rare special recruits span towns and days while ordinary offers remain', () => {
   const found = new Map();
   const specials = RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220);
@@ -218,6 +242,10 @@ test('rare special recruits span towns and days while ordinary offers remain', (
     state.position = { x: town.x, y: town.y };
     state.gold = 1000;
     const offer = getRecruitOffers(state).find(entry => entry.background.id === background.id);
+    const withoutBackground = getCompanyStats({ ...offer.person, background: 'Untrained', backgroundId: undefined });
+    for (const key of STAT_KEYS) {
+      assert.equal(offer.stats[key] - withoutBackground[key], background.bonuses[key] ?? 0, `${background.id} ${key}`);
+    }
     assert.equal(recruit(state, offer.id).ok, true);
     assert.equal(state.gold, 1000 - background.cost);
     assert.equal(state.party.at(-1).appearanceId, background.appearanceId);
@@ -236,6 +264,8 @@ test('rare special recruits span towns and days while ordinary offers remain', (
   assert.equal(startBattle(state, camp.id).ok, true);
   const unit = state.battle.units.find(entry => entry.id === offer.person.id);
   assert.equal(unit.appearanceId, 'elf');
+  const expectedStats = getCompanyStats(state.party.find(person => person.id === unit.id));
+  for (const key of STAT_KEYS) assert.equal(unit[key], expectedStats[key], `special battle ${key}`);
   const restored = validateSave(JSON.parse(JSON.stringify(state)));
   assert.equal(restored.battle.units.find(entry => entry.id === unit.id).appearanceId, 'elf');
   for (const mutate of [

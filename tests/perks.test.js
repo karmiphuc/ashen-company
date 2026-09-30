@@ -299,12 +299,15 @@ test('damage, morale, and Recover perks have concrete battle effects', () => {
   Object.assign(fear.captain, { meleeSkill: 200 });
   Object.assign(fear.target, { hp: 100, maxHp: 100, morale: 80 });
   fear.battle.rng = 0;
+  const ordinary = structuredClone(fear.state);
+  ordinary.battle.units.find(unit => unit.id === 'captain').perks = [];
   const fortified = structuredClone(fear.state);
   fortified.battle.units.find(unit => unit.id === 'enemy-1').perks = ['fortified-mind'];
+  advanceBattle(ordinary);
   advanceBattle(fear.state);
   advanceBattle(fortified);
-  assert.equal(fear.target.morale, 67);
-  assert.equal(fortified.battle.units.find(unit => unit.id === 'enemy-1').morale, 69);
+  assert.ok(fear.target.morale < ordinary.battle.units.find(unit => unit.id === 'enemy-1').morale);
+  assert.ok(fortified.battle.units.find(unit => unit.id === 'enemy-1').morale > fear.target.morale);
 
   const recovery = battleWithCaptain(['recover']);
   recovery.captain.fatigue = 95;

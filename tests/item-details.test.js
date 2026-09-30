@@ -85,7 +85,8 @@ test('shields give defense rather than armor, while gear shows current durabilit
 test('armor attachments explain fit, damage order, weight and repair', () => {
   const details = getItemDetails(item('fur-mantle'), 9);
   assert.equal(value(details, 'Attachment armor'), '9 / 25');
-  assert.equal(value(details, 'Fatigue load'), '2');
+  assert.equal(value(details, 'Fatigue load'), '1');
+  assert.equal(value(details, 'Armor per fatigue'), '25');
   assert.ok(details.notes.some(note => note.includes('requires body armor')));
   assert.ok(details.notes.some(note => note.includes('before the main suit')));
   assert.ok(details.notes.some(note => note.includes('Smithy')));

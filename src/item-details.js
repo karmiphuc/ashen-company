@@ -83,6 +83,7 @@ export function getItemDetails(item, condition) {
     stats.push(
       { label: 'Attachment armor', value: `${current} / ${maximum}` },
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
+      { label: 'Armor per fatigue', value: item.fatigue > 0 ? String(Math.round(maximum / item.fatigue * 10) / 10) : 'Weightless' },
     );
     notes.push('Fits one dedicated attachment slot and requires body armor. It absorbs body armor damage before the main suit; head hits still use the helmet.');
     notes.push('Swapping body armor keeps the attachment fitted. Stowing body armor also stows its attachment, preserving both items and their condition.');

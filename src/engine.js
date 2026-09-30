@@ -2428,8 +2428,24 @@ function effectiveWeaponRange(actor, weapon) {
   return (weapon?.range ?? 1) + (isBow(weapon) && hasPerk(actor, 'bow-mastery') ? 1 : 0);
 }
 
+export function getMoraleEffects(unit) {
+  const morale = unit.morale ?? 50;
+  if (morale >= 80) return { name: 'Confident', modifier: .1 };
+  if (morale >= 50) return { name: 'Steady', modifier: 0 };
+  if (morale >= 25) return { name: 'Wavering', modifier: -.1 };
+  return { name: 'Breaking', modifier: -.2 };
+}
+
 function moraleDamage(unit, amount) {
-  return hasPerk(unit, 'fortified-mind') ? Math.ceil(amount * .8) : amount;
+  const resistance = clamped(1 - (unit.resolve - 40) * .005, .6, 1.2);
+  return Math.max(1, Math.round(amount * resistance * (hasPerk(unit, 'fortified-mind') ? .8 : 1)));
+}
+
+function changeBattleMorale(battle, unit, amount) {
+  const previous = getMoraleEffects(unit).name;
+  unit.morale = clamped(unit.morale + amount, 0, 100);
+  const current = getMoraleEffects(unit).name;
+  if (previous !== current && unit.hp > 0) battleLog(battle, `${unit.name} is now ${current.toLowerCase()}.`);
 }
 
 function attackTarget(state, actor, target, weapon) {
@@ -2441,7 +2457,7 @@ function attackTarget(state, actor, target, weapon) {
   const anticipationDefense = ranged && hasPerk(target, 'anticipation')
     ? Math.max(10, Math.floor(target.rangedDefense * .1 * hexDistance(actor, target)))
     : 0;
-  const defense = (ranged ? target.rangedDefense : target.meleeDefense) + dodgeDefense + anticipationDefense
+  const defense = Math.round((ranged ? target.rangedDefense : target.meleeDefense) * (1 + getMoraleEffects(target).modifier)) + dodgeDefense + anticipationDefense
     + (hasPerk(target, 'last-stand') && target.hp * 2 <= target.maxHp ? 8 : 0)
     + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
   const terrainHit = ranged ? rangedTerrainModifier(battle, actor, actor, target) : heightHitModifier(battle.field, actor, target);
@@ -2454,7 +2470,7 @@ function attackTarget(state, actor, target, weapon) {
   const perkHit = weaponTrainingHit(actor, weapon) + (hasPerk(actor, 'high-ground') && higher ? 8 : 0)
     + (ranged && distance >= 3 && hasPerk(actor, 'marksman') ? 8 : 0);
   const adjacentShotPenalty = ranged && distance === 1 && !hasPerk(actor, 'point-blank') ? 12 : 0;
-  const chance = clamped(skill + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit + adjacentAllies * 5 + adaptationBonus + perkHit + Math.floor((actor.morale - 50) / 8) - Math.floor(actor.fatigue / 7) - adjacentShotPenalty, 12, 90);
+  const chance = clamped(Math.round(skill * (1 + getMoraleEffects(actor).modifier)) + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit + adjacentAllies * 5 + adaptationBonus + perkHit - Math.floor(actor.fatigue / 7) - adjacentShotPenalty, 12, 90);
   actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + attackFatigueCost(actor, weapon));
   if (weapon.reloadTurns) actor.reload = weapon.reloadTurns;
   actor.ap = 0;
@@ -2497,13 +2513,14 @@ function attackTarget(state, actor, target, weapon) {
   if (hasPerk(actor, 'mace-training') && weaponMasteryMatches('mace-training', weapon)) hpDamage = Math.round(hpDamage * 1.1);
   if (hasPerk(target, 'iron-jaw')) hpDamage = Math.max(1, Math.round(hpDamage * .8));
   target.hp = Math.max(0, target.hp - hpDamage);
-  target.morale = Math.max(0, target.morale - moraleDamage(target, 3 + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0)));
+  changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0)));
   const fallen = target.hp === 0;
   const perkProcs = [];
   if (fallen) {
     target.alive = false;
     target.ap = 0;
-    for (const ally of battle.units.filter(unit => unit.side === target.side && unit.alive)) ally.morale = Math.max(0, ally.morale - moraleDamage(ally, 12));
+    for (const ally of battle.units.filter(unit => unit.side === target.side && unit.alive)) changeBattleMorale(battle, ally, -moraleDamage(ally, 12));
+    for (const ally of battle.units.filter(unit => unit.side === actor.side && unit.alive)) changeBattleMorale(battle, ally, ally === actor ? 4 : 2);
     if (actor.side === 'company') battle.xp[actor.id] = (battle.xp[actor.id] ?? 0) + 20;
     if (hasPerk(actor, 'killing-frenzy')) {
       actor.frenzyUntilRound = battle.round + 2;

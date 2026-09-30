@@ -11,6 +11,20 @@ const units = [
 ];
 const battle = {units,status:'active',round:1,tactic:'focus',lastEvent:{actorId:'captain',targetId:'enemy',type:'attack',from:{q:2,r:2},to:{q:7,r:2},ranged:true,projectile:'arrow',hpDamage:30,armorDamage:25}};
 
+test('battle exposes each morale state and the active fighters actual resolve and combat modifier', () => {
+  const example = structuredClone(battle);
+  Object.assign(example.units[0], { morale: 85, resolve: 65 });
+  Object.assign(example.units[1], { morale: 20, resolve: 25 });
+  example.activeId = 'captain';
+  const html = battleHTML(example, 0);
+  assert.match(html, /Confident morale: 85\/100; resolve 65/);
+  assert.match(html, /Breaking morale: 20\/100; resolve 25/);
+  assert.match(html, /Confident · 85\/100 morale/);
+  assert.match(html, /Resolve 65 · \+10% attack and defense/);
+  assert.match(html, /battle-morale-flag morale-breaking/);
+  assert.doesNotMatch(html, /NaN|undefined/);
+});
+
 test('restored or paused battle renders without replaying the last projectile', () => {
   assert.doesNotMatch(battleHTML(battle,0), /Arrow in flight|action-shoot|action-hit/);
   const animated = battleHTML(battle,1,true);

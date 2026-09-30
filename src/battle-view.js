@@ -1,4 +1,4 @@
-import { getEquipment, getItem } from './engine.js';
+import { getEquipment, getItem, getMoraleEffects } from './engine.js';
 import { portraitHTML, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
@@ -144,6 +144,8 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const beforeBody = target && attacking && !event.head ? percent(bodyArmor + number(event.armorDamage), maxBodyArmor || 1) : body;
   const beforeHead = target && attacking && event.head ? percent(number(unit.headArmor) + number(event.armorDamage), unit.maxHeadArmor || 1) : head;
   const display = { seed: unit.seed ?? unit.id ?? 0, name: unit.name ?? 'Unknown' };
+  const morale = getMoraleEffects(unit);
+  const moraleLabel = `${morale.name} morale: ${Math.round(number(unit.morale, 50))}/100; resolve ${Math.round(number(unit.resolve, 50))}`;
 
   return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${esc(unit.name)}: ${Math.round(number(unit.hp))} health">
     <div class="battle-unit-bars" aria-hidden="true">
@@ -152,6 +154,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
       <span class="battle-unit-bar battle-unit-health"><i style="width:${health}%;--before-width:${beforeHealth}%;--after-width:${health}%"></i></span>
     </div>
     <span class="battle-pawn">${portraitHTML(display, equipmentFor(unit), 64)}</span>
+    <span class="battle-morale-flag morale-${morale.name.toLowerCase()}" title="${esc(moraleLabel)}" aria-label="${esc(moraleLabel)}">${morale.name[0]}</span>
     ${battleKitHTML(unit)}
     <strong>${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
@@ -197,6 +200,8 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
   const log = Array.isArray(battle.log) ? battle.log.slice(-6).reverse() : [];
   const selectedSpeed = [0, 1, 3].includes(Number(speed)) ? Number(speed) : 1;
   const status = String(battle.status || 'active');
+  const morale = getMoraleEffects(active || {});
+  const moralePercent = Math.round(morale.modifier * 100);
 
   return `<section class="battle-view battle-status-${esc(status)}" style="--action-time:${battleActionDuration(speed)}s" aria-label="Tactical battle">
     <header class="battle-topbar">
@@ -213,6 +218,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         </div>
       </div>
       <aside class="battle-log" aria-label="Battle event log">
+        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p><small>Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale.</small></section>` : ''}
         <h3>Combat log</h3>
         <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol>
       </aside>

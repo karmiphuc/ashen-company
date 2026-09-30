@@ -33,16 +33,34 @@ test('attachment catalog uses the independent slot and is not famed', () => {
   assert.equal(ARMOR_ATTACHMENTS.length, 15);
   assert.deepEqual(ARMOR_ATTACHMENTS.slice(0, 5).map(item => [item.id, item.armor, item.fatigue, item.price]), [
     ['padded-lining', 15, 1, 80],
-    ['fur-mantle', 25, 2, 130],
-    ['leather-reinforcement', 35, 4, 200],
-    ['iron-pauldrons', 60, 7, 340],
-    ['scale-mantle', 80, 10, 470],
+    ['fur-mantle', 25, 1, 130],
+    ['leather-reinforcement', 35, 2, 200],
+    ['iron-pauldrons', 60, 4, 340],
+    ['scale-mantle', 80, 5, 470],
   ]);
   for (const item of ARMOR_ATTACHMENTS) {
     assert.equal(item.slot, 'attachment');
     assert.ok(item.role);
     assert.equal(ITEMS.find(entry => entry.id === item.id), item);
     assert.throws(() => createFamedItemId(item.id, 1));
+  }
+});
+
+test('attachment armor efficiency stays near fifteen armor per fatigue', () => {
+  assert.deepEqual(ARMOR_ATTACHMENTS.map(item => [item.id, item.armor]), [
+    ['padded-lining', 15], ['fur-mantle', 25], ['leather-reinforcement', 35],
+    ['iron-pauldrons', 60], ['scale-mantle', 80], ['bone-platings', 40],
+    ['horned-pauldrons', 50], ['chain-mantle', 55], ['heraldic-plates', 60],
+    ['gladiator-pauldrons', 65], ['skull-chain', 65], ['spiked-chain', 70],
+    ['stag-plates', 75], ['heraldic-shoulders', 82], ['kraken-mantle', 90],
+  ]);
+  for (const item of ARMOR_ATTACHMENTS) {
+    const efficiency = item.armor / item.fatigue;
+    assert.ok(efficiency >= 15, `${item.id}: ${efficiency} armor per fatigue`);
+  }
+  for (const id of ['iron-pauldrons', 'scale-mantle', 'stag-plates', 'heraldic-shoulders', 'kraken-mantle']) {
+    const item = ARMOR_ATTACHMENTS.find(entry => entry.id === id);
+    assert.ok(item.armor / item.fatigue >= 15, `${id} should deliver at least 15 armor per fatigue`);
   }
 });
 
@@ -144,7 +162,7 @@ test('attachment fatigue participates in armor perks and its damage repairs inde
   addItem(state, 'leather-reinforcement');
   const before = getCompanyStats(state.party[0]).maxFatigue;
   assert.equal(equipItem(state, 'captain', 'leather-reinforcement').ok, true);
-  assert.equal(getCompanyStats(state.party[0]).maxFatigue, before - 4);
+  assert.equal(getCompanyStats(state.party[0]).maxFatigue, before - 2);
   state.party[0].armorDurability.attachment = 7;
   state.position = { x: 350, y: 460 };
   const quote = getTownServiceQuote(state, 'smithy', 'captain');

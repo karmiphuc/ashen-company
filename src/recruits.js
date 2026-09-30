@@ -11,14 +11,14 @@ export const RECRUIT_BACKGROUNDS = Object.freeze([
   freezeEntry({ id: 'hunter', name: 'Hunter', role: 'ranged', cost: 180, description: 'A practiced shot who knows how to act before prey bolts.', bonuses: { rangedSkill: 8, initiative: 3 } }),
   freezeEntry({ id: 'outrider', name: 'Outrider', role: 'ranged', cost: 180, description: 'Scouting ahead rewards speed, awareness, and stamina.', bonuses: { rangedSkill: 5, initiative: 5, maxFatigue: 2 } }),
   freezeEntry({ id: 'brawler', name: 'Brawler', role: 'frontline', cost: 150, description: 'Tavern scraps left this fighter tough and comfortable up close.', bonuses: { meleeSkill: 4, maxHp: 4 } }),
-  freezeEntry({ id: 'elf-wanderer', name: 'Elf Wanderer', role: 'ranged', cost: 320, appearanceId: 'elf', description: 'A far-traveled archer with a patient eye and a light step.', bonuses: { rangedSkill: 6, initiative: 4 } }),
-  freezeEntry({ id: 'half-orc-mercenary', name: 'Half-Orc Mercenary', role: 'frontline', cost: 340, appearanceId: 'half-orc', description: 'A hardy sword hand accustomed to difficult marches.', bonuses: { maxHp: 6, meleeSkill: 4 } }),
-  freezeEntry({ id: 'dwarf-guard', name: 'Dwarf Guard', role: 'frontline', cost: 360, appearanceId: 'dwarf', description: 'A compact, stubborn veteran with a practiced shield hand.', bonuses: { maxHp: 5, meleeDefense: 3 } }),
-  freezeEntry({ id: 'goblin-scout', name: 'Goblin Scout', role: 'ranged', cost: 240, appearanceId: 'goblin', description: 'A watchful scout who finds gaps before others notice them.', bonuses: { rangedSkill: 4, rangedDefense: 3 } }),
-  freezeEntry({ id: 'samurai', name: 'Samurai', role: 'frontline', cost: 420, appearanceId: 'samurai', description: 'Disciplined training lends a steady blade and guard.', bonuses: { meleeSkill: 6, meleeDefense: 2 } }),
-  freezeEntry({ id: 'ronin', name: 'Ronin', role: 'frontline', cost: 350, description: 'A wandering fighter who learned to survive without a lord.', bonuses: { meleeSkill: 5, initiative: 3 } }),
-  freezeEntry({ id: 'ninja', name: 'Ninja', role: 'ranged', cost: 390, appearanceId: 'ninja', description: 'A covert scout who favors speed and precise attacks.', bonuses: { rangedSkill: 5, initiative: 5 } }),
-  freezeEntry({ id: 'warrior-monk', name: 'Warrior Monk', role: 'support', cost: 300, description: 'Long practice gives this traveler calm and staying power.', bonuses: { resolve: 5, maxFatigue: 4 } }),
+  freezeEntry({ id: 'elf-wanderer', name: 'Elf Wanderer', role: 'ranged', cost: 320, appearanceId: 'elf', description: 'An elven archer whose long practice lends a patient eye and nimble footing.', bonuses: { rangedSkill: 8, initiative: 5, rangedDefense: 2 } }),
+  freezeEntry({ id: 'half-orc-mercenary', name: 'Half-Orc Mercenary', role: 'frontline', cost: 340, appearanceId: 'half-orc', description: 'A half-orc mercenary who endures hard blows and longer marches.', bonuses: { maxHp: 9, maxFatigue: 5, meleeSkill: 1 } }),
+  freezeEntry({ id: 'dwarf-guard', name: 'Dwarf Guard', role: 'frontline', cost: 360, appearanceId: 'dwarf', description: 'A dwarf veteran drilled to hold the line with a steady shield and stout resolve.', bonuses: { maxHp: 7, resolve: 5, meleeDefense: 3 } }),
+  freezeEntry({ id: 'goblin-scout', name: 'Goblin Scout', role: 'ranged', cost: 240, appearanceId: 'goblin', description: 'A goblin scout whose nimble escapes and quick shots keep danger at a distance.', bonuses: { rangedSkill: 4, initiative: 6, rangedDefense: 3 } }),
+  freezeEntry({ id: 'samurai', name: 'Samurai', role: 'frontline', cost: 420, appearanceId: 'samurai', description: 'Formal blade and guard training makes this fighter accurate, guarded, and ready.', bonuses: { meleeSkill: 8, meleeDefense: 4, initiative: 3 } }),
+  freezeEntry({ id: 'ronin', name: 'Ronin', role: 'frontline', cost: 350, description: 'Years of duels on the road taught quick, accurate strikes with a lighter guard.', bonuses: { meleeSkill: 6, initiative: 7, meleeDefense: 1 } }),
+  freezeEntry({ id: 'ninja', name: 'Ninja', role: 'ranged', cost: 390, appearanceId: 'ninja', description: 'Stealth and skirmish training favor quick ranged strikes and evasive movement.', bonuses: { rangedSkill: 6, initiative: 7, rangedDefense: 3 } }),
+  freezeEntry({ id: 'warrior-monk', name: 'Warrior Monk', role: 'support', cost: 300, description: 'Disciplined practice builds calm resolve, endurance, and a steady stance.', bonuses: { resolve: 7, maxFatigue: 6, meleeDefense: 1 } }),
 ]);
 
 export const RECRUIT_TRAITS = Object.freeze([
