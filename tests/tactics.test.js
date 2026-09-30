@@ -113,6 +113,7 @@ test('new weapons have working reach, piercing, bolts, reload, and town stock', 
   const polearm = createGame(3);
   polearm.party[0].equipment.weapon = 'billhook';
   polearm.party[0].equipment.shield = null;
+  polearm.party[0].armorDurability.shield = 0;
   approach(polearm);
   const poleActor = polearm.battle.units.find(unit => unit.id === 'captain');
   const poleTarget = polearm.battle.units.find(unit => unit.id === 'enemy-1');
@@ -130,6 +131,7 @@ test('new weapons have working reach, piercing, bolts, reload, and town stock', 
   const crossbow = createGame(4);
   crossbow.party[0].equipment.weapon = 'light-crossbow';
   crossbow.party[0].equipment.shield = null;
+  crossbow.party[0].armorDurability.shield = 0;
   approach(crossbow);
   const archer = crossbow.battle.units.find(unit => unit.id === 'captain');
   const target = crossbow.battle.units.find(unit => unit.id === 'enemy-1');

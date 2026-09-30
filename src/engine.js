@@ -304,7 +304,17 @@ export function moveFormation(state, fromIndex, toIndex) {
   return result(true, message);
 }
 function armorMaximum(itemId) { return getItem(itemId)?.armor ?? 0; }
-function itemCondition(itemId) { return ['armor', 'attachment', 'helmet'].includes(getItem(itemId)?.slot) ? armorMaximum(itemId) : null; }
+export function shieldMaximum(itemId) {
+  const item = getItem(itemId);
+  return item?.slot === 'shield' ? item.durability ?? Math.max(24, item.armor * 4) : 0;
+}
+function itemCondition(itemId) {
+  const slot = getItem(itemId)?.slot;
+  return slot === 'shield' ? shieldMaximum(itemId) : ['armor', 'attachment', 'helmet'].includes(slot) ? armorMaximum(itemId) : null;
+}
+function restoredCondition(itemId, condition) {
+  return getItem(itemId)?.slot === 'shield' && condition === null ? shieldMaximum(itemId) : condition;
+}
 function normalizeMember(person) {
   const level = person.level ?? 1;
   const unspent = person.trainingPoints ?? 0;
@@ -330,6 +340,8 @@ function normalizeMember(person) {
       body: person.armorDurability?.body ?? armorMaximum(person.equipment.armor),
       attachment: person.armorDurability?.attachment ?? armorMaximum(person.equipment.attachment),
       head: person.armorDurability?.head ?? armorMaximum(person.equipment.helmet),
+      shield: person.armorDurability?.shield ?? shieldMaximum(person.equipment.shield),
+      reserveShield: person.armorDurability?.reserveShield ?? shieldMaximum(person.reserveEquipment?.shield),
     },
   };
 }
@@ -395,7 +407,7 @@ export function getCompanyStats(person) {
   const maxBodyArmor = armorMaximum(person.equipment?.armor);
   const maxAttachmentArmor = armorMaximum(person.equipment?.attachment);
   const maxHeadArmor = armorMaximum(person.equipment?.helmet);
-  const shieldDefense = equipped.shield?.defense ?? 0;
+  const shieldDefense = (person.armorDurability?.shield ?? shieldMaximum(person.equipment?.shield)) > 0 ? equipped.shield?.defense ?? 0 : 0;
   const effectiveShieldDefense = (hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense)
     + (shieldDefense && hasPerk(person, 'shield-bearer') ? 5 : 0);
   const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) - fatigue);
@@ -422,6 +434,10 @@ export function getCompanyStats(person) {
     maxBodyArmor,
     maxAttachmentArmor,
     maxHeadArmor,
+    shieldDurability: person.armorDurability?.shield ?? shieldMaximum(person.equipment?.shield),
+    maxShieldDurability: shieldMaximum(person.equipment?.shield),
+    reserveShieldDurability: person.armorDurability?.reserveShield ?? shieldMaximum(person.reserveEquipment?.shield),
+    maxReserveShieldDurability: shieldMaximum(person.reserveEquipment?.shield),
   };
 }
 
@@ -1430,19 +1446,19 @@ export function getTownServiceQuote(state, service, memberId = null) {
       return { memberId: person.id, name: person.name, currentHp: person.hp, maxHp,
         hpMissing, amount: hpMissing, cost: hpMissing };
     }
-    const repairs = [['armor', 'body'], ['attachment', 'attachment'], ['helmet', 'head']].flatMap(([slot, part]) => {
-      const itemId = person.equipment[slot];
+    const repairs = [['armor', 'body', 'active'], ['attachment', 'attachment', 'active'], ['helmet', 'head', 'active'], ['shield', 'shield', 'active'], ['shield', 'reserveShield', 'reserve']].flatMap(([slot, part, set]) => {
+      const itemId = set === 'reserve' ? person.reserveEquipment.shield : person.equipment[slot];
       if (!itemId) return [];
-      const max = armorMaximum(itemId);
+      const max = slot === 'shield' ? shieldMaximum(itemId) : armorMaximum(itemId);
       const current = person.armorDurability[part];
-      return [{ slot, itemId, current, max, missing: Math.max(0, max - current) }];
+      return [{ slot, part, set, itemId, current, max, missing: Math.max(0, max - current) }];
     });
     const amount = repairs.reduce((total, repair) => total + repair.missing, 0);
     return { memberId: person.id, name: person.name, repairs, amount, cost: Math.ceil(amount / 2) };
   });
   quote.totalAmount = quote.entries.reduce((total, entry) => total + entry.amount, 0);
   quote.totalCost = quote.entries.reduce((total, entry) => total + entry.cost, 0);
-  if (!quote.totalAmount) return { ...quote, message: service === 'doctor' ? 'No healing is needed.' : 'No equipped armor needs repairs.' };
+  if (!quote.totalAmount) return { ...quote, message: service === 'doctor' ? 'No healing is needed.' : 'No equipped armor or shields need repairs.' };
   if (state.gold < quote.totalCost) return { ...quote, message: `The company needs ${quote.totalCost} crowns for this service.` };
   return { ...quote, ok: true };
 }
@@ -1455,13 +1471,27 @@ export function useTownService(state, service, memberId = null) {
     if (!entry.amount) continue;
     const person = state.party.find(member => member.id === entry.memberId);
     if (service === 'doctor') person.hp = entry.maxHp;
-    else for (const repair of entry.repairs) person.armorDurability[repair.slot === 'armor' ? 'body' : repair.slot === 'helmet' ? 'head' : 'attachment'] = repair.max;
+    else for (const repair of entry.repairs) person.armorDurability[repair.part] = repair.max;
   }
   const message = service === 'doctor'
     ? `Doctor restores ${quote.totalAmount} HP for ${quote.totalCost} crowns at ${TOWN_BY_ID.get(quote.townId).name}.`
-    : `Smithy restores ${quote.totalAmount} armor for ${quote.totalCost} crowns at ${TOWN_BY_ID.get(quote.townId).name}.`;
+    : `Smithy restores ${quote.totalAmount} armor and shield durability for ${quote.totalCost} crowns at ${TOWN_BY_ID.get(quote.townId).name}.`;
   record(state, message);
   return result(true, message);
+}
+
+function equippedCondition(person, destination, slot) {
+  if (slot === 'shield') return person.armorDurability[destination === 'reserve' ? 'reserveShield' : 'shield'];
+  if (destination !== 'active') return null;
+  return slot === 'armor' ? person.armorDurability.body : slot === 'attachment' ? person.armorDurability.attachment
+    : slot === 'helmet' ? person.armorDurability.head : null;
+}
+
+function setEquippedCondition(person, destination, slot, condition) {
+  if (slot === 'shield') person.armorDurability[destination === 'reserve' ? 'reserveShield' : 'shield'] = condition;
+  else if (destination === 'active' && slot === 'armor') person.armorDurability.body = condition;
+  else if (destination === 'active' && slot === 'attachment') person.armorDurability.attachment = condition;
+  else if (destination === 'active' && slot === 'helmet') person.armorDurability.head = condition;
 }
 
 function accessoryIndex(destination) {
@@ -1492,19 +1522,17 @@ export function equipItem(state, personId, itemId, destination = 'active') {
   state.inventory.splice(index, 1);
   if (previous) {
     state.inventory.push(previous);
-    state.inventoryCondition.push(destination === 'active' && ['armor', 'attachment', 'helmet'].includes(item.slot)
-      ? person.armorDurability[item.slot === 'armor' ? 'body' : item.slot === 'helmet' ? 'head' : 'attachment'] : null);
+    state.inventoryCondition.push(accessory >= 0 ? null : equippedCondition(person, destination, item.slot));
   }
   if (displaced) {
     state.inventory.push(displaced);
-    state.inventoryCondition.push(null);
+    state.inventoryCondition.push(item.twoHanded ? equippedCondition(person, destination, 'shield') : null);
+    if (item.twoHanded) setEquippedCondition(person, destination, 'shield', 0);
     set[item.twoHanded ? 'shield' : 'weapon'] = null;
   }
   if (accessory >= 0) person.accessories[accessory] = itemId;
   else set[item.slot] = itemId;
-  if (destination === 'active' && item.slot === 'armor') person.armorDurability.body = condition;
-  if (destination === 'active' && item.slot === 'attachment') person.armorDurability.attachment = condition;
-  if (destination === 'active' && item.slot === 'helmet') person.armorDurability.head = condition;
+  if (accessory < 0) setEquippedCondition(person, destination, item.slot, condition);
   const message = `${person.name} equipped ${item.name}${destination === 'active' ? '' : ` in ${destination}`}.`;
   record(state, message);
   return result(true, message);
@@ -1531,11 +1559,8 @@ export function unequipItem(state, personId, slot, destination = 'active') {
   if (accessory >= 0) person.accessories[accessory] = null;
   else set[slot] = null;
   state.inventory.push(itemId);
-  state.inventoryCondition.push(destination === 'active' && ['armor', 'attachment', 'helmet'].includes(slot)
-    ? person.armorDurability[slot === 'armor' ? 'body' : slot === 'helmet' ? 'head' : 'attachment'] : null);
-  if (destination === 'active' && slot === 'armor') person.armorDurability.body = 0;
-  if (destination === 'active' && slot === 'attachment') person.armorDurability.attachment = 0;
-  if (destination === 'active' && slot === 'helmet') person.armorDurability.head = 0;
+  state.inventoryCondition.push(accessory >= 0 ? null : equippedCondition(person, destination, slot));
+  if (accessory < 0) setEquippedCondition(person, destination, slot, 0);
   const message = `${person.name} stowed ${getItem(itemId).name}.`;
   record(state, message);
   return result(true, message);
@@ -1551,6 +1576,7 @@ export function swapWeaponSet(state, personId) {
   person.equipment.weapon = person.reserveEquipment.weapon;
   person.equipment.shield = person.reserveEquipment.shield;
   person.reserveEquipment = active;
+  [person.armorDurability.shield, person.armorDurability.reserveShield] = [person.armorDurability.reserveShield, person.armorDurability.shield];
   const message = `${person.name} switches weapon sets.`;
   record(state, message);
   return result(true, message);
@@ -1729,8 +1755,9 @@ export function camp(state) {
   }
   let repairs = 0;
   for (const person of state.party) {
-    for (const [part, slot] of [['body', 'armor'], ['attachment', 'attachment'], ['head', 'helmet']]) {
-      const maximum = armorMaximum(person.equipment[slot]);
+    for (const [part, slot, set] of [['body', 'armor', 'active'], ['attachment', 'attachment', 'active'], ['head', 'helmet', 'active'], ['shield', 'shield', 'active'], ['reserveShield', 'shield', 'reserve']]) {
+      const itemId = set === 'reserve' ? person.reserveEquipment.shield : person.equipment[slot];
+      const maximum = slot === 'shield' ? shieldMaximum(itemId) : armorMaximum(itemId);
       while (person.armorDurability[part] < maximum && state.supplies.tools > 0) {
         person.armorDurability[part] = Math.min(maximum, person.armorDurability[part] + 25);
         state.supplies.tools -= 1;
@@ -1871,8 +1898,8 @@ function sortTurnOrder(battle) {
 }
 
 function hasShieldSet(unit) {
-  if (unit.equipment.shield && !getItem(unit.equipment.weapon)?.twoHanded) return true;
-  return Boolean(unit.reserveEquipment.shield && !getItem(unit.reserveEquipment.weapon)?.twoHanded);
+  if (unit.equipment.shield && unit.shieldDurability > 0 && !getItem(unit.equipment.weapon)?.twoHanded) return true;
+  return Boolean(unit.reserveEquipment.shield && unit.reserveShieldDurability > 0 && !getItem(unit.reserveEquipment.weapon)?.twoHanded);
 }
 
 function isPureRangedUnit(unit) {
@@ -1947,6 +1974,8 @@ export function startBattle(state, encounterId) {
       id: person.id, name: person.name, side: 'company', q: index < 6 ? 2 : 1, r: 1 + index % 6,
       hp: person.hp, maxHp: stats.maxHp, bodyArmor: stats.bodyArmor, attachmentArmor: stats.attachmentArmor, headArmor: stats.headArmor,
       maxBodyArmor: stats.maxBodyArmor, maxAttachmentArmor: stats.maxAttachmentArmor, maxHeadArmor: stats.maxHeadArmor,
+      shieldDurability: stats.shieldDurability, maxShieldDurability: stats.maxShieldDurability,
+      reserveShieldDurability: stats.reserveShieldDurability, maxReserveShieldDurability: stats.maxReserveShieldDurability, battleSetSwapped: false,
       equipment: { ...person.equipment }, reserveEquipment: { ...person.reserveEquipment }, accessories: [...person.accessories],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: [...person.perks], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
@@ -1969,6 +1998,8 @@ export function startBattle(state, encounterId) {
       id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 6) : 11 - Math.floor(index / 6), r: 1 + index % 6,
       hp, maxHp: hp, bodyArmor: armorMaximum(gear.armor), attachmentArmor: armorMaximum(gear.attachment), headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: armorMaximum(gear.attachment), maxHeadArmor: armorMaximum(gear.helmet),
+      shieldDurability: shieldMaximum(gear.shield), maxShieldDurability: shieldMaximum(gear.shield),
+      reserveShieldDurability: 0, maxReserveShieldDurability: 0, battleSetSwapped: false,
       equipment: gear, reserveEquipment: { weapon: null, shield: null }, accessories: [null, null],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
@@ -2042,7 +2073,7 @@ function victoryLoot(battle, enemies) {
       const id = enemy.equipment[slot];
       if (!id || items.length >= 24) continue;
       const maximum = armorMaximum(id);
-      const condition = slot === 'armor' ? enemy.bodyArmor : slot === 'attachment' ? enemy.attachmentArmor : slot === 'helmet' ? enemy.headArmor : null;
+      const condition = slot === 'armor' ? enemy.bodyArmor : slot === 'attachment' ? enemy.attachmentArmor : slot === 'helmet' ? enemy.headArmor : slot === 'shield' ? enemy.shieldDurability : null;
       if (maximum && condition < Math.ceil(maximum * .25)) continue;
       const chance = slot === 'weapon' ? 70 : slot === 'shield' ? 55 : 40;
       if (roll(`${enemy.id}:${slot}`, 100) < chance) addItem(id, condition);
@@ -2117,17 +2148,19 @@ function battleGearFatigue(equipment) {
   return (getItem(equipment.weapon)?.fatigue ?? 0) + (getItem(equipment.shield)?.fatigue ?? 0);
 }
 
-function shieldDefenseFor(actor, shieldId) {
-  const defense = getItem(shieldId)?.defense ?? 0;
+function shieldDefenseFor(actor, shieldId, durability = actor.shieldDurability) {
+  const defense = durability > 0 ? getItem(shieldId)?.defense ?? 0 : 0;
   return (hasPerk(actor, 'shield-expert') ? Math.ceil(defense * 1.25) : defense)
     + (defense && hasPerk(actor, 'shield-bearer') ? 5 : 0);
 }
 
-function changeBattleWeapon(actor, weaponId, shieldId) {
+function changeBattleWeapon(actor, weaponId, shieldId, shieldDurability = actor.shieldDurability) {
   const oldDefense = shieldDefenseFor(actor, actor.equipment.shield);
   const oldFatigue = battleGearFatigue(actor.equipment);
   actor.equipment.weapon = weaponId;
   actor.equipment.shield = shieldId;
+  actor.shieldDurability = shieldDurability;
+  actor.maxShieldDurability = shieldMaximum(shieldId);
   const defenseDelta = shieldDefenseFor(actor, shieldId) - oldDefense;
   const fatigueDelta = oldFatigue - battleGearFatigue(actor.equipment);
   actor.meleeDefense += defenseDelta;
@@ -2174,8 +2207,13 @@ function switchBattleSet(state, actor, message) {
   const closingWithMelee = getItem(active.weapon)?.throwing && !getItem(actor.reserveEquipment.weapon)?.ranged;
   const readyingThrowing = getItem(actor.reserveEquipment.weapon)?.throwing;
   const previousReload = actor.reload;
-  changeBattleWeapon(actor, actor.reserveEquipment.weapon, actor.reserveEquipment.shield);
+  const activeShieldDurability = actor.shieldDurability;
+  const reserveShieldDurability = actor.reserveShieldDurability;
+  changeBattleWeapon(actor, actor.reserveEquipment.weapon, actor.reserveEquipment.shield, reserveShieldDurability);
   actor.reserveEquipment = active;
+  actor.reserveShieldDurability = activeShieldDurability;
+  actor.maxReserveShieldDurability = shieldMaximum(active.shield);
+  actor.battleSetSwapped = !actor.battleSetSwapped;
   if (closingWithMelee) actor.meleePhase = true;
   else if (readyingThrowing) actor.meleePhase = false;
   actor.reload = actor.reserveReload;
@@ -2210,7 +2248,7 @@ function chooseBattleWeapon(state, actor, enemies) {
   }
   const active = getItem(actor.equipment.weapon);
   const reserve = getItem(actor.reserveEquipment.weapon);
-  if (state.battle.tactic === 'shield-wall' && actor.equipment.shield) return false;
+  if (state.battle.tactic === 'shield-wall' && actor.equipment.shield && actor.shieldDurability > 0) return false;
   const outOfAmmo = state.supplies.ammo === 0;
   if (active?.ranged && (nearest <= 1 || outOfAmmo)) {
     if (active.throwing && reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
@@ -2236,8 +2274,8 @@ function chooseBattleWeapon(state, actor, enemies) {
 }
 
 function readyShieldWallSet(state, actor) {
-  if (state.battle.tactic !== 'shield-wall' || actor.side !== 'company' || actor.equipment.shield
-    || companyArcherWeapon(state, actor) || !actor.reserveEquipment.shield || getItem(actor.reserveEquipment.weapon)?.twoHanded) return false;
+  if (state.battle.tactic !== 'shield-wall' || actor.side !== 'company' || actor.equipment.shield && actor.shieldDurability > 0
+    || companyArcherWeapon(state, actor) || actor.reserveShieldDurability <= 0 || getItem(actor.reserveEquipment.weapon)?.twoHanded) return false;
   return switchBattleSet(state, actor, `${actor.name} readies ${getItem(actor.reserveEquipment.shield).name} for the shield wall.`);
 }
 
@@ -2442,6 +2480,18 @@ function moraleDamage(unit, amount) {
   return Math.max(1, Math.round(amount * resistance * (hasPerk(unit, 'fortified-mind') ? .8 : 1)));
 }
 
+function wearShield(battle, unit, amount) {
+  if (!unit.equipment.shield || unit.shieldDurability <= 0) return;
+  const wear = hasPerk(unit, 'shield-expert') ? Math.max(1, Math.ceil(amount * .5)) : amount;
+  unit.shieldDurability = Math.max(0, unit.shieldDurability - wear);
+  if (unit.shieldDurability === 0) {
+    const defense = shieldDefenseFor(unit, unit.equipment.shield, 1);
+    unit.meleeDefense -= defense;
+    unit.rangedDefense -= defense;
+    battleLog(battle, `${unit.name}'s ${getItem(unit.equipment.shield).name} breaks.`);
+  }
+}
+
 function changeBattleMorale(battle, unit, amount) {
   const previous = getMoraleEffects(unit).name;
   unit.morale = clamped(unit.morale + amount, 0, 100);
@@ -2478,6 +2528,7 @@ function attackTarget(state, actor, target, weapon) {
   if (actor.side === 'company' || !ranged && hexDistance(actor, target) <= 1) battle.lastContactRound = battle.round;
   if (!ranged && hexDistance(actor, target) <= 1) battle.engaged = true;
   if (battleRoll(battle) * 100 >= chance) {
+    wearShield(battle, target, ranged ? 1 : 2);
     if (hasPerk(actor, 'fast-adaptation')) actor.adaptation += 1;
     const message = `${actor.name} misses ${target.name}.`;
     battle.lastEvent = makeBattleEvent(actor, target, 'miss', message, weapon);
@@ -2485,13 +2536,14 @@ function attackTarget(state, actor, target, weapon) {
     return;
   }
   actor.adaptation = 0;
+  if (!ranged) wearShield(battle, target, 1);
   const baseDamage = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
   const damageMultiplier = (hasPerk(actor, 'executioner') && target.hp < target.maxHp ? 1.2 : 1)
     * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1)
     * (hasPerk(actor, 'polearm-training') && weaponMasteryMatches('polearm-training', weapon) ? 1.1 : 1)
-    * (hasPerk(actor, 'shield-strike') && !ranged && actor.equipment.shield ? 1.1 : 1)
-    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && !actor.equipment.shield ? 1.12 : 1)
-    * (hasPerk(actor, 'opportunist') && !ranged && !target.equipment.shield ? 1.1 : 1)
+    * (hasPerk(actor, 'shield-strike') && !ranged && actor.equipment.shield && actor.shieldDurability > 0 ? 1.1 : 1)
+    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && (!actor.equipment.shield || actor.shieldDurability === 0) ? 1.12 : 1)
+    * (hasPerk(actor, 'opportunist') && !ranged && (!target.equipment.shield || target.shieldDurability === 0) ? 1.1 : 1)
     * (hasPerk(actor, 'volley-fire') && ranged && distance >= 3 ? 1.1 : 1);
   const raw = Math.round(baseDamage * damageMultiplier * (1 + (getItem(actor.equipment.mount)?.damageBonus ?? 0)) * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
   const head = battleRoll(battle) < .22;
@@ -2821,13 +2873,15 @@ export function finishBattle(state) {
   for (const person of state.party) {
     const unit = battle.units.find(entry => entry.id === person.id);
     if (!unit) continue;
+    const activeShieldCondition = unit.battleSetSwapped ? unit.reserveShieldDurability : unit.shieldDurability;
+    const reserveShieldCondition = unit.battleSetSwapped ? unit.shieldDurability : unit.reserveShieldDurability;
     const carriedAccessories = [...unit.accessories];
     if (unit.pocketDrawnFrom !== null) carriedAccessories[unit.pocketDrawnFrom] = unit.equipment.weapon;
     if (!unit.alive) {
       if (victory) {
         for (const [itemId, condition] of [
-          ...SLOTS.map(slot => [person.equipment[slot], slot === 'armor' ? unit.bodyArmor : slot === 'attachment' ? unit.attachmentArmor : slot === 'helmet' ? unit.headArmor : null]),
-          ...['weapon', 'shield'].map(slot => [person.reserveEquipment[slot], null]),
+          ...SLOTS.map(slot => [person.equipment[slot], slot === 'armor' ? unit.bodyArmor : slot === 'attachment' ? unit.attachmentArmor : slot === 'helmet' ? unit.headArmor : slot === 'shield' ? activeShieldCondition : null]),
+          ...['weapon', 'shield'].map(slot => [person.reserveEquipment[slot], slot === 'shield' ? reserveShieldCondition : null]),
           ...carriedAccessories.map(id => [id, null]),
         ]) {
           if (itemId && state.inventory.length < MAX_INVENTORY) {
@@ -2841,7 +2895,8 @@ export function finishBattle(state) {
     person.hp = unit.hp;
     person.morale = unit.morale;
     person.accessories = carriedAccessories;
-    person.armorDurability = { body: unit.bodyArmor, attachment: unit.attachmentArmor, head: unit.headArmor };
+    person.armorDurability = { body: unit.bodyArmor, attachment: unit.attachmentArmor, head: unit.headArmor,
+      shield: activeShieldCondition, reserveShield: reserveShieldCondition };
     const earnedXp = battle.xp[person.id] ?? 0;
     person.xp += earnedXp;
     while (person.xp >= person.level * 50 && person.level < 20) {
@@ -2994,8 +3049,23 @@ function validateBattle(input, party, worldState) {
     assert(unit.meleePhase === undefined || typeof unit.meleePhase === 'boolean', 'battle melee phase');
     const maxAttachmentArmor = unit.maxAttachmentArmor ?? armorMaximum(unit.equipment.attachment);
     const attachmentArmor = unit.attachmentArmor ?? maxAttachmentArmor;
+    const maxShieldDurability = shieldMaximum(unit.equipment.shield);
+    const maxReserveShieldDurability = shieldMaximum(reserveEquipment.shield);
+    const shieldDurability = unit.shieldDurability ?? maxShieldDurability;
+    const reserveShieldDurability = unit.reserveShieldDurability ?? maxReserveShieldDurability;
+    const stowedWeapon = pocketDrawnFrom === null ? unit.equipment.weapon : pocketStowedWeapon;
+    const originalActive = partyMember?.equipment;
+    const originalReserve = partyMember?.reserveEquipment ?? { weapon: null, shield: null };
+    const battleSetSwapped = unit.battleSetSwapped ?? Boolean(originalActive
+      && stowedWeapon === originalReserve.weapon && unit.equipment.shield === originalReserve.shield
+      && reserveEquipment.weapon === originalActive.weapon && reserveEquipment.shield === originalActive.shield
+      && (stowedWeapon !== originalActive.weapon || unit.equipment.shield !== originalActive.shield));
     assert(unit.maxBodyArmor === armorMaximum(unit.equipment.armor) && maxAttachmentArmor === armorMaximum(unit.equipment.attachment) && unit.maxHeadArmor === armorMaximum(unit.equipment.helmet), 'battle armor maximum');
     assert(validCount(unit.bodyArmor) && unit.bodyArmor <= unit.maxBodyArmor && validCount(attachmentArmor) && attachmentArmor <= maxAttachmentArmor && validCount(unit.headArmor) && unit.headArmor <= unit.maxHeadArmor, 'battle armor');
+    assert(validCount(shieldDurability) && shieldDurability <= maxShieldDurability && validCount(reserveShieldDurability) && reserveShieldDurability <= maxReserveShieldDurability
+      && (unit.maxShieldDurability === undefined || unit.maxShieldDurability === maxShieldDurability)
+      && (unit.maxReserveShieldDurability === undefined || unit.maxReserveShieldDurability === maxReserveShieldDurability)
+      && typeof battleSetSwapped === 'boolean', 'battle shield durability');
     assert(validCount(unit.seed) && unit.seed <= 0xffffffff, 'battle unit seed');
     assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= 2, 'battle stamina');
     assert(unit.reload === undefined || validCount(unit.reload) && unit.reload <= 2, 'battle reload');
@@ -3008,6 +3078,7 @@ function validateBattle(input, party, worldState) {
       reserveEquipment: { weapon: reserveEquipment.weapon, shield: reserveEquipment.shield }, accessories: [...accessories],
       pocketDrawnFrom, pocketStowedWeapon, pocketStowedReload: unit.pocketStowedReload ?? 0,
       pocketDrawnRound: unit.pocketDrawnRound ?? 0, reserveReload: unit.reserveReload ?? 0, meleePhase: unit.meleePhase ?? false,
+      shieldDurability, maxShieldDurability, reserveShieldDurability, maxReserveShieldDurability, battleSetSwapped,
       perks: perks.filter(id => PERK_BY_ID.has(id)), adaptation, berserkRound, frenzyUntilRound, turnStartedRound, freeSwapRound, freeHealRound,
       seed: unit.seed, ...(unit.appearanceId ? { appearanceId: unit.appearanceId } : {}), alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap, reload: unit.reload ?? 0,
       meleeSkill: unit.meleeSkill, rangedSkill: unit.rangedSkill,
@@ -3073,7 +3144,7 @@ function validateBattle(input, party, worldState) {
   } : null;
   const loot = input.loot;
   assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= 24 && loot.items.every(id => getItem(id)), 'battle loot');
-  const itemConditions = loot.itemConditions ?? loot.items.map(itemCondition);
+  const itemConditions = (loot.itemConditions ?? loot.items.map(itemCondition)).map((condition, index) => restoredCondition(loot.items[index], condition));
   assert(Array.isArray(itemConditions) && itemConditions.length === loot.items.length && itemConditions.every((condition, index) => {
     const maximum = itemCondition(loot.items[index]);
     return maximum === null ? condition === null : validCount(condition) && condition <= maximum;
@@ -3105,7 +3176,8 @@ export function validateSave(input) {
   assert(validPoint(input.position), 'position');
   assert(input.destination === null || validPoint(input.destination), 'destination');
   assert(Array.isArray(input.inventory) && input.inventory.length <= MAX_INVENTORY && input.inventory.every(id => getItem(id)), 'inventory');
-  const inventoryCondition = input.inventoryCondition === undefined ? input.inventory.map(itemCondition) : input.inventoryCondition;
+  const inventoryCondition = (input.inventoryCondition === undefined ? input.inventory.map(itemCondition) : input.inventoryCondition)
+    .map((condition, index) => restoredCondition(input.inventory[index], condition));
   assert(Array.isArray(inventoryCondition) && inventoryCondition.length === input.inventory.length, 'inventory condition');
   for (let index = 0; index < input.inventory.length; index++) {
     const maximum = itemCondition(input.inventory[index]);
@@ -3122,7 +3194,7 @@ export function validateSave(input) {
     assert(recordObject(market) && Number.isSafeInteger(market.day) && market.day >= 1 && market.day <= input.day && validCount(market.food) && market.food <= 100, 'market stock');
     assert(recordObject(market.goods) && GOODS.every(good => validCount(market.goods[good.id]) && market.goods[good.id] <= 100) && Object.keys(market.goods).length === GOODS.length, 'goods stock');
     assert(recordObject(market.equipment) && ITEMS.filter(item => !NEW_ITEM_IDS.has(item.id)).every(item => validCount(market.equipment[item.id]) && market.equipment[item.id] <= 1024) && Object.keys(market.equipment).every(id => ITEM_BY_ID.has(id) && validCount(market.equipment[id]) && market.equipment[id] <= 1024), 'equipment stock');
-    if (market.buyback !== undefined) assert(Array.isArray(market.buyback) && market.buyback.length <= MAX_INVENTORY && market.buyback.every(entry => recordObject(entry) && getItem(entry.itemId)?.rarity === 'famed' && (itemCondition(entry.itemId) === null ? entry.condition === null : validCount(entry.condition) && entry.condition <= itemCondition(entry.itemId))), 'famed buyback');
+    if (market.buyback !== undefined) assert(Array.isArray(market.buyback) && market.buyback.length <= MAX_INVENTORY && market.buyback.every(entry => recordObject(entry) && getItem(entry.itemId)?.rarity === 'famed' && (itemCondition(entry.itemId) === null ? entry.condition === null : validCount(restoredCondition(entry.itemId, entry.condition)) && restoredCondition(entry.itemId, entry.condition) <= itemCondition(entry.itemId))), 'famed buyback');
     if (market.supplies !== undefined) assert(recordObject(market.supplies) && Object.keys(market.supplies).length === 3 && Object.keys(SUPPLY_INFO).every(kind => validCount(market.supplies[kind]) && market.supplies[kind] <= 100), 'supplies stock');
     if (market.armoryCycle !== undefined) assert(validCount(market.armoryCycle) && market.armoryCycle === armoryCycle(market.day), 'armory cycle');
     if (market.appliedEventId !== undefined && market.appliedEventId !== null) {
@@ -3244,6 +3316,8 @@ export function validateSave(input) {
     assert(validCount(member.armorDurability.body) && member.armorDurability.body <= armorMaximum(person.equipment.armor), 'body durability');
     assert(validCount(member.armorDurability.attachment) && member.armorDurability.attachment <= armorMaximum(person.equipment.attachment), 'attachment durability');
     assert(validCount(member.armorDurability.head) && member.armorDurability.head <= armorMaximum(person.equipment.helmet), 'head durability');
+    assert(validCount(member.armorDurability.shield) && member.armorDurability.shield <= shieldMaximum(person.equipment.shield), 'shield durability');
+    assert(validCount(member.armorDurability.reserveShield) && member.armorDurability.reserveShield <= shieldMaximum(reserve.shield), 'reserve shield durability');
     assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
   }
   const formation = input.formation === undefined ? seedFormation(input.party) : input.formation;
@@ -3343,14 +3417,16 @@ export function validateSave(input) {
     perks: [...(person.perks ?? [])],
     pendingLevelUps: person.pendingLevelUps,
     attributes: person.attributes ? { ...person.attributes } : undefined,
-    armorDurability: person.armorDurability ? { body: person.armorDurability.body, attachment: person.armorDurability.attachment, head: person.armorDurability.head } : undefined,
+    armorDurability: person.armorDurability ? { body: person.armorDurability.body, attachment: person.armorDurability.attachment, head: person.armorDurability.head,
+      shield: person.armorDurability.shield, reserveShield: person.armorDurability.reserveShield } : undefined,
   }));
   for (const person of party) {
     if (getItem(person.equipment.weapon)?.twoHanded && person.equipment.shield) {
       assert(battle === null && inventory.length < MAX_INVENTORY, 'legacy bow and shield');
       inventory.push(person.equipment.shield);
-      conditions.push(null);
+      conditions.push(person.armorDurability.shield);
       person.equipment.shield = null;
+      person.armorDurability.shield = 0;
     }
   }
   // Return a new plain state so callers cannot mutate the imported object through aliases.
@@ -3373,7 +3449,7 @@ export function validateSave(input) {
           ? (marketEvent?.type === 'armorer-shipment' && (input.shipments === undefined
             || shipments[id]?.status === 'delivered' && shipments[id].startDay === marketEvent.startDay) ? marketEvent.id : null)
           : market.appliedEventId,
-        buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: entry.condition })),
+        buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: restoredCondition(entry.itemId, entry.condition) })),
       }];
     })),
     shipments: normalizedShipments,

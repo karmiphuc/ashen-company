@@ -58,7 +58,7 @@ test('equipping and stowing preserve every owned item', () => {
 test('a full pack cannot grow beyond the save limit', () => {
   const state = createGame(8);
   state.inventory = Array(512).fill('buckler');
-  state.inventoryCondition = Array(512).fill(null);
+  state.inventoryCondition = Array(512).fill(24);
   assert.equal(buyItem(state, 'spear').ok, false);
   assert.equal(unequipItem(state, 'captain', 'helmet').ok, false);
   assert.equal(state.inventory.length, 512);

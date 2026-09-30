@@ -1,4 +1,4 @@
-import { getEquipment, getItem, getMoraleEffects } from './engine.js';
+import { getEquipment, getItem, getMoraleEffects, shieldMaximum } from './engine.js';
 import { portraitHTML, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
@@ -94,10 +94,16 @@ function pawnName(unit) {
 
 function equipmentFor(unit) {
   try {
-    return getEquipment(unit);
+    const equipment = getEquipment(unit);
+    return equipment.shield && unit.shieldDurability === 0 ? { ...equipment, shield: null } : equipment;
   } catch {
     return {};
   }
+}
+
+function shieldCondition(unit) {
+  const max = unit.equipment?.shield ? unit.maxShieldDurability ?? shieldMaximum(unit.equipment.shield) : 0;
+  return max ? { current: unit.shieldDurability ?? max, max } : null;
 }
 
 function battleKitHTML(unit) {
@@ -140,6 +146,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const maxBodyArmor = number(unit.maxBodyArmor ?? unit.bodyArmor) + number(unit.maxAttachmentArmor);
   const body = percent(bodyArmor, Math.max(maxBodyArmor, 1));
   const head = percent(unit.headArmor, unit.maxHeadArmor ?? Math.max(number(unit.headArmor), 1));
+  const shield = shieldCondition(unit);
   const beforeHealth = target && attacking ? percent(number(unit.hp) + number(event.hpDamage), unit.maxHp ?? 100) : health;
   const beforeBody = target && attacking && !event.head ? percent(bodyArmor + number(event.armorDamage), maxBodyArmor || 1) : body;
   const beforeHead = target && attacking && event.head ? percent(number(unit.headArmor) + number(event.armorDamage), unit.maxHeadArmor || 1) : head;
@@ -151,6 +158,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     <div class="battle-unit-bars" aria-hidden="true">
       <span class="battle-unit-bar battle-unit-head"><i style="width:${head}%;--before-width:${beforeHead}%;--after-width:${head}%"></i></span>
       <span class="battle-unit-bar battle-unit-body"><i style="width:${body}%;--before-width:${beforeBody}%;--after-width:${body}%"></i></span>
+      ${shield ? `<span class="battle-unit-bar battle-unit-shield" title="Shield: ${shield.current} / ${shield.max} durability${shield.current===0?' · Broken':''}"><i style="width:${percent(shield.current,shield.max)}%;background:#a98b55"></i></span>` : ''}
       <span class="battle-unit-bar battle-unit-health"><i style="width:${health}%;--before-width:${beforeHealth}%;--after-width:${health}%"></i></span>
     </div>
     <span class="battle-pawn">${portraitHTML(display, equipmentFor(unit), 64)}</span>
@@ -218,7 +226,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         </div>
       </div>
       <aside class="battle-log" aria-label="Battle event log">
-        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p><small>Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale.</small></section>` : ''}
+        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<small>Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale.</small></section>` : ''}
         <h3>Combat log</h3>
         <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol>
       </aside>

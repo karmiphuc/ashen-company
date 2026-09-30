@@ -86,6 +86,8 @@ test('shield wall deploys shield sets forward without changing company formation
   const captain = state.party.find(person => person.id === 'captain');
   captain.equipment = { ...captain.equipment, weapon: 'billhook', shield: null };
   captain.reserveEquipment = { weapon: 'arming-sword', shield: 'kite-shield' };
+  captain.armorDurability.shield = 0;
+  captain.armorDurability.reserveShield = 80;
   const scout = state.party.find(person => person.id === 'scout');
   scout.equipment = { ...scout.equipment, weapon: 'hunting-bow', shield: null };
   const savedFormation = structuredClone(state.formation);
@@ -147,6 +149,8 @@ test('switching to shield wall reforms through legal moves and no-shield compani
   const guard = battle.units.find(unit => unit.id === 'guard');
   captain.equipment.weapon = 'billhook';
   captain.equipment.shield = null;
+  captain.shieldDurability = 0;
+  captain.maxShieldDurability = 0;
   Object.assign(captain, { q: 3, r: 2 });
   Object.assign(guard, { q: 2, r: 4 });
   setBattleTactic(state, 'shield-wall');
@@ -163,6 +167,8 @@ test('switching to shield wall reforms through legal moves and no-shield compani
   for (const person of noShields.party) {
     person.equipment.shield = null;
     person.reserveEquipment.shield = null;
+    person.armorDurability.shield = 0;
+    person.armorDurability.reserveShield = 0;
   }
   setBattleTactic(noShields, 'shield-wall');
   start(noShields);

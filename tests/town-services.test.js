@@ -60,10 +60,10 @@ test('Smithy quotes each equipped armor piece and rounds each brother separately
     [['captain', 31, 16], ['scout', 0, 0], ['guard', 5, 3]]);
   assert.deepEqual([quote.totalAmount, quote.totalCost], [36, 19]);
   assert.deepEqual(quote.entries[0].repairs.map(repair => [repair.slot, repair.missing]),
-    [['armor', 21], ['helmet', 10]]);
+    [['armor', 21], ['helmet', 10], ['shield', 0]]);
   assert.equal(quote.entries[0].repairs[0].max, getItem(state.party[0].equipment.armor).armor);
   assert.ok(quote.entries[1].repairs.every(repair => repair.missing === 0), 'intact equipped pieces remain visible in the quote');
-  assert.deepEqual(quote.entries[2].repairs.map(repair => repair.slot), ['armor'], 'empty helmet slots are not repaired');
+  assert.deepEqual(quote.entries[2].repairs.map(repair => repair.slot), ['armor', 'shield'], 'empty helmet slots are not repaired');
 
   const oldGold = state.gold, oldTime = [state.day, state.hour], oldSupplies = structuredClone(state.supplies);
   assert.equal(getTownServiceQuote(state, 'smithy', 'captain').totalCost, 16);

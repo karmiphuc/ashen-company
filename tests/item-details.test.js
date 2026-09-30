@@ -91,3 +91,14 @@ test('armor attachments explain fit, damage order, weight and repair', () => {
   assert.ok(details.notes.some(note => note.includes('before the main suit')));
   assert.ok(details.notes.some(note => note.includes('Smithy')));
 });
+
+test('shield details preserve worn and broken condition and explain repair', () => {
+  const worn = getItemDetails(item('kite-shield'), 17);
+  assert.equal(value(worn, 'Shield durability'), '17 / 80');
+  assert.equal(value(worn, 'Melee defense'), '+18');
+  const broken = getItemDetails(item('kite-shield'), 0);
+  assert.equal(value(broken, 'Shield durability'), '0 / 80 (broken)');
+  assert.equal(value(broken, 'Melee defense'), '0');
+  assert.equal(value(broken, 'Ranged defense'), '0');
+  assert.ok(broken.notes.some(note => note.includes('Smithy') && note.includes('reserve shields')));
+});

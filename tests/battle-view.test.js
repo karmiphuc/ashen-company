@@ -25,6 +25,24 @@ test('battle exposes each morale state and the active fighters actual resolve an
   assert.doesNotMatch(html, /NaN|undefined/);
 });
 
+test('battle shows shield durability and hides a broken shield from the portrait', () => {
+  const example = structuredClone(battle);
+  example.activeId = 'captain';
+  example.units[0].equipment.shield = 'buckler';
+  example.units[0].maxShieldDurability = 24;
+  example.units[0].shieldDurability = 12;
+  const damaged = battleHTML(example, 0);
+  assert.match(damaged, /class="battle-unit-bar battle-unit-shield" title="Shield: 12 \/ 24 durability"><i style="width:50%;/);
+  assert.match(damaged, /Shield 12 \/ 24 durability/);
+  assert.match(damaged, /<img data-layer="shield"/);
+
+  example.units[0].shieldDurability = 0;
+  const broken = battleHTML(example, 0);
+  assert.match(broken, /Shield: 0 \/ 24 durability · Broken/);
+  assert.match(broken, /Shield 0 \/ 24 durability · Broken, no defense/);
+  assert.doesNotMatch(broken, /<img data-layer="shield"/);
+});
+
 test('restored or paused battle renders without replaying the last projectile', () => {
   assert.doesNotMatch(battleHTML(battle,0), /Arrow in flight|action-shoot|action-hit/);
   const animated = battleHTML(battle,1,true);

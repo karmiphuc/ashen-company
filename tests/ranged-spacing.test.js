@@ -11,6 +11,7 @@ function setup(weaponId = 'hunting-bow', seed = 51, backup = null) {
   const captain = state.party.find(person => person.id === 'captain');
   captain.equipment.weapon = weaponId;
   captain.equipment.shield = null;
+  captain.armorDurability.shield = 0;
   if (backup === 'pocket') captain.accessories[0] = 'rondel-dagger';
   else if (backup) captain.reserveEquipment = { weapon: backup, shield: null };
   const camp = getCampSites(state)[0];

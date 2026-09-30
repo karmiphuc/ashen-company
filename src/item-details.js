@@ -1,4 +1,4 @@
-import { getItem } from './engine.js';
+import { getItem, shieldMaximum } from './engine.js';
 
 const ROLES = {
   'patched-coat': 'Very light body cover for a new recruit; its 20 armor wears out quickly.',
@@ -69,12 +69,16 @@ export function getItemDetails(item, condition) {
     notes.push('Remaining armor reduces direct health damage. Damage that breaks through armor can add more health damage.');
     notes.push('For every weapon, 22% of landed hits strike the head. A head hit adds 10% armor damage and 25% health damage; this weapon has no extra head-hit bonus.');
   } else if (item.slot === 'shield') {
+    const maximum = shieldMaximum(item.id);
+    const current = Number.isFinite(condition) ? Math.max(0, Math.min(maximum, Math.floor(condition))) : maximum;
     stats.push(
-      { label: 'Melee defense', value: signed(item.defense ?? 0) },
-      { label: 'Ranged defense', value: signed(item.defense ?? 0) },
+      { label: 'Shield durability', value: `${current} / ${maximum}${current === 0 ? ' (broken)' : ''}` },
+      { label: 'Melee defense', value: signed(current > 0 ? item.defense ?? 0 : 0) },
+      { label: 'Ranged defense', value: signed(current > 0 ? item.defense ?? 0 : 0) },
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
     );
     notes.push('A shield makes attacks less likely to hit. It does not provide body or head armor durability.');
+    notes.push('Incoming melee attacks and blocked arrows wear down the active shield. At zero durability it provides no shield defense or shield perk bonuses. It stays repairable; rest with tools or visit a Smithy to repair active and reserve shields.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
     notes.push('A two-handed weapon stows the shield before combat.');
   } else if (item.slot === 'attachment') {
