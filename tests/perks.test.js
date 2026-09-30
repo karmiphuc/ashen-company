@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ITEMS, PERKS, createFamedItemId, createGame, getCampSites, getCompanyStats,
   getLevelUp, getPerkChoices, getPerkPoints, learnPerk, startBattle,
-  advanceBattle, finishBattle, trainAttributes, validateSave,
+  advanceBattle, finishBattle, trainAttributes, validateSave, getCompanyTravelBonus,
 } from '../src/engine.js';
 import { hexDistance, tileAt } from '../src/battle-terrain.js';
 
@@ -50,10 +50,11 @@ function battleWithCaptain(perks = [], weapon = 'arming-sword') {
 }
 
 test('perk catalog gives one independent point per level and learning is atomic', () => {
-  assert.equal(PERKS.length, 45);
+  assert.equal(PERKS.length, 40);
   assert.equal(new Set(PERKS.map(perk => perk.id)).size, PERKS.length);
   assert.ok(PERKS.every(perk => Object.isFrozen(perk) && perk.minLevel >= 2));
-  assert.ok(PERKS.every(perk => ['general', 'weapon', 'defense', 'ranged', 'mobility', 'support'].includes(perk.category) && typeof perk.icon === 'string'));
+  assert.ok(PERKS.every(perk => ['general', 'weapon', 'defense', 'ranged', 'mobility'].includes(perk.category) && typeof perk.icon === 'string'));
+  assert.equal(PERKS.find(perk => perk.id === 'recover').category, 'mobility');
   const state = createGame(201);
   const captain = state.party[0];
   assert.deepEqual(captain.perks, []);
@@ -85,7 +86,7 @@ test('legacy members gain unspent perks while malformed and overspent lists fail
   assert.equal(getPerkPoints(migrated.party[0]), 3);
   assert.deepEqual(validateSave(migrated), migrated);
 
-  for (const perks of [['missing'], ['colossus', 'colossus'], ['colossus', 'student']]) {
+  for (const perks of [['missing'], ['colossus', 'colossus'], ['colossus', 'pathfinder']]) {
     const bad = createGame(203);
     bad.party[0].level = perks.length === 2 ? 2 : 4;
     bad.party[0].perks = perks;
@@ -115,6 +116,35 @@ test('legacy members gain unspent perks while malformed and overspent lists fail
     mutate(bad.battle.units[0]);
     assert.throws(() => validateSave(bad), /Invalid save: battle/);
   }
+});
+
+test('removed world perks refund points in legacy party and active battle saves', () => {
+  const state = createGame(205);
+  const captain = state.party[0];
+  captain.level = 7;
+  captain.perks = ['student', 'field-medic', 'forager', 'paymaster', 'trailblazer', 'sword-training'];
+  assert.equal(getPerkPoints(captain), 5);
+  assert.equal(getCompanyStats(captain).dailyWage, 11);
+  assert.equal(getCompanyTravelBonus(state), 0);
+  const battle = beginBattle(state);
+  assert.deepEqual(battle.units.find(unit => unit.id === 'captain').perks, captain.perks);
+  const restored = validateSave(JSON.parse(JSON.stringify(state)));
+  assert.deepEqual(restored.party[0].perks, ['sword-training']);
+  assert.deepEqual(restored.battle.units.find(unit => unit.id === 'captain').perks, ['sword-training']);
+  assert.equal(getPerkPoints(restored.party[0]), 5);
+  assert.deepEqual(validateSave(restored), restored);
+  const forgedBattle = structuredClone(restored);
+  forgedBattle.battle.units.find(unit => unit.id === 'captain').perks = ['unknown-retired-perk'];
+  assert.throws(() => validateSave(forgedBattle), /Invalid save: battle perks/);
+  for (const enemy of restored.battle.units.filter(unit => unit.side === 'enemy')) { enemy.hp = 0; enemy.alive = false; }
+  advanceBattle(restored);
+  finishBattle(restored);
+  assert.equal(restored.party[0].xp, 30, 'retired Student no longer increases battle experience');
+
+  const unknown = createGame(206);
+  unknown.party[0].level = 2;
+  unknown.party[0].perks = ['unknown-retired-perk'];
+  assert.throws(() => validateSave(unknown), /Invalid save: person perks/);
 });
 
 test('Colossus preserves wound deficit when learned and when max health is trained', () => {
@@ -243,7 +273,7 @@ test('weapon masteries cover every bow and crossbow visual, including famed copi
   }
 });
 
-test('damage, morale, recovery, and Student perks have concrete battle effects', () => {
+test('damage, morale, and Recover perks have concrete battle effects', () => {
   const base = battleWithCaptain([]);
   Object.assign(base.captain, { meleeSkill: 200 });
   Object.assign(base.target, { hp: 80, maxHp: 100, morale: 80 });
@@ -284,14 +314,6 @@ test('damage, morale, recovery, and Student perks have concrete battle effects',
   assert.equal(recovery.battle.lastEvent.type, 'recover');
   assert.equal(recovery.captain.fatigue, 47);
 
-  const student = createGame(206);
-  student.party[0].level = 2;
-  student.party[0].perks = ['student'];
-  const studentBattle = beginBattle(student);
-  for (const enemy of studentBattle.units.filter(unit => unit.side === 'enemy')) { enemy.hp = 0; enemy.alive = false; }
-  advanceBattle(student);
-  finishBattle(student);
-  assert.equal(student.party[0].xp, 36);
 });
 
 test('Berserk grants one immediate action without a second turn recovery and starts Killing Frenzy', () => {

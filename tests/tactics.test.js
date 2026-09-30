@@ -79,12 +79,16 @@ test('focus survives an enemy turn and keeps attacks on a shared target', () => 
   setBattleTactic(state, 'focus');
   approach(state);
   const byId = id => state.battle.units.find(unit => unit.id === id);
-  Object.assign(byId('guard'), { q: 1, r: 1 });
-  Object.assign(byId('captain'), { q: 2, r: 2 });
-  Object.assign(byId('scout'), { q: 2, r: 3 });
-  Object.assign(byId('enemy-1'), { q: 3, r: 2, hp: 37, bodyArmor: 20 });
-  Object.assign(byId('enemy-2'), { q: 1, r: 3, hp: 37, bodyArmor: 0 });
-  Object.assign(byId('enemy-3'), { q: 8, r: 4 });
+  const at = (id, q, r, extra = {}) => {
+    Object.assign(byId(id), { q, r, ...extra });
+    Object.assign(state.battle.field.tiles.find(tile => tile.q === q && tile.r === r), { terrain: 'open', height: 0 });
+  };
+  at('guard', 1, 1);
+  at('captain', 2, 2);
+  at('scout', 2, 3);
+  at('enemy-1', 3, 2, { hp: 37, bodyArmor: 20 });
+  at('enemy-2', 1, 3, { hp: 37, bodyArmor: 0 });
+  at('enemy-3', 8, 4);
   state.battle.turnOrder = ['captain', 'enemy-1', 'scout', ...state.battle.turnOrder.filter(id => !['captain', 'enemy-1', 'scout'].includes(id))];
   activate(state.battle, 'captain');
   advanceBattle(state);

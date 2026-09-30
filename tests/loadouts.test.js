@@ -28,7 +28,10 @@ function battleWith(state) {
   assert.equal(startBattle(state, camp.id).ok, true);
   const battle = state.battle;
   const actor = battle.units.find(unit => unit.id === 'captain');
-  const at = (id, q, r) => Object.assign(battle.units.find(unit => unit.id === id), { q, r });
+  const at = (id, q, r) => {
+    Object.assign(battle.units.find(unit => unit.id === id), { q, r });
+    Object.assign(battle.field.tiles.find(tile => tile.q === q && tile.r === r), { terrain: 'open', height: 0 });
+  };
   const activate = () => {
     battle.turnIndex = battle.turnOrder.indexOf('captain');
     battle.activeId = 'captain';

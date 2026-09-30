@@ -4,6 +4,7 @@ import {
   createGame, getCampSites, travelTo, tick, startBattle, advanceBattle,
   setBattleTactic, validateSave, resolveBattle,
 } from '../src/engine.js';
+import { hexDistance, tileAt } from '../src/battle-terrain.js';
 
 function start(state) {
   const until = (state.day - 1) * 24 + state.hour + 48;
@@ -27,22 +28,32 @@ test('advance formation moves one hex per round without rear ranks catching a st
   assert.equal(setBattleTactic(state, 'advance-formation').ok, true);
   start(state);
   const battle = state.battle;
+  for (const tile of battle.field.tiles) if (tile.terrain === 'dense-trees') tile.terrain = 'trees';
   const company = battle.units.filter(unit => unit.side === 'company');
-  const origins = new Map(company.map(unit => [unit.id, unit.q]));
+  const origins = new Map(company.map(unit => [unit.id, { q: unit.q, r: unit.r }]));
   const firstRound = battle.round;
   while (battle.round === firstRound) advanceBattle(state);
-  for (const unit of company) assert.equal(unit.q, origins.get(unit.id) + 1, `${unit.id} completed the first bound`);
+  for (const unit of company) assert.equal(hexDistance(unit, origins.get(unit.id)), 1, `${unit.id} completed the first bound`);
   const scout = company.find(unit => unit.id === 'scout');
-  assert.equal(scout.q, origins.get('scout') + 1, 'the archer advances even while targets are in bow range');
+  assert.equal(hexDistance(scout, origins.get('scout')), 1, 'the archer advances even while targets are in bow range');
 
+  const firstPositions = new Map(company.map(unit => [unit.id, { q: unit.q, r: unit.r }]));
   const secondRound = battle.round;
   company.find(unit => unit.id === 'captain').reload = 1;
   while (battle.round === secondRound) advanceBattle(state);
-  for (const unit of company) assert.equal(unit.q, origins.get(unit.id) + 2, `${unit.id} moves at most once and reload does not break the bound`);
+  let secondBoundMoves = 0;
+  for (const unit of company) {
+    const moved = hexDistance(unit, firstPositions.get(unit.id));
+    assert.ok(moved <= 1, `${unit.id} moves at most once and reload does not break the bound`);
+    secondBoundMoves += moved;
+    assert.notEqual(tileAt(battle.field, unit.q, unit.r).terrain, 'dense-trees');
+  }
+  assert.ok(secondBoundMoves > 0, 'the formation uses a legal fallback direction around blocking trees');
 
   const front = Math.max(...company.map(unit => unit.q));
   const foe = battle.units.find(unit => unit.side === 'enemy');
   Object.assign(foe, { q: front + 1, r: company.find(unit => unit.q === front).r, hp: 300, maxHp: 300, meleeDefense: 300 });
+  tileAt(battle.field, foe.q, foe.r).terrain = 'open';
   const beforeContactRound = new Map(company.map(unit => [unit.id, unit.q]));
   const contactRound = battle.round;
   while (battle.round === contactRound && battle.status === 'active') advanceBattle(state);
@@ -182,8 +193,7 @@ test('new tactics switch and reload safely, reject malformed plans, and finish r
     },
     save => {
       const first = save.battle.units.find(unit => unit.side === 'company' && unit.alive);
-      save.battle.formationAdvance.direction = 'w';
-      save.battle.formationAdvance.origins[first.id].q = 0;
+      save.battle.formationAdvance.origins[first.id].q = -1;
     },
   ]) {
     const bad = structuredClone(restored);

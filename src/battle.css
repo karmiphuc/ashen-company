@@ -19,18 +19,26 @@
 .battle-scroll{position:relative;max-height:min(68vh,720px);overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
 .battlefield{width:var(--field-width,930px);height:var(--field-height,430px);margin:0 auto;background:#475333;isolation:isolate}
 .battle-terrain,.battle-units{position:absolute;inset:0;width:100%;height:100%}
-.battle-terrain{top:0;z-index:0}
-.battle-units{top:0;z-index:1;pointer-events:none}
-.battle-hex{appearance:none;display:block;width:76px;height:85px;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;color:inherit;cursor:pointer;z-index:calc(1 + var(--tile-row) + var(--tile-height));filter:drop-shadow(0 calc(var(--tile-height) * 3px) 1px rgba(14,13,9,.58));background-color:#566636;background-repeat:repeat;background-position:center;background-size:200% 200%}
-.battle-hex::after{pointer-events:none}
-.battle-hex:focus-visible{outline:3px solid #f0cf78;outline-offset:2px;filter:drop-shadow(0 0 5px #f0cf78) drop-shadow(0 calc(var(--tile-height) * 3px) 1px rgba(14,13,9,.58))}
-.battle-height-1{box-shadow:inset 0 -7px rgba(50,42,27,.34)}
-.battle-height-2{box-shadow:inset 0 -12px rgba(45,37,24,.46)}
-.battle-terrain-open{background-image:url('../assets/battle/grass-01.png')}
-.battle-terrain-brush{background-image:url('../assets/world/world_detail_autumn_green_01.png'),url('../assets/battle/grass-02.png');background-repeat:no-repeat,repeat;background-position:center 55%,center;background-size:72% auto,200% 200%}
-.battle-terrain-trees{background-image:url('../assets/world/world_detail_forest_green_01.png'),url('../assets/battle/grass-01.png');background-repeat:no-repeat,repeat;background-position:center 58%,center;background-size:86% auto,200% 200%}
-.battle-terrain-mud{background-image:url('../assets/battle/earth-01.png');filter:saturate(.62) brightness(.72) drop-shadow(0 calc(var(--tile-height) * 3px) 1px rgba(14,13,9,.58))}
-.battle-terrain-rock{background-image:url('../assets/world/legend_world_grass_hill_01.png'),url('../assets/battle/earth-01.png');background-repeat:no-repeat,repeat;background-position:center 54%,center;background-size:88% auto,200% 200%;filter:saturate(.72) brightness(.88) drop-shadow(0 calc(var(--tile-height) * 3px) 1px rgba(14,13,9,.58))}
+.battle-terrain{top:0;z-index:auto}
+.battle-units{top:0;z-index:auto;pointer-events:none}
+.battle-hex{appearance:none;display:block;width:76px;height:85px;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;color:inherit;cursor:pointer;clip-path:none;overflow:visible;z-index:calc(10 + var(--tile-row) * 10);filter:none;background:none}
+.battle-hex{box-shadow:none}
+.battle-hex::after{display:none}
+.battle-hex-top{position:absolute;inset:0;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#566636 url('../assets/battle/grass-01.png') center/200% 200%;box-shadow:inset 0 -2px #a6ad6940;pointer-events:none}
+.battle-hex-top::after{content:"";position:absolute;inset:0;background:linear-gradient(150deg,#d9daa517,transparent 40%,#10180728);pointer-events:none}
+.battle-hex-wall{position:absolute;left:0;top:63.75px;width:76px;height:calc(21.25px + var(--tile-rise));clip-path:polygon(0 0,50% 21.25px,100% 0,100% var(--tile-rise),50% 100%,0 var(--tile-rise));background:repeating-linear-gradient(0deg,#12130d38 0 1px,transparent 1px 8px),linear-gradient(90deg,#645238 50%,#3c3828 50%);filter:drop-shadow(0 3px 1px #080c07a8);pointer-events:none}
+.battle-height-1 .battle-hex-top,.battle-height-2 .battle-hex-top{box-shadow:inset 0 -3px #adad7280}
+.battle-height-label{position:absolute;left:29px;top:65px;min-width:18px;padding:1px 2px;border:1px solid #b7a7697a;background:#292b1dcc;color:#e5d99f;font:bold 9px/1 Arial,sans-serif;pointer-events:none}
+.battle-hex:focus-visible{outline:none;filter:drop-shadow(0 0 4px #f0cf78)}
+.battle-terrain-open.battle-hex-grass-alt .battle-hex-top{background-image:url('../assets/battle/grass-02.png')}
+.battle-terrain-brush .battle-hex-top{background-image:url('../assets/world/world_detail_autumn_green_01.png'),url('../assets/battle/grass-02.png');background-repeat:no-repeat,repeat;background-position:center 55%,center;background-size:72% auto,200% 200%}
+.battle-terrain-trees .battle-hex-top{background-image:url('../assets/world/world_detail_forest_green_01.png'),url('../assets/battle/grass-01.png');background-repeat:no-repeat,repeat;background-position:center 58%,center;background-size:86% auto,200% 200%}
+.battle-terrain-mud .battle-hex-top{background-image:url('../assets/battle/earth-01.png');filter:saturate(.62) brightness(.72)}
+.battle-terrain-rock .battle-hex-top{background-image:url('../assets/battle/earth-01.png');filter:saturate(.42) brightness(1.12)}
+.battle-tree-obstacle{position:absolute;left:-5px;top:-31px;width:86px;height:110px;background:url('../assets/world/world_detail_forest_green_01.png') center bottom/100% auto no-repeat;filter:drop-shadow(3px 5px 2px #0b100bbb);pointer-events:none}
+.battle-terrain-dense-trees .battle-hex-top{filter:brightness(.65)}
+.battle-unit,.battle-unit.is-active,.battle-unit.action-swing,.battle-unit.action-thrust,.battle-unit.action-shoot{z-index:calc(150 + var(--unit-depth,15))}
+.battle-projectile{z-index:250}
 .battle-biome-forest{background-color:#3d4d30}
 .battle-biome-mountain{background-color:#4c4c3d}
 .battle-biome-marsh{background-color:#3d5044}
@@ -39,6 +47,7 @@
 .battle-terrain-key span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .battle-terrain-key i{display:inline-block;width:13px;height:13px;border:1px solid #817451;background:#66754b}
 .battle-terrain-key .battle-key-trees{background:#385237}
+.battle-terrain-key .battle-key-dense-trees{background:#1c3020;border-color:#91a06b}
 .battle-terrain-key .battle-key-brush{background:#7d6540}
 .battle-terrain-key .battle-key-mud{background:#5b4632}
 .battle-terrain-key .battle-key-rock{background:#777464}

@@ -121,7 +121,7 @@ export function perksHTML(person, selectedId=null) {
   const points=getPerkPoints(person), level=person.level??1;
   const learned=new Set(person.perks??[]), selected=PERKS.find(perk=>perk.id===selectedId);
   const canLearn=selected&&!learned.has(selected.id)&&level>=selected.minLevel&&points>0;
-  const categories={general:'Melee & damage',weapon:'Weapon specializations',defense:'Defense & shields',ranged:'Ranged combat',mobility:'Mobility & terrain',support:'Stamina & company support'};
+  const categories={general:'Melee & damage',weapon:'Weapon masteries',defense:'Defense & shields',ranged:'Ranged combat',mobility:'Mobility & stamina'};
   const groups=Object.entries(categories).map(([id,label])=>`<section class="perk-category"><h3>${label}</h3><div class="perk-grid">${PERKS.filter(perk=>(perk.category||'general')===id).map(perk=>{
     const owned=learned.has(perk.id),locked=level<perk.minLevel;
     return `<button class="perk-card ${owned?'learned':''} ${locked?'locked':''} ${perk.id===selectedId?'chosen':''}" data-perk="${perk.id}" aria-pressed="${perk.id===selectedId}" aria-label="${esc(perk.name)}${owned?', learned':locked?`, unlocks at level ${perk.minLevel}`:''}"><img src="./assets/perks/${perk.icon||perk.id}.png" alt=""><span><strong>${esc(perk.name)}</strong><small>${owned?'Learned':locked?`Requires level ${perk.minLevel}`:'1 perk point'}</small></span><p>${esc(perk.description)}</p></button>`;

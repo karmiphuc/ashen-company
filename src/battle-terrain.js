@@ -1,6 +1,6 @@
 export const BATTLE_COLUMNS = 14;
 export const BATTLE_ROWS = 8;
-export const TILE_TERRAINS = Object.freeze(['open', 'trees', 'brush', 'mud', 'rock']);
+export const TILE_TERRAINS = Object.freeze(['open', 'trees', 'brush', 'mud', 'rock', 'dense-trees']);
 
 const DIRECTIONS = [[1, 0], [1, -1], [0, 1], [0, -1], [-1, 0], [-1, 1]];
 
@@ -17,6 +17,27 @@ function hash(value) {
 
 function random(seed) {
   return (hash(seed) >>> 0) / 4294967296;
+}
+
+function deploymentTile(q) {
+  return q <= 2 || q >= BATTLE_COLUMNS - 4;
+}
+
+function walkableTilesConnected(tiles) {
+  const walkable = tiles.filter(tile => tile.terrain !== 'dense-trees');
+  if (!walkable.length) return false;
+  const byPoint = new Map(tiles.map(tile => [`${tile.q},${tile.r}`, tile]));
+  const seen = new Set([`${walkable[0].q},${walkable[0].r}`]);
+  const queue = [walkable[0]];
+  for (const point of queue) for (const [dq, dr] of DIRECTIONS) {
+    const next = byPoint.get(`${point.q + dq},${point.r + dr}`);
+    const key = next && `${next.q},${next.r}`;
+    if (next && next.terrain !== 'dense-trees' && !seen.has(key)) {
+      seen.add(key);
+      queue.push(next);
+    }
+  }
+  return seen.size === walkable.length;
 }
 
 export function createBattleField(seed, encounterId, biome) {
@@ -48,6 +69,13 @@ export function createBattleField(seed, encounterId, biome) {
       tiles.push({ q, r, terrain, height });
     }
   }
+  const denseChance = biome === 'forest' ? .7 : .4;
+  const denseCandidates = tiles.filter(tile => tile.terrain === 'trees' && !deploymentTile(tile.q)
+    && random(`${seed}:${encounterId}:dense:${tile.q}:${tile.r}`) < denseChance);
+  for (const tile of denseCandidates) {
+    tile.terrain = 'dense-trees';
+    if (!walkableTilesConnected(tiles)) tile.terrain = 'trees';
+  }
   return { columns: BATTLE_COLUMNS, rows: BATTLE_ROWS, biome, tiles };
 }
 
@@ -77,7 +105,7 @@ export function hexNeighbors(field, point) {
 export function movementCost(field, from, to) {
   const tile = tileAt(field, to.q, to.r);
   const origin = tileAt(field, from.q, from.r);
-  if (!tile || !origin || hexDistance(from, to) !== 1) return Infinity;
+  if (!tile || !origin || tile.terrain === 'dense-trees' || origin.terrain === 'dense-trees' || hexDistance(from, to) !== 1) return Infinity;
   const ground = tile.terrain === 'trees' || tile.terrain === 'mud' ? 2 : 1;
   return Math.min(2, ground + (tile.height > origin.height ? 1 : 0));
 }
@@ -107,12 +135,12 @@ function roundedHex(q, r) {
 export function rangedCoverModifier(field, from, to) {
   const target = tileAt(field, to.q, to.r);
   if (!target) return 0;
-  let penalty = target.terrain === 'trees' ? 20 : target.terrain === 'brush' ? 10 : 0;
+  let penalty = target.terrain === 'trees' || target.terrain === 'dense-trees' ? 20 : target.terrain === 'brush' ? 10 : 0;
   const distance = hexDistance(from, to);
   for (let step = 1; step < distance; step++) {
     const point = roundedHex(from.q + (to.q - from.q) * step / distance, from.r + (to.r - from.r) * step / distance);
     const terrain = tileAt(field, point.q, point.r)?.terrain;
-    if (terrain === 'trees') penalty += 8;
+    if (terrain === 'trees' || terrain === 'dense-trees') penalty += 8;
     else if (terrain === 'brush') penalty += 4;
   }
   return -Math.min(36, penalty);

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ITEMS, PERKS, createGame, getCompanyStats, getCompanyTravelBonus, getDailyFood,
-  getCampSites, startBattle, advanceBattle, validateSave, camp, forage, tick,
+  ITEMS, PERKS, createGame, getCompanyStats,
+  getCampSites, startBattle, advanceBattle, validateSave,
 } from '../src/engine.js';
 import { hexDistance } from '../src/battle-terrain.js';
 
@@ -11,7 +11,7 @@ const added = [
   'dagger-training', 'throwing-training', 'shield-bearer', 'shield-strike', 'iron-jaw',
   'battle-forged', 'nimble', 'duelist', 'opportunist', 'last-stand', 'marksman',
   'point-blank', 'volley-fire', 'reload-drill', 'fleet-footed', 'marathoner',
-  'high-ground', 'field-medic', 'forager', 'paymaster', 'trailblazer',
+  'high-ground',
 ];
 
 function battleWith(weapon, perks = [], distance = 1) {
@@ -61,8 +61,8 @@ function compareAttack({ weapon, perk, distance = 1, armored = false, shield = t
 }
 
 test('expanded perk catalog is unique, grouped, saveable, and uses bundled icon IDs', () => {
-  assert.equal(added.length, 26);
-  assert.equal(PERKS.length, 45);
+  assert.equal(added.length, 22);
+  assert.equal(PERKS.length, 40);
   assert.ok(added.every(id => PERKS.some(perk => perk.id === id && perk.category && perk.icon)));
   const state = createGame(211);
   state.party[0].level = 20;
@@ -96,7 +96,7 @@ test('defensive perks reduce health or armor damage', () => {
   assert.ok(forged.perk.armorDamage < forged.plain.armorDamage);
 });
 
-test('light defense, shields, wages, forage, camp healing, and travel have concrete passive effects', () => {
+test('light defense and shield perks have concrete passive effects', () => {
   const state = createGame(212);
   const person = state.party[0];
   person.level = 20;
@@ -108,18 +108,6 @@ test('light defense, shields, wages, forage, camp healing, and travel have concr
   person.perks = ['nimble'];
   const lightBase = getCompanyStats({ ...person, perks: [] });
   assert.equal(getCompanyStats(person).rangedDefense, lightBase.rangedDefense + 5);
-  person.perks = ['paymaster', 'trailblazer', 'forager', 'field-medic'];
-  assert.equal(getCompanyStats(person).dailyWage, 23);
-  assert.equal(getCompanyTravelBonus(state), .05);
-  assert.equal(getDailyFood(state), 3);
-  for (const band of Object.values(state.bands)) band.defeatedUntil = 1000;
-  const food = state.food;
-  assert.equal(forage(state).ok, true);
-  assert.ok(state.food >= food + 5);
-  person.hp -= 50;
-  const wounded = person.hp;
-  assert.equal(camp(state).ok, true);
-  assert.equal(person.hp - wounded, 32);
 });
 
 test('movement perks increase reach or reduce movement fatigue', () => {
@@ -215,4 +203,43 @@ test('northern melee weapons inherit training families while slings remain separ
   assert.equal(slinger.battle.lastEvent.projectile, 'stone');
   assert.equal(slinger.actor.fatigue, plain.battle.units.find(unit => unit.id === 'captain').fatigue);
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(slinger.state))), slinger.state);
+});
+
+test('each weapon mastery reduces attack fatigue once, including northern weapons', () => {
+  for (const [perk, weapon, distance] of [
+    ['sword-training', 'northern-warcleaver', 1],
+    ['axe-training', 'northern-serrated-axe', 1],
+    ['mace-training', 'northern-heavy-flail', 1],
+    ['spear-training', 'northern-broadhead-spear', 1],
+    ['polearm-training', 'longaxe', 2],
+    ['dagger-training', 'rondel-dagger', 1],
+    ['throwing-training', 'javelins', 3],
+  ]) {
+    const mastered = battleWith(weapon, [perk], distance);
+    const plain = structuredClone(mastered.state);
+    plain.battle.units.find(unit => unit.id === 'captain').perks = [];
+    advanceBattle(mastered.state);
+    advanceBattle(plain);
+    assert.equal(mastered.battle.lastEvent.type, 'attack', weapon);
+    const item = ITEMS.find(entry => entry.id === weapon);
+    const cost = item.fatigueCost ?? (item.ranged ? 9 : 11);
+    assert.equal(mastered.actor.fatigue, Math.ceil(cost * .75), weapon);
+    assert.equal(plain.battle.units.find(unit => unit.id === 'captain').fatigue, cost, weapon);
+  }
+
+  const overlapping = battleWith('longaxe', ['axe-training', 'polearm-training'], 2);
+  advanceBattle(overlapping.state);
+  assert.equal(overlapping.actor.fatigue, Math.ceil((ITEMS.find(item => item.id === 'longaxe').fatigueCost ?? 11) * .75));
+});
+
+test('AI uses reduced attack cost when deciding whether to recover', () => {
+  const mastered = battleWith('arming-sword', ['sword-training']);
+  mastered.actor.fatigue = mastered.actor.maxFatigue - 10;
+  mastered.actor.turnStartedRound = mastered.battle.round;
+  const plain = structuredClone(mastered.state);
+  plain.battle.units.find(unit => unit.id === 'captain').perks = [];
+  advanceBattle(mastered.state);
+  advanceBattle(plain);
+  assert.equal(mastered.battle.lastEvent.type, 'attack');
+  assert.equal(plain.battle.lastEvent.type, 'recover');
 });

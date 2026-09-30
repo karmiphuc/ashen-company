@@ -2,10 +2,11 @@ import { getEquipment, getItem } from './engine.js';
 import { portraitHTML, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
-const TILE = { width: 76, height: 85, stepX: 76, stepY: 64, stagger: 38, elevation: 9, padX: 16, padY: 28, padBottom: 22 };
+const TILE = { width: 76, height: 85, stepX: 76, stepY: 64, stagger: 38, elevation: 20, padX: 16, padY: 80, padBottom: 22 };
 const TERRAIN = {
   open: ['Open ground', '1 AP to enter · no cover'],
   trees: ['Trees', '20 percentage points ranged protection · 2 AP to enter'],
+  'dense-trees': ['Dense trees', 'Impassable · obstructs ranged shots'],
   brush: ['Brush', '10 percentage points ranged protection · 1 AP to enter'],
   mud: ['Mud', '2 AP to enter · no cover'],
   rock: ['Rock', '1 AP to enter · no height advantage unless raised'],
@@ -74,7 +75,9 @@ function tileHTML(tile, grid) {
   const x = grid.padX + tile.q * grid.stepX + tile.r * grid.stagger;
   const y = grid.padY + tile.r * grid.stepY - tile.height * grid.elevation;
   const variant = tile.terrain === 'open' && (tile.q + tile.r) % 3 === 1 ? ' battle-hex-grass-alt' : '';
-  return `<button type="button" class="battle-hex battle-terrain-${tile.terrain} battle-height-${tile.height}${variant}" style="left:${x}px;top:${y}px;--tile-row:${tile.r};--tile-height:${tile.height}" data-action="inspect-terrain" data-q="${tile.q}" data-r="${tile.r}" data-terrain="${tile.terrain}" data-height="${tile.height}" data-detail="${esc(detail)}" title="${esc(detail)}" aria-label="Column ${tile.q + 1}, row ${tile.r + 1}: ${esc(detail)}"></button>`;
+  const wall = tile.height ? '<span class="battle-hex-wall" aria-hidden="true"></span>' : '';
+  const obstacle = tile.terrain === 'dense-trees' ? '<span class="battle-tree-obstacle" aria-hidden="true"></span>' : '';
+  return `<button type="button" class="battle-hex battle-terrain-${tile.terrain} battle-height-${tile.height}${variant}" style="left:${x}px;top:${y}px;--tile-row:${tile.r};--tile-height:${tile.height};--tile-rise:${tile.height * grid.elevation}px" data-action="inspect-terrain" data-q="${tile.q}" data-r="${tile.r}" data-terrain="${tile.terrain}" data-height="${tile.height}" data-detail="${esc(detail)}" title="${esc(detail)}" aria-label="Column ${tile.q + 1}, row ${tile.r + 1}: ${esc(detail)}">${wall}<span class="battle-hex-top" aria-hidden="true"></span>${obstacle}${tile.height ? `<span class="battle-height-label" aria-hidden="true">+${tile.height}</span>` : ''}</button>`;
 }
 
 function coordinates(unit, field, grid) {
@@ -142,7 +145,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const beforeHead = target && attacking && event.head ? percent(number(unit.headArmor) + number(event.armorDamage), unit.maxHeadArmor || 1) : head;
   const display = { seed: unit.seed ?? unit.id ?? 0, name: unit.name ?? 'Unknown' };
 
-  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${esc(unit.name)}: ${Math.round(number(unit.hp))} health">
+  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${esc(unit.name)}: ${Math.round(number(unit.hp))} health">
     <div class="battle-unit-bars" aria-hidden="true">
       <span class="battle-unit-bar battle-unit-head"><i style="width:${head}%;--before-width:${beforeHead}%;--after-width:${head}%"></i></span>
       <span class="battle-unit-bar battle-unit-body"><i style="width:${body}%;--before-width:${beforeBody}%;--after-width:${body}%"></i></span>

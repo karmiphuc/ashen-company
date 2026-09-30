@@ -1,6 +1,20 @@
-# Verification - version 0.24.0, 2026-09-30
+# Verification - version 0.25.0, 2026-09-30
 
-## v0.24.0 checks
+## v0.25.0 checks
+
+The full automated suite passes 252 tests after regenerating the offline cache. Movement checks cover impassable terrain, Pathfinder, formation detours, clear twelve-enemy deployment and save validation. The 100-seed starter samples each produce 100 victories: Road Thieves and Hungry Deserters keep all brothers alive in all samples, while Quarry Camp keeps all alive in 94. Its full-roster test floor is now 90% to allow the casualty variation introduced by obstacles, while retaining the 100% victory requirement.
+
+The catalog contains 40 combat perks. Sword, axe, mace, spear, polearm, dagger and throwing masteries now reduce matching attack fatigue by 25%, rounded up to whole fatigue; overlapping masteries apply the reduction once. The AI uses the same cost to decide whether it can attack. Their existing hit and damage bonuses remain. Retired Student, Field Medic, Forager, Paymaster and Trailblazer IDs are removed from loaded party and active battle saves, refunding their points; unknown IDs still fail validation. Recover remains under Mobility & stamina.
+
+Elevated hexes rise 20 pixels per level and expose earth sidewalls, with matching unit and animation coordinates. Dense tree hexes are impassable and obstruct ranged shots. Existing ordinary tree tiles remain passable cover. New fields keep deployment bands clear of blockers and preserve connected walkable ground; saved fields retain their terrain.
+
+At 1024x768, the mastery chooser displayed the new descriptions and no support group. Learning Axe Mastery spent one point and survived reload. A forest battle completed in twelve rounds, with all brothers surviving. Raised tile faces, tree obstacles and readable unit labels were checked visually. These browser sessions recorded no JavaScript errors.
+
+An independent review exercised ten seeds across all five tactics: all fifty battles ended in victory within 500 actions, every intermediate save validated, and no living unit occupied dense trees. The no-ammo shield-wall regression finished in round nineteen. Formation detours retain one-hex movement and rebuild their saved origins from actual positions.
+
+With the unmodified local production server stopped and direct HTTP unavailable, a fresh browser tab launched from cache and displayed Offline ready and version 0.25. Physical iPad Safari installation, airplane-mode launch and save retention remain untested.
+
+## Historical v0.24.0 checks
 
 The full automated suite passes 247 tests after regenerating the offline cache. The attachment catalog now has fifteen items: thirteen visible outer pieces plus two hidden inner reinforcements. Ten new styles add bone, horned, chain, heraldic, gladiator, skull, spiked, stag and kraken looks, using 22 additional pinned source PNGs. The original five stat rows remain unchanged. All item descriptions and inventory icons resolve; the attachment manifest verifies all 31 attachment images.
 
@@ -210,4 +224,4 @@ Earlier releases passed their recorded automated and browser checks for battle t
 
 ## Current limits
 
-Combat remains a simplified automatic simulation. The 45 perks use the exact effects described in the chooser; full class-specific trees, faction armies, and a procedural campaign are not implemented. Overworld travel has no pathfinding, and wounds are represented by lost HP rather than Battle Brothers' full injury system. Physical iPad Safari installation, airplane-mode launch, and save retention have not been tested.
+Combat remains a simplified automatic simulation. The 40 perks use the exact effects described in the chooser; full class-specific trees, faction armies, and a procedural campaign are not implemented. Overworld travel has no pathfinding, and wounds are represented by lost HP rather than Battle Brothers' full injury system. Physical iPad Safari installation, airplane-mode launch, and save retention have not been tested.

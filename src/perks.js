@@ -3,15 +3,15 @@ const PERK_CATEGORIES = {
   weapon: ['backstabber', 'sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training', 'shield-strike'],
   defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'last-stand'],
   ranged: ['bullseye', 'anticipation', 'bow-mastery', 'crossbow-mastery', 'marksman', 'point-blank', 'volley-fire', 'reload-drill'],
-  mobility: ['pathfinder', 'fleet-footed', 'marathoner', 'high-ground'],
-  support: ['student', 'recover', 'field-medic', 'forager', 'paymaster', 'trailblazer'],
+  mobility: ['pathfinder', 'recover', 'fleet-footed', 'marathoner', 'high-ground'],
 };
-const CATEGORY_ICONS = { general: 'executioner', weapon: 'backstabber', defense: 'shield-expert', ranged: 'bullseye', mobility: 'pathfinder', support: 'recover' };
-const ORIGINAL_PERK_ICONS = new Set(['colossus', 'student', 'pathfinder', 'fast-adaptation', 'recover', 'bullseye', 'executioner', 'steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'backstabber', 'anticipation', 'brawny', 'bow-mastery', 'crossbow-mastery', 'berserk', 'killing-frenzy', 'fearsome']);
+const CATEGORY_ICONS = { general: 'executioner', weapon: 'backstabber', defense: 'shield-expert', ranged: 'bullseye', mobility: 'pathfinder' };
+const ORIGINAL_PERK_ICONS = new Set(['colossus', 'pathfinder', 'fast-adaptation', 'recover', 'bullseye', 'executioner', 'steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'backstabber', 'anticipation', 'brawny', 'bow-mastery', 'crossbow-mastery', 'berserk', 'killing-frenzy', 'fearsome']);
+
+export const REMOVED_PERK_MIN_LEVEL = new Map([['student', 2], ['field-medic', 2], ['forager', 2], ['paymaster', 2], ['trailblazer', 3]]);
 
 export const PERKS = Object.freeze([
   { id: 'colossus', name: 'Colossus', description: 'Gain 25% maximum health.', minLevel: 2 },
-  { id: 'student', name: 'Student', description: 'Gain 20% more experience from battle.', minLevel: 2 },
   { id: 'pathfinder', name: 'Pathfinder', description: 'Reduce rough terrain and uphill movement costs by 1, to a minimum of 1.', minLevel: 2 },
   { id: 'fast-adaptation', name: 'Fast Adaptation', description: 'Gain +10 hit chance after each consecutive miss. The bonus resets on a hit.', minLevel: 2 },
   { id: 'recover', name: 'Recover', description: 'When catching your breath, recover at least 22 fatigue and otherwise halve current fatigue.', minLevel: 2 },
@@ -29,13 +29,13 @@ export const PERKS = Object.freeze([
   { id: 'berserk', name: 'Berserk', description: 'After a kill, gain 2 AP for one immediate bonus action, once per round.', minLevel: 7 },
   { id: 'killing-frenzy', name: 'Killing Frenzy', description: 'After a kill, deal 25% more damage through the next 2 rounds.', minLevel: 8 },
   { id: 'fearsome', name: 'Fearsome', description: 'Health damage from a hit inflicts 10 additional morale damage.', minLevel: 8 },
-  { id: 'sword-training', name: 'Sword Training', description: 'Gain +8 hit chance with swords, cleavers, shamshirs, estocs, and falxes.', minLevel: 2 },
-  { id: 'axe-training', name: 'Axe Training', description: 'Axes and bardiches deal 15% more armor damage.', minLevel: 2 },
-  { id: 'mace-training', name: 'Mace Training', description: 'Maces, hammers, flails, and goedendags deal 10% more health damage.', minLevel: 2 },
-  { id: 'spear-training', name: 'Spear Training', description: 'Gain +8 hit chance with melee spears and pikes.', minLevel: 2 },
-  { id: 'polearm-training', name: 'Polearm Training', description: 'Deal 10% more damage with melee weapons that reach at least two hexes.', minLevel: 3 },
-  { id: 'dagger-training', name: 'Dagger Training', description: 'Daggers and fighting knives gain 15 percentage points of armor penetration.', minLevel: 3 },
-  { id: 'throwing-training', name: 'Throwing Training', description: 'Gain +8 hit chance with thrown weapons.', minLevel: 3 },
+  { id: 'sword-training', name: 'Sword Mastery', description: 'Gain +8 hit chance and spend 25% less attack fatigue with swords, cleavers, shamshirs, estocs, and falxes.', minLevel: 2 },
+  { id: 'axe-training', name: 'Axe Mastery', description: 'Axes and bardiches deal 15% more armor damage and spend 25% less attack fatigue.', minLevel: 2 },
+  { id: 'mace-training', name: 'Mace Mastery', description: 'Maces, hammers, flails, and goedendags deal 10% more health damage and spend 25% less attack fatigue.', minLevel: 2 },
+  { id: 'spear-training', name: 'Spear Mastery', description: 'Gain +8 hit chance and spend 25% less attack fatigue with melee spears and pikes.', minLevel: 2 },
+  { id: 'polearm-training', name: 'Polearm Mastery', description: 'Deal 10% more damage and spend 25% less attack fatigue with melee weapons that reach at least two hexes.', minLevel: 3 },
+  { id: 'dagger-training', name: 'Dagger Mastery', description: 'Daggers and fighting knives gain 15 percentage points of armor penetration and spend 25% less attack fatigue.', minLevel: 3 },
+  { id: 'throwing-training', name: 'Throwing Mastery', description: 'Gain +8 hit chance and spend 25% less attack fatigue with thrown weapons.', minLevel: 3 },
   { id: 'shield-bearer', name: 'Shield Bearer', description: 'Gain +5 melee and ranged defense while using a shield.', minLevel: 2 },
   { id: 'shield-strike', name: 'Shield Strike', description: 'Deal 10% more melee damage while using a shield.', minLevel: 3 },
   { id: 'iron-jaw', name: 'Iron Jaw', description: 'Take 20% less health damage from every hit.', minLevel: 4 },
@@ -51,10 +51,6 @@ export const PERKS = Object.freeze([
   { id: 'fleet-footed', name: 'Fleet Footed', description: 'Gain one movement point when advancing toward a target if armor and helmet fatigue total at most 10.', minLevel: 3 },
   { id: 'marathoner', name: 'Marathoner', description: 'Spend 2 fatigue per combat movement point instead of 3.', minLevel: 3 },
   { id: 'high-ground', name: 'High Ground', description: 'Gain +8 hit chance when attacking from a higher hex.', minLevel: 3 },
-  { id: 'field-medic', name: 'Field Medic', description: 'This member recovers 8 extra health when camping.', minLevel: 2 },
-  { id: 'forager', name: 'Forager', description: 'Find 2 extra provisions when the company forages.', minLevel: 2 },
-  { id: 'paymaster', name: 'Paymaster', description: 'Reduce this member\'s daily wage by 1 crown, to a minimum of 1.', minLevel: 2 },
-  { id: 'trailblazer', name: 'Trailblazer', description: 'Increase company travel speed by 5% while this member lives.', minLevel: 3 },
 ].map(perk => {
   const category = Object.entries(PERK_CATEGORIES).find(([, ids]) => ids.includes(perk.id))?.[0];
   if (!category) throw new Error(`Missing perk category: ${perk.id}`);

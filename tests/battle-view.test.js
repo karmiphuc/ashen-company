@@ -53,7 +53,7 @@ test('enemy projectiles start at the mirrored weapon hand and travel toward the 
     ...battle,
     lastEvent: {...battle.lastEvent, actorId:'enemy', targetId:'captain', from:{q:7,r:2}, to:{q:2,r:2}},
   },1,true);
-  assert.match(html, /class="battle-projectile is-arrow"[^>]*left:644px;top:210px;--flight-x:-362px;--flight-y:-2px/);
+  assert.match(html, /class="battle-projectile is-arrow"[^>]*left:644px;top:262px;--flight-x:-362px;--flight-y:-2px/);
   assert.match(html, /--strike-x:-13.00px;--strike-y:0.00px/);
 });
 
@@ -90,12 +90,14 @@ test('14 by 8 terrain fields render inspectable cover, height, and elevation-ali
   };
   const html=battleHTML(expanded,1,true);
   assert.equal((html.match(/class="battle-hex /g)||[]).length,112);
-  assert.match(html,/--field-width:1362px;--field-height:620px/);
+  assert.match(html,/--field-width:1362px;--field-height:672px/);
   assert.match(html,/battle-biome-forest/);
   assert.match(html,/data-action="inspect-terrain" data-q="2" data-r="2" data-terrain="trees" data-height="1"/);
   assert.match(html,/Trees, Height 1; high-ground attacks gain 10 hit per level\. 20 percentage points ranged protection · 2 AP to enter/);
-  assert.match(html,/data-unit-id="captain" style="left:282px;top:149px/);
-  assert.match(html,/data-unit-id="enemy" style="left:1308px;top:460px/);
+  assert.match(html,/data-unit-id="captain" style="left:282px;top:190px/);
+  assert.match(html,/data-unit-id="enemy" style="left:1308px;top:490px/);
+  assert.match(html,/--tile-rise:40px/);
+  assert.equal((html.match(/class="battle-hex-wall"/g)||[]).length,2);
   assert.match(html,/forest · 14 × 8/);
   assert.doesNotMatch(html,/NaN|undefined/);
 });
@@ -103,7 +105,7 @@ test('14 by 8 terrain fields render inspectable cover, height, and elevation-ali
 test('fieldless legacy battles keep a flat 10 by 5 battlefield', () => {
   const html=battleHTML(battle,0);
   assert.equal((html.match(/class="battle-hex /g)||[]).length,50);
-  assert.match(html,/--field-width:944px;--field-height:428px/);
+  assert.match(html,/--field-width:944px;--field-height:480px/);
   assert.match(html,/grassland · 10 × 5/);
   assert.doesNotMatch(html,/battle-height-[12]/);
 });
@@ -122,10 +124,20 @@ test('attack events with a movement origin animate from the matching raised tile
   const captainClasses=captainTag.match(/\bclass="([^"]*)"/)?.[1].split(/\s+/)??[];
   assert.ok(captainClasses.includes('action-shoot'));
   assert.ok(captainClasses.includes('action-move'));
-  assert.match(html,/--move-x:-76px;--move-y:-18px/);
+  assert.match(html,/--move-x:-76px;--move-y:-40px/);
 });
 
 test('terrain tiles remain tappable below the pointer-transparent pawn layer', () => {
-  assert.match(battleCSS,/\.battle-terrain\{top:0;z-index:0\}/);
-  assert.match(battleCSS,/\.battle-units\{top:0;z-index:1;pointer-events:none\}/);
+  assert.match(battleCSS,/\.battle-terrain\{top:0;z-index:auto\}/);
+  assert.match(battleCSS,/\.battle-units\{top:0;z-index:auto;pointer-events:none\}/);
+});
+
+test('dense trees show a raised obstacle and explicitly describe impassable terrain', () => {
+  const field={columns:14,rows:8,biome:'forest',tiles:[{q:4,r:3,height:2,terrain:'dense-trees'}]};
+  const html=battleHTML({...battle,field},0);
+  assert.match(html,/Dense trees, Height 2;[^\"]+Impassable/);
+  assert.match(html,/class="battle-tree-obstacle"/);
+  assert.match(html,/class="battle-hex-wall"/);
+  assert.match(html,/class="battle-height-label"[^>]*>\+2/);
+  assert.doesNotMatch(html,/NaN|undefined/);
 });

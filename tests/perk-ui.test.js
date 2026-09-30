@@ -8,7 +8,8 @@ test('build picker groups every perk once and uses packaged icons', () => {
   const person = createGame(1).party[0];
   person.level = 10;
   const html = perksHTML(person, 'duelist');
-  assert.equal((html.match(/class="perk-category"/g) || []).length, 6);
+  assert.equal((html.match(/class="perk-category"/g) || []).length, 5);
+  assert.match(html, /Mobility &amp; stamina|Mobility & stamina/);
   assert.equal((html.match(/data-perk="/g) || []).length, PERKS.length);
   for (const perk of PERKS) {
     assert.ok(html.includes(`data-perk="${perk.id}"`));

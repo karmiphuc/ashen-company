@@ -29,19 +29,22 @@ test('procedural fields are deterministic, complete and connected', () => {
     assert.equal(field.rows, 8);
     assert.equal(field.tiles.length, 112);
     assert.equal(new Set(field.tiles.map(tile => `${tile.q},${tile.r}`)).size, 112);
-    const seen = new Set(['0,0']);
-    const queue = [{ q: 0, r: 0 }];
-    for (const point of queue) for (const next of hexNeighbors(field, point)) {
+    const walkable = field.tiles.filter(tile => tile.terrain !== 'dense-trees');
+    const seen = new Set([`${walkable[0].q},${walkable[0].r}`]);
+    const queue = [walkable[0]];
+    for (const point of queue) for (const next of hexNeighbors(field, point).filter(tile => tileAt(field, tile.q, tile.r).terrain !== 'dense-trees')) {
       const key = `${next.q},${next.r}`;
       if (!seen.has(key)) { seen.add(key); queue.push(next); }
     }
-    assert.equal(seen.size, 112);
+    assert.equal(seen.size, walkable.length);
+    assert.ok(field.tiles.filter(tile => tile.q <= 2 || tile.q >= 10).every(tile => tile.terrain !== 'dense-trees'));
     assert.ok(field.tiles.every(tile => tile.height >= 0 && tile.height <= 2));
   }
   assert.notDeepEqual(createBattleField(1, 'quarry', 'forest'), createBattleField(2, 'quarry', 'forest'));
   for (let seed = 1; seed <= 20; seed++) {
     const forest = createBattleField(seed, 'grove', 'forest');
     assert.ok(forest.tiles.filter(tile => tile.terrain === 'trees').length >= 5);
+    assert.ok(forest.tiles.filter(tile => tile.terrain === 'dense-trees').length >= 5);
     const high = forest.tiles.filter(tile => tile.height === 2);
     assert.ok(high.length > 0);
     assert.ok(high.some(tile => hexNeighbors(forest, tile).some(neighbor => tileAt(forest, neighbor.q, neighbor.r).height >= 1)));
@@ -57,6 +60,8 @@ test('trees, mud, elevation and intervening cover affect travel and shots', () =
   assert.equal(movementCost(field, from, next), 1);
   next.terrain = 'trees';
   assert.equal(movementCost(field, from, next), 2);
+  next.terrain = 'dense-trees';
+  assert.equal(movementCost(field, from, next), Infinity);
   next.terrain = 'mud';
   assert.equal(movementCost(field, from, next), 2);
   next.terrain = 'open';
@@ -64,6 +69,8 @@ test('trees, mud, elevation and intervening cover affect travel and shots', () =
   assert.equal(movementCost(field, from, next), 2);
   next.height = 0;
   next.terrain = 'trees';
+  assert.equal(rangedCoverModifier(field, from, target), -8);
+  next.terrain = 'dense-trees';
   assert.equal(rangedCoverModifier(field, from, target), -8);
   next.terrain = 'open';
   target.terrain = 'trees';
@@ -83,6 +90,7 @@ test('battle movement spends terrain cost and deployed units never overlap', () 
   assert.equal(base.battle.field.columns, 14);
   assert.equal(base.battle.field.rows, 8);
   assert.equal(new Set(base.battle.units.map(unit => `${unit.q},${unit.r}`)).size, base.battle.units.length);
+  assert.ok(base.battle.units.every(unit => tileAt(base.battle.field, unit.q, unit.r).terrain !== 'dense-trees'));
   const open = structuredClone(base);
   const slow = structuredClone(base);
   for (const tile of open.battle.field.tiles) { tile.terrain = 'open'; tile.height = 0; }
@@ -99,6 +107,25 @@ test('battle movement spends terrain cost and deployed units never overlap', () 
   const slowCaptain = slow.battle.units.find(unit => unit.id === 'captain');
   assert.equal(hexDistance(origin, openCaptain), 2);
   assert.equal(hexDistance(origin, slowCaptain), 1);
+});
+
+test('pathfinding and Pathfinder route around dense trees', () => {
+  const state = createGame(51);
+  approach(state);
+  const battle = state.battle;
+  for (const tile of battle.field.tiles) { tile.terrain = 'open'; tile.height = 0; }
+  const captain = battle.units.find(unit => unit.id === 'captain');
+  const target = battle.units.find(unit => unit.id === 'enemy-1');
+  Object.assign(captain, { q: 2, r: 3, perks: ['pathfinder'], fatigue: 0 });
+  Object.assign(target, { q: 5, r: 3 });
+  for (const ally of battle.units.filter(unit => unit.side === 'company' && unit.id !== captain.id)) Object.assign(ally, { q: 0, r: ally.id === 'scout' ? 0 : 1 });
+  for (const enemy of battle.units.filter(unit => unit.side === 'enemy' && unit.id !== target.id)) { enemy.hp = 0; enemy.alive = false; }
+  for (let r = 1; r < battle.field.rows; r++) tileAt(battle.field, 3, r).terrain = 'dense-trees';
+  battle.turnIndex = battle.turnOrder.indexOf(captain.id);
+  battle.activeId = captain.id;
+  assert.equal(advanceBattle(state).ok, true);
+  assert.notEqual(tileAt(battle.field, captain.q, captain.r).terrain, 'dense-trees');
+  assert.ok(captain.r < 3, 'the actor starts routing toward the open end of the tree line');
 });
 
 test('elevation changes the outcome of the same seeded melee swing', () => {
@@ -180,6 +207,7 @@ test('new fields round-trip, malformed fields fail, and fieldless active saves s
     save => { save.battle.field.rows = 9; },
     save => { save.battle.units[0].q = 14; },
     save => { save.battle.units[1].q = save.battle.units[0].q; save.battle.units[1].r = save.battle.units[0].r; },
+    save => { tileAt(save.battle.field, save.battle.units[0].q, save.battle.units[0].r).terrain = 'dense-trees'; },
   ]) {
     const bad = structuredClone(state);
     mutate(bad);
