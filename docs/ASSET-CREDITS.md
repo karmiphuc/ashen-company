@@ -1,5 +1,10 @@
 # Asset credits
 
+Fantasy Brothers 6.2 and Samurai 2.1 recruit and equipment artwork is documented
+in [FANTASY-SAMURAI.md](FANTASY-SAMURAI.md) and
+[`assets/fantasy-samurai-source.json`](../assets/fantasy-samurai-source.json).
+Those assets retain their original authorship and distribution terms.
+
 Ashen Company includes adapted artwork from *Battle Brothers* and the **Legends** mod. The upstream source repository is [Battle-Brothers-Legends/Legends-public](https://github.com/Battle-Brothers-Legends/Legends-public), pinned here to commit [`b014cdf8520e69b2383116d1654977e9dbb10d96`](https://github.com/Battle-Brothers-Legends/Legends-public/tree/b014cdf8520e69b2383116d1654977e9dbb10d96). Credit belongs to the original Battle Brothers and Legends contributors; this project does not claim authorship of those assets.
 
 The checked-in manifests identify the upstream repository commit and source path for each imported file. Some also record raw download URLs and byte sizes; the portrait, item, battle, and battle-UI manifests record SHA-256 hashes:

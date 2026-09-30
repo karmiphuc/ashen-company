@@ -11,6 +11,14 @@ export const RECRUIT_BACKGROUNDS = Object.freeze([
   freezeEntry({ id: 'hunter', name: 'Hunter', role: 'ranged', cost: 180, description: 'A practiced shot who knows how to act before prey bolts.', bonuses: { rangedSkill: 8, initiative: 3 } }),
   freezeEntry({ id: 'outrider', name: 'Outrider', role: 'ranged', cost: 180, description: 'Scouting ahead rewards speed, awareness, and stamina.', bonuses: { rangedSkill: 5, initiative: 5, maxFatigue: 2 } }),
   freezeEntry({ id: 'brawler', name: 'Brawler', role: 'frontline', cost: 150, description: 'Tavern scraps left this fighter tough and comfortable up close.', bonuses: { meleeSkill: 4, maxHp: 4 } }),
+  freezeEntry({ id: 'elf-wanderer', name: 'Elf Wanderer', role: 'ranged', cost: 320, appearanceId: 'elf', description: 'A far-traveled archer with a patient eye and a light step.', bonuses: { rangedSkill: 6, initiative: 4 } }),
+  freezeEntry({ id: 'half-orc-mercenary', name: 'Half-Orc Mercenary', role: 'frontline', cost: 340, appearanceId: 'half-orc', description: 'A hardy sword hand accustomed to difficult marches.', bonuses: { maxHp: 6, meleeSkill: 4 } }),
+  freezeEntry({ id: 'dwarf-guard', name: 'Dwarf Guard', role: 'frontline', cost: 360, appearanceId: 'dwarf', description: 'A compact, stubborn veteran with a practiced shield hand.', bonuses: { maxHp: 5, meleeDefense: 3 } }),
+  freezeEntry({ id: 'goblin-scout', name: 'Goblin Scout', role: 'ranged', cost: 240, appearanceId: 'goblin', description: 'A watchful scout who finds gaps before others notice them.', bonuses: { rangedSkill: 4, rangedDefense: 3 } }),
+  freezeEntry({ id: 'samurai', name: 'Samurai', role: 'frontline', cost: 420, appearanceId: 'samurai', description: 'Disciplined training lends a steady blade and guard.', bonuses: { meleeSkill: 6, meleeDefense: 2 } }),
+  freezeEntry({ id: 'ronin', name: 'Ronin', role: 'frontline', cost: 350, description: 'A wandering fighter who learned to survive without a lord.', bonuses: { meleeSkill: 5, initiative: 3 } }),
+  freezeEntry({ id: 'ninja', name: 'Ninja', role: 'ranged', cost: 390, appearanceId: 'ninja', description: 'A covert scout who favors speed and precise attacks.', bonuses: { rangedSkill: 5, initiative: 5 } }),
+  freezeEntry({ id: 'warrior-monk', name: 'Warrior Monk', role: 'support', cost: 300, description: 'Long practice gives this traveler calm and staying power.', bonuses: { resolve: 5, maxFatigue: 4 } }),
 ]);
 
 export const RECRUIT_TRAITS = Object.freeze([
@@ -42,6 +50,7 @@ const ROLE_BACKGROUNDS = Object.freeze({
   support: Object.freeze(['wayfarer', 'sailor', 'pilgrim']),
 });
 const ROLES = Object.freeze(['frontline', 'ranged', 'support']);
+const SPECIAL_BACKGROUNDS = RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220);
 const POSITIVE_TRAITS = RECRUIT_TRAITS.filter(trait => trait.kind === 'positive');
 const TRADEOFF_TRAITS = RECRUIT_TRAITS.filter(trait => trait.kind === 'tradeoff');
 
@@ -49,6 +58,13 @@ function hashSeed(value) {
   let hash = 2166136261;
   for (const char of String(value)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return hash >>> 0;
+}
+
+function mixSeed(value) {
+  let hash = hashSeed(value);
+  hash = Math.imul(hash ^ hash >>> 16, 0x7feb352d);
+  hash = Math.imul(hash ^ hash >>> 15, 0x846ca68b);
+  return (hash ^ hash >>> 16) >>> 0;
 }
 
 function directlyCancels(positive, tradeoff) {
@@ -59,7 +75,12 @@ export function makeRecruitProfile(seed, townId, day, slot) {
   const base = hashSeed(`${seed}:${townId}:${day}:recruit`);
   const role = ROLES[(slot + base) % ROLES.length];
   const choices = ROLE_BACKGROUNDS[role];
-  const backgroundId = choices[hashSeed(`${base}:${slot}:background`) % choices.length];
+  const specialSlot = mixSeed(`${base}:special-chance`) % 6 === 0
+    ? mixSeed(`${base}:special-slot`) % 3 : -1;
+  const specialChoices = SPECIAL_BACKGROUNDS.filter(background => background.role === role);
+  const backgroundId = slot === specialSlot
+    ? specialChoices[mixSeed(`${base}:special-background`) % specialChoices.length].id
+    : choices[hashSeed(`${base}:${slot}:background`) % choices.length];
   const positive = POSITIVE_TRAITS[hashSeed(`${base}:${slot}:positive`) % POSITIVE_TRAITS.length];
   const traits = [positive.id];
   if (hashSeed(`${base}:${slot}:tradeoff-chance`) % 2 === 0) {

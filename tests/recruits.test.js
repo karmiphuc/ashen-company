@@ -5,6 +5,7 @@ import {
   getBackground, getTraits, getCompanyStats, getCampSites, travelTo, tick,
   startBattle, validateSave,
 } from '../src/engine.js';
+import { RECRUIT_BACKGROUNDS } from '../src/recruits.js';
 
 const STAT_KEYS = ['maxHp', 'meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve'];
 
@@ -28,7 +29,7 @@ test('daily recruit offers are deterministic, varied, visible, and pure', () => 
 
   for (const offer of offers) {
     assert.match(offer.id, /^hire:oakwatch:1:[0-2]$/);
-    assert.ok(offer.cost >= 120 && offer.cost <= 200);
+    assert.ok(offer.cost >= 120 && offer.cost <= 450);
     assert.equal(offer.cost, offer.background.cost);
     assert.equal(offer.person.hp, offer.stats.maxHp);
     assert.equal(offer.person.level, 1);
@@ -182,8 +183,69 @@ test('the deterministic catalog reaches every background and trait without cance
       }
     }
   }
-  assert.equal(backgrounds.size, 10);
+  assert.ok(RECRUIT_BACKGROUNDS.filter(background => background.cost < 220).every(background => backgrounds.has(background.id)));
   assert.equal(traits.size, 12);
+});
+
+test('rare special recruits span towns and days while ordinary offers remain', () => {
+  const found = new Map();
+  const specials = RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220);
+  for (let seed = 1; seed <= 64; seed++) {
+    const state = createGame(seed);
+    for (let day = 1; day <= 24; day++) {
+      state.day = day;
+      for (const town of SETTLEMENTS) {
+        state.position = { x: town.x, y: town.y };
+        const offers = getRecruitOffers(state);
+        const rare = offers.filter(offer => offer.cost >= 220);
+        assert.ok(rare.length <= 1);
+        assert.ok(offers.filter(offer => offer.cost < 220).length >= 2);
+        for (const offer of rare) {
+          assert.ok(offer.cost <= 450);
+          assert.equal(offer.person.appearanceId, offer.background.appearanceId);
+          if (!found.has(offer.background.id)) found.set(offer.background.id, { seed, day, town });
+        }
+      }
+    }
+    if (found.size === specials.length) break;
+  }
+  assert.deepEqual(new Set(found.keys()), new Set(specials.map(background => background.id)));
+
+  for (const background of specials) {
+    const { seed, day, town } = found.get(background.id);
+    const state = createGame(seed);
+    state.day = day;
+    state.position = { x: town.x, y: town.y };
+    state.gold = 1000;
+    const offer = getRecruitOffers(state).find(entry => entry.background.id === background.id);
+    assert.equal(recruit(state, offer.id).ok, true);
+    assert.equal(state.gold, 1000 - background.cost);
+    assert.equal(state.party.at(-1).appearanceId, background.appearanceId);
+    assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
+  }
+
+  const { seed, day, town } = found.get('elf-wanderer');
+  const state = createGame(seed);
+  state.day = day;
+  state.position = { x: town.x, y: town.y };
+  state.gold = 1000;
+  const offer = getRecruitOffers(state).find(entry => entry.background.id === 'elf-wanderer');
+  assert.equal(recruit(state, offer.id).ok, true);
+  const camp = getCampSites(state)[0];
+  approach(state, camp);
+  assert.equal(startBattle(state, camp.id).ok, true);
+  const unit = state.battle.units.find(entry => entry.id === offer.person.id);
+  assert.equal(unit.appearanceId, 'elf');
+  const restored = validateSave(JSON.parse(JSON.stringify(state)));
+  assert.equal(restored.battle.units.find(entry => entry.id === unit.id).appearanceId, 'elf');
+  for (const mutate of [
+    save => { save.party.find(person => person.id === unit.id).appearanceId = 'goblin'; },
+    save => { save.battle.units.find(entry => entry.id === unit.id).appearanceId = 'goblin'; },
+  ]) {
+    const corrupted = structuredClone(state);
+    mutate(corrupted);
+    assert.throws(() => validateSave(corrupted), /Invalid save/);
+  }
 });
 
 test('old saves migrate without buffs and malformed hiring data is rejected', () => {

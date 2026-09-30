@@ -1,5 +1,6 @@
 // Local raster layers from Battle-Brothers-Legends/Legends-public.
 // See assets/portraits/legends-source.json for the pinned source manifest.
+import { FANTASY_ARMOR_VISUALS, FANTASY_HELMET_VISUALS, FANTASY_ITEM_IMAGES, FANTASY_APPEARANCES, FANTASY_CLOSED_HELMETS, FANTASY_HIDDEN_HEADS } from './fantasy-art.js';
 
 const PORTRAIT_ROOT = 'assets/portraits/';
 const ITEM_ROOT = 'assets/items/';
@@ -16,6 +17,7 @@ const APPEARANCES = [
 
 export const VISUALS = {
   armor: {
+    ...FANTASY_ARMOR_VISUALS,
     padded: ['armor-padded.png', 5, 46],
     gambeson: ['armor-gambeson.png', 5, 46],
     leather: ['armor-leather.png', 5, 46],
@@ -44,6 +46,7 @@ export const VISUALS = {
     'northern-horned-plate': ['armor-northern-horned-plate.png', 5, 46],
   },
   helmet: {
+    ...FANTASY_HELMET_VISUALS,
     hood: ['helmet-hood.png', -16, -60],
     nasal: ['helmet-nasal.png', -20, -55],
     kettle: ['helmet-kettle.png', -23, -59],
@@ -183,6 +186,7 @@ export const VISUALS = {
 const PORTRAIT = VISUALS;
 
 const ITEM_IMAGES = {
+  ...FANTASY_ITEM_IMAGES,
   'patched-coat': 'patched-coat.png',
   'quilted-jack': 'quilted-jack.png',
   'padded-gambeson': 'padded-gambeson.png',
@@ -348,10 +352,10 @@ function layer(name, spec, item) {
   return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none">`;
 }
 
-function bodyLayer(file, armored) {
+function bodyLayer(file, armored, left = 11, top = 50) {
   const source = `${PORTRAIT_ROOT}${file}`;
-  if (!armored) return `<img data-layer="body" class="bb-layer bb-layer-body" src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;max-width:none;pointer-events:none">`;
-  return `<span data-layer="body" class="bb-layer bb-layer-body"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(0 0,22px 0,22px 60px,0 60px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(22px 0,60px 0,60px 34px,22px 34px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:11px;top:50px;clip-path:polygon(60px 0,82px 0,82px 60px,60px 60px);max-width:none;pointer-events:none"></span>`;
+  if (!armored) return `<img data-layer="body" class="bb-layer bb-layer-body" src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none">`;
+  return `<span data-layer="body" class="bb-layer bb-layer-body"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(0 0,22px 0,22px 60px,0 60px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(22px 0,60px 0,60px 34px,22px 34px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(60px 0,82px 0,82px 60px,60px 60px);max-width:none;pointer-events:none"></span>`;
 }
 
 function attachmentLayer(spec, part) {
@@ -379,7 +383,8 @@ function portraitSize(size) {
 export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const portraitSeed = hash(`${person.seed ?? 0}|${person.name ?? ''}`);
   const appearanceIndex = (((portraitSeed >>> 16) ^ portraitSeed) >>> 0) % APPEARANCES.length;
-  const appearance = APPEARANCES[appearanceIndex];
+  const specialAppearances = FANTASY_APPEARANCES[person.appearanceId];
+  const appearance = specialAppearances ? specialAppearances[portraitSeed % specialAppearances.length] : APPEARANCES[appearanceIndex];
   const width = portraitSize(size);
   const height = Math.round(width * CANVAS.height / CANVAS.width);
   const scale = Number((width / CANVAS.width).toFixed(6));
@@ -389,15 +394,17 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const helmet = layerSpec('helmet', equipment.helmet);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
-  const closedHelmet = helmetVisual === 'greathelm' || helmetVisual === 'full-helm';
+  const hiddenHead = FANTASY_HIDDEN_HEADS.includes(helmetVisual);
+  const closedHelmet = helmetVisual === 'greathelm' || helmetVisual === 'full-helm' || FANTASY_CLOSED_HELMETS.includes(helmetVisual);
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
   const compositionTop = helmetVisual === 'bascinet' ? 13 : 0;
-  const rider = `${bodyLayer(appearance.body, Boolean(armor))}
+  const rider = `${bodyLayer(appearance.body, Boolean(armor), appearance.bodyLeft, appearance.bodyTop)}
         ${attachmentLayer(attachment, 'back')}
         ${layer('armor', armor, equipment.armor)}
         ${attachmentLayer(attachment, 'front')}
-        <img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:0;${faceClip}max-width:none;pointer-events:none">
-        ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:25px;top:0;max-width:none;pointer-events:none">`}
+        ${hiddenHead ? '' : `<img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:${appearance.headTop ?? 0}px;${faceClip}max-width:none;pointer-events:none">`}
+        ${coveredHead || !appearance.ear ? '' : layer('ear', appearance.ear)}
+        ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:${appearance.hairLeft ?? 25}px;top:${appearance.hairTop ?? 0}px;max-width:none;pointer-events:none">`}
         ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none">`}
         ${layer('helmet', helmet, equipment.helmet)}
         ${layer('shield', layerSpec('shield', equipment.shield), equipment.shield)}

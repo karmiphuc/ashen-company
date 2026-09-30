@@ -1,0 +1,1460 @@
+{
+  "archives": [
+    {
+      "name": "Fantasy Brothers 6.2",
+      "sha256": "260bec3d6d1635db3400ba6d2ad13bdac540bad0b2d24960915ac3bc41947cfa"
+    },
+    {
+      "name": "Samurai 2.1",
+      "sha256": "3749fda7b976bd5d26377e192b8274a94d59c67f236095ddcf3bbb0e93c366c1"
+    }
+  ],
+  "geometryFormat": "xMin,xMax,yMin,yMax; positive Y points up",
+  "assets": [
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_ armor_body_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        376,
+        758,
+        472,
+        820
+      ],
+      "geometry": [
+        -44.0,
+        52.0,
+        -50.0,
+        12.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-wushi-armor.png",
+      "anchor": [
+        8,
+        48
+      ],
+      "sha256": "9ac8ebdb22364982b56c12f46d5bf8eb6516ce9c51f4dd49249ac30b56e0d16a"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/armor/inventory_wushi_armor_body_01.png",
+      "sourceItemId": "armor.body.wushi_armor",
+      "sourceScript": "scripts/items/armor/wushi_armor.nut",
+      "destination": "assets/items/samurai-wushi-armor.png",
+      "sha256": "70d36f25b63c4826e1dcc6f521f1114d1e21918a023ee935d828316f76af4398"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_ armor03_body_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        0,
+        758,
+        100,
+        828
+      ],
+      "geometry": [
+        -48.0,
+        52.0,
+        -50.0,
+        20.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-ronin-clothes.png",
+      "anchor": [
+        4,
+        40
+      ],
+      "sha256": "2af12820b3c58e6cbb8270f5a27363426d1a8b801971612b8eefa0472c0b7dab"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/armor/inventory_wushi_armor03_body_01.png",
+      "sourceItemId": "armor.body.wushi_armor03",
+      "sourceScript": "scripts/items/armor/wushi_armor03.nut",
+      "destination": "assets/items/samurai-ronin-clothes.png",
+      "sha256": "297f30c5972db7d2699f56b378851880df1ce939db2de9e7ab9f2fef08eadfae"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_ armor04_body_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        608,
+        675,
+        712,
+        753
+      ],
+      "geometry": [
+        -50.0,
+        52.0,
+        -50.0,
+        21.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-ninja-suit.png",
+      "anchor": [
+        2,
+        39
+      ],
+      "sha256": "5bb7c8a5ffe629d206b20973e4226cb6c6160e69b030dbac0b7341fe5820bc02"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/armor/inventory_wushi_armor04_body_01.png",
+      "sourceItemId": "armor.body.wushi_armor04",
+      "sourceScript": "scripts/items/armor/wushi_armor04.nut",
+      "destination": "assets/items/samurai-ninja-suit.png",
+      "sha256": "06af991c32b3e61bbe2558d1ad5f436cb7caade25b096930aeb90d528ce99c6a"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_ armor05_body_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        332,
+        675,
+        441,
+        755
+      ],
+      "geometry": [
+        -52.0,
+        52.0,
+        -50.0,
+        24.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-elite-ninja-suit.png",
+      "anchor": [
+        0,
+        36
+      ],
+      "sha256": "be3205bfd04c5092ba2fcd3f50a3529e3aaa5944d62c6d94481d9078b98959bc"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/armor/inventory_wushi_armor05_body_01.png",
+      "sourceItemId": "armor.body.wushi_armor05",
+      "sourceScript": "scripts/items/armor/wushi_armor05.nut",
+      "destination": "assets/items/samurai-elite-ninja-suit.png",
+      "sha256": "7ebcbe7dffd6585a65e8981925f3b5c2ed2cd87917c7a072d444fa244d29fcfa"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_ armor06_body_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        1763,
+        675,
+        1867,
+        753
+      ],
+      "geometry": [
+        -50.0,
+        52.0,
+        -50.0,
+        21.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-monk-soldier-armor.png",
+      "anchor": [
+        2,
+        39
+      ],
+      "sha256": "bc2e7e0d14453d66b5503419cbf5af0f98884b547125355ea0d8cee81fc95833"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/armor/inventory_wushi_armor06_body_01.png",
+      "sourceItemId": "armor.body.wushi_armor06",
+      "sourceScript": "scripts/items/armor/wushi_armor06.nut",
+      "destination": "assets/items/samurai-monk-soldier-armor.png",
+      "sha256": "e3a34a8300868de1d54f9c6b7e4f1dd8ce8a3a46006687b5584245f7fd393fe0"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_ armor07_body_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        190,
+        758,
+        278,
+        822
+      ],
+      "geometry": [
+        -42.0,
+        44.0,
+        -53.0,
+        11.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-light-foot-armor.png",
+      "anchor": [
+        10,
+        49
+      ],
+      "sha256": "28d56ada6a21c845e6a078533bcc054fa338caaf6af81afc5c94786959548527"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/armor/inventory_wushi_armor07_body_01.png",
+      "sourceItemId": "armor.body.wushi_armor07",
+      "sourceScript": "scripts/items/armor/wushi_armor07.nut",
+      "destination": "assets/items/samurai-light-foot-armor.png",
+      "sha256": "983877c17298a012aeff9ee1e38785885cc23aac3dd0976f4b4305fa974a2a70"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_ armor18_body_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        1035,
+        592,
+        1149,
+        674
+      ],
+      "geometry": [
+        -55.0,
+        61.0,
+        -50.0,
+        32.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-tycoon-armor.png",
+      "anchor": [
+        -3,
+        28
+      ],
+      "sha256": "47ab4d420e2abf57cf09dedf96055ddbadee7f0f53c092fabab910753522ecf1"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/armor/inventory_wushi_armor18_body_01.png",
+      "sourceItemId": "armor.body.wushi_armor18",
+      "sourceScript": "scripts/items/armor/wushi_armor18.nut",
+      "destination": "assets/items/samurai-tycoon-armor.png",
+      "sha256": "f926f1c5a8c39f019d4c981fa3d0354a97cb7f2dc79d416d61acae26ca326bc5"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_ armor19_body_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        805,
+        592,
+        919,
+        674
+      ],
+      "geometry": [
+        -55.0,
+        61.0,
+        -50.0,
+        32.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-shogun-armor.png",
+      "anchor": [
+        -3,
+        28
+      ],
+      "sha256": "dd8487d9b92eab10c8896b627ac13b338e5ceb72c4eb485869450c3bb9e2b93b"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/armor/inventory_wushi_armor19_body_01.png",
+      "sourceItemId": "armor.body.wushi_armor19",
+      "sourceScript": "scripts/items/armor/wushi_armor19.nut",
+      "destination": "assets/items/samurai-shogun-armor.png",
+      "sha256": "7d8af130188f526d769745fd78ecb77daf36e2f17fb37f997b5a84a8f40f243f"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_helmet03_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        352,
+        395,
+        439,
+        506
+      ],
+      "geometry": [
+        -39.0,
+        46.0,
+        -29.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-ninja-mask.png",
+      "anchor": [
+        13,
+        -35
+      ],
+      "sha256": "9ceb4a3917be49861da4c2f1f31435a3cc3834c43462bf641da83a55bf09ed6a"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/helmets/icon_wushi_helmet03_01.png",
+      "sourceItemId": "armor.head.wushi_helmet03",
+      "sourceScript": "scripts/items/helmets/wushi_helmet03.nut",
+      "destination": "assets/items/samurai-ninja-mask.png",
+      "sha256": "759507aecc39c9ada64cba87707567fb027452a583df3aacf58f77877114fb8a"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_helmet04_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        176,
+        395,
+        263,
+        506
+      ],
+      "geometry": [
+        -39.0,
+        46.0,
+        -29.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-elite-ninja-mask.png",
+      "anchor": [
+        13,
+        -35
+      ],
+      "sha256": "10c49c58ec43184fd2b9f46ce7e1233546edd6b22bc4cd26c69901ce6afbae28"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/helmets/icon_wushi_helmet04_01.png",
+      "sourceItemId": "armor.head.wushi_helmet04",
+      "sourceScript": "scripts/items/helmets/wushi_helmet04.nut",
+      "destination": "assets/items/samurai-elite-ninja-mask.png",
+      "sha256": "349db64a41fce447a76def35c3dc0d566d913323d794d3746ceff28861745e0c"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_helmet05_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        704,
+        395,
+        791,
+        506
+      ],
+      "geometry": [
+        -39.0,
+        46.0,
+        -29.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-monk-mask.png",
+      "anchor": [
+        13,
+        -35
+      ],
+      "sha256": "b9260174f75b632af723974618bf430fe6d94961c6bfc77a12c07c6e63afe08c"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/helmets/icon_wushi_helmet05_01.png",
+      "sourceItemId": "armor.head.wushi_helmet05",
+      "sourceScript": "scripts/items/helmets/wushi_helmet05.nut",
+      "destination": "assets/items/samurai-monk-mask.png",
+      "sha256": "d4a0ac9e0b21ac2d5c0e12ac4931cb9ec0f53f3b0682c33482f47c3b0af15075"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_helmet06_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        325,
+        276,
+        425,
+        394
+      ],
+      "geometry": [
+        -45.0,
+        51.0,
+        -36.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-bamboo-hat.png",
+      "anchor": [
+        7,
+        -35
+      ],
+      "sha256": "51e4f5b406e31beb06fbf9a72e50b18c69c3eb011d4c5efe853355ea965252dc"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/helmets/icon_wushi_helmet06_01.png",
+      "sourceItemId": "armor.head.wushi_helmet06",
+      "sourceScript": "scripts/items/helmets/wushi_helmet06.nut",
+      "destination": "assets/items/samurai-bamboo-hat.png",
+      "sha256": "a496d5a1551dcc93d80802d9cf94ce26188736add5afce78755d5e6922f72ab1"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_helmet09_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        202,
+        0,
+        302,
+        140
+      ],
+      "geometry": [
+        -45.0,
+        51.0,
+        -36.0,
+        104.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-helmet.png",
+      "anchor": [
+        7,
+        -57
+      ],
+      "sha256": "a99680dbf9a616a1c6f034537e529359d61c80ae52bce08f2ca358928e9bae68"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/helmets/icon_wushi_helmet09_01.png",
+      "sourceItemId": "armor.head.wushi_helmet09",
+      "sourceScript": "scripts/items/helmets/wushi_helmet09.nut",
+      "destination": "assets/items/samurai-helmet.png",
+      "sha256": "fd8472bcfd7be6f465bb6f75006f1bff247a572e183070a477aecf4684be9f09"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_helmet14_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        810,
+        276,
+        900,
+        387
+      ],
+      "geometry": [
+        -39.0,
+        49.0,
+        -29.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-tycoon-helmet.png",
+      "anchor": [
+        13,
+        -35
+      ],
+      "sha256": "5760d9fff8832b1424e9765bbfeadb5d7f3510285608a5061e1230b25e25450e"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/helmets/icon_wushi_helmet14_01.png",
+      "sourceItemId": "armor.head.wushi_helmet14",
+      "sourceScript": "scripts/items/helmets/wushi_helmet14.nut",
+      "destination": "assets/items/samurai-tycoon-helmet.png",
+      "sha256": "720a326645e9a59d218a673653d55902988fb701be5c9c020b469bc4148431e9"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_helmet17_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        1447,
+        276,
+        1537,
+        387
+      ],
+      "geometry": [
+        -39.0,
+        49.0,
+        -29.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-shogun-helmet.png",
+      "anchor": [
+        13,
+        -35
+      ],
+      "sha256": "1578b0c0049a011b4325ecd8a749602accbd4327e4920ce9ac348c6171c72c4f"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/helmets/icon_wushi_helmet17_01.png",
+      "sourceItemId": "armor.head.wushi_helmet17",
+      "sourceScript": "scripts/items/helmets/wushi_helmet17.nut",
+      "destination": "assets/items/samurai-shogun-helmet.png",
+      "sha256": "5386491104761b2093876c0f18b3b5d1206cfa22b361d590b93f4599e5563438"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_wushi_helmet24_01",
+      "atlas": "gfx/wushi.png",
+      "rect": [
+        0,
+        276,
+        111,
+        394
+      ],
+      "geometry": [
+        -45.0,
+        51.0,
+        -36.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-ronin-hat.png",
+      "anchor": [
+        7,
+        -35
+      ],
+      "sha256": "260825d32432531ff418c92d5d3eeeaf54f7357b11b8b57cc85eeb128ed18651"
+    },
+    {
+      "kind": "inventory",
+      "mod": "samurai",
+      "source": "gfx/ui/items/helmets/icon_wushi_helmet24_01.png",
+      "sourceItemId": "armor.head.wushi_helmet24",
+      "sourceScript": "scripts/items/helmets/wushi_helmet24.nut",
+      "destination": "assets/items/samurai-ronin-hat.png",
+      "sha256": "9079b4ac0fb8c92e9a9488eb1162d7a92d7d6e090592100bfc953bbcc129a9ce"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxarmor_100",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        167,
+        1921,
+        261,
+        1985
+      ],
+      "geometry": [
+        -48.0,
+        46.0,
+        -54.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-wokou-armor.png",
+      "anchor": [
+        4,
+        50
+      ],
+      "sha256": "a40c103849b98a83f4ad593d896cc3fbbb64b6ff2a3f664408f09ec489c923c2"
+    },
+    {
+      "kind": "inventory",
+      "mod": "fantasy",
+      "source": "gfx/ui/items/armor/inventory_xxarmor_100.png",
+      "sourceItemId": "armor.body.xxwokoulightarmor",
+      "sourceScript": "scripts/items/armor/xxwokoulightarmor.nut",
+      "destination": "assets/items/fantasy-wokou-armor.png",
+      "sha256": "fbb00cfecf117d82fafa761735c677d7ab47cfe0124ae445f0010b63bbd10cea"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxarmor_101",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1831,
+        1767,
+        1939,
+        1839
+      ],
+      "geometry": [
+        -53.0,
+        55.0,
+        -51.0,
+        21.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-samurai-armor.png",
+      "anchor": [
+        -1,
+        39
+      ],
+      "sha256": "8099a764c9bf158e2bb3b78a1aeaa25885d679ab963ee181b8c44be38506ce05"
+    },
+    {
+      "kind": "inventory",
+      "mod": "fantasy",
+      "source": "gfx/ui/items/armor/inventory_xxarmor_101.png",
+      "sourceItemId": "armor.body.xxsamuraiarmor",
+      "sourceScript": "scripts/items/armor/xxsamuraiarmor.nut",
+      "destination": "assets/items/fantasy-samurai-armor.png",
+      "sha256": "60792aad05f600c593c2cc1ff3ffb5ce12f82645d256c25a5abc3d1636840e4c"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxcloth_100",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1311,
+        1767,
+        1401,
+        1845
+      ],
+      "geometry": [
+        -39.0,
+        43.0,
+        -61.0,
+        13.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-kasaya.png",
+      "anchor": [
+        13,
+        47
+      ],
+      "sha256": "1c1910bde0134a8a7b9a237d02981ea5048c069ae81974f60ab3f417773900c9"
+    },
+    {
+      "kind": "inventory",
+      "mod": "fantasy",
+      "source": "gfx/ui/items/armor/inventory_xxcloth_100.png",
+      "sourceItemId": "armor.body.xxmonkrobe",
+      "sourceScript": "scripts/items/armor/xxmonkrobe.nut",
+      "destination": "assets/items/fantasy-kasaya.png",
+      "sha256": "d176d747f75a128b43a59befa4ec2dceb65b0a123d846f320ce96d0c36a6379a"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxarmor_200",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        0,
+        1680,
+        110,
+        1766
+      ],
+      "geometry": [
+        -56.0,
+        54.0,
+        -63.0,
+        23.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-grand-steel-armor.png",
+      "anchor": [
+        -4,
+        37
+      ],
+      "sha256": "6ba20adbc51585fa69b3a0d6e708a804d1c3af1b5d7e5f992d8b9a9b87ffde56"
+    },
+    {
+      "kind": "inventory",
+      "mod": "fantasy",
+      "source": "gfx/ui/items/armor/inventory_xxarmor_200_L.png",
+      "sourceItemId": "armor.body.xxsteelarmor",
+      "sourceScript": "scripts/items/armor/xxsteelarmor.nut",
+      "destination": "assets/items/fantasy-grand-steel-armor.png",
+      "sha256": "84625f3a00e784e78c2dec1fd3a8569e95905a06c6a5be292a123227dda5fb91"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxknighthelm_100",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        271,
+        1355,
+        355,
+        1469
+      ],
+      "geometry": [
+        -37.0,
+        47.0,
+        -32.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-knight-helm.png",
+      "anchor": [
+        15,
+        -35
+      ],
+      "sha256": "5a1389782bb307aff1519a2eb21873ca5b5aacb875a30559ddddaf837a12adeb"
+    },
+    {
+      "kind": "inventory",
+      "mod": "fantasy",
+      "source": "gfx/ui/items/helmets/inventory_xxknighthelm_100.png",
+      "sourceItemId": "armor.head.xxknighthelm",
+      "sourceScript": "scripts/items/helmets/xxknighthelm.nut",
+      "destination": "assets/items/fantasy-knight-helm.png",
+      "sha256": "fbad12a3e1a183f206b4cebb9c3bf0945c59902ff72a057e4467a8c227c5e749"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_helmet_xx01",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        526,
+        1355,
+        610,
+        1469
+      ],
+      "geometry": [
+        -47.0,
+        37.0,
+        -28.0,
+        86.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-red-dragon-helm.png",
+      "anchor": [
+        5,
+        -39
+      ],
+      "sha256": "2ea2bad61cdbaa062f2f7e34eb00f0b8fc42a784462a489f1456e77ba98b6147"
+    },
+    {
+      "kind": "inventory",
+      "mod": "fantasy",
+      "source": "gfx/ui/items/helmets/inventory_bust_helmet_xx01.png",
+      "sourceItemId": "armor.head.xxdragonhat",
+      "sourceScript": "scripts/items/helmets/named/xxdragonhat.nut",
+      "destination": "assets/items/fantasy-red-dragon-helm.png",
+      "sha256": "a3a92e788613053229417d253d0ff41f64a9808ff3380697a8ae75c74581bc85"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxknighthelm_110",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1660,
+        983,
+        1741,
+        1106
+      ],
+      "geometry": [
+        -37.0,
+        44.0,
+        -34.0,
+        89.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-eastern-helm.png",
+      "anchor": [
+        15,
+        -42
+      ],
+      "sha256": "5de3182a4c6093f8614e2222db8d68068a42c38388030f78f194c605fdc2213f"
+    },
+    {
+      "kind": "inventory",
+      "mod": "fantasy",
+      "source": "gfx/ui/items/helmets/inventory_xxhat_hunshelm.png",
+      "sourceItemId": "armor.head.xxhat_hunshelm",
+      "sourceScript": "scripts/items/helmets/xxhat_hunshelm.nut",
+      "destination": "assets/items/fantasy-eastern-helm.png",
+      "sha256": "51b55ef55d7b75b696c95a8e9695f3bf971fdea57822eeeab60a216141ca04cb"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_helmet_xx02",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        475,
+        1234,
+        575,
+        1352
+      ],
+      "geometry": [
+        -45.0,
+        51.0,
+        -36.0,
+        82.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-kasa.png",
+      "anchor": [
+        7,
+        -35
+      ],
+      "sha256": "0110ad327faa6785968c0e661cee37f1c5b2c84f403ad86f5e9618ba4ee30f5c"
+    },
+    {
+      "kind": "inventory",
+      "mod": "fantasy",
+      "source": "gfx/ui/items/helmets/inventory_bust_helmet_xx02.png",
+      "sourceItemId": "armor.head.xxhat_kasa",
+      "sourceScript": "scripts/items/helmets/xxhat_kasa.nut",
+      "destination": "assets/items/fantasy-kasa.png",
+      "sha256": "858fcee93857395404a5bb0768cf99a4bb154c1e72d87d11e768f43b7dec4121"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7869",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1777,
+        1921,
+        1855,
+        1979
+      ],
+      "geometry": [
+        -39.0,
+        39.0,
+        -48.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-0-body.png",
+      "anchor": [
+        13,
+        50
+      ],
+      "sha256": "39601b01338174a206d02062c762c236d2968d3d4c0685b3e1f940f839a6f54b"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_head_7863",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1119,
+        1850,
+        1169,
+        1918
+      ],
+      "geometry": [
+        -21.0,
+        29.0,
+        -20.0,
+        48.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-0-head.png",
+      "anchor": [
+        31,
+        -1
+      ],
+      "sha256": "785adfdceeaa8358c369312a1521be83dab76803554d8356ab41b4a7f8cb6a04"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "hair_elf_01",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1651,
+        1850,
+        1723,
+        1916
+      ],
+      "geometry": [
+        -27.0,
+        45.0,
+        -15.0,
+        51.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-0-hair.png",
+      "anchor": [
+        25,
+        -4
+      ],
+      "sha256": "2d10ff21d857896852b5f35b5f7a5cb5a9ccf733eee44d61617fe500e739b7b8"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7869",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1777,
+        1921,
+        1855,
+        1979
+      ],
+      "geometry": [
+        -39.0,
+        39.0,
+        -48.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-1-body.png",
+      "anchor": [
+        13,
+        50
+      ],
+      "sha256": "39601b01338174a206d02062c762c236d2968d3d4c0685b3e1f940f839a6f54b"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_head_7864",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1527,
+        1850,
+        1577,
+        1918
+      ],
+      "geometry": [
+        -21.0,
+        29.0,
+        -20.0,
+        48.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-1-head.png",
+      "anchor": [
+        31,
+        -1
+      ],
+      "sha256": "472bc3f74fa20ae1e3a9c694b177e85fbf806c9fa6f329de4176f7b15c49338d"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "hair_elf_02",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1870,
+        1850,
+        1942,
+        1916
+      ],
+      "geometry": [
+        -27.0,
+        45.0,
+        -15.0,
+        51.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-1-hair.png",
+      "anchor": [
+        25,
+        -4
+      ],
+      "sha256": "f1f00d7880ab87df5e05160c332c4707de5c2debe3c7d0a64add068cefda4ecc"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7869",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1777,
+        1921,
+        1855,
+        1979
+      ],
+      "geometry": [
+        -39.0,
+        39.0,
+        -48.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-2-body.png",
+      "anchor": [
+        13,
+        50
+      ],
+      "sha256": "39601b01338174a206d02062c762c236d2968d3d4c0685b3e1f940f839a6f54b"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_head_7865",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1170,
+        1850,
+        1220,
+        1918
+      ],
+      "geometry": [
+        -21.0,
+        29.0,
+        -20.0,
+        48.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-2-head.png",
+      "anchor": [
+        31,
+        -1
+      ],
+      "sha256": "20cdda4ef31b3b70ed3a47cdc87f79ec660d16379eb966c0bd893474414ef40f"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "hair_elf_03",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1432,
+        1921,
+        1492,
+        1981
+      ],
+      "geometry": [
+        -33.0,
+        27.0,
+        -10.0,
+        50.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-2-hair.png",
+      "anchor": [
+        19,
+        -3
+      ],
+      "sha256": "c7ef3e89c8a6f37cb91455bbddb01ba2ad7d2869c868058ca76c944902cbe668"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7872",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        936,
+        1921,
+        1018,
+        1981
+      ],
+      "geometry": [
+        -42.0,
+        40.0,
+        -50.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-orc-0-body.png",
+      "anchor": [
+        10,
+        50
+      ],
+      "sha256": "3bba60c47765f21e5e82eecdd5e0d0185d0e49fc2f9ae3b77c6f9be57502276f"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_head_7900",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1944,
+        141,
+        2014,
+        211
+      ],
+      "geometry": [
+        -31.0,
+        39.0,
+        -23.0,
+        47.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-orc-0-head.png",
+      "anchor": [
+        21,
+        0
+      ],
+      "sha256": "738ecfca6a09e4c4a53b111cc1229e587def96c497f51bded60a76ebd535c968"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7872",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        936,
+        1921,
+        1018,
+        1981
+      ],
+      "geometry": [
+        -42.0,
+        40.0,
+        -50.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-orc-1-body.png",
+      "anchor": [
+        10,
+        50
+      ],
+      "sha256": "3bba60c47765f21e5e82eecdd5e0d0185d0e49fc2f9ae3b77c6f9be57502276f"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_head_7901",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        71,
+        1850,
+        141,
+        1920
+      ],
+      "geometry": [
+        -31.0,
+        39.0,
+        -23.0,
+        47.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-orc-1-head.png",
+      "anchor": [
+        21,
+        0
+      ],
+      "sha256": "d63ebbf6910645aadda2a2fa23831c2691c02beed558f0428adfe09718c60fc6"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7872",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        936,
+        1921,
+        1018,
+        1981
+      ],
+      "geometry": [
+        -42.0,
+        40.0,
+        -50.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-orc-2-body.png",
+      "anchor": [
+        10,
+        50
+      ],
+      "sha256": "3bba60c47765f21e5e82eecdd5e0d0185d0e49fc2f9ae3b77c6f9be57502276f"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_head_7902",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        0,
+        1850,
+        70,
+        1920
+      ],
+      "geometry": [
+        -31.0,
+        39.0,
+        -23.0,
+        47.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-orc-2-head.png",
+      "anchor": [
+        21,
+        0
+      ],
+      "sha256": "528abe58f7ff79ba948b15c23cd35c0f3fa4b1f2997c076e85befbfadac91f78"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7871",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1698,
+        1921,
+        1776,
+        1979
+      ],
+      "geometry": [
+        -39.0,
+        39.0,
+        -48.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-goblin-0-body.png",
+      "anchor": [
+        13,
+        50
+      ],
+      "sha256": "4cebc0e47e2fdb87b00c18181da37dd2836f887d6f288be46845378886f1bdae"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxgoblin_head_100",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1264,
+        1680,
+        1356,
+        1762
+      ],
+      "geometry": [
+        -45.0,
+        47.0,
+        -27.0,
+        55.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-goblin-0-head.png",
+      "anchor": [
+        7,
+        -8
+      ],
+      "sha256": "b2ede22c8d697e7b660791e70d85c5846bc1e19910c724e0d126919860378864"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7871",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1698,
+        1921,
+        1776,
+        1979
+      ],
+      "geometry": [
+        -39.0,
+        39.0,
+        -48.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-goblin-1-body.png",
+      "anchor": [
+        13,
+        50
+      ],
+      "sha256": "4cebc0e47e2fdb87b00c18181da37dd2836f887d6f288be46845378886f1bdae"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxgoblin_head_101",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1543,
+        1680,
+        1635,
+        1762
+      ],
+      "geometry": [
+        -45.0,
+        47.0,
+        -27.0,
+        55.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-goblin-1-head.png",
+      "anchor": [
+        7,
+        -8
+      ],
+      "sha256": "645ba1e1ffbed27e23a998a8880361ad15a4a5dfde5ab08372ed6c28dc3a2579"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "bust_naked_body_7871",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1698,
+        1921,
+        1776,
+        1979
+      ],
+      "geometry": [
+        -39.0,
+        39.0,
+        -48.0,
+        10.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-goblin-2-body.png",
+      "anchor": [
+        13,
+        50
+      ],
+      "sha256": "4cebc0e47e2fdb87b00c18181da37dd2836f887d6f288be46845378886f1bdae"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "xxgoblin_head_102",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1357,
+        1680,
+        1449,
+        1762
+      ],
+      "geometry": [
+        -45.0,
+        47.0,
+        -27.0,
+        55.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-goblin-2-head.png",
+      "anchor": [
+        7,
+        -8
+      ],
+      "sha256": "b4ab90e153ef015927c27cf2a396d35f9c63eef58deb5b0b347170faffb45855"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_head_wushi_01",
+      "atlas": "gfx/wushi04.png",
+      "rect": [
+        677,
+        0,
+        746,
+        89
+      ],
+      "geometry": [
+        -40.0,
+        29.0,
+        -20.0,
+        69.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-face-1.png",
+      "anchor": [
+        12,
+        -22
+      ],
+      "sha256": "593f606c51c6c5494b22e4ae88f4a4f1dd9155099e2a8f7db453a4998eaa27f4"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_head_wushi_02",
+      "atlas": "gfx/wushi04.png",
+      "rect": [
+        747,
+        0,
+        816,
+        89
+      ],
+      "geometry": [
+        -40.0,
+        29.0,
+        -20.0,
+        69.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-face-2.png",
+      "anchor": [
+        12,
+        -22
+      ],
+      "sha256": "a9a35b23cc1423992d05d9b3549d6917da7f3155a3d09a3197e463ed101c2c00"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "samurai",
+      "brush": "bust_head_wushi_03",
+      "atlas": "gfx/wushi04.png",
+      "rect": [
+        0,
+        180,
+        69,
+        269
+      ],
+      "geometry": [
+        -40.0,
+        29.0,
+        -20.0,
+        69.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/samurai-face-3.png",
+      "anchor": [
+        12,
+        -22
+      ],
+      "sha256": "7cb1e67275825775a9362aa5fbb2db997b48b2247699bd2d0834ccec78432f3f"
+    },
+    {
+      "kind": "worn-layer",
+      "mod": "fantasy",
+      "brush": "ear_elf",
+      "atlas": "gfx/entity_xx.png",
+      "rect": [
+        1493,
+        1921,
+        1553,
+        1981
+      ],
+      "geometry": [
+        -33.0,
+        27.0,
+        -10.0,
+        50.0
+      ],
+      "conversion": "vertical flip; resize to brush geometry",
+      "destination": "assets/portraits/fantasy-elf-ear.png",
+      "anchor": [
+        19,
+        -3
+      ],
+      "sha256": "11ee3855bece3488c382a1f0365cceed36ba7196ad9f69362b191bbeaa54d91a"
+    }
+  ],
+  "notes": [
+    "Dwarf styling reuses existing human portraits and beards, following the mod race composition.",
+    "Armor stats adapted to Ashen Company; mod scripted magic powers not imported."
+  ]
+}

@@ -3,6 +3,7 @@ import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors
 import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
+import { FANTASY_ITEMS } from './fantasy-items.js';
 import { MOUNTS } from './mounts.js';
 import { enemyProgression } from './enemy-progression.js';
 import { getRegionalEnemyFaction, getRegionalEnemyTemplates, getRegionalCampText } from './enemy-rosters.js';
@@ -42,6 +43,7 @@ export const ITEMS = Object.freeze([
   ...ADDITIONAL_ITEMS,
   ...ARMOR_ATTACHMENTS,
   ...NORTHERN_ITEMS,
+  ...FANTASY_ITEMS,
   ...MOUNTS,
 ]);
 
@@ -191,7 +193,7 @@ export function getItem(id) {
   item.bonuses = Object.freeze(bonuses.map(bonus => Object.freeze(bonus)));
   return Object.freeze(item);
 }
-const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id)]);
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
@@ -1571,6 +1573,7 @@ function recruitPerson(state, town, slot) {
     name: profile.name,
     background: background.name,
     backgroundId: background.id,
+    ...(background.appearanceId ? { appearanceId: background.appearanceId } : {}),
     traits: [...profile.traitIds],
     seed: profile.personSeed,
     hp: 100,
@@ -1947,7 +1950,7 @@ export function startBattle(state, encounterId) {
       equipment: { ...person.equipment }, reserveEquipment: { ...person.reserveEquipment }, accessories: [...person.accessories],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: [...person.perks], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0,
-      seed: person.seed, alive: person.hp > 0,
+      seed: person.seed, ...(person.appearanceId ? { appearanceId: person.appearanceId } : {}), alive: person.hp > 0,
       morale: person.morale, fatigue: 0, ap: 2, reload: 0,
       meleeSkill: stats.meleeSkill, rangedSkill: stats.rangedSkill,
       meleeDefense: stats.meleeDefense - (hasPerk(person, 'dodge') ? Math.floor(stats.initiative * .15) : 0),
@@ -2948,6 +2951,7 @@ function validateBattle(input, party, worldState) {
     const reserveEquipment = unit.reserveEquipment ?? { weapon: null, shield: null };
     const accessories = unit.accessories ?? [null, null];
     const partyMember = unit.side === 'company' ? party.find(person => person.id === unit.id) : null;
+    assert(unit.appearanceId === partyMember?.appearanceId, 'battle unit appearance');
     if (partyMember) assert((unit.equipment.mount ?? null) === (partyMember.equipment.mount ?? null), 'battle mount owner');
     const perks = unit.perks ?? partyMember?.perks ?? [];
     assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && (PERK_BY_ID.has(id) || REMOVED_PERK_MIN_LEVEL.has(id))) && new Set(perks).size === perks.length, 'battle perks');
@@ -2985,7 +2989,7 @@ function validateBattle(input, party, worldState) {
       pocketDrawnFrom, pocketStowedWeapon, pocketStowedReload: unit.pocketStowedReload ?? 0,
       pocketDrawnRound: unit.pocketDrawnRound ?? 0, reserveReload: unit.reserveReload ?? 0, meleePhase: unit.meleePhase ?? false,
       perks: perks.filter(id => PERK_BY_ID.has(id)), adaptation, berserkRound, frenzyUntilRound, turnStartedRound,
-      seed: unit.seed, alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap, reload: unit.reload ?? 0,
+      seed: unit.seed, ...(unit.appearanceId ? { appearanceId: unit.appearanceId } : {}), alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap, reload: unit.reload ?? 0,
       meleeSkill: unit.meleeSkill, rangedSkill: unit.rangedSkill,
       meleeDefense: unit.meleeDefense, rangedDefense: unit.rangedDefense,
       maxFatigue: unit.maxFatigue, initiative: unit.initiative, resolve: unit.resolve,
@@ -3176,6 +3180,7 @@ export function validateSave(input) {
     assert(typeof person.background === 'string' && person.background.length > 0 && person.background.length <= 80, 'person background');
     const backgroundDefinition = person.backgroundId === undefined ? null : RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId);
     assert(person.backgroundId === undefined || backgroundDefinition && person.background === backgroundDefinition.name, 'person background id');
+    assert(person.appearanceId === backgroundDefinition?.appearanceId, 'person appearance');
     const traits = person.traits ?? [];
     assert(Array.isArray(traits) && traits.length <= 2 && traits.every(id => typeof id === 'string' && RECRUIT_TRAIT_BY_ID.has(id)) && new Set(traits).size === traits.length, 'person traits');
     assert(backgroundDefinition ? traits.length >= 1 && RECRUIT_TRAIT_BY_ID.get(traits[0]).kind === 'positive' && (traits.length === 1 || RECRUIT_TRAIT_BY_ID.get(traits[1]).kind === 'tradeoff') : traits.length === 0, 'person trait kinds');
@@ -3308,6 +3313,7 @@ export function validateSave(input) {
   const party = input.party.map(person => normalizeMember({
     id: person.id, name: person.name, background: person.background, seed: person.seed,
     ...(person.backgroundId === undefined ? {} : { backgroundId: person.backgroundId }),
+    ...(person.appearanceId ? { appearanceId: person.appearanceId } : {}),
     traits: [...(person.traits ?? [])],
     hp: person.hp, morale: person.morale,
     equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot] ?? null])),

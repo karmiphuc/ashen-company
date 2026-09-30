@@ -20,6 +20,8 @@ const CORE = [
   './src/additional-items.js',
   './src/mounts.js',
   './src/northern-items.js',
+  './src/fantasy-items.js',
+  './src/fantasy-art.js',
   './src/armor-attachments.js',
   './src/enemy-progression.js',
   './src/enemy-rosters.js',
