@@ -3,7 +3,7 @@ const PERK_CATEGORIES = {
   weapon: ['backstabber', 'sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training', 'shield-strike'],
   defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'last-stand'],
   ranged: ['bullseye', 'anticipation', 'bow-mastery', 'crossbow-mastery', 'marksman', 'point-blank', 'volley-fire', 'reload-drill'],
-  mobility: ['pathfinder', 'recover', 'fleet-footed', 'marathoner', 'high-ground'],
+  mobility: ['pathfinder', 'recover', 'fleet-footed', 'marathoner', 'high-ground', 'quick-hands', 'combat-bandaging'],
 };
 const CATEGORY_ICONS = { general: 'executioner', weapon: 'backstabber', defense: 'shield-expert', ranged: 'bullseye', mobility: 'pathfinder' };
 const ORIGINAL_PERK_ICONS = new Set(['colossus', 'pathfinder', 'fast-adaptation', 'recover', 'bullseye', 'executioner', 'steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'backstabber', 'anticipation', 'brawny', 'bow-mastery', 'crossbow-mastery', 'berserk', 'killing-frenzy', 'fearsome']);
@@ -15,6 +15,8 @@ export const PERKS = Object.freeze([
   { id: 'pathfinder', name: 'Pathfinder', description: 'Reduce rough terrain and uphill movement costs by 1, to a minimum of 1.', minLevel: 2 },
   { id: 'fast-adaptation', name: 'Fast Adaptation', description: 'Gain +10 hit chance after each consecutive miss. The bonus resets on a hit.', minLevel: 2 },
   { id: 'recover', name: 'Recover', description: 'When catching your breath, recover at least 22 fatigue and otherwise halve current fatigue.', minLevel: 2 },
+  { id: 'quick-hands', name: 'Quick Hands', description: 'The first weapon-set swap or pocket weapon draw or stow each round costs no AP. Continue fighting after switching.', minLevel: 2 },
+  { id: 'combat-bandaging', name: 'Combat Bandaging', description: 'The first healing item used each round costs no AP. At half health or lower, heal before other actions, even in melee. The item is still consumed.', minLevel: 2 },
   { id: 'bullseye', name: 'Bullseye', description: 'Ignore ranged accuracy penalties from trees and brush. Height still applies.', minLevel: 3 },
   { id: 'executioner', name: 'Executioner', description: 'Deal 20% more damage to a target below full health.', minLevel: 3 },
   { id: 'steel-brow', name: 'Steel Brow', description: 'Head hits no longer deal extra health damage.', minLevel: 3 },

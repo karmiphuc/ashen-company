@@ -1949,7 +1949,7 @@ export function startBattle(state, encounterId) {
       maxBodyArmor: stats.maxBodyArmor, maxAttachmentArmor: stats.maxAttachmentArmor, maxHeadArmor: stats.maxHeadArmor,
       equipment: { ...person.equipment }, reserveEquipment: { ...person.reserveEquipment }, accessories: [...person.accessories],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
-      perks: [...person.perks], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0,
+      perks: [...person.perks], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
       seed: person.seed, ...(person.appearanceId ? { appearanceId: person.appearanceId } : {}), alive: person.hp > 0,
       morale: person.morale, fatigue: 0, ap: 2, reload: 0,
       meleeSkill: stats.meleeSkill, rangedSkill: stats.rangedSkill,
@@ -1971,7 +1971,7 @@ export function startBattle(state, encounterId) {
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: armorMaximum(gear.attachment), maxHeadArmor: armorMaximum(gear.helmet),
       equipment: gear, reserveEquipment: { weapon: null, shield: null }, accessories: [null, null],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
-      perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0,
+      perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
       seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
       morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2, reload: 0,
       meleeSkill: 30 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0), rangedSkill: 28 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0),
@@ -2137,22 +2137,35 @@ function changeBattleWeapon(actor, weaponId, shieldId) {
 }
 
 function useBattleAccessory(state, actor, enemies) {
-  if (actor.side !== 'company' || Math.min(...enemies.map(enemy => hexDistance(actor, enemy))) < 2) return false;
-  const index = actor.accessories.findIndex(id => {
-    const item = getItem(id);
-    return item?.consumable === 'heal' && actor.hp <= actor.maxHp * .55 && actor.maxHp - actor.hp >= Math.min(20, item.heal)
-      || item?.consumable === 'recover' && actor.fatigue >= actor.maxFatigue * .75;
-  });
-  if (index < 0) return false;
-  const item = getItem(actor.accessories[index]);
+  if (actor.side !== 'company') return false;
+  const index = actor.accessories.findIndex(id => getItem(id)?.consumable === 'heal' && actor.hp <= actor.maxHp * .5);
+  const safeToRecover = Math.min(...enemies.map(enemy => hexDistance(actor, enemy))) >= 2;
+  const selected = index >= 0 ? index : safeToRecover
+    ? actor.accessories.findIndex(id => getItem(id)?.consumable === 'recover' && actor.fatigue >= actor.maxFatigue * .75)
+    : -1;
+  if (selected < 0) return false;
+  const item = getItem(actor.accessories[selected]);
+  if (item.consumable === 'heal' && actor.hp >= actor.maxHp || item.consumable === 'recover' && actor.fatigue === 0) return false;
   if (item.consumable === 'heal') actor.hp = Math.min(actor.maxHp, actor.hp + item.heal);
   else actor.fatigue = Math.max(0, actor.fatigue - item.recover);
-  actor.accessories[index] = null;
-  actor.ap = 0;
+  actor.accessories[selected] = null;
+  const free = item.consumable === 'heal' && hasPerk(actor, 'combat-bandaging') && actor.freeHealRound !== state.battle.round;
+  if (free) actor.freeHealRound = state.battle.round;
+  else actor.ap = 0;
   const message = `${actor.name} uses ${item.name}.`;
   state.battle.lastEvent = makeBattleEvent(actor, null, 'use', message, getItem(actor.equipment.weapon), null, { itemId: item.id });
   battleLog(state.battle, message);
-  nextBattleTurn(state.battle);
+  if (!free) nextBattleTurn(state.battle);
+  return true;
+}
+
+function finishBattleSwap(state, actor, message) {
+  const free = hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== state.battle.round;
+  if (free) actor.freeSwapRound = state.battle.round;
+  else actor.ap = 0;
+  state.battle.lastEvent = makeBattleEvent(actor, null, 'swap', message, getItem(actor.equipment.weapon));
+  battleLog(state.battle, message);
+  if (!free) nextBattleTurn(state.battle);
   return true;
 }
 
@@ -2167,11 +2180,7 @@ function switchBattleSet(state, actor, message) {
   else if (readyingThrowing) actor.meleePhase = false;
   actor.reload = actor.reserveReload;
   actor.reserveReload = previousReload;
-  actor.ap = 0;
-  state.battle.lastEvent = makeBattleEvent(actor, null, 'swap', message, getItem(actor.equipment.weapon));
-  battleLog(state.battle, message);
-  nextBattleTurn(state.battle);
-  return true;
+  return finishBattleSwap(state, actor, message);
 }
 
 function companyArcherWeapon(state, actor) {
@@ -2194,12 +2203,8 @@ function chooseBattleWeapon(state, actor, enemies) {
       actor.pocketStowedWeapon = null;
       actor.pocketStowedReload = 0;
       actor.pocketDrawnRound = 0;
-      actor.ap = 0;
       const message = `${actor.name} readies ${getItem(actor.equipment.weapon).name} again.`;
-      state.battle.lastEvent = makeBattleEvent(actor, null, 'swap', message, getItem(actor.equipment.weapon));
-      battleLog(state.battle, message);
-      nextBattleTurn(state.battle);
-      return true;
+      return finishBattleSwap(state, actor, message);
     }
     return false;
   }
@@ -2219,12 +2224,8 @@ function chooseBattleWeapon(state, actor, enemies) {
       changeBattleWeapon(actor, actor.accessories[pocketIndex], actor.equipment.shield);
       actor.accessories[pocketIndex] = null;
       actor.reload = 0;
-      actor.ap = 0;
       const message = `${actor.name} draws ${getItem(actor.equipment.weapon).name} from a pocket.`;
-      state.battle.lastEvent = makeBattleEvent(actor, null, 'swap', message, getItem(actor.equipment.weapon));
-      battleLog(state.battle, message);
-      nextBattleTurn(state.battle);
-      return true;
+      return finishBattleSwap(state, actor, message);
     }
     if (reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
   }
@@ -2554,13 +2555,12 @@ export function advanceBattle(state) {
     actor.fatigue = Math.max(0, actor.fatigue - 6);
     actor.turnStartedRound = battle.round;
   }
+  if (useBattleAccessory(state, actor, enemies)) {
+    return result(true, battle.lastEvent.message);
+  }
   const formationCompanyCount = battle.units.filter(unit => unit.alive && unit.side === 'company').length;
   const formationMoveFrom = battle.tactic === 'advance-formation' && formationCompanyCount > 1 ? advanceFormationStep(battle, actor) : null;
   if (readyShieldWallSet(state, actor)) return result(true, battle.lastEvent.message);
-  if (useBattleAccessory(state, actor, enemies)) {
-    if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
-    return result(true, battle.lastEvent.message);
-  }
   if (chooseBattleWeapon(state, actor, enemies)) {
     if (formationMoveFrom) battle.lastEvent.moveFrom = formationMoveFrom;
     return result(true, battle.lastEvent.message);
@@ -2977,10 +2977,13 @@ function validateBattle(input, party, worldState) {
     const berserkRound = unit.berserkRound ?? 0;
     const frenzyUntilRound = unit.frenzyUntilRound ?? 0;
     const turnStartedRound = unit.turnStartedRound ?? 0;
+    const freeSwapRound = unit.freeSwapRound ?? 0;
+    const freeHealRound = unit.freeHealRound ?? 0;
     assert(validCount(adaptation) && adaptation <= 1000, 'battle adaptation');
     assert(validCount(berserkRound) && berserkRound <= input.round, 'battle berserk round');
     assert(validCount(frenzyUntilRound) && frenzyUntilRound <= input.round + 2, 'battle frenzy round');
     assert(validCount(turnStartedRound) && turnStartedRound <= input.round, 'battle turn started round');
+    assert(validCount(freeSwapRound) && freeSwapRound <= input.round && validCount(freeHealRound) && freeHealRound <= input.round, 'battle free actions');
     assert(recordObject(reserveEquipment) && (reserveEquipment.weapon === null || getItem(reserveEquipment.weapon)?.slot === 'weapon') && (reserveEquipment.shield === null || getItem(reserveEquipment.shield)?.slot === 'shield') && (!getItem(reserveEquipment.weapon)?.twoHanded || reserveEquipment.shield === null), 'battle reserve equipment');
     assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'battle accessories');
     const pocketDrawnFrom = unit.pocketDrawnFrom ?? null;
@@ -3005,7 +3008,7 @@ function validateBattle(input, party, worldState) {
       reserveEquipment: { weapon: reserveEquipment.weapon, shield: reserveEquipment.shield }, accessories: [...accessories],
       pocketDrawnFrom, pocketStowedWeapon, pocketStowedReload: unit.pocketStowedReload ?? 0,
       pocketDrawnRound: unit.pocketDrawnRound ?? 0, reserveReload: unit.reserveReload ?? 0, meleePhase: unit.meleePhase ?? false,
-      perks: perks.filter(id => PERK_BY_ID.has(id)), adaptation, berserkRound, frenzyUntilRound, turnStartedRound,
+      perks: perks.filter(id => PERK_BY_ID.has(id)), adaptation, berserkRound, frenzyUntilRound, turnStartedRound, freeSwapRound, freeHealRound,
       seed: unit.seed, ...(unit.appearanceId ? { appearanceId: unit.appearanceId } : {}), alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap, reload: unit.reload ?? 0,
       meleeSkill: unit.meleeSkill, rangedSkill: unit.rangedSkill,
       meleeDefense: unit.meleeDefense, rangedDefense: unit.rangedDefense,

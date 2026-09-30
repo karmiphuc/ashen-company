@@ -50,11 +50,17 @@ function battleWithCaptain(perks = [], weapon = 'arming-sword') {
 }
 
 test('perk catalog gives one independent point per level and learning is atomic', () => {
-  assert.equal(PERKS.length, 40);
+  assert.equal(PERKS.length, 42);
   assert.equal(new Set(PERKS.map(perk => perk.id)).size, PERKS.length);
   assert.ok(PERKS.every(perk => Object.isFrozen(perk) && perk.minLevel >= 2));
   assert.ok(PERKS.every(perk => ['general', 'weapon', 'defense', 'ranged', 'mobility'].includes(perk.category) && typeof perk.icon === 'string'));
   assert.equal(PERKS.find(perk => perk.id === 'recover').category, 'mobility');
+  for (const id of ['quick-hands', 'combat-bandaging']) {
+    const novice = createGame(201);
+    novice.party[0].level = 2;
+    assert.equal(learnPerk(novice, novice.party[0].id, id).ok, true);
+    assert.deepEqual(validateSave(novice), novice);
+  }
   const state = createGame(201);
   const captain = state.party[0];
   assert.deepEqual(captain.perks, []);

@@ -114,14 +114,14 @@ export function getItemDetails(item, condition) {
   } else if (item.slot === 'accessory') {
     if (item.consumable === 'heal') {
       stats.push({ label: 'Effect', value: `Restores up to ${item.heal ?? 0} health` }, { label: 'Uses', value: 'One' });
-      notes.push(`At 55% health or lower, with at least ${Math.min(20, item.heal ?? 0)} health missing and enemies at least two hexes away, the battle AI may use it. Use consumes the item and the full turn; healing never repairs armor.`);
+      notes.push('At 50% health or lower, the battle AI prioritizes healing even in melee. Use consumes the item and the full turn; Combat Bandaging makes the first healing item each round cost no AP. Healing never repairs armor.');
     } else if (item.consumable === 'recover') {
       stats.push({ label: 'Effect', value: `Reduces fatigue by ${item.recover ?? 0}` }, { label: 'Uses', value: 'One' });
       notes.push('At 75% of maximum fatigue or higher, with enemies at least two hexes away, the battle AI may use it. Use consumes the item and the full turn.');
     } else {
       stats.push({ label: 'Uses', value: 'One' });
     }
-    notes.push('A fighter can auto-use at most one consumable per turn.');
+    notes.push('Consumables occupy one of the two accessory slots and are removed after use. Free healing keeps the fighter ready for another action.');
   }
   const role = item.rarity === 'famed'
     ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with the ordinary version.`

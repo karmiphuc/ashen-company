@@ -344,6 +344,129 @@ test('field supplies consume one slot and one turn each, then stay consumed', ()
   assert.deepEqual(state.party[0].accessories, [null, null]);
 });
 
+test('critical wounds take healing priority in melee before fatigue relief or shield readiness', () => {
+  const state = createGame(361);
+  addItem(state, 'stimulant');
+  addItem(state, 'bandages');
+  equipItem(state, 'captain', 'stimulant', 'accessory-1');
+  equipItem(state, 'captain', 'bandages', 'accessory-2');
+  const { battle, actor, at, activate } = battleWith(state);
+  at('enemy-1', 3, 1);
+  actor.hp = 50;
+  actor.fatigue = actor.maxFatigue;
+  activate();
+  assert.equal(advanceBattle(state).ok, true);
+  assert.equal(battle.lastEvent.itemId, 'bandages');
+  assert.equal(actor.hp, 74);
+  assert.equal(actor.accessories[0], 'stimulant');
+  assert.equal(actor.accessories[1], null);
+  assert.equal(actor.ap, 0);
+  assert.deepEqual(validateSave(state), state);
+});
+
+test('Combat Bandaging keeps the turn after one heal and preserves its round limit through reload', () => {
+  const state = createGame(362);
+  state.party[0].level = 2;
+  state.party[0].perks = ['combat-bandaging'];
+  addItem(state, 'bandages');
+  addItem(state, 'bandages');
+  equipItem(state, 'captain', 'bandages', 'accessory-1');
+  equipItem(state, 'captain', 'bandages', 'accessory-2');
+  const { battle, actor, activate } = battleWith(state);
+  Object.assign(actor, { hp: 60, maxHp: 200 });
+  activate();
+  const ap = actor.ap;
+  advanceBattle(state);
+  assert.equal(battle.lastEvent.itemId, 'bandages');
+  assert.equal(actor.ap, ap);
+  assert.equal(battle.activeId, actor.id);
+  assert.equal(actor.freeHealRound, battle.round);
+  const restored = validateSave(JSON.parse(JSON.stringify(state)));
+  assert.equal(restored.battle.units.find(unit => unit.id === actor.id).freeHealRound, battle.round);
+  advanceBattle(restored);
+  const restoredActor = restored.battle.units.find(unit => unit.id === actor.id);
+  assert.equal(restored.battle.lastEvent.itemId, 'bandages');
+  assert.equal(restoredActor.ap, 0);
+  assert.notEqual(restored.battle.activeId, actor.id);
+  assert.deepEqual(restoredActor.accessories, [null, null]);
+});
+
+test('Combat Bandaging heals under pressure and still attacks on the next action', () => {
+  const state = createGame(365);
+  state.party[0].level = 2;
+  state.party[0].perks = ['combat-bandaging'];
+  addItem(state, 'bandages');
+  equipItem(state, 'captain', 'bandages', 'accessory-1');
+  const { battle, actor, at, activate } = battleWith(state);
+  at('enemy-1', 3, 1);
+  actor.hp = 50;
+  activate();
+  advanceBattle(state);
+  assert.equal(battle.lastEvent.type, 'use');
+  assert.equal(battle.activeId, actor.id);
+  advanceBattle(state);
+  assert.equal(battle.lastEvent.type, 'attack');
+  assert.equal(actor.ap, 0);
+  assert.equal(actor.accessories[0], null);
+  assert.deepEqual(validateSave(state), state);
+});
+
+test('Quick Hands gives one free set swap per round and its limit survives reload', () => {
+  const state = createGame(363);
+  state.party[0].level = 2;
+  state.party[0].perks = ['quick-hands'];
+  addItem(state, 'greatsword');
+  addItem(state, 'javelins');
+  equipItem(state, 'captain', 'greatsword');
+  equipItem(state, 'captain', 'javelins', 'reserve');
+  const { battle, actor, activate } = battleWith(state);
+  activate();
+  const ap = actor.ap;
+  advanceBattle(state);
+  assert.equal(battle.lastEvent.type, 'swap');
+  assert.equal(actor.equipment.weapon, 'javelins');
+  assert.equal(actor.ap, ap);
+  assert.equal(battle.activeId, actor.id);
+  const restored = validateSave(JSON.parse(JSON.stringify(state)));
+  restored.supplies.ammo = 0;
+  advanceBattle(restored);
+  const restoredActor = restored.battle.units.find(unit => unit.id === actor.id);
+  assert.equal(restored.battle.lastEvent.type, 'swap');
+  assert.equal(restoredActor.equipment.weapon, 'greatsword');
+  assert.equal(restoredActor.ap, 0);
+  assert.notEqual(restored.battle.activeId, actor.id);
+});
+
+test('Quick Hands covers pocket draw and stow, then continues the same turn', () => {
+  const state = createGame(364);
+  state.party[0].level = 2;
+  state.party[0].perks = ['quick-hands'];
+  addItem(state, 'hunting-bow');
+  addItem(state, 'qatal-dagger');
+  equipItem(state, 'captain', 'hunting-bow');
+  equipItem(state, 'captain', 'qatal-dagger', 'accessory-1');
+  const { battle, actor, at, activate } = battleWith(state);
+  at('captain', 0, 0);
+  at('guard', 0, 1);
+  at('enemy-1', 1, 0);
+  activate();
+  advanceBattle(state);
+  assert.equal(battle.lastEvent.type, 'swap');
+  assert.equal(actor.equipment.weapon, 'qatal-dagger');
+  assert.equal(battle.activeId, actor.id);
+  advanceBattle(state);
+  assert.notEqual(battle.lastEvent.type, 'swap');
+  at('enemy-1', 6, 0);
+  battle.round += 2;
+  activate();
+  advanceBattle(state);
+  assert.equal(battle.lastEvent.type, 'swap');
+  assert.equal(actor.equipment.weapon, 'hunting-bow');
+  assert.equal(actor.accessories[0], 'qatal-dagger');
+  assert.equal(battle.activeId, actor.id);
+  assert.deepEqual(validateSave(state), state);
+});
+
 test('victory recovers a casualty’s original set, reserve set, and drawn pocket weapon once', () => {
   const state = createGame(39);
   for (const id of ['hunting-bow', 'qatal-dagger', 'javelins']) addItem(state, id);
@@ -389,11 +512,15 @@ test('legacy saves migrate empty carried slots and malformed new gear is rejecte
     delete unit.pocketStowedReload;
     delete unit.pocketDrawnRound;
     delete unit.reserveReload;
+    delete unit.freeSwapRound;
+    delete unit.freeHealRound;
   }
   const loaded = validateSave(state);
   assert.deepEqual(loaded.party[0].reserveEquipment, { weapon: null, shield: null });
   assert.deepEqual(loaded.party[0].accessories, [null, null]);
   assert.deepEqual(loaded.battle.units[0].accessories, [null, null]);
+  assert.equal(loaded.battle.units[0].freeSwapRound, 0);
+  assert.equal(loaded.battle.units[0].freeHealRound, 0);
   assert.deepEqual(validateSave(loaded), loaded);
   const badReserve = structuredClone(loaded);
   badReserve.party[0].reserveEquipment = { weapon: 'greatsword', shield: 'buckler' };
