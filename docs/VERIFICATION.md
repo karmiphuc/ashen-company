@@ -1,4 +1,10 @@
-# Verification - version 0.38.0, 2026-10-01
+# Verification - version 0.39.0, 2026-10-02
+
+## v0.39.0 checks
+
+All 426 tests pass after rebuilding the offline cache. Flight tests cover successful and failed 50% rolls, one check per turn, save persistence, opportunity attacks without AP or ammo spending, interrupted flight, escape without kill XP or escaped gear salvage, malformed flight fields and instant/stepwise resolution parity. Dual-crossbow tests exercise identical and different items with Quick Hands and Crossbow Mastery, preserve both loading states across reload, and verify reload affects only the wielded weapon. Without enough AP, the AI reloads rather than paying for an unusable swap.
+
+The browser showed a Breaking enemy with the Fleeing indicator while paused. The animated forest battle completed in three rounds with all brothers surviving; no browser warnings or errors were recorded. Physical iPad Safari remains untested.
 
 ## v0.38.0 checks
 

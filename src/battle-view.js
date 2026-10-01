@@ -108,8 +108,9 @@ function shieldCondition(unit) {
   return max ? { current: unit.shieldDurability ?? max, max } : null;
 }
 
-function statusIconsHTML(unit) {
+function statusIconsHTML(unit, battle) {
   const statuses = [
+    unit.alive && unit.fleeRound === battle.round ? ['fleeing', 'Fleeing', '<path d="M1 7h10L8 4l1-1 5 5-5 5-1-1 3-3H1z"/>'] : null,
     unit.shieldWallActive ? ['shieldwall', 'Shield wall active', '<path d="M8 1 14 3v4.5c0 3.2-2.1 5.9-6 7.5-3.9-1.6-6-4.3-6-7.5V3z"/>'] : null,
     unit.spearwallActive ? ['spearwall', 'Spearwall active', '<path d="M2 14 11.3 4.7l.9.9L2.9 15zM11 2l3 3-1 1-3-3z"/>'] : null,
     unit.riposteActive ? ['riposte', 'Riposte active', '<path d="M2 3 3 2l11 11-1 1zm11-1 1 1L3 14l-1-1zM2 2l3 1-2 2zm9 9 3 0-1 3zm3-9-3 1 2 2zm-9 9-3 0 1 3z"/>'] : null,
@@ -223,7 +224,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     </div>
     <span class="battle-pawn">${portraitHTML(display, equipmentFor(unit), 64)}</span>
     <span class="battle-morale-flag morale-${morale.name.toLowerCase()}" title="${esc(moraleLabel)}" aria-label="${esc(moraleLabel)}">${morale.name[0]}</span>
-    ${statusIconsHTML(unit)}
+    ${statusIconsHTML(unit, battle)}
     ${battleKitHTML(unit)}
     <strong>${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))}/${maxAp} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
@@ -284,7 +285,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         ${terrainLegend(field)}
         <div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company' && !unit.ally).length} company fighters, ${units.filter(unit => unit.ally).length} allied fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
           <div class="battle-terrain">${tiles}</div>
-          <div class="battle-units">${units.map(unit => unitHTML(unit, battle, animateEvent, field, grid)).join('')}${projectileHTML(battle, animateEvent, field, grid)}</div>
+          <div class="battle-units">${units.filter(unit => !unit.escaped).map(unit => unitHTML(unit, battle, animateEvent, field, grid)).join('')}${projectileHTML(battle, animateEvent, field, grid)}</div>
         </div>
       </div>
       <aside class="battle-log" aria-label="Battle event log">

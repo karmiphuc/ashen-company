@@ -2286,7 +2286,7 @@ function finishBattlePhase(battle) {
   battle.activeId = null;
   battle.casualties = battle.units.filter(unit => unit.side === 'company' && !unit.ally && !unit.alive).map(unit => unit.id);
   if (companyAlive) {
-    const enemies = battle.units.filter(unit=>unit.side==='enemy');
+    const enemies = battle.units.filter(unit=>unit.side==='enemy' && !unit.escaped);
     battle.loot = victoryLoot(battle, enemies);
     for (const unit of battle.units.filter(entry => entry.side === 'company' && !entry.ally && entry.alive)) {
       battle.xp[unit.id] = (battle.xp[unit.id] ?? 0) + 30;
@@ -3098,6 +3098,52 @@ function consumeMovementCredit(battle, actor, from, to) {
   actor.movementCredit = Math.max(0, (actor.movementCredit ?? 0) - cost);
 }
 
+function fleeBattleEnemy(state, actor, enemies) {
+  const battle = state.battle;
+  const from = { q: actor.q, r: actor.r };
+  const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  const edgeDistance = point => Math.min(point.q, point.r, battle.field.columns - 1 - point.q, battle.field.rows - 1 - point.r);
+  const destinations = openNeighbors(battle, actor, occupied)
+    .map(point => ({ ...point, apCost: battleMoveApCost(battle, actor, actor, point),
+      distance: Math.min(...enemies.map(enemy => hexDistance(point, enemy))) }))
+    .filter(point => point.apCost <= actor.ap && point.distance >= Math.min(...enemies.map(enemy => hexDistance(actor, enemy))))
+    .sort((a, b) => edgeDistance(a) - edgeDistance(b) || b.distance - a.distance || a.apCost - b.apCost || a.q - b.q || a.r - b.r);
+  const point = destinations[0];
+  const exiting = edgeDistance(actor) === 0;
+  const reactions = [];
+  if (point || exiting) for (const enemy of enemies.filter(unit => hexDistance(actor, unit) === 1
+    && (exiting || hexDistance(point, unit) > 1) && !unit.stunnedTurns && unit.fatigue + 5 <= unit.maxFatigue)) {
+    const equipped = getItem(enemy.equipment.weapon);
+    const weapon = equipped && !equipped.ranged ? equipped : { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 };
+    const impact = attackTarget(state, enemy, actor, weapon, { reaction: true, name: 'Opportunity Strike' });
+    const event = battle.lastEvent;
+    reactions.push({ actorId: enemy.id, targetId: actor.id, type: event.type,
+      from: { q: enemy.q, r: enemy.r }, to: from, ...impact, skillName: 'Opportunity Strike' });
+    if (!actor.alive) break;
+  }
+  let message;
+  if (!actor.alive) message = `${actor.name} is cut down while fleeing.`;
+  else if (exiting) {
+    actor.escaped = true; actor.alive = false; actor.hp = 0;
+    clearWeaponStances(actor);
+    message = `${actor.name} flees the battlefield.`;
+  } else if (point) {
+    actor.ap -= point.apCost;
+    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, battleMovementCost(battle, actor, from, point)));
+    consumeMovementCredit(battle, actor, from, point);
+    actor.q = point.q; actor.r = point.r;
+    clearWeaponStances(actor);
+    const interception = spearwallReactionsOnMove(state, actor, from);
+    reactions.push(...interception.reactions);
+    message = interception.blocked ? `${actor.name} tries to flee but is stopped by Spearwall.` : `${actor.name} flees from the company.`;
+  } else { actor.ap = 0; message = `${actor.name} tries to flee but cannot find a way out.`; }
+  battle.lastEvent = makeBattleEvent(actor, null, actor.alive && point ? 'move' : 'hold', message,
+    getItem(actor.equipment.weapon), from, { skillName: 'Flee', ...(reactions.length ? { reactions } : {}) });
+  battleLog(battle, message);
+  if (!finishBattlePhase(battle) && (!actor.alive || actor.ap <= 0)) nextBattleTurn(battle);
+  return result(true, message);
+}
+
 function advanceBattleV2(state) {
   const battle = state.battle;
   const actor = battle.units.find(unit => unit.id === battle.activeId);
@@ -3119,9 +3165,26 @@ function advanceBattleV2(state) {
     actor.turnStartedRound = battle.round;
     if (battle.weaponSkillsVersion === 1) actor.stunProtected = false;
   }
+  if (battle.weaponSkillsVersion === 1 && actor.side === 'enemy' && actor.morale < 25) {
+    if (actor.fleeRollRound !== battle.round) {
+      actor.fleeRollRound = battle.round;
+      if (battleRoll(battle) < .5) actor.fleeRound = battle.round;
+    }
+    if (actor.fleeRound === battle.round) return fleeBattleEnemy(state, actor, enemies);
+  }
   if (useBattleAccessory(state, actor, enemies)) return result(true, battle.lastEvent.message);
   if (readyShieldWallSet(state, actor) || chooseBattleWeapon(state, actor, enemies)) return result(true, battle.lastEvent.message);
   const equipped = getItem(actor.equipment.weapon);
+  const reserve = getItem(actor.reserveEquipment.weapon);
+  const swapCost = hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== battle.round ? 0 : 4;
+  if (actor.side === 'company' && !actor.ally && isCrossbow(equipped) && actor.reload > 0
+    && isCrossbow(reserve) && actor.reserveReload === 0 && battleWeaponHasAmmo(state, actor, reserve, 'reserve')
+    && enemies.some(enemy => hexDistance(actor, enemy) >= 2 && hexDistance(actor, enemy) <= effectiveWeaponRange(actor, reserve))
+    && actor.ap >= swapCost + attackApCost(reserve, battle, actor)
+    && actor.fatigue + attackFatigueCost(actor, reserve) <= actor.maxFatigue) {
+    switchBattleSet(state, actor, `${actor.name} draws a loaded ${reserve.name} instead of reloading.`);
+    return result(true, battle.lastEvent.message);
+  }
   if (actor.reload > 0 && actor.ap >= 4) {
     actor.reload -= 1;
     actor.ap -= 4;
@@ -4000,6 +4063,10 @@ function validateBattle(input, party, worldState) {
       assert(unit[key] === undefined || weaponSkillsVersion === 1 && typeof unit[key] === 'boolean', `battle ${key}`);
     assert(unit.stunnedTurns === undefined || weaponSkillsVersion === 1 && validCount(unit.stunnedTurns) && unit.stunnedTurns <= 1, 'battle stun');
     assert(unit.pendingBerserkAp === undefined || weaponSkillsVersion === 1 && [0, 4].includes(unit.pendingBerserkAp), 'battle pending Berserk');
+    for (const key of ['fleeRollRound', 'fleeRound']) assert(unit[key] === undefined
+      || weaponSkillsVersion === 1 && unit.side === 'enemy' && validCount(unit[key]) && unit[key] >= 1 && unit[key] <= input.round, `battle ${key}`);
+    assert(unit.fleeRound === undefined || unit.fleeRollRound >= unit.fleeRound, 'battle flee roll');
+    assert(unit.escaped === undefined || weaponSkillsVersion === 1 && unit.side === 'enemy' && unit.escaped === true && !unit.alive && unit.hp === 0, 'battle escaped');
     if (weaponSkillsVersion === 1) assert((unit.stunnedTurns ?? 0) === 0 || unit.stunProtected === true, 'battle stun protection');
     if (unit.spearwallActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'spear', 'battle spearwall weapon');
     if (unit.riposteActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'sword', 'battle riposte weapon');
@@ -4018,6 +4085,9 @@ function validateBattle(input, party, worldState) {
       shieldDurability, maxShieldDurability, reserveShieldDurability, maxReserveShieldDurability, battleSetSwapped,
       throwingAmmo: { active: throwingAmmo.active, reserve: throwingAmmo.reserve },
       perks: perks.filter(id => PERK_BY_ID.has(id)), adaptation, berserkRound, frenzyUntilRound, turnStartedRound, freeSwapRound, freeHealRound,
+      ...(unit.fleeRollRound === undefined ? {} : { fleeRollRound: unit.fleeRollRound }),
+      ...(unit.fleeRound === undefined ? {} : { fleeRound: unit.fleeRound }),
+      ...(unit.escaped === undefined ? {} : { escaped: unit.escaped }),
       ...(rulesVersion === 2 ? { shieldWallActive: unit.shieldWallActive ?? false } : {}),
       ...(weaponSkillsVersion === 1 ? { spearwallActive: unit.spearwallActive ?? false, riposteActive: unit.riposteActive ?? false,
         stunnedTurns: unit.stunnedTurns ?? 0, stunProtected: unit.stunProtected ?? false,
@@ -4067,7 +4137,7 @@ function validateBattle(input, party, worldState) {
   if (event?.fallen !== undefined) assert(typeof event.fallen === 'boolean', 'battle event fallen');
   if (event?.weaponId !== undefined) assert(event.weaponId === null || getItem(event.weaponId)?.slot === 'weapon', 'battle event weapon');
   if (event?.itemId !== undefined) assert(getItem(event.itemId)?.slot === 'accessory', 'battle event item');
-  if (event?.skillName !== undefined) assert(['Reload', 'Stunned', ...Object.values(COMBAT_SKILLS).map(skill => skill.name)].includes(event.skillName), 'battle event skill');
+  if (event?.skillName !== undefined) assert(['Reload', 'Stunned', 'Flee', ...Object.values(COMBAT_SKILLS).map(skill => skill.name)].includes(event.skillName), 'battle event skill');
   if (event?.ranged !== undefined) assert(typeof event.ranged === 'boolean', 'battle event ranged');
   if (event?.projectile !== undefined) assert([null, 'arrow', 'bolt', 'javelin', 'axe', 'stone'].includes(event.projectile), 'battle event projectile');
   for (const key of ['from', 'to', 'moveFrom']) if (event?.[key] !== undefined) assert(event[key] === null || validHex(event[key], field), `battle event ${key}`);
@@ -4082,9 +4152,9 @@ function validateBattle(input, party, worldState) {
         && typeof impact.hit === 'boolean' && typeof impact.head === 'boolean' && typeof impact.fallen === 'boolean'), 'battle event area impacts');
   }
   if (event?.reactions !== undefined) {
-    assert(weaponSkillsVersion === 1 && Array.isArray(event.reactions) && event.reactions.length >= 1 && event.reactions.length <= 6
+    assert(weaponSkillsVersion === 1 && Array.isArray(event.reactions) && event.reactions.length >= 1 && event.reactions.length <= 12
       && event.reactions.every(reaction => recordObject(reaction) && ids.has(reaction.actorId) && ids.has(reaction.targetId)
-        && ['attack', 'miss'].includes(reaction.type) && ['Riposte', 'Spearwall'].includes(reaction.skillName)
+        && ['attack', 'miss'].includes(reaction.type) && ['Riposte', 'Spearwall', 'Opportunity Strike'].includes(reaction.skillName)
         && validHex(reaction.from, field) && validHex(reaction.to, field)
         && ['hpDamage', 'armorDamage', 'shieldDamage'].every(key => validCount(reaction[key]) && reaction[key] <= 1000)
         && typeof reaction.head === 'boolean' && typeof reaction.fallen === 'boolean'), 'battle event reactions');
