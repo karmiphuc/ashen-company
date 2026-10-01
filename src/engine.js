@@ -4339,7 +4339,8 @@ export function validateSave(input) {
   assert(Number.isFinite(input.hour) && input.hour >= 0 && input.hour < 24, 'hour');
   const tactic = input.tactic ?? 'offense';
   assert(TACTICS.includes(tactic), 'tactic');
-  const mountRewards = input.mountRewards ?? Object.fromEntries(getMountRewardDefinitions().map(reward => [reward.id, false]));
+  const mountRewards = input.mountRewards === undefined
+    ? Object.fromEntries(getMountRewardDefinitions().map(reward => [reward.id, false])) : input.mountRewards;
   const mountRewardIds = getMountRewardDefinitions().map(reward => reward.id);
   assert(recordObject(mountRewards) && Object.keys(mountRewards).length === mountRewardIds.length
     && mountRewardIds.every(id => typeof mountRewards[id] === 'boolean'), 'mount rewards');

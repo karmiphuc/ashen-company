@@ -47,6 +47,7 @@ test('rewards cannot be claimed early, remotely, or lost to a full stash; old sa
   const oldSave = createGame(45);
   delete oldSave.mountRewards;
   assert.equal(Object.hasOwn(validateSave(oldSave), 'mountRewards'), false);
+  assert.throws(() => validateSave({ ...oldSave, mountRewards: null }), /mount rewards/);
 });
 
 test('rewards reject active, resolved, and game-over states and direct raw-save claims initialize flags', () => {
