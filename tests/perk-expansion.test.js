@@ -4,6 +4,7 @@ import {
   ITEMS, PERKS, createGame, getCompanyStats,
   getCampSites, startBattle, advanceBattle, validateSave,
 } from '../src/engine.js';
+import { COMBAT_SKILLS } from '../src/combat-skills.js';
 import { hexDistance } from '../src/battle-terrain.js';
 
 const added = [
@@ -53,6 +54,13 @@ function compareAttack({ weapon, perk, distance = 1, armored = false, shield = t
   const plainActor = control.battle.units.find(unit => unit.id === armed.actor.id);
   if (!actorShield) { armed.actor.equipment.shield = null; plainActor.equipment.shield = null; }
   if (!targetPerk) plainActor.perks = [];
+  if (perk === 'dagger-training') {
+    // Compare ordinary armor-piercing attacks; Puncture already bypasses all armor.
+    for (const actor of [armed.actor, plainActor]) {
+      actor.fatigue = actor.maxFatigue - 11;
+      actor.turnStartedRound = armed.battle.round;
+    }
+  }
   advanceBattle(armed.state);
   advanceBattle(control);
   assert.equal(armed.battle.lastEvent.type, 'attack', perk);
@@ -367,9 +375,10 @@ test('each weapon mastery reduces attack fatigue once, including northern weapon
     advanceBattle(plain);
     assert.equal(mastered.battle.lastEvent.type, 'attack', weapon);
     const item = ITEMS.find(entry => entry.id === weapon);
-    const cost = item.fatigueCost ?? (item.ranged ? 9 : 11);
-    assert.equal(mastered.actor.fatigue, Math.ceil(cost * .75), weapon);
-    assert.equal(plain.battle.units.find(unit => unit.id === 'captain').fatigue, cost, weapon);
+    const fatigueFor = event => Object.values(COMBAT_SKILLS).find(skill => skill.name === event.skillName)?.fatigue
+      ?? item.fatigueCost ?? (item.ranged ? 9 : 11);
+    assert.equal(mastered.actor.fatigue, Math.ceil(fatigueFor(mastered.battle.lastEvent) * .75), weapon);
+    assert.equal(plain.battle.units.find(unit => unit.id === 'captain').fatigue, fatigueFor(plain.battle.lastEvent), weapon);
   }
 
   const overlapping = battleWith('longaxe', ['axe-training', 'polearm-training'], 2);

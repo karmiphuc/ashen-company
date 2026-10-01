@@ -108,6 +108,30 @@ function shieldCondition(unit) {
   return max ? { current: unit.shieldDurability ?? max, max } : null;
 }
 
+function statusIconsHTML(unit) {
+  const statuses = [
+    unit.shieldWallActive ? ['shieldwall', 'Shield wall active', '<path d="M8 1 14 3v4.5c0 3.2-2.1 5.9-6 7.5-3.9-1.6-6-4.3-6-7.5V3z"/>'] : null,
+    unit.spearwallActive ? ['spearwall', 'Spearwall active', '<path d="M2 14 11.3 4.7l.9.9L2.9 15zM11 2l3 3-1 1-3-3z"/>'] : null,
+    unit.riposteActive ? ['riposte', 'Riposte active', '<path d="M2 3 3 2l11 11-1 1zm11-1 1 1L3 14l-1-1zM2 2l3 1-2 2zm9 9 3 0-1 3zm3-9-3 1 2 2zm-9 9-3 0 1 3z"/>'] : null,
+    number(unit.stunnedTurns) > 0 ? ['stunned', 'Stunned', '<path d="m8 1 1.2 4.3 3.8-2.3-1.7 4 4.7.2-4.1 1.9 3.1 3.5-4.5-1.2-.5 4.6-2-4.2-3.4 3 .9-4.6-4.6-.8 4-2.1-3.3-3.3 4.6 1z"/>'] : null,
+    unit.stunProtected && number(unit.stunnedTurns) === 0 ? ['stun-protected', 'Stun protected', '<path d="M8 1 14 3v4.5c0 3.2-2.1 5.9-6 7.5-3.9-1.6-6-4.3-6-7.5V3zM7 10l-2-2 1-1 1 1 3-3 1 1z"/>'] : null,
+  ].filter(Boolean);
+  return statuses.map(([id, label, path], index) => `<span class="battle-shieldwall battle-status-icon battle-status-${id}" style="left:${index * 18}px" role="img" title="${label}" aria-label="${label}"><svg viewBox="0 0 16 16" aria-hidden="true">${path}</svg></span>`).join('');
+}
+
+function reactionsFor(event) {
+  return Array.isArray(event?.reactions) ? event.reactions : [];
+}
+
+function impactsFor(event, unitId) {
+  const affected = Array.isArray(event?.affectedTargets) ? event.affectedTargets : [];
+  const impacts = affected.filter(entry => (entry?.id ?? entry?.targetId) === unitId);
+  if (event?.targetId === unitId && ['attack', 'hit', 'fall', 'miss'].includes(event.type)
+    && !affected.some(entry => (entry?.id ?? entry?.targetId) === unitId)) impacts.push(event);
+  for (const reaction of reactionsFor(event)) if (reaction?.targetId === unitId) impacts.push(reaction);
+  return impacts;
+}
+
 function battleKitHTML(unit) {
   const reserve = [unit?.reserveEquipment?.weapon,unit?.reserveEquipment?.shield].filter(Boolean).length;
   const accessories = Array.isArray(unit?.accessories) ? unit.accessories.filter(Boolean).length : 0;
@@ -127,29 +151,53 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const { x, y } = coordinates(unit, field, grid);
   const alive = unit.alive !== false && number(unit.hp, 1) > 0;
   const event = animateEvent ? battle.lastEvent || {} : {};
+  const reactions = reactionsFor(event);
+  const primaryActor = event.actorId === unit.id;
+  const reaction = reactions.find(entry => entry?.actorId === unit.id);
+  const reactionTarget = reactions.some(entry => entry?.targetId === unit.id);
+  const primaryTarget = event.targetId === unit.id;
+  const impacts = impactsFor(event, unit.id);
+  const hasImpact = impacts.length > 0;
+  const primaryMiss = primaryTarget && event.type === 'miss';
+  const hasHit = impacts.some(impact => impact.hit !== false && impact.type !== 'miss');
+  const hasMiss = primaryMiss || impacts.some(impact => impact.hit === false || impact.type === 'miss');
+  const shieldDamage = impacts.reduce((total, impact) => total + number(impact.shieldDamage), 0);
   const attacking = ['attack', 'hit', 'fall', 'miss'].includes(event.type);
-  const actor = event.actorId === unit.id;
-  const target = event.targetId === unit.id;
   const origin = coordinates(event.from || unit, field, grid);
-  const moveOrigin = coordinates(target && event.pushedFrom ? event.pushedFrom : actor && event.moveFrom ? event.moveFrom : event.from || unit, field, grid);
+  const moveOrigin = coordinates(primaryTarget && event.pushedFrom ? event.pushedFrom : primaryActor && event.moveFrom ? event.moveFrom : event.from || unit, field, grid);
   const destination = coordinates(event.to || unit, field, grid);
-  const dx = destination.x - origin.x, dy = destination.y - origin.y;
+  const strikeOrigin = reaction ? coordinates(reaction.from || unit, field, grid) : origin;
+  const reactionTargetUnit = reaction ? battle.units.find(entry => entry.id === reaction.targetId) : null;
+  const strikeDestination = reaction ? coordinates(reaction.to || reactionTargetUnit || unit, field, grid) : destination;
+  const dx = strikeDestination.x - strikeOrigin.x, dy = strikeDestination.y - strikeOrigin.y;
   const length = Math.max(1, Math.hypot(dx, dy));
   const weapon = equipmentFor(unit).weapon;
-  const motion = event.ranged ? 'shoot' : ['spear', 'billhook', 'dagger'].includes(weapon?.visual) ? 'thrust' : 'swing';
+  const primaryWeapon = primaryActor ? getItem(event.weaponId) || weapon : weapon;
+  const motionFor = (item, ranged) => ranged || item?.ranged ? 'shoot' : ['spear', 'billhook', 'dagger'].includes(item?.visual) ? 'thrust' : 'swing';
+  const primaryMotion = primaryActor && attacking ? motionFor(primaryWeapon, event.ranged) : null;
+  const reactionMotion = reaction ? motionFor(weapon, reaction.ranged) : null;
+  const motionClasses = [...new Set([primaryMotion, reactionMotion].filter(Boolean).map(motion => `action-${motion}`))];
+  const hpDamage = impacts.reduce((total, impact) => total + number(impact.hpDamage), 0);
+  const bodyDamage = impacts.reduce((total, impact) => total + (impact.head ? 0 : number(impact.armorDamage)), 0);
+  const headDamage = impacts.reduce((total, impact) => total + (impact.head ? number(impact.armorDamage) : 0), 0);
+  const impactFallen = impacts.some(impact => impact.fallen) || primaryTarget && Boolean(event.fallen);
+  const attacker = battle.units.find(entry => entry.id === event.actorId);
+  const friendlyFire = event.friendlyFire === true && attacker && attacker.id !== unit.id && attacker.side === unit.side && hasHit;
   const classes = [
     'battle-unit',
     unit.side === 'company' ? 'battle-unit-company' : 'battle-unit-enemy',
     unit.ally ? 'battle-unit-ally' : '',
     alive ? 'battle-unit-alive' : 'battle-unit-down',
-    (animateEvent && event.actorId ? event.actorId : battle.activeId) === unit.id ? 'is-active' : '',
-    event.actorId === unit.id ? 'is-acting' : '',
-    event.targetId === unit.id ? 'is-target' : '',
-    actor && attacking ? `action-${motion}` : '',
-    actor && (event.type === 'move' || event.moveFrom) || target && event.pushedFrom ? 'action-move' : '',
-    actor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? 'action-hold' : '',
-    target && attacking && event.type !== 'miss' ? 'action-hit' : '',
-    target && event.fallen ? 'action-fall' : '',
+    (animateEvent && event.actorId ? event.actorId : battle.activeId) === unit.id || reaction ? 'is-active' : '',
+    primaryActor || reaction ? 'is-acting' : '',
+    reaction ? 'is-reacting' : '',
+    primaryTarget || hasImpact || reactionTarget ? 'is-target' : '',
+    ...motionClasses,
+    primaryActor && (event.type === 'move' || event.moveFrom) || primaryTarget && event.pushedFrom ? 'action-move' : '',
+    primaryActor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? 'action-hold' : '',
+    hasHit || shieldDamage > 0 ? 'action-hit' : '',
+    impactFallen ? 'action-fall' : '',
+    friendlyFire ? 'is-friendly-fire' : '',
   ].filter(Boolean).join(' ');
   const health = percent(unit.hp, unit.maxHp ?? 100);
   const bodyArmor = number(unit.bodyArmor) + number(unit.attachmentArmor);
@@ -157,29 +205,30 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const body = percent(bodyArmor, Math.max(maxBodyArmor, 1));
   const head = percent(unit.headArmor, unit.maxHeadArmor ?? Math.max(number(unit.headArmor), 1));
   const shield = shieldCondition(unit);
+  const beforeShield = shield && hasImpact ? percent(shield.current + shieldDamage, shield.max) : shield ? percent(shield.current, shield.max) : 0;
   const maxAp = battle.rulesVersion === 2 ? 9 : 2;
-  const beforeHealth = target && attacking ? percent(number(unit.hp) + number(event.hpDamage), unit.maxHp ?? 100) : health;
-  const beforeBody = target && attacking && !event.head ? percent(bodyArmor + number(event.armorDamage), maxBodyArmor || 1) : body;
-  const beforeHead = target && attacking && event.head ? percent(number(unit.headArmor) + number(event.armorDamage), unit.maxHeadArmor || 1) : head;
+  const beforeHealth = hasImpact ? percent(number(unit.hp) + hpDamage, unit.maxHp ?? 100) : health;
+  const beforeBody = hasImpact ? percent(bodyArmor + bodyDamage, maxBodyArmor || 1) : body;
+  const beforeHead = hasImpact ? percent(number(unit.headArmor) + headDamage, unit.maxHeadArmor || 1) : head;
   const display = { seed: unit.seed ?? unit.id ?? 0, name: unit.name ?? 'Unknown' };
   const morale = getMoraleEffects(unit);
   const moraleLabel = `${morale.name} morale: ${Math.round(number(unit.morale, 50))}/100; resolve ${Math.round(number(unit.resolve, 50))}`;
 
-  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${unit.ally?'Allied fighter, ':''}${esc(unit.name)}: ${Math.round(number(unit.hp))} health">
+  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${unit.ally?'Allied fighter, ':''}${esc(unit.name)}: ${Math.round(number(unit.hp))} health${friendlyFire?', friendly fire impact':''}">
     <div class="battle-unit-bars" aria-hidden="true">
       <span class="battle-unit-bar battle-unit-head"><i style="width:${head}%;--before-width:${beforeHead}%;--after-width:${head}%"></i></span>
       <span class="battle-unit-bar battle-unit-body"><i style="width:${body}%;--before-width:${beforeBody}%;--after-width:${body}%"></i></span>
-      ${shield ? `<span class="battle-unit-bar battle-unit-shield" title="Shield: ${shield.current} / ${shield.max} durability${shield.current===0?' · Broken':''}"><i style="width:${percent(shield.current,shield.max)}%;background:#a98b55"></i></span>` : ''}
+      ${shield ? `<span class="battle-unit-bar battle-unit-shield" title="Shield: ${shield.current} / ${shield.max} durability${shield.current===0?' · Broken':''}"><i style="width:${percent(shield.current,shield.max)}%;--before-width:${beforeShield}%;--after-width:${percent(shield.current,shield.max)}%;background:#a98b55"></i></span>` : ''}
       <span class="battle-unit-bar battle-unit-health"><i style="width:${health}%;--before-width:${beforeHealth}%;--after-width:${health}%"></i></span>
     </div>
     <span class="battle-pawn">${portraitHTML(display, equipmentFor(unit), 64)}</span>
     <span class="battle-morale-flag morale-${morale.name.toLowerCase()}" title="${esc(moraleLabel)}" aria-label="${esc(moraleLabel)}">${morale.name[0]}</span>
-    ${unit.shieldWallActive ? '<span class="battle-shieldwall" title="Shield wall active" aria-label="Shield wall active"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 14 3v4.5c0 3.2-2.1 5.9-6 7.5-3.9-1.6-6-4.3-6-7.5V3z"/></svg></span>' : ''}
+    ${statusIconsHTML(unit)}
     ${battleKitHTML(unit)}
     <strong>${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))}/${maxAp} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
-    ${target && attacking ? `<span class="battle-impact" aria-hidden="true">${event.type === 'miss' ? 'Miss' : `${event.hpDamage || 0}${event.armorDamage ? ` / ${event.armorDamage}` : ''}`}</span>` : ''}
-    ${actor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? `<span class="battle-order">${event.type === 'hold' ? 'Hold' : event.type === 'swap' ? 'Swap set' : event.type === 'use' ? 'Use item' : event.message?.includes(' reloads ') ? 'Reload' : 'Recover'}</span>` : ''}
+    ${hasImpact || primaryMiss ? `<span class="battle-impact" aria-hidden="true">${hasHit ? `${friendlyFire ? 'Friendly fire · ' : ''}${hpDamage}${bodyDamage + headDamage ? ` / ${bodyDamage + headDamage}` : ''}${shieldDamage ? ` · Shield -${shieldDamage}` : ''}${hasMiss ? ' · Miss' : ''}` : shieldDamage ? `Deflected · Shield -${shieldDamage}` : 'Miss'}</span>` : ''}
+    ${reaction ? `<span class="battle-order">${esc(reaction.skillName || String(reaction.type || 'Reaction').replace(/^./, letter => letter.toUpperCase()))}</span>` : primaryActor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? `<span class="battle-order">${event.type === 'hold' ? 'Hold' : event.type === 'swap' ? 'Swap set' : event.type === 'use' ? 'Use item' : event.message?.includes(' reloads ') ? 'Reload' : 'Recover'}</span>` : ''}
   </article>`;
 }
 

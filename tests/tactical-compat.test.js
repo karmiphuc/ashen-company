@@ -45,9 +45,10 @@ test('new battles survive a save reload after every action and match instant res
 test('legacy active battle keeps its two-AP turns and battlefield through reload', () => {
   const state = start(9053);
   delete state.battle.rulesVersion;
+  delete state.battle.weaponSkillsVersion;
   for (const unit of state.battle.units) {
     unit.ap = 2;
-    for (const key of ['shieldWallActive', 'tacticalRole', 'skillPreference', 'aiTargetId', 'formationMovedRound', 'movementCredit']) delete unit[key];
+    for (const key of ['shieldWallActive', 'tacticalRole', 'skillPreference', 'aiTargetId', 'formationMovedRound', 'movementCredit', 'spearwallActive', 'riposteActive', 'stunnedTurns', 'stunProtected', 'pendingBerserkAp']) delete unit[key];
   }
   const oldField = structuredClone(state.battle.field);
   const restored = validateSave(structuredClone(state));

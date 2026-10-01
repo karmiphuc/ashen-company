@@ -19,6 +19,7 @@ const CORE = [
   './src/item-details.js',
   './src/engine.js',
   './src/combat-skills.js',
+  './src/area-safety.js',
   './src/tactical-ai.js',
   './src/additional-items.js',
   './src/mounts.js',

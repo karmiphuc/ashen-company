@@ -183,3 +183,91 @@ test('dense trees show a raised obstacle and explicitly describe impassable terr
   assert.match(html,/class="battle-height-label"[^>]*>\+2/);
   assert.doesNotMatch(html,/NaN|undefined/);
 });
+
+test('spearwall, riposte, and stun statuses remain visible accessibly while paused', () => {
+  const statusBattle = {
+    ...battle,
+    activeId:'captain',
+    units:[{...units[0],shieldWallActive:true,spearwallActive:true,riposteActive:true,stunnedTurns:1,stunProtected:true}],
+  };
+  const html=battleHTML(statusBattle,0,false);
+  for (const [id,label] of [['shieldwall','Shield wall active'],['spearwall','Spearwall active'],['riposte','Riposte active'],['stunned','Stunned']]) {
+    assert.match(html,new RegExp(`battle-status-icon battle-status-${id}[^>]*aria-label="${label}"`));
+  }
+  assert.doesNotMatch(html,/action-(?:swing|thrust|shoot|hit)|battle-projectile/);
+  assert.match(battleHTML(statusBattle,1,true),/battle-status-spearwall/);
+  const protectedBattle={...statusBattle,units:[{...statusBattle.units[0],stunnedTurns:0,stunProtected:true}]};
+  assert.match(battleHTML(protectedBattle,0,false),/battle-status-stun-protected[^>]*aria-label="Stun protected"/);
+});
+
+test('area impacts animate every affected unit and identify friendly fire without hiding the skill action', () => {
+  const areaBattle = {
+    ...battle,
+    activeId:'captain',
+    units:[
+      {...units[0],equipment:{...units[0].equipment,weapon:'arming-sword'}},
+      {...units[1],hp:75,bodyArmor:15,maxBodyArmor:50},
+      {id:'ally-1',name:'Guard',side:'company',ally:true,q:2,r:3,hp:75,maxHp:80,equipment:{weapon:'arming-sword'}},
+    ],
+    lastEvent:{actorId:'captain',targetId:'enemy',type:'attack',skillName:'Swing',weaponId:'arming-sword',ranged:false,
+      from:{q:2,r:2},to:{q:7,r:2},hpDamage:25,armorDamage:10,head:false,fallen:false,friendlyFire:true,
+      affectedTargets:[
+        {id:'enemy',hit:true,hpDamage:25,armorDamage:10,head:false,fallen:false},
+        {id:'ally-1',hit:true,hpDamage:5,armorDamage:0,head:false,fallen:false},
+      ]},
+  };
+  const html=battleHTML(areaBattle,1,true);
+  const article=id=>(html.match(/<article\b[^>]*>/g)||[]).find(tag=>tag.includes(`data-unit-id="${id}"`));
+  assert.match(article('captain'),/is-acting[^>]*action-swing|action-swing[^>]*is-acting/);
+  assert.match(article('enemy'),/is-target[^>]*action-hit|action-hit[^>]*is-target/);
+  assert.match(article('ally-1'),/is-friendly-fire/);
+  assert.match(html,/>25 \/ 10<\/span>/);
+  assert.match(html,/>Friendly fire · 5<\/span>/);
+  assert.match(article('ally-1'),/friendly fire impact/);
+  assert.match(html,/Skill used: Swing/);
+});
+
+test('area misses render as deflections and animate shield wear without false health damage', () => {
+  const blocked = {
+    ...battle,
+    units:[
+      {...units[0],equipment:{...units[0].equipment,weapon:'arming-sword'}},
+      {...units[1],hp:70,maxHp:100,equipment:{weapon:'wood-axe',shield:'round-shield'},shieldDurability:30,maxShieldDurability:48},
+    ],
+    lastEvent:{actorId:'captain',targetId:'enemy',type:'attack',weaponId:'arming-sword',ranged:false,
+      from:{q:2,r:2},to:{q:7,r:2},hpDamage:0,armorDamage:0,shieldDamage:18,head:false,fallen:false,
+      affectedTargets:[{id:'enemy',hit:false,hpDamage:0,armorDamage:0,shieldDamage:18,head:false,fallen:false}]},
+  };
+  const html=battleHTML(blocked,1,true);
+  const enemy=(html.match(/<article\b[^>]*>[\s\S]*?<\/article>/g)||[]).find(tag=>tag.includes('data-unit-id="enemy"'));
+  assert.match(enemy,/action-hit/);
+  assert.match(html,/>Deflected · Shield -18<\/span>/);
+  assert.match(html,/width:63%;--before-width:100%;--after-width:63%;background:#a98b55/);
+  assert.match(enemy,/battle-unit-health"><i style="width:70%;--before-width:70%;--after-width:70%/);
+  assert.doesNotMatch(enemy,/is-friendly-fire/);
+});
+
+test('a riposte reaction animates beside the initiating miss and damages its own target', () => {
+  const reactionBattle = {
+    ...battle,
+    activeId:'enemy',
+    units:[
+      {...units[0],equipment:{...units[0].equipment,weapon:'arming-sword'}},
+      {...units[1],hp:54,maxHp:70,equipment:{weapon:'wood-axe'}},
+    ],
+    lastEvent:{actorId:'enemy',targetId:'captain',type:'miss',weaponId:'wood-axe',ranged:false,
+      from:{q:7,r:2},to:{q:2,r:2},message:'Raider misses Mara; Mara ripostes.',reactions:[
+        {actorId:'captain',targetId:'enemy',type:'riposte',skillName:'Riposte',from:{q:2,r:2},to:{q:7,r:2},hpDamage:16,armorDamage:4,shieldDamage:0,head:false,fallen:false},
+      ]},
+  };
+  const html=battleHTML(reactionBattle,3,true);
+  const article=id=>(html.match(/<article\b[^>]*>/g)||[]).find(tag=>tag.includes(`data-unit-id="${id}"`));
+  assert.match(article('enemy'),/is-acting[^>]*action-swing|action-swing[^>]*is-acting/);
+  assert.match(article('enemy'),/action-hit/);
+  assert.match(article('captain'),/is-reacting/);
+  assert.match(article('captain'),/--strike-x:13\.00px/);
+  assert.match(html,/>Miss<\/span>/);
+  assert.match(html,/>16 \/ 4<\/span>/);
+  assert.match(html,/>Riposte<\/span>/);
+  assert.match(html,/--action-time:0\.275s/);
+});

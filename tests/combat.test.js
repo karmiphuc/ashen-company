@@ -102,6 +102,9 @@ test('casualties leave the roster, their gear is recovered on victory, and defea
   const fallenGuard = state.battle.units.find(unit => unit.id === 'guard');
   fallenGuard.hp = 0;
   fallenGuard.alive = false;
+  // Isolate casualty cleanup from the encounter's changing tactical balance.
+  for (const unit of state.battle.units.filter(unit => unit.side === 'company' && unit.alive)) unit.meleeSkill = unit.rangedSkill = 200;
+  for (const unit of state.battle.units.filter(unit => unit.side === 'enemy')) unit.hp = 1;
   resolveBattle(state);
   assert.equal(state.battle.status, 'victory');
   assert.ok(state.battle.casualties.includes('guard'));

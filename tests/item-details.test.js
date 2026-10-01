@@ -2,9 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ITEMS, getItem, createFamedItemId } from '../src/engine.js';
 import { getItemDetails } from '../src/item-details.js';
+import { equipmentSkills, weaponSkillFamily } from '../src/combat-skills.js';
 
 const item = id => ITEMS.find(entry => entry.id === id);
 const value = (details, label) => details.stats.find(stat => stat.label === label)?.value;
+
+test('every weapon including famed copies exposes its family signatures and correct AP costs', () => {
+  for (const base of ITEMS.filter(entry => entry.slot === 'weapon')) {
+    assert.ok(weaponSkillFamily(base), `${base.id} needs a weapon family`);
+    const skills = equipmentSkills(base);
+    assert.ok(skills.length, `${base.id} needs a signature`);
+    for (const weapon of [base, getItem(createFamedItemId(base.id, 17))]) {
+      assert.deepEqual(equipmentSkills(weapon), skills);
+      const details = getItemDetails(weapon);
+      for (const skill of skills) {
+        assert.ok(details.stats.some(stat => stat.label === skill.name && stat.value.includes(`${skill.ap} AP`)), `${weapon.id} describes ${skill.name}`);
+      }
+    }
+  }
+});
 
 test('every catalog item has useful details without changing the item', () => {
   assert.equal(ITEMS.length, 160);

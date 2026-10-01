@@ -1,6 +1,14 @@
-# Verification - version 0.25.0, 2026-09-30
+# Verification - version 0.37.0, 2026-10-01
 
-## v0.25.0 checks
+## v0.37.0 checks
+
+All 416 automated tests pass after rebuilding the offline cache, and the final diff passes whitespace checks. The delegated review found issues with target priorities, Defense bracing, reaction Berserk, redundant Riposte and shield bypass; each was corrected and covered by a regression. The reviewer hit its usage limit before issuing a final verdict; the final full test run and source checks were completed by the primary agent.
+
+Weapon-family tests cover AP and mastery fatigue, every catalog family and famed inheritance, armor/shield effects, stun protection, stance expiry, blocked and successful interceptions, nested counters, area geometry, friendly-fire restrictions and target priorities. Compatibility tests load a synthetic save produced by the released v0.36 engine, compare its complete resolved result against that previous engine, and compare instant resolution with saving after every action. Existing two-AP and earlier nine-AP battles retain their rules.
+
+Browser verification showed paused Spearwall, Riposte and stun badges, and Greatsword details with Split at 6 AP/25 fatigue and Swing at 6 AP/30 fatigue. A company equipped with sword, spear and greatsword completed an animated forest battle in three rounds with all fighters surviving. The exercised browser flows recorded no warnings or JavaScript errors. Automated cache verification covers the new area-safety module; physical iPad Safari and airplane-mode retention remain untested.
+
+## Historical v0.25.0 checks
 
 The full automated suite passes 252 tests after regenerating the offline cache. Movement checks cover impassable terrain, Pathfinder, formation detours, clear twelve-enemy deployment and save validation. The 100-seed starter samples each produce 100 victories: Road Thieves and Hungry Deserters keep all brothers alive in all samples, while Quarry Camp keeps all alive in 94. Its full-roster test floor is now 90% to allow the casualty variation introduced by obstacles, while retaining the 100% victory requirement.
 

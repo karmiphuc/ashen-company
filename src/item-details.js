@@ -1,5 +1,5 @@
 import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
-import { equipmentSkills } from './combat-skills.js';
+import { equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 
 const ROLES = {
   'patched-coat': 'Very light body cover for a new recruit; its 20 armor wears out quickly.',
@@ -48,7 +48,7 @@ export function getItemDetails(item, condition) {
       { label: 'Damage through armor', value: `${Math.round((item.armorPiercing ?? .30) * 100)}% of base hit` },
       { label: 'Reach', value: `${item.range ?? 1} ${item.range === 1 || item.range === undefined ? 'hex' : 'hexes'}` },
       { label: 'Attack skill', value: ranged ? 'Ranged' : 'Melee' },
-      { label: 'Attack AP', value: `${item.reloadTurns ? 3 : !ranged && (item.twoHanded || (item.range ?? 1) > 1) ? 6 : 4} (new battles)` },
+      { label: 'Attack AP', value: `${['dagger', 'qatal'].includes(weaponSkillFamily(item)) || item.reloadTurns ? 3 : !ranged && (item.twoHanded || (item.range ?? 1) > 1) ? 6 : 4} (new battles)` },
       { label: 'Attack fatigue', value: String(item.fatigueCost ?? (ranged ? 9 : 11)) },
       { label: 'Hands', value: item.twoHanded ? 'Two; shield stowed' : 'One; shield allowed' },
     );
@@ -74,7 +74,8 @@ export function getItemDetails(item, condition) {
     }
     notes.push('Hit modifier changes hit chance in percentage points before other bonuses and penalties.');
     notes.push('Remaining armor reduces direct health damage. Damage that breaks through armor can add more health damage.');
-    notes.push('For every weapon, 22% of landed hits strike the head. A head hit adds 10% armor damage and 25% health damage; this weapon has no extra head-hit bonus.');
+    notes.push('Ordinary attacks: 22% of landed hits strike the head. A head hit adds 10% armor damage and 25% health damage. Body-only and head-targeting skills override this chance.');
+    notes.push('Signature skills apply to newly started battles. Existing active battles finish with the rules they started under. The AI chooses affordable skills using the personal preference and company tactic.');
   } else if (item.slot === 'shield') {
     const maximum = shieldMaximum(item.id);
     const current = Number.isFinite(condition) ? Math.max(0, Math.min(maximum, Math.floor(condition))) : maximum;

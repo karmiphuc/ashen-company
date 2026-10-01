@@ -276,7 +276,9 @@ test('weapon masteries cover every bow and crossbow visual, including famed copi
       mastered.battle.rng = 0;
       advanceBattle(mastered.state);
       assert.equal(mastered.battle.lastEvent.type, 'attack', `${weaponId} should attack at mastery range`);
-      assert.equal(mastered.captain.fatigue, Math.ceil((weapon.fatigueCost ?? 9) * .75));
+      const skillFatigue = mastered.battle.lastEvent.skillName === 'Piercing Bolt' ? 16
+        : mastered.battle.lastEvent.skillName === 'Aimed Shot' ? 15 : weapon.fatigueCost ?? 9;
+      assert.equal(mastered.captain.fatigue, Math.ceil(skillFatigue * .75), `${weaponId} mastery discounts the selected shot`);
     }
   }
 });
@@ -374,12 +376,14 @@ test('new battle saves accept the Berserk AP ceiling and reject larger forged va
 test('Berserk keeps the 2 AP effect in legacy active battles', () => {
   const fight = battleWithCaptain(['berserk']);
   fight.battle.rulesVersion = 1;
+  delete fight.battle.weaponSkillsVersion;
   for (const unit of fight.battle.units) {
     unit.ap = 2;
     delete unit.shieldWallActive;
     delete unit.aiTargetId;
     delete unit.formationMovedRound;
     delete unit.movementCredit;
+    for (const key of ['spearwallActive', 'riposteActive', 'stunnedTurns', 'stunProtected', 'pendingBerserkAp']) delete unit[key];
   }
   Object.assign(fight.captain, { meleeSkill: 200 });
   Object.assign(fight.target, { hp: 1, maxHp: 100 });

@@ -1,12 +1,12 @@
 # Weapon skills: core families first
 
-**Status: Partially implemented — bow/shield foundation in v0.35; other families remain planned**
+**Status: Implemented in v0.37 — core families and additional family signatures**
 
 Date: 2026-09-28
 
-Implementation update: 2026-10-01. Version 0.35 adds 9 AP turns to new battles, personal roles/preferences, bow Quick/Aimed Shots, Shieldwall and Knock Back. Existing active battles retain their prior rules. Repairable shields were already implemented in v0.33. The original design below remains the roadmap for other weapon families, reactions and restricted area attacks; see [current tactical rules](TACTICAL-AI.md).
+Implementation update: 2026-10-01. Version 0.37 completes the core families, reactions, stuns and restricted area attacks, and adds signatures for the remaining equipment families. Repairable shields were implemented in v0.33. Existing active battles retain their prior rules. This document preserves the agreed design; implementation details and additional family skills are recorded in [current tactical rules](TACTICAL-AI.md).
 
-This document records the agreed design and remaining future work. The full core scope covers spears, swords, maces, daggers, bows, and shields; v0.35 implements bows and shields first. The table includes planned skills as well as that implemented subset.
+This document records the original agreed design. The full core scope covers spears, swords, maces, daggers, bows, and shields. The table is now implemented; further item-specific tuning remains future work.
 
 ## Summary
 
@@ -31,8 +31,8 @@ Weapon tiers share their family's skills. Better and famed weapons apply their e
 - Open-ground movement costs 2 AP; rough terrain and uphill movement retain their additional costs and Pathfinder reductions.
 - Normal attacks retain existing weapon fatigue costs. Recover costs 9 AP and removes 22 fatigue; its perk retains stronger recovery. Passive recovery becomes 15 fatigue per turn.
 - Weapon-set and pocket-weapon swaps cost 4 AP; consumables cost 4 AP. Crossbows use 3 AP to shoot and 4 AP to reload.
-- Other families retain their basic attack: 4 AP for one-handed/throwing weapons, 6 AP for two-handed/reach weapons. Signature skills follow later.
-- Berserk grants **+4 AP once per round in new battles**; existing active battles retain +2 AP. The bonus is spent normally rather than granting a free attack.
+- Other families retain their basic attack and gain family signatures in v0.37; see the current tactical rules.
+- Berserk grants **+4 AP once per round in nine-AP battles**; legacy two-AP active battles retain +2 AP. The bonus is spent normally rather than granting a free attack.
 
 ## Automatic decisions and friendly fire
 
@@ -60,7 +60,7 @@ Preserve archer spacing and sensible weapon swapping. Equipment details show ski
 - AI evaluation must not consume random rolls or inspect future rolls. Kill probabilities and allied damage bounds use visible combat state and the same damage rules as execution.
 - Stances expire at the owner's next turn or when required equipment is swapped. Reactions cannot trigger further reactions and cost 5 fatigue each.
 - Stun skips the target's next turn; it cannot be reapplied until that target subsequently takes a normal turn. Knock Back requires a free destination with at most one elevation difference and cancels stances when it moves the target.
-- Save preferences, statuses, remaining AP, and weapon loading state. Existing brothers default to Balanced. The implemented compatibility policy keeps existing active battles on their original 2 AP rules, preserving positions, health, equipment, and progress. New battles use 9 AP, with Berserk adding 4 AP once per round; old active battles keep its 2 AP effect.
+- Save preferences, statuses, remaining AP, and weapon loading state. Existing brothers default to Balanced. The implemented compatibility policy keeps existing active battles on their original rules (2 AP or earlier 9 AP), preserving positions, health, equipment, and progress. New battles use 9 AP, with Berserk adding 4 AP once per round; legacy two-AP battles keep its 2 AP effect.
 - **Repairable shields are implemented in v0.33:** broken shields stay owned and can be repaired with tools or at a Smithy. Shield skills preserve that durability system.
 - No manual targeting, new injuries, new weapon items, or permanent shield destruction in this release.
 
@@ -73,4 +73,4 @@ Preserve archer spacing and sensible weapon swapping. Equipment details show ski
 - Test old saves and reloads between actions, including statuses and unloaded crossbows. Animated and instant resolution must produce identical outcomes.
 - When this feature is implemented, check tablet controls and offline battle/save/reload, run the regression suite, then publish the versioned update and refreshed offline cache to the existing GitHub Pages game.
 
-This roadmap does not imply that the remaining skills, reactions or area attacks are implemented.
+The core scope is implemented. Manual targeting and further item-specific variants remain outside this release.

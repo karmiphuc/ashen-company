@@ -31,7 +31,7 @@ Use **Battle formation** to arrange 12 front, 12 middle, and 12 rear positions o
 
 Two additional battle orders are available before or during combat. **Advance in Formation** moves the company in coordinated one-hex steps, waiting for the current step to finish before starting another and attacking without individual pursuit. **Shield Wall** places shielded melee fighters and throwing skirmishers ahead of archers and unshielded two-handers. During battle, fighters move into their ranks normally; the order does not teleport them or overwrite the saved company formation. Bowmen with a backup shield remain archers.
 
-Each brother has a combat role and a Balanced, Damage, or Control preference in the company screen. New battles use 9 AP, with Quick Shot, Aimed Shot, Shieldwall, and Knock Back chosen automatically according to targets, danger, equipment, and company orders. Active battles from older saves finish under their original two-AP rules. See [current tactical rules](docs/TACTICAL-AI.md).
+Each brother has a combat role and a Balanced, Damage, or Control preference in the company screen. New battles use 9 AP and automatic weapon skills for every weapon family, including Spearwall, Riposte, stuns, armor-breaking strikes and sword area attacks. Roles and preferences guide affordable choices. Active battles from older saves finish under their original rules, including earlier nine-AP battles. See [current tactical rules](docs/TACTICAL-AI.md).
 
 Victories recover a mix of crowns, supplies, and enemy equipment. Salvaged body armor and helmets retain their remaining durability; destroyed or badly ruined pieces are not recovered. Inspect the condition of each individual loot item before collecting it, then repair worn armor in camp with tools.
 
@@ -53,7 +53,7 @@ These are the intended Safari steps; installation and airplane-mode play have no
 
 ## Future work
 
-The [weapon-skills roadmap](docs/WEAPON-SKILLS-PLAN.md) records the agreed design. Version 0.35 implements the 9 AP foundation, personal preferences, and bow/shield skills; the remaining weapon families and area attacks are planned. See [current tactical rules](docs/TACTICAL-AI.md).
+The [weapon-skills roadmap](docs/WEAPON-SKILLS-PLAN.md) records the agreed design. Version 0.37 implements the core weapon-family skills, reactions and restricted area attacks. Further tuning and additional item-specific abilities remain future work. See [current tactical rules](docs/TACTICAL-AI.md).
 
 ## Development
 

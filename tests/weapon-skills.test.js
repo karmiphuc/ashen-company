@@ -42,12 +42,14 @@ test('new fights use 9 AP and two bow Quick Shots, while old saved fights keep 2
 
   const legacy = battleWithCaptain().state;
   delete legacy.battle.rulesVersion;
+  delete legacy.battle.weaponSkillsVersion;
   for (const unit of legacy.battle.units) {
     unit.ap = 2;
     delete unit.shieldWallActive;
     delete unit.aiTargetId;
     delete unit.formationMovedRound;
     delete unit.movementCredit;
+    for (const key of ['spearwallActive', 'riposteActive', 'stunnedTurns', 'stunProtected', 'pendingBerserkAp']) delete unit[key];
   }
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(legacy))), legacy);
   assert.equal(advanceBattle(legacy).ok, true);

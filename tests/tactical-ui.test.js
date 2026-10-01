@@ -33,7 +33,7 @@ test('battle pawn shows rules-version AP maximum and shield-wall status, with cu
   };
   const current = battleHTML(battle, 0, true);
   assert.match(current, /7\/9 AP · 19 F/);
-  assert.match(current, /class="battle-shieldwall"[^>]*aria-label="Shield wall active"/);
+  assert.match(current, /class="battle-shieldwall[^\"]*"[^>]*aria-label="Shield wall active"/);
   assert.match(current, /Skill used: Shield &amp; Strike/);
   assert.match(current, /2 AP to enter/);
 
