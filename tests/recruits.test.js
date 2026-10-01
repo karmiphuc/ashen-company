@@ -5,7 +5,7 @@ import {
   getBackground, getTraits, getCompanyStats, getCampSites, travelTo, tick,
   startBattle, validateSave,
 } from '../src/engine.js';
-import { RECRUIT_BACKGROUNDS } from '../src/recruits.js';
+import { RECRUIT_BACKGROUNDS, RECRUIT_BACKGROUND_BY_ID, makeRecruitProfile } from '../src/recruits.js';
 
 const STAT_KEYS = ['maxHp', 'meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve'];
 
@@ -29,7 +29,7 @@ test('daily recruit offers are deterministic, varied, visible, and pure', () => 
 
   for (const offer of offers) {
     assert.match(offer.id, /^hire:oakwatch:1:[0-2]$/);
-    assert.ok(offer.cost >= 120 && offer.cost <= 450);
+    assert.ok(offer.cost >= 120 && offer.cost <= 540);
     assert.equal(offer.cost, offer.background.cost);
     assert.equal(offer.person.hp, offer.stats.maxHp);
     assert.equal(offer.person.level, 1);
@@ -187,7 +187,52 @@ test('the deterministic catalog reaches every background and trait without cance
   assert.equal(traits.size, 12);
 });
 
-test('special backgrounds offer distinct, modest combat roles', () => {
+test('ordinary recruit backgrounds match settlement type while rare specialists remain available', () => {
+  const ordinaryByKind = {
+    town: new Set(['wayfarer', 'farmhand', 'sailor', 'tinker', 'pilgrim', 'deserter', 'caravan-guard', 'hunter', 'outrider', 'brawler']),
+    village: new Set(['farmhand', 'brawler', 'tinker', 'hunter', 'wayfarer', 'pilgrim']),
+    castle: new Set(['deserter', 'caravan-guard', 'hunter', 'outrider']),
+  };
+  const specialIds = new Set(RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220).map(background => background.id));
+  for (const [kind, ordinary] of Object.entries(ordinaryByKind)) {
+    const seenOrdinary = new Set();
+    const seenSpecial = new Set();
+    for (let seed = 1; seed <= 64; seed++) {
+      for (let day = 1; day <= 12; day++) {
+        const slotCount = kind === 'village' ? 2 : 3;
+        const profiles = Array.from({ length: slotCount }, (_, slot) => makeRecruitProfile(seed, 'oakwatch', day, slot, kind));
+        assert.deepEqual(profiles, Array.from({ length: slotCount }, (_, slot) => makeRecruitProfile(seed, 'oakwatch', day, slot, kind)));
+        const specials = profiles.filter(profile => specialIds.has(profile.backgroundId));
+        assert.ok(specials.length <= 1, kind);
+        for (const profile of profiles) {
+          if (specialIds.has(profile.backgroundId)) seenSpecial.add(profile.backgroundId);
+          else {
+            assert.ok(ordinary.has(profile.backgroundId), `${kind}: ${profile.backgroundId}`);
+            seenOrdinary.add(profile.backgroundId);
+          }
+        }
+      }
+    }
+    assert.deepEqual(seenOrdinary, ordinary, kind);
+    assert.deepEqual(seenSpecial, specialIds, kind);
+  }
+});
+
+test('fantasy race bonuses and their hiring premiums double without changing other special backgrounds', () => {
+  const fantasy = {
+    'elf-wanderer': { cost: 460, bonuses: { rangedSkill: 16, initiative: 10, rangedDefense: 4 } },
+    'half-orc-mercenary': { cost: 500, bonuses: { maxHp: 18, maxFatigue: 10, meleeSkill: 2 } },
+    'dwarf-guard': { cost: 540, bonuses: { maxHp: 14, resolve: 10, meleeDefense: 6 } },
+    'goblin-scout': { cost: 300, bonuses: { rangedSkill: 8, initiative: 12, rangedDefense: 6 } },
+  };
+  for (const [id, expected] of Object.entries(fantasy)) {
+    const background = RECRUIT_BACKGROUND_BY_ID.get(id);
+    assert.equal(background.cost, expected.cost, id);
+    assert.deepEqual(background.bonuses, expected.bonuses, id);
+  }
+  assert.deepEqual(RECRUIT_BACKGROUND_BY_ID.get('samurai').bonuses, { meleeSkill: 8, meleeDefense: 4, initiative: 3 });
+  assert.equal(RECRUIT_BACKGROUND_BY_ID.get('samurai').cost, 420);
+
   const specials = RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220);
   const byId = Object.fromEntries(specials.map(background => [background.id, background.bonuses]));
   assert.equal(specials.length, 8);
@@ -195,7 +240,7 @@ test('special backgrounds offer distinct, modest combat roles', () => {
   for (const background of specials) {
     assert.ok(Object.keys(background.bonuses).every(key => STAT_KEYS.includes(key)), background.id);
     const total = Object.values(background.bonuses).reduce((sum, value) => sum + value, 0);
-    assert.ok(total >= 8 && total <= 16, `${background.id} bonus total: ${total}`);
+    assert.ok(total >= 8 && total <= (fantasy[background.id] ? 30 : 16), `${background.id} bonus total: ${total}`);
   }
 
   assert.ok(byId['elf-wanderer'].rangedSkill > byId['goblin-scout'].rangedSkill);
@@ -207,7 +252,7 @@ test('special backgrounds offer distinct, modest combat roles', () => {
   assert.ok(byId.samurai.meleeDefense > byId.ronin.meleeDefense);
   assert.ok(byId.ronin.initiative > byId.samurai.initiative);
   assert.ok(byId.ninja.rangedSkill > 0 && byId.ninja.rangedDefense > 0);
-  assert.ok(byId.ninja.initiative > byId['elf-wanderer'].initiative);
+  assert.ok(byId['elf-wanderer'].initiative > byId.ninja.initiative);
   assert.ok(byId['warrior-monk'].resolve > 0 && byId['warrior-monk'].maxFatigue > 0);
 });
 
@@ -222,10 +267,11 @@ test('rare special recruits span towns and days while ordinary offers remain', (
         state.position = { x: town.x, y: town.y };
         const offers = getRecruitOffers(state);
         const rare = offers.filter(offer => offer.cost >= 220);
+        assert.equal(offers.length, town.kind === 'village' ? 2 : 3);
         assert.ok(rare.length <= 1);
-        assert.ok(offers.filter(offer => offer.cost < 220).length >= 2);
+        assert.ok(offers.filter(offer => offer.cost < 220).length >= offers.length - 1);
         for (const offer of rare) {
-          assert.ok(offer.cost <= 450);
+          assert.ok(offer.cost <= 540);
           assert.equal(offer.person.appearanceId, offer.background.appearanceId);
           if (!found.has(offer.background.id)) found.set(offer.background.id, { seed, day, town });
         }

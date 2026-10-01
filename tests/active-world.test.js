@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SETTLEMENTS, camp, createGame, finishBattle, forage, getCaravans, getRoamingBands,
-  pursueBand, resolveBattle, retreatBattle, tick, travelTo, validateSave,
+  equipItem, pursueBand, resolveBattle, retreatBattle, terrainAt, tick, travelTo, validateSave,
 } from '../src/engine.js';
 
 const now = state => (state.day - 1) * 24 + state.hour;
@@ -55,11 +55,35 @@ test('raiders naturally hunt and contact the company, while settlements are sanc
   assert.equal(getRoamingBands(safe).find(band => band.id === id).behavior, 'patrolling');
 });
 
-test('open-road travel can pull away from slower hunters and quarter-hour AI is frame partition independent', () => {
+test('band chase speed stays five percent above local terrain pace across campaign stages', () => {
+  for (const scenario of [
+    { id: 'road-thieves', day: 1, difficulty: 0, company: { x: 300, y: 800 }, hunter: { x: 220, y: 800 }, terrain: 'plains', factor: 1 },
+    { id: 'frontier-veterans', day: 100, difficulty: 3, company: { x: 475, y: 445 }, hunter: { x: 395, y: 445 }, terrain: 'forest', factor: .64 },
+  ]) {
+    const state = createGame(1);
+    state.day = scenario.day;
+    const hunter = placeCompanyAndBand(state, scenario.id, scenario.company, scenario.hunter);
+    hunter.behavior = 'hunting-company';
+    assert.equal(terrainAt(hunter.x, hunter.y), scenario.terrain);
+    assert.equal(getRoamingBands(state).find(band => band.id === scenario.id).difficulty, scenario.difficulty);
+    const before = Math.hypot(state.position.x - hunter.x, state.position.y - hunter.y);
+
+    assert.equal(tick(state, .25).ok, true);
+
+    const after = Math.hypot(state.position.x - hunter.x, state.position.y - hunter.y);
+    const expectedStep = 55 * scenario.factor * 1.05 * .25;
+    assert.ok(Math.abs(before - after - expectedStep) < 1e-9, `${scenario.id} on day ${scenario.day}`);
+  }
+});
+
+test('a mounted company can pull away from slightly faster hunters and quarter-hour AI is frame partition independent', () => {
   const escaping = createGame(1);
   const id = 'road-thieves';
   const hunter = placeCompanyAndBand(escaping, id, { x: 300, y: 800 }, { x: 220, y: 800 });
   hunter.behavior = 'hunting-company';
+  escaping.inventory.push('riding-horse');
+  escaping.inventoryCondition.push(null);
+  assert.equal(equipItem(escaping, 'captain', 'riding-horse').ok, true);
   const before = Math.hypot(escaping.position.x - hunter.x, escaping.position.y - hunter.y);
   assert.equal(travelTo(escaping, 600, 800).ok, true);
   assert.equal(tick(escaping, 1).ok, true);

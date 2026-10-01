@@ -58,21 +58,27 @@ export const GOODS = Object.freeze([
 export const SETTLEMENTS = Object.freeze([
   { id: 'oakwatch', name: 'Oakwatch', x: 350, y: 460, kind: 'town', description: 'The company found its footing beneath these old oaks.', color: '#d7ad68' },
   { id: 'greyhaven', name: 'Greyhaven', x: 495, y: 305, kind: 'town', description: 'A stone market where caravans change hands.', color: '#a8b7b3' },
-  { id: 'ironford', name: 'Ironford', x: 745, y: 400, kind: 'city', description: 'Smoke rises above its forges and river gates.', color: '#da936c' },
-  { id: 'thornwall', name: 'Thornwall', x: 1005, y: 255, kind: 'fort', description: 'A border keep with a long memory.', color: '#c1a78f' },
+  { id: 'ironford', name: 'Ironford', x: 745, y: 400, kind: 'town', major: true, description: 'Smoke rises above its forges and river gates.', color: '#da936c' },
+  { id: 'thornwall', name: 'Thornwall', x: 1005, y: 255, kind: 'castle', description: 'A border keep with a long memory.', color: '#c1a78f' },
   { id: 'redmere', name: 'Redmere', x: 925, y: 615, kind: 'town', description: 'Reed boats gather on the rust colored lake.', color: '#cb8679' },
-  { id: 'highpass', name: 'Highpass', x: 615, y: 130, kind: 'outpost', description: 'A cold refuge on the mountain road.', color: '#b9c4ce' },
+  { id: 'highpass', name: 'Highpass', x: 615, y: 130, kind: 'castle', description: 'A cold refuge on the mountain road.', color: '#b9c4ce' },
   { id: 'saltwick', name: 'Saltwick', x: 265, y: 660, kind: 'village', description: 'Fisherfolk and salt traders share its quiet harbor.', color: '#81b9b3' },
   { id: 'barrowfield', name: 'Barrowfield', x: 625, y: 605, kind: 'village', description: 'Farmland scattered among ancient burial mounds.', color: '#b8c282' },
   { id: 'pinecross', name: 'Pinecross', x: 1290, y: 350, kind: 'town', description: 'A timber market at the edge of the eastern pinewoods.', color: '#a9bb87' },
-  { id: 'dunridge', name: 'Dunridge', x: 1660, y: 175, kind: 'fort', description: 'A fortified pass above the northern trade road.', color: '#bab6a6' },
-  { id: 'eastmere', name: 'Eastmere', x: 1960, y: 560, kind: 'city', description: 'A busy caravan city beyond the reed marshes.', color: '#d1ae72' },
+  { id: 'dunridge', name: 'Dunridge', x: 1660, y: 175, kind: 'castle', description: 'A fortified pass above the northern trade road.', color: '#bab6a6' },
+  { id: 'eastmere', name: 'Eastmere', x: 1960, y: 560, kind: 'town', major: true, description: 'A busy caravan city beyond the reed marshes.', color: '#d1ae72' },
   { id: 'stonebridge', name: 'Stonebridge', x: 1440, y: 735, kind: 'town', description: 'Smiths and toll keepers share the old stone crossing.', color: '#b7ae99' },
-  { id: 'southwatch', name: 'Southwatch', x: 420, y: 1010, kind: 'fort', description: 'A southern refuge among the wooded hills.', color: '#aaa98b' },
+  { id: 'southwatch', name: 'Southwatch', x: 420, y: 1010, kind: 'castle', description: 'A southern refuge among the wooded hills.', color: '#aaa98b' },
   { id: 'wheatmere', name: 'Wheatmere', x: 820, y: 1230, kind: 'village', description: 'Wide grain fields feed the southern frontier.', color: '#d5bf78' },
   { id: 'blackfen', name: 'Blackfen', x: 1230, y: 1135, kind: 'village', description: 'Reed cutters and hunters live above the black water.', color: '#9cae84' },
-  { id: 'farhold', name: 'Farhold', x: 1860, y: 1180, kind: 'fort', description: 'The last stronghold on a road haunted by veteran raiders.', color: '#c9a28e' },
+  { id: 'farhold', name: 'Farhold', x: 1860, y: 1180, kind: 'castle', description: 'The last stronghold on a road haunted by veteran raiders.', color: '#c9a28e' },
 ]);
+
+export const SETTLEMENT_TYPES = Object.freeze({
+  village: Object.freeze({ summary: 'Plentiful provisions, simple equipment and two civilian hires.', food: 12, goods: 0, tools: 0, medicine: 0, ammo: 0, hires: 2, better: 1, premium: 0, shipments: 1 }),
+  town: Object.freeze({ summary: 'More trade goods, tools and medicine, with three varied hires.', food: 0, goods: 2, tools: 2, medicine: 2, ammo: 0, hires: 3, better: 3, premium: 1, shipments: 3 }),
+  castle: Object.freeze({ summary: 'Quality military equipment, extra tools and ammunition, with three military hires.', food: -4, goods: -1, tools: 4, medicine: 0, ammo: 15, hires: 3, better: 4, premium: 2, shipments: 3 }),
+});
 
 const CAMP_SITES = Object.freeze([
   { id: 'quarry-camp', name: 'Brigand Camp', x: 440, y: 520, difficulty: 1, description: 'Three desperate raiders shelter in an abandoned quarry.', reward: 110, enemies: [
@@ -236,7 +242,7 @@ const BAND_RADIUS = 28;
 const BAND_AGGRO_RADIUS = 120;
 const BAND_CHASE_LEASH = 260;
 const BAND_PATROL_SPEED = 7;
-const BAND_CHASE_SPEED = 42;
+const BAND_CHASE_BONUS = .05;
 const BAND_RAID_SPEED = 36;
 const CARAVAN_CONTACT_RADIUS = 10;
 const ENCOUNTER_GRACE_HOURS = 1.5;
@@ -598,7 +604,7 @@ function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
     roll ^= roll >>> 15;
     return roll & 1;
   }).reduce((total, kept) => total + kept, 0);
-  const common = gear.filter(item => item.price < 250);
+  const common = gear.filter(item => item.price < (town.kind === 'village' ? 150 : 250));
   const better = gear.filter(item => item.price >= 250 && item.price < 450);
   const premium = gear.filter(item => item.price >= 450);
   const armoryChoices = (items, slots, label) => {
@@ -608,11 +614,11 @@ function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
     return [...northern, ...rotated.filter(item => !northern.includes(item)).slice(0, slots - northern.length)];
   };
   for (const item of common) equipment[item.id] = halfStock(item, 1 + Number(townEventHash(`${state.seed}:${town.id}:${cycle}:common:${item.id}`) % 4 === 0), 'base');
-  const betterSlots = town.kind === 'city' || town.kind === 'fort' ? 4 : town.kind === 'town' ? 3 : 2;
-  const premiumSlots = town.kind === 'city' || town.kind === 'fort' ? 2 : town.kind === 'town' ? 1 : 0;
+  const betterSlots = SETTLEMENT_TYPES[town.kind].better + Number(Boolean(town.major));
+  const premiumSlots = SETTLEMENT_TYPES[town.kind].premium + Number(Boolean(town.major));
   for (const item of armoryChoices(better, betterSlots, 'better')) equipment[item.id] = halfStock(item, 1, 'better');
   for (const item of armoryChoices(premium, premiumSlots, 'premium')) equipment[item.id] = halfStock(item, 1, 'premium');
-  if (['city', 'fort'].includes(town.kind) && townEventHash(`${state.seed}:${town.id}:${cycle}:mount-offer`) % 100 < 2) {
+  if ((town.major || town.kind === 'castle') && townEventHash(`${state.seed}:${town.id}:${cycle}:mount-offer`) % 100 < 2) {
     const mount = MOUNTS[townEventHash(`${state.seed}:${town.id}:${cycle}:mount-kind`) % MOUNTS.length];
     equipment[mount.id] = 1;
   }
@@ -620,23 +626,24 @@ function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
 }
 
 function dailyMarketStock(state, town) {
+  const type = SETTLEMENT_TYPES[town.kind];
   const modifiers = townEventModifiers(scheduledTownEvent(state, town));
   const goods = Object.fromEntries(GOODS.map(good => {
     const factor = MARKET_FACTORS[town.id][good.id];
     const adjustment = (good.id === 'grain' ? modifiers.grainStock : null) ?? modifiers.goodsStock ?? 0;
     const minimum = good.id === 'grain' && modifiers.grainStock < 0 ? 2 : 0;
-    const stock = (factor <= .8 ? 8 : factor >= 1.3 ? 2 : 5) + hashSeed(`${state.seed}:${state.day}:${town.id}:${good.id}`) % 3 + adjustment;
+    const stock = (factor <= .8 ? 8 : factor >= 1.3 ? 2 : 5) + hashSeed(`${state.seed}:${state.day}:${town.id}:${good.id}`) % 3 + adjustment + type.goods;
     return [good.id, Math.max(minimum, stock)];
   }));
-  const baseFood = 18 + (MARKET_FACTORS[town.id].grain <= .8 ? 12 : 0) + hashSeed(`${state.seed}:${state.day}:${town.id}:food`) % 6;
+  const baseFood = 18 + (MARKET_FACTORS[town.id].grain <= .8 ? 12 : 0) + hashSeed(`${state.seed}:${state.day}:${town.id}:food`) % 6 + type.food;
   const food = Math.max(modifiers.foodStock < 0 ? 12 : 0, baseFood + (modifiers.foodStock ?? 0));
-  const supplies = Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock + hashSeed(`${state.seed}:${state.day}:${town.id}:${kind}`) % 3]));
+  const supplies = Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock + hashSeed(`${state.seed}:${state.day}:${town.id}:${kind}`) % 3 + type[kind]]));
   return { food, goods, supplies };
 }
 
 function addShipmentStock(equipment, state, town, event, cycle) {
   const candidates = ITEMS.filter(item => item.slot !== 'mount' && item.price >= 250 && equipment[item.id] === 0);
-  const count = town.kind === 'city' ? 4 : town.kind === 'fort' ? 3 : 2;
+  const count = SETTLEMENT_TYPES[town.kind].shipments + Number(Boolean(town.major));
   for (const item of rotatedItems(candidates, state, town, cycle, event.id).slice(0, count)) {
     if (townEventHash(`${state.seed}:${town.id}:${event.id}:shipment:${item.id}`) % 2 === 0) equipment[item.id] += 1;
   }
@@ -699,7 +706,7 @@ export function getMarket(state, townId) {
       cycleStartDay: cycle * ARMORY_ROTATION_DAYS + 1,
       nextRestockDay: (cycle + 1) * ARMORY_ROTATION_DAYS + 1,
       daysUntilRestock: (cycle + 1) * ARMORY_ROTATION_DAYS + 1 - state.day,
-      summary: 'Armory stock rotates weekly. Provisions, trade goods, and supplies restock daily.',
+      summary: `${SETTLEMENT_TYPES[town.kind].summary} Armory stock rotates weekly. Provisions, trade goods, and supplies restock daily.`,
     },
     food: { buyPrice: Math.max(2, Math.round(5 * MARKET_FACTORS[town.id].grain * (townEventModifiers(event).foodBuy ?? 1))), stock: stock.food, owned: state.food },
     equipment: [
@@ -986,7 +993,8 @@ function advanceRoamingBands(state) {
     if (canHunt) {
       progress.behavior = 'hunting-company';
       progress.targetId = null;
-      moveTowardPoint(progress, state.position, BAND_CHASE_SPEED * WORLD_STEP_HOURS);
+      const chaseSpeed = terrainSpeed(terrainAt(progress.x, progress.y)) * (1 + BAND_CHASE_BONUS);
+      moveTowardPoint(progress, state.position, chaseSpeed * WORLD_STEP_HOURS);
       if (distance(progress, state.position) <= BAND_RADIUS && contactId === null) contactId = band.id;
     } else {
       progress.behavior = 'patrolling';
@@ -1293,7 +1301,10 @@ export function getContractOffers(state, townId) {
   offers.push({ id: `rescue-${serial}`, type: 'rescue', from: town.id, to: town.id,
     rescueId: `rescue-${serial}`, rescuePoint, rescueDifficulty: state.day >= 28 ? 3 : state.day >= 10 ? 2 : 1,
     reward: 260 + Math.min(100, Math.floor(state.day / 5) * 20), renown: 3 });
-  return offers;
+  const cycle = Math.floor((state.day - 1) / 7);
+  const boardSeed = townEventHash(`${state.seed}:${town.id}:${cycle}:board`);
+  const count = 1 + boardSeed % 3;
+  return offers.sort((a, b) => townEventHash(`${boardSeed}:${state.contractSerial}:${a.type}`) - townEventHash(`${boardSeed}:${state.contractSerial}:${b.type}`)).slice(0, count);
 }
 
 export function acceptContract(state, townId, offerId) {
@@ -1642,7 +1653,7 @@ function recruitOfferDay(id) {
 }
 
 function recruitPerson(state, town, slot) {
-  const profile = makeRecruitProfile(state.seed, town.id, state.day, slot);
+  const profile = makeRecruitProfile(state.seed, town.id, state.day, slot, town.kind);
   const background = RECRUIT_BACKGROUND_BY_ID.get(profile.backgroundId);
   const person = normalizeMember({
     id: `recruit-${town.id}-${state.day}-${slot}`,
@@ -1664,7 +1675,7 @@ export function getRecruitOffers(state) {
   const town = townAt(state);
   if (!town) return [];
   const consumed = new Set(state.hiredRecruitOffers ?? []);
-  return Array.from({ length: 3 }, (_, slot) => recruitPerson(state, town, slot))
+  return Array.from({ length: SETTLEMENT_TYPES[town.kind].hires }, (_, slot) => recruitPerson(state, town, slot))
     .filter(offer => !consumed.has(offer.id))
     .map(offer => ({
       ...offer,

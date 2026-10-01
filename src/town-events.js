@@ -55,7 +55,7 @@ export function scheduledTownEvent(state, town) {
   const duration = 3 + townEventHash(`${state.seed}:${town.id}:${cycle}:event-duration`) % 2;
   const endDay = startDay + duration - 1;
   if (state.day > endDay) return null;
-  const type = town.kind === 'city'
+  const type = town.major
     ? 'armorer-shipment'
     : EVENT_TYPES[townEventHash(`${state.seed}:${town.id}:${cycle}:event-type`) % EVENT_TYPES.length];
   const definition = EVENTS[type];

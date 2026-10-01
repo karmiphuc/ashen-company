@@ -3,23 +3,29 @@ import assert from 'node:assert/strict';
 import { acceptContract, createGame, getCaravans, getContractOffers } from '../src/engine.js';
 import { battleResultsHTML, caravanListHTML, caravanSidebarHTML, contractOffersHTML, huntContractHTML } from '../src/campaign-ui.js';
 import { battleHTML } from '../src/battle-view.js';
+import { findOffer } from './helpers/contract-offers.js';
 
 test('combat contract offers explain allied militia and caravan guards', () => {
-  const state = createGame(21);
-  const offers = getContractOffers(state, 'oakwatch');
-  const html = contractOffersHTML(state, offers);
+  const assaultState = createGame(21);
+  const assault = findOffer(assaultState, 'assault');
+  const assaultOffers = getContractOffers(assaultState, 'oakwatch');
+  const rescueState = createGame(21);
+  const rescue = findOffer(rescueState, 'rescue');
+  const rescueOffers = getContractOffers(rescueState, 'oakwatch');
+  assert.ok(assaultOffers.length <= 3 && rescueOffers.length <= 3);
+  const html = contractOffersHTML(assaultState, assaultOffers) + contractOffersHTML(rescueState, rescueOffers);
   assert.match(html, /Join a camp assault/);
   assert.match(html, /Three allied militia wait/);
   assert.match(html, /Rescue a besieged caravan/);
   assert.match(html, /three guards fighting beside you/);
-  assert.match(html, /data-accept="assault-1"/);
-  assert.match(html, /data-accept="rescue-1"/);
+  assert.match(html, new RegExp(`data-accept="${assault.id}"`));
+  assert.match(html, new RegExp(`data-accept="${rescue.id}"`));
 });
 
 test('accepted assault and rescue contracts lead to their targets and back to the issuer', () => {
   for (const type of ['assault', 'rescue']) {
     const state = createGame(21);
-    const offer = getContractOffers(state, 'oakwatch').find(entry => entry.type === type);
+    const offer = findOffer(state, type);
     assert.equal(acceptContract(state, 'oakwatch', offer.id).ok, true);
     const pending = huntContractHTML(state, state.contract);
     assert.match(pending, new RegExp(`data-quest-travel="${type === 'assault' ? 'camp' : 'rescue'}" data-target-id="${type === 'assault' ? offer.campId : offer.rescueId}"`));
@@ -38,7 +44,7 @@ test('accepted assault and rescue contracts lead to their targets and back to th
 
 test('quest caravan waits for rescue without a shipment timer', () => {
   const state = createGame(22);
-  const offer = getContractOffers(state, 'oakwatch').find(entry => entry.type === 'rescue');
+  const offer = findOffer(state, 'rescue');
   assert.equal(acceptContract(state, 'oakwatch', offer.id).ok, true);
   const caravan = getCaravans(state).find(entry => entry.quest);
   const sidebar = caravanSidebarHTML(state, caravan);

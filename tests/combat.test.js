@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createGame, getCampSites, getContractOffers, acceptContract, travelTo, tick,
+  createGame, getCampSites, acceptContract, travelTo, tick,
   startBattle, advanceBattle, resolveBattle, retreatBattle, finishBattle,
   getCompanyStats, getMarket, buyItem, buyFood, buySupplies, equipItem, unequipItem,
   camp, forage, getLevelUp, trainAttributes, validateSave,
 } from '../src/engine.js';
+import { findOffer } from './helpers/contract-offers.js';
 
 function approach(state, site) {
   const until = (state.day - 1) * 24 + state.hour + 48;
@@ -46,7 +47,7 @@ test('the first camp is reachable and a deterministic battle survives save/load'
 test('a stocked hunt remains reloadable after every battle turn', () => {
   let state = createGame(7391);
   assert.equal(buySupplies(state, 'tools', 5).ok, true);
-  const hunt = getContractOffers(state, 'oakwatch').find(offer => offer.type === 'hunt');
+  const hunt = findOffer(state, 'hunt');
   assert.equal(acceptContract(state, 'oakwatch', hunt.id).ok, true);
   const site = getCampSites(state).find(entry => entry.id === hunt.campId);
   approach(state, site);
@@ -128,8 +129,7 @@ test('casualties leave the roster, their gear is recovered on victory, and defea
 
 test('hunt rewards require clearing the camp and returning to the issuer', () => {
   const state = createGame(1);
-  const hunt = getContractOffers(state, 'oakwatch').find(offer => offer.type === 'hunt');
-  assert.ok(hunt);
+  const hunt = findOffer(state, 'hunt');
   assert.equal(acceptContract(state, 'oakwatch', hunt.id).ok, true);
   const site = getCampSites(state).find(entry => entry.id === hunt.campId);
   approach(state, site);

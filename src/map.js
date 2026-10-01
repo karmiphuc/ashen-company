@@ -27,7 +27,7 @@ const knownTownArt = {
   oakwatch: 'houses_02_01', greyhaven: 'townhall_02', ironford: 'stronghold_01', thornwall: 'stronghold_02',
   redmere: 'townhall_01', highpass: 'fortified_outpost_01', saltwick: 'houses_01_01', barrowfield: 'houses_03_01',
 };
-const buildingByKind = { city: 'townhall_02', town: 'townhall_01', fort: 'stronghold_02', outpost: 'fortified_outpost_01', village: 'houses_03_01' };
+const buildingByKind = { town: 'townhall_01', castle: 'stronghold_02', village: 'houses_03_01' };
 const WORLD_PAD = 170;
 const DOUBLE_TAP_DELAY = 350;
 const DOUBLE_TAP_DISTANCE = 24;

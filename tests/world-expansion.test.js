@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import {
   SETTLEMENTS, WORLD_BOUNDS, createGame, getCampSites, getRoamingBands,
   getMarket, townAt, travelTo, tick, startBattle, resolveBattle, finishBattle,
-  getContractOffers, acceptContract, huntComplete, validateSave,
+  acceptContract, huntComplete, validateSave,
 } from '../src/engine.js';
+import { findOffer } from './helpers/contract-offers.js';
 
 const hours = state => (state.day - 1) * 24 + state.hour;
 const campById = (state, id) => getCampSites(state).find(camp => camp.id === id);
@@ -134,8 +135,7 @@ test('seeded camp offers regenerate deterministically by generation and do not m
 
 test('a hunt stays complete after respawn, while a new-generation hunt needs a new defeat', () => {
   const state = createGame(817);
-  const offer = getContractOffers(state, 'oakwatch').find(contract => contract.type === 'hunt');
-  assert.ok(offer);
+  const offer = findOffer(state, 'hunt');
   assert.equal(acceptContract(state, 'oakwatch', offer.id).ok, true);
   const contract = structuredClone(state.contract);
   assert.equal(contract.campGeneration, campById(state, contract.campId).generation);

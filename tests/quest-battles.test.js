@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createGame, getContractOffers, acceptContract, getContractTarget, getQuestEncounter, getCaravans,
+  createGame, acceptContract, getContractTarget, getQuestEncounter, getCaravans,
   getCampSites, startBattle, advanceBattle, resolveBattle, retreatBattle, finishBattle,
   activateMapTarget, tick, travelTo, validateSave, contractObjectiveComplete,
 } from '../src/engine.js';
+import { findOffer } from './helpers/contract-offers.js';
 
 function accept(state, type) {
-  const offer = getContractOffers(state, 'oakwatch').find(entry => entry.type === type);
-  assert.ok(offer, `${type} offer exists`);
+  const offer = findOffer(state, type);
   assert.equal(acceptContract(state, 'oakwatch', offer.id).ok, true);
   return offer;
 }

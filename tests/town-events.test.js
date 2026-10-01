@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ITEMS, SETTLEMENTS, createGame, createFamedItemId, getTownEvent, getTownEconomy, getMarket,
-  getContractOffers, acceptContract, travelTo, tick, buyAll, buyFood, buyGood,
+  acceptContract, travelTo, tick, buyAll, buyFood, buyGood,
   sellGood, buyItem, sellItem, getPurchaseQuote, validateSave,
 } from '../src/engine.js';
+import { findOffer } from './helpers/contract-offers.js';
 
 function atTown(state, townId) {
   const town = SETTLEMENTS.find(entry => entry.id === townId);
@@ -274,7 +275,9 @@ test('courier market rewards have a stable roll, add at most one item, and apply
   for (let seed = 1; seed <= 48 && outcomes.size < 2; seed++) {
     const delivering = createGame(seed);
     const control = createGame(seed);
-    const offer = getContractOffers(delivering, 'oakwatch').find(entry => entry.type === 'courier');
+    const offer = findOffer(delivering, 'courier');
+    const offeredSerial = delivering.contractSerial;
+    control.contractSerial = offeredSerial;
     assert.equal(acceptContract(delivering, 'oakwatch', offer.id).ok, true);
     const target = SETTLEMENTS.find(town => town.id === offer.to);
     for (const state of [delivering, control]) {
@@ -293,6 +296,7 @@ test('courier market rewards have a stable roll, add at most one item, and apply
       assert.equal(count, expected[id] + 1);
       if (!saturationChecked) {
         const capped = createGame(seed);
+        capped.contractSerial = offeredSerial;
         assert.equal(acceptContract(capped, 'oakwatch', offer.id).ok, true);
         atTown(capped, target.id);
         assert.equal(buyFood(capped, 1).ok, true);

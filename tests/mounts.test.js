@@ -54,12 +54,12 @@ test('living mounted members add world speed and daily food, with battle skill a
   }
 });
 
-test('weekly city and fort mount offers are rare, deterministic, and tradable', () => {
+test('weekly large town and castle mount offers are rare, deterministic, and tradable', () => {
   let offer = null;
   let opportunities = 0;
   for (let seed = 1; seed <= 300; seed++) {
     const state = createGame(seed);
-    for (const town of SETTLEMENTS.filter(entry => ['city', 'fort'].includes(entry.kind))) {
+    for (const town of SETTLEMENTS.filter(entry => entry.major || entry.kind === 'castle')) {
       state.position = { x: town.x, y: town.y };
       const offered = getMarket(state).equipment.filter(row => mountIds.includes(row.itemId) && row.stock > 0);
       assert.ok(offered.length <= 1);

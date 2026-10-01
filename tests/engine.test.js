@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { findOffer } from './helpers/contract-offers.js';
 import assert from 'node:assert/strict';
 import {
   ITEMS, GOODS, SETTLEMENTS, createGame, travelTo, tick, townAt, getContractOffers, acceptContract,
@@ -131,8 +132,8 @@ test('supply contracts require and consume cargo, while old courier saves migrat
   const beforeOffers = structuredClone(state);
   const offers = getContractOffers(state, 'oakwatch');
   assert.deepEqual(state, beforeOffers);
-  assert.deepEqual(offers.map(offer => offer.type), ['courier', 'supply', 'hunt', 'assault', 'rescue']);
-  const supply = offers[1];
+  assert.ok(offers.length >= 1 && offers.length <= 3);
+  const supply = findOffer(state, 'supply');
   assert.equal(acceptContract(state, 'oakwatch', supply.id).ok, true);
   assert.equal(state.contract.goodId, supply.goodId);
   assert.equal(buyGood(state, supply.goodId, supply.quantity).ok, true);
@@ -143,7 +144,7 @@ test('supply contracts require and consume cargo, while old courier saves migrat
   assert.deepEqual(validateSave(state), state);
 
   const legacy = createGame(44);
-  acceptContract(legacy, 'oakwatch');
+  acceptContract(legacy, 'oakwatch', findOffer(legacy, 'courier').id);
   delete legacy.cargo;
   delete legacy.marketStock;
   delete legacy.contract.type;
@@ -160,11 +161,11 @@ test('supply contracts require and consume cargo, while old courier saves migrat
 
 test('an undersupplied delivery remains open and can finish after arrival', () => {
   const state = createGame(7391);
-  const offer = getContractOffers(state, 'oakwatch')[1];
+  const offer = findOffer(state, 'supply');
   acceptContract(state, 'oakwatch', offer.id);
   reach(state, offer.to);
   assert.equal(state.contract?.type, 'supply');
-  for (let i = 0; i < 3 && state.contract; i++) {
+  for (let i = 0; i < 7 && state.contract; i++) {
     const available = getMarket(state).goods.find(entry => entry.goodId === offer.goodId).stock;
     const needed = offer.quantity - (state.cargo[offer.goodId] ?? 0);
     if (available) assert.equal(buyGood(state, offer.goodId, Math.min(needed, available)).ok, true);
@@ -201,7 +202,7 @@ test('travel obeys bounds and difficult terrain slows progress', () => {
 
 test('delivery pays on arrival and another can be taken', () => {
   const state = createGame(14);
-  assert.equal(acceptContract(state, 'oakwatch').ok, true);
+  assert.equal(acceptContract(state, 'oakwatch', findOffer(state, 'courier').id).ok, true);
   const contract = { ...state.contract };
   const target = SETTLEMENTS.find(town => town.id === contract.to);
   reach(state, target.id);
@@ -211,7 +212,7 @@ test('delivery pays on arrival and another can be taken', () => {
   assert.equal(townAt(state)?.id, target.id);
   assert.ok(state.visited.includes(target.id));
   assert.equal(state.gold, 900 + contract.reward - (state.day - 1) * 15);
-  assert.equal(acceptContract(state, target.id).ok, true);
+  assert.equal(acceptContract(state, target.id, findOffer(state, 'courier', target.id).id).ok, true);
   assert.notEqual(state.contract.to, target.id);
 });
 

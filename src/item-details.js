@@ -114,7 +114,7 @@ export function getItemDetails(item, condition) {
     );
     notes.push('One mount fits the dedicated mount slot. Each living mounted brother adds 10% to company travel speed; three mounts give +30%. Stashed mounts give no bonus and consume no food.');
     notes.push('The movement bonus only helps movement, never grants another attack, and still respects terrain, occupied hexes, and your formation tactic. Mounted attacks retain normal range and ammunition costs.');
-    notes.push('Mounts are extremely rare in city and fort markets. A defeated mounted enemy may leave a surviving mount to capture.');
+    notes.push('Mounts are extremely rare in large town and castle markets. A defeated mounted enemy may leave a surviving mount to capture.');
   } else if (item.slot === 'accessory') {
     if (item.consumable === 'heal') {
       stats.push({ label: 'Effect', value: `Restores up to ${item.heal ?? 0} health` }, { label: 'Uses', value: 'One' });

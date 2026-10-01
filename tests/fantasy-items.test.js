@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { FANTASY_ITEMS } from '../src/fantasy-items.js';
 import { FANTASY_APPEARANCES } from '../src/fantasy-art.js';
-import { ITEMS, SETTLEMENTS, createGame, equipItem, getCompanyStats, getItem, getMarket, validateSave } from '../src/engine.js';
+import { ITEMS, SETTLEMENTS, SETTLEMENT_TYPES, createGame, equipItem, getCompanyStats, getItem, getMarket, validateSave } from '../src/engine.js';
 import { getItemDetails } from '../src/item-details.js';
 import { itemImage, portraitHTML } from '../src/portraits.js';
 import { listOfflineAssets } from '../tools/build-cache.mjs';
@@ -54,9 +54,9 @@ test('weekly armory budgets keep the new gear scarce while every item can appear
         if (market.event?.type === 'armorer-shipment') continue;
         const better = stocked.filter(item => item.slot !== 'mount' && item.price >= 250 && item.price < 450);
         const premium = stocked.filter(item => item.slot !== 'mount' && item.price >= 450);
-        const broadTown = town.kind === 'city' || town.kind === 'fort';
-        assert.ok(better.length <= (broadTown ? 4 : town.kind === 'town' ? 3 : 2), `${town.id} day ${day} better stock`);
-        assert.ok(premium.length <= (broadTown ? 2 : town.kind === 'town' ? 1 : 0), `${town.id} day ${day} premium stock`);
+        const type = SETTLEMENT_TYPES[town.kind], major = Number(Boolean(town.major));
+        assert.ok(better.length <= type.better + major, `${town.id} day ${day} better stock`);
+        assert.ok(premium.length <= type.premium + major, `${town.id} day ${day} premium stock`);
       }
     }
     if (seen.size === FANTASY_ITEMS.length) break;

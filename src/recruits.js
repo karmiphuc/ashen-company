@@ -11,10 +11,10 @@ export const RECRUIT_BACKGROUNDS = Object.freeze([
   freezeEntry({ id: 'hunter', name: 'Hunter', role: 'ranged', cost: 180, description: 'A practiced shot who knows how to act before prey bolts.', bonuses: { rangedSkill: 8, initiative: 3 } }),
   freezeEntry({ id: 'outrider', name: 'Outrider', role: 'ranged', cost: 180, description: 'Scouting ahead rewards speed, awareness, and stamina.', bonuses: { rangedSkill: 5, initiative: 5, maxFatigue: 2 } }),
   freezeEntry({ id: 'brawler', name: 'Brawler', role: 'frontline', cost: 150, description: 'Tavern scraps left this fighter tough and comfortable up close.', bonuses: { meleeSkill: 4, maxHp: 4 } }),
-  freezeEntry({ id: 'elf-wanderer', name: 'Elf Wanderer', role: 'ranged', cost: 320, appearanceId: 'elf', description: 'An elven archer whose long practice lends a patient eye and nimble footing.', bonuses: { rangedSkill: 8, initiative: 5, rangedDefense: 2 } }),
-  freezeEntry({ id: 'half-orc-mercenary', name: 'Half-Orc Mercenary', role: 'frontline', cost: 340, appearanceId: 'half-orc', description: 'A half-orc mercenary who endures hard blows and longer marches.', bonuses: { maxHp: 9, maxFatigue: 5, meleeSkill: 1 } }),
-  freezeEntry({ id: 'dwarf-guard', name: 'Dwarf Guard', role: 'frontline', cost: 360, appearanceId: 'dwarf', description: 'A dwarf veteran drilled to hold the line with a steady shield and stout resolve.', bonuses: { maxHp: 7, resolve: 5, meleeDefense: 3 } }),
-  freezeEntry({ id: 'goblin-scout', name: 'Goblin Scout', role: 'ranged', cost: 240, appearanceId: 'goblin', description: 'A goblin scout whose nimble escapes and quick shots keep danger at a distance.', bonuses: { rangedSkill: 4, initiative: 6, rangedDefense: 3 } }),
+  freezeEntry({ id: 'elf-wanderer', name: 'Elf Wanderer', role: 'ranged', cost: 460, appearanceId: 'elf', description: 'An elven archer whose long practice lends a patient eye and nimble footing.', bonuses: { rangedSkill: 16, initiative: 10, rangedDefense: 4 } }),
+  freezeEntry({ id: 'half-orc-mercenary', name: 'Half-Orc Mercenary', role: 'frontline', cost: 500, appearanceId: 'half-orc', description: 'A half-orc mercenary who endures hard blows and longer marches.', bonuses: { maxHp: 18, maxFatigue: 10, meleeSkill: 2 } }),
+  freezeEntry({ id: 'dwarf-guard', name: 'Dwarf Guard', role: 'frontline', cost: 540, appearanceId: 'dwarf', description: 'A dwarf veteran drilled to hold the line with a steady shield and stout resolve.', bonuses: { maxHp: 14, resolve: 10, meleeDefense: 6 } }),
+  freezeEntry({ id: 'goblin-scout', name: 'Goblin Scout', role: 'ranged', cost: 300, appearanceId: 'goblin', description: 'A goblin scout whose nimble escapes and quick shots keep danger at a distance.', bonuses: { rangedSkill: 8, initiative: 12, rangedDefense: 6 } }),
   freezeEntry({ id: 'samurai', name: 'Samurai', role: 'frontline', cost: 420, appearanceId: 'samurai', description: 'Formal blade and guard training makes this fighter accurate, guarded, and ready.', bonuses: { meleeSkill: 8, meleeDefense: 4, initiative: 3 } }),
   freezeEntry({ id: 'ronin', name: 'Ronin', role: 'frontline', cost: 350, description: 'Years of duels on the road taught quick, accurate strikes with a lighter guard.', bonuses: { meleeSkill: 6, initiative: 7, meleeDefense: 1 } }),
   freezeEntry({ id: 'ninja', name: 'Ninja', role: 'ranged', cost: 390, appearanceId: 'ninja', description: 'Stealth and skirmish training favor quick ranged strikes and evasive movement.', bonuses: { rangedSkill: 6, initiative: 7, rangedDefense: 3 } }),
@@ -44,10 +44,23 @@ const NAMES = Object.freeze([
   'Ada Pike', 'Kellan Moss', 'Sera Wren', 'Milo Hart', 'Tamsin Crow', 'Rolf Mercer',
   'Petra Dain', 'Jonas Vey', 'Lina Marsh', 'Corin Ash', 'Freya Dunn', 'Emil Rook',
 ]);
-const ROLE_BACKGROUNDS = Object.freeze({
+const TOWN_ROLE_BACKGROUNDS = Object.freeze({
   frontline: Object.freeze(['farmhand', 'deserter', 'caravan-guard', 'brawler']),
   ranged: Object.freeze(['tinker', 'hunter', 'outrider']),
   support: Object.freeze(['wayfarer', 'sailor', 'pilgrim']),
+});
+const ROLE_BACKGROUNDS_BY_KIND = Object.freeze({
+  town: TOWN_ROLE_BACKGROUNDS,
+  village: Object.freeze({
+    frontline: Object.freeze(['farmhand', 'brawler']),
+    ranged: Object.freeze(['tinker', 'hunter']),
+    support: Object.freeze(['wayfarer', 'pilgrim']),
+  }),
+  castle: Object.freeze({
+    frontline: Object.freeze(['deserter', 'caravan-guard']),
+    ranged: Object.freeze(['hunter', 'outrider']),
+    support: Object.freeze(['caravan-guard', 'deserter']),
+  }),
 });
 const ROLES = Object.freeze(['frontline', 'ranged', 'support']);
 const SPECIAL_BACKGROUNDS = RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220);
@@ -71,12 +84,13 @@ function directlyCancels(positive, tradeoff) {
   return Object.entries(positive.bonuses).some(([stat, value]) => value > 0 && (tradeoff.bonuses[stat] ?? 0) < 0);
 }
 
-export function makeRecruitProfile(seed, townId, day, slot) {
+export function makeRecruitProfile(seed, townId, day, slot, kind = 'town') {
   const base = hashSeed(`${seed}:${townId}:${day}:recruit`);
   const role = ROLES[(slot + base) % ROLES.length];
-  const choices = ROLE_BACKGROUNDS[role];
+  const choices = (ROLE_BACKGROUNDS_BY_KIND[kind] ?? TOWN_ROLE_BACKGROUNDS)[role];
+  const slotCount = kind === 'village' ? 2 : 3;
   const specialSlot = mixSeed(`${base}:special-chance`) % 6 === 0
-    ? mixSeed(`${base}:special-slot`) % 3 : -1;
+    ? mixSeed(`${base}:special-slot`) % slotCount : -1;
   const specialChoices = SPECIAL_BACKGROUNDS.filter(background => background.role === role);
   const backgroundId = slot === specialSlot
     ? specialChoices[mixSeed(`${base}:special-background`) % specialChoices.length].id
