@@ -400,7 +400,7 @@ test('Combat Bandaging heals under pressure and still attacks on the next action
   addItem(state, 'bandages');
   equipItem(state, 'captain', 'bandages', 'accessory-1');
   const { battle, actor, at, activate } = battleWith(state);
-  at('enemy-1', 3, 1);
+  at('enemy-1', actor.q + 1, actor.r);
   actor.hp = 50;
   activate();
   advanceBattle(state);

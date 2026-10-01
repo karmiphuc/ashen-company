@@ -279,28 +279,36 @@ function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function inBounds(x, y) { return Number.isFinite(x) && Number.isFinite(y) && x >= BOUNDS.minX && x <= BOUNDS.maxX && y >= BOUNDS.minY && y <= BOUNDS.maxY; }
 function clamped(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function personById(state, id) { return state.party.find(person => person.id === id); }
-const FRONT_FORMATION = [2, 3, 1, 4, 0, 5];
-const REAR_FORMATION = [8, 9, 7, 10, 6, 11];
+const FRONT_FORMATION = [5, 6, 4, 7, 3, 8, 2, 9, 1, 10, 0, 11];
+const MIDDLE_FORMATION = FRONT_FORMATION.map(index => index + 12);
+const REAR_FORMATION = FRONT_FORMATION.map(index => index + 24);
+
+function expandedFormation(formation) {
+  if (formation.length !== 12) return [...formation];
+  const slots = Array(36).fill(null);
+  formation.forEach((id, index) => { slots[index < 6 ? index + 3 : index + 21] = id; });
+  return slots;
+}
 
 function seedFormation(party) {
-  const slots = Array(12).fill(null);
+  const slots = Array(36).fill(null);
   const ranged = party.filter(person => getItem(person.equipment?.weapon)?.ranged === true);
   const melee = party.filter(person => !ranged.includes(person));
   for (const person of [...melee, ...ranged]) {
-    const preferred = ranged.includes(person) ? [...REAR_FORMATION, ...FRONT_FORMATION] : [...FRONT_FORMATION, ...REAR_FORMATION];
+    const preferred = ranged.includes(person) ? [...REAR_FORMATION, ...MIDDLE_FORMATION, ...FRONT_FORMATION] : [...FRONT_FORMATION, ...MIDDLE_FORMATION, ...REAR_FORMATION];
     slots[preferred.find(index => slots[index] === null)] = person.id;
   }
   return slots;
 }
 
 export function getFormation(state) {
-  return [...(state.formation ?? seedFormation(state.party))];
+  return expandedFormation(state.formation ?? seedFormation(state.party));
 }
 
 export function moveFormation(state, fromIndex, toIndex) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
-  if (!Number.isSafeInteger(fromIndex) || !Number.isSafeInteger(toIndex) || fromIndex < 0 || fromIndex >= 12 || toIndex < 0 || toIndex >= 12) return result(false, 'Choose two formation slots.');
+  if (!Number.isSafeInteger(fromIndex) || !Number.isSafeInteger(toIndex) || fromIndex < 0 || fromIndex >= 36 || toIndex < 0 || toIndex >= 36) return result(false, 'Choose two formation slots.');
   const formation = getFormation(state);
   if (!formation[fromIndex]) return result(false, 'Select a company member to move.');
   [formation[fromIndex], formation[toIndex]] = [formation[toIndex], formation[fromIndex]];
@@ -1744,7 +1752,7 @@ export function recruit(state, offerId) {
   if (!offer) return result(false, 'That recruit is no longer available here today.');
   if (state.gold < offer.cost) return result(false, `Recruitment costs ${offer.cost} crowns.`);
   const formation = getFormation(state);
-  const vacancy = [...FRONT_FORMATION, ...REAR_FORMATION].find(index => formation[index] === null);
+  const vacancy = [...FRONT_FORMATION, ...MIDDLE_FORMATION, ...REAR_FORMATION].find(index => formation[index] === null);
   if (vacancy === undefined) return result(false, 'The company formation has no open place.');
   const person = normalizeMember(offer.person);
   state.party.push(person);
@@ -2063,7 +2071,7 @@ function shieldWallDeployment(company) {
     Object.assign(unit, point);
     occupied.add(`${point.q},${point.r}`);
   };
-  const cells = columns => columns.flatMap(q => Array.from({ length: 6 }, (_, index) => ({ q, r: index + 1 })));
+  const cells = columns => columns.flatMap(q => FRONT_FORMATION.map(index => ({ q, r: index + 2 })));
   for (const unit of shields) place(unit, cells([2, 1, 0]));
   const rearColumns = shields.some(unit => unit.q === 1) ? [0, 1, 2] : [1, 0, 2];
   for (const unit of rear) place(unit, cells(rearColumns));
@@ -2085,7 +2093,7 @@ export function startBattle(state, encounterId) {
     if (!person) return [];
     const stats = getCompanyStats(person);
     return [{
-      id: person.id, name: person.name, side: 'company', q: index < 6 ? 2 : 1, r: 1 + index % 6,
+      id: person.id, name: person.name, side: 'company', q: 2 - Math.floor(index / 12), r: 2 + index % 12,
       hp: person.hp, maxHp: stats.maxHp, bodyArmor: stats.bodyArmor, attachmentArmor: stats.attachmentArmor, headArmor: stats.headArmor,
       maxBodyArmor: stats.maxBodyArmor, maxAttachmentArmor: stats.maxAttachmentArmor, maxHeadArmor: stats.maxHeadArmor,
       shieldDurability: stats.shieldDurability, maxShieldDurability: stats.maxShieldDurability,
@@ -2112,7 +2120,7 @@ export function startBattle(state, encounterId) {
     const shieldDefense = getItem(gear.shield)?.defense ?? 0;
     const hp = 25 + camp.difficulty * 12 + rank * 8 + (index === 0 && camp.difficulty === 3 ? 12 : 0);
     return {
-      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 6) : 11 - Math.floor(index / 6), r: 1 + index % 6,
+      id: `enemy-${index + 1}`, name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + FRONT_FORMATION[index % 12],
       hp, maxHp: hp, bodyArmor: armorMaximum(gear.armor), attachmentArmor: armorMaximum(gear.attachment), headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: armorMaximum(gear.attachment), maxHeadArmor: armorMaximum(gear.helmet),
       shieldDurability: shieldMaximum(gear.shield), maxShieldDurability: shieldMaximum(gear.shield),
@@ -2137,7 +2145,7 @@ export function startBattle(state, encounterId) {
     const gear = { armor: 'patched-coat', attachment: null, helmet: 'cloth-hood',
       weapon: ['arming-sword', 'spear', 'bludgeon'][index], shield: index === 1 ? 'round-shield' : 'buckler', mount: null };
     const occupied = new Set([...company, ...enemies, ...allies].map(unit => `${unit.q},${unit.r}`));
-    const point = [3, 4, 0, 1, 2].flatMap(q => [2, 3, 4, 1, 5, 0, 6, 7].map(r => ({ q, r })))
+    const point = [3, 4, 0, 1, 2].flatMap(q => FRONT_FORMATION.map(row => ({ q, r: row + 2 })))
       .find(hex => passableHex(hex, field) && !occupied.has(`${hex.q},${hex.r}`));
     const shield = shieldMaximum(gear.shield);
     allies.push({ id: `ally-${index + 1}`, name: encounterType === 'rescue' ? ['Caravan Guard', 'Wagon Spearman', 'Caravan Veteran'][index]
@@ -3167,7 +3175,7 @@ function passableHex(point, field) { return validHex(point, field) && tileAt(fie
 
 function validateBattleField(input) {
   if (input === undefined) return legacyBattleField();
-  assert(recordObject(input) && (input.columns === 14 && input.rows === 8 || input.columns === 10 && input.rows === 5), 'battle field size');
+  assert(recordObject(input) && (input.columns === 14 && [8, 16].includes(input.rows) || input.columns === 10 && input.rows === 5), 'battle field size');
   assert(['plains', 'forest', 'mountain', 'marsh'].includes(input.biome), 'battle field biome');
   assert(Array.isArray(input.tiles) && input.tiles.length === input.columns * input.rows, 'battle field tiles');
   const tiles = input.tiles.map((tile, index) => {
@@ -3554,7 +3562,7 @@ export function validateSave(input) {
     assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
   }
   const formation = input.formation === undefined ? seedFormation(input.party) : input.formation;
-  assert(Array.isArray(formation) && formation.length === 12 && formation.every(id => id === null || ids.has(id)) && formation.filter(id => id !== null).length === ids.size && new Set(formation.filter(id => id !== null)).size === ids.size, 'formation');
+  assert(Array.isArray(formation) && [12, 36].includes(formation.length) && formation.every(id => id === null || ids.has(id)) && formation.filter(id => id !== null).length === ids.size && new Set(formation.filter(id => id !== null)).size === ids.size, 'formation');
   const camps = input.camps === undefined ? {} : input.camps;
   assert(recordObject(camps) && Object.keys(camps).every(isCampId), 'camps');
   for (const [id,entry] of Object.entries(camps)) {
@@ -3670,7 +3678,7 @@ export function validateSave(input) {
   return {
     version: 1, seed: input.seed, day: input.day, hour: input.hour,
     gold: input.gold, food: input.food, renown: input.renown,
-    party, formation: [...formation],
+    party, formation: expandedFormation(formation),
     inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
     marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => {
       const town = TOWN_BY_ID.get(id);

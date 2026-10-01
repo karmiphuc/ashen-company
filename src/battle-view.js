@@ -42,7 +42,7 @@ function percent(value, maximum) {
 function fieldModel(battle) {
   const source = battle?.field && typeof battle.field === 'object' ? battle.field : LEGACY_FIELD;
   const columns = Math.max(4, Math.min(20, Math.floor(number(source.columns, 10))));
-  const rows = Math.max(3, Math.min(12, Math.floor(number(source.rows, 5))));
+  const rows = Math.max(3, Math.min(16, Math.floor(number(source.rows, 5))));
   const supplied = Array.isArray(source.tiles) ? source.tiles : [];
   const byCoordinate = new Map();
   for (const tile of supplied) {

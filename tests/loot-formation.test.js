@@ -44,20 +44,20 @@ function setLootTestGear(state) {
   enemies[0].headArmor = 3;
 }
 
-test('formation saves 12 unique slots, recruits into a vacancy, and deploys by row', () => {
+test('formation saves 36 unique slots, recruits into a vacancy, and deploys by row', () => {
   const state = createGame(1201);
   const original = getFormation(state);
-  assert.equal(original.length, 12);
+  assert.equal(original.length, 36);
   assert.equal(original.filter(Boolean).length, state.party.length);
   assert.deepEqual(new Set(original.filter(Boolean)), new Set(state.party.map(person => person.id)));
-  assert.equal(original.slice(6).filter(Boolean).length, 0, 'the starter company has no ranged weapon yet');
+  assert.equal(original.slice(12).filter(Boolean).length, 0, 'the starter company has no ranged weapon yet');
 
   const captainSlot = original.indexOf('captain');
   assert.equal(moveFormation(state, captainSlot, 11).ok, true);
   assert.equal(getFormation(state)[11], 'captain');
   assert.equal(getFormation(state)[captainSlot], null);
   const beforeInvalid = structuredClone(state.formation);
-  for (const [from, to] of [[-1, 0], [12, 0], [0, 12], [captainSlot, captainSlot]]) {
+  for (const [from, to] of [[-1, 0], [36, 0], [0, 36], [captainSlot, captainSlot]]) {
     assert.equal(moveFormation(state, from, to).ok, false);
     assert.deepEqual(state.formation, beforeInvalid);
   }
@@ -81,11 +81,47 @@ test('formation saves 12 unique slots, recruits into a vacancy, and deploys by r
   const lockedFormation = structuredClone(state.formation);
   assert.equal(moveFormation(state, 0, 1).ok, false, 'formation cannot change during battle');
   assert.deepEqual(state.formation, lockedFormation);
-  const expected = new Map(getFormation(state).flatMap((id, slot) => id ? [[id, { q: slot < 6 ? 2 : 1, r: 1 + slot % 6 }]] : []));
+  const expected = new Map(getFormation(state).flatMap((id, slot) => id ? [[id, { q: 2 - Math.floor(slot / 12), r: 2 + slot % 12 }]] : []));
   for (const unit of state.battle.units.filter(entry => entry.side === 'company')) {
     assert.deepEqual({ q: unit.q, r: unit.r }, expected.get(unit.id));
   }
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
+});
+
+test('all three formation ranks and outer rows deploy with flank space', () => {
+  const state = createGame(1234);
+  for (const [id, destination] of [['captain', 0], ['guard', 23], ['scout', 35]]) {
+    assert.equal(moveFormation(state, getFormation(state).indexOf(id), destination).ok, true);
+  }
+  const site = approachCamp(state);
+  assert.equal(startBattle(state, site.id).ok, true);
+  for (const [id, q, r] of [['captain', 2, 2], ['guard', 1, 13], ['scout', 0, 13]]) {
+    const unit = state.battle.units.find(unit => unit.id === id);
+    assert.deepEqual({ q: unit.q, r: unit.r }, { q, r });
+  }
+  assert.equal(state.battle.field.rows, 16);
+  assert.deepEqual(validateSave(structuredClone(state)), state);
+});
+
+test('old twelve-slot formations expand without moving an active eight-row battle', () => {
+  const state = createGame(1235);
+  const site = approachCamp(state);
+  startBattle(state, site.id);
+  state.formation = Array(12).fill(null);
+  state.formation[0] = 'captain';
+  state.formation[5] = 'guard';
+  state.formation[11] = 'scout';
+  state.battle.field.rows = 8;
+  state.battle.field.tiles = state.battle.field.tiles.filter(tile => tile.r < 8);
+  state.battle.units.forEach((unit, index) => { unit.r = index % 6 + 1; });
+  const originalBattle = structuredClone(state.battle);
+  const restored = validateSave(state);
+  assert.equal(restored.formation.length, 36);
+  assert.equal(restored.formation[3], 'captain');
+  assert.equal(restored.formation[8], 'guard');
+  assert.equal(restored.formation[32], 'scout');
+  assert.deepEqual(restored.battle, originalBattle);
+  assert.deepEqual(validateSave(restored), restored);
 });
 
 test('a fallen member leaves an empty formation slot while survivors retain order', () => {
@@ -247,7 +283,7 @@ test('legacy formations and loot migrate while malformed formation or condition 
   assert.deepEqual(validateSave(migrated), migrated);
 
   for (const mutate of [
-    save => { save.formation[0] = save.formation[1]; },
+    save => { save.formation[0] = 'captain'; },
     save => { save.formation[save.formation.indexOf('captain')] = null; },
     save => { save.formation.pop(); },
     save => { save.battle.loot.itemConditions.pop(); },

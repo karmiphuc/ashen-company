@@ -1,5 +1,5 @@
 export const BATTLE_COLUMNS = 14;
-export const BATTLE_ROWS = 8;
+export const BATTLE_ROWS = 16;
 export const TILE_TERRAINS = Object.freeze(['open', 'trees', 'brush', 'mud', 'rock', 'dense-trees']);
 
 const DIRECTIONS = [[1, 0], [1, -1], [0, 1], [0, -1], [-1, 0], [-1, 1]];
@@ -50,7 +50,7 @@ export function createBattleField(seed, encounterId, biome) {
   const hillCount = biome === 'mountain' ? 3 : biome === 'marsh' ? 1 : 2;
   const hills = Array.from({ length: hillCount }, (_, index) => ({
     q: 1 + Math.floor(random(`${seed}:${encounterId}:hill-q:${index}`) * 12),
-    r: 1 + Math.floor(random(`${seed}:${encounterId}:hill-r:${index}`) * 6),
+    r: 1 + Math.floor(random(`${seed}:${encounterId}:hill-r:${index}`) * (BATTLE_ROWS - 2)),
     radius: biome === 'mountain' ? 3.5 : biome === 'forest' ? 2.8 : 2.2,
   }));
   const tiles = [];

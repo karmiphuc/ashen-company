@@ -134,6 +134,16 @@ test('14 by 8 terrain fields render inspectable cover, height, and elevation-ali
   assert.doesNotMatch(html,/NaN|undefined/);
 });
 
+test('sixteen-row fields render every tile and units on the last row', () => {
+  const field = { columns: 14, rows: 16, biome: 'plains', tiles: [] };
+  const expanded = { ...battle, field, units: [{ ...units[0], q: 2, r: 15 }] };
+  const html = battleHTML(expanded, 0);
+  assert.equal((html.match(/class="battle-hex /g) || []).length, 224);
+  assert.match(html, /plains · 14 × 16/);
+  assert.match(html, /data-q="13" data-r="15"/);
+  assert.doesNotMatch(html, /NaN|undefined/);
+});
+
 test('fieldless legacy battles keep a flat 10 by 5 battlefield', () => {
   const html=battleHTML(battle,0);
   assert.equal((html.match(/class="battle-hex /g)||[]).length,50);

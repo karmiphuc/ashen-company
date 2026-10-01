@@ -78,16 +78,17 @@ export function resourceHTML(state, speed) {
 }
 
 export function formationHTML(state, selectedIndex=null) {
-  const formation=getFormation(state);
+  const savedFormation=getFormation(state);
+  const formation=Array.from({length:36},(_,index)=>savedFormation[index]??null);
   const selectedId=Number.isInteger(selectedIndex)?formation[selectedIndex]:null;
   const selectedPerson=state.party.find(person=>person.id===selectedId);
   const slot=(index,line,position)=>{
     const member=state.party.find(person=>person.id===formation[index]);
     const selected=index===selectedIndex;
-    return `<button class="formation-slot ${member?'is-occupied':'is-empty'} ${selected?'is-selected':''}" data-formation-slot="${index}" aria-pressed="${selected}" aria-label="${line} position ${position}: ${member?esc(member.name):'empty'}${selected?', selected':''}">${member?`${portraitHTML(member,getEquipment(member),44)}<span><strong>${esc(member.name)}</strong><small>${selected?'Selected · tap a destination':`${line} ${position}`}</small></span>`:`<span class="formation-empty"><strong>Empty</strong><small>${line} ${position}</small></span>`}</button>`;
+    return `<button class="formation-slot ${member?'is-occupied':'is-empty'} ${selected?'is-selected':''}" data-formation-slot="${index}" aria-pressed="${selected}" aria-label="${line} position ${position}: ${member?esc(member.name):'empty'}${selected?', selected':''}">${member?`${portraitHTML(member,getEquipment(member),34)}<span><strong>${esc(member.name)}</strong><small>${selected?'Selected · tap a destination':`${line} ${position}`}</small></span>`:`<span class="formation-empty"><strong>Empty</strong><small>${line} ${position}</small></span>`}</button>`;
   };
-  const line=(front)=>Array.from({length:6},(_,row)=>slot((front?0:6)+row,front?'Front':'Rear',row+1)).join('');
-  return `<section class="formation-editor"><p class="formation-help" role="status">${selectedPerson?`${esc(selectedPerson.name)} selected. Tap another position to move or swap; tap the selected position again to cancel.`:'Tap a fighter, then tap another position to move or swap.'}</p><div class="formation-board"><section><h3>Rear line</h3><div class="formation-line">${line(false)}</div></section><section><h3>Front line</h3><div class="formation-line">${line(true)}</div></section><div class="formation-enemy" aria-label="Enemies approach from the right"><span aria-hidden="true">&rarr;</span><strong>Enemy line</strong></div></div><p class="formation-note">Front fighters begin closer to the enemy. Rear fighters start one hex behind them. Formation is locked once battle begins.</p></section>`;
+  const line=(name,start)=>Array.from({length:12},(_,row)=>slot(start+row,name,row+1)).join('');
+  return `<section class="formation-editor"><p class="formation-help" role="status">${selectedPerson?`${esc(selectedPerson.name)} selected. Tap another position to move or swap; tap the selected position again to cancel.`:'Tap a fighter, then tap another position to move or swap.'}</p><div class="formation-board"><section class="formation-column formation-rear"><h3>Rear</h3><div class="formation-line">${line('Rear',24)}</div></section><section class="formation-column formation-middle"><h3>Middle</h3><div class="formation-line">${line('Middle',12)}</div></section><section class="formation-column formation-front"><h3>Front</h3><div class="formation-line">${line('Front',0)}</div></section><div class="formation-enemy" aria-label="Enemies approach from the right"><span aria-hidden="true">&rarr;</span><strong>Enemy line</strong></div></div><p class="formation-note">Front positions begin closest to the enemy; Middle and Rear begin progressively farther back. Formation is locked once battle begins.</p></section>`;
 }
 
 function conditionRow(label, current, max, type, status='') {

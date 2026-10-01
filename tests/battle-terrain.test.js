@@ -26,9 +26,9 @@ test('procedural fields are deterministic, complete and connected', () => {
     const field = createBattleField(7391, 'quarry-camp:1', biome);
     assert.deepEqual(field, createBattleField(7391, 'quarry-camp:1', biome));
     assert.equal(field.columns, 14);
-    assert.equal(field.rows, 8);
-    assert.equal(field.tiles.length, 112);
-    assert.equal(new Set(field.tiles.map(tile => `${tile.q},${tile.r}`)).size, 112);
+    assert.equal(field.rows, 16);
+    assert.equal(field.tiles.length, 224);
+    assert.equal(new Set(field.tiles.map(tile => `${tile.q},${tile.r}`)).size, 224);
     const walkable = field.tiles.filter(tile => tile.terrain !== 'dense-trees');
     const seen = new Set([`${walkable[0].q},${walkable[0].r}`]);
     const queue = [walkable[0]];
@@ -88,7 +88,7 @@ test('battle movement spends terrain cost and deployed units never overlap', () 
   const base = createGame(5);
   approach(base);
   assert.equal(base.battle.field.columns, 14);
-  assert.equal(base.battle.field.rows, 8);
+  assert.equal(base.battle.field.rows, 16);
   assert.equal(new Set(base.battle.units.map(unit => `${unit.q},${unit.r}`)).size, base.battle.units.length);
   assert.ok(base.battle.units.every(unit => tileAt(base.battle.field, unit.q, unit.r).terrain !== 'dense-trees'));
   const open = structuredClone(base);
@@ -215,9 +215,9 @@ test('new fields round-trip, malformed fields fail, and fieldless active saves s
   }
   const old = createGame(12);
   approach(old);
-  for (const unit of old.battle.units) {
-    if (unit.side === 'enemy') { unit.q = unit.equipment.weapon === 'hunting-bow' ? 8 : 7; unit.r -= 1; }
-    else unit.r -= 1;
+  for (const [index, unit] of old.battle.units.entries()) {
+    if (unit.side === 'enemy') unit.q = unit.equipment.weapon === 'hunting-bow' ? 8 : 7;
+    unit.r = index % 5;
   }
   delete old.battle.field;
   old.battle.lastEvent = null;
