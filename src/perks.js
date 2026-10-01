@@ -29,7 +29,7 @@ export const PERKS = Object.freeze([
   { id: 'brawny', name: 'Brawny', description: 'Reduce armor and helmet fatigue penalties by 30%.', minLevel: 4 },
   { id: 'bow-mastery', name: 'Bow Mastery', description: 'Gain +1 range with bows and reduce their attack fatigue by 25%.', minLevel: 5 },
   { id: 'crossbow-mastery', name: 'Crossbow Mastery', description: 'Crossbow attacks gain +20 percentage points of armor penetration and cost 25% less fatigue.', minLevel: 5 },
-  { id: 'berserk', name: 'Berserk', description: 'After a kill, gain 2 AP for one immediate bonus action, once per round.', minLevel: 7 },
+  { id: 'berserk', name: 'Berserk', description: 'After a kill in a new battle, gain 4 AP for immediate actions, once per round. Old battles retain 2 AP.', minLevel: 7 },
   { id: 'killing-frenzy', name: 'Killing Frenzy', description: 'After a kill, deal 25% more damage through the next 2 rounds.', minLevel: 8 },
   { id: 'battle-flow', name: 'Battle Flow', description: 'Recover 10 fatigue after a kill.', minLevel: 5 },
   { id: 'fearsome', name: 'Fearsome', description: 'Health damage from a hit inflicts 10 additional morale damage.', minLevel: 8 },

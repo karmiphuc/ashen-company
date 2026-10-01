@@ -28,7 +28,7 @@ test('mounts use their own slot, conserve ownership, and migrate old saves', () 
   assert.equal(equipItem(state, 'captain', 'warg-mount', 'reserve').ok, false);
 });
 
-test('living mounted members add world speed and daily food, with battle skill and damage properties', () => {
+test('living mounted members add world speed, daily food, initiative, and battle skill', () => {
   const mounted = createGame(28);
   const plain = createGame(28);
   mounted.inventory.push('dire-wolf-mount');
@@ -36,6 +36,7 @@ test('living mounted members add world speed and daily food, with battle skill a
   assert.equal(equipItem(mounted, 'captain', 'dire-wolf-mount').ok, true);
   assert.equal(getCompanyStats(mounted.party[0]).meleeSkill, getCompanyStats(plain.party[0]).meleeSkill + 5);
   assert.equal(getCompanyStats(mounted.party[0]).rangedSkill, getCompanyStats(plain.party[0]).rangedSkill + 5);
+  assert.equal(getCompanyStats(mounted.party[0]).initiative, getCompanyStats(plain.party[0]).initiative + 4);
   assert.equal(getDailyFood(mounted), getDailyFood(plain) + 3);
   assert.equal(getCompanyTravelBonus(mounted), .1);
   for (const state of [mounted, plain]) for (const band of Object.values(state.bands)) band.defeatedUntil = 1000;
@@ -46,11 +47,13 @@ test('living mounted members add world speed and daily food, with battle skill a
   mounted.party[0].hp = 0;
   assert.equal(getCompanyTravelBonus(mounted), 0);
   assert.equal(getDailyFood(mounted), plain.party.length);
+  assert.equal(getCompanyStats(mounted.party[0]).initiative, getCompanyStats(plain.party[0]).initiative);
   for (const id of mountIds) {
     const item = getItem(id);
     assert.equal(item.slot, 'mount');
     assert.equal(item.damageBonus, id === 'armored-war-horse' ? .2 : .15);
-    assert.equal(item.movementBonus, 1);
+    assert.equal(item.movementBonus, 2);
+    assert.equal(item.initiativeBonus, 4);
   }
 });
 
@@ -168,6 +171,7 @@ test('rare mounted elites are visible while scouting and keep their mount in bat
   const elite = state.battle.units.find(unit => unit.id === 'enemy-1');
   assert.equal(elite.equipment.mount, band.enemies[0].mount);
   assert.ok(mountIds.includes(elite.equipment.mount));
+  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + 4);
   assert.deepEqual(validateSave(state), state);
 });
 
@@ -181,6 +185,8 @@ test('a mount can carry its rider farther in a combat turn', () => {
     mounted.position = { x: 440, y: 520 };
     startBattle(mounted, 'quarry-camp');
     const plain = structuredClone(mounted);
+    const mountedRider = mounted.battle.units.find(unit => unit.id === 'captain');
+    assert.equal(mountedRider.movementCredit, 4, 'the +2 movement points cover two extra open-ground hexes at start of turn');
     for (const state of [mounted, plain]) {
       const battle = state.battle;
       battle.turnIndex = battle.turnOrder.indexOf('captain');

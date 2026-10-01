@@ -327,7 +327,7 @@ test('damage, morale, and Recover perks have concrete battle effects', () => {
 
 });
 
-test('Berserk grants one immediate action without a second turn recovery and starts Killing Frenzy', () => {
+test('Berserk grants 4 AP once per round without a second turn recovery and starts Killing Frenzy', () => {
   const fight = battleWithCaptain(['berserk', 'killing-frenzy']);
   const second = fight.battle.units.find(unit => unit.id === 'enemy-2');
   const third = fight.battle.units.find(unit => unit.id === 'enemy-3');
@@ -341,10 +341,10 @@ test('Berserk grants one immediate action without a second turn recovery and sta
   advanceBattle(fight.state);
   assert.equal(fight.target.alive, false);
   assert.equal(fight.battle.activeId, 'captain');
-  assert.equal(fight.captain.ap, 7, 'Berserk adds 2 AP to the 5 left after a 4 AP attack');
+  assert.equal(fight.captain.ap, 9, 'Berserk adds 4 AP to the 5 left after a 4 AP attack');
   assert.equal(fight.captain.berserkRound, fight.battle.round);
   assert.equal(fight.captain.frenzyUntilRound, fight.battle.round + 2);
-  assert.match(fight.battle.lastEvent.message, /Killing Frenzy: \+25% damage\. Berserk: \+2 AP\./);
+  assert.match(fight.battle.lastEvent.message, /Killing Frenzy: \+25% damage\. Berserk: \+4 AP\./);
   const reloaded = validateSave(JSON.parse(JSON.stringify(fight.state)));
   const fatigue = fight.captain.fatigue;
   advanceBattle(fight.state);
@@ -354,8 +354,38 @@ test('Berserk grants one immediate action without a second turn recovery and sta
   assert.equal(second.alive, false);
   assert.equal(third.alive, true);
   assert.doesNotMatch(fight.battle.lastEvent.message, /Berserk:/, 'Berserk cannot trigger twice in one round');
-  assert.equal(fight.captain.ap, 3, 'the second 4 AP attack spends the remaining Berserk budget');
+  assert.equal(fight.captain.ap, 5, 'the second kill earns no extra AP in the same round');
   for (let action = 0; action < 5 && fight.battle.activeId === 'captain'; action++) advanceBattle(fight.state);
   assert.notEqual(fight.battle.activeId, 'captain');
   assert.deepEqual(validateSave(fight.state), fight.state);
+});
+
+test('new battle saves accept the Berserk AP ceiling and reject larger forged values', () => {
+  const state = createGame(252);
+  beginBattle(state);
+  const captain = state.battle.units.find(unit => unit.id === 'captain');
+  captain.ap = 13;
+  assert.equal(validateSave(JSON.parse(JSON.stringify(state))).battle.units.find(unit => unit.id === 'captain').ap, 13);
+  const forged = structuredClone(state);
+  forged.battle.units.find(unit => unit.id === 'captain').ap = 14;
+  assert.throws(() => validateSave(forged), /Invalid save: battle stamina/);
+});
+
+test('Berserk keeps the 2 AP effect in legacy active battles', () => {
+  const fight = battleWithCaptain(['berserk']);
+  fight.battle.rulesVersion = 1;
+  for (const unit of fight.battle.units) {
+    unit.ap = 2;
+    delete unit.shieldWallActive;
+    delete unit.aiTargetId;
+    delete unit.formationMovedRound;
+    delete unit.movementCredit;
+  }
+  Object.assign(fight.captain, { meleeSkill: 200 });
+  Object.assign(fight.target, { hp: 1, maxHp: 100 });
+  fight.battle.rng = 0;
+  advanceBattle(fight.state);
+  assert.equal(fight.captain.ap, 2);
+  assert.match(fight.battle.lastEvent.message, /Berserk: \+2 AP\./);
+  assert.equal(validateSave(fight.state).battle.units.find(unit => unit.id === 'captain').ap, 2);
 });

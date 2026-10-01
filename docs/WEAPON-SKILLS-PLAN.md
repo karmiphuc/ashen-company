@@ -32,7 +32,7 @@ Weapon tiers share their family's skills. Better and famed weapons apply their e
 - Normal attacks retain existing weapon fatigue costs. Recover costs 9 AP and removes 22 fatigue; its perk retains stronger recovery. Passive recovery becomes 15 fatigue per turn.
 - Weapon-set and pocket-weapon swaps cost 4 AP; consumables cost 4 AP. Crossbows use 3 AP to shoot and 4 AP to reload.
 - Other families retain their basic attack: 4 AP for one-handed/throwing weapons, 6 AP for two-handed/reach weapons. Signature skills follow later.
-- Berserk retains **+2 AP once per round**, spent normally rather than granting a free attack.
+- Berserk grants **+4 AP once per round in new battles**; existing active battles retain +2 AP. The bonus is spent normally rather than granting a free attack.
 
 ## Automatic decisions and friendly fire
 
@@ -60,7 +60,7 @@ Preserve archer spacing and sensible weapon swapping. Equipment details show ski
 - AI evaluation must not consume random rolls or inspect future rolls. Kill probabilities and allied damage bounds use visible combat state and the same damage rules as execution.
 - Stances expire at the owner's next turn or when required equipment is swapped. Reactions cannot trigger further reactions and cost 5 fatigue each.
 - Stun skips the target's next turn; it cannot be reapplied until that target subsequently takes a normal turn. Knock Back requires a free destination with at most one elevation difference and cancels stances when it moves the target.
-- Save preferences, statuses, remaining AP, and weapon loading state. Existing brothers default to Balanced. The implemented compatibility policy keeps existing active battles on their original 2 AP rules, preserving positions, health, equipment, and progress. New battles use 9 AP, with Berserk adding 2 AP once per round.
+- Save preferences, statuses, remaining AP, and weapon loading state. Existing brothers default to Balanced. The implemented compatibility policy keeps existing active battles on their original 2 AP rules, preserving positions, health, equipment, and progress. New battles use 9 AP, with Berserk adding 4 AP once per round; old active battles keep its 2 AP effect.
 - **Repairable shields are implemented in v0.33:** broken shields stay owned and can be repaired with tools or at a Smithy. Shield skills preserve that durability system.
 - No manual targeting, new injuries, new weapon items, or permanent shield destruction in this release.
 

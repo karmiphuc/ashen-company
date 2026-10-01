@@ -40,7 +40,7 @@ These 19 implemented perks use names familiar to Battle Brothers players. The so
 | Pathfinder | Lower movement AP and Fatigue costs on difficult ground | Reduce rough terrain and uphill movement costs by 1, to a minimum of 1. Unlocks at level 2. |
 | Fast Adaptation | Stacking +10% hit chance after each miss, reset on hit | Gain +10 hit chance after each consecutive miss. The bonus resets on a hit. Unlocks at level 2. |
 | Executioner | +20% damage to an injured target | Deal 20% more damage to a target below full health. Unlocks at level 3. |
-| Berserk | Refund 4 AP on kill, at most once each turn | After a kill, gain 2 AP for one immediate bonus action, once per round. Unlocks at level 7. |
+| Berserk | Refund 4 AP on kill, at most once each turn | After a kill, gain 4 AP in new battles or 2 AP in older active battles, once per round. Unlocks at level 7. |
 | Killing Frenzy | +25% damage for two turns after a kill; refreshes | After a kill, deal 25% more damage through the next 2 rounds. Unlocks at level 8. |
 | Dodge | Defense equals 15% of current Initiative | Gain 15% of current initiative as melee and ranged defense. Unlocks at level 3. |
 | Student | +20% battle XP, with perk-point refund at level 11 | Gain 20% more experience from battle. Unlocks at level 2. |

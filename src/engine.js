@@ -442,6 +442,7 @@ export function getCompanyStats(person) {
   const equipped = getEquipment(person);
   const famedStatBonus = key => (equipped.armor?.statBonuses?.[key] ?? 0) + (equipped.helmet?.statBonuses?.[key] ?? 0);
   const mountHit = person.hp > 0 ? equipped.mount?.hitBonus ?? 0 : 0;
+  const mountInitiative = person.hp > 0 ? equipped.mount?.initiativeBonus ?? 0 : 0;
   const armorFatigue = (equipped.armor?.fatigue ?? 0) + (equipped.attachment?.fatigue ?? 0) + (equipped.helmet?.fatigue ?? 0);
   const otherFatigue = (equipped.weapon?.fatigue ?? 0) + (equipped.shield?.fatigue ?? 0);
   const fatigue = otherFatigue + (hasPerk(person, 'brawny') ? Math.floor(armorFatigue * .7) : armorFatigue);
@@ -457,7 +458,7 @@ export function getCompanyStats(person) {
   const shieldDefense = (person.armorDurability?.shield ?? shieldMaximum(person.equipment?.shield)) > 0 ? equipped.shield?.defense ?? 0 : 0;
   const effectiveShieldDefense = (hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense)
     + (shieldDefense && hasPerk(person, 'shield-bearer') ? 5 : 0);
-  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0)
+  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) + mountInitiative
     - (hasPerk(person, 'relentless') ? Math.ceil(fatigue / 2) : fatigue));
   const dodgeDefense = hasPerk(person, 'dodge') ? Math.floor(initiative * .15) : 0;
   const nimbleDefense = armorFatigue <= 15 && hasPerk(person, 'nimble') ? 5 : 0;
@@ -2151,7 +2152,7 @@ export function startBattle(state, encounterId) {
       meleeSkill: 30 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0), rangedSkill: 28 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0),
       meleeDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense,
       rangedDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense,
-      maxFatigue: 85, initiative: 75 + camp.difficulty * 6 + rank * 3, resolve: 32 + camp.difficulty * 8 + rank * 4,
+      maxFatigue: 85, initiative: 75 + camp.difficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0), resolve: 32 + camp.difficulty * 8 + rank * 4,
     };
   });
   const jointBattle = encounterType === 'rescue' || encounterType === 'camp' && state.contract?.type === 'assault'
@@ -2859,9 +2860,9 @@ function attackTarget(state, actor, target, weapon, option = null) {
       perkProcs.push('Killing Frenzy: +25% damage.');
     }
     if (hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round) {
-      actor.ap = battle.rulesVersion === 2 ? actor.ap + 2 : 2;
+      actor.ap = battle.rulesVersion === 2 ? actor.ap + 4 : 2;
       actor.berserkRound = battle.round;
-      perkProcs.push('Berserk: +2 AP.');
+      perkProcs.push(`Berserk: +${battle.rulesVersion === 2 ? 4 : 2} AP.`);
     }
   }
   const message = `${actor.name} hits ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}`;
@@ -2960,7 +2961,7 @@ function advanceBattleV2(state) {
       return result(true, message);
     }
   }
-  if (companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round) {
+  if (companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round && (weapon.ranged || !nearbyTarget)) {
     const reform = shieldWallReformStep(state, actor);
     if (reform) {
       const cost = battleMoveApCost(battle, actor, actor, reform);
@@ -3014,29 +3015,30 @@ function advanceBattleV2(state) {
         preventedDamage: target.meleeSkill * .18, incomingDamage: 2, bonus: actor.skillPreference === 'control' ? 8 : -6 });
     }
   }
-  if (actor.equipment.shield && actor.shieldDurability > 0 && !actor.shieldWallActive && actor.fatigue + 20 <= actor.maxFatigue) {
+  const surrounded = enemies.filter(enemy => hexDistance(actor, enemy) <= 1).length >= 2;
+  if (actor.equipment.shield && actor.shieldDurability > 0 && !actor.shieldWallActive && actor.fatigue + 20 <= actor.maxFatigue
+    && (companyTactic !== 'offense' || surrounded)) {
     candidates.push({ id: 'shieldwall', type: 'shieldwall', apCost: 4, fatigueCost: 20,
       preventedDamage: nearest <= 2 ? shieldDefenseFor(actor, actor.equipment.shield) * .8 : 0,
       bonus: battle.tactic === 'shield-wall' && nearest <= 2 ? 5 : -8 });
   }
   const targetPaths = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range, weapon.ranged === true) }))
-    .filter(entry => entry.path?.length).sort((a, b) => pathCost(battle, actor, actor, a.path) - pathCost(battle, actor, actor, b.path));
+    .filter(entry => entry.path?.length).sort((a, b) => pathCost(battle, actor, actor, a.path) - pathCost(battle, actor, actor, b.path)
+      || a.target.id.localeCompare(b.target.id));
+  const pursuit = (companyTactic === 'focus' && targetPaths.find(entry => entry.target.id === battle.focusTargetId))
+    || targetPaths.find(entry => entry.target.id === actor.aiTargetId) || targetPaths[0];
   const formationLocked = companyTactic === 'advance-formation' && (actor.formationMovedRound === battle.round
     || companyInMeleeContact(battle) || battle.formationAdvance?.completedRound >= battle.round);
   const wallLocked = companyTactic === 'shield-wall' && (actor.formationMovedRound === battle.round
     || battle.round - battle.lastContactRound < 4);
-  for (const entry of formationLocked || wallLocked || nearbyTarget ? [] : targetPaths.slice(0, 3)) {
-    const direct = noAmmo ? hexNeighbors(battle.field, actor)
-      .filter(point => Number.isFinite(battleMovementCost(battle, actor, actor, point))
-        && !battle.units.some(unit => unit.alive && unit.q === point.q && unit.r === point.r))
-      .sort((a, b) => hexDistance(a, entry.target) - hexDistance(b, entry.target) || b.q - a.q || a.r - b.r)[0] : null;
-    const point = direct && hexDistance(direct, entry.target) < hexDistance(actor, entry.target) ? direct : entry.path[0];
+  for (const entry of formationLocked || wallLocked || nearbyTarget || !pursuit ? [] : [pursuit]) {
+    const point = entry.path[0];
     const apCost = battleMoveApCost(battle, actor, actor, point);
     const alliesOnTarget = battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id
       && hexDistance(unit, entry.target) <= 1).length;
     const adjacentThreats = enemies.filter(enemy => hexDistance(point, enemy) <= 1).length;
     candidates.push({ id: `move-${entry.target.id}`, type: 'move', targetId: entry.target.id, point, apCost,
-      fatigueCost: movementFatigue(actor, battleMovementCost(battle, actor, actor, point)), bonus: 8 + Math.min(6, hexDistance(actor, entry.target)) + (noAmmo ? 15 : 0)
+      fatigueCost: movementFatigue(actor, battleMovementCost(battle, actor, actor, point)), bonus: 14 + (noAmmo ? 15 : 0)
         + (companyTactic === 'advance-formation' || companyTactic === 'shield-wall' ? 20 : 0),
       spacingGain: weapon.ranged ? nearestEnemyDistance(battle, actor, point) - nearest : 0,
       flankGain: alliesOnTarget && hexDistance(point, entry.target) <= 1 && hexDistance(actor, entry.target) > 1 ? 1 : 0,
@@ -3050,6 +3052,11 @@ function advanceBattleV2(state) {
       fatigueCost: movementFatigue(actor, retreat.cost), preventedDamage: 8, spacingGain: retreat.safety - nearest, bonus: 28 });
   }
   if (actor.ap >= 9) candidates.push({ id: 'recover', type: 'recover', apCost: 9, fatigueCost: 0, bonus: actor.fatigue >= actor.maxFatigue * .55 ? 18 : -20 });
+  if (!weapon.ranged && candidates.some(action => action.type === 'attack' && action.apCost <= actor.ap && hexDistance(actor, action.target) === 1)) {
+    for (let index = candidates.length - 1; index >= 0; index--) {
+      if (candidates[index].type === 'attack' && hexDistance(actor, candidates[index].target) > 1) candidates.splice(index, 1);
+    }
+  }
   if (companyTactic === 'focus' && candidates.some(action => action.type === 'attack' && action.targetId === battle.focusTargetId)) {
     for (let index = candidates.length - 1; index >= 0; index--) {
       if (candidates[index].type === 'attack' && candidates[index].targetId !== battle.focusTargetId) candidates.splice(index, 1);
@@ -3629,7 +3636,7 @@ function validateBattle(input, party, worldState) {
       && (unit.maxReserveShieldDurability === undefined || unit.maxReserveShieldDurability === maxReserveShieldDurability)
       && typeof battleSetSwapped === 'boolean', 'battle shield durability');
     assert(validCount(unit.seed) && unit.seed <= 0xffffffff, 'battle unit seed');
-    assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= (rulesVersion === 2 ? 11 : 2), 'battle stamina');
+    assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= (rulesVersion === 2 ? 13 : 2), 'battle stamina');
     assert(unit.shieldWallActive === undefined || rulesVersion === 2 && typeof unit.shieldWallActive === 'boolean', 'battle shieldwall');
     assert(unit.tacticalRole === undefined || COMBAT_ROLES.includes(unit.tacticalRole) && unit.tacticalRole !== 'auto', 'battle tactical role');
     assert(unit.skillPreference === undefined || SKILL_PREFERENCES.includes(unit.skillPreference), 'battle skill preference');

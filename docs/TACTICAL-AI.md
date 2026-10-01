@@ -10,6 +10,8 @@ The AI compares affordable actions using expected damage, kill probability, inco
 
 ## New battle rules
 
+Version 0.36 keeps a reachable pursuit target across movement steps and save reloads. Without a valid target, fighters choose the nearest reachable route; dead or blocked targets release the commitment. Melee fighters deal with adjacent enemies before farther targets, including with reach weapons. Shield Wall reformation does not pull a melee fighter away from an enemy already in reach. Under Offense, the Shieldwall skill is available only with at least two adjacent enemies; it remains an automatic choice rather than a mandatory action.
+
 New battles use 9 AP per turn. Old active battles retain their previous 2-AP rules, positions and progress. Settings default to Auto and Balanced when loading an older company.
 
 | Action | AP | Notes |
@@ -25,7 +27,7 @@ New battles use 9 AP per turn. Old active battles retain their previous 2-AP rul
 | Weapon swap / consumable | 4 | Quick Hands and Combat Bandaging retain their free first use each round. |
 | Recover | 9 | Recover 22 fatigue, or the stronger Recover perk effect. |
 
-Passive fatigue recovery is 15 per turn. Berserk grants 2 AP once per round after a kill; these AP must pay for actual actions. Throwing bundles retain their separate counts and paid refills. Shield durability, mounts, terrain, morale, masteries and named equipment remain in effect.
+Passive fatigue recovery is 15 per turn. Berserk grants 4 AP once per round after a kill in new battles; old active battles retain its 2 AP effect. These AP must pay for actual actions. Throwing bundles retain their separate counts and paid refills. Mounts add 2 movement and 4 initiative in battle while terrain continues to affect routes. Shield durability, morale, masteries and named equipment remain in effect.
 
 ## Verification
 

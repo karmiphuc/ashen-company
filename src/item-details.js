@@ -116,7 +116,8 @@ export function getItemDetails(item, condition) {
       { label: 'Company travel speed', value: `+${Math.round(item.travelBonus * 100)}% while equipped` },
       { label: 'Hit chance', value: `+${item.hitBonus} percentage points` },
       { label: 'Attack damage', value: `+${Math.round(item.damageBonus * 100)}%` },
-      { label: 'Combat movement', value: `+${item.movementBonus} movement point per turn` },
+      { label: 'Combat movement', value: `+${item.movementBonus} movement points per turn` },
+      { label: 'Initiative', value: `+${item.initiativeBonus}` },
       { label: 'Extra daily food', value: String(item.foodUpkeep) },
     );
     notes.push('One mount fits the dedicated mount slot. Each living mounted brother adds 10% to company travel speed; three mounts give +30%. Stashed mounts give no bonus and consume no food.');
