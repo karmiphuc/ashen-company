@@ -362,7 +362,7 @@ test('critical wounds take healing priority in melee before fatigue relief or sh
   assert.equal(actor.hp, 74);
   assert.equal(actor.accessories[0], 'stimulant');
   assert.equal(actor.accessories[1], null);
-  assert.equal(actor.ap, 0);
+  assert.equal(actor.ap, 5);
   assert.deepEqual(validateSave(state), state);
 });
 
@@ -388,9 +388,11 @@ test('Combat Bandaging keeps the turn after one heal and preserves its round lim
   advanceBattle(restored);
   const restoredActor = restored.battle.units.find(unit => unit.id === actor.id);
   assert.equal(restored.battle.lastEvent.itemId, 'bandages');
-  assert.equal(restoredActor.ap, 0);
-  assert.notEqual(restored.battle.activeId, actor.id);
+  assert.equal(restoredActor.ap, 5);
+  assert.equal(restored.battle.activeId, actor.id, 'the paid heal leaves enough AP for another action');
   assert.deepEqual(restoredActor.accessories, [null, null]);
+  advanceBattle(restored);
+  assert.notEqual(restored.battle.lastEvent.type, 'use', 'spent bandages cannot be used again');
 });
 
 test('Combat Bandaging heals under pressure and still attacks on the next action', () => {
@@ -408,7 +410,7 @@ test('Combat Bandaging heals under pressure and still attacks on the next action
   assert.equal(battle.activeId, actor.id);
   advanceBattle(state);
   assert.equal(battle.lastEvent.type, 'attack');
-  assert.equal(actor.ap, 0);
+  assert.equal(actor.ap, 5);
   assert.equal(actor.accessories[0], null);
   assert.deepEqual(validateSave(state), state);
 });
@@ -436,8 +438,11 @@ test('Quick Hands gives one free set swap per round and its limit survives reloa
   const restoredActor = restored.battle.units.find(unit => unit.id === actor.id);
   assert.equal(restored.battle.lastEvent.type, 'swap');
   assert.equal(restoredActor.equipment.weapon, 'greatsword');
-  assert.equal(restoredActor.ap, 0);
-  assert.notEqual(restored.battle.activeId, actor.id);
+  assert.equal(restoredActor.ap, 5);
+  assert.equal(restored.battle.activeId, actor.id, 'the paid swap leaves AP for a follow-up action');
+  advanceBattle(restored);
+  assert.equal(restoredActor.equipment.weapon, 'greatsword');
+  assert.notEqual(restored.battle.lastEvent.type, 'swap', 'the empty ranged reserve stays stowed');
 });
 
 test('Quick Hands covers pocket draw and stow, then continues the same turn', () => {

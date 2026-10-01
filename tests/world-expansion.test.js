@@ -27,6 +27,12 @@ function defeatCamp(state, id) {
   state.destination = null;
   state.pursuit = null;
   assert.equal(startBattle(state, id).ok, true);
+  // This fixture tests camp cooldowns rather than starter-company combat balance.
+  for (const unit of state.battle.units.filter(unit => unit.side === 'enemy')) {
+    unit.hp = 1;
+    unit.armor = 0;
+    unit.headArmor = 0;
+  }
   assert.equal(resolveBattle(state).ok, true);
   assert.equal(state.battle.status, 'victory');
   assert.equal(finishBattle(state).ok, true);

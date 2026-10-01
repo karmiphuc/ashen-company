@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ITEMS } from '../src/engine.js';
+import { ITEMS, getItem, createFamedItemId } from '../src/engine.js';
 import { getItemDetails } from '../src/item-details.js';
 
 const item = id => ITEMS.find(entry => entry.id === id);
@@ -44,7 +44,7 @@ test('bow and crossbow explain actual ranged costs and differences', () => {
   assert.equal(value(crossbow, 'Armor damage'), '120% of base hit');
   assert.equal(value(crossbow, 'Damage through armor'), '45% of base hit');
   assert.equal(value(crossbow, 'Reach'), '5 hexes');
-  assert.equal(value(crossbow, 'Reload'), '1 turn after each shot');
+  assert.equal(value(crossbow, 'Reload'), '4 AP after each shot (new battles)');
   assert.equal(value(crossbow, 'Hands'), 'Two; shield stowed');
 });
 
@@ -54,6 +54,19 @@ test('throwing bundles expose remaining throws and shield damage', () => {
   assert.equal(value(axes,'Shield damage'),'24 per hit or block');
   assert.ok(axes.notes.some(note=>note.includes('refill from company ammunition')));
   assert.equal(value(getItemDetails(item('javelins'),0),'Bundle throws'),'0 / 5');
+});
+
+test('bow and shield skills expose AP costs and famed gear inherits the same skills', () => {
+  for (const bow of [item('hunting-bow'), getItem(createFamedItemId('hunting-bow', 41))]) {
+    const details = getItemDetails(bow);
+    assert.equal(value(details, 'Quick Shot'), '4 AP');
+    assert.equal(value(details, 'Aimed Shot'), '7 AP · 15 fatigue before masteries');
+    assert.ok(details.notes.some(note => note.includes('+15 hit chance and +1 range')));
+  }
+  const shield = getItemDetails(item('round-shield'));
+  assert.equal(value(shield, 'Shieldwall'), '4 AP · 20 fatigue before masteries');
+  assert.equal(value(shield, 'Knock Back'), '4 AP · 20 fatigue before masteries');
+  assert.equal(value(getItemDetails(item('light-crossbow')), 'Aimed Shot'), undefined);
 });
 
 test('billhook, dagger, and axe show their real tradeoffs', () => {

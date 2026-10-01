@@ -21,15 +21,17 @@ Play at **https://karmiphuc.github.io/ashen-company/**. No account, server, exte
 
 Roaming bands roll their numbers and equipment within their tier: the original four nearby patrols keep 1-2 lightly equipped enemies, while larger frontier warbands offer more dangerous fights. Shipment raiders are selected by how close their patrol route runs to the wagon road. Clearing that band protects the delivery without another group taking its place. A band's roster stays stable while it roams and rerolls after defeat and respawn.
 
-Loadouts are automatic during battle. A melee fighter with a ranged reserve opens with it while enemies approach; a shield-and-throwing-weapon user switches to their melee set when the lines meet or ammunition runs out. Bow and crossbow users try to escape first, drawing a carried dagger when trapped or out of ammunition. Bandages and medical satchels heal a badly wounded fighter when enemies are at least two hexes away; stimulants relieve high fatigue. Switching sets, drawing a dagger, and using a remedy each spend the turn. Used supplies stay consumed, crossbows retain their reload state across swaps, and survivors return to their chosen starting equipment after battle. Throwing weapons share the company's ammunition supply.
+Loadouts are automatic during battle. A melee fighter with a ranged reserve opens with it while enemies approach; a shield-and-throwing-weapon user switches to their melee set when the lines meet or ammunition runs out. Bow and crossbow users try to escape first, drawing a carried dagger when trapped or out of ammunition. At half health or lower, fighters prioritize carried healing items, including in melee; stimulants relieve high fatigue. In new battles, switching sets, drawing a dagger, and using a remedy each cost 4 AP, with the free first-use exceptions from Quick Hands and Combat Bandaging. Used supplies stay consumed, crossbows retain their reload state across swaps, and survivors return to their chosen starting equipment after battle. Each throwing bundle has five charges; company ammunition pays for refills after battle.
 
 Clearing a camp has a 15%, 25%, or 40% chance of a famed item, depending on difficulty. Famed weapons, armor, helmets, and shields receive a generated name and improved combat stats, with a gold glow on their artwork. Inspect them to compare their bonuses with the ordinary item. Camp difficulty limits the base equipment tier. Each camp generation has a fixed reward roll, so retreating or reloading cannot reroll its reward. Famed items can be equipped, stowed, sold, and bought back while the merchant still stocks them; their name and bonuses survive save export/import.
 
 The campaign also includes local market stocks and prices, five trade goods, wages and daily provisions, foraging, autosave, and JSON save export/import. Choose 1× or 3× to advance world time while travelling or waiting; pause, menus, and backgrounding stop it. The world does not simulate while the app is closed.
 
-Use **Battle formation** to arrange six front-line and six rear-line slots. Tap an occupied slot, then another slot to move or swap the fighters. The formation is saved and determines their starting battle positions. Arrange it before pursuing a roaming band: catching a pursued band starts combat directly. A camp's sidebar action retains its encounter preview; double-tapping the camp bypasses that preview.
+Use **Battle formation** to arrange 12 front, 12 middle, and 12 rear positions on the 14 x 16 battlefield. Tap an occupied slot, then another slot to move or swap the fighters. The formation is saved and determines their starting battle positions. Arrange it before pursuing a roaming band: catching a pursued band starts combat directly. A camp's sidebar action retains its encounter preview; double-tapping the camp bypasses that preview.
 
 Two additional battle orders are available before or during combat. **Advance in Formation** moves the company in coordinated one-hex steps, waiting for the current step to finish before starting another and attacking without individual pursuit. **Shield Wall** places shielded melee fighters and throwing skirmishers ahead of archers and unshielded two-handers. During battle, fighters move into their ranks normally; the order does not teleport them or overwrite the saved company formation. Bowmen with a backup shield remain archers.
+
+Each brother has a combat role and a Balanced, Damage, or Control preference in the company screen. New battles use 9 AP, with Quick Shot, Aimed Shot, Shieldwall, and Knock Back chosen automatically according to targets, danger, equipment, and company orders. Active battles from older saves finish under their original two-AP rules. See [current tactical rules](docs/TACTICAL-AI.md).
 
 Victories recover a mix of crowns, supplies, and enemy equipment. Salvaged body armor and helmets retain their remaining durability; destroyed or badly ruined pieces are not recovered. Inspect the condition of each individual loot item before collecting it, then repair worn armor in camp with tools.
 
@@ -48,6 +50,10 @@ These are the intended Safari steps; installation and airplane-mode play have no
 - Battles use generated terrain on a fixed-size hex field with simplified automatic behavior. Company tactics offer five broad AI orders, but there are no manual unit moves, the full Battle Brothers skill trees or its complete combat simulation.
 - Level-ups use a three-of-eight attribute chooser with saved rolls. A separate perk chooser grants one permanent choice per earned level. Backgrounds and traits provide small stat modifiers; class-specific perk trees and background events are not implemented.
 - iPad Safari installation, airplane-mode launch, and save retention have not been verified on a physical iPad.
+
+## Future work
+
+The [weapon-skills roadmap](docs/WEAPON-SKILLS-PLAN.md) records the agreed design. Version 0.35 implements the 9 AP foundation, personal preferences, and bow/shield skills; the remaining weapon families and area attacks are planned. See [current tactical rules](docs/TACTICAL-AI.md).
 
 ## Development
 

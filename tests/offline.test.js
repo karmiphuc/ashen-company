@@ -72,6 +72,7 @@ test('offline list contains every runtime media asset and required app file', as
     assert.ok(assets.includes(path), `${path} is missing`);
   }
   assert.ok(assets.some(path => path.startsWith('./assets/audio/') && path.endsWith('.mp3')), 'offline audio files are missing');
+  for (const path of ['./src/combat-skills.js', './src/tactical-ai.js']) assert.ok(assets.includes(path), `${path} is missing`);
   assert.deepEqual(assets.filter(path => /\.(png|jpg|mp3)$/i.test(path)).sort(), await runtimeMediaFiles(join(ROOT, 'assets')));
   assert.ok(assets.every(path => !path.includes('contact-sheet') && !path.includes('ASSET-CREDITS')));
   for (const path of assets) {

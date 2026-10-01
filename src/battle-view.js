@@ -53,12 +53,13 @@ function fieldModel(battle) {
   }
   const tiles = [];
   for (let r = 0; r < rows; r++) for (let q = 0; q < columns; q++) tiles.push(byCoordinate.get(`${q},${r}`) || { q, r, terrain: 'open', height: 0 });
-  return { columns, rows, biome: String(source.biome || 'grassland').toLowerCase().replace(/[^a-z0-9-]/g, ''), tiles };
+  return { columns, rows, biome: String(source.biome || 'grassland').toLowerCase().replace(/[^a-z0-9-]/g, ''), tiles, apScale: battle?.rulesVersion === 2 ? 2 : 1 };
 }
 
 function gridModel(field) {
   return {
     ...TILE,
+    apScale: field.apScale,
     fieldWidth: TILE.padX * 2 + (field.columns - 1) * TILE.stepX + (field.rows - 1) * TILE.stagger + TILE.width,
     fieldHeight: TILE.padY + (field.rows - 1) * TILE.stepY + Math.max(TILE.height, 122) + TILE.padBottom,
   };
@@ -69,7 +70,8 @@ function fieldTile(field, q, r) {
 }
 
 function tileHTML(tile, grid) {
-  const [name, effect] = TERRAIN[tile.terrain];
+  const [name, baseEffect] = TERRAIN[tile.terrain];
+  const effect = baseEffect.replace(/\b([12]) AP to enter/g, (_, cost) => `${Number(cost) * grid.apScale} AP to enter`);
   const elevation = tile.height ? `Height ${tile.height}; high-ground attacks gain 10 hit per level` : 'Ground level';
   const detail = `${name}, ${elevation}. ${effect}`;
   const x = grid.padX + tile.q * grid.stepX + tile.r * grid.stagger;
@@ -129,7 +131,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const actor = event.actorId === unit.id;
   const target = event.targetId === unit.id;
   const origin = coordinates(event.from || unit, field, grid);
-  const moveOrigin = coordinates(actor && event.moveFrom ? event.moveFrom : event.from || unit, field, grid);
+  const moveOrigin = coordinates(target && event.pushedFrom ? event.pushedFrom : actor && event.moveFrom ? event.moveFrom : event.from || unit, field, grid);
   const destination = coordinates(event.to || unit, field, grid);
   const dx = destination.x - origin.x, dy = destination.y - origin.y;
   const length = Math.max(1, Math.hypot(dx, dy));
@@ -144,7 +146,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     event.actorId === unit.id ? 'is-acting' : '',
     event.targetId === unit.id ? 'is-target' : '',
     actor && attacking ? `action-${motion}` : '',
-    actor && (event.type === 'move' || event.moveFrom) ? 'action-move' : '',
+    actor && (event.type === 'move' || event.moveFrom) || target && event.pushedFrom ? 'action-move' : '',
     actor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? 'action-hold' : '',
     target && attacking && event.type !== 'miss' ? 'action-hit' : '',
     target && event.fallen ? 'action-fall' : '',
@@ -155,6 +157,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const body = percent(bodyArmor, Math.max(maxBodyArmor, 1));
   const head = percent(unit.headArmor, unit.maxHeadArmor ?? Math.max(number(unit.headArmor), 1));
   const shield = shieldCondition(unit);
+  const maxAp = battle.rulesVersion === 2 ? 9 : 2;
   const beforeHealth = target && attacking ? percent(number(unit.hp) + number(event.hpDamage), unit.maxHp ?? 100) : health;
   const beforeBody = target && attacking && !event.head ? percent(bodyArmor + number(event.armorDamage), maxBodyArmor || 1) : body;
   const beforeHead = target && attacking && event.head ? percent(number(unit.headArmor) + number(event.armorDamage), unit.maxHeadArmor || 1) : head;
@@ -171,9 +174,10 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     </div>
     <span class="battle-pawn">${portraitHTML(display, equipmentFor(unit), 64)}</span>
     <span class="battle-morale-flag morale-${morale.name.toLowerCase()}" title="${esc(moraleLabel)}" aria-label="${esc(moraleLabel)}">${morale.name[0]}</span>
+    ${unit.shieldWallActive ? '<span class="battle-shieldwall" title="Shield wall active" aria-label="Shield wall active"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 14 3v4.5c0 3.2-2.1 5.9-6 7.5-3.9-1.6-6-4.3-6-7.5V3z"/></svg></span>' : ''}
     ${battleKitHTML(unit)}
     <strong>${esc(pawnName(unit))}</strong>
-    <small>${Math.max(0, Math.round(number(unit.ap)))} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
+    <small>${Math.max(0, Math.round(number(unit.ap)))}/${maxAp} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
     ${target && attacking ? `<span class="battle-impact" aria-hidden="true">${event.type === 'miss' ? 'Miss' : `${event.hpDamage || 0}${event.armorDamage ? ` / ${event.armorDamage}` : ''}`}</span>` : ''}
     ${actor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? `<span class="battle-order">${event.type === 'hold' ? 'Hold' : event.type === 'swap' ? 'Swap set' : event.type === 'use' ? 'Use item' : event.message?.includes(' reloads ') ? 'Reload' : 'Recover'}</span>` : ''}
   </article>`;
@@ -218,6 +222,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
   const status = String(battle.status || 'active');
   const morale = getMoraleEffects(active || {});
   const moralePercent = Math.round(morale.modifier * 100);
+  const skillName = animateEvent && battle.lastEvent?.actorId === active?.id ? battle.lastEvent?.skillName : null;
 
   return `<section class="battle-view battle-status-${esc(status)}" style="--action-time:${battleActionDuration(speed)}s" aria-label="Tactical battle">
     <header class="battle-topbar">
@@ -234,7 +239,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         </div>
       </div>
       <aside class="battle-log" aria-label="Battle event log">
-        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<small>Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale.</small></section>` : ''}
+        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<small>Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale.</small></section>` : ''}
         <h3>Combat log</h3>
         <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol>
       </aside>

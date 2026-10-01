@@ -1,4 +1,5 @@
 import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
+import { equipmentSkills } from './combat-skills.js';
 
 const ROLES = {
   'patched-coat': 'Very light body cover for a new recruit; its 20 armor wears out quickly.',
@@ -47,15 +48,16 @@ export function getItemDetails(item, condition) {
       { label: 'Damage through armor', value: `${Math.round((item.armorPiercing ?? .30) * 100)}% of base hit` },
       { label: 'Reach', value: `${item.range ?? 1} ${item.range === 1 || item.range === undefined ? 'hex' : 'hexes'}` },
       { label: 'Attack skill', value: ranged ? 'Ranged' : 'Melee' },
+      { label: 'Attack AP', value: `${item.reloadTurns ? 3 : !ranged && (item.twoHanded || (item.range ?? 1) > 1) ? 6 : 4} (new battles)` },
       { label: 'Attack fatigue', value: String(item.fatigueCost ?? (ranged ? 9 : 11)) },
       { label: 'Hands', value: item.twoHanded ? 'Two; shield stowed' : 'One; shield allowed' },
     );
     if (ranged) {
       stats.push({ label: 'Ammunition', value: item.throwing ? '1 bundle charge per throw' : '1 per shot' });
       if (item.throwing) stats.push({ label: 'Bundle throws', value: `${Number.isFinite(condition) ? Math.max(0, Math.min(throwingCapacity(item), condition)) : throwingCapacity(item)} / ${throwingCapacity(item)}` });
-      if (item.reloadTurns) stats.push({ label: 'Reload', value: `${item.reloadTurns} turn after each shot` });
+      if (item.reloadTurns) stats.push({ label: 'Reload', value: '4 AP after each shot (new battles)' });
       notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
-      notes.push('Bow and crossbow fighters keep their distance while ammunition remains. When ammunition runs out, they draw a pocket weapon or reserve melee set and fight according to the selected tactic. With ammunition, they return to ranged weapons as soon as two hexes of space open. Drawing or switching costs a full turn.');
+      notes.push('Bow and crossbow fighters keep their distance while ammunition remains. When ammunition runs out, they draw a pocket weapon or reserve melee set and fight according to the selected tactic. Drawing or switching costs 4 AP in new battles; Quick Hands makes the first swap each round free.');
       if (item.throwing) notes.push('Throwing weapons are one-handed and carry five throws per bundle. Active and reserve bundles have separate counts, preserved when swapping or stowing. After battle, equipped bundles refill from company ammunition, one supply per restored throw; shortages leave partial bundles. Carry a spare bundle or melee weapon. Without a usable backup, the fighter punches.');
       if (item.ranged && !item.throwing && !item.twoHanded) notes.push('This ranged weapon leaves the other hand free for a shield.');
       if (!item.throwing) notes.push('A bow or crossbow shot from an adjacent hex has a 12-point hit penalty if the fighter cannot reposition or switch to melee.');
@@ -68,7 +70,7 @@ export function getItemDetails(item, condition) {
       notes.push('Axes and thrown spears damage an active shield even when the attack is blocked. Shield Expert halves this wear; a broken shield stays repairable.');
     }
     if (item.pocketWeapon) {
-      notes.push('The battle AI draws this pocket weapon when a ranged fighter is forced into close combat and returns it to the pocket when range opens and ammunition remains. Drawing or returning it costs a full turn.');
+      notes.push('The battle AI draws this pocket weapon when a ranged fighter is forced into close combat and returns it to the pocket when range opens and ammunition remains. Drawing or returning it costs 4 AP in new battles.');
     }
     notes.push('Hit modifier changes hit chance in percentage points before other bonuses and penalties.');
     notes.push('Remaining armor reduces direct health damage. Damage that breaks through armor can add more health damage.');
@@ -125,14 +127,18 @@ export function getItemDetails(item, condition) {
   } else if (item.slot === 'accessory') {
     if (item.consumable === 'heal') {
       stats.push({ label: 'Effect', value: `Restores up to ${item.heal ?? 0} health` }, { label: 'Uses', value: 'One' });
-      notes.push('At 50% health or lower, the battle AI prioritizes healing even in melee. Use consumes the item and the full turn; Combat Bandaging makes the first healing item each round cost no AP. Healing never repairs armor.');
+      notes.push('At 50% health or lower, the battle AI prioritizes healing even in melee. Use consumes the item and 4 AP in new battles; Combat Bandaging makes the first healing item each round cost no AP. Healing never repairs armor.');
     } else if (item.consumable === 'recover') {
       stats.push({ label: 'Effect', value: `Reduces fatigue by ${item.recover ?? 0}` }, { label: 'Uses', value: 'One' });
-      notes.push('At 75% of maximum fatigue or higher, with enemies at least two hexes away, the battle AI may use it. Use consumes the item and the full turn.');
+      notes.push('At 75% of maximum fatigue or higher, with enemies at least two hexes away, the battle AI may use it. Use consumes the item and 4 AP in new battles.');
     } else {
       stats.push({ label: 'Uses', value: 'One' });
     }
     notes.push('Consumables occupy one of the two accessory slots and are removed after use. Free healing keeps the fighter ready for another action.');
+  }
+  for (const skill of equipmentSkills(item)) {
+    stats.push({ label: skill.name, value: `${skill.ap} AP${skill.fatigue ? ` · ${skill.fatigue} fatigue before masteries` : ''}` });
+    notes.push(`${skill.name}: ${skill.description}`);
   }
   const role = item.rarity === 'famed'
     ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with the ordinary version.`

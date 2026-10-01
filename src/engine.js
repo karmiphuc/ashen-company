@@ -11,6 +11,8 @@ import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk, weaponTrainingVisua
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile } from './recruits.js';
 import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-events.js';
 import { CARAVAN_ATTACK_WARNING_HOURS, CARAVAN_SHORTAGE_HOURS, CARAVAN_TRAVEL_HOURS, routeSegmentDistance, shipmentId, shipmentPlan, shipmentPosition } from './caravans.js';
+import { COMBAT_SKILLS } from './combat-skills.js';
+import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, rankTacticalActions } from './tactical-ai.js';
 
 export { PERKS } from './perks.js';
 
@@ -346,6 +348,7 @@ function normalizeMember(person) {
     : person.pendingLevelUps.map(entry => ({ level: entry.level, rolls: { ...entry.rolls } }));
   return {
     ...person,
+    combatRole: person.combatRole ?? 'auto', skillPreference: person.skillPreference ?? 'balanced',
     equipment: { ...person.equipment, attachment: person.equipment.attachment ?? null, mount: person.equipment.mount ?? null },
     traits: [...(person.traits ?? [])],
     reserveEquipment: { weapon: person.reserveEquipment?.weapon ?? null, shield: person.reserveEquipment?.shield ?? null },
@@ -1984,6 +1987,18 @@ export function setBattleTactic(state, tactic) {
   return result(true, message);
 }
 
+export function setCombatSettings(state, personId, settings) {
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings) || Object.keys(settings).length < 1 || Object.keys(settings).length > 2
+    || !Object.keys(settings).every(key => ['combatRole', 'skillPreference'].includes(key))) return result(false, 'Unknown combat setting.');
+  if (state.gameOver || state.battle) return result(false, 'Change combat settings outside battle.');
+  const person = personById(state, personId);
+  if (!person) return result(false, 'Unknown company member.');
+  if (Object.hasOwn(settings, 'combatRole') && !COMBAT_ROLES.includes(settings.combatRole)
+    || Object.hasOwn(settings, 'skillPreference') && !SKILL_PREFERENCES.includes(settings.skillPreference)) return result(false, 'Unknown combat setting.');
+  Object.assign(person, settings);
+  return result(true, `${person.name}'s combat settings updated.`);
+}
+
 function battleRoll(battle) {
   battle.rng = (Math.imul(battle.rng, 1664525) + 1013904223) >>> 0;
   return battle.rng / 4294967296;
@@ -2103,8 +2118,10 @@ export function startBattle(state, encounterId) {
       accessories: [...person.accessories],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: [...person.perks], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
+      tacticalRole: resolveCombatRole(person, getItem(person.equipment.weapon), getItem(person.reserveEquipment.weapon)), skillPreference: person.skillPreference,
+      aiTargetId: null, formationMovedRound: 0,
       seed: person.seed, ...(person.appearanceId ? { appearanceId: person.appearanceId } : {}), alive: person.hp > 0,
-      morale: person.morale, fatigue: 0, ap: 2, reload: 0,
+      morale: person.morale, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false,
       meleeSkill: stats.meleeSkill, rangedSkill: stats.rangedSkill,
       meleeDefense: stats.meleeDefense - (hasPerk(person, 'dodge') ? Math.floor(stats.initiative * .15) : 0)
         - (hasPerk(person, 'reach-advantage') && getItem(person.equipment.weapon)?.twoHanded && !getItem(person.equipment.weapon)?.ranged ? 5 : 0),
@@ -2130,7 +2147,7 @@ export function startBattle(state, encounterId) {
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
       seed: hashSeed(`${state.seed}:${camp.id}:${index}`), alive: true,
-      morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 2, reload: 0,
+      morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
       meleeSkill: 30 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0), rangedSkill: 28 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0),
       meleeDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense,
       rangedDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense,
@@ -2156,7 +2173,7 @@ export function startBattle(state, encounterId) {
       equipment: gear, reserveEquipment: { weapon: null, shield: null }, throwingAmmo: { active: 0, reserve: 0 }, accessories: [null, null],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
-      seed: hashSeed(`${state.seed}:${camp.id}:ally:${index}`), alive: true, morale: 70, fatigue: 0, ap: 2, reload: 0,
+      seed: hashSeed(`${state.seed}:${camp.id}:ally:${index}`), alive: true, morale: 70, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
       meleeSkill: 47 + allyRank * 3, rangedSkill: 25, meleeDefense: 7 + allyRank + getItem(gear.shield).defense,
       rangedDefense: 7 + allyRank + getItem(gear.shield).defense, maxFatigue: 85, initiative: 75 + allyRank * 2, resolve: 45 + allyRank * 2 });
   }
@@ -2165,13 +2182,14 @@ export function startBattle(state, encounterId) {
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', rulesVersion: 2, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
     log: [], lastEvent: null,
     loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [], itemConditions: [] },
     casualties: [], xp: {},
   };
+  for (const unit of battle.units) unit.movementCredit = Math.max(0, movementBudget(unit) - 2) * 2;
   battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(battle.tactic) ? makeFormationAdvancePlan(battle) : null;
   battle.turnOrder = sortTurnOrder(battle);
   orderCompanyTurnsForFormation(battle);
@@ -2199,7 +2217,11 @@ function nextBattleTurn(battle) {
     if (unit?.alive) {
       battle.turnIndex = next;
       battle.activeId = unit.id;
-      unit.ap = 2;
+      unit.ap = battle.rulesVersion === 2 ? 9 : 2;
+      if (battle.rulesVersion === 2) {
+        unit.shieldWallActive = false;
+        unit.movementCredit = Math.max(0, movementBudget(unit) - 2) * 2;
+      }
       return;
     }
     next += 1;
@@ -2316,6 +2338,7 @@ function changeBattleWeapon(actor, weaponId, shieldId, shieldDurability = actor.
   const oldFatigue = battleGearFatigue(actor.equipment);
   actor.equipment.weapon = weaponId;
   actor.equipment.shield = shieldId;
+  actor.shieldWallActive = false;
   actor.shieldDurability = shieldDurability;
   actor.maxShieldDurability = shieldMaximum(shieldId);
   const defenseDelta = shieldDefenseFor(actor, shieldId) - oldDefense;
@@ -2342,26 +2365,27 @@ function useBattleAccessory(state, actor, enemies) {
   if (selected < 0) return false;
   const item = getItem(actor.accessories[selected]);
   if (item.consumable === 'heal' && actor.hp >= actor.maxHp || item.consumable === 'recover' && actor.fatigue === 0) return false;
+  const free = item.consumable === 'heal' && hasPerk(actor, 'combat-bandaging') && actor.freeHealRound !== state.battle.round;
+  if (!free && state.battle.rulesVersion === 2 && actor.ap < 4) return false;
   if (item.consumable === 'heal') actor.hp = Math.min(actor.maxHp, actor.hp + item.heal);
   else actor.fatigue = Math.max(0, actor.fatigue - item.recover);
   actor.accessories[selected] = null;
-  const free = item.consumable === 'heal' && hasPerk(actor, 'combat-bandaging') && actor.freeHealRound !== state.battle.round;
   if (free) actor.freeHealRound = state.battle.round;
-  else actor.ap = 0;
+  else actor.ap = state.battle.rulesVersion === 2 ? actor.ap - 4 : 0;
   const message = `${actor.name} uses ${item.name}.`;
   state.battle.lastEvent = makeBattleEvent(actor, null, 'use', message, getItem(actor.equipment.weapon), null, { itemId: item.id });
   battleLog(state.battle, message);
-  if (!free) nextBattleTurn(state.battle);
+  if (!free && actor.ap <= 0) nextBattleTurn(state.battle);
   return true;
 }
 
 function finishBattleSwap(state, actor, message) {
   const free = hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== state.battle.round;
   if (free) actor.freeSwapRound = state.battle.round;
-  else actor.ap = 0;
+  else actor.ap = state.battle.rulesVersion === 2 ? actor.ap - 4 : 0;
   state.battle.lastEvent = makeBattleEvent(actor, null, 'swap', message, getItem(actor.equipment.weapon));
   battleLog(state.battle, message);
-  if (!free) nextBattleTurn(state.battle);
+  if (!free && actor.ap <= 0) nextBattleTurn(state.battle);
   return true;
 }
 
@@ -2399,6 +2423,7 @@ function battleWeaponHasAmmo(state, actor, weapon, set = 'active') {
 function chooseBattleWeapon(state, actor, enemies) {
   if (actor.side !== 'company' || actor.ally) return false;
   const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
+  if (state.battle.rulesVersion === 2 && actor.ap < 4 && !(hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== state.battle.round)) return false;
   const archer = companyArcherWeapon(state, actor);
   if (actor.pocketDrawnFrom !== null) {
     const readyToShoot = archer ? nearest >= 2 : nearest >= 3 && state.battle.round >= actor.pocketDrawnRound + 2;
@@ -2453,6 +2478,7 @@ function chooseBattleWeapon(state, actor, enemies) {
 }
 
 function readyShieldWallSet(state, actor) {
+  if (state.battle.rulesVersion === 2 && actor.ap < 4 && !(hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== state.battle.round)) return false;
   if (state.battle.tactic !== 'shield-wall' || actor.side !== 'company' || actor.ally || actor.equipment.shield && actor.shieldDurability > 0
     || companyArcherWeapon(state, actor) || actor.reserveShieldDurability <= 0 || getItem(actor.reserveEquipment.weapon)?.twoHanded
     || getItem(actor.reserveEquipment.weapon)?.throwing && (actor.throwingAmmo?.reserve ?? 0) <= 0) return false;
@@ -2638,6 +2664,12 @@ function attackFatigueCost(actor, weapon) {
   return mastery ? Math.ceil(base * .75) : base;
 }
 
+function attackApCost(weapon) {
+  if (isCrossbow(weapon)) return 3;
+  if (weapon?.ranged) return 4;
+  return weapon?.twoHanded || (weapon?.range ?? 1) > 1 && !weapon?.ranged ? 6 : 4;
+}
+
 function weaponTrainingHit(actor, weapon) {
   if (hasPerk(actor, 'sword-training') && weaponMasteryMatches('sword-training', weapon)) return 8;
   if (hasPerk(actor, 'spear-training') && weaponMasteryMatches('spear-training', weapon)) return 8;
@@ -2674,6 +2706,7 @@ function wearShield(battle, unit, amount) {
   const wear = hasPerk(unit, 'shield-expert') ? Math.max(1, Math.ceil(amount * .5)) : amount;
   unit.shieldDurability = Math.max(0, unit.shieldDurability - wear);
   if (unit.shieldDurability === 0) {
+    unit.shieldWallActive = false;
     const defense = shieldDefenseFor(unit, unit.equipment.shield, 1);
     unit.meleeDefense -= defense;
     unit.rangedDefense -= defense;
@@ -2689,44 +2722,90 @@ function changeBattleMorale(battle, unit, amount) {
   if (previous !== current && unit.hp > 0) battleLog(battle, `${unit.name} is now ${current.toLowerCase()}.`);
 }
 
-function attackTarget(state, actor, target, weapon) {
-  const battle = state.battle;
+function aimedFatigueCost(actor) {
+  return hasPerk(actor, 'bow-mastery') ? Math.ceil(15 * .75) : 15;
+}
+
+function attackHitChance(battle, actor, target, weapon, hitBonus = 0) {
   const ranged = weapon.ranged === true;
-  if (weapon.throwing) actor.throwingAmmo.active = Math.max(0, actor.throwingAmmo.active - 1);
-  else if (ranged && actor.side === 'company' && !actor.ally) state.supplies.ammo = Math.max(0, state.supplies.ammo - 1);
   const skill = ranged ? actor.rangedSkill : actor.meleeSkill;
   const dodgeDefense = hasPerk(target, 'dodge')
     ? Math.floor(Math.max(0, target.initiative - target.fatigue * (hasPerk(target, 'relentless') ? .1 : .2)) * .15) : 0;
   const reachDefense = hasPerk(target, 'reach-advantage') && getItem(target.equipment.weapon)?.twoHanded
     && !getItem(target.equipment.weapon)?.ranged ? 5 : 0;
   const anticipationDefense = ranged && hasPerk(target, 'anticipation')
-    ? Math.max(10, Math.floor(target.rangedDefense * .1 * hexDistance(actor, target)))
-    : 0;
+    ? Math.max(10, Math.floor(target.rangedDefense * .1 * hexDistance(actor, target))) : 0;
   const defense = Math.round((ranged ? target.rangedDefense : target.meleeDefense) * (1 + getMoraleEffects(target).modifier)) + dodgeDefense + anticipationDefense
+    + (target.shieldWallActive && target.shieldDurability > 0 ? shieldDefenseFor(target, target.equipment.shield) : 0)
     + (!ranged ? reachDefense : 0)
     + (hasPerk(target, 'last-stand') && target.hp * 2 <= target.maxHp ? 8 : 0)
     + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
   const terrainHit = ranged ? rangedTerrainModifier(battle, actor, actor, target) : heightHitModifier(battle.field, actor, target);
   const adjacentAllies = !ranged && hasPerk(actor, 'backstabber')
-    ? battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id && hexDistance(unit, target) <= 1).length
-    : 0;
-  const adaptationBonus = hasPerk(actor, 'fast-adaptation') ? actor.adaptation * 10 : 0;
+    ? battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id && hexDistance(unit, target) <= 1).length : 0;
   const distance = hexDistance(actor, target);
   const higher = tileAt(battle.field, actor.q, actor.r).height > tileAt(battle.field, target.q, target.r).height;
   const perkHit = weaponTrainingHit(actor, weapon) + (hasPerk(actor, 'high-ground') && higher ? 8 : 0)
     + (ranged && distance >= 3 && hasPerk(actor, 'marksman') ? 8 : 0);
   const adjacentShotPenalty = ranged && distance === 1 && !hasPerk(actor, 'point-blank') ? 12 : 0;
-  const chance = clamped(Math.round(skill * (1 + getMoraleEffects(actor).modifier)) + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit + adjacentAllies * 5 + adaptationBonus + perkHit - Math.floor(actor.fatigue / 7) - adjacentShotPenalty, 12, 90);
-  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + attackFatigueCost(actor, weapon));
+  return clamped(Math.round(skill * (1 + getMoraleEffects(actor).modifier)) + (weapon.hitBonus ?? 0) - defense + 15 + terrainHit
+    + adjacentAllies * 5 + (hasPerk(actor, 'fast-adaptation') ? actor.adaptation * 10 : 0) + perkHit + hitBonus
+    - Math.floor(actor.fatigue / 7) - adjacentShotPenalty, 12, 90);
+}
+
+function predictAttack(battle, actor, target, weapon, hitBonus = 0) {
+  const ranged = weapon.ranged === true;
+  const distance = hexDistance(actor, target);
+  const hitChance = attackHitChance(battle, actor, target, weapon, hitBonus) / 100;
+  const damageMultiplier = (hasPerk(actor, 'executioner') && target.hp < target.maxHp ? 1.2 : 1)
+    * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1)
+    * (hasPerk(actor, 'polearm-training') && weaponMasteryMatches('polearm-training', weapon) ? 1.1 : 1)
+    * (hasPerk(actor, 'shield-strike') && !ranged && actor.equipment.shield && actor.shieldDurability > 0 ? 1.1 : 1)
+    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && (!actor.equipment.shield || actor.shieldDurability === 0) ? 1.12 : 1)
+    * (hasPerk(actor, 'opportunist') && !ranged && (!target.equipment.shield || target.shieldDurability === 0) ? 1.1 : 1)
+    * (hasPerk(actor, 'volley-fire') && ranged && distance >= 3 ? 1.1 : 1);
+  const piercing = Math.min(1, (weapon.armorPiercing ?? .30) + (isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery') ? .2 : 0)
+    + (hasPerk(actor, 'dagger-training') && weaponMasteryMatches('dagger-training', weapon) ? .15 : 0));
+  let health = 0, armor = 0, kill = 0;
+  const rolls = Math.max(1, weapon.damageMax - weapon.damageMin + 1);
+  for (let base = weapon.damageMin; base <= weapon.damageMax; base++) for (const [head, weight] of [[true, .22], [false, .78]]) {
+    const raw = Math.round(base * damageMultiplier * (1 + (getItem(actor.equipment.mount)?.damageBonus ?? 0))
+      * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
+    const before = head ? target.headArmor : target.attachmentArmor + target.bodyArmor;
+    const armorDamage = Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1) * (head ? 1.1 : 1)
+      * (hasPerk(actor, 'axe-training') && weaponMasteryMatches('axe-training', weapon) ? 1.15 : 1)
+      * (hasPerk(target, 'battle-forged') && before > 0 ? .85 : 1)));
+    let hp = before > 0 ? Math.max(1, Math.floor(raw * piercing - before * .025) + Math.max(0, Math.floor((armorDamage - before) * .25))) : raw;
+    if (head && !hasPerk(target, 'steel-brow')) hp = Math.round(hp * 1.25);
+    if (hasPerk(actor, 'mace-training') && weaponMasteryMatches('mace-training', weapon)) hp = Math.round(hp * 1.1);
+    if (hasPerk(target, 'iron-jaw')) hp = Math.max(1, Math.round(hp * .8));
+    const probability = weight / rolls;
+    health += hp * probability;
+    armor += Math.min(before, armorDamage) * probability;
+    if (hp >= target.hp) kill += probability;
+  }
+  return { expectedHealthDamage: health * hitChance, expectedArmorDamage: armor * hitChance,
+    expectedShieldDamage: target.shieldDurability > 0 ? shieldImpactDamage(weapon) || (ranged ? 1 - hitChance : 2 - hitChance) : 0,
+    killProbability: kill * hitChance };
+}
+
+function attackTarget(state, actor, target, weapon, option = null) {
+  const battle = state.battle;
+  const ranged = weapon.ranged === true;
+  if (weapon.throwing) actor.throwingAmmo.active = Math.max(0, actor.throwingAmmo.active - 1);
+  else if (ranged && actor.side === 'company' && !actor.ally) state.supplies.ammo = Math.max(0, state.supplies.ammo - 1);
+  const distance = hexDistance(actor, target);
+  const chance = attackHitChance(battle, actor, target, weapon, option?.hitBonus ?? 0);
+  actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (option?.id === 'aimed-shot' ? aimedFatigueCost(actor) : attackFatigueCost(actor, weapon)));
   if (weapon.reloadTurns) actor.reload = weapon.reloadTurns;
-  actor.ap = 0;
+  actor.ap = battle.rulesVersion === 2 ? Math.max(0, actor.ap - (option?.ap ?? attackApCost(weapon))) : 0;
   if (actor.side === 'company' || !ranged && hexDistance(actor, target) <= 1) battle.lastContactRound = battle.round;
   if (!ranged && hexDistance(actor, target) <= 1) battle.engaged = true;
   if (battleRoll(battle) * 100 >= chance) {
     const shieldDamage = wearShield(battle, target, shieldImpactDamage(weapon) || (ranged ? 1 : 2));
     if (hasPerk(actor, 'fast-adaptation')) actor.adaptation += 1;
     const message = `${actor.name} misses ${target.name}.${shieldDamage ? ` ${target.name}'s shield takes ${shieldDamage} damage.` : ''}`;
-    battle.lastEvent = makeBattleEvent(actor, target, 'miss', message, weapon, null, { shieldDamage });
+    battle.lastEvent = makeBattleEvent(actor, target, 'miss', message, weapon, null, { shieldDamage, ...(option?.name ? { skillName: option.name } : {}) });
     battleLog(battle, message);
     return;
   }
@@ -2780,19 +2859,261 @@ function attackTarget(state, actor, target, weapon) {
       perkProcs.push('Killing Frenzy: +25% damage.');
     }
     if (hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round) {
-      actor.ap = 2;
+      actor.ap = battle.rulesVersion === 2 ? actor.ap + 2 : 2;
       actor.berserkRound = battle.round;
       perkProcs.push('Berserk: +2 AP.');
     }
   }
   const message = `${actor.name} hits ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}`;
-  battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, fallen });
+  battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, fallen,
+    ...(option?.name ? { skillName: option.name } : {}) });
   battleLog(battle, message);
+}
+
+function knockBackDestination(battle, actor, target) {
+  const occupied = new Set(battle.units.filter(unit => unit.alive).map(unit => `${unit.q},${unit.r}`));
+  const height = tileAt(battle.field, target.q, target.r).height;
+  return hexNeighbors(battle.field, target)
+    .filter(point => hexDistance(actor, point) > hexDistance(actor, target)
+      && !occupied.has(`${point.q},${point.r}`)
+      && tileAt(battle.field, point.q, point.r).terrain !== 'trees'
+      && Math.abs(tileAt(battle.field, point.q, point.r).height - height) <= 1
+      && Number.isFinite(movementCost(battle.field, target, point)))
+    .sort((a, b) => hexDistance(actor, b) - hexDistance(actor, a) || a.q - b.q || a.r - b.r)[0] ?? null;
+}
+
+function battleMoveApCost(battle, actor, from, to) {
+  const cost = battleMovementCost(battle, actor, from, to);
+  return Number.isFinite(cost) ? Math.max(0, cost * 2 - (actor.movementCredit ?? 0)) : Infinity;
+}
+
+function consumeMovementCredit(battle, actor, from, to) {
+  const cost = battleMovementCost(battle, actor, from, to) * 2;
+  actor.movementCredit = Math.max(0, (actor.movementCredit ?? 0) - cost);
+}
+
+function advanceBattleV2(state) {
+  const battle = state.battle;
+  const actor = battle.units.find(unit => unit.id === battle.activeId);
+  if (!actor?.alive) { nextBattleTurn(battle); return result(true, 'The next fighter takes their turn.'); }
+  const enemies = battle.units.filter(unit => unit.alive && unit.side !== actor.side);
+  if (!enemies.length) { finishBattlePhase(battle); return result(true, 'The battle is over.'); }
+  if (actor.turnStartedRound !== battle.round) {
+    actor.fatigue = Math.max(0, actor.fatigue - 15);
+    actor.turnStartedRound = battle.round;
+  }
+  if (useBattleAccessory(state, actor, enemies)) return result(true, battle.lastEvent.message);
+  if (readyShieldWallSet(state, actor) || chooseBattleWeapon(state, actor, enemies)) return result(true, battle.lastEvent.message);
+  const equipped = getItem(actor.equipment.weapon);
+  if (actor.reload > 0 && actor.ap >= 4) {
+    actor.reload -= 1;
+    actor.ap -= 4;
+    if (hasPerk(actor, 'reload-drill')) actor.fatigue = Math.max(0, actor.fatigue - 12);
+    const message = `${actor.name} reloads ${equipped?.name ?? 'their weapon'}.`;
+    battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equipped, null, { skillName: 'Reload' });
+    battleLog(battle, message);
+    if (actor.ap <= 0) nextBattleTurn(battle);
+    return result(true, message);
+  }
+  const noAmmo = equipped?.ranged && !battleWeaponHasAmmo(state, actor, equipped);
+  const weapon = noAmmo || !equipped ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equipped;
+  const range = effectiveWeaponRange(actor, weapon);
+  const attackCost = attackApCost(weapon);
+  const candidates = [];
+  const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
+  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : 'offense';
+  const nearbyTarget = enemies.some(enemy => hexDistance(actor, enemy) <= range);
+  if (companyTactic === 'focus' && !enemies.some(enemy => enemy.id === battle.focusTargetId)) {
+    battle.focusTargetId = enemies.filter(enemy => pathToTarget(battle, actor, enemy, range, weapon.ranged === true) !== null)
+      .sort((a, b) => a.hp + (a.bodyArmor + a.attachmentArmor + a.headArmor) * .15 + a.meleeDefense * .3
+        - b.hp - (b.bodyArmor + b.attachmentArmor + b.headArmor) * .15 - b.meleeDefense * .3
+        || hexDistance(actor, a) - hexDistance(actor, b) || a.id.localeCompare(b.id))[0]?.id ?? null;
+  }
+  if (companyTactic === 'defense' && !nearbyTarget && (battle.round - battle.lastContactRound < 4)
+    && !(battle.engaged && nearest <= 3)) {
+    actor.ap = 0;
+    actor.fatigue = Math.max(0, actor.fatigue - 12);
+    const message = `${actor.name} holds the line.`;
+    battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, equipped);
+    battleLog(battle, message);
+    nextBattleTurn(battle);
+    return result(true, message);
+  }
+  if (companyTactic === 'advance-formation' && !companyInMeleeContact(battle) && actor.formationMovedRound !== battle.round) {
+    const from = { q: actor.q, r: actor.r };
+    const previousFatigue = actor.fatigue;
+    const previousPlan = structuredClone(battle.formationAdvance);
+    const moved = advanceFormationStep(battle, actor);
+    const apCost = moved ? battleMoveApCost(battle, actor, from, actor) : 0;
+    if (moved && apCost > actor.ap) {
+      actor.q = from.q; actor.r = from.r;
+      actor.fatigue = previousFatigue;
+      battle.formationAdvance = previousPlan;
+    } else if (moved) {
+      actor.formationMovedRound = battle.round;
+      actor.ap -= apCost;
+      consumeMovementCredit(battle, actor, from, actor);
+      const message = `${actor.name} advances one step with the formation.`;
+      battle.lastEvent = makeBattleEvent(actor, null, 'move', message, equipped, from);
+      battleLog(battle, message);
+      if (actor.ap <= 0) nextBattleTurn(battle);
+      return result(true, message);
+    }
+  }
+  if (companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round) {
+    const reform = shieldWallReformStep(state, actor);
+    if (reform) {
+      const cost = battleMoveApCost(battle, actor, actor, reform);
+      if (actor.ap >= cost) {
+        const from = { q: actor.q, r: actor.r };
+        actor.q = reform.q; actor.r = reform.r;
+        actor.ap -= cost;
+        actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, battleMovementCost(battle, actor, from, actor)));
+        consumeMovementCredit(battle, actor, from, actor);
+        actor.formationMovedRound = battle.round;
+        battle.formationAdvance = makeFormationAdvancePlan(battle);
+        const message = `${actor.name} reforms the shield wall.`;
+        battle.lastEvent = makeBattleEvent(actor, null, 'move', message, equipped, from);
+        battleLog(battle, message);
+        if (actor.ap <= 0) nextBattleTurn(battle);
+        return result(true, message);
+      }
+    }
+  }
+  let retreatFrom = null;
+  if (weapon.ranged && nearest <= 1 && actor.reload === 0 && companyTactic !== 'advance-formation') {
+    const retreat = archerRetreatOption(battle, actor, range);
+    const cost = retreat ? battleMoveApCost(battle, actor, actor, retreat) : Infinity;
+    if (retreat && actor.ap >= cost + attackCost) {
+      retreatFrom = { q: actor.q, r: actor.r };
+      actor.q = retreat.q; actor.r = retreat.r;
+      actor.ap -= cost;
+      actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, battleMovementCost(battle, actor, retreatFrom, actor)));
+      consumeMovementCredit(battle, actor, retreatFrom, actor);
+      if (companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
+    }
+  }
+  const canAttack = actor.fatigue + attackFatigueCost(actor, weapon) <= actor.maxFatigue && actor.reload === 0;
+  for (const target of enemies) {
+    const distance = hexDistance(actor, target);
+    const normal = predictAttack(battle, actor, target, weapon);
+    const aimed = isBow(weapon) ? predictAttack(battle, actor, target, weapon, 15) : null;
+    if (distance <= range && canAttack) {
+      candidates.push({ id: 'attack', type: 'attack', targetId: target.id, target, apCost: attackCost,
+        fatigueCost: attackFatigueCost(actor, weapon), ...normal,
+        wastedAmmo: weapon.ranged && target.hp < normal.expectedHealthDamage * .4 ? 1 : 0,
+        bonus: 18 + (isBow(weapon) && actor.ap >= 8 && (!weapon.reloadTurns) && (!actor.ally && actor.side === 'company' ? state.supplies.ammo >= 2 : true) ? normal.expectedHealthDamage * .75 : 0) });
+    }
+    if (aimed && distance <= range + 1 && actor.reload === 0 && actor.fatigue + aimedFatigueCost(actor) <= actor.maxFatigue) {
+      candidates.push({ id: 'aimed-shot', type: 'attack', targetId: target.id, target, apCost: 7,
+        fatigueCost: aimedFatigueCost(actor), ...aimed, bonus: 15 });
+    }
+    if (distance === 1 && actor.equipment.shield && actor.shieldDurability > 0 && actor.fatigue + 20 <= actor.maxFatigue) {
+      const push = knockBackDestination(battle, actor, target);
+      if (push) candidates.push({ id: 'knock-back', type: 'knock-back', targetId: target.id, target, push, apCost: 4, fatigueCost: 20,
+        preventedDamage: target.meleeSkill * .18, incomingDamage: 2, bonus: actor.skillPreference === 'control' ? 8 : -6 });
+    }
+  }
+  if (actor.equipment.shield && actor.shieldDurability > 0 && !actor.shieldWallActive && actor.fatigue + 20 <= actor.maxFatigue) {
+    candidates.push({ id: 'shieldwall', type: 'shieldwall', apCost: 4, fatigueCost: 20,
+      preventedDamage: nearest <= 2 ? shieldDefenseFor(actor, actor.equipment.shield) * .8 : 0,
+      bonus: battle.tactic === 'shield-wall' && nearest <= 2 ? 5 : -8 });
+  }
+  const targetPaths = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range, weapon.ranged === true) }))
+    .filter(entry => entry.path?.length).sort((a, b) => pathCost(battle, actor, actor, a.path) - pathCost(battle, actor, actor, b.path));
+  const formationLocked = companyTactic === 'advance-formation' && (actor.formationMovedRound === battle.round
+    || companyInMeleeContact(battle) || battle.formationAdvance?.completedRound >= battle.round);
+  const wallLocked = companyTactic === 'shield-wall' && (actor.formationMovedRound === battle.round
+    || battle.round - battle.lastContactRound < 4);
+  for (const entry of formationLocked || wallLocked || nearbyTarget ? [] : targetPaths.slice(0, 3)) {
+    const direct = noAmmo ? hexNeighbors(battle.field, actor)
+      .filter(point => Number.isFinite(battleMovementCost(battle, actor, actor, point))
+        && !battle.units.some(unit => unit.alive && unit.q === point.q && unit.r === point.r))
+      .sort((a, b) => hexDistance(a, entry.target) - hexDistance(b, entry.target) || b.q - a.q || a.r - b.r)[0] : null;
+    const point = direct && hexDistance(direct, entry.target) < hexDistance(actor, entry.target) ? direct : entry.path[0];
+    const apCost = battleMoveApCost(battle, actor, actor, point);
+    const alliesOnTarget = battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id
+      && hexDistance(unit, entry.target) <= 1).length;
+    const adjacentThreats = enemies.filter(enemy => hexDistance(point, enemy) <= 1).length;
+    candidates.push({ id: `move-${entry.target.id}`, type: 'move', targetId: entry.target.id, point, apCost,
+      fatigueCost: movementFatigue(actor, battleMovementCost(battle, actor, actor, point)), bonus: 8 + Math.min(6, hexDistance(actor, entry.target)) + (noAmmo ? 15 : 0)
+        + (companyTactic === 'advance-formation' || companyTactic === 'shield-wall' ? 20 : 0),
+      spacingGain: weapon.ranged ? nearestEnemyDistance(battle, actor, point) - nearest : 0,
+      flankGain: alliesOnTarget && hexDistance(point, entry.target) <= 1 && hexDistance(actor, entry.target) > 1 ? 1 : 0,
+      incomingDamage: adjacentThreats * 4,
+      blocksAlly: battle.units.some(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id
+        && hexDistance(unit, point) === 1 && hexDistance(unit, entry.target) > hexDistance(point, entry.target)) ? .2 : 0 });
+  }
+  if (weapon.ranged && nearest <= 1 && companyTactic !== 'advance-formation') {
+    const retreat = archerRetreatOption(battle, actor, range);
+    if (retreat) candidates.push({ id: 'retreat', type: 'move', point: retreat, apCost: battleMoveApCost(battle, actor, actor, retreat),
+      fatigueCost: movementFatigue(actor, retreat.cost), preventedDamage: 8, spacingGain: retreat.safety - nearest, bonus: 28 });
+  }
+  if (actor.ap >= 9) candidates.push({ id: 'recover', type: 'recover', apCost: 9, fatigueCost: 0, bonus: actor.fatigue >= actor.maxFatigue * .55 ? 18 : -20 });
+  if (companyTactic === 'focus' && candidates.some(action => action.type === 'attack' && action.targetId === battle.focusTargetId)) {
+    for (let index = candidates.length - 1; index >= 0; index--) {
+      if (candidates[index].type === 'attack' && candidates[index].targetId !== battle.focusTargetId) candidates.splice(index, 1);
+    }
+  }
+  const ranked = rankTacticalActions(actor, candidates, { tactic: battle.tactic, focusTargetId: battle.focusTargetId,
+    previousTargetId: enemies.some(enemy => enemy.id === actor.aiTargetId) ? actor.aiTargetId : null });
+  const choice = ranked[0];
+  if (!choice || choice.score < -10) {
+    actor.ap = 0;
+    const message = `${actor.name} holds position.`;
+    battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, equipped);
+    battleLog(battle, message);
+  } else if (choice.type === 'attack') {
+    actor.aiTargetId = choice.target.id;
+    attackTarget(state, actor, choice.target, weapon, choice.id === 'aimed-shot' ? COMBAT_SKILLS['aimed-shot']
+      : isBow(weapon) ? COMBAT_SKILLS['quick-shot'] : null);
+    if (retreatFrom) battle.lastEvent.moveFrom = retreatFrom;
+  } else if (choice.type === 'knock-back') {
+    actor.aiTargetId = choice.target.id;
+    const chance = attackHitChance(battle, actor, choice.target, { ...weapon, ranged: false });
+    actor.ap -= 4;
+    actor.fatigue += 20;
+    const hit = battleRoll(battle) * 100 < chance;
+    const from = { q: choice.target.q, r: choice.target.r };
+    if (hit) { choice.target.q = choice.push.q; choice.target.r = choice.push.r; choice.target.shieldWallActive = false; }
+    const message = `${actor.name} ${hit ? 'knocks back' : 'fails to knock back'} ${choice.target.name}.`;
+    battle.lastEvent = makeBattleEvent(actor, choice.target, hit ? 'move' : 'miss', message, equipped, null,
+      { skillName: COMBAT_SKILLS['knock-back'].name, ...(hit ? { pushedFrom: from } : {}) });
+    battleLog(battle, message);
+  } else if (choice.type === 'shieldwall') {
+    actor.ap -= 4;
+    actor.fatigue += 20;
+    actor.shieldWallActive = true;
+    const message = `${actor.name} raises a shieldwall.`;
+    battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, equipped, null, { skillName: COMBAT_SKILLS.shieldwall.name });
+    battleLog(battle, message);
+  } else if (choice.type === 'move') {
+    const from = { q: actor.q, r: actor.r };
+    actor.q = choice.point.q; actor.r = choice.point.r;
+    actor.ap -= choice.apCost;
+    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + choice.fatigueCost);
+    consumeMovementCredit(battle, actor, from, actor);
+    if (choice.targetId) actor.aiTargetId = choice.targetId;
+    if (companyTactic === 'advance-formation' || companyTactic === 'shield-wall') actor.formationMovedRound = battle.round;
+    if (companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
+    const message = `${actor.name} moves across the field.`;
+    battle.lastEvent = makeBattleEvent(actor, null, 'move', message, equipped, from);
+    battleLog(battle, message);
+  } else {
+    actor.ap = 0;
+    actor.fatigue = hasPerk(actor, 'recover') ? Math.max(0, actor.fatigue - Math.max(22, Math.ceil(actor.fatigue / 2))) : Math.max(0, actor.fatigue - 22);
+    const message = `${actor.name} catches their breath.`;
+    battle.lastEvent = makeBattleEvent(actor, null, 'recover', message, equipped);
+    battleLog(battle, message);
+  }
+  if (!finishBattlePhase(battle) && actor.ap <= 0) nextBattleTurn(battle);
+  return result(true, battle.lastEvent.message);
 }
 
 export function advanceBattle(state) {
   const battle = state.battle;
   if (!battle || battle.status !== 'active') return result(false, 'There is no active battle.');
+  if (battle.rulesVersion === 2) return advanceBattleV2(state);
   const actor = battle.units.find(unit => unit.id === battle.activeId);
   if (!actor?.alive) {
     nextBattleTurn(battle);
@@ -3046,7 +3367,7 @@ export function advanceBattle(state) {
 
 export function resolveBattle(state) {
   if (!state.battle || state.battle.status !== 'active') return result(false, 'There is no active battle.');
-  for (let turn = 0; turn < 500 && state.battle.status === 'active'; turn++) advanceBattle(state);
+  for (let turn = 0; turn < (state.battle.rulesVersion === 2 ? 2000 : 500) && state.battle.status === 'active'; turn++) advanceBattle(state);
   return state.battle.status === 'active' ? result(false, 'The battle is still underway.') : result(true, `Battle ended in ${state.battle.status}.`);
 }
 
@@ -3210,6 +3531,8 @@ function validateBattle(input, party, worldState) {
   assert(input.encounterName === undefined || input.encounterName === encounterName, 'battle encounter name');
   assert(typeof input.id === 'string' && input.id.length <= 80 && input.id.startsWith('battle-'), 'battle id');
   assert(['active', 'victory', 'defeat', 'retreat'].includes(input.status), 'battle status');
+  const rulesVersion = input.rulesVersion ?? 1;
+  assert(rulesVersion === 1 || rulesVersion === 2, 'battle rules version');
   assert(Number.isSafeInteger(input.round) && input.round >= 1 && input.round <= 1000, 'battle round');
   const tactic = input.tactic ?? 'offense';
   assert(TACTICS.includes(tactic), 'battle tactic');
@@ -3255,11 +3578,17 @@ function validateBattle(input, party, worldState) {
     const turnStartedRound = unit.turnStartedRound ?? 0;
     const freeSwapRound = unit.freeSwapRound ?? 0;
     const freeHealRound = unit.freeHealRound ?? 0;
+    const formationMovedRound = unit.formationMovedRound ?? 0;
+    const aiTargetId = unit.aiTargetId ?? null;
+    const movementCredit = unit.movementCredit ?? 0;
     assert(validCount(adaptation) && adaptation <= 1000, 'battle adaptation');
     assert(validCount(berserkRound) && berserkRound <= input.round, 'battle berserk round');
     assert(validCount(frenzyUntilRound) && frenzyUntilRound <= input.round + 2, 'battle frenzy round');
     assert(validCount(turnStartedRound) && turnStartedRound <= input.round, 'battle turn started round');
     assert(validCount(freeSwapRound) && freeSwapRound <= input.round && validCount(freeHealRound) && freeHealRound <= input.round, 'battle free actions');
+    assert(validCount(formationMovedRound) && formationMovedRound <= input.round && (aiTargetId === null || partyIds.has(aiTargetId)
+      || /^ally-[1-3]$/.test(aiTargetId) || /^enemy-([1-9]|1[0-2])$/.test(aiTargetId)), 'battle AI state');
+    assert(validCount(movementCredit) && movementCredit <= Math.max(0, movementBudget(unit) - 2) * 2, 'battle movement credit');
     assert(recordObject(reserveEquipment) && (reserveEquipment.weapon === null || getItem(reserveEquipment.weapon)?.slot === 'weapon') && (reserveEquipment.shield === null || getItem(reserveEquipment.shield)?.slot === 'shield') && (!getItem(reserveEquipment.weapon)?.twoHanded || reserveEquipment.shield === null), 'battle reserve equipment');
     assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'battle accessories');
     const pocketDrawnFrom = unit.pocketDrawnFrom ?? null;
@@ -3300,7 +3629,10 @@ function validateBattle(input, party, worldState) {
       && (unit.maxReserveShieldDurability === undefined || unit.maxReserveShieldDurability === maxReserveShieldDurability)
       && typeof battleSetSwapped === 'boolean', 'battle shield durability');
     assert(validCount(unit.seed) && unit.seed <= 0xffffffff, 'battle unit seed');
-    assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= 2, 'battle stamina');
+    assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= (rulesVersion === 2 ? 11 : 2), 'battle stamina');
+    assert(unit.shieldWallActive === undefined || rulesVersion === 2 && typeof unit.shieldWallActive === 'boolean', 'battle shieldwall');
+    assert(unit.tacticalRole === undefined || COMBAT_ROLES.includes(unit.tacticalRole) && unit.tacticalRole !== 'auto', 'battle tactical role');
+    assert(unit.skillPreference === undefined || SKILL_PREFERENCES.includes(unit.skillPreference), 'battle skill preference');
     assert(unit.reload === undefined || validCount(unit.reload) && unit.reload <= 2, 'battle reload');
     for (const key of ['meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve']) assert(validCount(unit[key]) && unit[key] <= 300, `battle ${key}`);
     return {
@@ -3314,6 +3646,10 @@ function validateBattle(input, party, worldState) {
       shieldDurability, maxShieldDurability, reserveShieldDurability, maxReserveShieldDurability, battleSetSwapped,
       throwingAmmo: { active: throwingAmmo.active, reserve: throwingAmmo.reserve },
       perks: perks.filter(id => PERK_BY_ID.has(id)), adaptation, berserkRound, frenzyUntilRound, turnStartedRound, freeSwapRound, freeHealRound,
+      ...(rulesVersion === 2 ? { shieldWallActive: unit.shieldWallActive ?? false } : {}),
+      ...(unit.tacticalRole === undefined ? {} : { tacticalRole: unit.tacticalRole }),
+      ...(unit.skillPreference === undefined ? {} : { skillPreference: unit.skillPreference }),
+      ...(rulesVersion === 2 ? { aiTargetId, formationMovedRound, movementCredit } : {}),
       seed: unit.seed, ...(unit.appearanceId ? { appearanceId: unit.appearanceId } : {}), alive: unit.alive, morale: unit.morale, fatigue: unit.fatigue, ap: unit.ap, reload: unit.reload ?? 0,
       meleeSkill: unit.meleeSkill, rangedSkill: unit.rangedSkill,
       meleeDefense: unit.meleeDefense, rangedDefense: unit.rangedDefense,
@@ -3356,9 +3692,11 @@ function validateBattle(input, party, worldState) {
   if (event?.fallen !== undefined) assert(typeof event.fallen === 'boolean', 'battle event fallen');
   if (event?.weaponId !== undefined) assert(event.weaponId === null || getItem(event.weaponId)?.slot === 'weapon', 'battle event weapon');
   if (event?.itemId !== undefined) assert(getItem(event.itemId)?.slot === 'accessory', 'battle event item');
+  if (event?.skillName !== undefined) assert(['Quick Shot', 'Aimed Shot', 'Shieldwall', 'Knock Back', 'Reload'].includes(event.skillName), 'battle event skill');
   if (event?.ranged !== undefined) assert(typeof event.ranged === 'boolean', 'battle event ranged');
   if (event?.projectile !== undefined) assert([null, 'arrow', 'bolt', 'javelin', 'axe', 'stone'].includes(event.projectile), 'battle event projectile');
   for (const key of ['from', 'to', 'moveFrom']) if (event?.[key] !== undefined) assert(event[key] === null || validHex(event[key], field), `battle event ${key}`);
+  if (event?.pushedFrom !== undefined) assert(validHex(event.pushedFrom, field), 'battle event pushed from');
   for (const key of ['hpDamage', 'armorDamage', 'shieldDamage']) if (event?.[key] !== undefined) assert(validCount(event[key]) && event[key] <= 1000, `battle event ${key}`);
   const actor = units.find(unit => unit.id === event?.actorId);
   const target = units.find(unit => unit.id === event?.targetId);
@@ -3368,6 +3706,8 @@ function validateBattle(input, party, worldState) {
     actorId: event.actorId, targetId: event.targetId, type: event.type === 'hit' || event.type === 'fall' ? 'attack' : event.type,
     weaponId, ranged, projectile: event.projectile === undefined ? ranged && ['attack', 'miss', 'hit', 'fall'].includes(event.type) ? projectileForWeapon(getItem(weaponId)) : null : event.projectile,
     ...(event.itemId === undefined ? {} : { itemId: event.itemId }),
+    ...(event.skillName === undefined ? {} : { skillName: event.skillName }),
+    ...(event.pushedFrom === undefined ? {} : { pushedFrom: { q: event.pushedFrom.q, r: event.pushedFrom.r } }),
     from: event.from === undefined ? actor ? { q: actor.q, r: actor.r } : null : event.from === null ? null : { q: event.from.q, r: event.from.r },
     to: event.to === undefined ? target ? { q: target.q, r: target.r } : actor ? { q: actor.q, r: actor.r } : null : event.to === null ? null : { q: event.to.q, r: event.to.r },
     ...(event.moveFrom === undefined ? {} : { moveFrom: event.moveFrom === null ? null : { q: event.moveFrom.q, r: event.moveFrom.r } }),
@@ -3390,6 +3730,7 @@ function validateBattle(input, party, worldState) {
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
     id: input.id, campId: input.campId, encounterType, encounterName, difficulty, campGeneration, famedDrop, tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
+    ...(input.rulesVersion === undefined ? {} : { rulesVersion }),
     field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng, lootSeed,
     log: [...input.log], lastEvent: normalizedEvent,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items], itemConditions: [...itemConditions] },
@@ -3505,6 +3846,8 @@ export function validateSave(input) {
     assert(typeof person.id === 'string' && person.id.length <= 40 && /^[a-z0-9-]+$/.test(person.id) && !ids.has(person.id), 'person id');
     ids.add(person.id);
     assert(typeof person.name === 'string' && person.name.length > 0 && person.name.length <= 80, 'person name');
+    assert(person.combatRole === undefined || COMBAT_ROLES.includes(person.combatRole), 'person combat role');
+    assert(person.skillPreference === undefined || SKILL_PREFERENCES.includes(person.skillPreference), 'person skill preference');
     assert(typeof person.background === 'string' && person.background.length > 0 && person.background.length <= 80, 'person background');
     const backgroundDefinition = person.backgroundId === undefined ? null : RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId);
     assert(person.backgroundId === undefined || backgroundDefinition && person.background === backgroundDefinition.name, 'person background id');
@@ -3650,6 +3993,7 @@ export function validateSave(input) {
   const conditions = [...inventoryCondition];
   const party = input.party.map(person => normalizeMember({
     id: person.id, name: person.name, background: person.background, seed: person.seed,
+    combatRole: person.combatRole ?? 'auto', skillPreference: person.skillPreference ?? 'balanced',
     ...(person.backgroundId === undefined ? {} : { backgroundId: person.backgroundId }),
     ...(person.appearanceId ? { appearanceId: person.appearanceId } : {}),
     traits: [...(person.traits ?? [])],

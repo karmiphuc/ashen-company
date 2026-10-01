@@ -204,9 +204,11 @@ test('Pathfinder crosses two rough uphill tiles for the normal two-point move bu
   const normal = base.battle.units.find(unit => unit.id === 'captain');
   const swift = pathfinder.battle.units.find(unit => unit.id === 'captain');
   assert.equal(hexDistance(origin, normal), 1);
-  assert.equal(hexDistance(origin, swift), 2);
+  assert.equal(hexDistance(origin, swift), 1);
   assert.equal(normal.fatigue, 6);
-  assert.equal(swift.fatigue, 6);
+  assert.equal(swift.fatigue, 3);
+  assert.equal(normal.ap, 5);
+  assert.equal(swift.ap, 7, 'Pathfinder halves this rough uphill move from 4 AP to 2 AP');
 });
 
 test('Bullseye, Anticipation, Backstabber, and Fast Adaptation alter deterministic hit rolls', () => {
@@ -252,7 +254,7 @@ test('Bullseye, Anticipation, Backstabber, and Fast Adaptation alter determinist
   advanceBattle(adaptation.state);
   assert.equal(adaptation.battle.lastEvent.type, 'miss');
   assert.equal(adaptation.captain.adaptation, 1);
-  Object.assign(adaptation.captain, { ap: 2, meleeSkill: 200 });
+  Object.assign(adaptation.captain, { ap: 4, meleeSkill: 200 });
   activate(adaptation.battle, 'captain');
   advanceBattle(adaptation.state);
   assert.equal(adaptation.battle.lastEvent.type, 'attack');
@@ -339,7 +341,7 @@ test('Berserk grants one immediate action without a second turn recovery and sta
   advanceBattle(fight.state);
   assert.equal(fight.target.alive, false);
   assert.equal(fight.battle.activeId, 'captain');
-  assert.equal(fight.captain.ap, 2);
+  assert.equal(fight.captain.ap, 7, 'Berserk adds 2 AP to the 5 left after a 4 AP attack');
   assert.equal(fight.captain.berserkRound, fight.battle.round);
   assert.equal(fight.captain.frenzyUntilRound, fight.battle.round + 2);
   assert.match(fight.battle.lastEvent.message, /Killing Frenzy: \+25% damage\. Berserk: \+2 AP\./);
@@ -352,6 +354,8 @@ test('Berserk grants one immediate action without a second turn recovery and sta
   assert.equal(second.alive, false);
   assert.equal(third.alive, true);
   assert.doesNotMatch(fight.battle.lastEvent.message, /Berserk:/, 'Berserk cannot trigger twice in one round');
+  assert.equal(fight.captain.ap, 3, 'the second 4 AP attack spends the remaining Berserk budget');
+  for (let action = 0; action < 5 && fight.battle.activeId === 'captain'; action++) advanceBattle(fight.state);
   assert.notEqual(fight.battle.activeId, 'captain');
   assert.deepEqual(validateSave(fight.state), fight.state);
 });

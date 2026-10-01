@@ -94,9 +94,12 @@ test('focus survives an enemy turn and keeps attacks on a shared target', () => 
   advanceBattle(state);
   assert.equal(state.battle.focusTargetId, 'enemy-2');
   assert.equal(state.battle.lastEvent.targetId, 'enemy-2');
+  byId('enemy-2').maxHp = 300;
+  byId('enemy-2').hp = 300;
   byId('enemy-1').hp = 1;
-  advanceBattle(state);
+  while (state.battle.activeId === 'captain') advanceBattle(state);
   assert.equal(state.battle.focusTargetId, 'enemy-2');
+  while (state.battle.activeId === 'enemy-1') advanceBattle(state);
   advanceBattle(state);
   assert.equal(state.battle.lastEvent.targetId, 'enemy-2');
   assert.deepEqual(validateSave(state), state);

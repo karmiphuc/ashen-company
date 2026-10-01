@@ -233,7 +233,7 @@ test('Relentless keeps exact initiative across shield and weapon set swaps', () 
 });
 
 test('movement perks increase reach or reduce movement fatigue', () => {
-  const base = battleWith('arming-sword', [], 5);
+  const base = battleWith('arming-sword', [], 7);
   base.actor.equipment.armor = 'mail-shirt';
   base.actor.equipment.helmet = null;
   base.actor.q = 2;
@@ -241,12 +241,17 @@ test('movement perks increase reach or reduce movement fatigue', () => {
   const origin = { q: 2, r: 2 };
   const fleet = structuredClone(base.state);
   fleet.battle.units.find(unit => unit.id === 'captain').perks = ['fleet-footed'];
+  fleet.battle.units.find(unit => unit.id === 'captain').movementCredit = 2;
   advanceBattle(base.state);
   advanceBattle(fleet);
   const walker = base.battle.units.find(unit => unit.id === 'captain');
   const runner = fleet.battle.units.find(unit => unit.id === 'captain');
+  assert.equal(runner.ap, walker.ap + 2, 'Fleet Footed saves 2 movement AP on the first step');
+  for (const state of [base.state, fleet]) {
+    for (let action = 0; action < 20 && state.battle.activeId === 'captain'; action++) advanceBattle(state);
+  }
   assert.ok(hexDistance(origin, runner) > hexDistance(origin, walker));
-  assert.equal(hexDistance(origin, runner), 3, 'Fleet Footed works at 15 armor fatigue');
+  assert.equal(hexDistance(origin, runner), 5, 'Fleet Footed adds a fifth open-ground step at 15 armor fatigue');
   const marathon = battleWith('arming-sword', ['marathoner'], 5);
   marathon.actor.equipment.armor = 'patched-coat';
   marathon.actor.equipment.helmet = null;

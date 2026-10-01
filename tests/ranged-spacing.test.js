@@ -84,6 +84,7 @@ test('defensive melee backups return to ranged fire as soon as two-hex space ope
         advanceBattle(state);
         assert.equal(actor.equipment.weapon, weapon, `${weapon}/${backup}/${tactic} stayed in melee`);
         assert.deepEqual({ q: actor.q, r: actor.r }, { q: 0, r: 0 });
+        actor.ap = 9;
         battle.activeId = actor.id;
         battle.turnIndex = battle.turnOrder.indexOf(actor.id);
         advanceBattle(state);

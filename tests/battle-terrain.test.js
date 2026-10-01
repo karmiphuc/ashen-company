@@ -105,8 +105,10 @@ test('battle movement spends terrain cost and deployed units never overlap', () 
   assert.equal(advanceBattle(slow).ok, true);
   const openCaptain = open.battle.units.find(unit => unit.id === 'captain');
   const slowCaptain = slow.battle.units.find(unit => unit.id === 'captain');
-  assert.equal(hexDistance(origin, openCaptain), 2);
+  assert.equal(hexDistance(origin, openCaptain), 1);
   assert.equal(hexDistance(origin, slowCaptain), 1);
+  assert.equal(openCaptain.ap, 7, 'open ground costs 2 AP');
+  assert.equal(slowCaptain.ap, 5, 'rough ground costs 4 AP');
 });
 
 test('pathfinding and Pathfinder route around dense trees', () => {

@@ -187,8 +187,10 @@ test('a mount can carry its rider farther in a combat turn', () => {
       battle.activeId = 'captain';
     }
     plain.battle.units.find(unit => unit.id === 'captain').equipment.mount = null;
-    advanceBattle(mounted);
-    advanceBattle(plain);
+    plain.battle.units.find(unit => unit.id === 'captain').movementCredit = 0;
+    for (const state of [mounted, plain]) {
+      for (let action = 0; action < 20 && state.battle.activeId === 'captain'; action++) advanceBattle(state);
+    }
     const rider = mounted.battle.units.find(unit => unit.id === 'captain');
     const walker = plain.battle.units.find(unit => unit.id === 'captain');
     extraDistance = rider.q > walker.q;

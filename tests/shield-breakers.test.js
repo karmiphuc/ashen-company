@@ -13,7 +13,7 @@ function duel(weaponId, mount = null) {
 }
 
 function attack({state,battle,actor}) {
-  actor.ap=2;actor.fatigue=0;actor.reload=0;battle.rng=0;
+  actor.ap=9;actor.fatigue=0;actor.reload=0;battle.rng=0;
   battle.activeId=actor.id;battle.turnIndex=battle.turnOrder.indexOf(actor.id);
   advanceBattle(state);return battle.lastEvent;
 }

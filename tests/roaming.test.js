@@ -161,6 +161,7 @@ test('funded archers step out of melee, empty quivers fight back, and exhaustion
   Object.assign(enemy, { q: 3, r: 2 });
   state.battle.turnIndex = state.battle.turnOrder.indexOf('captain');
   state.battle.activeId = 'captain';
+  fighter.ap = 9;
   advanceBattle(state);
   assert.equal(state.supplies.ammo, 0);
   assert.ok(['attack', 'miss'].includes(state.battle.lastEvent.type));
@@ -169,6 +170,7 @@ test('funded archers step out of melee, empty quivers fight back, and exhaustion
   fighter.fatigue = fighter.maxFatigue;
   state.battle.turnIndex = state.battle.turnOrder.indexOf('captain');
   state.battle.activeId = 'captain';
+  fighter.ap = 9;
   advanceBattle(state);
   assert.equal(state.battle.lastEvent.type, 'recover');
   assert.ok(fighter.fatigue < fighter.maxFatigue);
