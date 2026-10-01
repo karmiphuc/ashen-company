@@ -1,0 +1,55 @@
+{
+  "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "files": [
+    {
+      "path": "assets/audio/heartfelt-battle.mp3",
+      "author": "request",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/heartfelt-battle-loopable-fantasy-stringspianohorn",
+      "original": "heartfelt-battle_loop.ogg",
+      "conversion": "mono MP3, 32 kHz, 64 kbps",
+      "bytes": 1229516,
+      "sha256": "0bee0170ad20f2258a77ea985d799e0dda2d41551705102f988682e3922044ac"
+    },
+    {
+      "path": "assets/audio/swing.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "original": "Audio/knifeSlice.ogg",
+      "conversion": "mono MP3, 22.05 kHz, 64 kbps",
+      "bytes": 5476,
+      "sha256": "8d9a21abeb13787fae81135774fe600bc0c6797e64f7f3eb520970764a28d77c"
+    },
+    {
+      "path": "assets/audio/cloth.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "original": "Audio/cloth1.ogg",
+      "conversion": "mono MP3, 22.05 kHz, 64 kbps",
+      "bytes": 6103,
+      "sha256": "6084bce2a0a19dd8cb4da2fcc0deea75236df82be01b58b93122316464dcb7cd"
+    },
+    {
+      "path": "assets/audio/metal.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactMetal_medium_002.ogg",
+      "conversion": "mono MP3, 22.05 kHz, 64 kbps",
+      "bytes": 1714,
+      "sha256": "a7059a7373f34d66c7f2dfbf1328cd8f59a1afabe735de9a52ae75c0fd64abca"
+    },
+    {
+      "path": "assets/audio/impact.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactPunch_medium_000.ogg",
+      "conversion": "mono MP3, 22.05 kHz, 64 kbps",
+      "bytes": 4222,
+      "sha256": "a0919a25fa7685d5becc2bac06f4e51d0584e56a2c8dc639909ab4b755d9cb51"
+    }
+  ]
+}

@@ -1,5 +1,11 @@
 # Asset credits
 
+## Battle audio
+
+The battle loop is [Heartfelt Battle](https://opengameart.org/content/heartfelt-battle-loopable-fantasy-stringspianohorn) by **request**. Weapon whooshes and cloth sounds come from [Kenney RPG Audio](https://kenney.nl/assets/rpg-audio); metal and body impacts come from [Kenney Impact Sounds](https://kenney.nl/assets/impact-sounds). All five source recordings are released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+The [audio manifest](../assets/audio/source-manifest.json) records each source file, conversion, size and SHA-256 hash. Mono MP3 conversions total about 1.2 MB. One looping music element and at most three short effect voices keep memory and playback work bounded. Audio is cached for offline play; the world map has no music. Music and effects can be muted independently in the Save menu.
+
 Fantasy Brothers 6.2 and Samurai 2.1 recruit and equipment artwork is documented
 in [FANTASY-SAMURAI.md](FANTASY-SAMURAI.md) and
 [`assets/fantasy-samurai-source.json`](../assets/fantasy-samurai-source.json).

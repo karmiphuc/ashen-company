@@ -14,6 +14,7 @@ const CORE = [
   './src/campaign-ui.js',
   './src/battle-view.js',
   './src/battle-terrain.js',
+  './src/audio.js',
   './src/app.js',
   './src/item-details.js',
   './src/engine.js',
@@ -35,22 +36,22 @@ const CORE = [
   './assets/icon.svg',
 ];
 
-async function imageFiles(directory) {
+async function assetFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async entry => {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) return imageFiles(path);
-    if (entry.isFile() && /\.(png|jpg)$/i.test(entry.name) && !/^contact[-_]sheet/i.test(entry.name)) return [path];
+    if (entry.isDirectory()) return assetFiles(path);
+    if (entry.isFile() && /\.(png|jpg|mp3)$/i.test(entry.name) && !/^contact[-_]sheet/i.test(entry.name)) return [path];
     return [];
   }));
   return nested.flat();
 }
 
 export async function listOfflineAssets() {
-  const images = (await imageFiles(join(ROOT, 'assets')))
+  const assets = (await assetFiles(join(ROOT, 'assets')))
     .map(path => './' + relative(ROOT, path).split(sep).join('/'))
     .sort();
-  return [...CORE, ...images];
+  return [...CORE, ...assets];
 }
 
 export async function renderServiceWorker() {
@@ -89,12 +90,53 @@ self.addEventListener('activate', event => event.waitUntil((async () => {
   await self.clients.claim();
 })()));
 
+function parseAudioRange(range, size) {
+  const match = /^bytes=(\\d*)-(\\d*)$/i.exec(range.trim());
+  if (!match || (!match[1] && !match[2]) || size <= 0) return null;
+  let start;
+  let end;
+  if (!match[1]) {
+    const suffixLength = Number(match[2]);
+    if (!Number.isSafeInteger(suffixLength) || suffixLength <= 0) return null;
+    start = Math.max(0, size - suffixLength);
+    end = size - 1;
+  } else {
+    start = Number(match[1]);
+    end = match[2] ? Number(match[2]) : size - 1;
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= size) return null;
+    end = Math.min(end, size - 1);
+  }
+  return { start, end };
+}
+
+async function cachedAudioRange(cached, range) {
+  const bytes = await cached.arrayBuffer();
+  const size = bytes.byteLength;
+  const selected = parseAudioRange(range, size);
+  const headers = new Headers(cached.headers);
+  headers.set('Accept-Ranges', 'bytes');
+  if (!headers.has('Content-Type')) headers.set('Content-Type', 'audio/mpeg');
+  if (!selected) {
+    headers.set('Content-Range', 'bytes */' + size);
+    headers.set('Content-Length', '0');
+    return new Response(null, { status: 416, headers });
+  }
+  const length = selected.end - selected.start + 1;
+  headers.set('Content-Range', 'bytes ' + selected.start + '-' + selected.end + '/' + size);
+  headers.set('Content-Length', String(length));
+  return new Response(bytes.slice(selected.start, selected.end + 1), { status: 206, headers });
+}
+
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.registration.scope)) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(event.request, { ignoreSearch: true });
-    if (cached) return cached;
+    if (cached) {
+      const range = event.request.headers.get('Range');
+      const isAudio = new URL(event.request.url).pathname.toLowerCase().endsWith('.mp3');
+      return range && isAudio ? cachedAudioRange(cached, range) : cached;
+    }
     if (event.request.mode === 'navigate') {
       return await cache.match(new URL('./index.html', self.registration.scope).href) || Response.error();
     }
