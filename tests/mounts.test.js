@@ -6,7 +6,7 @@ import {
   getRoamingBands, startBattle, advanceBattle,
 } from '../src/engine.js';
 
-const mountIds = ['riding-horse', 'warg-mount', 'dire-wolf-mount'];
+const mountIds = ['riding-horse', 'war-horse', 'armored-war-horse', 'warg-mount', 'dire-wolf-mount'];
 
 test('mounts use their own slot, conserve ownership, and migrate old saves', () => {
   const state = createGame(17);
@@ -49,8 +49,24 @@ test('living mounted members add world speed and daily food, with battle skill a
   for (const id of mountIds) {
     const item = getItem(id);
     assert.equal(item.slot, 'mount');
-    assert.equal(item.damageBonus, .15);
+    assert.equal(item.damageBonus, id === 'armored-war-horse' ? .2 : .15);
     assert.equal(item.movementBonus, 1);
+  }
+});
+
+test('fantasy war horses carry their catalog trade-offs into company stats', () => {
+  const plain = createGame(280);
+  for (const [id, hit, food, price] of [['war-horse', 5, 2, 1800], ['armored-war-horse', 7, 3, 2600]]) {
+    const state = createGame(280);
+    const item = getItem(id);
+    assert.equal(item.price, price);
+    state.inventory.push(id);
+    state.inventoryCondition.push(null);
+    assert.equal(equipItem(state, 'captain', id).ok, true);
+    assert.equal(getCompanyStats(state.party[0]).meleeSkill, getCompanyStats(plain.party[0]).meleeSkill + hit);
+    assert.equal(getDailyFood(state), getDailyFood(plain) + food);
+    assert.equal(getCompanyTravelBonus(state), .1);
+    assert.deepEqual(validateSave(state), state);
   }
 });
 

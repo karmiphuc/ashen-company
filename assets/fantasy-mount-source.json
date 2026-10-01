@@ -1,0 +1,25 @@
+{
+  "archive": "Fantasy Brothers 6.2",
+  "archiveSha256": "260bec3d6d1635db3400ba6d2ad13bdac540bad0b2d24960915ac3bc41947cfa",
+  "atlas": "gfx/entity_xx.png",
+  "brushFile": "brushes/entity_xx.brush",
+  "geometryFormat": "xMin,xMax,yMin,yMax; positive Y points up",
+  "assets": [
+    {
+      "brush": "xxhorse_1",
+      "rect": [846, 1112, 986, 1233],
+      "geometry": [-45, 95, -65, 56],
+      "body": { "path": "assets/portraits/mount-war-horse-body.png", "conversion": "atlas crop; vertical flip", "anchor": [-15, 20], "sha256": "52105dcd1e613826a84041cc570acf20805f562543348ae4735a13abcf9fe20a" },
+      "head": { "path": "assets/portraits/mount-war-horse-head.png", "conversion": "front crop x=70..120,y=18..121 from flipped body", "anchor": [55, 38], "sha256": "171ef9986aef3b4865de0b70d2ec2f9c899bccf8b67bee9eb5499c1688a4ef0b" },
+      "inventory": { "source": "gfx/ui/items/shields/inventory_xxhorse_shield_1.png", "path": "assets/items/war-horse.png", "sha256": "b3ca7d7cb649a3b875040a60a9e65fda6c7daf7478cbd504b911ea11a3604cd7" }
+    },
+    {
+      "brush": "xxheavyhorse_1",
+      "rect": [1551, 1112, 1691, 1233],
+      "geometry": [-45, 95, -65, 56],
+      "body": { "path": "assets/portraits/mount-armored-war-horse-body.png", "conversion": "atlas crop; vertical flip", "anchor": [-15, 20], "sha256": "c34411e353a505c2e0026e59626cad52d9bba8f96437389d4b3d946d33175dcd" },
+      "head": { "path": "assets/portraits/mount-armored-war-horse-head.png", "conversion": "front crop x=70..120,y=18..121 from flipped body", "anchor": [55, 38], "sha256": "ccc558f654582a81a9c4f15747ca9635a27d050bf43bff2b63bd541494d65062" },
+      "inventory": { "source": "gfx/ui/items/shields/inventory_xxheavyhorse_shield_1.png", "path": "assets/items/armored-war-horse.png", "sha256": "0ae2184b68fe7b7e4ac4fabb5fe5d831ff85db1a599fc48a32289d7e1ee1691e" }
+    }
+  ]
+}

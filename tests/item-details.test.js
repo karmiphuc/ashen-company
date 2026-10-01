@@ -7,7 +7,7 @@ const item = id => ITEMS.find(entry => entry.id === id);
 const value = (details, label) => details.stats.find(stat => stat.label === label)?.value;
 
 test('every catalog item has useful details without changing the item', () => {
-  assert.equal(ITEMS.length, 158);
+  assert.equal(ITEMS.length, 160);
   for (const entry of ITEMS) {
     const before = structuredClone(entry);
     const details = getItemDetails(entry);
@@ -46,6 +46,14 @@ test('bow and crossbow explain actual ranged costs and differences', () => {
   assert.equal(value(crossbow, 'Reach'), '5 hexes');
   assert.equal(value(crossbow, 'Reload'), '1 turn after each shot');
   assert.equal(value(crossbow, 'Hands'), 'Two; shield stowed');
+});
+
+test('throwing bundles expose remaining throws and shield damage', () => {
+  const axes=getItemDetails(item('heavy-throwing-axes'),2);
+  assert.equal(value(axes,'Bundle throws'),'2 / 5');
+  assert.equal(value(axes,'Shield damage'),'24 per hit or block');
+  assert.ok(axes.notes.some(note=>note.includes('refill from company ammunition')));
+  assert.equal(value(getItemDetails(item('javelins'),0),'Bundle throws'),'0 / 5');
 });
 
 test('billhook, dagger, and axe show their real tradeoffs', () => {

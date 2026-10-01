@@ -67,6 +67,8 @@ test('mounts place authored animal layers around the rider without changing unmo
   assert.doesNotMatch(bare, /data-layer="mount-/);
   for (const [id, visual, body, head] of [
     ['riding-horse', 'horse', 'mount-horse-body.png', 'mount-horse-head.png'],
+    ['war-horse', 'warhorse', 'mount-war-horse-body.png', 'mount-war-horse-head.png'],
+    ['armored-war-horse', 'armoredhorse', 'mount-armored-war-horse-body.png', 'mount-armored-war-horse-head.png'],
     ['warg-mount', 'warg', 'mount-wolf-body.png', 'mount-wolf-head.png'],
     ['dire-wolf-mount', 'wolf', 'mount-wolf-body.png', 'mount-wolf-head.png'],
   ]) {
@@ -74,14 +76,19 @@ test('mounts place authored animal layers around the rider without changing unmo
     assert.equal(layerSource(html, 'mount-body'), `assets/portraits/${body}`);
     assert.equal(layerSource(html, 'mount-head'), `assets/portraits/${head}`);
     assert.ok(html.indexOf('data-layer="mount-body"') < html.indexOf('data-layer="body"'));
-    if (visual === 'horse') {
+    if (['horse', 'warhorse', 'armoredhorse'].includes(visual)) {
       assert.ok(html.indexOf('data-layer="mount-head"') > html.indexOf('data-layer="head"'));
-      assert.match(html, /data-layer="mount-head"[^>]*left:52px;top:35px/);
-      assert.match(html, /data-layer="mount-body"[^>]*left:12px;top:42px/);
+      if (visual === 'horse') {
+        assert.match(html, /data-layer="mount-head"[^>]*left:52px;top:35px/);
+        assert.match(html, /data-layer="mount-body"[^>]*left:12px;top:42px/);
+      } else {
+        assert.match(html, /data-layer="mount-head"[^>]*left:55px;top:38px/);
+        assert.match(html, /data-layer="mount-body"[^>]*left:-15px;top:20px/);
+      }
     } else assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="body"'));
     assert.match(html, /bb-portrait-rider"[^>]*transform:translate\(2px,0\) scale\(\.76\)/);
     for (const part of ['body', 'head']) {
-      assert.match(html, new RegExp(`data-layer="mount-${part}"[^>]*transform:scaleX\\(${visual === 'horse' ? 1 : -1}\\)`));
+      assert.match(html, new RegExp(`data-layer="mount-${part}"[^>]*transform:scaleX\\(${['horse', 'warhorse', 'armoredhorse'].includes(visual) ? 1 : -1}\\)`));
     }
     assert.match(itemImage({ id }), new RegExp(`^assets/items/${id}\\.png$`));
   }
@@ -126,6 +133,16 @@ test('portrait provenance manifest hashes every packaged source raster', () => {
   for (const asset of manifest.assets) {
     const bytes = readFileSync(new URL(`../assets/portraits/${asset.file}`, import.meta.url));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256, asset.file);
+  }
+});
+
+test('Fantasy war horse layers and icons match their source manifest', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../assets/fantasy-mount-source.json', import.meta.url), 'utf8'));
+  assert.deepEqual(manifest.assets.map(asset => asset.brush), ['xxhorse_1', 'xxheavyhorse_1']);
+  for (const asset of manifest.assets) for (const part of ['body', 'head', 'inventory']) {
+    const file = asset[part];
+    const bytes = readFileSync(new URL(`../${file.path}`, import.meta.url));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, file.path);
   }
 });
 

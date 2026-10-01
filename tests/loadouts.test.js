@@ -94,7 +94,7 @@ test('old saved market stock recognizes new weapons and accessories', () => {
   assert.deepEqual(validateSave(loaded), loaded);
 });
 
-test('battle auto-readies throwing shield set, then returns to melee when ammunition runs out', () => {
+test('battle auto-readies throwing shield set, then returns to melee when its charges run out', () => {
   const state = createGame(33);
   addItem(state, 'greatsword');
   addItem(state, 'javelins');
@@ -111,7 +111,7 @@ test('battle auto-readies throwing shield set, then returns to melee when ammuni
   assert.equal(actor.equipment.shield, 'buckler');
   assert.equal(actor.meleeDefense, defense + getItem('buckler').defense);
   assert.deepEqual(validateSave(state), state);
-  state.supplies.ammo = 0;
+  actor.throwingAmmo.active = 0;
   activate();
   assert.equal(advanceBattle(state).ok, true);
   assert.equal(actor.equipment.weapon, 'greatsword');
@@ -124,7 +124,7 @@ test('battle auto-readies throwing shield set, then returns to melee when ammuni
   assert.deepEqual(state.party[0].reserveEquipment, original.reserveEquipment);
 });
 
-test('throwing weapons spend ammunition and retain shield defense', () => {
+test('throwing weapons spend a charge and retain shield defense', () => {
   const state = createGame(34);
   addItem(state, 'javelins');
   equipItem(state, 'captain', 'javelins');
@@ -134,8 +134,10 @@ test('throwing weapons spend ammunition and retain shield defense', () => {
   at('enemy-1', 4, 2);
   activate();
   const ammo = state.supplies.ammo;
+  const charges = actor.throwingAmmo.active;
   advanceBattle(state);
-  assert.equal(state.supplies.ammo, ammo - 1);
+  assert.equal(actor.throwingAmmo.active, charges - 1);
+  assert.equal(state.supplies.ammo, ammo);
   assert.ok(['attack', 'miss'].includes(battle.lastEvent.type));
   assert.equal(battle.lastEvent.projectile, 'javelin');
   assert.equal(actor.equipment.shield, 'buckler');
@@ -429,6 +431,7 @@ test('Quick Hands gives one free set swap per round and its limit survives reloa
   assert.equal(battle.activeId, actor.id);
   const restored = validateSave(JSON.parse(JSON.stringify(state)));
   restored.supplies.ammo = 0;
+  restored.battle.units.find(unit => unit.id === actor.id).throwingAmmo.active = 0;
   advanceBattle(restored);
   const restoredActor = restored.battle.units.find(unit => unit.id === actor.id);
   assert.equal(restored.battle.lastEvent.type, 'swap');

@@ -96,6 +96,7 @@ test('combat cues distinguish misses, ranged flight, armor hits, and item use', 
     ['swing', 0], ['impact', .14],
   ]);
   assert.deepEqual(combatSoundCue({ type: 'attack', ranged: false, armorDamage: 3 }).map(cue => cue.name), ['swing', 'metal']);
+  assert.deepEqual(combatSoundCue({ type: 'miss', ranged: true, shieldDamage: 18 }).map(cue => cue.name), ['swing', 'metal']);
   assert.deepEqual(combatSoundCue({ type: 'use' }).map(cue => cue.name), ['cloth']);
   assert.deepEqual(combatSoundCue({ type: 'movement' }), []);
 });

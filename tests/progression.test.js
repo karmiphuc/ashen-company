@@ -108,7 +108,7 @@ test('old unspent points migrate without changing earned attributes', () => {
   assert.equal(getLevelUp(restored).level, 4);
 });
 
-test('training is blocked during battle and level 20 XP stays saveable', () => {
+test('training is blocked during battle and level 30 XP stays saveable', () => {
   const state = createGame(43);
   winBand(state);
   const member = state.party.find(person => getLevelUp(person));
@@ -119,13 +119,21 @@ test('training is blocked during battle and level 20 XP stays saveable', () => {
   resolveBattle(state);
   finishBattle(state);
 
+  const advancing = createGame(44);
+  advancing.party[0].level = 20;
+  advancing.party[0].xp = 999;
+  winBand(advancing);
+  assert.equal(advancing.party[0].level, 21);
+  assert.equal(getLevelUp(advancing.party[0]).level, 21);
+  assert.deepEqual(validateSave(advancing), advancing);
+
   const veteran = createGame(44);
-  veteran.party[0].level = 20;
-  veteran.party[0].xp = 999;
+  veteran.party[0].level = 30;
+  veteran.party[0].xp = 1499;
   approachBand(veteran, 'road-thieves');
   resolveBattle(veteran);
   finishBattle(veteran);
-  assert.equal(veteran.party[0].xp, 999);
+  assert.equal(veteran.party[0].xp, 1499);
   assert.deepEqual(validateSave(veteran), veteran);
 });
 

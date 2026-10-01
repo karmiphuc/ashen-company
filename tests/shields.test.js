@@ -64,6 +64,7 @@ test('melee misses and hits wear shields; a break removes defense without losing
   const striker = hitBattle.units.find(unit => unit.id === 'enemy-1');
   Object.assign(defender, { q: 2, r: 1 });
   Object.assign(striker, { q: 3, r: 1, meleeSkill: 200 });
+  striker.equipment.weapon = 'arming-sword';
   for (const ally of hitBattle.units.filter(unit => unit.side === 'company' && unit !== defender)) Object.assign(ally, { hp: 0, alive: false });
   for (const enemy of hitBattle.units.filter(unit => unit.side === 'enemy' && unit !== striker)) Object.assign(enemy, { hp: 0, alive: false });
   hitBattle.turnIndex = hitBattle.turnOrder.indexOf(striker.id);

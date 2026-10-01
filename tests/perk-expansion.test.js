@@ -62,7 +62,7 @@ function compareAttack({ weapon, perk, distance = 1, armored = false, shield = t
 
 test('expanded perk catalog is unique, grouped, saveable, and uses bundled icon IDs', () => {
   assert.equal(added.length, 22);
-  assert.equal(PERKS.length, 42);
+  assert.equal(PERKS.length, 46);
   assert.ok(added.every(id => PERKS.some(perk => perk.id === id && perk.category && perk.icon)));
   const state = createGame(211);
   state.party[0].level = 20;
@@ -108,11 +108,133 @@ test('light defense and shield perks have concrete passive effects', () => {
   person.perks = ['nimble'];
   const lightBase = getCompanyStats({ ...person, perks: [] });
   assert.equal(getCompanyStats(person).rangedDefense, lightBase.rangedDefense + 5);
+  person.equipment.armor = 'mail-shirt';
+  assert.equal(getCompanyStats(person).rangedDefense, getCompanyStats({ ...person, perks: [] }).rangedDefense + 5,
+    'Nimble includes armor with exactly 15 fatigue');
+  person.equipment.helmet = 'cloth-hood';
+  assert.equal(getCompanyStats(person).rangedDefense, getCompanyStats({ ...person, perks: [] }).rangedDefense,
+    'Nimble stops above 15 fatigue');
+});
+
+test('Gifted and Relentless improve combat stats without changing level-up rolls', () => {
+  const state = createGame(213);
+  const person = state.party[0];
+  person.level = 4;
+  person.equipment.armor = 'mail-shirt';
+  const baseline = getCompanyStats(person);
+  person.perks = ['gifted', 'relentless'];
+  const improved = getCompanyStats(person);
+  assert.equal(improved.meleeSkill, baseline.meleeSkill + 3);
+  assert.equal(improved.rangedSkill, baseline.rangedSkill + 3);
+  assert.equal(improved.meleeDefense, baseline.meleeDefense + 2);
+  assert.equal(improved.rangedDefense, baseline.rangedDefense + 2);
+  assert.equal(improved.initiative, baseline.initiative + 10);
+  assert.equal(person.attributes.meleeSkill, 0, 'Gifted does not add permanent training');
+  assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
+});
+
+test('Reach Advantage follows the equipped two-handed melee weapon', () => {
+  const state = createGame(214);
+  const person = state.party[0];
+  person.level = 4;
+  person.equipment.weapon = 'greatsword';
+  person.equipment.shield = null;
+  person.perks = ['reach-advantage'];
+  assert.equal(getCompanyStats(person).meleeDefense, getCompanyStats({ ...person, perks: [] }).meleeDefense + 5);
+  person.equipment.weapon = 'hunting-bow';
+  assert.equal(getCompanyStats(person).meleeDefense, getCompanyStats({ ...person, perks: [] }).meleeDefense);
+  person.equipment.weapon = 'arming-sword';
+  assert.equal(getCompanyStats(person).meleeDefense, getCompanyStats({ ...person, perks: [] }).meleeDefense);
+});
+
+test('Reach Advantage changes a real melee hit roll and stops after swapping weapons', () => {
+  const fight = battleWith('arming-sword');
+  fight.actor.meleeSkill = 35;
+  Object.assign(fight.target, { meleeDefense: 0, morale: 50 });
+  fight.target.equipment.weapon = 'greatsword';
+  fight.target.equipment.shield = null;
+  fight.target.perks = ['reach-advantage'];
+  let selectedRoll = null;
+  for (let roll = 0; roll < 500 && selectedRoll === null; roll++) {
+    const protectedState = structuredClone(fight.state);
+    const plainState = structuredClone(fight.state);
+    protectedState.battle.rng = plainState.battle.rng = roll * 1000000;
+    plainState.battle.units.find(unit => unit.id === fight.target.id).perks = [];
+    advanceBattle(protectedState);
+    advanceBattle(plainState);
+    if (protectedState.battle.lastEvent.type === 'miss' && plainState.battle.lastEvent.type === 'attack') selectedRoll = roll;
+  }
+  assert.notEqual(selectedRoll, null);
+  const swapped = structuredClone(fight.state);
+  swapped.battle.rng = selectedRoll * 1000000;
+  swapped.battle.units.find(unit => unit.id === fight.target.id).equipment.weapon = 'arming-sword';
+  advanceBattle(swapped);
+  assert.equal(swapped.battle.lastEvent.type, 'attack');
+});
+
+test('Relentless preserves Dodge defense as combat fatigue rises', () => {
+  const fight = battleWith('arming-sword');
+  fight.actor.meleeSkill = 35;
+  Object.assign(fight.target, { meleeDefense: 0, morale: 50, initiative: 100, fatigue: 80, maxFatigue: 100 });
+  fight.target.perks = ['dodge', 'relentless'];
+  let changed = false;
+  for (let roll = 0; roll < 1000 && !changed; roll++) {
+    const relentless = structuredClone(fight.state);
+    const plain = structuredClone(fight.state);
+    relentless.battle.rng = plain.battle.rng = roll * 1000000;
+    plain.battle.units.find(unit => unit.id === fight.target.id).perks = ['dodge'];
+    advanceBattle(relentless);
+    advanceBattle(plain);
+    changed = relentless.battle.lastEvent.type === 'miss' && plain.battle.lastEvent.type === 'attack';
+  }
+  assert.equal(changed, true);
+});
+
+test('Relentless keeps exact initiative across shield and weapon set swaps', () => {
+  for (const [seed, armor, perks] of [
+    [215, 'quilted-jack', ['relentless']],
+    [216, 'padded-gambeson', ['relentless', 'brawny']],
+  ]) {
+    const state = createGame(seed);
+    const person = state.party[0];
+    person.level = 4;
+    person.perks = perks;
+    person.equipment = { ...person.equipment, armor, helmet: null, weapon: 'javelins', shield: 'buckler' };
+    person.reserveEquipment = { weapon: 'arming-sword', shield: 'round-shield' };
+    person.armorDurability.body = ITEMS.find(item => item.id === armor).armor;
+    person.armorDurability.head = 0;
+    const firstInitiative = getCompanyStats(person).initiative;
+    const secondInitiative = getCompanyStats({ ...person, equipment: { ...person.equipment, weapon: 'arming-sword', shield: 'round-shield' } }).initiative;
+    assert.equal(firstInitiative - secondInitiative, 1, `${armor} changes the rounding of a 3-fatigue swap`);
+    assert.deepEqual(validateSave(state), state);
+
+    const site = getCampSites(state)[0];
+    state.position = { x: site.x, y: site.y };
+    assert.equal(startBattle(state, site.id).ok, true);
+    const battle = state.battle;
+    const actor = battle.units.find(unit => unit.id === person.id);
+    const enemies = battle.units.filter(unit => unit.side === 'enemy');
+    Object.assign(actor, { q: 2, r: 2 });
+    enemies.forEach((enemy, index) => Object.assign(enemy, { q: 3 + index, r: 2 }));
+    battle.turnIndex = battle.turnOrder.indexOf(actor.id);
+    battle.activeId = actor.id;
+    assert.equal(actor.initiative, firstInitiative);
+    assert.equal(advanceBattle(state).ok, true);
+    assert.equal(battle.lastEvent.type, 'swap');
+    assert.equal(actor.initiative, secondInitiative);
+
+    enemies.forEach((enemy, index) => Object.assign(enemy, { q: 8 + index, r: 2 }));
+    battle.turnIndex = battle.turnOrder.indexOf(actor.id);
+    battle.activeId = actor.id;
+    assert.equal(advanceBattle(state).ok, true);
+    assert.equal(battle.lastEvent.type, 'swap');
+    assert.equal(actor.initiative, firstInitiative, 'returning to the first set adds no extra initiative');
+  }
 });
 
 test('movement perks increase reach or reduce movement fatigue', () => {
   const base = battleWith('arming-sword', [], 5);
-  base.actor.equipment.armor = 'patched-coat';
+  base.actor.equipment.armor = 'mail-shirt';
   base.actor.equipment.helmet = null;
   base.actor.q = 2;
   base.actor.r = 2;
@@ -124,6 +246,7 @@ test('movement perks increase reach or reduce movement fatigue', () => {
   const walker = base.battle.units.find(unit => unit.id === 'captain');
   const runner = fleet.battle.units.find(unit => unit.id === 'captain');
   assert.ok(hexDistance(origin, runner) > hexDistance(origin, walker));
+  assert.equal(hexDistance(origin, runner), 3, 'Fleet Footed works at 15 armor fatigue');
   const marathon = battleWith('arming-sword', ['marathoner'], 5);
   marathon.actor.equipment.armor = 'patched-coat';
   marathon.actor.equipment.helmet = null;
@@ -132,6 +255,23 @@ test('movement perks increase reach or reduce movement fatigue', () => {
   advanceBattle(marathon.state);
   advanceBattle(plain);
   assert.ok(marathon.actor.fatigue < plain.battle.units.find(unit => unit.id === 'captain').fatigue);
+});
+
+test('Battle Flow refunds fatigue only when an attack kills', () => {
+  const fight = battleWith('arming-sword', ['battle-flow']);
+  fight.target.hp = 1;
+  const plain = structuredClone(fight.state);
+  plain.battle.units.find(unit => unit.id === 'captain').perks = [];
+  advanceBattle(fight.state);
+  advanceBattle(plain);
+  assert.equal(fight.battle.lastEvent.fallen, true);
+  assert.equal(plain.battle.units.find(unit => unit.id === 'captain').fatigue - fight.actor.fatigue, 10);
+  assert.match(fight.battle.lastEvent.message, /Battle Flow: -10 fatigue/);
+
+  const surviving = battleWith('arming-sword', ['battle-flow']);
+  advanceBattle(surviving.state);
+  assert.equal(surviving.battle.lastEvent.fallen, false);
+  assert.equal(surviving.actor.fatigue, 11);
 });
 
 test('reload drill restores fatigue on the automatic reload turn', () => {

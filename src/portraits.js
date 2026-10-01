@@ -179,6 +179,8 @@ export const VISUALS = {
   },
   mount: {
     horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 42, 52, 35, null, 1],
+    warhorse: ['mount-war-horse-body.png', 'mount-war-horse-head.png', -15, 20, 55, 38, null, 1],
+    armoredhorse: ['mount-armored-war-horse-body.png', 'mount-armored-war-horse-head.png', -15, 20, 55, 38, null, 1],
     warg: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71, 'sepia(.85) saturate(.7) brightness(.7)'],
     wolf: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 55, 27, 71],
   },
@@ -280,6 +282,8 @@ const ITEM_IMAGES = {
   'southern-turban': 'southern-turban.png',
   'high-kettle-helm': 'high-kettle-helm.png',
   'riding-horse': 'riding-horse.png',
+  'war-horse': 'war-horse.png',
+  'armored-war-horse': 'armored-war-horse.png',
   'warg-mount': 'warg-mount.png',
   'dire-wolf-mount': 'dire-wolf-mount.png',
   'painted-round-shield': 'painted-round-shield.png',
@@ -392,6 +396,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const armor = layerSpec('armor', equipment.armor);
   const attachment = layerSpec('attachment', equipment.attachment);
   const mount = layerSpec('mount', equipment.mount);
+  const horseHeadFront = ['horse', 'warhorse', 'armoredhorse'].includes(visual(equipment.mount));
   const helmet = layerSpec('helmet', equipment.helmet);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
@@ -415,9 +420,9 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
       <span class="bb-portrait-composition" style="display:block;position:absolute;left:0;top:${compositionTop}px;width:104px;height:142px">
         ${mountLayer(mount, 'body')}
-        ${visual(equipment.mount) === 'horse' ? '' : mountLayer(mount, 'head')}
+        ${horseHeadFront ? '' : mountLayer(mount, 'head')}
         ${mount ? `<span class="bb-portrait-rider" style="display:block;position:absolute;left:0;top:0;width:104px;height:142px;transform:translate(2px,0) scale(.76);transform-origin:top left">${rider}</span>` : rider}
-        ${visual(equipment.mount) === 'horse' ? mountLayer(mount, 'head') : ''}
+        ${horseHeadFront ? mountLayer(mount, 'head') : ''}
       </span>
     </span>
   </span>`;

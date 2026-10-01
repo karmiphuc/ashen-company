@@ -7,7 +7,7 @@ export function combatSoundCue(event) {
   if (event.type === 'use') return [{ name: 'cloth', delay: 0, volume: .4, rate: 1 }];
   if (!['attack', 'miss'].includes(event.type)) return [];
   const cues = [{ name: 'swing', delay: 0, volume: event.ranged ? .3 : .4, rate: event.ranged ? 1.5 : 1 }];
-  if (event.type === 'attack') cues.push({ name: event.armorDamage > 0 ? 'metal' : 'impact', delay: event.ranged ? .14 : .08, volume: .5, rate: 1 });
+  if (event.type === 'attack' || event.shieldDamage > 0) cues.push({ name: event.armorDamage > 0 || event.shieldDamage > 0 ? 'metal' : 'impact', delay: event.ranged ? .14 : .08, volume: .5, rate: 1 });
   return cues;
 }
 

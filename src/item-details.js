@@ -1,4 +1,4 @@
-import { getItem, shieldMaximum } from './engine.js';
+import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
 
 const ROLES = {
   'patched-coat': 'Very light body cover for a new recruit; its 20 armor wears out quickly.',
@@ -51,16 +51,21 @@ export function getItemDetails(item, condition) {
       { label: 'Hands', value: item.twoHanded ? 'Two; shield stowed' : 'One; shield allowed' },
     );
     if (ranged) {
-      stats.push({ label: 'Ammunition', value: item.throwing ? '1 per attack' : '1 per shot' });
+      stats.push({ label: 'Ammunition', value: item.throwing ? '1 bundle charge per throw' : '1 per shot' });
+      if (item.throwing) stats.push({ label: 'Bundle throws', value: `${Number.isFinite(condition) ? Math.max(0, Math.min(throwingCapacity(item), condition)) : throwingCapacity(item)} / ${throwingCapacity(item)}` });
       if (item.reloadTurns) stats.push({ label: 'Reload', value: `${item.reloadTurns} turn after each shot` });
       notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
       notes.push('Bow and crossbow fighters keep their distance while ammunition remains. When ammunition runs out, they draw a pocket weapon or reserve melee set and fight according to the selected tactic. With ammunition, they return to ranged weapons as soon as two hexes of space open. Drawing or switching costs a full turn.');
-      if (item.throwing) notes.push('Throwing weapons are one-handed, can be paired with a shield, and spend one company ammunition per attack.');
+      if (item.throwing) notes.push('Throwing weapons are one-handed and carry five throws per bundle. Active and reserve bundles have separate counts, preserved when swapping or stowing. After battle, equipped bundles refill from company ammunition, one supply per restored throw; shortages leave partial bundles. Carry a spare bundle or melee weapon. Without a usable backup, the fighter punches.');
       if (item.ranged && !item.throwing && !item.twoHanded) notes.push('This ranged weapon leaves the other hand free for a shield.');
       if (!item.throwing) notes.push('A bow or crossbow shot from an adjacent hex has a 12-point hit penalty if the fighter cannot reposition or switch to melee.');
       notes.push('Throwers switch to a melee backup when enemies close or ammunition runs out. A fighter trapped without a usable weapon can only make the basic unarmed attack.');
     } else if ((item.range ?? 1) > 1) {
       notes.push('Extra reach still uses melee skill and melee defense; it does not spend ammunition.');
+    }
+    if (shieldImpactDamage(item)) {
+      stats.push({ label: 'Shield damage', value: `${shieldImpactDamage(item)} per hit or block` });
+      notes.push('Axes and thrown spears damage an active shield even when the attack is blocked. Shield Expert halves this wear; a broken shield stays repairable.');
     }
     if (item.pocketWeapon) {
       notes.push('The battle AI draws this pocket weapon when a ranged fighter is forced into close combat and returns it to the pocket when range opens and ammunition remains. Drawing or returning it costs a full turn.');
@@ -78,7 +83,7 @@ export function getItemDetails(item, condition) {
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
     );
     notes.push('A shield makes attacks less likely to hit. It does not provide body or head armor durability.');
-    notes.push('Incoming melee attacks and blocked arrows wear down the active shield. At zero durability it provides no shield defense or shield perk bonuses. It stays repairable; rest with tools or visit a Smithy to repair active and reserve shields.');
+    notes.push('Incoming melee attacks and blocked arrows wear down the active shield. Axes and thrown spears inflict heavy shield damage on hits and blocks. At zero durability it provides no shield defense or shield perk bonuses. It stays repairable; rest with tools or visit a Smithy to repair active and reserve shields.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
     notes.push('A two-handed weapon stows the shield before combat.');
   } else if (item.slot === 'attachment') {
@@ -113,6 +118,8 @@ export function getItemDetails(item, condition) {
       { label: 'Extra daily food', value: String(item.foodUpkeep) },
     );
     notes.push('One mount fits the dedicated mount slot. Each living mounted brother adds 10% to company travel speed; three mounts give +30%. Stashed mounts give no bonus and consume no food.');
+    notes.push('Mounted fighters control adjacent hexes: enemies may enter or move within this zone, but cannot step out while the rider lives. This applies to both sides.');
+    notes.push('Highpass receives one Riding Horse on days 8, 22, 36 and every 14 days after. It stays on sale through that week until bought. Large towns and castles also have a 2% weekly chance of a rare mount; late-game mounted enemies may surrender their mount as victory loot.');
     notes.push('The movement bonus only helps movement, never grants another attack, and still respects terrain, occupied hexes, and your formation tactic. Mounted attacks retain normal range and ammunition costs.');
     notes.push('Mounts are extremely rare in large town and castle markets. A defeated mounted enemy may leave a surviving mount to capture.');
   } else if (item.slot === 'accessory') {

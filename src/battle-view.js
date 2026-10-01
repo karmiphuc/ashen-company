@@ -1,4 +1,4 @@
-import { getEquipment, getItem, getMoraleEffects, shieldMaximum } from './engine.js';
+import { getEquipment, getItem, getMoraleEffects, shieldMaximum, throwingCapacity } from './engine.js';
 import { portraitHTML, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
@@ -109,9 +109,16 @@ function shieldCondition(unit) {
 function battleKitHTML(unit) {
   const reserve = [unit?.reserveEquipment?.weapon,unit?.reserveEquipment?.shield].filter(Boolean).length;
   const accessories = Array.isArray(unit?.accessories) ? unit.accessories.filter(Boolean).length : 0;
-  if (!reserve && !accessories && !unit.ally) return '';
-  const labels = [unit.ally ? 'Allied fighter' : '', reserve ? `reserve set ${reserve === 2 ? 'ready' : 'partial'}` : '', accessories ? `${accessories} carried ${accessories === 1 ? 'accessory' : 'accessories'}` : ''].filter(Boolean);
-  return `<span class="battle-kit" aria-label="${esc(labels.join('; '))}">${unit.ally?'<i>Ally</i>':''}${reserve?'<i>Reserve</i>':''}${accessories?`<i>Bag ${accessories}</i>`:''}</span>`;
+  const stowed = unit?.pocketDrawnFrom !== null && unit?.pocketDrawnFrom !== undefined;
+  const activeWeapon = getItem(stowed ? unit?.pocketStowedWeapon : unit?.equipment?.weapon);
+  const reserveWeapon = getItem(unit?.reserveEquipment?.weapon);
+  const activeCharges = activeWeapon?.throwing ? unit?.throwingAmmo?.active ?? throwingCapacity(activeWeapon) : null;
+  const reserveCharges = reserveWeapon?.throwing ? unit?.throwingAmmo?.reserve ?? throwingCapacity(reserveWeapon) : null;
+  const ammo = [activeCharges === null ? '' : activeCharges + '/' + throwingCapacity(activeWeapon), reserveCharges === null ? '' : 'R' + reserveCharges + '/' + throwingCapacity(reserveWeapon)].filter(Boolean).join(' · ');
+  const ammoDetails = [activeCharges === null ? '' : activeWeapon.name + ' ' + activeCharges + '/' + throwingCapacity(activeWeapon), reserveCharges === null ? '' : 'reserve ' + reserveWeapon.name + ' ' + reserveCharges + '/' + throwingCapacity(reserveWeapon)].filter(Boolean).join('; ');
+  if (!reserve && !accessories && !ammo && !unit.ally) return '';
+  const labels = [unit.ally ? 'Allied fighter' : '', reserve ? `reserve set ${reserve === 2 ? 'ready' : 'partial'}` : '', accessories ? `${accessories} carried ${accessories === 1 ? 'accessory' : 'accessories'}` : '', ammoDetails ? 'throwing ammunition ' + ammoDetails : ''].filter(Boolean);
+  return '<span class="battle-kit" aria-label="' + esc(labels.join('; ')) + '">' + (unit.ally ? '<i>Ally</i>' : '') + (reserve ? '<i>Reserve</i>' : '') + (accessories ? '<i>Bag ' + accessories + '</i>' : '') + (ammo ? '<i>Ammo ' + esc(ammo) + '</i>' : '') + '</span>';
 }
 
 function unitHTML(unit, battle, animateEvent, field, grid) {
