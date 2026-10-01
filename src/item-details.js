@@ -142,6 +142,7 @@ export function getItemDetails(item, condition) {
     stats.push({ label: skill.name, value: `${skill.ap} AP${skill.fatigue ? ` · ${skill.fatigue} fatigue before masteries` : ''}` });
     notes.push(`${skill.name}: ${skill.description}`);
   }
+  if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
   const role = item.rarity === 'famed'
     ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with the ordinary version.`
     : baseRole;

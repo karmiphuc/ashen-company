@@ -2,6 +2,8 @@
 
 Version 0.37 adds automatic skills to every weapon family, including reactions, stuns and restricted area attacks. Skills use existing equipment stats, durability, ammunition and mastery discounts.
 
+Version 0.38 makes matching weapon masteries reduce ordinary attacks and weapon skills by 1 AP, with a minimum of 1 AP. Overlapping masteries apply the discount once. The AI checks and spends the same discounted cost, including Spearwall and Riposte. The table and equipment details show base costs. Shieldwall, Knock Back, reloads, swaps, consumables and reaction costs are unchanged. Earlier battles without the weapon-skills marker keep their original costs.
+
 ## Company and personal orders
 
 Company tactics still govern the overall advance, formation and focus target. Each brother has an equipment-derived Auto role that can be overridden with Frontliner, Skirmisher, Ranged or Flanker, and a Balanced, Damage or Control skill preference. Drawing a backup weapon does not change the role chosen at deployment.

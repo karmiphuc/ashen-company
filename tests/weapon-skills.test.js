@@ -67,7 +67,7 @@ test('Aimed Shot reaches one extra hex for 7 AP and 15 fatigue, reduced by Bow M
     const ammo = state.supplies.ammo;
     advanceBattle(state);
     assert.equal(battle.lastEvent.skillName, 'Aimed Shot');
-    assert.equal(actor.ap, 2);
+    assert.equal(actor.ap, mastery ? 3 : 2);
     assert.equal(actor.fatigue, mastery ? 12 : 15);
     assert.equal(state.supplies.ammo, ammo - 1);
     if (!mastery) assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);

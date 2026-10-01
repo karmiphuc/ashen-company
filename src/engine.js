@@ -2668,19 +2668,22 @@ function weaponMasteryMatches(perkId, weapon) {
   }
 }
 
-function attackFatigueCost(actor, weapon) {
-  const base = weapon?.fatigueCost ?? (weapon?.ranged ? 9 : 11);
-  const mastery = isBow(weapon) && hasPerk(actor, 'bow-mastery')
+function hasWeaponMastery(actor, weapon) {
+  return isBow(weapon) && hasPerk(actor, 'bow-mastery')
     || isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery')
     || WEAPON_MASTERY_IDS.some(id => hasPerk(actor, id) && weaponMasteryMatches(id, weapon));
-  return mastery ? Math.ceil(base * .75) : base;
 }
 
-function attackApCost(weapon, battle = null) {
-  if (isCrossbow(weapon)) return 3;
-  if (weapon?.ranged) return 4;
-  if (battle?.weaponSkillsVersion === 1 && ['dagger', 'qatal'].includes(weaponSkillFamily(weapon))) return 3;
-  return weapon?.twoHanded || (weapon?.range ?? 1) > 1 && !weapon?.ranged ? 6 : 4;
+function attackFatigueCost(actor, weapon) {
+  const base = weapon?.fatigueCost ?? (weapon?.ranged ? 9 : 11);
+  return hasWeaponMastery(actor, weapon) ? Math.ceil(base * .75) : base;
+}
+
+function attackApCost(weapon, battle = null, actor = null, option = null) {
+  const base = option?.ap ?? (isCrossbow(weapon) ? 3 : weapon?.ranged ? 4
+    : battle?.weaponSkillsVersion === 1 && ['dagger', 'qatal'].includes(weaponSkillFamily(weapon)) ? 3
+    : weapon?.twoHanded || (weapon?.range ?? 1) > 1 && !weapon?.ranged ? 6 : 4);
+  return battle?.weaponSkillsVersion === 1 && actor && hasWeaponMastery(actor, weapon) ? Math.max(1, base - 1) : base;
 }
 
 function weaponTrainingHit(actor, weapon) {
@@ -2838,7 +2841,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
   if (!option?.areaFollowup) {
     actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (option?.reaction ? 5 : attackSkillFatigue(actor, weapon, option)));
     if (weapon.reloadTurns) actor.reload = weapon.reloadTurns;
-    if (!option?.reaction) actor.ap = battle.rulesVersion === 2 ? Math.max(0, actor.ap - (option?.ap ?? attackApCost(weapon, battle))) : 0;
+    if (!option?.reaction) actor.ap = battle.rulesVersion === 2 ? Math.max(0, actor.ap - attackApCost(weapon, battle, actor, option)) : 0;
   }
   if (actor.side === 'company' || !ranged && hexDistance(actor, target) <= 1) battle.lastContactRound = battle.round;
   if (!ranged && hexDistance(actor, target) <= 1) battle.engaged = true;
@@ -2933,10 +2936,10 @@ function maximumHealthDamage(battle, actor, target, weapon, option) {
 
 function safeKillProbability(battle, actor, target, weapon) {
   const range = effectiveWeaponRange(actor, weapon);
-  const attackCost = attackApCost(weapon, battle);
+  const attackCost = attackApCost(weapon, battle, actor);
   const swapCost = hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== battle.round ? 0 : 4;
   const alternate = [getItem(actor.reserveEquipment.weapon), ...actor.accessories.map(getItem)]
-    .some(item => item?.slot === 'weapon' && actor.ap >= swapCost + (item.pocketWeapon ? 3 : attackApCost(item, battle)));
+    .some(item => item?.slot === 'weapon' && actor.ap >= swapCost + (attackApCost(item, battle, actor)));
   if (alternate) return 1;
   // Treat any extra attack budget as a possible safe sequence, even if movement might block it.
   if (actor.ap >= attackCost * 2) return 1;
@@ -3000,7 +3003,7 @@ function areaAttackCandidate(state, actor, primary, weapon, option) {
   const enemies = impacts.filter(impact => !impact.ally);
   const priorityTarget = primary.side === actor.side ? targets.find(target => target.side !== actor.side) : primary;
   return { id: option.id, type: 'area', targetId: priorityTarget.id, target: priorityTarget, areaAnchor: primary, targets, safety,
-    apCost: option.ap, fatigueCost: attackSkillFatigue(actor, weapon, option),
+    apCost: attackApCost(weapon, battle, actor, option), fatigueCost: attackSkillFatigue(actor, weapon, option),
     expectedHealthDamage: enemies.reduce((sum, impact) => sum + impact.expectedHealthDamage, 0),
     expectedArmorDamage: enemies.reduce((sum, impact) => sum + impact.expectedArmorDamage, 0),
     killProbability: Math.max(...enemies.map(impact => impact.killProbability)),
@@ -3132,7 +3135,7 @@ function advanceBattleV2(state) {
   const noAmmo = equipped?.ranged && !battleWeaponHasAmmo(state, actor, equipped);
   const weapon = noAmmo || !equipped ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equipped;
   const range = effectiveWeaponRange(actor, weapon);
-  const attackCost = attackApCost(weapon, battle);
+  const attackCost = attackApCost(weapon, battle, actor);
   const skillFamily = battle.weaponSkillsVersion === 1 && !noAmmo ? weaponSkillFamily(weapon) : null;
   const candidates = [];
   const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
@@ -3146,7 +3149,7 @@ function advanceBattleV2(state) {
   }
   if (companyTactic === 'defense' && !nearbyTarget && (battle.round - battle.lastContactRound < 4)
     && !(battle.engaged && nearest <= 3)
-    && !(skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies) && actor.ap >= 4
+    && !(skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies) && actor.ap >= attackApCost(weapon, battle, actor, COMBAT_SKILLS.spearwall)
       && actor.fatigue + COMBAT_SKILLS.spearwall.fatigue <= actor.maxFatigue)) {
     actor.ap = 0;
     actor.fatigue = Math.max(0, actor.fatigue - 12);
@@ -3237,15 +3240,15 @@ function advanceBattleV2(state) {
       candidates.push({ id: 'attack', type: 'attack', targetId: target.id, target, apCost: attackCost,
         fatigueCost: attackFatigueCost(actor, weapon), ...normal,
         wastedAmmo: weapon.ranged && target.hp < normal.expectedHealthDamage * .4 ? 1 : 0,
-        bonus: 18 + (isBow(weapon) && actor.ap >= 8 && (!weapon.reloadTurns) && (!actor.ally && actor.side === 'company' ? state.supplies.ammo >= 2 : true) ? normal.expectedHealthDamage * .75 : 0) });
+        bonus: 18 + (isBow(weapon) && actor.ap >= attackCost * 2 && (!weapon.reloadTurns) && (!actor.ally && actor.side === 'company' ? state.supplies.ammo >= 2 : true) ? normal.expectedHealthDamage * .75 : 0) });
     }
     if (skillFamily && distance <= range && actor.reload === 0) {
       const option = skillOptionForTarget(skillFamily, actor, target, weapon, battle);
       const fatigueCost = option && attackSkillFatigue(actor, weapon, option);
-      if (option && actor.ap >= option.ap && actor.fatigue + fatigueCost <= actor.maxFatigue) {
+      if (option && actor.ap >= attackApCost(weapon, battle, actor, option) && actor.fatigue + fatigueCost <= actor.maxFatigue) {
         const predicted = predictAttack(battle, actor, target, weapon, option);
         candidates.push({ id: option.id, type: 'attack', targetId: target.id, target, option,
-          apCost: option.ap, fatigueCost, ...predicted,
+          apCost: attackApCost(weapon, battle, actor, option), fatigueCost, ...predicted,
           preventedDamage: ['knock-out', 'stunning-stone'].includes(option.id) ? target.meleeSkill * .25 : 0,
           bonus: 18 + (['knock-out', 'stunning-stone'].includes(option.id) ? (actor.skillPreference === 'control' ? 22 : 3)
             : option.id === 'hook' ? 10 : option.id === 'split-shield' ? 8 : option.id === 'puncture' ? 8 : 0) });
@@ -3255,13 +3258,13 @@ function advanceBattleV2(state) {
       for (const id of ['split', 'swing']) {
         const option = COMBAT_SKILLS[id];
         const fatigueCost = attackSkillFatigue(actor, weapon, option);
-        if (actor.ap < option.ap || actor.fatigue + fatigueCost > actor.maxFatigue) continue;
+        if (actor.ap < attackApCost(weapon, battle, actor, option) || actor.fatigue + fatigueCost > actor.maxFatigue) continue;
         const candidate = areaAttackCandidate(state, actor, target, weapon, option);
         if (candidate) candidates.push(candidate);
       }
     }
     if (aimed && distance <= range + 1 && actor.reload === 0 && actor.fatigue + aimedFatigueCost(actor) <= actor.maxFatigue) {
-      candidates.push({ id: 'aimed-shot', type: 'attack', targetId: target.id, target, apCost: 7,
+      candidates.push({ id: 'aimed-shot', type: 'attack', targetId: target.id, target, apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS['aimed-shot']),
         fatigueCost: aimedFatigueCost(actor), ...aimed, bonus: 15 });
     }
     if (distance === 1 && actor.equipment.shield && actor.shieldDurability > 0 && actor.fatigue + 20 <= actor.maxFatigue) {
@@ -3279,7 +3282,7 @@ function advanceBattleV2(state) {
   }
   if (skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies)
     && actor.fatigue + COMBAT_SKILLS.spearwall.fatigue <= actor.maxFatigue)
-    candidates.push({ id: 'spearwall', type: 'stance', apCost: 4, fatigueCost: 30,
+    candidates.push({ id: 'spearwall', type: 'stance', apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS.spearwall), fatigueCost: 30,
       preventedDamage: 18, bonus: actor.skillPreference === 'control' ? 14 : 3 });
   if (skillFamily === 'sword' && !actor.riposteActive
     && enemies.some(enemy => hexDistance(actor, enemy) === 1 && enemy.stunnedTurns === 0
@@ -3287,12 +3290,12 @@ function advanceBattleV2(state) {
     && !(companyTactic === 'offense' && actor.equipment.shield && actor.shieldDurability > 0
       && enemies.filter(enemy => hexDistance(actor, enemy) === 1).length >= 2)
     && actor.fatigue + COMBAT_SKILLS.riposte.fatigue <= actor.maxFatigue)
-    candidates.push({ id: 'riposte', type: 'stance', apCost: 4, fatigueCost: 25,
+    candidates.push({ id: 'riposte', type: 'stance', apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS.riposte), fatigueCost: 25,
       preventedDamage: 12, bonus: actor.skillPreference === 'control' ? 10 : -2 });
   if (skillFamily === 'two-handed-sword') for (const ally of battle.units.filter(unit => unit.alive
     && unit.side === actor.side && unit.id !== actor.id && hexDistance(actor, unit) === 1)) {
     const option = COMBAT_SKILLS.split;
-    if (actor.ap < option.ap || actor.fatigue + attackSkillFatigue(actor, weapon, option) > actor.maxFatigue) continue;
+    if (actor.ap < attackApCost(weapon, battle, actor, option) || actor.fatigue + attackSkillFatigue(actor, weapon, option) > actor.maxFatigue) continue;
     const candidate = areaAttackCandidate(state, actor, ally, weapon, option);
     if (candidate) candidates.push(candidate);
   }

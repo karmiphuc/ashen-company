@@ -1,4 +1,8 @@
-# Verification - version 0.37.0, 2026-10-01
+# Verification - version 0.38.0, 2026-10-01
+
+## v0.38.0 checks
+
+All 419 tests pass after rebuilding the offline cache. Matching masteries reduce basic and signature attack AP once, including overlapping axe/polearm mastery, bows, crossbows, throwing weapons, daggers and two-handed weapons. A three-AP mastered Knock Out and Spearwall are selected and paid correctly; unmatched masteries and earlier battle rules retain base costs. The existing Aimed Shot test now verifies its six-AP mastered cost. Mastery descriptions render correctly in the browser perk chooser.
 
 ## v0.37.0 checks
 
