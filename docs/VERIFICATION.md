@@ -1,4 +1,10 @@
-# Verification - version 0.39.0, 2026-10-02
+# Verification - version 0.40.0, 2026-10-02
+
+## v0.40.0 checks
+
+All 439 automated tests pass after regenerating the offline cache. Mount skill checks cover both charge distances, all six straight directions, fixed AP with mastery, normal damage, guaranteed stun through protection, blocked pushes, trees/cliffs/occupied routes, inadequate AP/fatigue, miss behavior, Spearwall interruption, ranged and formation exclusions, one free bite after hits/misses/area attacks, reaction recursion prevention, wolf kill rewards with immediate Berserk AP, animation markup and save-per-action parity. Earlier engine battle fixtures retain exact resolved results. Reward checks cover three deterministic town events, free guaranteed acquisition, availability without expiry, full-stash retry, once-only claim flags, unavailable/remote claims, battle/game-over rejection and older save loading.
+
+Browser verification exercised the Oakwatch acceptance button and confirmed its claimed status. Paused battle fixtures show charge damage and stun, and the wolf's separate follow-up damage. The event module is included in the offline cache. Physical iPad Safari and airplane-mode retention remain untested.
 
 ## v0.39.0 checks
 

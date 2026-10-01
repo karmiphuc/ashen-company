@@ -1,4 +1,4 @@
-import { SETTLEMENTS, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum } from './engine.js';
+import { SETTLEMENTS, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum, getMountRewardEvents } from './engine.js';
 import { portraitHTML, itemImage } from './portraits.js';
 import { SETTLEMENT_TYPES, townAt } from './engine.js';
 
@@ -38,6 +38,14 @@ export function townEventHTML(state, townId, compact=false) {
   const event=getTownEvent(state,townId);
   if(!event)return '';
   return `<section class="town-event ${compact?'compact':''}"><div class="town-event-heading"><strong>${esc(event.name)}</strong><small>Through day ${event.endDay} · ${event.daysRemaining} ${event.daysRemaining===1?'day':'days'} left</small></div>${compact?'':`<p>${esc(event.description)}</p>`}<p class="town-event-effects">${event.effects.map(esc).join(' · ')}</p></section>`;
+}
+
+export function mountRewardHTML(state, townId, compact=false) {
+  const event=getMountRewardEvents(state).find(entry=>entry.townId===townId);
+  if(!event)return '';
+  const status=event.claimed?'This one-time mount reward has already been claimed.':event.available?event.scene:`Word is spreading that ${event.name.toLowerCase()} may be offered here around day ${event.availableDay}.`;
+  const claim=event.available&&!event.claimed?(townAt(state)?.id===townId?`<button class="primary" data-action="claim-mount-reward" data-claim-mount-reward="${esc(event.id)}">${esc(event.acceptLabel)}</button><small>There is no charge. The mount goes straight to your stash; if it is full, make room and return.</small>`:'<small>Visit this settlement to accept the offer.</small>'):'';
+  return `<section class="mount-reward ${compact?'compact':''}"><div class="town-event-heading"><strong>${esc(event.title)}</strong><small>${event.townName} · ${event.claimed?'Claimed':event.available?'Available now':`Day ${event.availableDay}`}</small></div><p>${esc(status)}</p>${claim}</section>`;
 }
 
 const caravanStatus = { 'en-route':'On the road', 'under-attack':'Raiders closing', delivered:'Delivered', lost:'Shipment lost' };

@@ -23,6 +23,7 @@ const CORE = [
   './src/tactical-ai.js',
   './src/additional-items.js',
   './src/mounts.js',
+  './src/mount-events.js',
   './src/northern-items.js',
   './src/fantasy-items.js',
   './src/fantasy-art.js',

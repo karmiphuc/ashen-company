@@ -176,7 +176,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const primaryWeapon = primaryActor ? getItem(event.weaponId) || weapon : weapon;
   const motionFor = (item, ranged) => ranged || item?.ranged ? 'shoot' : ['spear', 'billhook', 'dagger'].includes(item?.visual) ? 'thrust' : 'swing';
   const primaryMotion = primaryActor && attacking ? motionFor(primaryWeapon, event.ranged) : null;
-  const reactionMotion = reaction ? motionFor(weapon, reaction.ranged) : null;
+  const reactionMotion = reaction ? reaction.skillName === 'Wolf Bite' ? 'bite' : motionFor(weapon, reaction.ranged) : null;
   const motionClasses = [...new Set([primaryMotion, reactionMotion].filter(Boolean).map(motion => `action-${motion}`))];
   const hpDamage = impacts.reduce((total, impact) => total + number(impact.hpDamage), 0);
   const bodyDamage = impacts.reduce((total, impact) => total + (impact.head ? 0 : number(impact.armorDamage)), 0);
@@ -229,7 +229,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     <strong>${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))}/${maxAp} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
     ${hasImpact || primaryMiss ? `<span class="battle-impact" aria-hidden="true">${hasHit ? `${friendlyFire ? 'Friendly fire · ' : ''}${hpDamage}${bodyDamage + headDamage ? ` / ${bodyDamage + headDamage}` : ''}${shieldDamage ? ` · Shield -${shieldDamage}` : ''}${hasMiss ? ' · Miss' : ''}` : shieldDamage ? `Deflected · Shield -${shieldDamage}` : 'Miss'}</span>` : ''}
-    ${reaction ? `<span class="battle-order">${esc(reaction.skillName || String(reaction.type || 'Reaction').replace(/^./, letter => letter.toUpperCase()))}</span>` : primaryActor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? `<span class="battle-order">${event.type === 'hold' ? 'Hold' : event.type === 'swap' ? 'Swap set' : event.type === 'use' ? 'Use item' : event.message?.includes(' reloads ') ? 'Reload' : 'Recover'}</span>` : ''}
+    ${reaction ? `<span class="battle-order">${esc(reaction.skillName || String(reaction.type || 'Reaction').replace(/^./, letter => letter.toUpperCase()))}</span>` : primaryActor && event.skillName === 'Charge' ? '<span class="battle-order">Charge</span>' : primaryActor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? `<span class="battle-order">${event.type === 'hold' ? 'Hold' : event.type === 'swap' ? 'Swap set' : event.type === 'use' ? 'Use item' : event.message?.includes(' reloads ') ? 'Reload' : 'Recover'}</span>` : ''}
   </article>`;
 }
 

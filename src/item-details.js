@@ -124,8 +124,8 @@ export function getItemDetails(item, condition) {
     notes.push('One mount fits the dedicated mount slot. Each living mounted brother adds 10% to company travel speed; three mounts give +30%. Stashed mounts give no bonus and consume no food.');
     notes.push('Mounted fighters control adjacent hexes: enemies may enter or move within this zone, but cannot step out while the rider lives. This applies to both sides.');
     notes.push('Highpass receives one Riding Horse on days 8, 22, 36 and every 14 days after. It stays on sale through that week until bought. Large towns and castles also have a 2% weekly chance of a rare mount; late-game mounted enemies may surrender their mount as victory loot.');
-    notes.push('The movement bonus only helps movement, never grants another attack, and still respects terrain, occupied hexes, and your formation tactic. Mounted attacks retain normal range and ammunition costs.');
-    notes.push('Mounts are extremely rare in large town and castle markets. A defeated mounted enemy may leave a surviving mount to capture.');
+    notes.push('The movement bonus respects terrain, occupied hexes and formation tactics. Horses charge only under Offense or Thin them out, with no adjacent threat. Wolf and warg bites only reach adjacent enemies and do not follow reactions.');
+    notes.push('Mounts are extremely rare in large town and castle markets. Capture them from defeated mounted enemies, or claim the three one-time town events: War Horse at Oakwatch, Armored War Horse at Ironford, Dire Wolf at Blackfen.');
   } else if (item.slot === 'accessory') {
     if (item.consumable === 'heal') {
       stats.push({ label: 'Effect', value: `Restores up to ${item.heal ?? 0} health` }, { label: 'Uses', value: 'One' });

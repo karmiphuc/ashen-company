@@ -1,5 +1,9 @@
 # Ashen Company
 
+Version 0.40 adds mount skills in new battles. All horses can spend exactly 6 AP to charge 2-3 empty hexes in a straight line and make a normal melee attack. A landed hit guarantees a one-turn stun and pushes a surviving victim one hex if that hex is free. Spearwall can stop the charge. Offense and Thin them out permit charges; defensive and formation tactics keep their line. Wolves and wargs make one free dagger-like bite after a rider attack against an adjacent surviving enemy, including after a missed attack; reactions do not trigger bites.
+
+Three unique events guarantee one mount each, once per campaign: Retired Outrider's Promise at Oakwatch (War Horse, day 10-13), The Smith's Last Charger at Ironford (Armored War Horse, day 24-27), and The Marsh Hunter's Bond at Blackfen (Dire Wolf, day 40-43). Town panels show their stories and acceptance choices. Rewards are free, remain available until claimed, and wait if the stash is full. Existing companies qualify; older active battles finish under their saved rules.
+
 An offline mercenary-company campaign game for desktop and tablet browsers. Lead a band across the Grey Marches, take delivery and brigand-hunt contracts, recruit and outfit companions, and fight automatic tactical battles. Ashen Company uses adapted *Battle Brothers* / Legends artwork; see [asset credits](docs/ASSET-CREDITS.md).
 
 Play at **https://karmiphuc.github.io/ashen-company/**. No account, server, external fonts, or runtime dependencies are required.

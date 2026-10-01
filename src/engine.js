@@ -5,6 +5,7 @@ import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
 import { MOUNTS } from './mounts.js';
+import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression } from './enemy-progression.js';
 import { getRegionalEnemyFaction, getRegionalEnemyTemplates, getRegionalCampText } from './enemy-rosters.js';
 import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk, weaponTrainingVisual } from './perks.js';
@@ -524,6 +525,7 @@ export function createGame(seed = Date.now()) {
     marketStock: {},
     shipments: {},
     shipmentLegacyThroughDay: 0,
+    mountRewards: Object.fromEntries(getMountRewardDefinitions().map(reward => [reward.id, false])),
     supplies: { tools: 8, medicine: 5, ammo: 16 },
     camps: {},
     bands: {},
@@ -601,6 +603,33 @@ export function getTownEvent(state, townId) {
   const effects = ['A friendly armorer wagon is on the road.', 'Extra stock and its 10% discount begin only if it arrives.'];
   return { ...scheduled, type: 'armorer-shipment-en-route', name: 'Armorer Shipment En Route', description: 'A guarded wagon is carrying arms toward this settlement.',
     effects, effectText: effects.join(' '), status: shipment?.status ?? 'en-route' };
+}
+
+export function getMountRewardEvents(state) {
+  return getMountRewardDefinitions().map(reward => ({
+    ...scheduledMountReward(state, reward),
+    claimed: state.mountRewards?.[reward.id] === true,
+  }));
+}
+
+export function claimMountReward(state, rewardId) {
+  const reward = getMountRewardDefinitions().find(entry => entry.id === rewardId);
+  if (!reward) return result(false, 'That mount reward is not available.');
+  if (state.battle || state.gameOver) return result(false, 'Mount rewards can only be claimed while the company is active between battles.');
+  if (!state.mountRewards || typeof state.mountRewards !== 'object' || Array.isArray(state.mountRewards)) state.mountRewards = {};
+  for (const entry of getMountRewardDefinitions()) state.mountRewards[entry.id] = state.mountRewards[entry.id] === true;
+  if (state.mountRewards?.[reward.id]) return result(false, `${reward.name} has already been claimed.`);
+  if (townAt(state)?.id !== reward.townId) return result(false, `Visit ${reward.townName} to claim this mount.`);
+  const scheduled = scheduledMountReward(state, reward);
+  if (!scheduled.available) return result(false, `The ${reward.name} is expected around day ${scheduled.availableDay}.`);
+  if (state.inventory.length >= MAX_INVENTORY) return result(false, 'The company pack is full. Make room and claim this mount later.');
+  if (!Array.isArray(state.inventoryCondition) || state.inventoryCondition.length !== state.inventory.length)
+    state.inventoryCondition = state.inventory.map(itemCondition);
+  state.inventory.push(reward.itemId);
+  state.inventoryCondition.push(null);
+  state.mountRewards[reward.id] = true;
+  record(state, `Claimed the one-time ${reward.name} reward at ${reward.townName}.`);
+  return result(true, `${reward.name} is now in the company stash.`);
 }
 
 export function getTownEconomy(state) {
@@ -2187,7 +2216,7 @@ export function startBattle(state, encounterId) {
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', rulesVersion: 2, weaponSkillsVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', rulesVersion: 2, weaponSkillsVersion: 1, mountSkillsVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
     log: [], lastEvent: null,
@@ -2680,6 +2709,7 @@ function attackFatigueCost(actor, weapon) {
 }
 
 function attackApCost(weapon, battle = null, actor = null, option = null) {
+  if (option?.id === 'charge') return option.ap;
   const base = option?.ap ?? (isCrossbow(weapon) ? 3 : weapon?.ranged ? 4
     : battle?.weaponSkillsVersion === 1 && ['dagger', 'qatal'].includes(weaponSkillFamily(weapon)) ? 3
     : weapon?.twoHanded || (weapon?.range ?? 1) > 1 && !weapon?.ranged ? 6 : 4);
@@ -2839,7 +2869,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
   }
   const chance = option?.chanceOverride ?? attackHitChance(battle, actor, target, weapon, option?.hitBonus ?? 0, option);
   if (!option?.areaFollowup) {
-    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (option?.reaction ? 5 : attackSkillFatigue(actor, weapon, option)));
+    actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (option?.freeFollowup ? 0 : option?.reaction ? 5 : attackSkillFatigue(actor, weapon, option)));
     if (weapon.reloadTurns) actor.reload = weapon.reloadTurns;
     if (!option?.reaction) actor.ap = battle.rulesVersion === 2 ? Math.max(0, actor.ap - attackApCost(weapon, battle, actor, option)) : 0;
   }
@@ -2848,7 +2878,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
   if (battleRoll(battle) * 100 >= chance) {
     const shieldDamage = wearShield(battle, target, option?.id === 'split-shield' ? shieldImpactDamage(weapon) + 16 : shieldImpactDamage(weapon) || (ranged ? 1 : 2));
     if (hasPerk(actor, 'fast-adaptation')) actor.adaptation += 1;
-    const message = `${actor.name} misses ${target.name}.${shieldDamage ? ` ${target.name}'s shield takes ${shieldDamage} damage.` : ''}`;
+    const message = `${actor.name}${option?.freeFollowup ? "'s mount misses with Wolf Bite against" : ' misses'} ${target.name}.${shieldDamage ? ` ${target.name}'s shield takes ${shieldDamage} damage.` : ''}`;
     battle.lastEvent = makeBattleEvent(actor, target, 'miss', message, weapon, null, { shieldDamage, ...(option?.name ? { skillName: option.name } : {}) });
     battleLog(battle, message);
     if (battle.weaponSkillsVersion === 1 && !option?.reaction && !option?.areaAction && !ranged
@@ -2902,14 +2932,14 @@ function attackTarget(state, actor, target, weapon, option = null) {
       perkProcs.push('Killing Frenzy: +25% damage.');
     }
     if (!option?.deferKillPerks && hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round) {
-      if (battle.weaponSkillsVersion === 1 && option?.reaction) actor.pendingBerserkAp = 4;
+      if (battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup) actor.pendingBerserkAp = 4;
       else actor.ap = battle.rulesVersion === 2 ? actor.ap + 4 : 2;
       actor.berserkRound = battle.round;
-      perkProcs.push(battle.weaponSkillsVersion === 1 && option?.reaction ? 'Berserk: +4 AP next turn.'
+      perkProcs.push(battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup ? 'Berserk: +4 AP next turn.'
         : `Berserk: +${battle.rulesVersion === 2 ? 4 : 2} AP.`);
     }
   }
-  const message = `${actor.name} hits ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}`;
+  const message = `${actor.name}${option?.freeFollowup ? "'s mount uses Wolf Bite against" : ' hits'} ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}`;
   battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, fallen,
     ...(option?.name ? { skillName: option.name } : {}) });
   battleLog(battle, message);
@@ -2917,6 +2947,88 @@ function attackTarget(state, actor, target, weapon, option = null) {
 }
 
 const SWING_DIRECTIONS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
+
+function horseChargePlan(battle, actor, target, weapon) {
+  const mount = getItem(actor.equipment.mount);
+  if (battle.mountSkillsVersion !== 1 || !/horse/.test(mount?.visual ?? '') || weapon.ranged
+    || actor.tacticalRole === 'ranged' || actor.ap < 6
+    || battle.units.some(unit => unit.alive && unit.side !== actor.side && hexDistance(actor, unit) === 1)) return null;
+  const distance = hexDistance(actor, target);
+  if (distance < 3 || distance > 4) return null;
+  const direction = SWING_DIRECTIONS.find(([q, r]) => target.q - actor.q === q * distance && target.r - actor.r === r * distance);
+  if (!direction) return null;
+  const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  const path = [];
+  let from = actor, fatigueCost = attackFatigueCost(actor, weapon);
+  for (let step = 1; step < distance; step++) {
+    const point = { q: actor.q + direction[0] * step, r: actor.r + direction[1] * step };
+    const cost = battleMovementCost(battle, actor, from, point);
+    if (occupied.has(`${point.q},${point.r}`) || !Number.isFinite(cost)
+      || Math.abs(tileAt(battle.field, from.q, from.r).height - tileAt(battle.field, point.q, point.r).height) > 1) return null;
+    fatigueCost += movementFatigue(actor, cost);
+    path.push(point); from = point;
+  }
+  if (actor.fatigue + fatigueCost > actor.maxFatigue) return null;
+  return { path, direction, fatigueCost };
+}
+
+function performHorseCharge(state, actor, target, weapon, plan) {
+  const battle = state.battle, origin = { q: actor.q, r: actor.r }, reactions = [];
+  actor.ap -= 6;
+  actor.aiTargetId = target.id;
+  clearWeaponStances(actor);
+  for (const point of plan.path) {
+    const from = { q: actor.q, r: actor.r };
+    const cost = battleMovementCost(battle, actor, from, point);
+    actor.q = point.q; actor.r = point.r;
+    actor.fatigue += movementFatigue(actor, cost);
+    consumeMovementCredit(battle, actor, from, point);
+    const interception = spearwallReactionsOnMove(state, actor, from);
+    reactions.push(...interception.reactions);
+    if (interception.blocked || !actor.alive) {
+      const message = `${actor.name}'s charge is stopped by Spearwall.`;
+      battle.lastEvent = makeBattleEvent(actor, target, 'hold', message, weapon, null,
+        { skillName: 'Charge', moveFrom: origin, reactions });
+      battleLog(battle, message);
+      return;
+    }
+  }
+  const impact = attackTarget(state, actor, target, weapon, { ...COMBAT_SKILLS.charge, ap: 0 });
+  if (impact.hit && target.alive) {
+    target.stunnedTurns = 1;
+    target.stunProtected = true;
+    clearWeaponStances(target);
+    const destination = { q: target.q + plan.direction[0], r: target.r + plan.direction[1] };
+    const tile = tileAt(battle.field, destination.q, destination.r);
+    if (tile && Number.isFinite(movementCost(battle.field, target, destination))
+      && Math.abs(tile.height - tileAt(battle.field, target.q, target.r).height) <= 1
+      && !battle.units.some(unit => unit.alive && unit.q === destination.q && unit.r === destination.r)) {
+      battle.lastEvent.pushedFrom = { q: target.q, r: target.r };
+      target.q = destination.q; target.r = destination.r;
+      battle.lastEvent.to = destination;
+    }
+    battle.lastEvent.message += ' Stunned by the charge.';
+    battleLog(battle, `${target.name} is stunned by the charge.`);
+  }
+  battle.lastEvent.moveFrom = origin;
+  if (reactions.length) battle.lastEvent.reactions = [...reactions, ...(battle.lastEvent.reactions ?? [])];
+}
+
+function wolfFollowup(state, actor, preferred) {
+  const battle = state.battle;
+  if (battle.mountSkillsVersion !== 1 || !actor.alive || !['wolf', 'warg'].includes(getItem(actor.equipment.mount)?.visual)) return;
+  const target = [preferred, ...battle.units].find(unit => unit?.alive && unit.side !== actor.side && hexDistance(actor, unit) === 1);
+  if (!target) return;
+  const original = battle.lastEvent;
+  const bite = { damageMin: 12, damageMax: 20, armorPiercing: .4, armorDamage: .6, range: 1 };
+  const impact = attackTarget(state, actor, target, bite, { name: 'Wolf Bite', reaction: true, freeFollowup: true });
+  const event = battle.lastEvent;
+  battle.lastEvent = { ...original, reactions: [...(original.reactions ?? []), {
+    actorId: actor.id, targetId: target.id, type: event.type, from: { q: actor.q, r: actor.r }, to: { q: target.q, r: target.r },
+    hpDamage: impact.hpDamage, armorDamage: impact.armorDamage, shieldDamage: impact.shieldDamage,
+    head: impact.head, fallen: impact.fallen, skillName: 'Wolf Bite',
+  }] };
+}
 
 function areaTargets(battle, actor, primary, skillId) {
   const dq = primary.q - actor.q, dr = primary.r - actor.r;
@@ -2935,6 +3047,8 @@ function maximumHealthDamage(battle, actor, target, weapon, option) {
 }
 
 function safeKillProbability(battle, actor, target, weapon) {
+  // Mount follow-ups and charges add safe alternatives beyond the basic-attack bound.
+  if (battle.mountSkillsVersion === 1 && getItem(actor.equipment.mount)) return 1;
   const range = effectiveWeaponRange(actor, weapon);
   const attackCost = attackApCost(weapon, battle, actor);
   const swapCost = hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== battle.round ? 0 : 4;
@@ -3299,6 +3413,12 @@ function advanceBattleV2(state) {
     const distance = hexDistance(actor, target);
     const normal = predictAttack(battle, actor, target, weapon);
     const aimed = isBow(weapon) ? predictAttack(battle, actor, target, weapon, 15) : null;
+    const charge = ['offense', 'focus'].includes(companyTactic) && horseChargePlan(battle, actor, target, weapon);
+    if (charge) {
+      const predicted = predictAttack(battle, { ...actor, ...charge.path.at(-1) }, target, weapon);
+      candidates.push({ id: 'charge', type: 'charge', targetId: target.id, target, plan: charge, apCost: 6,
+        fatigueCost: charge.fatigueCost, ...predicted, preventedDamage: target.meleeSkill * .25, bonus: 24 });
+    }
     if (distance <= range && canAttack) {
       candidates.push({ id: 'attack', type: 'attack', targetId: target.id, target, apCost: attackCost,
         fatigueCost: attackFatigueCost(actor, weapon), ...normal,
@@ -3392,7 +3512,7 @@ function advanceBattleV2(state) {
       fatigueCost: movementFatigue(actor, retreat.cost), preventedDamage: 8, spacingGain: retreat.safety - nearest, bonus: 28 });
   }
   if (actor.ap >= 9) candidates.push({ id: 'recover', type: 'recover', apCost: 9, fatigueCost: 0, bonus: actor.fatigue >= actor.maxFatigue * .55 ? 18 : -20 });
-  const offensive = action => action.type === 'attack' || action.type === 'area';
+  const offensive = action => ['attack', 'area', 'charge'].includes(action.type);
   const hitsAdjacentEnemy = action => offensive(action) && (action.targets ?? [action.target])
     .some(target => target.side !== actor.side && hexDistance(actor, target) === 1);
   const hitsFocus = action => offensive(action) && (action.targets ?? [action.target])
@@ -3420,6 +3540,8 @@ function advanceBattleV2(state) {
     const message = `${actor.name} holds position.`;
     battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, equipped);
     battleLog(battle, message);
+  } else if (choice.type === 'charge') {
+    performHorseCharge(state, actor, choice.target, weapon, choice.plan);
   } else if (choice.type === 'attack') {
     actor.aiTargetId = choice.target.id;
     const option = choice.option ?? (choice.id === 'aimed-shot' ? COMBAT_SKILLS['aimed-shot']
@@ -3436,6 +3558,7 @@ function advanceBattleV2(state) {
       }
     }
     if (retreatFrom) battle.lastEvent.moveFrom = retreatFrom;
+    wolfFollowup(state, actor, choice.target);
   } else if (choice.type === 'area') {
     actor.aiTargetId = choice.target.id;
     const option = COMBAT_SKILLS[choice.id];
@@ -3484,6 +3607,7 @@ function advanceBattleV2(state) {
       battle.lastEvent.message += ' A necessary finishing strike risks friendly fire.';
       battleLog(battle, 'A necessary finishing strike risks friendly fire.');
     }
+    wolfFollowup(state, actor, choice.target);
   } else if (choice.type === 'stance') {
     actor.ap -= choice.apCost;
     actor.fatigue += choice.fatigueCost;
@@ -3961,6 +4085,8 @@ function validateBattle(input, party, worldState) {
   assert(rulesVersion === 1 || rulesVersion === 2, 'battle rules version');
   const weaponSkillsVersion = input.weaponSkillsVersion ?? 0;
   assert((weaponSkillsVersion === 0 || weaponSkillsVersion === 1) && (weaponSkillsVersion === 0 || rulesVersion === 2), 'battle weapon skills version');
+  const mountSkillsVersion = input.mountSkillsVersion ?? 0;
+  assert((mountSkillsVersion === 0 || mountSkillsVersion === 1) && (mountSkillsVersion === 0 || weaponSkillsVersion === 1), 'battle mount skills version');
   assert(Number.isSafeInteger(input.round) && input.round >= 1 && input.round <= 1000, 'battle round');
   const tactic = input.tactic ?? 'offense';
   assert(TACTICS.includes(tactic), 'battle tactic');
@@ -4154,7 +4280,7 @@ function validateBattle(input, party, worldState) {
   if (event?.reactions !== undefined) {
     assert(weaponSkillsVersion === 1 && Array.isArray(event.reactions) && event.reactions.length >= 1 && event.reactions.length <= 12
       && event.reactions.every(reaction => recordObject(reaction) && ids.has(reaction.actorId) && ids.has(reaction.targetId)
-        && ['attack', 'miss'].includes(reaction.type) && ['Riposte', 'Spearwall', 'Opportunity Strike'].includes(reaction.skillName)
+        && ['attack', 'miss'].includes(reaction.type) && ['Riposte', 'Spearwall', 'Opportunity Strike', 'Wolf Bite'].includes(reaction.skillName)
         && validHex(reaction.from, field) && validHex(reaction.to, field)
         && ['hpDamage', 'armorDamage', 'shieldDamage'].every(key => validCount(reaction[key]) && reaction[key] <= 1000)
         && typeof reaction.head === 'boolean' && typeof reaction.fallen === 'boolean'), 'battle event reactions');
@@ -4197,6 +4323,7 @@ function validateBattle(input, party, worldState) {
     id: input.id, campId: input.campId, encounterType, encounterName, difficulty, campGeneration, famedDrop, tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
     ...(input.rulesVersion === undefined ? {} : { rulesVersion }),
     ...(input.weaponSkillsVersion === undefined ? {} : { weaponSkillsVersion }),
+    ...(input.mountSkillsVersion === undefined ? {} : { mountSkillsVersion }),
     field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng, lootSeed,
     log: [...input.log], lastEvent: normalizedEvent,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items], itemConditions: [...itemConditions] },
@@ -4212,6 +4339,10 @@ export function validateSave(input) {
   assert(Number.isFinite(input.hour) && input.hour >= 0 && input.hour < 24, 'hour');
   const tactic = input.tactic ?? 'offense';
   assert(TACTICS.includes(tactic), 'tactic');
+  const mountRewards = input.mountRewards ?? Object.fromEntries(getMountRewardDefinitions().map(reward => [reward.id, false]));
+  const mountRewardIds = getMountRewardDefinitions().map(reward => reward.id);
+  assert(recordObject(mountRewards) && Object.keys(mountRewards).length === mountRewardIds.length
+    && mountRewardIds.every(id => typeof mountRewards[id] === 'boolean'), 'mount rewards');
   for (const key of ['gold', 'food']) assert(validCount(input[key]) && input[key] <= 1000000000, key);
   for (const key of ['renown', 'contractSerial', 'recruitSerial']) assert(validCount(input[key]) && input[key] <= 1000000, key);
   const hiredRecruitOffers = input.hiredRecruitOffers ?? [];
@@ -4509,6 +4640,7 @@ export function validateSave(input) {
     })),
     shipments: normalizedShipments,
     shipmentLegacyThroughDay,
+    ...(input.mountRewards === undefined ? {} : { mountRewards: { ...mountRewards } }),
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
     bands: normalizedBands, pursuit, encounterGraceUntil, tactic,
     battle, gameOver,

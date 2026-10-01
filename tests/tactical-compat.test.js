@@ -46,6 +46,7 @@ test('legacy active battle keeps its two-AP turns and battlefield through reload
   const state = start(9053);
   delete state.battle.rulesVersion;
   delete state.battle.weaponSkillsVersion;
+  delete state.battle.mountSkillsVersion;
   for (const unit of state.battle.units) {
     unit.ap = 2;
     for (const key of ['shieldWallActive', 'tacticalRole', 'skillPreference', 'aiTargetId', 'formationMovedRound', 'movementCredit', 'spearwallActive', 'riposteActive', 'stunnedTurns', 'stunProtected', 'pendingBerserkAp']) delete unit[key];

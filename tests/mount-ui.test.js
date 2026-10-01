@@ -21,7 +21,8 @@ test('mount equipment and item details expose costs and additive company benefit
     assert.equal(details.stats.find(row=>row.label==='Combat movement').value,'+2 movement points per turn');
     assert.equal(details.stats.find(row=>row.label==='Initiative').value,'+4');
     assert.equal(details.stats.find(row=>row.label==='Extra daily food').value,String(getItem(id).foodUpkeep));
-    assert.ok(details.notes.some(note=>note.includes('never grants another attack')));
+    assert.ok(details.notes.some(note=>note.includes('formation tactics')));
+    assert.ok(details.stats.some(row=>row.label===(id==='riding-horse'?'Charge':'Wolf Bite')));
   }
 });
 
