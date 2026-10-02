@@ -1,5 +1,6 @@
+import { townFacilities } from './town-facilities.js';
 import { regionAt } from './geography.js';
-import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getFactionPatrols, getCaravans, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
+import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getFactionPatrols, getCaravans, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = [
   'world_desert_01', 'world_desert_02', 'world_desert_03',
@@ -90,7 +91,8 @@ function townArt(town) {
 }
 
 function bands() {
-  const value = state ? getRoamingBands(state) : [];
+  const quest=state?getQuestEncounter(state):null;
+  const value = state ? [...getRoamingBands(state),...(quest?.kind==='deserters'?[quest]:[])] : [];
   return Array.isArray(value) ? value : [];
 }
 
@@ -186,6 +188,10 @@ function buildBackground() {
     else if (random() < .1) objects.push({ x, y, name: `world_detail_autumn_green_0${1 + Math.floor(random() * 2)}`, width: 45 + random() * 28 });
   }
   SETTLEMENTS.forEach((town, index) => {
+    const facilities=townFacilities(state.seed,town);
+    facilities.forEach((facility,i)=>sprite(context,facility.id==='blacksmith'?'houses_01_01':'houses_02_01',town.x-33+i*63,town.y+15,25,.9));
+    if(facilities.length&&camera.zoom>=.65){context.font='bold 9px Arial';context.textAlign='center';context.lineWidth=3;context.strokeStyle='#241a14';const label=facilities.map(f=>f.name).join(' · ');context.strokeText(label,town.x,town.y+48);context.fillStyle='#edcf89';context.fillText(label,town.x,town.y+48);}
+
     objects.push({ x: town.x, y: town.y, name: townArt(town), width: town.kind === 'village' ? 100 : 122 });
     if (town.kind === 'village') objects.push({ x: town.x - 60, y: town.y + 40, name: index % 2 ? 'wheat_farm_01' : 'wheat_field_01', width: 100 });
     if (town.id === 'saltwick') objects.push({ x: town.x - 68, y: town.y + 32, name: 'harbor_sw', width: 83 });
@@ -311,7 +317,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const band = bands().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
       const caravan = caravans().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 24);
       const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
-      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: 'band', id: band.id, entity: { ...band, kind: 'band' } }
+      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind==='deserters'?'deserters':'band', id: band.id, entity: band }
         : camp ? { type: 'camp', id: camp.id, entity: camp }
           : town ? { type: 'town', id: town.id, entity: town }
             : null;
@@ -319,7 +325,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const target = caravan && caravanDistance <= existingDistance
         ? { type: 'caravan', id: caravan.id, entity: caravan }
         : existingTarget;
-      if ((target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
+      if ((target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
       else if (!target) onTravel(world.x, world.y);
@@ -379,15 +385,15 @@ function draw() {
   getCampSites(state).forEach((camp, index) => {
     context.save();
     if (camp.cleared) context.globalAlpha = .48;
-    if (selection === camp.id || state.contract?.campId === camp.id) {
-      context.strokeStyle = '#dca673'; context.lineWidth = 2;
+    if (!camp.cleared || selection === camp.id) {
+      context.strokeStyle = camp.cleared?'#b4a78a':'#f29b46'; context.lineWidth = selection===camp.id?3:2;
       context.beginPath(); context.ellipse(camp.x, camp.y + 2, 33, 13, 0, 0, Math.PI * 2); context.stroke();
     }
     sprite(context, index % 3 === 1 ? 'stone_watchtower_01' : 'fortified_outpost_01', camp.x, camp.y, 70);
     sprite(context, `banner_10${campDifficulty(camp)}`, camp.x + 25, camp.y - 27, 18, .86);
     context.font = 'bold 12px Georgia'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#241a14';
     context.strokeText(campLabel(camp), camp.x, camp.y + 20);
-    context.fillStyle = camp.cleared ? '#b4a78a' : '#e5b493'; context.fillText(campLabel(camp), camp.x, camp.y + 20);
+    context.fillStyle = camp.cleared ? '#b4a78a' : '#f29b46'; context.fillText(campLabel(camp), camp.x, camp.y + 20);
     context.restore();
   });
 
@@ -433,7 +439,7 @@ function draw() {
 
   activeBands.forEach((band, index) => {
     const count = bandCount(band), selected = selection === band.id, hunted = state.pursuit === band.id;
-    const art = { south: 'figure_player_nomad', north: 'figure_player_berserker', east: 'figure_player_assassin', forest: 'figure_player_ranger' }[band.factionId] || ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
+    const art = { 'northern-highlands':'figure_player_berserker',greenwood:'figure_player_ranger','blackwater-basin':'figure_player_slave','far-steppe':'figure_player_nomad','saffron-coast':'figure_player_nomad',sunlands:'figure_player_nomad','highland-clans':'figure_player_berserker','southern-sultanate':'figure_player_nomad',south: 'figure_player_nomad', north: 'figure_player_berserker', east: 'figure_player_assassin', forest: 'figure_player_ranger' }[band.factionId] || ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
     context.save();
     if (band.behavior === 'hunting-company') {
       const angle = Math.atan2(state.position.y - band.y, state.position.x - band.x);
@@ -444,17 +450,17 @@ function draw() {
       context.lineTo(tipX - Math.cos(angle + .55) * 8, tipY - Math.sin(angle + .55) * 8); context.closePath();
       context.fillStyle = '#ed6558'; context.fill();
     }
-    if (selected || hunted) {
-      context.lineWidth = 2; context.strokeStyle = selected ? '#f1d380' : '#c46d57'; context.setLineDash(hunted ? [3, 3] : []);
+    {
+      context.lineWidth = selected?3:2; context.strokeStyle = band.behavior==='hunting-company'?'#ed6558':'#f29b46'; context.setLineDash(hunted ? [3, 3] : []);
       context.beginPath(); context.ellipse(band.x, band.y + 7, 25, 10, 0, 0, Math.PI * 2); context.stroke(); context.setLineDash([]);
     }
     context.beginPath(); context.ellipse(band.x, band.y + 8, 16, 6, 0, 0, Math.PI * 2); context.fillStyle = '#14201688'; context.fill();
     if (count > 1) sprite(context, ['figure_player_berserker', 'figure_player_ranger', 'figure_player_slave'][index % 3], band.x - 8, band.y + 1, 25, .72);
     sprite(context, art, band.x + (count > 1 ? 7 : 0), band.y, 29, .72);
     sprite(context, `banner_10${clamp(Number(band.difficulty) || Math.ceil(count / 2), 1, 3)}`, band.x + 16, band.y - 20, 17, .82);
-    const label = `${band.name || 'Wandering Brigands'} · ${count} brigand${count === 1 ? '' : 's'}`;
+    const label = `${band.name || 'Wandering Brigands'} · ${count} ${band.kind==='deserters'?'deserters':`brigand${count===1?'':'s'}`}`;
     context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913cc'; context.strokeText(label, band.x, band.y + 24);
-    context.fillStyle = selected ? '#f0d998' : hunted ? '#e8a389' : '#d8cfad'; context.fillText(label, band.x, band.y + 24);
+    context.fillStyle = band.behavior==='hunting-company'?'#ed6558':'#f29b46'; context.fillText(label, band.x, band.y + 24);
     const activity = bandActivity(band);
     if (activity) {
       context.font = 'bold 9px Arial'; context.strokeStyle = '#1c1913cc'; context.strokeText(activity, band.x, band.y + 36);

@@ -5,6 +5,7 @@ import {
   acceptContract, travelTo, tick, buyAll, buyFood, buyGood,
   sellGood, buyItem, sellItem, getPurchaseQuote, validateSave,
 } from '../src/engine.js';
+import { townFacilities } from '../src/town-facilities.js';
 import { findOffer } from './helpers/contract-offers.js';
 
 function atTown(state, townId) {
@@ -88,7 +89,7 @@ test('high-end gear is scarce across seeds and read or reload cannot restock a p
     if (getTownEvent(state, 'ironford')) continue;
     ordinaryDays++;
     const available = getMarket(state).equipment.filter(row => premium.has(row.itemId) && row.stock > 0);
-    assert.ok(available.length <= 2, 'a city displays a tiny premium selection');
+    assert.ok(available.length <= Math.max(1,1+townFacilities(seed,SETTLEMENTS.find(t=>t.id==='ironford')).length), 'a city has one small premium budget plus specialist boosts');
     for (const row of available) observed.add(row.itemId);
   }
   assert.ok(ordinaryDays >= 3);
@@ -199,7 +200,7 @@ test('harvest, caravan, fair, shipment, and muster change their advertised marke
         } else if (event.type === 'militia-muster') {
           assert.ok(pricedGear(during).buyPrice > pricedGear(before).buyPrice);
           // Hold the armory fixed so weekly rotation and random empty shelves cannot mask reservations.
-          state.marketStock[town.id] = { day, food: during.food.stock, goods: Object.fromEntries(during.goods.map(row=>[row.goodId,row.stock])), supplies: Object.fromEntries(during.supplies.map(row=>[row.kind,row.stock])), equipment: Object.fromEntries(ITEMS.map(item=>[item.id,1])), armoryCycle: Math.floor((day-1)/7), appliedEventId: null, buyback: [] };
+          state.marketStock[town.id] = { day, food: during.food.stock, goods: Object.fromEntries(during.goods.map(row=>[row.goodId,row.stock])), supplies: Object.fromEntries(during.supplies.map(row=>[row.kind,row.stock])), equipment: Object.fromEntries(ITEMS.map(item=>[item.id,1])), armoryVersion: 1, armoryCycle: Math.floor((day-1)/7), appliedEventId: null, buyback: [] };
           const reserved = getMarket(state);
           assert.ok(reserved.equipment.some(row => ITEMS.find(item=>item.id===row.itemId)?.price>=250 && row.stock===0), 'the muster visibly reserves stocked ordinary gear');
           delete state.marketStock[town.id];

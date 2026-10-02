@@ -98,14 +98,14 @@ test('weekly city and castle mount offers are deterministic and tradable', () =>
   assert.deepEqual(validateSave(state), state);
 });
 
-test('ordinary armory stock is halved in expectation without changing item catalog or enemy loot', () => {
+test('starter essentials remain available within the reduced common armory', () => {
   const ordinary = ITEMS.filter(item => item.slot !== 'mount');
   let copies = 0;
   for (let seed = 1; seed <= 500; seed++) {
     const state = createGame(seed);
     copies += getMarket(state).equipment.find(row => row.itemId === 'patched-coat').stock;
   }
-  assert.ok(copies > 280 && copies < 500, 'common gear stock averages about half the former one-to-two copies');
+  assert.ok(copies === 500, 'the original cheap coat remains available without stocking every added cheap design');
   assert.ok(ordinary.some(item => item.id === 'patched-coat'));
 });
 

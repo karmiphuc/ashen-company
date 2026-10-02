@@ -22,7 +22,7 @@ test('settlements use three fixed classes with distinct stocks and hiring pools'
   assert.ok(average('village', 'food') > average('town', 'food'));
   assert.ok(average('castle', 'ammo') > average('town', 'ammo'));
   assert.ok(average('town', 'medicine') > average('village', 'medicine'));
-  assert.equal(totals.village.premium, 0);
+  assert.ok(average('village','premium')<average('town','premium'),'occasional village smiths have fewer premium designs than cities');
   assert.ok(average('castle', 'premium') > average('town', 'premium'));
 });
 
@@ -44,5 +44,5 @@ test('quest boards offer one to three stable jobs, vary locally, and retain acce
     }
   }
   assert.deepEqual(counts, new Set([1, 2, 3]));
-  assert.deepEqual(types, new Set(['courier', 'supply', 'hunt', 'assault', 'rescue']));
+  assert.deepEqual(types, new Set(['courier', 'supply', 'hunt', 'assault', 'rescue', 'deserters']));
 });

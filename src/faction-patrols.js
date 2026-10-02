@@ -1,4 +1,4 @@
-import { regionAt, roadRoute } from './geography.js';
+import { regionAt, roadRoute, REGIONS } from './geography.js';
 import { worldEnemyTemplates, regionalOutfit, enemyCombatRole } from './regional-enemies.js';
 import { regionalMountPool } from './mount-distribution.js';
 
@@ -34,12 +34,20 @@ export function patrolDefinitions(settlements){
   const result=Object.freeze(definitions);definitionCache.set(settlements,result);return result;
 }
 export function initialPatrolProgress(state,definition){return {x:definition.home.x,y:definition.home.y,waypoint:1,troops:Array.from({length:definition.size},(_,i)=>i),spawnCycle:0,defeatedUntil:0,cooldownUntil:0,lastReinforcedHour:(state.day-1)*24+state.hour,behavior:'touring',targetId:null,wins:0,losses:0};}
+export function factionTroops(seed,factionId,difficulty,count) {
+  const regionId={'western-league':'western-marches','highland-clans':'northern-highlands','eastern-march':'eastern-frontier','southern-sultanate':'sunlands'}[factionId];
+  const region=REGIONS.find(r=>r.id===regionId),templates=worldEnemyTemplates(region.x,region.y,difficulty);
+  return Array.from({length:count},(_,index)=>{
+    const soldier=regionalOutfit(templates[index%templates.length],seed,index,region.x,region.y,difficulty,{champions:false});
+    const title={ranged:'Marksman',skirmisher:'Skirmisher',shield:'Shieldman',melee:'Man-at-arms'}[enemyCombatRole(soldier)];
+    soldier.name=`${SOLDIER_FACTIONS.find(f=>f.id===factionId).name} ${title}`;
+    return soldier;
+  });
+}
 function roster(state,definition,progress){
-  const templates=worldEnemyTemplates(definition.home.x,definition.home.y,definition.difficulty);
+  const troops=factionTroops(`${state.seed}:${definition.id}:${progress.spawnCycle}`,definition.factionId,definition.difficulty,definition.size);
   return progress.troops.map(index=>{
-    const soldier=regionalOutfit(templates[index%templates.length],`${state.seed}:${definition.id}:${progress.spawnCycle}`,index,definition.home.x,definition.home.y,definition.difficulty,{champions:false});
-    const role=enemyCombatRole(soldier),title={ranged:'Marksman',skirmisher:'Skirmisher',shield:'Shieldman',melee:'Man-at-arms'}[role];
-    soldier.name=`${SOLDIER_FACTIONS.find(f=>f.id===definition.factionId).name} ${title}`;
+    const soldier={...troops[index]};
     if(index===0&&hash(`${state.seed}:${definition.id}:cavalry`)%3===0){const pool=regionalMountPool(definition.home.x,definition.home.y,{reward:true});soldier.mount=pool[hash(definition.id)%pool.length];}
     return soldier;
   });

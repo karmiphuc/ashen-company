@@ -1,4 +1,16 @@
-# Verification - version 0.44.6, 2026-10-03
+# Verification - version 0.45.0, 2026-10-03
+
+## v0.45.0 checks
+
+All 494 automated tests pass. Towns now keep capped regional shelves instead of including every inexpensive imported design. Seeded blacksmiths expand weapon/shield selections and armorsmiths expand armor/helmet selections; each town has one small quality budget across its entire market. Workshop placement stays fixed through visits, days and saves, and appears on the map, settlement panel and marketplace. Ten seeds across all 48 settlements average 3.7 body-armor designs and 3.2 helmets in stock, down from 20.5 and 26.3 in v0.44.6; all stocked designs average 22.5 instead of 64.6. Purchases remain sold out until weekly rotation, shipments stay small and regional, and rare offers/buybacks retain their dedicated paths. Old bulky market projections adopt the new shelves without deleting company-owned equipment or named buybacks.
+
+Regional outfits enforce northern barbarian and southern desert designs, light woodland elites, cult robes, ancient-only tomb equipment and general mercenary mail/plate. Ancient sepulchers occur in selected highland, frontier and Blackwater locations; reinforcements retain their theme. Soldier patrols and deserters wear their faction's culture rather than adopting the culture of the land they tour. Actual v0.44.6 active-battle snapshots at newly ancient sites keep their original encounter name, gear, damage, random state and turn order.
+
+Allied guards/militia deploy together on the top or bottom battlefield edge, leaving the company formation untouched. Being caught by a hunting band gives every enemy priority in the opening round; voluntary attacks and subsequent rounds use normal initiative. Save/reload preserves the opening turn order. Armor, helmet, attachment and shield stash cards show fatigue alongside remaining durability.
+
+Deserter contracts have a stable 10% weekly roll in towns/castles, hard difficulty, eight elite local-faction troops and an 850-crown return payment. Accepting consumes that town's weekly offer. A deterministic 25% encounter roll upgrades exactly one existing worn item using the generated famed/named-quality system, preserving its original design and culture while applying real bonuses to its wearer. Retreat, waiting and save/reload cannot reroll equipment. Intact named-quality trophies are salvaged; destroyed armor remains unrecoverable. Integrated tests cover actual travel into battle, retreat/retry, save round-trips, victory salvage and one-time payment.
+
+Fresh Chromium verifies all 526 cached resources and relaunches offline. Canvas draw inspection records orange hostile labels/outlines and a red chasing-band label. Rendered checks cover workshop panels, the Plate Harness grid card (120/300 durability and 38 fatigue), 30 elite regional portraits and the hard Deserter contract/target UI. No missing images or browser exceptions. Physical iPad Safari remains untested.
 
 ## v0.44.6 checks
 

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { townFacilities } from '../src/town-facilities.js';
 import { FANTASY_ITEMS } from '../src/fantasy-items.js';
 import { FANTASY_APPEARANCES } from '../src/fantasy-art.js';
 import { ITEMS, SETTLEMENTS, SETTLEMENT_TYPES, createGame, equipItem, getCompanyStats, getItem, getMarket, validateSave } from '../src/engine.js';
@@ -54,9 +55,9 @@ test('weekly armory budgets keep the new gear scarce while every item can appear
         if (market.event?.type === 'armorer-shipment') continue;
         const better = stocked.filter(item => item.slot !== 'mount' && item.price >= 250 && item.price < 450);
         const premium = stocked.filter(item => item.slot !== 'mount' && item.price >= 450);
-        const type = SETTLEMENT_TYPES[town.kind], major = Number(Boolean(town.major));
-        assert.ok(better.length <= type.better + major, `${town.id} day ${day} better stock`);
-        assert.ok(premium.length <= type.premium + major, `${town.id} day ${day} premium stock`);
+        const type = SETTLEMENT_TYPES[town.kind], specialists = townFacilities(seed,town).length;
+        assert.ok(better.length <= type.better + specialists, `${town.id} day ${day} better stock`);
+        assert.ok(premium.length <= Math.max(1,type.premium + specialists), `${town.id} day ${day} premium stock`);
       }
     }
     if (seen.size === FANTASY_ITEMS.length) break;
