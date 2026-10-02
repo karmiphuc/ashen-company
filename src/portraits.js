@@ -139,15 +139,15 @@ export const VISUALS = {
     'northern-sling': ['weapon-northern-sling.png', 73, 57, 'rotate(-25deg)', '5px 60px'],
   },
   shield: {
-    round: ['shield-round.png', -2, 68],
-    kite: ['shield-kite.png', -6, 54],
-    heater: ['shield-heater.png', -4, 54],
-    adarga: ['shield-adarga.png', -2, 68],
-    'painted-round-shield': ['shield-painted-round-shield.png', -4, 68],
-    'painted-heater-shield': ['shield-painted-heater-shield.png', -4, 54],
-    'painted-tower-shield': ['shield-painted-tower-shield.png', -23, 28, 'scale(.65)', '0 0'],
-    'northern-heartwood-shield': ['shield-northern-heartwood-shield.png', -24, 54],
-    'northern-iron-round-shield': ['shield-northern-iron-round-shield.png', -14, 68],
+    round: ['shield-round.png', 62, 68],
+    kite: ['shield-kite.png', 62, 54],
+    heater: ['shield-heater.png', 62, 54],
+    adarga: ['shield-adarga.png', 62, 68],
+    'painted-round-shield': ['shield-painted-round-shield.png', 62, 68],
+    'painted-heater-shield': ['shield-painted-heater-shield.png', 62, 54],
+    'painted-tower-shield': ['shield-painted-tower-shield.png', 62, 28, 'scale(.65)', '0 0'],
+    'northern-heartwood-shield': ['shield-northern-heartwood-shield.png', 62, 54],
+    'northern-iron-round-shield': ['shield-northern-iron-round-shield.png', 62, 68],
   },
   accessory: {
     bandages: ['../items/bandages.png'],
@@ -185,12 +185,23 @@ export const VISUALS = {
     'kraken-mantle': { front: ['attachment-kraken-mantle.png', 5, 46] },
   },
   mount: {
-    horse: ['mount-horse-body.png', 'mount-horse-head.png', 12, 28, 52, 45, null, 1],
+    horse: ['mount-horse-body.png', 'mount-horse-head.png', -8, 54, 12, 66, null, 1, .72],
     warhorse: ['mount-war-horse-body.png', 'mount-war-horse-head.png', -15, 5, 55, 23, null, 1],
     armoredhorse: ['mount-armored-war-horse-body.png', 'mount-armored-war-horse-head.png', -15, 5, 55, 23, null, 1],
     warg: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 23, 27, 37, 'sepia(.85) saturate(.7) brightness(.7)'],
     wolf: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 23, 27, 37],
   },
+};
+const SHIELD_WIDTHS = {
+  'shield-round.png': 44,
+  'shield-kite.png': 48,
+  'shield-heater.png': 46,
+  'shield-adarga.png': 44,
+  'shield-painted-round-shield.png': 46,
+  'shield-painted-heater-shield.png': 46,
+  'shield-painted-tower-shield.png': 100,
+  'shield-northern-heartwood-shield.png': 66,
+  'shield-northern-iron-round-shield.png': 56,
 };
 // Rest poses are expressed around the grip, independent of the sprite's crop.
 // Native BB long-weapon artwork already slopes from the opposite shoulder to
@@ -258,8 +269,8 @@ function weaponRest(spec, item) {
   }
   if (RANGED_WEAPONS.has(visual(item)) || /crossbow|(?:^|-)bow$/.test(file.replace('weapon-', '').replace('.png', ''))) return spec;
   const reverse = REVERSED_ONE_HANDERS.has(item?.baseId || item?.id) || REVERSED_ONE_HANDERS.has(visual(item));
-  return [file, 22 - gripX, 111 - gripY,
-    reverse ? 'scale(.75) rotate(-30deg) scaleX(-1)' : rest, origin];
+  return [file, 82 - gripX, 111 - gripY,
+    `scaleX(-1) ${reverse ? 'scale(.75) rotate(-30deg) scaleX(-1)' : rest}`, origin];
 }
 
 function weaponFrame(spec) {
@@ -477,11 +488,11 @@ function attachmentLayer(spec, part) {
 
 function mountLayer(spec, part) {
   if (!spec) return '';
-  const [body, head, bodyLeft, bodyTop, headLeft, headTop, filter, facing = -1] = spec;
+  const [body, head, bodyLeft, bodyTop, headLeft, headTop, filter, facing = -1, scale = 1] = spec;
   const file = part === 'body' ? body : head;
   const left = part === 'body' ? bodyLeft : headLeft;
   const top = part === 'body' ? bodyTop : headTop;
-  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:scaleX(${facing});${filter ? `filter:${filter};` : ''}z-index:${part === 'head' ? 5 : 0};max-width:none;pointer-events:none">`;
+  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:scaleX(${facing})${scale === 1 ? '' : ` scale(${scale})`};transform-origin:${scale === 1 ? 'center' : 'top left'};${filter ? `filter:${filter};` : ''}z-index:${part === 'head' ? 5 : 0};max-width:none;pointer-events:none">`;
 }
 
 function portraitFrame(equipment, weapon = layerSpec('weapon', equipment.weapon), shield = layerSpec('shield', equipment.shield)) {
@@ -492,7 +503,9 @@ function portraitFrame(equipment, weapon = layerSpec('weapon', equipment.weapon)
   // Move and scale the whole composition; never push only the helmet down onto the brow.
   const headroom = Math.max(0, -weaponBounds.top, dlcHelmet ? -dlcHelmet.top : helmetVisual === 'bascinet' ? 13 : 0);
   const leftRoom = Math.max(0, -weaponBounds.left, -(shield?.[1] ?? 0), -(dlcHelmet?.left ?? 0));
-  const rightRoom = Math.max(0, weaponBounds.right - CANVAS.width, dlcHelmet ? dlcHelmet.left + dlcHelmet.width - CANVAS.width : 0);
+  const shieldScale = Number(shield?.[3]?.match(/scale\(([\d.]+)\)/)?.[1] ?? 1);
+  const shieldRight = shield ? shield[1] + SHIELD_WIDTHS[shield[0]] * shieldScale : 0;
+  const rightRoom = Math.max(0, shieldRight - CANVAS.width, weaponBounds.right - CANVAS.width, dlcHelmet ? dlcHelmet.left + dlcHelmet.width - CANVAS.width : 0);
   const footroom = Math.max(0, weaponBounds.bottom - CANVAS.height);
   const framed = Boolean(dlcHelmet || leftRoom || rightRoom || weaponBounds.top < 0 || footroom);
   const compositionScale = framed ? Math.min(CANVAS.width / (CANVAS.width + leftRoom + rightRoom), CANVAS.height / (CANVAS.height + headroom + footroom)) : 1;

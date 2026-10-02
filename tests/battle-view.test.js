@@ -87,9 +87,9 @@ test('enemy projectiles start at the mirrored weapon hand and travel toward the 
     lastEvent: {...battle.lastEvent, actorId:'enemy', targetId:'captain', from:{q:7,r:2}, to:{q:2,r:2}, projectile:'javelin', weaponId:'javelins'},
   },1,true);
   const projectile=html.match(/class="battle-projectile is-javelin"[^>]*style="([^"]+)"/)[1];
-  // Enemy's one-handed javelin is now on the left; mirroring puts its grip on the right.
+  // Enemy's one-handed javelin is now on the right; mirroring puts its grip on the left.
   const px=Number(projectile.match(/left:([\d.]+)px/)[1]),py=Number(projectile.match(/top:([\d.]+)px/)[1]);
-  assert.ok(Math.abs(px-(662+30*64/104))<1e-8);
+  assert.ok(Math.abs(px-(662-30*64/104))<1e-8);
   assert.ok(Math.abs(py-(220+111*64/104))<1e-8);
   assert.ok(Math.abs(Number(projectile.match(/--flight-x:([\d.-]+)px/)[1])-(282-px))<1e-8);
   assert.ok(Math.abs(Number(projectile.match(/--flight-y:([\d.-]+)px/)[1])-(260-py))<1e-8);
