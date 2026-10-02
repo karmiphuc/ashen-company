@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {inflateSync} from 'node:zlib';
 import {ITEMS, getItem} from '../src/engine.js';
 import {portraitHTML, portraitWeaponAnchor} from '../src/portraits.js';
 
@@ -86,16 +87,60 @@ test('all five mounts share one plate and coordinate space; equipment is above t
   }
 });
 
-test('Riding Horse stays below the face and leaves the center chest visible on the shared plate',()=>{
-  for(let seed=0;seed<24;seed++)for(const helmet of [null,getItem('bb-fangshire'),getItem('bb-flat-top-helmet')]){
-    const html=portraitHTML({name:'Rider',seed},{mount:getItem('riding-horse'),armor:getItem('plate-harness'),helmet,weapon:getItem('arming-sword'),shield:getItem('painted-tower-shield')});
-    const h=pose(html,'mount-head'),b=pose(html,'mount-body');
-    assert.match(h.image,/scale\(0.72\)/);assert.match(b.image,/scale\(0.72\)/);
-    const [width,height]=pngSize(h.image);
-    assert.ok(h.y>=60,'horse cannot hide the rider face');
-    assert.ok(h.x+width*.72<=48,'horse leaves the center chest visible');
-    assert.ok(Math.abs(h.y+height*.72-124)<1,'horse head sits on the plate');
-    assert.match(tag(html,'head'),/top:0px/);
-    assert.equal((html.match(/data-layer="base-plate"/g)||[]).length,1);
+
+const rasterCache=new Map();
+function opaquePixels(image) {
+  const src=image.match(/src="([^"]+)"/)[1];if(rasterCache.has(src))return rasterCache.get(src);
+  const bytes=readFileSync(new URL('../'+src,import.meta.url));
+  const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);
+  assert.equal(bytes[24],8);assert.equal(bytes[25],6);assert.equal(bytes[28],0,'noninterlaced RGBA mount art');
+  const chunks=[];for(let offset=8;offset<bytes.length;){const size=bytes.readUInt32BE(offset),type=bytes.toString('ascii',offset+4,offset+8);if(type==='IDAT')chunks.push(bytes.subarray(offset+8,offset+8+size));offset+=12+size;}
+  const raw=inflateSync(Buffer.concat(chunks)),stride=width*4,pixels=[],decoded=Buffer.alloc(stride*height);
+  const paeth=(a,b,c)=>{const p=a+b-c,da=Math.abs(p-a),db=Math.abs(p-b),dc=Math.abs(p-c);return da<=db&&da<=dc?a:db<=dc?b:c;};
+  let minX=width,minY=height,maxX=0,maxY=0;
+  for(let y=0;y<height;y++){
+    const filter=raw[y*(stride+1)];assert.ok(filter<=4);
+    for(let i=0;i<stride;i++){
+      const at=y*stride+i,left=i>=4?decoded[at-4]:0,up=y?decoded[at-stride]:0,corner=y&&i>=4?decoded[at-stride-4]:0;
+      decoded[at]=(raw[y*(stride+1)+1+i]+[0,left,up,Math.floor((left+up)/2),paeth(left,up,corner)][filter])&255;
+    }
+    for(let x=0;x<width;x++)if(decoded[y*stride+x*4+3]){
+      minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x+1);maxY=Math.max(maxY,y+1);
+      if(decoded[y*stride+x*4+3]>16)pixels.push([x+.5,y+.5]);
+    }
   }
+  const result={pixels,bounds:[minX,minY,maxX,maxY]};rasterCache.set(src,result);return result;
+}
+function mountGeometry(html,part) {
+  const p=pose(html,'mount-'+part),raster=opaquePixels(p.image);
+  const xy=p.image.match(/transform:scale\(([\d.-]+),([\d.-]+)\)/);
+  const scale=Number(p.image.match(/ scale\(([\d.]+)\)/)?.[1]??1);
+  const sx=xy?Number(xy[1]):Number(p.image.match(/scaleX\((-?1)\)/)[1])*scale,sy=xy?Number(xy[2]):scale;
+  const [x1,y1,x2,y2]=raster.bounds;
+  return {...p,sx,sy,pixels:raster.pixels.map(([x,y])=>[p.x+x*sx,p.y+y*sy]),
+    left:Math.min(p.x+x1*sx,p.x+x2*sx),right:Math.max(p.x+x1*sx,p.x+x2*sx),top:p.y+y1*sy,bottom:p.y+y2*sy};
+}
+
+test('every mount stays low on the right, visibly supports the rider and remains visible behind every shield',()=>{
+  const profiles=new Set();
+  for(let seed=0;seed<24;seed++)for(const mount of mounts)for(const helmet of [null,getItem('bb-fangshire'),getItem('bb-named-conic-helmet-with-faceguard'),getItem('bb-gunner-hat')])for(const shield of shields){
+    const html=portraitHTML({name:'Rider',seed},{mount,armor:getItem('plate-harness'),helmet,weapon:getItem('arming-sword'),shield});
+    profiles.add(html.match(/data-appearance="(\d+)"/)[1]);
+    const head=mountGeometry(html,'head'),body=mountGeometry(html,'body'),s=pose(html,'shield'),f=frame(html);
+    assert.ok(head.left>=85,`${mount.id}: animal is on the right, not beside the left arm`);
+    assert.ok(head.top>=65,`${mount.id}: animal cannot obscure the face`);
+    assert.ok(head.bottom>=121&&head.bottom<=124,`${mount.id}: all muzzles meet the same plate`);
+    assert.ok(Math.abs(body.left-30)<1e-8&&Math.abs(body.right-129)<1e-8,`${mount.id}: rear body spans beneath the rider`);
+    assert.ok(Math.abs(body.top-76)<1e-8&&Math.abs(body.bottom-126)<1e-8);
+    const support=body.pixels.filter(([x,y])=>x>=45&&x<=80&&y>=110&&y<=122).length*Math.abs(body.sx*body.sy);
+    assert.ok(support>100,`${mount.id}: actual opaque pixels support the rider (${support})`);
+    const scale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)?.[1]??1),right=s.x+pngSize(s.image)[0]*scale;
+    assert.ok(right-s.x<=48+1e-8,'mounted shields cannot hide the whole animal');
+    const visible=head.pixels.filter(([x])=>x>right+1).length*Math.abs(head.sx*head.sy);
+    assert.ok(visible>100,`${mount.id}: recognizable mount remains visible beyond ${shield.id} (${visible})`);
+    for(const part of [head,body])assert.ok(f.x+part.left*f.scale>=-1e-8&&f.x+part.right*f.scale<=104+1e-8&&f.y+part.bottom*f.scale<=142+1e-8,`${mount.id}: opaque art is framed`);
+    assert.equal((html.match(/data-layer="base-plate"/g)||[]).length,1);
+    if(tag(html,'head'))assert.match(tag(html,'head'),/top:0px/);
+  }
+  assert.equal(profiles.size,6,'covers every human appearance');
 });

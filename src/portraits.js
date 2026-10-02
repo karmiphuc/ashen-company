@@ -185,11 +185,11 @@ export const VISUALS = {
     'kraken-mantle': { front: ['attachment-kraken-mantle.png', 5, 46] },
   },
   mount: {
-    horse: ['mount-horse-body.png', 'mount-horse-head.png', -8, 54, 12, 66, null, 1, .72],
-    warhorse: ['mount-war-horse-body.png', 'mount-war-horse-head.png', -15, 5, 55, 23, null, 1],
-    armoredhorse: ['mount-armored-war-horse-body.png', 'mount-armored-war-horse-head.png', -15, 5, 55, 23, null, 1],
-    warg: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 23, 27, 37, 'sepia(.85) saturate(.7) brightness(.7)'],
-    wolf: ['mount-wolf-body.png', 'mount-wolf-head.png', 4, 23, 27, 37],
+    horse: {body:'mount-horse-body.png',head:'mount-horse-head.png',headLeft:96.5,headTop:66,scale:.70,facing:1},
+    warhorse: {body:'mount-war-horse-body.png',head:'mount-war-horse-head.png',headLeft:101.2,headTop:65,scale:.58,facing:1},
+    armoredhorse: {body:'mount-armored-war-horse-body.png',head:'mount-armored-war-horse-head.png',headLeft:101.2,headTop:65,scale:.58,facing:1},
+    warg: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:132,headTop:73,scale:.58,facing:-1,filter:'sepia(.85) saturate(.7) brightness(.7)'},
+    wolf: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:132,headTop:73,scale:.58,facing:-1},
   },
 };
 const SHIELD_WIDTHS = {
@@ -252,6 +252,24 @@ const SHOULDER_DIMENSIONS = {
   'weapon-northern-heavy-flail.png': [74, 108],
 };
 
+
+// A mounted pawn is one silhouette, not a miniature rider beside an animal.
+// All species share this plate/envelope. Natural foreground heads sit on
+// connected rear bodies; compact shields keep the mounted silhouette readable.
+const MOUNT_PLATE = {left: 4, top: 108, width: 131, height: 22};
+const MOUNT_BODY_BOUNDS = {
+  'mount-horse-body.png':[4,9,74,96],
+  'mount-war-horse-body.png':[37,20,115,117],
+  'mount-armored-war-horse-body.png':[35,20,115,120],
+  'mount-wolf-body.png':[0,0,104,100],
+};
+function mountedShield(spec, mount) {
+  if (!spec || !mount) return spec;
+  const [file, left, top, transform, origin] = spec;
+  const authoredScale = Number(transform?.match(/scale\(([\d.]+)\)/)?.[1] ?? 1);
+  const scale = Math.min(authoredScale, 48 / SHIELD_WIDTHS[file]);
+  return [file, left, Math.max(54, top), scale === 1 ? transform : `scale(${scale})`, scale === 1 ? origin : '0 0'];
+}
 
 function weaponRest(spec, item) {
   if (!spec) return spec;
@@ -488,14 +506,22 @@ function attachmentLayer(spec, part) {
 
 function mountLayer(spec, part) {
   if (!spec) return '';
-  const [body, head, bodyLeft, bodyTop, headLeft, headTop, filter, facing = -1, scale = 1] = spec;
-  const file = part === 'body' ? body : head;
-  const left = part === 'body' ? bodyLeft : headLeft;
-  const top = part === 'body' ? bodyTop : headTop;
-  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:scaleX(${facing})${scale === 1 ? '' : ` scale(${scale})`};transform-origin:${scale === 1 ? 'center' : 'top left'};${filter ? `filter:${filter};` : ''}z-index:${part === 'head' ? 5 : 0};max-width:none;pointer-events:none">`;
+  const {body,head,headLeft,headTop,filter,facing,scale}=spec;
+  const file=part==='body'?body:head;
+  let left=headLeft,top=headTop,transform=`scaleX(${facing}) scale(${scale})`;
+  if(part==='body'){
+    // Rear animal mass supports the rider instead of becoming a second bust
+    // beside them. Normalize its opaque crop beneath the torso; the rider
+    // masks the upper portion and the species' foreground head stays natural.
+    const [x1,y1,x2,y2]=MOUNT_BODY_BOUNDS[body];
+    const sx=99/(x2-x1),sy=50/(y2-y1);
+    left=facing===1?30-x1*sx:129+x1*sx;top=76-y1*sy;
+    transform=`scale(${facing*sx},${sy})`;
+  }
+  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT+file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:${transform};transform-origin:top left;${filter?`filter:${filter};`:''}z-index:${part==='head'?5:0};max-width:none;pointer-events:none">`;
 }
 
-function portraitFrame(equipment, weapon = layerSpec('weapon', equipment.weapon), shield = layerSpec('shield', equipment.shield)) {
+function portraitFrame(equipment, weapon = layerSpec('weapon', equipment.weapon), shield = mountedShield(layerSpec('shield', equipment.shield), equipment.mount)) {
   const dlcHelmet = DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
   const helmetVisual = visual(equipment.helmet);
   const weaponBounds = weaponFrame(weapon);
@@ -505,7 +531,8 @@ function portraitFrame(equipment, weapon = layerSpec('weapon', equipment.weapon)
   const leftRoom = Math.max(0, -weaponBounds.left, -(shield?.[1] ?? 0), -(dlcHelmet?.left ?? 0));
   const shieldScale = Number(shield?.[3]?.match(/scale\(([\d.]+)\)/)?.[1] ?? 1);
   const shieldRight = shield ? shield[1] + SHIELD_WIDTHS[shield[0]] * shieldScale : 0;
-  const rightRoom = Math.max(0, shieldRight - CANVAS.width, weaponBounds.right - CANVAS.width, dlcHelmet ? dlcHelmet.left + dlcHelmet.width - CANVAS.width : 0);
+  const mountRight = layerSpec('mount', equipment.mount) ? MOUNT_PLATE.left + MOUNT_PLATE.width : 0;
+  const rightRoom = Math.max(0, mountRight - CANVAS.width, shieldRight - CANVAS.width, weaponBounds.right - CANVAS.width, dlcHelmet ? dlcHelmet.left + dlcHelmet.width - CANVAS.width : 0);
   const footroom = Math.max(0, weaponBounds.bottom - CANVAS.height);
   const framed = Boolean(dlcHelmet || leftRoom || rightRoom || weaponBounds.top < 0 || footroom);
   const compositionScale = framed ? Math.min(CANVAS.width / (CANVAS.width + leftRoom + rightRoom), CANVAS.height / (CANVAS.height + headroom + footroom)) : 1;
@@ -543,7 +570,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const attachment = layerSpec('attachment', equipment.attachment);
   const mount = layerSpec('mount', equipment.mount);
   const helmet = layerSpec('helmet', equipment.helmet);
-  const shield = layerSpec('shield', equipment.shield);
+  const shield = mountedShield(layerSpec('shield', equipment.shield), mount);
   const weapon = layerSpec('weapon', equipment.weapon);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
@@ -565,7 +592,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:hidden;vertical-align:middle;background:transparent">
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
       <span class="bb-portrait-composition" style="display:block;position:absolute;left:${compositionLeft}px;top:${compositionTop}px;width:104px;height:142px;${compositionTransform}">
-        ${mount ? '<span data-layer="base-plate" class="bb-portrait-base" style="position:absolute;left:4px;top:116px;width:96px;height:18px;border-radius:50%;background:linear-gradient(#aaa99f,#62635d);border:2px solid #383a35;box-sizing:border-box;z-index:0"></span>' : ''}
+        ${mount ? `<span data-layer="base-plate" class="bb-portrait-base" style="position:absolute;left:${MOUNT_PLATE.left}px;top:${MOUNT_PLATE.top}px;width:${MOUNT_PLATE.width}px;height:${MOUNT_PLATE.height}px;border-radius:50%;background:linear-gradient(#c4c5bc,#81847c 45%,#535850);border:2px solid #363b34;box-shadow:inset 0 -3px 0 #3d433a;box-sizing:border-box;z-index:0"></span>` : ''}
         ${mountLayer(mount, 'body')}
         ${rider}
         ${mountLayer(mount, 'head')}

@@ -1,5 +1,9 @@
 # Asset credits
 
+## Mounted portrait composition (v0.44.6)
+
+All five mounts reuse the existing credited PNG files unchanged. The renderer normalizes their rear-body opaque bounds beneath the rider, places natural head silhouettes at the lower right, and draws one shared plate. These composition transforms are an adaptation of the supplied bust artwork, not new anatomical mount artwork. Wolf and warg heads are mirrored to face outward; the warg retains its existing color treatment.
+
 ## Battle audio
 
 The battle loop is [Heartfelt Battle](https://opengameart.org/content/heartfelt-battle-loopable-fantasy-stringspianohorn) by **request**. Weapon whooshes and cloth sounds come from [Kenney RPG Audio](https://kenney.nl/assets/rpg-audio); metal and body impacts come from [Kenney Impact Sounds](https://kenney.nl/assets/impact-sounds). All five source recordings are released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).

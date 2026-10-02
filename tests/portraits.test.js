@@ -81,9 +81,8 @@ test('mounts place authored animal layers around the rider without changing unmo
     assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="weapon"'));
     assert.match(html, /data-layer="base-plate"/);
     assert.doesNotMatch(html, /bb-portrait-rider|scale\(\.76\)/);
-    for (const part of ['body', 'head']) {
-      assert.match(html, new RegExp(`data-layer="mount-${part}"[^>]*transform:scaleX\\(${['horse', 'warhorse', 'armoredhorse'].includes(visual) ? 1 : -1}\\)(?: scale\\(0.72\\))?`));
-    }
+    assert.match(html,/data-layer="mount-body"[^>]*transform:scale\(/);
+    assert.match(html,new RegExp(`data-layer="mount-head"[^>]*transform:scaleX\\(${['horse','warhorse','armoredhorse'].includes(visual)?1:-1}\\) scale\\([\\d.]+\\)`));
     assert.match(itemImage({ id }), new RegExp(`^assets/items/${id}\\.png$`));
   }
 });
