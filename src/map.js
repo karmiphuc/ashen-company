@@ -185,10 +185,6 @@ function buildBackground() {
     else if (terrain === 'mountain') objects.push({ x, y, name: `legend_world_grass_hill_0${1 + Math.floor(random() * 3)}`, width: 100 + random() * 70 });
     else if (random() < .1) objects.push({ x, y, name: `world_detail_autumn_green_0${1 + Math.floor(random() * 2)}`, width: 45 + random() * 28 });
   }
-  for (const region of WORLD_REGIONS) {
-    context.save();context.font=`bold ${12/camera.zoom}px Georgia`;context.textAlign='center';context.lineWidth=4;context.strokeStyle='#24251ddd';
-    context.strokeText(region.name.toUpperCase(),region.x,region.y);context.fillStyle=region.color;context.fillText(region.name.toUpperCase(),region.x,region.y);context.restore();
-  }
   SETTLEMENTS.forEach((town, index) => {
     objects.push({ x: town.x, y: town.y, name: townArt(town), width: town.kind === 'village' ? 100 : 122 });
     if (town.kind === 'village') objects.push({ x: town.x - 60, y: town.y + 40, name: index % 2 ? 'wheat_farm_01' : 'wheat_field_01', width: 100 });
