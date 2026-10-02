@@ -83,9 +83,16 @@ test('attack effects support misses and remain safe when older events have no po
 test('enemy projectiles start at the mirrored weapon hand and travel toward the company', () => {
   const html = battleHTML({
     ...battle,
-    lastEvent: {...battle.lastEvent, actorId:'enemy', targetId:'captain', from:{q:7,r:2}, to:{q:2,r:2}},
+    units:[units[0],{...units[1],equipment:{weapon:'javelins'}}],
+    lastEvent: {...battle.lastEvent, actorId:'enemy', targetId:'captain', from:{q:7,r:2}, to:{q:2,r:2}, projectile:'javelin', weaponId:'javelins'},
   },1,true);
-  assert.match(html, /class="battle-projectile is-arrow"[^>]*left:644px;top:262px;--flight-x:-362px;--flight-y:-2px/);
+  const projectile=html.match(/class="battle-projectile is-javelin"[^>]*style="([^"]+)"/)[1];
+  // Enemy's one-handed javelin is now on the left; mirroring puts its grip on the right.
+  const px=Number(projectile.match(/left:([\d.]+)px/)[1]),py=Number(projectile.match(/top:([\d.]+)px/)[1]);
+  assert.ok(Math.abs(px-(662+30*64/104))<1e-8);
+  assert.ok(Math.abs(py-(220+111*64/104))<1e-8);
+  assert.ok(Math.abs(Number(projectile.match(/--flight-x:([\d.-]+)px/)[1])-(282-px))<1e-8);
+  assert.ok(Math.abs(Number(projectile.match(/--flight-y:([\d.-]+)px/)[1])-(260-py))<1e-8);
   assert.match(html, /--strike-x:-13.00px;--strike-y:0.00px/);
 });
 

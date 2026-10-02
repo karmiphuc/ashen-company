@@ -1,5 +1,5 @@
 import { getEquipment, getItem, getMoraleEffects, shieldMaximum, throwingCapacity } from './engine.js';
-import { portraitHTML, itemImage } from './portraits.js';
+import { portraitHTML, portraitWeaponAnchor, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
 const TILE = { width: 76, height: 85, stepX: 76, stepY: 64, stagger: 38, elevation: 20, padX: 16, padY: 80, padBottom: 22 };
@@ -240,7 +240,9 @@ function projectileHTML(battle, animateEvent, field, grid) {
   const target = battle.units.find(unit => unit.id === event.targetId);
   if (!actor || !target) return '';
   const start = coordinates(event.from || actor, field, grid), end = coordinates(event.to || target, field, grid);
-  start.x += actor.side === 'enemy' ? -18 : 18; start.y += 52; end.y += event.head ? 29 : 50;
+  const grip = portraitWeaponAnchor(equipmentFor(actor));
+  start.x += (grip.x - 52) * (64 / 104) * (actor.side === 'enemy' ? -1 : 1);
+  start.y += 10 + grip.y * (64 / 104); end.y += event.head ? 29 : 50;
   if (event.type === 'miss') { end.x += 20; end.y -= 12; }
   const dx = end.x - start.x, dy = end.y - start.y;
   const angle = Math.atan2(dy, dx) * 180 / Math.PI;

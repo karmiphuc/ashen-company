@@ -1,4 +1,10 @@
-# Verification - version 0.44.2, 2026-10-03
+# Verification - version 0.44.3, 2026-10-03
+
+## v0.44.3 checks
+
+All 479 automated tests pass. Weapon regressions cover every one-handed weapon with every shield, ordinary/named/display-only objects, and every two-handed melee family on foot and on all five mounts. They check the shared left-hand grip, clear center chest, enlarged two-handed sprites, opposite-shoulder axis, complete raster bounds inside the portrait, and preserved animation rest/origin variables. Mounted tests check one common coordinate space and base plate, full-size riders, foreground animal parts below equipment, and projectile origins matching the actual framed grip. Existing 113-helmet anchor and crown/horn framing checks continue to pass.
+
+A fresh Chromium profile verifies all 523 offline assets and an offline relaunch. Rendered galleries inspect all weapon families, all five mounts, representative shields, armor and named items, and company/enemy attack poses. No missing images or browser exceptions.
 
 ## v0.44.2 checks
 
