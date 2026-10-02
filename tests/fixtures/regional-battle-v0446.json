@@ -1,0 +1,3045 @@
+{
+  "version": "0.44.6",
+  "state": {
+    "version": 1,
+    "worldLayoutVersion": 2,
+    "seed": 1,
+    "day": 1,
+    "hour": 8,
+    "gold": 900,
+    "food": 30,
+    "renown": 0,
+    "party": [
+      {
+        "id": "captain",
+        "name": "Mara Voss",
+        "background": "Captain",
+        "seed": 6720,
+        "hp": 100,
+        "morale": 80,
+        "equipment": {
+          "armor": "leather-vest",
+          "helmet": "leather-cap",
+          "weapon": "arming-sword",
+          "shield": "buckler",
+          "attachment": null,
+          "mount": null
+        },
+        "combatRole": "auto",
+        "skillPreference": "balanced",
+        "traits": [],
+        "reserveEquipment": {
+          "weapon": null,
+          "shield": null
+        },
+        "throwingAmmo": {
+          "active": 0,
+          "reserve": 0
+        },
+        "accessories": [
+          null,
+          null
+        ],
+        "level": 1,
+        "xp": 0,
+        "perks": [],
+        "trainingPoints": 0,
+        "pendingLevelUps": [],
+        "attributes": {
+          "maxHp": 0,
+          "meleeSkill": 0,
+          "rangedSkill": 0,
+          "meleeDefense": 0,
+          "rangedDefense": 0,
+          "maxFatigue": 0,
+          "initiative": 0,
+          "resolve": 0
+        },
+        "armorDurability": {
+          "body": 65,
+          "attachment": 0,
+          "head": 40,
+          "shield": 24,
+          "reserveShield": 0
+        }
+      },
+      {
+        "id": "scout",
+        "name": "Toren Hale",
+        "background": "Scout",
+        "seed": 11091,
+        "hp": 100,
+        "morale": 78,
+        "equipment": {
+          "armor": "quilted-jack",
+          "helmet": "cloth-hood",
+          "weapon": "spear",
+          "shield": null,
+          "attachment": null,
+          "mount": null
+        },
+        "combatRole": "auto",
+        "skillPreference": "balanced",
+        "traits": [],
+        "reserveEquipment": {
+          "weapon": null,
+          "shield": null
+        },
+        "throwingAmmo": {
+          "active": 0,
+          "reserve": 0
+        },
+        "accessories": [
+          null,
+          null
+        ],
+        "level": 1,
+        "xp": 0,
+        "perks": [],
+        "trainingPoints": 0,
+        "pendingLevelUps": [],
+        "attributes": {
+          "maxHp": 0,
+          "meleeSkill": 0,
+          "rangedSkill": 0,
+          "meleeDefense": 0,
+          "rangedDefense": 0,
+          "maxFatigue": 0,
+          "initiative": 0,
+          "resolve": 0
+        },
+        "armorDurability": {
+          "body": 50,
+          "attachment": 0,
+          "head": 20,
+          "shield": 0,
+          "reserveShield": 0
+        }
+      },
+      {
+        "id": "guard",
+        "name": "Bryn Calder",
+        "background": "Guard",
+        "seed": 15458,
+        "hp": 100,
+        "morale": 76,
+        "equipment": {
+          "armor": "patched-coat",
+          "helmet": null,
+          "weapon": "wood-axe",
+          "shield": "round-shield",
+          "attachment": null,
+          "mount": null
+        },
+        "combatRole": "auto",
+        "skillPreference": "balanced",
+        "traits": [],
+        "reserveEquipment": {
+          "weapon": null,
+          "shield": null
+        },
+        "throwingAmmo": {
+          "active": 0,
+          "reserve": 0
+        },
+        "accessories": [
+          null,
+          null
+        ],
+        "level": 1,
+        "xp": 0,
+        "perks": [],
+        "trainingPoints": 0,
+        "pendingLevelUps": [],
+        "attributes": {
+          "maxHp": 0,
+          "meleeSkill": 0,
+          "rangedSkill": 0,
+          "meleeDefense": 0,
+          "rangedDefense": 0,
+          "maxFatigue": 0,
+          "initiative": 0,
+          "resolve": 0
+        },
+        "armorDurability": {
+          "body": 20,
+          "attachment": 0,
+          "head": 0,
+          "shield": 48,
+          "reserveShield": 0
+        }
+      }
+    ],
+    "inventory": [
+      "cloth-hood",
+      "buckler"
+    ],
+    "inventoryCondition": [
+      20,
+      24
+    ],
+    "cargo": {},
+    "marketStock": {},
+    "shipments": {
+      "kargan": {
+        "startDay": 1,
+        "originId": "stormpost",
+        "status": "en-route",
+        "travelHours": 60,
+        "travelStartHour": 0,
+        "attackerId": "kargan-patrol",
+        "attackerSpawnCycle": 0,
+        "attackHour": null,
+        "resolvedHour": null,
+        "raidCleared": false
+      }
+    },
+    "shipmentLegacyThroughDay": 0,
+    "mountRewards": {
+      "war-horse": false,
+      "armored-war-horse": false,
+      "dire-wolf-mount": false
+    },
+    "supplies": {
+      "tools": 8,
+      "medicine": 5,
+      "ammo": 16
+    },
+    "camps": {},
+    "bands": {
+      "road-thieves": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 406.98575199978694,
+        "y": 449.5428906664773,
+        "direction": -1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "hungry-deserters": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 376.41554378812873,
+        "y": 531.3719266802817,
+        "direction": -1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "forest-cutthroats": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 598.3085489359494,
+        "y": 363.06548412428435,
+        "direction": -1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "river-raiders": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 787.3461352820083,
+        "y": 546.1730676410041,
+        "direction": -1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "pinewood-poachers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1252.419168543284,
+        "y": 444.9461123621894,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "east-road-reavers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1599.4501804409203,
+        "y": 681.3152614635592,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "saltmarsh-waylayers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 345.48750819798613,
+        "y": 837.3468934454688,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "southern-deserters": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 595.8478153219255,
+        "y": 982.0573034452117,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "fen-reavers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1182.419168543284,
+        "y": 1054.9461123621895,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "frontier-veterans": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1832.7273074819905,
+        "y": 985.3091228834313,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "greyhaven-rabble": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 573.8924050412913,
+        "y": 240.05925127835283,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "ironford-extortionists": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 831.7405735803325,
+        "y": 337.6186754713863,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "redmere-skirmishers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 903.6143584444236,
+        "y": 683.0398421581176,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "thornwall-outlaws": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1004.7875833746607,
+        "y": 191.58968109848593,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "highpass-marauders": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 747.0150503787943,
+        "y": 108.85929291125633,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "barrowfield-robbers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 601.3351136073653,
+        "y": 713.7343124840509,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "pinecross-deserters": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1217.4534133004313,
+        "y": 289.66403192268154,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "dunridge-lancers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1499.4379887980213,
+        "y": 145.88361768579128,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "eastmere-freeblades": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1821.7333691449096,
+        "y": 505.9140073749271,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "stonebridge-tollmen": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1380.220397693678,
+        "y": 721.3188742792744,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "southwatch-raiders": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 329.5380553458126,
+        "y": 938.9227577717099,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "wheatmere-pillagers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 769.1284986074083,
+        "y": 1180.7444565062438,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "blackfen-stalkers": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1114.9844170559275,
+        "y": 1083.3210558622459,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "farhold-warbands": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1696.656803105595,
+        "y": 1127.615021675753,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "ambercross-raiders": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2305.5866795956417,
+        "y": 413.78969142443003,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "reedharbor-raiders": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2332.990215502071,
+        "y": 1083.7896914244302,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "sunspire-raiders": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2589.1519950044567,
+        "y": 229.4107222819871,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "cinderhold-raiders": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2616.555530910886,
+        "y": 859.410722281987,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "frostgate-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2276.8961236787195,
+        "y": 159.99309475691717,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "ravenfell-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2862.309599787015,
+        "y": 144.98964213537585,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "silverpeak-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2989.6544859326073,
+        "y": 343.7370526692198,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "longgrass-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3302.9138759165767,
+        "y": 186.23532635844896,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "kargan-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3609.9965897071856,
+        "y": 308.7405052907611,
+        "direction": 1,
+        "behavior": "raiding-caravan",
+        "targetId": "shipment:kargan:1"
+      },
+      "stormpost-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3884.031948771475,
+        "y": 158.74050529076118,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "fieldcross-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3084.359796448392,
+        "y": 796.2422316015319,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "windrest-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3519.053825071328,
+        "y": 701.2387789799903,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "duskfort-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3919.493433811228,
+        "y": 1036.2353263584491,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "redcliff-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3285.1831333967,
+        "y": 1197.4879158246051,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "elmvale-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1823.795855516403,
+        "y": 1474.4838604676556,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "fenwatch-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2230.4255174426385,
+        "y": 1491.6442885667432,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "bogmere-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1567.087141378548,
+        "y": 1627.2015958743484,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "southmarch-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 444.0481403435319,
+        "y": 1428.2397130566192,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "ashgrove-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 960.6307120678222,
+        "y": 1500.7451286653584,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "westport-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 330.5045696542578,
+        "y": 1746.5209316106118,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "woolhaven-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 960.3784272406933,
+        "y": 1821.0246351406845,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "greenbank-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1580.5045696542577,
+        "y": 1883.5386111427567,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "saffronbay-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 430.50456965425775,
+        "y": 2157.573970207046,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "pearlwick-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1043.9219979299673,
+        "y": 2290.5950738965244,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "sunharbor-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 1780.5045696542577,
+        "y": 2328.846069622227,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "oasis-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2358.866738666838,
+        "y": 1720.260896628392,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "sandwatch-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2757.0807964757273,
+        "y": 1691.588642305158,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "brassgate-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3127.4599247953524,
+        "y": 1523.1076256698784,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "sultans-rest-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3551.351944179332,
+        "y": 1723.051979408293,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "dawnspire-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3930.307530806903,
+        "y": 1531.4808740095816,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "spicehaven-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 2724.9833445068643,
+        "y": 2116.597094801098,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      },
+      "emberkeep-patrol": {
+        "defeatedUntil": 0,
+        "spawnCycle": 0,
+        "x": 3759.0354313917223,
+        "y": 2319.332531319414,
+        "direction": 1,
+        "behavior": "patrolling",
+        "targetId": null
+      }
+    },
+    "factionPatrols": {
+      "soldiers:western-league:1": {
+        "x": 350,
+        "y": 460,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:western-league:2": {
+        "x": 495,
+        "y": 305,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:western-league:3": {
+        "x": 1440,
+        "y": 735,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:highland-clans:1": {
+        "x": 2859.8954694735817,
+        "y": 140,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:highland-clans:2": {
+        "x": 2859.8954694735817,
+        "y": 140,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:eastern-march:1": {
+        "x": 3613.492706900378,
+        "y": 300,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:eastern-march:2": {
+        "x": 2387.184475087682,
+        "y": 410,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:eastern-march:3": {
+        "x": 3510.7294472512694,
+        "y": 700,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:southern-sultanate:1": {
+        "x": 3510.7294472512694,
+        "y": 1736.2459667835765,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:southern-sultanate:2": {
+        "x": 3099.676408654835,
+        "y": 1530.7194474853593,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      },
+      "soldiers:southern-sultanate:3": {
+        "x": 450,
+        "y": 2147.299005380011,
+        "waypoint": 1,
+        "troops": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "spawnCycle": 0,
+        "defeatedUntil": 0,
+        "cooldownUntil": 0,
+        "lastReinforcedHour": 8,
+        "behavior": "touring",
+        "targetId": null,
+        "wins": 0,
+        "losses": 0
+      }
+    },
+    "factionReports": [],
+    "worldLosses": {},
+    "factionSimulationHour": 8,
+    "pursuit": null,
+    "encounterGraceUntil": 0,
+    "tactic": "offense",
+    "battle": {
+      "id": "battle-wild-camp-11-1-0",
+      "campId": "wild-camp-11",
+      "encounterType": "camp",
+      "encounterName": "Reed Cult Camp 11",
+      "difficulty": 2,
+      "campGeneration": 0,
+      "famedDrop": "famed:northern-serrated-axe:1639682512",
+      "mountReward": null,
+      "field": {
+        "columns": 14,
+        "rows": 16,
+        "biome": "plains",
+        "tiles": [
+          {
+            "q": 0,
+            "r": 0,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 3,
+            "terrain": "trees",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 5,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 7,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 8,
+            "terrain": "rock",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 10,
+            "terrain": "rock",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 11,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 13,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 0,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 0,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 3,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 5,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 7,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 8,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 9,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 11,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 1,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 0,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 3,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 5,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 7,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 8,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 11,
+            "terrain": "trees",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 12,
+            "terrain": "trees",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 2,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 0,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 3,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 5,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 6,
+            "terrain": "brush",
+            "height": 1
+          },
+          {
+            "q": 3,
+            "r": 7,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 8,
+            "terrain": "rock",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 10,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 11,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 13,
+            "terrain": "rock",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 3,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 0,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 2,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 3,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 4,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 5,
+            "terrain": "brush",
+            "height": 1
+          },
+          {
+            "q": 4,
+            "r": 6,
+            "terrain": "brush",
+            "height": 1
+          },
+          {
+            "q": 4,
+            "r": 7,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 4,
+            "r": 8,
+            "terrain": "rock",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 11,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 4,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 0,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 2,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 5,
+            "r": 3,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 5,
+            "r": 4,
+            "terrain": "brush",
+            "height": 1
+          },
+          {
+            "q": 5,
+            "r": 5,
+            "terrain": "brush",
+            "height": 1
+          },
+          {
+            "q": 5,
+            "r": 6,
+            "terrain": "brush",
+            "height": 2
+          },
+          {
+            "q": 5,
+            "r": 7,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 5,
+            "r": 8,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 5,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 11,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 5,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 0,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 1,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 6,
+            "r": 2,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 6,
+            "r": 3,
+            "terrain": "open",
+            "height": 2
+          },
+          {
+            "q": 6,
+            "r": 4,
+            "terrain": "brush",
+            "height": 1
+          },
+          {
+            "q": 6,
+            "r": 5,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 6,
+            "r": 6,
+            "terrain": "brush",
+            "height": 1
+          },
+          {
+            "q": 6,
+            "r": 7,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 6,
+            "r": 8,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 10,
+            "terrain": "rock",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 11,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 6,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 0,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 1,
+            "terrain": "dense-trees",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 2,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 7,
+            "r": 3,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 7,
+            "r": 4,
+            "terrain": "dense-trees",
+            "height": 1
+          },
+          {
+            "q": 7,
+            "r": 5,
+            "terrain": "trees",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 6,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 7,
+            "r": 7,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 8,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 11,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 13,
+            "terrain": "trees",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 14,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 7,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 0,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 3,
+            "terrain": "open",
+            "height": 1
+          },
+          {
+            "q": 8,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 5,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 7,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 8,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 9,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 11,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 8,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 0,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 1,
+            "terrain": "trees",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 3,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 5,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 7,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 8,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 9,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 11,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 9,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 0,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 3,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 4,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 5,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 7,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 8,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 10,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 11,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 13,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 10,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 0,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 3,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 5,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 7,
+            "terrain": "mud",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 8,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 11,
+            "terrain": "trees",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 11,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 0,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 1,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 3,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 5,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 7,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 8,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 9,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 11,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 12,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 0,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 1,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 2,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 3,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 4,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 5,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 6,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 7,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 8,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 9,
+            "terrain": "brush",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 10,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 11,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 12,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 13,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 14,
+            "terrain": "open",
+            "height": 0
+          },
+          {
+            "q": 13,
+            "r": 15,
+            "terrain": "open",
+            "height": 0
+          }
+        ]
+      },
+      "tactic": "offense",
+      "focusTargetId": null,
+      "lastContactRound": 1,
+      "engaged": false,
+      "status": "active",
+      "rulesVersion": 2,
+      "weaponSkillsVersion": 1,
+      "mountSkillsVersion": 1,
+      "round": 1,
+      "activeId": "scout",
+      "units": [
+        {
+          "id": "guard",
+          "name": "Bryn Calder",
+          "side": "company",
+          "q": 2,
+          "r": 6,
+          "hp": 100,
+          "maxHp": 105,
+          "bodyArmor": 20,
+          "attachmentArmor": 0,
+          "headArmor": 0,
+          "maxBodyArmor": 20,
+          "maxAttachmentArmor": 0,
+          "maxHeadArmor": 0,
+          "shieldDurability": 48,
+          "maxShieldDurability": 48,
+          "reserveShieldDurability": 0,
+          "maxReserveShieldDurability": 0,
+          "battleSetSwapped": false,
+          "equipment": {
+            "armor": "patched-coat",
+            "helmet": null,
+            "weapon": "wood-axe",
+            "shield": "round-shield",
+            "attachment": null,
+            "mount": null
+          },
+          "reserveEquipment": {
+            "weapon": null,
+            "shield": null
+          },
+          "throwingAmmo": {
+            "active": 0,
+            "reserve": 0
+          },
+          "accessories": [
+            null,
+            null
+          ],
+          "pocketDrawnFrom": null,
+          "pocketStowedWeapon": null,
+          "pocketStowedReload": 0,
+          "pocketDrawnRound": 0,
+          "reserveReload": 0,
+          "meleePhase": false,
+          "perks": [],
+          "adaptation": 0,
+          "berserkRound": 0,
+          "frenzyUntilRound": 0,
+          "turnStartedRound": 0,
+          "freeSwapRound": 0,
+          "freeHealRound": 0,
+          "tacticalRole": "frontliner",
+          "skillPreference": "balanced",
+          "aiTargetId": null,
+          "formationMovedRound": 0,
+          "seed": 15458,
+          "alive": true,
+          "morale": 76,
+          "fatigue": 0,
+          "ap": 9,
+          "reload": 0,
+          "shieldWallActive": false,
+          "spearwallActive": false,
+          "riposteActive": false,
+          "stunnedTurns": 0,
+          "stunProtected": false,
+          "pendingBerserkAp": 0,
+          "meleeSkill": 62,
+          "rangedSkill": 45,
+          "meleeDefense": 21,
+          "rangedDefense": 18,
+          "maxFatigue": 93,
+          "initiative": 98,
+          "resolve": 42,
+          "movementCredit": 0
+        },
+        {
+          "id": "captain",
+          "name": "Mara Voss",
+          "side": "company",
+          "q": 2,
+          "r": 7,
+          "hp": 100,
+          "maxHp": 100,
+          "bodyArmor": 65,
+          "attachmentArmor": 0,
+          "headArmor": 40,
+          "maxBodyArmor": 65,
+          "maxAttachmentArmor": 0,
+          "maxHeadArmor": 40,
+          "shieldDurability": 24,
+          "maxShieldDurability": 24,
+          "reserveShieldDurability": 0,
+          "maxReserveShieldDurability": 0,
+          "battleSetSwapped": false,
+          "equipment": {
+            "armor": "leather-vest",
+            "helmet": "leather-cap",
+            "weapon": "arming-sword",
+            "shield": "buckler",
+            "attachment": null,
+            "mount": null
+          },
+          "reserveEquipment": {
+            "weapon": null,
+            "shield": null
+          },
+          "throwingAmmo": {
+            "active": 0,
+            "reserve": 0
+          },
+          "accessories": [
+            null,
+            null
+          ],
+          "pocketDrawnFrom": null,
+          "pocketStowedWeapon": null,
+          "pocketStowedReload": 0,
+          "pocketDrawnRound": 0,
+          "reserveReload": 0,
+          "meleePhase": false,
+          "perks": [],
+          "adaptation": 0,
+          "berserkRound": 0,
+          "frenzyUntilRound": 0,
+          "turnStartedRound": 0,
+          "freeSwapRound": 0,
+          "freeHealRound": 0,
+          "tacticalRole": "frontliner",
+          "skillPreference": "balanced",
+          "aiTargetId": null,
+          "formationMovedRound": 0,
+          "seed": 6720,
+          "alive": true,
+          "morale": 80,
+          "fatigue": 0,
+          "ap": 9,
+          "reload": 0,
+          "shieldWallActive": false,
+          "spearwallActive": false,
+          "riposteActive": false,
+          "stunnedTurns": 0,
+          "stunProtected": false,
+          "pendingBerserkAp": 0,
+          "meleeSkill": 63,
+          "rangedSkill": 46,
+          "meleeDefense": 13,
+          "rangedDefense": 13,
+          "maxFatigue": 87,
+          "initiative": 92,
+          "resolve": 52,
+          "movementCredit": 0
+        },
+        {
+          "id": "scout",
+          "name": "Toren Hale",
+          "side": "company",
+          "q": 2,
+          "r": 8,
+          "hp": 100,
+          "maxHp": 100,
+          "bodyArmor": 50,
+          "attachmentArmor": 0,
+          "headArmor": 20,
+          "maxBodyArmor": 50,
+          "maxAttachmentArmor": 0,
+          "maxHeadArmor": 20,
+          "shieldDurability": 0,
+          "maxShieldDurability": 0,
+          "reserveShieldDurability": 0,
+          "maxReserveShieldDurability": 0,
+          "battleSetSwapped": false,
+          "equipment": {
+            "armor": "quilted-jack",
+            "helmet": "cloth-hood",
+            "weapon": "spear",
+            "shield": null,
+            "attachment": null,
+            "mount": null
+          },
+          "reserveEquipment": {
+            "weapon": null,
+            "shield": null
+          },
+          "throwingAmmo": {
+            "active": 0,
+            "reserve": 0
+          },
+          "accessories": [
+            null,
+            null
+          ],
+          "pocketDrawnFrom": null,
+          "pocketStowedWeapon": null,
+          "pocketStowedReload": 0,
+          "pocketDrawnRound": 0,
+          "reserveReload": 0,
+          "meleePhase": false,
+          "perks": [],
+          "adaptation": 0,
+          "berserkRound": 0,
+          "frenzyUntilRound": 0,
+          "turnStartedRound": 0,
+          "freeSwapRound": 0,
+          "freeHealRound": 0,
+          "tacticalRole": "frontliner",
+          "skillPreference": "balanced",
+          "aiTargetId": null,
+          "formationMovedRound": 0,
+          "seed": 11091,
+          "alive": true,
+          "morale": 78,
+          "fatigue": 0,
+          "ap": 9,
+          "reload": 0,
+          "shieldWallActive": false,
+          "spearwallActive": false,
+          "riposteActive": false,
+          "stunnedTurns": 0,
+          "stunProtected": false,
+          "pendingBerserkAp": 0,
+          "meleeSkill": 57,
+          "rangedSkill": 56,
+          "meleeDefense": 5,
+          "rangedDefense": 8,
+          "maxFatigue": 94,
+          "initiative": 109,
+          "resolve": 42,
+          "movementCredit": 0
+        },
+        {
+          "id": "enemy-1",
+          "name": "Bogland Hunter Veteran",
+          "side": "enemy",
+          "q": 12,
+          "r": 7,
+          "hp": 49,
+          "maxHp": 49,
+          "bodyArmor": 20,
+          "attachmentArmor": 0,
+          "headArmor": 70,
+          "maxBodyArmor": 20,
+          "maxAttachmentArmor": 0,
+          "maxHeadArmor": 70,
+          "shieldDurability": 0,
+          "maxShieldDurability": 0,
+          "reserveShieldDurability": 0,
+          "maxReserveShieldDurability": 0,
+          "battleSetSwapped": false,
+          "equipment": {
+            "armor": "bb-monk-robe",
+            "attachment": null,
+            "helmet": "bb-rusty-mail-coif",
+            "weapon": "hunting-bow",
+            "shield": null,
+            "mount": null
+          },
+          "reserveEquipment": {
+            "weapon": null,
+            "shield": null
+          },
+          "throwingAmmo": {
+            "active": 0,
+            "reserve": 0
+          },
+          "accessories": [
+            null,
+            null
+          ],
+          "pocketDrawnFrom": null,
+          "pocketStowedWeapon": null,
+          "pocketStowedReload": 0,
+          "pocketDrawnRound": 0,
+          "reserveReload": 0,
+          "meleePhase": false,
+          "perks": [],
+          "adaptation": 0,
+          "berserkRound": 0,
+          "frenzyUntilRound": 0,
+          "turnStartedRound": 0,
+          "freeSwapRound": 0,
+          "freeHealRound": 0,
+          "seed": 1657419343,
+          "alive": true,
+          "morale": 71,
+          "fatigue": 0,
+          "ap": 9,
+          "reload": 0,
+          "shieldWallActive": false,
+          "aiTargetId": null,
+          "formationMovedRound": 0,
+          "spearwallActive": false,
+          "riposteActive": false,
+          "stunnedTurns": 0,
+          "stunProtected": false,
+          "pendingBerserkAp": 0,
+          "meleeSkill": 42,
+          "rangedSkill": 45,
+          "meleeDefense": 6,
+          "rangedDefense": 6,
+          "maxFatigue": 85,
+          "initiative": 95,
+          "resolve": 48,
+          "movementCredit": 0
+        },
+        {
+          "id": "enemy-2",
+          "name": "Ritual Knife Veteran",
+          "side": "enemy",
+          "q": 12,
+          "r": 8,
+          "hp": 49,
+          "maxHp": 49,
+          "bodyArmor": 110,
+          "attachmentArmor": 0,
+          "headArmor": 80,
+          "maxBodyArmor": 110,
+          "maxAttachmentArmor": 0,
+          "maxHeadArmor": 80,
+          "shieldDurability": 24,
+          "maxShieldDurability": 24,
+          "reserveShieldDurability": 0,
+          "maxReserveShieldDurability": 0,
+          "battleSetSwapped": false,
+          "equipment": {
+            "armor": "bb-worn-mail-shirt",
+            "attachment": null,
+            "helmet": "bb-mail-coif",
+            "weapon": "javelins",
+            "shield": "buckler",
+            "mount": null
+          },
+          "reserveEquipment": {
+            "weapon": null,
+            "shield": null
+          },
+          "throwingAmmo": {
+            "active": 5,
+            "reserve": 0
+          },
+          "accessories": [
+            null,
+            null
+          ],
+          "pocketDrawnFrom": null,
+          "pocketStowedWeapon": null,
+          "pocketStowedReload": 0,
+          "pocketDrawnRound": 0,
+          "reserveReload": 0,
+          "meleePhase": false,
+          "perks": [],
+          "adaptation": 0,
+          "berserkRound": 0,
+          "frenzyUntilRound": 0,
+          "turnStartedRound": 0,
+          "freeSwapRound": 0,
+          "freeHealRound": 0,
+          "seed": 1640641724,
+          "alive": true,
+          "morale": 71,
+          "fatigue": 0,
+          "ap": 9,
+          "reload": 0,
+          "shieldWallActive": false,
+          "aiTargetId": null,
+          "formationMovedRound": 0,
+          "spearwallActive": false,
+          "riposteActive": false,
+          "stunnedTurns": 0,
+          "stunProtected": false,
+          "pendingBerserkAp": 0,
+          "meleeSkill": 42,
+          "rangedSkill": 45,
+          "meleeDefense": 14,
+          "rangedDefense": 14,
+          "maxFatigue": 85,
+          "initiative": 95,
+          "resolve": 48,
+          "movementCredit": 0
+        },
+        {
+          "id": "enemy-3",
+          "name": "Reed Spear Veteran",
+          "side": "enemy",
+          "q": 11,
+          "r": 6,
+          "hp": 49,
+          "maxHp": 49,
+          "bodyArmor": 190,
+          "attachmentArmor": 0,
+          "headArmor": 70,
+          "maxBodyArmor": 190,
+          "maxAttachmentArmor": 0,
+          "maxHeadArmor": 70,
+          "shieldDurability": 0,
+          "maxShieldDurability": 0,
+          "reserveShieldDurability": 0,
+          "maxReserveShieldDurability": 0,
+          "battleSetSwapped": false,
+          "equipment": {
+            "armor": "bb-ancient-scale-coat",
+            "attachment": null,
+            "helmet": "bb-rusty-mail-coif",
+            "weapon": "hooked-bill",
+            "shield": null,
+            "mount": null
+          },
+          "reserveEquipment": {
+            "weapon": null,
+            "shield": null
+          },
+          "throwingAmmo": {
+            "active": 0,
+            "reserve": 0
+          },
+          "accessories": [
+            null,
+            null
+          ],
+          "pocketDrawnFrom": null,
+          "pocketStowedWeapon": null,
+          "pocketStowedReload": 0,
+          "pocketDrawnRound": 0,
+          "reserveReload": 0,
+          "meleePhase": false,
+          "perks": [],
+          "adaptation": 0,
+          "berserkRound": 0,
+          "frenzyUntilRound": 0,
+          "turnStartedRound": 0,
+          "freeSwapRound": 0,
+          "freeHealRound": 0,
+          "seed": 1690974581,
+          "alive": true,
+          "morale": 71,
+          "fatigue": 0,
+          "ap": 9,
+          "reload": 0,
+          "shieldWallActive": false,
+          "aiTargetId": null,
+          "formationMovedRound": 0,
+          "spearwallActive": false,
+          "riposteActive": false,
+          "stunnedTurns": 0,
+          "stunProtected": false,
+          "pendingBerserkAp": 0,
+          "meleeSkill": 45,
+          "rangedSkill": 40,
+          "meleeDefense": 6,
+          "rangedDefense": 6,
+          "maxFatigue": 85,
+          "initiative": 87,
+          "resolve": 48,
+          "movementCredit": 0
+        },
+        {
+          "id": "enemy-4",
+          "name": "Graveyard Cleaver Veteran",
+          "side": "enemy",
+          "q": 11,
+          "r": 9,
+          "hp": 49,
+          "maxHp": 49,
+          "bodyArmor": 185,
+          "attachmentArmor": 0,
+          "headArmor": 110,
+          "maxBodyArmor": 185,
+          "maxAttachmentArmor": 0,
+          "maxHeadArmor": 110,
+          "shieldDurability": 0,
+          "maxShieldDurability": 0,
+          "reserveShieldDurability": 0,
+          "maxReserveShieldDurability": 0,
+          "battleSetSwapped": false,
+          "equipment": {
+            "armor": "bb-heraldic-mail",
+            "attachment": null,
+            "helmet": "bb-heavy-mail-coif",
+            "weapon": "military-cleaver",
+            "shield": null,
+            "mount": null
+          },
+          "reserveEquipment": {
+            "weapon": null,
+            "shield": null
+          },
+          "throwingAmmo": {
+            "active": 0,
+            "reserve": 0
+          },
+          "accessories": [
+            null,
+            null
+          ],
+          "pocketDrawnFrom": null,
+          "pocketStowedWeapon": null,
+          "pocketStowedReload": 0,
+          "pocketDrawnRound": 0,
+          "reserveReload": 0,
+          "meleePhase": false,
+          "perks": [],
+          "adaptation": 0,
+          "berserkRound": 0,
+          "frenzyUntilRound": 0,
+          "turnStartedRound": 0,
+          "freeSwapRound": 0,
+          "freeHealRound": 0,
+          "seed": 1674196962,
+          "alive": true,
+          "morale": 71,
+          "fatigue": 0,
+          "ap": 9,
+          "reload": 0,
+          "shieldWallActive": false,
+          "aiTargetId": null,
+          "formationMovedRound": 0,
+          "spearwallActive": false,
+          "riposteActive": false,
+          "stunnedTurns": 0,
+          "stunProtected": false,
+          "pendingBerserkAp": 0,
+          "meleeSkill": 45,
+          "rangedSkill": 40,
+          "meleeDefense": 6,
+          "rangedDefense": 6,
+          "maxFatigue": 85,
+          "initiative": 87,
+          "resolve": 48,
+          "movementCredit": 0
+        },
+        {
+          "id": "enemy-5",
+          "name": "Blackwater Scythe Veteran",
+          "side": "enemy",
+          "q": 11,
+          "r": 5,
+          "hp": 49,
+          "maxHp": 49,
+          "bodyArmor": 135,
+          "attachmentArmor": 0,
+          "headArmor": 140,
+          "maxBodyArmor": 135,
+          "maxAttachmentArmor": 0,
+          "maxHeadArmor": 140,
+          "shieldDurability": 0,
+          "maxShieldDurability": 0,
+          "reserveShieldDurability": 0,
+          "maxReserveShieldDurability": 0,
+          "battleSetSwapped": false,
+          "equipment": {
+            "armor": "bb-ancient-breastplate",
+            "attachment": null,
+            "helmet": "bb-nasal-helmet-with-rusty-mail",
+            "weapon": "war-scythe",
+            "shield": null,
+            "mount": null
+          },
+          "reserveEquipment": {
+            "weapon": null,
+            "shield": null
+          },
+          "throwingAmmo": {
+            "active": 0,
+            "reserve": 0
+          },
+          "accessories": [
+            null,
+            null
+          ],
+          "pocketDrawnFrom": null,
+          "pocketStowedWeapon": null,
+          "pocketStowedReload": 0,
+          "pocketDrawnRound": 0,
+          "reserveReload": 0,
+          "meleePhase": false,
+          "perks": [],
+          "adaptation": 0,
+          "berserkRound": 0,
+          "frenzyUntilRound": 0,
+          "turnStartedRound": 0,
+          "freeSwapRound": 0,
+          "freeHealRound": 0,
+          "seed": 1590308867,
+          "alive": true,
+          "morale": 71,
+          "fatigue": 0,
+          "ap": 9,
+          "reload": 0,
+          "shieldWallActive": false,
+          "aiTargetId": null,
+          "formationMovedRound": 0,
+          "spearwallActive": false,
+          "riposteActive": false,
+          "stunnedTurns": 0,
+          "stunProtected": false,
+          "pendingBerserkAp": 0,
+          "meleeSkill": 45,
+          "rangedSkill": 40,
+          "meleeDefense": 6,
+          "rangedDefense": 6,
+          "maxFatigue": 85,
+          "initiative": 87,
+          "resolve": 48,
+          "movementCredit": 0
+        }
+      ],
+      "turnOrder": [
+        "scout",
+        "guard",
+        "enemy-1",
+        "enemy-2",
+        "captain",
+        "enemy-3",
+        "enemy-4",
+        "enemy-5"
+      ],
+      "turnIndex": 0,
+      "rng": 2516786022,
+      "lootSeed": 3284194660,
+      "log": [
+        "Round 1: The company engages Reed Cult Camp 11."
+      ],
+      "lastEvent": null,
+      "loot": {
+        "gold": 0,
+        "food": 0,
+        "tools": 0,
+        "medicine": 0,
+        "ammo": 0,
+        "items": [],
+        "itemConditions": []
+      },
+      "casualties": [],
+      "xp": {},
+      "formationAdvance": null
+    },
+    "gameOver": false,
+    "position": {
+      "x": 1466,
+      "y": 1174
+    },
+    "destination": null,
+    "destinationAction": null,
+    "contract": null,
+    "contractSerial": 0,
+    "recruitSerial": 0,
+    "hiredRecruitOffers": [],
+    "log": [
+      "Day 1: Armorer wagon leaves Stormpost for Kargan.",
+      "Day 1: The Ashen Company gathers at Oakwatch. The road is yours.",
+      "Day 1: Battle begins at Reed Cult Camp 11."
+    ],
+    "visited": [
+      "oakwatch"
+    ],
+    "formation": [
+      null,
+      null,
+      null,
+      null,
+      "guard",
+      "captain",
+      "scout",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  }
+}

@@ -41,5 +41,6 @@ test('all three decorative assets survive as independently wearable, damage-pres
 
 test('reclaimed attachments enter regional enemy outfits and remain usable equipment',()=>{
  const seen=new Set();for(const region of WORLD_REGIONS)for(let seed=0;seed<60;seed++){const enemy=regionalOutfit({name:'Raider',weapon:'arming-sword',armor:'leather-vest',helmet:'leather-cap'},seed,0,region.x,region.y,2);if(newIds.includes(enemy.attachment)){seen.add(enemy.attachment);assert.equal(getItem(enemy.attachment).slot,'attachment');}}
+ for(let seed=0;seed<60;seed++){const enemy=regionalOutfit({name:'Ancient Guard',weapon:'arming-sword',armor:'bb-ancient-mail',helmet:'bb-ancient-legionary-helmet'},seed,0,WORLD_REGIONS[0].x,WORLD_REGIONS[0].y,2,{theme:'ancient'});if(enemy.attachment)seen.add(enemy.attachment);}
  assert.deepEqual(seen,new Set(newIds));
 });

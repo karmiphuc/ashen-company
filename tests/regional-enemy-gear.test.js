@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { REGIONS } from '../src/geography.js';
+import { REGIONS, regionAt } from '../src/geography.js';
+import { armoryTheme, matchesArmoryTheme } from '../src/armory-themes.js';
 import { DLC_ITEMS } from '../src/dlc-items.js';
 import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, regionalOutfit, enemyCombatRole, enemyRoleBonuses } from '../src/regional-enemies.js';
 import { SETTLEMENTS, createGame, getCampSites, getRoamingBands, getItem, getCompanyStats, equipItem, getMarket, buyItem, sellItem, startBattle, resolveBattle, validateSave } from '../src/engine.js';
@@ -44,7 +45,7 @@ test('old and new non-starter patrols and seeded camps receive broad imported ge
     assert.deepEqual(s,before,'scouting does not mutate campaign state');
   }
   assert.ok(used.size>=150,`${used.size} imported designs are distributed`);
-  assert.equal(factions.size,9);
+  assert.equal(factions.size,10);assert.ok(factions.has('ancient'));
 });
 
 test('elite role perks and signature benefits enter new combat snapshots and survive repeated imports', () => {
@@ -119,4 +120,41 @@ test('DLC famed drops round trip for multiple camps and cannot be replaced with 
     const bad=structuredClone(state);bad.battle.famedDrop='famed:bb-fangshire:0';assert.throws(()=>validateSave(bad),/famed drop/);
   }
   assert.ok(checked>=5);
+});
+
+
+test('regional enemies keep strict cultural sets and even elite woodland fighters remain light',()=>{
+  for(const region of REGIONS)for(const tier of [1,2,3])for(let seed=1;seed<=100;seed++){
+    const theme=armoryTheme(region.id);
+    for(const [index,enemy]of worldEnemyTemplates(region.x,region.y,tier).entries()){
+      const geared=regionalOutfit(enemy,seed,index,region.x,region.y,tier);
+      for(const slot of ['armor','helmet'])assert.ok(matchesArmoryTheme(getItem(geared[slot]),theme),`${region.id}/${tier}: ${geared[slot]}`);
+      if(theme==='forest'){assert.ok(getItem(geared.armor).fatigue<=15);assert.ok(getItem(geared.helmet).fatigue<=9);}
+      if(theme==='north'&&enemyCombatRole(geared)!=='ranged')assert.ok(/northern-|longaxe|two-handed-hammer|javelin|throwing-axes/.test(geared.weapon));
+    }
+  }
+});
+
+test('ancient tombs occur only in special regions and all guards and reinforcements wear ancient gear',()=>{
+  let found=0;
+  for(let seed=1;seed<=20;seed++){
+    const state=createGame(seed);state.day=100;
+    for(const site of getCampSites(state).filter(c=>c.factionId==='ancient')){
+      found++;assert.ok(['blackwater-basin','eastern-frontier','northern-highlands'].includes(regionAt(site.x,site.y).id));
+      assert.match(site.name,/Ancient Sepulcher/);assert.ok(site.enemies.every(e=>!e.mount));
+      for(const e of site.enemies)for(const slot of ['armor','helmet'])assert.ok(matchesArmoryTheme(getItem(e[slot]),'ancient'));
+    }
+  }
+  assert.ok(found>=20,'special camps are consistently present');
+});
+
+test('real v0.44.6 active battle at a newly ancient site retains its original name, worn gear, damage and turn state',()=>{
+  const {state}=JSON.parse(readFileSync(new URL('./fixtures/regional-battle-v0446.json',import.meta.url)));
+  const restored=validateSave(state);
+  assert.notEqual(getCampSites(restored).find(c=>c.id===state.battle.campId).name,state.battle.encounterName);
+  assert.deepEqual(restored.battle.units,state.battle.units);
+  assert.equal(restored.battle.encounterName,state.battle.encounterName);
+  assert.deepEqual(restored.battle.turnOrder,state.battle.turnOrder);
+  assert.equal(restored.battle.rng,state.battle.rng);
+  assert.deepEqual(validateSave(restored),restored);
 });

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SETTLEMENTS, camp, createGame, finishBattle, forage, getCaravans, getRoamingBands,
-  equipItem, pursueBand, resolveBattle, retreatBattle, terrainAt, tick, travelTo, validateSave,
+  advanceBattle, startBattle, equipItem, pursueBand, resolveBattle, retreatBattle, terrainAt, tick, travelTo, validateSave,
 } from '../src/engine.js';
 
 const now = state => (state.day - 1) * 24 + state.hour;
@@ -202,4 +202,19 @@ test('an out-of-contact wagon escapes at arrival and late renewed contact record
   assert.equal(threatened.status, 'lost');
   assert.ok(threatened.resolvedHour > threatened.attackHour + 7);
   assert.equal(threatened.resolvedHour, now(late));
+});
+
+
+test('being caught gives enemies the first round, voluntary attacks retain initiative, and later rounds resume initiative',()=>{
+  const caught=createGame(1);placeCompanyAndBand(caught,'road-thieves',{x:800,y:800},{x:835,y:800});
+  tick(caught,.25);assert.equal(caught.battle.enemyOpening,true);
+  const order=caught.battle.turnOrder.map(id=>caught.battle.units.find(u=>u.id===id));
+  assert.ok(order.slice(0,2).every(u=>u.side==='enemy'));assert.equal(caught.battle.activeId,order[0].id);
+  assert.deepEqual(validateSave(validateSave(caught)),caught);
+  // Keep defenders alive; the next round must use normal initiative again.
+  for(const u of caught.battle.units){u.meleeSkill=0;u.rangedSkill=0;u.meleeDefense=200;u.rangedDefense=200;u.hp=u.maxHp=250;}
+  for(let i=0;i<100&&caught.battle.round===1;i++)advanceBattle(caught);
+  assert.equal(caught.battle.round,2);assert.equal(caught.battle.units.find(u=>u.id===caught.battle.turnOrder[0]).side,'company');
+  const voluntary=createGame(1),band=getRoamingBands(voluntary).find(b=>b.id==='road-thieves');voluntary.position={x:band.x,y:band.y};
+  startBattle(voluntary,band.id);assert.equal(voluntary.battle.enemyOpening,false);assert.equal(voluntary.battle.units.find(u=>u.id===voluntary.battle.activeId).side,'company');
 });

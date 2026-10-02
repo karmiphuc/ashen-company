@@ -40,6 +40,6 @@ test('northern fort armories favor local gear while preserving scarce total stoc
   const north = sample('dunridge');
   const south = sample('southwatch');
   assert.ok(north.northern > south.northern * 1.7, `${north.northern} versus ${south.northern}`);
-  assert.ok(north.total < 120 * 4, 'the six better and premium slots remain approximately half stocked');
-  assert.ok(Math.abs(north.total - south.total) < 120, 'local preference does not add total gear slots');
+  assert.ok(north.total < 120 * 11, 'specialist boosts remain a capped town-wide selection');
+  assert.ok(Math.abs(north.total - south.total) < 120 * 2, 'local preference does not add total gear slots');
 });

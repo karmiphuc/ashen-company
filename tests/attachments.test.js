@@ -65,7 +65,7 @@ test('attachment armor efficiency stays near fifteen armor per fatigue', () => {
   }
 });
 
-test('all attachments appear in rotating shop stock without bypassing half-stock scarcity', () => {
+test('all attachments appear in rotating shop stock within specialist shelf budgets', () => {
   const town = SETTLEMENTS.find(entry => entry.id === 'ironford');
   const attachmentIds = new Set(ARMOR_ATTACHMENTS.map(item => item.id));
   const newIds = new Set(ARMOR_ATTACHMENTS.slice(5).map(item => item.id));
@@ -93,7 +93,7 @@ test('all attachments appear in rotating shop stock without bypassing half-stock
   assert.deepEqual(seen, attachmentIds, 'every attachment can enter the city armory rotation');
   assert.deepEqual(purchased, newIds, 'every new attachment can be bought');
   assert.ok(total < 500 * 4, 'the expanded catalog does not fill every attachment slot each week');
-  assert.ok(bonePlatings > 200 && bonePlatings < 400, 'the new common piece keeps a half-stock roll per copy');
+  assert.ok(bonePlatings > 10 && bonePlatings < 180, 'common attachments rotate through a few shelves instead of every design being common stock');
 });
 
 test('saved markets from before the attachment expansion gain valid new stock', () => {

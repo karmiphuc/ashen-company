@@ -1,5 +1,9 @@
 # Asset credits
 
+## Town workshop scenery (v0.45.0)
+
+Blacksmith and armorsmith map structures reuse the credited `houses_01_01.png` and `houses_02_01.png` settlement artwork as small workshop buildings. This release introduces no new source images; regional and ancient outfits use the existing credited equipment catalog.
+
 ## Mounted portrait composition (v0.44.6)
 
 All five mounts reuse the existing credited PNG files unchanged. The renderer normalizes their rear-body opaque bounds beneath the rider, places natural head silhouettes at the lower right, and draws one shared plate. These composition transforms are an adaptation of the supplied bust artwork, not new anatomical mount artwork. Wolf and warg heads are mirrored to face outward; the warg retains its existing color treatment.

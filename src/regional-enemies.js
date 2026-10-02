@@ -1,6 +1,7 @@
 import { regionAt } from './geography.js';
 import { REGIONAL_ENEMY_FACTIONS } from './enemy-rosters.js';
 import { DLC_ITEMS } from './dlc-items.js';
+import { armoryTheme, matchesArmoryTheme } from './armory-themes.js';
 
 const profile = (label, family, names, camps, collections, extra = '') => Object.freeze({label, family, names: Object.freeze(names), camps: Object.freeze(camps), collections: Object.freeze(collections), extra});
 export const WORLD_ENEMY_PROFILES = Object.freeze({
@@ -9,7 +10,7 @@ export const WORLD_ENEMY_PROFILES = Object.freeze({
   greenwood: profile('Greenwood Hunters', 'forest', ['Greenwood Poacher', 'Briar Bowhunter', 'Thicket Knife', 'Forester Spear', 'Timber Axeman', 'Snareline Bill'], ['Poacher Lodge', 'Briar Hideout', 'Snareline Camp'], ['base'], 'hunt'),
   'eastern-frontier': profile('Frontier Free Companies', 'east', ['Free Company Spear', 'Siege Crossbow', 'Oathbroken Sword', 'Campaign Bill', 'Mercenary Thrower', 'Redoubt Guard'], ['Free Company Redoubt', 'Oathbroken Keep', 'Deserter Muster'], ['base', 'of-flesh-and-faith']),
   'far-steppe': profile('Steppe Warbands', 'south', ['Steppe Horsebow', 'Grassland Thrower', 'Kargan Lancer', 'Windrest Shamshir', 'Steppe Glaive', 'Longgrass Scout'], ['Horsebow Camp', 'Kargan Warcamp', 'Grassland Corral'], ['blazing-deserts', 'base'], 'steppe'),
-  'southern-marches': profile('Border Deserters', 'east', ['Border Spear', 'Grainroad Crossbow', 'Garrison Deserter', 'Border Bill', 'Field Skirmisher', 'Oathbroken Guard'], ['Garrison Ruins', 'Grainroad Blockade', 'Border Redoubt'], ['base', 'of-flesh-and-faith']),
+  'southern-marches': profile('Southern Border Deserters', 'south', ['Border Bowman', 'Grainroad Qatal', 'Garrison Lancer', 'Border Archer', 'Field Skirmisher', 'Oathbroken Shamshir'], ['Garrison Ruins', 'Grainroad Blockade', 'Border Redoubt'], ['blazing-deserts']),
   'blackwater-basin': profile('Blackwater Cultists', 'forest', ['Blackwater Bow', 'Bogland Hunter', 'Ritual Knife', 'Reed Spear', 'Graveyard Cleaver', 'Blackwater Scythe'], ['Sunken Shrine', 'Reed Cult Camp', 'Graveyard Vigil'], ['base', 'warriors-of-the-north'], 'cult'),
   'saffron-coast': profile('Saffron Corsairs', 'south', ['Corsair Bowman', 'Dockside Qatal', 'Saltroad Spear', 'Saffron Archer', 'Corsair Thrower', 'Harbor Duelist'], ['Corsair Cove', 'Saltroad Hideout', 'Harbor Blockade'], ['blazing-deserts', 'base'], 'coast'),
   sunlands: profile('Sunland Nomads', 'south', ['Nomad Qatal', 'Desert Warbow', 'Lamellar Lancer', 'Arena Shamshir', 'Sandstorm Thrower', 'Sunland Glaive'], ['Dune Encampment', 'Gladiator Refuge', 'Lamellar Stronghold'], ['blazing-deserts', 'base']),
@@ -39,39 +40,33 @@ export function worldCampText(x,y,enemyCount,index) {
 // Stable rolls use authored IDs, campaign seed and generation, never the frame clock.
 function hash(value) { let h=2166136261;for(const char of String(value)){h^=char.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0; }
 const pools = new Map();
-function regionalDesign(item,p) {
-  if(!p.collections.includes(item.collection))return false;
-  const ancient=/ancient|decayed/.test(item.id), cult=/cultist|monk|dark-cowl|wizard|witchhunter/.test(item.id);
-  if(p.extra==='cult')return ancient||cult||/robe|hood|mail|scythe/.test(item.id);
-  if(ancient||cult||/vizier|noble-gear|noble-headgear|jester|straw|apron|mouth-piece/.test(item.id))return false;
-  if(p.extra==='hunt')return /leather|tunic|gambeson|surcoat|padded|mail|hood|hat|cap|werewolf/.test(item.id);
-  return true;
-}
-export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true}={}) {
+export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true,theme=armoryTheme(regionAt(x,y).id)}={}) {
   if(difficulty===0)return {...enemy};
-  const result={...enemy,name:enemy.name.replace(/ Champion$/,'')},p=WORLD_ENEMY_PROFILES[regionAt(x,y).id],role=enemyCombatRole(enemy);
+  const result={...enemy,name:enemy.name.replace(/ Champion$/,'')},role=enemyCombatRole(enemy);
   for(const slot of ['armor','helmet']) {
     const ranged=role==='ranged',skirmish=role==='skirmisher';
-    const max=ranged?(slot==='armor'?90:110):skirmish?[0,85,120,150][difficulty]:[0,slot==='armor'?100:110,slot==='armor'?190:210,slot==='armor'?320:350][difficulty];
-    const min=ranged?[0,5,15,25][difficulty]:[0,15,55,100][difficulty];
-    const fatigueMax=ranged?(slot==='armor'?12:8):skirmish?(slot==='armor'?18:10):50;
-    const key=`${regionAt(x,y).id}:${role}:${difficulty}:${slot}`;
-    if(!pools.has(key))pools.set(key,DLC_ITEMS.filter(item=>item.slot===slot&&item.sourceKind==='ordinary'&&item.armor>=min&&item.armor<=max&&item.fatigue<=fatigueMax&&regionalDesign(item,p)));
+    const roleMax=ranged?(slot==='armor'?90:110):skirmish?[0,85,120,150][difficulty]:[0,slot==='armor'?100:110,slot==='armor'?190:210,slot==='armor'?320:350][difficulty];
+    const max=Math.min(roleMax,theme==='forest'?(slot==='armor'?150:110):theme==='cult'?120:350);
+    const min=theme==='cult'?[0,15,35,60][difficulty]:ranged?[0,5,15,25][difficulty]:[0,15,55,100][difficulty];
+    const roleFatigue=ranged?(slot==='armor'?12:8):skirmish?(slot==='armor'?18:10):50;
+    const fatigueMax=Math.min(roleFatigue,theme==='forest'?(slot==='armor'?15:9):50);
+    const key=`${theme}:${role}:${difficulty}:${slot}`;
+    if(!pools.has(key))pools.set(key,DLC_ITEMS.filter(item=>item.slot===slot&&item.sourceKind==='ordinary'&&item.armor>=min&&item.armor<=max&&item.fatigue<=fatigueMax&&matchesArmoryTheme(item,theme)));
     const choices=pools.get(key);
     if(choices.length)result[slot]=choices[hash(`${seed}:${index}:${slot}`)%choices.length].id;
   }
   // Reclaimed decorative layers enter regional outfits as real armor attachments.
   if(difficulty>=2&&hash(`${seed}:${index}:reclaimed-attachment`)%5===0){
     const region=regionAt(x,y).id;
-    const attachments=['northern-highlands','greenwood'].includes(region)?['northern-pelt-mantle']
-      :region==='blackwater-basin'?['ancient-gilded-collar']
+    const attachments=theme==='ancient'?['ancient-gilded-collar']:['northern-highlands','greenwood'].includes(region)?['northern-pelt-mantle']
+      :region==='blackwater-basin'?[]
       :['western-marches','eastern-frontier','southern-marches','saffron-coast','sunlands'].includes(region)?['noble-brocade-mantle']:[];
     if(attachments.length)result.attachment=attachments[0];
   }
   // A single elite leader may carry a named trophy; legendary relics stay out of common outfits.
   if(champions&&difficulty===3&&index===0&&hash(`${seed}:champion`)%8===0) {
     const slot=hash(`${seed}:trophy-slot`)%2?'armor':'helmet';
-    const trophies=DLC_ITEMS.filter(item=>item.slot===slot&&item.rarity==='named'&&(item.sourceKind!=='legendary'||item.id==='bb-fangshire')&&(p.collections.includes(item.collection)||['northern-highlands','greenwood'].includes(regionAt(x,y).id)&&['lindwurm','supporter-edition'].includes(item.collection))&&item.armor<=(role==='ranged'?110:role==='skirmisher'?180:400));
+    const trophies=DLC_ITEMS.filter(item=>item.slot===slot&&item.rarity==='named'&&(item.sourceKind!=='legendary'||item.id==='bb-fangshire')&&matchesArmoryTheme(item,theme)&&item.armor<=(theme==='forest'?(slot==='armor'?150:110):role==='ranged'?110:role==='skirmisher'?180:400)&&item.fatigue<=(theme==='forest'?(slot==='armor'?15:9):role==='ranged'?(slot==='armor'?12:8):50));
     if(trophies.length){result[slot]=trophies[hash(`${seed}:trophy`)%trophies.length].id;result.name=`${result.name} Champion`;}
   }
   return result;
@@ -80,4 +75,11 @@ export function enemyRoleBonuses(enemy,difficulty) {
   const role=enemyCombatRole(enemy);
   if(difficulty===0)return {perks:[],meleeSkill:0,rangedSkill:0,initiative:0};
   return {perks:difficulty===3?[role==='ranged'?'bullseye':role==='shield'?'shield-expert':role==='skirmisher'?'quick-hands':'backstabber']:[],meleeSkill:role==='melee'?3:0,rangedSkill:role==='ranged'||role==='skirmisher'?5:0,initiative:role==='ranged'||role==='skirmisher'?8:0};
+}
+
+export function ancientCampAt(x,y,index) {
+  return ['blackwater-basin','eastern-frontier','northern-highlands'].includes(regionAt(x,y).id) && index%3===1;
+}
+export function ancientEnemies(difficulty) {
+  return Array.from({length:6},(_,index)=>({name:['Ancient Legionary','Ancient Pikeman','Tomb Guardian','Ancient Honor Guard','Sepulcher Sentinel','Ancient Praetorian'][index],weapon:index%2?'war-scythe':'military-cleaver',shield:index%2?null:'round-shield',armor:difficulty===1?'bb-ancient-mail':'bb-ancient-plate-harness',helmet:'bb-ancient-legionary-helmet'}));
 }
