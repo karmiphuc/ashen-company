@@ -76,17 +76,11 @@ test('mounts place authored animal layers around the rider without changing unmo
     assert.equal(layerSource(html, 'mount-body'), `assets/portraits/${body}`);
     assert.equal(layerSource(html, 'mount-head'), `assets/portraits/${head}`);
     assert.ok(html.indexOf('data-layer="mount-body"') < html.indexOf('data-layer="body"'));
-    if (['horse', 'warhorse', 'armoredhorse'].includes(visual)) {
-      assert.ok(html.indexOf('data-layer="mount-head"') > html.indexOf('data-layer="head"'));
-      if (visual === 'horse') {
-        assert.match(html, /data-layer="mount-head"[^>]*left:52px;top:35px/);
-        assert.match(html, /data-layer="mount-body"[^>]*left:12px;top:42px/);
-      } else {
-        assert.match(html, /data-layer="mount-head"[^>]*left:55px;top:38px/);
-        assert.match(html, /data-layer="mount-body"[^>]*left:-15px;top:20px/);
-      }
-    } else assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="body"'));
-    assert.match(html, /bb-portrait-rider"[^>]*transform:translate\(2px,0\) scale\(\.76\)/);
+    assert.ok(html.indexOf('data-layer="mount-head"') > html.indexOf('data-layer="head"'));
+    assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="shield"'));
+    assert.ok(html.indexOf('data-layer="mount-head"') < html.indexOf('data-layer="weapon"'));
+    assert.match(html, /data-layer="base-plate"/);
+    assert.doesNotMatch(html, /bb-portrait-rider|scale\(\.76\)/);
     for (const part of ['body', 'head']) {
       assert.match(html, new RegExp(`data-layer="mount-${part}"[^>]*transform:scaleX\\(${['horse', 'warhorse', 'armoredhorse'].includes(visual) ? 1 : -1}\\)`));
     }
