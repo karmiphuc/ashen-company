@@ -7,6 +7,7 @@ import {
 } from '../src/engine.js';
 
 function approachCamp(state, site = getCampSites(state)[0]) {
+  for(const patrol of Object.values(state.factionPatrols)){patrol.troops=[];patrol.defeatedUntil=(state.day-1)*24+state.hour+72;}
   const until = (state.day - 1) * 24 + state.hour + 48;
   for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   assert.equal(travelTo(state, site.x, site.y).ok, true);

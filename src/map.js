@@ -1,5 +1,5 @@
 import { regionAt } from './geography.js';
-import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getCaravans, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
+import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getFactionPatrols, getCaravans, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = [
   'world_desert_01', 'world_desert_02', 'world_desert_03',
@@ -307,10 +307,11 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const world = { x: camera.x + (current.x - width / 2) / camera.zoom, y: camera.y + (current.y - height / 2) / camera.zoom };
       const town = SETTLEMENTS.find(item => Math.hypot(item.x - world.x, item.y - world.y) < 48);
       const camp = getCampSites(state).find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
+      const patrol = getFactionPatrols(state).filter(p=>p.active).find(item=>Math.hypot(item.x+24-world.x,item.y-24-world.y)<24);
       const band = bands().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
       const caravan = caravans().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 24);
       const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
-      const existingTarget = band ? { type: 'band', id: band.id, entity: { ...band, kind: 'band' } }
+      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: 'band', id: band.id, entity: { ...band, kind: 'band' } }
         : camp ? { type: 'camp', id: camp.id, entity: camp }
           : town ? { type: 'town', id: town.id, entity: town }
             : null;
@@ -318,7 +319,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const target = caravan && caravanDistance <= existingDistance
         ? { type: 'caravan', id: caravan.id, entity: caravan }
         : existingTarget;
-      if ((target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
+      if ((target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
       else if (!target) onTravel(world.x, world.y);
@@ -460,6 +461,15 @@ function draw() {
       context.fillStyle = band.behavior === 'hunting-company' ? '#f08072' : '#e3a267'; context.fillText(activity, band.x, band.y + 36);
     }
     context.restore();
+  });
+
+  getFactionPatrols(state).filter(p=>p.active).forEach(p=>{
+    context.save();context.translate(24,-24);
+    context.beginPath();context.arc(p.x,p.y+3,18,0,Math.PI*2);context.strokeStyle=p.color;context.lineWidth=selection===p.id?4:2;context.stroke();
+    sprite(context,'figure_player_assassin',p.x,p.y,30,.85);
+    context.font='bold 10px Arial';context.textAlign='center';context.strokeStyle='#142016';context.lineWidth=3;
+    const label=camera.zoom>=.4||selection===p.id?`${p.factionLabel} · ${p.enemies.length}`:`${p.enemies.length}`;
+    context.strokeText(label,p.x,p.y+28);context.fillStyle=p.color;context.fillText(label,p.x,p.y+28);context.restore();
   });
 
   if (state.destination) {

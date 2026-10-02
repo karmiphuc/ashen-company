@@ -78,7 +78,7 @@ test('town events are deterministic, local, finite, and read without changing a 
 });
 
 test('high-end gear is scarce across seeds and read or reload cannot restock a purchase', () => {
-  const premium = new Set(ITEMS.filter(item => item.price >= 450).map(item => item.id));
+  const premium = new Set(ITEMS.filter(item => item.price >= 450 && item.slot!=='mount').map(item => item.id));
   assert.ok(premium.size > 2);
   const observed = new Set();
   let ordinaryDays = 0;

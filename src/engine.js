@@ -6,9 +6,11 @@ import { NORTHERN_ITEMS } from './northern-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
 import { DLC_ITEMS } from './dlc-items.js';
 import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, worldCampText, regionalOutfit, enemyRoleBonuses } from './regional-enemies.js';
-import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad } from './geography.js';
+import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad, WORLD_LAYOUT_VERSION, compactPoint, authoredPoint } from './geography.js';
 import { FRONTIER_ITEMS } from './frontier-items.js';
 import { MOUNTS } from './mounts.js';
+import { factionPatrols, patrolDefinitions, initialPatrolProgress, advanceFactionSimulation } from './faction-patrols.js';
+import { cityMountOffer, campMountReward, regionalMountPool } from './mount-distribution.js';
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression } from './enemy-progression.js';
 import { getRegionalCampText } from './enemy-rosters.js';
@@ -65,7 +67,7 @@ export const GOODS = Object.freeze([
   { id: 'wool', name: 'Wool', basePrice: 30, description: 'Bales of fleece for clothiers and camps.' },
 ]);
 
-export const SETTLEMENTS = Object.freeze([
+const AUTHORED_SETTLEMENTS = [
   { id: 'oakwatch', name: 'Oakwatch', x: 350, y: 460, kind: 'town', description: 'The company found its footing beneath these old oaks.', color: '#d7ad68' },
   { id: 'greyhaven', name: 'Greyhaven', x: 495, y: 305, kind: 'town', description: 'A stone market where caravans change hands.', color: '#a8b7b3' },
   { id: 'ironford', name: 'Ironford', x: 745, y: 400, kind: 'town', major: true, description: 'Smoke rises above its forges and river gates.', color: '#da936c' },
@@ -86,8 +88,8 @@ export const SETTLEMENTS = Object.freeze([
   { id: 'reedharbor', name: 'Reedharbor', x: 2550, y: 1080, kind: 'village', description: 'Reed boats bring salt to the eastern frontier.', color: '#c9ad82' },
   { id: 'sunspire', name: 'Sunspire', x: 2930, y: 220, kind: 'castle', description: 'A watch keep guarding the high eastern road.', color: '#c9ad82' },
   { id: 'cinderhold', name: 'Cinderhold', x: 2970, y: 850, kind: 'castle', description: 'A stone fortress overlooking the cinder woods.', color: '#c9ad82' },
-  ...REGIONAL_SETTLEMENTS,
-]);
+];
+export const SETTLEMENTS = Object.freeze([...AUTHORED_SETTLEMENTS.map(town=>Object.freeze({...town,...compactPoint(town)})),...REGIONAL_SETTLEMENTS]);
 
 export const SETTLEMENT_TYPES = Object.freeze({
   village: Object.freeze({ summary: 'Plentiful provisions, simple equipment and two civilian hires.', food: 12, goods: 0, tools: 0, medicine: 0, ammo: 0, hires: 2, better: 1, premium: 0, shipments: 1 }),
@@ -156,8 +158,8 @@ const ROAMING_BANDS = Object.freeze([
   { id: 'reedharbor-raiders', name: 'Reedharbor Raiders', difficulty: 2, start: { x: 2370, y: 1140 }, end: { x: 2500, y: 1020 } },
   { id: 'sunspire-raiders', name: 'Sunspire Raiders', difficulty: 3, start: { x: 2750, y: 280 }, end: { x: 2880, y: 160 } },
   { id: 'cinderhold-raiders', name: 'Cinderhold Raiders', difficulty: 3, start: { x: 2790, y: 910 }, end: { x: 2920, y: 790 } },
-  ...REGIONAL_SETTLEMENTS.map((town, index) => ({ id: `${town.id}-patrol`, name: `${town.name} ${town.kind === 'castle' ? 'Deserters' : 'Waylayers'}`, difficulty: town.kind === 'village' ? 1 : town.kind === 'castle' ? 3 : 2, start: { x: town.x - 100, y: town.y + 50 }, end: { x: Math.min(4950, town.x + 130), y: Math.max(85, town.y - 50) } })),
-]);
+  ...REGIONAL_SETTLEMENTS.map((compactTown, index) => { const town=authoredPoint(compactTown);return ({ id: `${compactTown.id}-patrol`, name: `${compactTown.name} ${compactTown.kind === 'castle' ? 'Deserters' : 'Waylayers'}`, difficulty: compactTown.kind === 'village' ? 1 : compactTown.kind === 'castle' ? 3 : 2, start: { x: town.x - 100, y: town.y + 50 }, end: { x: Math.min(4950, town.x + 130), y: Math.max(85, town.y - 50) } });}),
+].map(band=>Object.freeze({...band,start:compactPoint(band.start),end:compactPoint(band.end)})));
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
 const FAMED_ID = /^famed:([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
@@ -532,6 +534,7 @@ export function createGame(seed = Date.now()) {
   const numericSeed = hashSeed(seed);
   const state = {
     version: 1,
+    worldLayoutVersion: WORLD_LAYOUT_VERSION,
     seed: numericSeed,
     day: 1,
     hour: 8,
@@ -553,6 +556,7 @@ export function createGame(seed = Date.now()) {
     supplies: { tools: 8, medicine: 5, ammo: 16 },
     camps: {},
     bands: {},
+    factionPatrols: {}, factionReports: [], worldLosses: {}, factionSimulationHour: 8,
     pursuit: null,
     encounterGraceUntil: 0,
     tactic: 'offense',
@@ -569,6 +573,7 @@ export function createGame(seed = Date.now()) {
     visited: ['oakwatch'],
   };
   state.bands = Object.fromEntries(ROAMING_BANDS.map(band => [band.id, initialBandProgress(state, band)]));
+  state.factionPatrols = Object.fromEntries(patrolDefinitions(SETTLEMENTS).map(d=>[d.id,initialPatrolProgress(state,d)]));
   state.party = state.party.map(normalizeMember);
   state.formation = seedFormation(state.party);
   advanceCaravans(state, worldHours(state));
@@ -578,6 +583,7 @@ export function createGame(seed = Date.now()) {
 
 export function terrainAt(x, y) {
   if (!inBounds(x, y)) return 'sea';
+  ({x,y}=authoredPoint({x,y}));
   if (Math.hypot(x - 615, y - 145) < 100 || Math.hypot(x - 1080, y - 455) < 85) return 'mountain';
   if (Math.hypot(x - 475, y - 445) < 95 || Math.hypot(x - 840, y - 235) < 120) return 'forest';
   if (Math.hypot(x - 865, y - 555) < 88) return 'marsh';
@@ -586,7 +592,7 @@ export function terrainAt(x, y) {
   if (Math.hypot((x - 1230) / 1.4, y - 1120) < 155 || Math.hypot(x - 1920, y - 500) < 120) return 'marsh';
   // Preserve terrain in the original footprint; new regions introduce distinct climates.
   if (x > 2120 || y > 1380) {
-    const region = regionAt(x,y);
+    const point=compactPoint({x,y}),region = regionAt(point.x,point.y);
     if (region.climate === 'snow') return y < 180 ? 'snow' : 'mountain';
     if (region.climate === 'desert') return Math.hypot(x-2400,y-1900)<140 ? 'plains' : 'desert';
     if (region.climate === 'marsh') return 'marsh';
@@ -743,10 +749,8 @@ function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
       equipment[rare[townEventHash(`${state.seed}:${town.id}:${cycle}:named-kind`) % rare.length].id] = 1;
     }
   }
-  if ((town.major || town.kind === 'castle') && townEventHash(`${state.seed}:${town.id}:${cycle}:mount-offer`) % 100 < 2) {
-    const mount = MOUNTS[townEventHash(`${state.seed}:${town.id}:${cycle}:mount-kind`) % MOUNTS.length];
-    equipment[mount.id] = 1;
-  }
+  const mountOffer=cityMountOffer(state.seed,town,cycle);
+  if(mountOffer)equipment[mountOffer]=1;
   if (town.id === 'highpass' && cycle % 2 === 1) equipment['riding-horse'] = 1;
   return equipment;
 }
@@ -1032,7 +1036,7 @@ function roamingBand(state, band) {
   const pool = tier ? worldEnemyTemplates(band.start.x, band.start.y, tier) : band.enemies;
   const offset = Math.floor(random() * pool.length);
   const enemies = Array.from({ length: Math.min(12, count + progression.reinforcements) }, (_, index) => { const enemy = { ...pool[(index + offset) % pool.length] }; return regionalOutfit(enemy, `${state.seed}:${band.id}:${spawnCycle}`, index, band.start.x, band.start.y, tier); });
-  if (progression.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, band.id, spawnCycle);
+  if (progression.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, band.id, spawnCycle, band.start.x, band.start.y);
   const position = activeBandProgress(state, band);
   const target = position.behavior === 'raiding-caravan' ? getCaravans(state).find(caravan => caravan.id === position.targetId
     && (caravan.status === 'en-route' || caravan.status === 'under-attack')) : null;
@@ -1041,12 +1045,38 @@ function roamingBand(state, band) {
     id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle, veteranRank: progression.rank,
     ...(tier ? { factionId: regionAt(band.start.x,band.start.y).id, factionLabel: WORLD_ENEMY_PROFILES[regionAt(band.start.x,band.start.y).id].label } : {}),
     x: position.x, y: position.y, behavior, targetId: behavior === 'raiding-caravan' ? position.targetId : null,
-    enemies,
+    enemies: survivingWorldEnemies(state, band.id, spawnCycle, enemies),
     description: target ? `These raiders are closing on the armorer wagon bound for ${TOWN_BY_ID.get(target.destinationId).name}. Defeat them before they reach it.`
       : position.behavior === 'hunting-company' ? 'These raiders have spotted the Ashen Company and are giving chase.'
       : tier ? `${enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${enemies.length} lightly equipped brigand${enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
     reward: 0,
   };
+}
+
+function survivingWorldEnemies(state,id,cycle,enemies) {
+  const losses=state.worldLosses?.[id];
+  return enemies.map((enemy,index)=>Object.defineProperty({...enemy},'worldIndex',{value:index})).filter(enemy=>!losses||losses.cycle!==cycle||enemy.worldIndex>=losses.size||losses.survivors.includes(enemy.worldIndex));
+}
+export function getFactionPatrols(state) { return factionPatrols(state,SETTLEMENTS); }
+function advanceSoldiers(state) {
+  const currentHostile=id=>getRoamingBands(state).find(b=>b.id===id)??getCampSites(state).find(c=>c.id===id&&!c.cleared);
+  advanceFactionSimulation(state,{settlements:SETTLEMENTS,getItem,hostiles:()=>getRoamingBands(state),camps:()=>getCampSites(state),currentHostile,
+    hostileResult(target,survivors) {
+      const current=currentHostile(target.id);if(!current)return;
+      state.worldLosses??={};
+      if(survivors.length) {
+        const previous=state.worldLosses[target.id];
+        state.worldLosses[target.id]={cycle:target.spawnCycle??target.generation,size:Math.max(previous?.size??0,...current.enemies.map(e=>e.worldIndex+1)),survivors:survivors.map(index=>current.enemies[index].worldIndex)};
+      }else {
+        delete state.worldLosses[target.id];
+        if(target.kind==='camp')state.camps[target.id]={clearedDay:state.day,respawnAt:worldHours(state)+72,generation:target.generation};
+        else {
+          state.bands[target.id]={...state.bands[target.id],defeatedUntil:worldHours(state)+48,spawnCycle:target.spawnCycle+1,behavior:'patrolling',targetId:null};
+          for(const shipment of Object.values(state.shipments??{}))if(shipment.attackerId===target.id&&(shipment.status==='under-attack'||shipment.status==='en-route')){shipment.status='en-route';shipment.attackerId=null;shipment.attackerSpawnCycle=null;shipment.attackHour=null;}
+        }
+      }
+    }
+  });
 }
 
 export function getRoamingBands(state) { return ROAMING_BANDS.map(band => roamingBand(state, band)).filter(Boolean); }
@@ -1143,7 +1173,7 @@ function startHostileContact(state, bandId) {
   return startBattle(state, bandId);
 }
 
-export function getEncounterSites(state) { return [...getCampSites(state), ...getRoamingBands(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
+export function getEncounterSites(state) { return [...getCampSites(state), ...getRoamingBands(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
 
 export function getQuestEncounter(state) {
   const contract = state.contract;
@@ -1202,6 +1232,7 @@ export function activateMapTarget(state, type, id) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   if (type === 'band') return pursueBand(state, id);
+  if(type==='patrol'){const patrol=getFactionPatrols(state).find(p=>p.id===id);return result(Boolean(patrol),patrol?`${patrol.name} are ${patrol.playerRelation} soldiers.`:'Patrol unavailable.');}
   if (type === 'caravan' && getQuestEncounter(state)?.id === id) type = 'rescue';
   if (type === 'caravan') {
     const caravan = getCaravans(state).find(entry => entry.id === id && (entry.status === 'en-route' || entry.status === 'under-attack'));
@@ -1368,7 +1399,7 @@ export function tick(state, hours) {
     }
     advanceClock(state, step);
     const reachedWorldStep = Math.abs(worldHours(state) / WORLD_STEP_HOURS - Math.round(worldHours(state) / WORLD_STEP_HOURS)) < 1e-7;
-    if (reachedWorldStep) { snapWorldStepClock(state); advanceCaravans(state, worldHours(state)); }
+    if (reachedWorldStep) { snapWorldStepClock(state); advanceCaravans(state, worldHours(state)); advanceSoldiers(state); }
     const hostileContact = reachedWorldStep ? advanceRoamingBands(state) : null;
     if (reachedWorldStep && state.destinationAction?.type === 'caravan') {
       const caravan = getCaravans(state).find(entry => entry.id === state.destinationAction.id
@@ -1935,6 +1966,7 @@ function advanceStationaryTime(state, hours) {
           && (entry.status === 'en-route' || entry.status === 'under-attack'));
         if (!caravan) { state.destination = null; state.destinationAction = null; }
       }
+      advanceSoldiers(state);
       const hostileContact = advanceRoamingBands(state);
       if (hostileContact) return startHostileContact(state, hostileContact);
     }
@@ -2017,9 +2049,10 @@ function famedDropForCamp(seed, camp) {
   return createFamedItemId(baseId, hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-item`));
 }
 
-function rareEnemyMount(seed, encounterId, cycle) {
+function rareEnemyMount(seed, encounterId, cycle, x, y) {
   if (hashSeed(`${seed}:${encounterId}:${cycle}:mounted-elite`) % 100 >= 2) return null;
-  return MOUNTS[hashSeed(`${seed}:${encounterId}:elite-mount-kind`) % MOUNTS.length].id;
+  const pool=regionalMountPool(x,y,{reward:true});
+  return pool[hashSeed(`${seed}:${encounterId}:elite-mount-kind`) % pool.length];
 }
 
 function randomCamp(state, id, index, generation) {
@@ -2036,8 +2069,9 @@ function randomCamp(state, id, index, generation) {
       x = Math.round(cell.x + 40 + random() * (cell.width-80));
       y = Math.round(cell.y + 30 + random() * (cell.height-60));
     }
-    if (!SETTLEMENTS.some(town => Math.hypot(town.x-x,town.y-y)<90) && !CAMP_SITES.some(camp => Math.hypot(camp.x-x,camp.y-y)<85)) break;
+    if (!SETTLEMENTS.some(town => {const point=authoredPoint(town);return Math.hypot(point.x-x,point.y-y)<90;}) && !CAMP_SITES.some(camp => Math.hypot(camp.x-x,camp.y-y)<85)) break;
   }
+  ({x,y}=compactPoint({x,y}));
   const difficulty = column === 0 && row < 2 ? 1 : 1 + Math.floor(random() * 3);
   const pool = worldEnemyTemplates(x, y, difficulty);
   const count = 2 + difficulty + Math.floor(random() * 2);
@@ -2053,8 +2087,8 @@ export function getCampSites(state) {
     const camp = fixed || randomCamp(state,id,index-CAMP_SITES.length,progress.generation);
     const scaling = enemyProgression(state, camp.difficulty);
     const enemies = Array.from({ length: Math.min(12, camp.enemies.length + scaling.reinforcements) }, (_, enemyIndex) => { const enemy={...camp.enemies[enemyIndex % camp.enemies.length]}; return !fixed && enemyIndex>=camp.enemies.length ? regionalOutfit(enemy, `${state.seed}:${id}:${progress.generation}`, enemyIndex, camp.x, camp.y, camp.difficulty, {champions:false}) : enemy; });
-    if (scaling.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation);
-    return {...camp,description:scaling.reinforcements?`${enemies.length} fighters hold this position. Veteran reinforcements have gathered as your company has grown.`:camp.description,kind:'camp',generation:progress.generation,veteranRank:scaling.rank,famedChance:FAMED_CHANCES[camp.difficulty]??0,enemies,cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
+    if (scaling.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation, camp.x, camp.y);
+    return {...camp,description:scaling.reinforcements?`${enemies.length} fighters hold this position. Veteran reinforcements have gathered as your company has grown.`:camp.description,kind:'camp',generation:progress.generation,veteranRank:scaling.rank,famedChance:FAMED_CHANCES[camp.difficulty]??0,mountChance:camp.random&&camp.difficulty===3?.12:0,enemies:survivingWorldEnemies(state,id,progress.generation,enemies),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
   });
 }
 
@@ -2282,7 +2316,7 @@ export function startBattle(state, encounterId) {
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
-    famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, field,
+    famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     status: 'active', rulesVersion: 2, weaponSkillsVersion: 1, mountSkillsVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
@@ -2345,7 +2379,7 @@ function victoryLoot(battle, enemies) {
   const addItem = (id, condition = itemCondition(id)) => {
     if (id && items.length < 24) { items.push(id); itemConditions.push(condition); }
   };
-  if (!band) addItem(battle.famedDrop);
+  if (!band) {addItem(battle.famedDrop);addItem(battle.mountReward);}
   for (const enemy of enemies) {
     for (const slot of ['weapon', 'shield', 'armor', 'attachment', 'helmet']) {
       const id = enemy.equipment[slot];
@@ -4146,7 +4180,9 @@ function validateBattle(input, party, worldState) {
     && famedBasesForCamp({...encounter,difficulty})?.includes(famedItem.baseId)
     && famedDrop === createFamedItemId(famedItem.baseId, famedSeed)
     && famedRoll < (FAMED_CHANCES[difficulty] ?? 0) * 10000, 'battle famed drop');
-  const legacyCampName = encounterType==='camp' && /^wild-camp-/.test(encounter.id) ? getRegionalCampText(encounter.x,encounter.y,difficulty,1,Number(encounter.id.slice(10))-1).name : null;
+  const legacyCampName = encounterType==='camp' && /^wild-camp-/.test(encounter.id) ? getRegionalCampText(authoredPoint(encounter).x,authoredPoint(encounter).y,difficulty,1,Number(encounter.id.slice(10))-1).name : null;
+  const mountReward=input.mountReward ?? null;
+  assert(mountReward===null || encounterType==='camp' && MOUNTS.some(item=>item.id===mountReward) && mountReward===campMountReward(worldState.seed,{...encounter,difficulty,generation:campGeneration}), 'battle mount reward');
   assert(input.encounterName === undefined || input.encounterName === encounterName || input.encounterName === legacyCampName, 'battle encounter name');
   assert(typeof input.id === 'string' && input.id.length <= 80 && input.id.startsWith('battle-'), 'battle id');
   assert(['active', 'victory', 'defeat', 'retreat'].includes(input.status), 'battle status');
@@ -4400,7 +4436,7 @@ function validateBattle(input, party, worldState) {
   assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
-    id: input.id, campId: input.campId, encounterType, encounterName, difficulty, campGeneration, famedDrop, tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
+    id: input.id, campId: input.campId, encounterType, encounterName, difficulty, campGeneration, famedDrop, ...(input.mountReward===undefined?{}:{mountReward}), tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
     ...(input.rulesVersion === undefined ? {} : { rulesVersion }),
     ...(input.weaponSkillsVersion === undefined ? {} : { weaponSkillsVersion }),
     ...(input.mountSkillsVersion === undefined ? {} : { mountSkillsVersion }),
@@ -4414,6 +4450,11 @@ function validateBattle(input, party, worldState) {
 export function validateSave(input) {
   assert(input && typeof input === 'object' && !Array.isArray(input), 'expected an object');
   assert(input.version === 1, 'unsupported version');
+  assert(input.worldLayoutVersion === undefined || [1,WORLD_LAYOUT_VERSION].includes(input.worldLayoutVersion), 'world layout');
+  if(input.worldLayoutVersion !== WORLD_LAYOUT_VERSION) {
+    const convert=point=>point && typeof point==='object' && Number.isFinite(point.x) && Number.isFinite(point.y) ? {...point,...compactPoint(point)} : point;
+    input={...input,worldLayoutVersion:WORLD_LAYOUT_VERSION,position:convert(input.position),destination:convert(input.destination),bands:input.bands && Object.fromEntries(Object.entries(input.bands).map(([id,entry])=>[id,convert(entry)])),contract:input.contract ? {...input.contract,...(input.contract.rescuePoint ? {rescuePoint:convert(input.contract.rescuePoint)} : {})} : input.contract};
+  }
   assert(validCount(input.seed) && input.seed <= 0xffffffff, 'seed');
   assert(Number.isSafeInteger(input.day) && input.day >= 1 && input.day <= 1000000, 'day');
   assert(Number.isFinite(input.hour) && input.hour >= 0 && input.hour < 24, 'hour');
@@ -4630,6 +4671,27 @@ export function validateSave(input) {
     normalizedBands[band.id] = { defeatedUntil: entry.defeatedUntil, spawnCycle: entry.spawnCycle,
       x: entry.x, y: entry.y, direction: entry.direction, behavior: entry.behavior, targetId: entry.targetId };
   }
+  const patrols=input.factionPatrols??Object.fromEntries(patrolDefinitions(SETTLEMENTS).map(d=>[d.id,initialPatrolProgress(input,d)]));
+  const definitions=patrolDefinitions(SETTLEMENTS),now=worldHours(input),knownPatrols=new Set(definitions.map(d=>d.id));
+  assert(recordObject(patrols)&&Object.keys(patrols).length===definitions.length,'faction patrols');
+  for(const d of definitions){const p=patrols[d.id];assert(recordObject(p)&&Object.keys(p).length===12&&inBounds(p.x,p.y)&&validCount(p.waypoint)&&p.waypoint<d.waypoints.length
+    &&Array.isArray(p.troops)&&p.troops.length<=d.size&&new Set(p.troops).size===p.troops.length&&p.troops.every(i=>validCount(i)&&i<d.size)
+    &&validCount(p.spawnCycle)&&p.spawnCycle<=1000000&&validCount(p.wins)&&p.wins<=1000000000&&validCount(p.losses)&&p.losses<=1000000000
+    &&Number.isFinite(p.defeatedUntil)&&p.defeatedUntil>=0&&p.defeatedUntil<=now+72
+    &&Number.isFinite(p.cooldownUntil)&&p.cooldownUntil>=0&&p.cooldownUntil<=now+6
+    &&Number.isFinite(p.lastReinforcedHour)&&p.lastReinforcedHour>=0&&p.lastReinforcedHour<=now
+    &&['touring','returning','engaging','clearing-camp','reforming'].includes(p.behavior)
+    &&(p.targetId===null||knownPatrols.has(p.targetId)||BAND_BY_ID.has(p.targetId)||isCampId(p.targetId)),'faction patrol state');}
+  const worldLosses=input.worldLosses??{};
+  assert(recordObject(worldLosses)&&Object.keys(worldLosses).length<=ROAMING_BANDS.length+CAMP_SITES.length+RANDOM_CAMP_IDS.length,'world casualties');
+  for(const [id,p]of Object.entries(worldLosses))assert((BAND_BY_ID.has(id)||isCampId(id))&&recordObject(p)&&Object.keys(p).length===3&&validCount(p.cycle)&&p.cycle<=1000000&&validCount(p.size)&&p.size>0&&p.size<=12
+    &&Array.isArray(p.survivors)&&p.survivors.length>0&&p.survivors.length<p.size&&new Set(p.survivors).size===p.survivors.length&&p.survivors.every(i=>validCount(i)&&i<p.size),'world casualty state');
+  const factionReports=input.factionReports??[];
+  assert(Array.isArray(factionReports)&&factionReports.length<=24&&factionReports.every(r=>recordObject(r)&&Object.keys(r).length===8&&knownPatrols.has(r.patrolId)&&definitions.find(d=>d.id===r.patrolId).factionId===r.factionId
+    &&(knownPatrols.has(r.opponentId)||BAND_BY_ID.has(r.opponentId)||isCampId(r.opponentId))&&typeof r.opponentName==='string'&&r.opponentName.length<=120
+    &&['band','camp','patrol'].includes(r.kind)&&['victory','defeat'].includes(r.outcome)&&validCount(r.losses)&&r.losses<=9&&Number.isFinite(r.hour)&&r.hour>=0&&r.hour<=now),'faction reports');
+  const factionSimulationHour=input.factionSimulationHour??now;
+  assert(Number.isFinite(factionSimulationHour)&&factionSimulationHour>=0&&factionSimulationHour<=now,'faction simulation clock');
   const encounterGraceUntil = input.encounterGraceUntil ?? 0;
   assert(Number.isFinite(encounterGraceUntil) && encounterGraceUntil >= 0
     && encounterGraceUntil <= worldHours(input) + ENCOUNTER_GRACE_HOURS, 'encounter grace');
@@ -4723,6 +4785,8 @@ export function validateSave(input) {
     shipmentLegacyThroughDay,
     ...(input.mountRewards === undefined ? {} : { mountRewards: { ...mountRewards } }),
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
+    worldLayoutVersion: WORLD_LAYOUT_VERSION,
+    factionPatrols:structuredClone(patrols), worldLosses:structuredClone(worldLosses), factionReports:structuredClone(factionReports), factionSimulationHour,
     bands: normalizedBands, pursuit, encounterGraceUntil, tactic,
     battle, gameOver,
     position: { x: input.position.x, y: input.position.y },

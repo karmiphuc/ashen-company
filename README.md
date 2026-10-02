@@ -1,5 +1,9 @@
 # Ashen Company
 
+Version 0.44 reduces world area by **33%**, preserving nine regions, all 48 settlements and the road network. City stables now rotate horses and warhorses; armored horses are scarce, and wolves/wargs favor northern, forest and marsh cities. High-tier frontier camp clears have an independent **12% extra mount reward**, alongside named loot.
+
+**Eleven allied and neutral city patrols** tour across the world: two or three per political faction. They hunt brigands, clear camps and fight rival armies in quarter-hour simulation. Both sides lose troops, casualties survive reloads, depleted columns return to friendly cities, and destroyed armies reform after 72 hours. Select their colored map markers or Soldier patrols destinations to inspect rosters, tours and outcomes. Existing saves migrate positions once, including active campaigns and battles.
+
 Version 0.42 adds the sourced base-game and DLC armor catalog: **217 wearable designs (104 body armors and 113 helmets)**, with matching inventory art and worn portrait sprites. Browse collections in the market; northern and southern armories favor local designs, and the new frontier enemies wear regional equipment. Protection and fatigue use source baselines; prices, famed bonuses, and special effects remain adapted to this game. See [catalog coverage and source notes](docs/DLC-EQUIPMENT.md).
 
 The world now has **48 settlements across nine named regions, 71 local roads and highways, 56 patrols, and 39 camps**, including snow-covered highlands and the desert Sunlands. Gold highways connect regional markets, new caravans follow the displayed network, and frontier roads speed travel. Original settlement IDs, shipment routes, starter patrols, and camp generation remain compatible. Repeated content builds and save imports are idempotent. See [regional world details](docs/REGIONAL-WORLD.md).

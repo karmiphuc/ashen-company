@@ -1,4 +1,4 @@
-import { REGIONAL_SETTLEMENTS, regionAt, roadRoute } from './geography.js';
+import { REGIONAL_SETTLEMENTS, regionAt, roadRoute, authoredPoint } from './geography.js';
 const regionalIds = new Set(REGIONAL_SETTLEMENTS.map(town => town.id));
 export const CARAVAN_TRAVEL_HOURS = 60;
 export const CARAVAN_ATTACK_WARNING_HOURS = 7;
@@ -12,7 +12,7 @@ export function shipmentPlan(town, settlements, event, travelHours = CARAVAN_TRA
   // Eastmere's eastern trade road crosses Stonebridge rather than the northern pass.
   const candidates = regionalIds.has(town.id) ? settlements.filter(place => place.id !== town.id && place.kind !== 'village' && regionAt(place.x,place.y).id === regionAt(town.x,town.y).id) : settlements.filter(place => !regionalIds.has(place.id));
   const origin = town.id === 'eastmere' ? settlements.find(place => place.id === 'stonebridge') : (candidates.length ? candidates : settlements).filter(place => place.id !== town.id)
-    .sort((a, b) => Math.hypot(a.x - town.x, a.y - town.y) - Math.hypot(b.x - town.x, b.y - town.y) || a.id.localeCompare(b.id))[0];
+    .sort((a, b) => Math.hypot(authoredPoint(a).x-authoredPoint(town).x,authoredPoint(a).y-authoredPoint(town).y)-Math.hypot(authoredPoint(b).x-authoredPoint(town).x,authoredPoint(b).y-authoredPoint(town).y) || a.id.localeCompare(b.id))[0];
   const departureHour = (event.startDay - 1) * 24;
   return { id: shipmentId(town.id, event.startDay), originId: origin.id, destinationId: town.id,
     departureHour, travelHours, travelStartHour, ...(regionalIds.has(town.id) ? { roadPoints: roadRoute(settlements, origin.id, town.id) } : {}), arrivalHour: travelStartHour + travelHours };
