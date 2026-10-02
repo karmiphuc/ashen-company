@@ -1059,21 +1059,18 @@ function survivingWorldEnemies(state,id,cycle,enemies) {
 }
 export function getFactionPatrols(state) { return factionPatrols(state,SETTLEMENTS); }
 function advanceSoldiers(state) {
-  const currentHostile=id=>getRoamingBands(state).find(b=>b.id===id)??getCampSites(state).find(c=>c.id===id&&!c.cleared);
-  advanceFactionSimulation(state,{settlements:SETTLEMENTS,getItem,hostiles:()=>getRoamingBands(state),camps:()=>getCampSites(state),currentHostile,
+  const currentHostile=id=>getRoamingBands(state).find(b=>b.id===id);
+  advanceFactionSimulation(state,{settlements:SETTLEMENTS,getItem,hostiles:()=>getRoamingBands(state),currentHostile,
     hostileResult(target,survivors) {
       const current=currentHostile(target.id);if(!current)return;
       state.worldLosses??={};
       if(survivors.length) {
         const previous=state.worldLosses[target.id];
-        state.worldLosses[target.id]={cycle:target.spawnCycle??target.generation,size:Math.max(previous?.size??0,...current.enemies.map(e=>e.worldIndex+1)),survivors:survivors.map(index=>current.enemies[index].worldIndex)};
+        state.worldLosses[target.id]={cycle:target.spawnCycle,size:Math.max(previous?.size??0,...current.enemies.map(e=>e.worldIndex+1)),survivors:survivors.map(index=>current.enemies[index].worldIndex)};
       }else {
         delete state.worldLosses[target.id];
-        if(target.kind==='camp')state.camps[target.id]={clearedDay:state.day,respawnAt:worldHours(state)+72,generation:target.generation};
-        else {
-          state.bands[target.id]={...state.bands[target.id],defeatedUntil:worldHours(state)+48,spawnCycle:target.spawnCycle+1,behavior:'patrolling',targetId:null};
-          for(const shipment of Object.values(state.shipments??{}))if(shipment.attackerId===target.id&&(shipment.status==='under-attack'||shipment.status==='en-route')){shipment.status='en-route';shipment.attackerId=null;shipment.attackerSpawnCycle=null;shipment.attackHour=null;}
-        }
+        state.bands[target.id]={...state.bands[target.id],defeatedUntil:worldHours(state)+48,spawnCycle:target.spawnCycle+1,behavior:'patrolling',targetId:null};
+        for(const shipment of Object.values(state.shipments??{}))if(shipment.attackerId===target.id&&(shipment.status==='under-attack'||shipment.status==='en-route')){shipment.status='en-route';shipment.attackerId=null;shipment.attackerSpawnCycle=null;shipment.attackHour=null;}
       }
     }
   });
@@ -4682,6 +4679,10 @@ export function validateSave(input) {
     &&Number.isFinite(p.lastReinforcedHour)&&p.lastReinforcedHour>=0&&p.lastReinforcedHour<=now
     &&['touring','returning','engaging','clearing-camp','reforming'].includes(p.behavior)
     &&(p.targetId===null||knownPatrols.has(p.targetId)||BAND_BY_ID.has(p.targetId)||isCampId(p.targetId)),'faction patrol state');}
+  const normalizedPatrols=structuredClone(patrols);
+  for(const p of Object.values(normalizedPatrols))if(p.behavior==='clearing-camp'||p.targetId!==null&&isCampId(p.targetId)){
+    p.targetId=null;p.behavior=p.troops.length?'touring':'reforming';
+  }
   const worldLosses=input.worldLosses??{};
   assert(recordObject(worldLosses)&&Object.keys(worldLosses).length<=ROAMING_BANDS.length+CAMP_SITES.length+RANDOM_CAMP_IDS.length,'world casualties');
   for(const [id,p]of Object.entries(worldLosses))assert((BAND_BY_ID.has(id)||isCampId(id))&&recordObject(p)&&Object.keys(p).length===3&&validCount(p.cycle)&&p.cycle<=1000000&&validCount(p.size)&&p.size>0&&p.size<=12
@@ -4786,7 +4787,7 @@ export function validateSave(input) {
     ...(input.mountRewards === undefined ? {} : { mountRewards: { ...mountRewards } }),
     camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
     worldLayoutVersion: WORLD_LAYOUT_VERSION,
-    factionPatrols:structuredClone(patrols), worldLosses:structuredClone(worldLosses), factionReports:structuredClone(factionReports), factionSimulationHour,
+    factionPatrols:normalizedPatrols, worldLosses:structuredClone(worldLosses), factionReports:structuredClone(factionReports), factionSimulationHour,
     bands: normalizedBands, pursuit, encounterGraceUntil, tactic,
     battle, gameOver,
     position: { x: input.position.x, y: input.position.y },

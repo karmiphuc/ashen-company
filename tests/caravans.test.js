@@ -184,8 +184,17 @@ test('shortages raise only ordinary equipment prices and retain a same-town trad
 
 test('a shortage pays a small cross-town ordinary-gear profit without creating same-town arbitrage', () => {
   const state = createGame(1);
-  for (let step = 0; step < 6; step++) assert.equal(tick(state, 72).ok, true);
-  assert.equal(tick(state, 12).ok, true);
+  // Keep soldiers reforming so this pricing fixture cannot be rescued by a patrol.
+  const advanceWithoutPatrols = hours => {
+    while (hours > 0) {
+      const now = (state.day - 1) * 24 + state.hour;
+      for (const p of Object.values(state.factionPatrols)) { p.troops = []; p.defeatedUntil = now + 72; }
+      const step = Math.min(hours, 71.75);
+      assert.equal(tick(state, step).ok, true);
+      hours -= step;
+    }
+  };
+  advanceWithoutPatrols(444);
   const caravan = getCaravans(state).find(row => row.id === 'shipment:eastmere:19');
   assert.equal(caravan?.status, 'lost');
   assert.ok(caravan.resolvedHour <= (state.day - 1) * 24 + state.hour);

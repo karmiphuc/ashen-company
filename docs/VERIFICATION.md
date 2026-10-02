@@ -1,4 +1,10 @@
-# Verification - version 0.44.4, 2026-10-03
+# Verification - version 0.44.5, 2026-10-03
+
+## v0.44.5 checks
+
+All 482 automated tests pass. Faction patrols target roving brigands and rival patrols, never camps. An adjacent-camp regression verifies that camp enumeration is never called and even a camp supplied in the hostile list cannot be selected or fought, while a nearby roving band still triggers combat. The integrated twelve-hour simulation remains deterministic across split ticks, produces persistent casualties and leaves camps untouched. Company-reserved bands remain protected, and rival army battles, losses, city reinforcement and reformation remain covered. The caravan shortage-pricing fixture keeps soldiers reforming so a background rescue cannot remove the shortage being tested.
+
+Save migration clears historical camp-target orders, including old assault behavior, stale engaging targets and destroyed columns, without mutating the source save or erasing past camp casualties/reports. Repeated validation is stable. Fresh Chromium verification loads all 523 offline assets, relaunches offline and verifies a simulated twelve-hour world has roaming-band battles without camp targets, reports or clears.
 
 ## v0.44.4 checks
 

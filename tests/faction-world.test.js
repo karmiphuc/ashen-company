@@ -26,10 +26,10 @@ test('city-based factions have two or three patrols each and tours cross distant
  for(const faction of SOLDIER_FACTIONS){const group=patrols.filter(p=>p.factionId===faction.id);assert.ok(group.length>=2&&group.length<=3);for(const p of group){assert.equal(SETTLEMENTS.find(t=>t.id===p.homeId).kind,'town');assert.ok(p.waypoints.some(t=>Math.hypot(t.x-p.home.x,t.y-p.home.y)>1000));assert.ok(p.enemies.every(e=>getItem(e.weapon)&&getItem(e.armor)));}}
  assert.equal(patrols.filter(p=>p.playerRelation==='ally').length,3);assert.equal(patrols.filter(p=>p.playerRelation==='neutral').length,8);
 });
-test('world simulation is chunk invariant, causes persistent casualties and camp clears, and grants no company rewards',()=>{
+test('world simulation is chunk invariant, causes persistent casualties without camp clears, and grants no company rewards',()=>{
  const state=createGame(1),split=structuredClone(state),wealth={gold:state.gold,inventory:state.inventory,renown:state.renown};
  tick(state,12);for(let i=0;i<48;i++)tick(split,.25);
- assert.deepEqual(state,split);assert.ok(state.factionReports.length>0);assert.ok(state.factionReports.some(r=>r.losses>0));assert.ok(Object.values(state.camps).some(c=>c.clearedDay));
+ assert.deepEqual(state,split);assert.ok(state.factionReports.length>0);assert.ok(state.factionReports.some(r=>r.losses>0));assert.deepEqual(state.camps,{});assert.ok(state.factionReports.every(r=>r.kind!=='camp'));
  assert.deepEqual({gold:state.gold,inventory:state.inventory,renown:state.renown},wealth);
  assert.ok(getFactionPatrols(state).some(p=>p.enemies.length<p.size));assert.deepEqual(validateSave(state),state);
 });
@@ -69,6 +69,36 @@ test('depleted patrols return home until fully reinforced; reserved company targ
  p.troops=[0,1,2];p.behavior='returning';state.hour=20.25;advanceFactionSimulation(state,emptyContext);
  assert.equal(p.troops.length,4);assert.equal(p.behavior,'returning');
  state.day=2;state.hour=8.25;advanceFactionSimulation(state,emptyContext);assert.equal(p.troops.length,5);assert.equal(p.behavior,'returning');
- const camp=getCampSites(state).find(c=>c.random);Object.assign(p,{x:camp.x,y:camp.y,troops:Array.from({length:definition.size},(_,i)=>i),behavior:'touring'});
- state.destinationAction={type:'camp',id:camp.id};state.hour+=.25;advanceFactionSimulation(state,{...emptyContext,camps:()=>[camp]});assert.notEqual(p.targetId,camp.id);
+ const band=getRoamingBands(state).find(b=>b.difficulty>0);Object.assign(p,{x:band.x,y:band.y,troops:Array.from({length:definition.size},(_,i)=>i),behavior:'touring'});
+ state.destinationAction={type:'camp',id:band.id};state.hour+=.25;advanceFactionSimulation(state,{...emptyContext,hostiles:()=>[band],currentHostile:()=>band});assert.notEqual(p.targetId,band.id);
+});
+
+
+test('patrols ignore adjacent camps and only engage roving bands, even when a camp is supplied as a hostile',()=>{
+ const state=createGame(99),definition=patrolDefinitions(SETTLEMENTS)[0],p=state.factionPatrols[definition.id];
+ const camp={...getCampSites(state).find(c=>c.random),x:p.x,y:p.y};
+ const campsBefore=structuredClone(state.camps);let reads=0;const battles=[];
+ const context={...emptyContext,camps:()=>{reads++;return [camp];},hostiles:()=>[camp],hostileResult:target=>battles.push(target)};
+ p.behavior='clearing-camp';p.targetId=camp.id;
+ state.hour+=.25;advanceFactionSimulation(state,context);
+ assert.equal(reads,0);assert.deepEqual(battles,[]);assert.equal(p.behavior,'touring');assert.equal(p.targetId,null);
+ const band={...getRoamingBands(state).find(b=>b.difficulty>0),x:p.x,y:p.y};
+ state.hour+=.25;advanceFactionSimulation(state,{...context,hostiles:()=>[camp,band],currentHostile:id=>id===band.id?band:null});
+ assert.ok(battles.some(target=>target.id===band.id));assert.ok(battles.every(target=>target.kind==='band'));
+ assert.ok(state.factionReports.some(r=>r.kind==='band'));assert.ok(state.factionReports.every(r=>r.kind!=='camp'));
+ assert.equal(reads,0);assert.deepEqual(state.camps,campsBefore);
+});
+
+test('saved camp assaults resume as normal patrols without changing camp history or mutating the input',()=>{
+ const state=createGame(99),definition=patrolDefinitions(SETTLEMENTS)[0],camp=getCampSites(state).find(c=>c.random);
+ state.factionReports.push({patrolId:definition.id,factionId:definition.factionId,opponentId:camp.id,opponentName:camp.name,kind:'camp',outcome:'defeat',losses:1,hour:state.hour});
+ state.worldLosses[camp.id]={cycle:camp.generation,size:2,survivors:[0]};
+ for(const [behavior,troops]of [['clearing-camp',[0,1,2,3]],['engaging',[0,1,2,3]],['clearing-camp',[]]]){
+   Object.assign(state.factionPatrols[definition.id],{behavior,targetId:camp.id,troops,defeatedUntil:troops.length?0:80});
+   const before=structuredClone(state),restored=validateSave(state);
+   assert.deepEqual(state,before);assert.equal(restored.factionPatrols[definition.id].behavior,troops.length?'touring':'reforming');
+   assert.equal(restored.factionPatrols[definition.id].targetId,null);assert.deepEqual(restored.camps,state.camps);
+   assert.deepEqual(restored.worldLosses,state.worldLosses);assert.deepEqual(restored.factionReports,state.factionReports);
+   assert.deepEqual(validateSave(restored),restored);
+ }
 });

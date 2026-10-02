@@ -48,7 +48,7 @@ export function factionPatrols(state,settlements){
   const now=(state.day-1)*24+state.hour;
   return patrolDefinitions(settlements).map(definition=>{
     const progress=state.factionPatrols?.[definition.id]??initialPatrolProgress(state,definition),faction=SOLDIER_FACTIONS.find(f=>f.id===definition.factionId);
-    return {...definition,x:progress.x,y:progress.y,kind:'patrol',playerRelation:faction.relation,color:faction.color,factionLabel:faction.name,rivalLabel:SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name,enemies:roster(state,definition,progress),active:progress.troops.length>0&&progress.defeatedUntil<=now,behavior:progress.behavior,targetId:progress.targetId,wins:progress.wins,losses:progress.losses,respawnHours:Math.max(0,Math.ceil(progress.defeatedUntil-now)),description:`${faction.relation==='ally'?'Allied':'Neutral'} city soldiers tour the roads, hunt brigands and fight ${SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name} patrols. Casualties persist until they recover at a city.`};
+    return {...definition,x:progress.x,y:progress.y,kind:'patrol',playerRelation:faction.relation,color:faction.color,factionLabel:faction.name,rivalLabel:SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name,enemies:roster(state,definition,progress),active:progress.troops.length>0&&progress.defeatedUntil<=now,behavior:progress.behavior,targetId:progress.targetId,wins:progress.wins,losses:progress.losses,respawnHours:Math.max(0,Math.ceil(progress.defeatedUntil-now)),description:`${faction.relation==='ally'?'Allied':'Neutral'} city soldiers tour the roads, hunt roaming brigands and fight ${SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name} patrols. Casualties persist until they recover at a city.`};
   });
 }
 function strength(enemies,getItem){return enemies.reduce((sum,e)=>sum+18+(getItem(e.armor)?.armor??0)*.07+(getItem(e.helmet)?.armor??0)*.04+((getItem(e.weapon)?.damageMin??20)+(getItem(e.weapon)?.damageMax??30))*.16+(getItem(e.shield)?.defense??0)*.4+(e.mount?7:0),0);}
@@ -73,19 +73,15 @@ export function advanceFactionSimulation(state,context){
     const p=state.factionPatrols[d.id]??=initialPatrolProgress(state,d);
     if(!p.troops.length&&p.defeatedUntil<=now){const cycle=p.spawnCycle+1;state.factionPatrols[d.id]={...initialPatrolProgress(state,d),spawnCycle:cycle,wins:p.wins,losses:p.losses};}
   }
-  const armies=factionPatrols(state,context.settlements).filter(p=>p.active),hostiles=context.hostiles(),campTargets=()=>context.camps();
-  let camps=null;
+  const armies=factionPatrols(state,context.settlements).filter(p=>p.active),hostiles=context.hostiles().filter(target=>target.kind==='band');
   const reserved=new Set([state.pursuit,state.destinationAction?.id,state.contract?.campId]);
   for(const army of armies){
     const p=state.factionPatrols[army.id],d=byId.get(army.id);
     if(!p.troops.length||p.defeatedUntil>now)continue;
     const recovering=p.troops.length<Math.ceil(d.size/2)||(p.behavior==='returning'&&p.troops.length<d.size);
     const threats=[...hostiles.filter(b=>b.difficulty>0&&!reserved.has(b.id)),...armies.filter(other=>other.id!==army.id&&soldierRelations(army.factionId,other.factionId)==='hostile')];
-    const threat=p.cooldownUntil<=now?threats.filter(t=>Math.hypot(t.x-p.x,t.y-p.y)<=(recovering?35:180)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)||a.id.localeCompare(b.id))[0]:null;
-    if(!camps)camps=campTargets();
-    const camp=!recovering&&p.cooldownUntil<=now&&!threat?camps.filter(c=>c.random&&!c.cleared&&!reserved.has(c.id)&&Math.hypot(c.x-p.x,c.y-p.y)<125).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)||a.id.localeCompare(b.id))[0]:null;
-    const target=threat??camp;
-    if(target){p.behavior=recovering?'returning':target.kind==='camp'?'clearing-camp':'engaging';p.targetId=target.id;move(p,target,52*.25);}
+    const target=p.cooldownUntil<=now?threats.filter(t=>Math.hypot(t.x-p.x,t.y-p.y)<=(recovering?35:180)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)||a.id.localeCompare(b.id))[0]:null;
+    if(target){p.behavior=recovering?'returning':'engaging';p.targetId=target.id;move(p,target,52*.25);}
     else {p.behavior=recovering?'returning':'touring';p.targetId=null;const goal=p.behavior==='returning'?d.home:d.waypoints[p.waypoint];if(move(p,goal,55*.25)&&p.behavior==='touring')p.waypoint=(p.waypoint+1)%d.waypoints.length;}
     const atCity=context.settlements.some(t=>t.kind==='town'&&Math.hypot(t.x-p.x,t.y-p.y)<=28&&soldierFactionAt(t.x,t.y).id===army.factionId);
     if(atCity&&now-p.lastReinforcedHour>=12&&p.troops.length<d.size){const missing=Array.from({length:d.size},(_,i)=>i).find(i=>!p.troops.includes(i));p.troops.push(missing);p.troops.sort((a,b)=>a-b);p.lastReinforcedHour=now;}
@@ -104,7 +100,7 @@ export function advanceFactionSimulation(state,context){
       rival.troops=battle.bSurvivors.map(index=>rival.troops[index]);rival.cooldownUntil=now+6;rival[battle.aWins?'losses':'wins']+=1;
       if(!rival.troops.length){rival.defeatedUntil=now+72;rival.behavior='reforming';rival.x=rivalDefinition.home.x;rival.y=rivalDefinition.home.y;}
       addReport(state,target,army,battle.aWins?'defeat':'victory',before-rival.troops.length,now);
-    }else context.hostileResult(target,battle.aWins&&target.kind==='camp'?[]:battle.bSurvivors,battle.aWins);
+    }else context.hostileResult(target,battle.bSurvivors,battle.aWins);
   }
   state.factionSimulationHour=now;
 }
