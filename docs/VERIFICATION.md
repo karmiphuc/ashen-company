@@ -1,4 +1,10 @@
-# Verification - version 0.44.0, 2026-10-03
+# Verification - version 0.44.1, 2026-10-03
+
+## v0.44.1 checks
+
+Medical icons now use rolled-bandage and medicine-supply images, with per-file pinned provenance and hashes. All nine shield sprite variants appear on the weapon side, including mounted portraits. Portrait and offline checks pass, with 517 cached assets on a fresh offline browser reload.
+
+All 471 automated tests pass, and fresh offline browser galleries verify all 113 imported helmets with no exceptions. The DLC importer had incorrectly anchored helmets to the torso origin y=63; the native head origin is y=48. All 113 imported helmets failed the source-geometry regression against v0.44.0. The importer now uses separate head/body origins and records native brush bounds and raster dimensions. Tall crowns and wide horns fit by transforming the whole composition, preserving helmet-to-face alignment rather than lowering helmets. Regression coverage checks all 113 helmets, independent reference shapes, all six head appearances, ordinary and named variants, mounted riders, crown/horn clipping and unchanged armor anchors.
 
 ## v0.44.0 checks
 

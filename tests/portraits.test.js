@@ -169,7 +169,9 @@ test('v0.12 expansion art exists and matches its pinned-source manifest', () => 
   for (const asset of manifest.assets) {
     const bytes = readFileSync(new URL(`../${asset.local}`, import.meta.url));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256, asset.local);
-    assert.match(asset.url, new RegExp(`^https://raw\\.githubusercontent\\.com/Battle-Brothers-Legends/Legends-public/${manifest.commit}/`));
+    const repository=(asset.repository??manifest.repository).replace('https://github.com/','');
+    assert.ok(['Battle-Brothers-Legends/Legends-public','kovasap/battle-bros-decompiled'].includes(repository));
+    assert.ok(asset.url.startsWith(`https://raw.githubusercontent.com/${repository}/${asset.commit??manifest.commit}/`));
   }
 });
 

@@ -635,12 +635,14 @@
     },
     {
       "local": "assets/items/surgeons-kit.png",
-      "source": "gfx/ui/items/legend_armor/inventory_bandages_04.png",
+      "source": "gfx/ui/items/supplies/medicine.png",
       "kind": "inventory",
       "itemId": "surgeons-kit",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_bandages_04.png",
-      "bytes": 16674,
-      "sha256": "61b50413e5f46c4982008203f601837d502103ce305a9494bd432a14c2f5599d"
+      "url": "https://raw.githubusercontent.com/kovasap/battle-bros-decompiled/e06d68df0915827967f98a05d0c705c1f53df0b7/gfx/ui/items/supplies/medicine.png",
+      "bytes": 12658,
+      "sha256": "ebb861d471ba99b7b4ab231c7467d5f0896be05e8230d9beeba6f81e2e2bd9b1",
+      "repository": "https://github.com/kovasap/battle-bros-decompiled",
+      "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7"
     }
   ]
 }

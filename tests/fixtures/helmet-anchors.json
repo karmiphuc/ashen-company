@@ -1,0 +1,101 @@
+{
+  "repository": "kovasap/battle-bros-decompiled",
+  "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+  "headBrush": {
+    "atlas": "gfx/entity_0.png",
+    "name": "bust_head_01",
+    "bounds": [
+      -21,
+      29,
+      -20,
+      48
+    ],
+    "localTop": 0,
+    "origin": [
+      52,
+      48
+    ]
+  },
+  "helmetReferences": [
+    {
+      "id": "bb-aketon-cap",
+      "bounds": [
+        -26.0,
+        32.0,
+        -19.0,
+        49.0
+      ],
+      "expectedTop": -1
+    },
+    {
+      "id": "bb-leather-headband",
+      "bounds": [
+        -18.0,
+        30.0,
+        9.0,
+        33.0
+      ],
+      "expectedTop": 15
+    },
+    {
+      "id": "bb-closed-flat-top-helmet",
+      "bounds": [
+        -28.0,
+        32.0,
+        -31.0,
+        51.0
+      ],
+      "expectedTop": -3
+    },
+    {
+      "id": "bb-bascinet-with-mail",
+      "bounds": [
+        -28.0,
+        42.0,
+        -29.0,
+        57.0
+      ],
+      "expectedTop": -9
+    },
+    {
+      "id": "bb-heavy-horned-plate-helmet",
+      "bounds": [
+        -48.0,
+        46.0,
+        -25.0,
+        55.0
+      ],
+      "expectedTop": -7
+    },
+    {
+      "id": "bb-gladiator-helmet",
+      "bounds": [
+        -51.0,
+        39.0,
+        -38.0,
+        80.0
+      ],
+      "expectedTop": -32
+    },
+    {
+      "id": "bb-gunner-hat",
+      "bounds": [
+        -34.0,
+        38.0,
+        -13.0,
+        111.0
+      ],
+      "expectedTop": -63
+    },
+    {
+      "id": "bb-fangshire",
+      "bounds": [
+        -47.0,
+        37.0,
+        -22.0,
+        62.0
+      ],
+      "expectedTop": -14
+    }
+  ]
+}

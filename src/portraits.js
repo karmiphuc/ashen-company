@@ -139,15 +139,15 @@ export const VISUALS = {
     'northern-sling': ['weapon-northern-sling.png', 73, 57, 'rotate(-25deg)', '5px 60px'],
   },
   shield: {
-    round: ['shield-round.png', 8, 68],
-    kite: ['shield-kite.png', 6, 54],
-    heater: ['shield-heater.png', 6, 54],
-    adarga: ['shield-adarga.png', 8, 68],
-    'painted-round-shield': ['shield-painted-round-shield.png', 8, 68],
-    'painted-heater-shield': ['shield-painted-heater-shield.png', 6, 54],
-    'painted-tower-shield': ['shield-painted-tower-shield.png', 2, 28, 'scale(.65)', '0 0'],
-    'northern-heartwood-shield': ['shield-northern-heartwood-shield.png', 5, 54],
-    'northern-iron-round-shield': ['shield-northern-iron-round-shield.png', 8, 68],
+    round: ['shield-round.png', 52, 68],
+    kite: ['shield-kite.png', 50, 54],
+    heater: ['shield-heater.png', 52, 54],
+    adarga: ['shield-adarga.png', 52, 68],
+    'painted-round-shield': ['shield-painted-round-shield.png', 50, 68],
+    'painted-heater-shield': ['shield-painted-heater-shield.png', 52, 54],
+    'painted-tower-shield': ['shield-painted-tower-shield.png', 37, 28, 'scale(.65)', '0 0'],
+    'northern-heartwood-shield': ['shield-northern-heartwood-shield.png', 33, 54],
+    'northern-iron-round-shield': ['shield-northern-iron-round-shield.png', 40, 68],
   },
   accessory: {
     bandages: ['../items/bandages.png'],
@@ -417,7 +417,15 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const hiddenHead = FANTASY_HIDDEN_HEADS.includes(helmetVisual) || dlcHelmet?.hideHead;
   const closedHelmet = dlcHelmet?.hideBeard || helmetVisual === 'greathelm' || helmetVisual === 'full-helm' || FANTASY_CLOSED_HELMETS.includes(helmetVisual);
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
-  const compositionTop = helmetVisual === 'bascinet' ? 13 : 0;
+  // Preserve the helmet/head relationship while fitting tall crowns and wide horns.
+  // Move and scale the whole composition; never push only the helmet down onto the brow.
+  const headroom = dlcHelmet ? Math.max(0, -dlcHelmet.top) : 0;
+  const leftRoom = dlcHelmet ? Math.max(0, -dlcHelmet.left) : 0;
+  const rightRoom = dlcHelmet ? Math.max(0, dlcHelmet.left + dlcHelmet.width - CANVAS.width) : 0;
+  const compositionScale = dlcHelmet ? Math.min(CANVAS.width / (CANVAS.width + leftRoom + rightRoom), CANVAS.height / (CANVAS.height + headroom)) : 1;
+  const compositionLeft = dlcHelmet ? (CANVAS.width - (CANVAS.width + leftRoom + rightRoom) * compositionScale) / 2 + leftRoom * compositionScale : 0;
+  const compositionTop = dlcHelmet ? headroom * compositionScale : helmetVisual === 'bascinet' ? 13 : 0;
+  const compositionTransform = dlcHelmet ? `transform:scale(${compositionScale});transform-origin:top left;` : '';
   const rider = `${bodyLayer(appearance.body, Boolean(armor), appearance.bodyLeft, appearance.bodyTop)}
         ${attachmentLayer(attachment, 'back')}
         ${layer('armor', armor, equipment.armor)}
@@ -432,7 +440,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
 
   return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:hidden;vertical-align:middle;background:transparent">
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
-      <span class="bb-portrait-composition" style="display:block;position:absolute;left:0;top:${compositionTop}px;width:104px;height:142px">
+      <span class="bb-portrait-composition" style="display:block;position:absolute;left:${compositionLeft}px;top:${compositionTop}px;width:104px;height:142px;${compositionTransform}">
         ${mountLayer(mount, 'body')}
         ${horseHeadFront ? '' : mountLayer(mount, 'head')}
         ${mount ? `<span class="bb-portrait-rider" style="display:block;position:absolute;left:0;top:0;width:104px;height:142px;transform:translate(2px,0) scale(.76);transform-origin:top left">${rider}</span>` : rider}
