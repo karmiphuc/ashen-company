@@ -1,4 +1,10 @@
-# Verification - version 0.40.0, 2026-10-02
+# Verification - version 0.44.0, 2026-10-03
+
+## v0.44.0 checks
+
+All 469 automated tests pass. Coverage includes exact 33% area reduction, all regions/roads/towns, unmodified real v0.43 save fixtures, one-time migration and active-battle preservation, city stable distribution and regional beasts, deterministic named-plus-mount camp loot, city-only patrol counts, distant tours, rival victories/defeats, permanent casualties, home recovery, protected company targets, quarter-hour chunk invariance, no NPC company rewards, and malformed-save rejection. Existing hostile-only tests isolate their soldier patrols so caravan timing and deterministic starter fights remain independently covered.
+
+A 30-day campaign simulation produced 343 reported engagements including 26 rival-patrol reports, reached more than 1,000 units from home, and passed save validation after every four simulated hours. Fresh Chromium offline relaunch verifies all 517 cached assets, all 217 catalog designs and their portrait sprites, patrol selection and rosters, and no browser exceptions. Physical iPad Safari is not tested.
 
 ## v0.40.0 checks
 

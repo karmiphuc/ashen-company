@@ -1,4 +1,9 @@
-// Stable authored geography. Existing town IDs/coordinates and the original camp grid stay fixed.
+// Compact the added frontier while preserving the original campaign footprint.
+export const WORLD_LAYOUT_VERSION = 2;
+export const FRONTIER_SCALE = 0.6850883976607238;
+export const LEGACY_WORLD_LIMITS = Object.freeze({minX:180,maxX:5000,minY:80,maxY:3000});
+export function compactPoint(point) { return {x:point.x<=2120?point.x:2120+(point.x-2120)*FRONTIER_SCALE,y:point.y<=1380?point.y:1380+(point.y-1380)*FRONTIER_SCALE}; }
+export function authoredPoint(point) { return {x:point.x<=2120?point.x:2120+(point.x-2120)/FRONTIER_SCALE,y:point.y<=1380?point.y:1380+(point.y-1380)/FRONTIER_SCALE}; }
 export const REGIONS = Object.freeze([
   { id: 'western-marches', name: 'Western Marches', x: 700, y: 90, color: '#b7b67a', climate: 'temperate', grain: .75, timber: .80, iron: 1.15, salt: 1.15, wool: .90, gear: 1.02 },
   { id: 'northern-highlands', name: 'Northern Highlands', x: 2250, y: 90, color: '#b5c7ce', climate: 'snow', grain: 1.45, timber: 1.20, iron: .80, salt: 1.35, wool: 1.10, gear: 1.15 },
@@ -9,9 +14,10 @@ export const REGIONS = Object.freeze([
   { id: 'blackwater-basin', name: 'Blackwater Basin', x: 1800, y: 1380, color: '#91a99c', climate: 'marsh', grain: 1.10, timber: .80, iron: 1.30, salt: .70, wool: 1.20, gear: 1.15 },
   { id: 'saffron-coast', name: 'Saffron Coast', x: 1140, y: 2370, color: '#d3bf89', climate: 'coastal', grain: .85, timber: 1.15, iron: 1.30, salt: .55, wool: 1.00, gear: 1.08 },
   { id: 'sunlands', name: 'Sunlands', x: 3700, y: 2200, color: '#d8b274', climate: 'desert', grain: 1.25, timber: 1.45, iron: .95, salt: .80, wool: 1.10, gear: 1.18 },
-].map(Object.freeze));
+].map(region => Object.freeze({...region,...compactPoint(region)})));
 const regionById = new Map(REGIONS.map(region => [region.id, region]));
 export function regionAt(x, y) {
+  ({x,y}=authoredPoint({x,y}));
   const id = y >= 1700 && x < 2200 ? 'saffron-coast'
     : y >= 1400 && x >= 2200 ? 'sunlands'
     : x >= 3400 ? 'far-steppe'
@@ -22,7 +28,7 @@ export function regionAt(x, y) {
     : x >= 1100 ? 'greenwood' : 'western-marches';
   return regionById.get(id);
 }
-const town = (id, name, x, y, kind, description, major = false) => Object.freeze({ id, name, x, y, kind, description, major, regionId: regionAt(x, y).id, color: regionAt(x, y).color });
+const town = (id, name, x, y, kind, description, major = false) => { const point=compactPoint({x,y}),region=regionAt(point.x,point.y);return Object.freeze({id,name,...point,kind,description,major,regionId:region.id,color:region.color}); };
 export const REGIONAL_SETTLEMENTS = Object.freeze([
   town('frostgate', 'Frostgate', 2380, 140, 'castle', 'The northern iron road passes beneath its frost-bound walls.'),
   town('ravenfell', 'Ravenfell', 3200, 140, 'town', 'Fur merchants and caravan guards shelter from the highland wind.'),
@@ -53,7 +59,7 @@ export const REGIONAL_SETTLEMENTS = Object.freeze([
   town('spicehaven', 'Spicehaven', 3000, 2450, 'town', 'A southern caravan city with a renowned armory.', true),
   town('emberkeep', 'Emberkeep', 4500, 2750, 'castle', 'Veteran guards hold a remote fortress above the dunes.'),
 ]);
-export const WORLD_LIMITS = Object.freeze({ minX: 180, maxX: 5000, minY: 80, maxY: 3000 });
+export const WORLD_LIMITS = Object.freeze({ minX: 180, maxX: compactPoint({x:5000,y:3000}).x, minY: 80, maxY: compactPoint({x:5000,y:3000}).y });
 // Camps added after the original twelve use these cells; the original seeded grid is untouched.
 export const FRONTIER_CAMP_CELLS = Object.freeze([
   { x: 2240, y: 80, width: 550, height: 250 }, { x: 2850, y: 80, width: 500, height: 250 },
@@ -63,6 +69,7 @@ export const FRONTIER_CAMP_CELLS = Object.freeze([
   { x: 220, y: 1770, width: 1700, height: 1100 }, { x: 2220, y: 1450, width: 650, height: 1450 },
   { x: 2980, y: 1450, width: 750, height: 1450 }, { x: 3880, y: 1450, width: 1000, height: 1450 },
 ].map(Object.freeze));
+function authoredDistance(a,b){a=authoredPoint(a);b=authoredPoint(b);return Math.hypot(a.x-b.x,a.y-b.y);}
 const roadCache = new WeakMap();
 const routeCache = new WeakMap();
 const legacyEdges = [['oakwatch','greyhaven'],['greyhaven','ironford'],['ironford','thornwall'],['ironford','redmere'],['greyhaven','highpass'],['oakwatch','saltwick'],['oakwatch','barrowfield'],['barrowfield','redmere'],['barrowfield','ironford'],['eastmere','stonebridge']];
@@ -80,12 +87,12 @@ export function roadNetwork(settlements) {
   for (const [a,b] of legacyEdges) add(a,b);
   for (const [a,b] of highways) add(a,b,'highway');
   // Two local links per settlement form loops, rather than a single brittle tree.
-  for (const town of settlements) for (const neighbor of settlements.filter(other=>other.id!==town.id).sort((a,b)=>Math.hypot(town.x-a.x,town.y-a.y)-Math.hypot(town.x-b.x,town.y-b.y)||a.id.localeCompare(b.id)).slice(0,2)) add(town.id,neighbor.id);
+  for (const town of settlements) for (const neighbor of settlements.filter(other=>other.id!==town.id).sort((a,b)=>authoredDistance(town,a)-authoredDistance(town,b)||a.id.localeCompare(b.id)).slice(0,2)) add(town.id,neighbor.id);
   // Connect any remaining components deterministically.
   const connected = new Set([settlements[0]?.id]);
   const flood = () => { let changed=true; while(changed){changed=false;for(const edge of edges.values())if(connected.has(edge.from)!==connected.has(edge.to)){connected.add(edge.from);connected.add(edge.to);changed=true;}} };
   flood();
-  while(connected.size<settlements.length){let best=null;for(const a of settlements.filter(t=>connected.has(t.id)))for(const b of settlements.filter(t=>!connected.has(t.id))){const length=Math.hypot(a.x-b.x,a.y-b.y);if(!best||length<best.length)best={a,b,length};}if(!best)break;add(best.a.id,best.b.id);flood();}
+  while(connected.size<settlements.length){let best=null;for(const a of settlements.filter(t=>connected.has(t.id)))for(const b of settlements.filter(t=>!connected.has(t.id))){const length=authoredDistance(a,b);if(!best||length<best.length)best={a,b,length};}if(!best)break;add(best.a.id,best.b.id);flood();}
   const roads = Object.freeze([...edges.values()].sort((a,b)=>a.id.localeCompare(b.id)));roadCache.set(settlements,roads);return roads;
 }
 export function roadRoute(settlements, from, to) {

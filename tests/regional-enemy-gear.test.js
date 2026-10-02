@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { REGIONS } from '../src/geography.js';
 import { DLC_ITEMS } from '../src/dlc-items.js';
 import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, regionalOutfit, enemyCombatRole, enemyRoleBonuses } from '../src/regional-enemies.js';
-import { createGame, getCampSites, getRoamingBands, getItem, getCompanyStats, equipItem, getMarket, buyItem, sellItem, startBattle, resolveBattle, validateSave } from '../src/engine.js';
+import { SETTLEMENTS, createGame, getCampSites, getRoamingBands, getItem, getCompanyStats, equipItem, getMarket, buyItem, sellItem, startBattle, resolveBattle, validateSave } from '../src/engine.js';
 import { getItemDetails } from '../src/item-details.js';
 
 test('nine regions have distinct combat rosters, weapons, light roles and usable catalog gear', () => {
@@ -85,7 +85,7 @@ test('all imported named and legendary pieces have permanent benefits; Fangshire
 test('named market offers remain scarce, within budgets, and purchase/sale paths support intrinsic IDs', () => {
   let found=null;
   for(let seed=1;seed<=100&&!found;seed++){
-    const state=createGame(seed);state.position={x:2380,y:140};state.gold=100000;
+    const state=createGame(seed);state.position={x:SETTLEMENTS.find(t=>t.id==='frostgate').x,y:140};state.gold=100000;
     const rare=getMarket(state).equipment.filter(row=>row.stock>0&&getItem(row.itemId).rarity==='named');
     assert.ok(rare.length<=1);
     if(rare.length)found={state,id:rare[0].itemId};

@@ -74,7 +74,7 @@ test('fantasy war horses carry their catalog trade-offs into company stats', () 
   }
 });
 
-test('weekly large town and castle mount offers are rare, deterministic, and tradable', () => {
+test('weekly city and castle mount offers are deterministic and tradable', () => {
   let offer = null;
   let opportunities = 0;
   for (let seed = 1; seed <= 300; seed++) {
@@ -87,7 +87,7 @@ test('weekly large town and castle mount offers are rare, deterministic, and tra
       if (!offer && offered.length) offer = { state: structuredClone(state), itemId: offered[0].itemId };
     }
   }
-  assert.ok(opportunities / (300 * SETTLEMENTS.filter(entry => entry.major || entry.kind === 'castle').length) > .005 && opportunities / (300 * SETTLEMENTS.filter(entry => entry.major || entry.kind === 'castle').length) < .04, 'roughly two percent of eligible weekly armories offer a mount');
+  assert.ok(opportunities / (300 * SETTLEMENTS.filter(entry => entry.major || entry.kind === 'castle').length) > .005 && opportunities / (300 * SETTLEMENTS.filter(entry => entry.major || entry.kind === 'castle').length) < .30, 'city horses are stocked more often than rare beasts and castle warhorses');
   const { state, itemId } = offer;
   assert.equal(getMarket(state).equipment.find(row => row.itemId === itemId).stock, 1);
   state.gold = 5000;

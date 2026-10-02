@@ -26,8 +26,10 @@ const threatenedRoutes = [
 ];
 
 function passHours(state, hours) {
+  for(const patrol of Object.values(state.factionPatrols)){patrol.troops=[];patrol.defeatedUntil=(state.day-1)*24+state.hour+72;}
   while (hours > 0) {
-    const step = Math.min(hours, 72);
+    for(const p of Object.values(state.factionPatrols)){p.troops=[];p.defeatedUntil=(state.day-1)*24+state.hour+72;}
+    const step = Math.min(hours, 24);
     assert.equal(tick(state, step).ok, true);
     hours -= step;
   }

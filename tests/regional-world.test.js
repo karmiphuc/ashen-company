@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SETTLEMENTS, WORLD_BOUNDS, WORLD_REGIONS, WORLD_ROADS, createGame, getMarket, getCampSites, getRoamingBands, getCaravans, travelTo, tick, terrainAt, validateSave } from '../src/engine.js';
-import { REGIONAL_SETTLEMENTS, roadRoute, regionAt, distanceToRoad, regionalTownArt, regionalTownSpecialty } from '../src/geography.js';
+import { REGIONAL_SETTLEMENTS, compactPoint, roadRoute, regionAt, distanceToRoad, regionalTownArt, regionalTownSpecialty } from '../src/geography.js';
 import { shipmentPlan, shipmentPosition } from '../src/caravans.js';
 const inBounds=point=>point.x>=WORLD_BOUNDS.minX&&point.x<=WORLD_BOUNDS.maxX&&point.y>=WORLD_BOUNDS.minY&&point.y<=WORLD_BOUNDS.maxY;
 
@@ -19,7 +19,7 @@ test('48 settlements populate nine distinct regions and one connected road netwo
     if(town.id!=='oakwatch')assert.ok(WORLD_ROADS.filter(road=>road.from===town.id||road.to===town.id).length>=2,town.id);
   }
   for(const road of WORLD_ROADS)assert.equal(distanceToRoad(road.points[0].x,road.points[0].y,[road]),0);
-  assert.equal(terrainAt(4950,2700),'desert');assert.equal(terrainAt(3300,100),'snow');
+  assert.equal(terrainAt(...Object.values(compactPoint({x:4950,y:2700}))),'desert');assert.equal(terrainAt(...Object.values(compactPoint({x:3300,y:100}))),'snow');
 });
 
 test('new caravans remain on displayed roads through their journey while original route origins remain stable', () => {
@@ -63,10 +63,10 @@ test('additional patrols and camps are deterministic, in bounds, persist progres
 });
 
 test('roads speed frontier travel and snow/desert positions round trip without accepting out-of-bounds destinations', () => {
-  const state=createGame(1013);state.position={x:4100,y:1875};
+  const state=createGame(1013);state.position=compactPoint({x:4100,y:1875});const initialX=state.position.x;
   for(const band of Object.values(state.bands))band.defeatedUntil=48;
-  assert.equal(travelTo(state,4150,1900).ok,true);assert.equal(tick(state,.25).ok,true);
-  assert.ok(state.position.x>4114,'highway provides more than ordinary desert movement');
+  assert.equal(travelTo(state,...Object.values(compactPoint({x:4150,y:1900}))).ok,true);assert.equal(tick(state,.25).ok,true);
+  assert.ok(state.position.x>initialX+14,'highway provides more than ordinary desert movement');
   assert.deepEqual(validateSave(state),state);
   assert.equal(travelTo(state,WORLD_BOUNDS.maxX+1,1800).ok,false);
 });

@@ -40,7 +40,7 @@ test('fifty-six visible patrols move with time and can be intercepted', () => {
   assert.ok(original.every(band => band.kind === 'band' && band.difficulty === 0 && band.enemies.length <= 2));
   assert.equal(frontier.length, 52);
   assert.ok(frontier.every(band => band.kind === 'band' && band.difficulty >= 1 && band.enemies.length >= 2));
-  assert.equal(getEncounterSites(state).length, getCampSites(state).length + first.length);
+  assert.equal(getEncounterSites(state).length, getCampSites(state).length + first.length + 11);
   tick(state, 1);
   const moved = getRoamingBands(state);
   assert.ok(moved.some((band, index) => band.x !== first[index].x || band.y !== first[index].y));
@@ -52,6 +52,7 @@ test('fifty-six visible patrols move with time and can be intercepted', () => {
 
 test('bands give renewable fights, shared experience, and leave hunts untouched', () => {
   const state = createGame(2);
+  for(const p of Object.values(state.factionPatrols)){p.troops=[];p.defeatedUntil=80;}
   const campState = structuredClone(state.camps);
   for (const id of ['road-thieves', 'hungry-deserters']) {
     catchBand(state, id);

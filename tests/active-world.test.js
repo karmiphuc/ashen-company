@@ -8,6 +8,7 @@ import {
 const now = state => (state.day - 1) * 24 + state.hour;
 
 function isolateBand(state, id) {
+  for(const patrol of Object.values(state.factionPatrols)){patrol.troops=[];patrol.defeatedUntil=(state.day-1)*24+state.hour+72;}
   for (const [bandId, progress] of Object.entries(state.bands)) {
     if (bandId !== id) progress.defeatedUntil = now(state) + 48;
   }
@@ -179,6 +180,7 @@ test('caravan raiders physically intercept, warn on contact, lose only after con
 
 test('an out-of-contact wagon escapes at arrival and late renewed contact records the actual loss time', () => {
   const escaped = createGame(16);
+  for(const p of Object.values(escaped.factionPatrols)){p.troops=[];p.defeatedUntil=140;}
   const shipment = escaped.shipments.eastmere;
   shipment.status = 'under-attack';
   shipment.attackHour = 0;
@@ -190,6 +192,7 @@ test('an out-of-contact wagon escapes at arrival and late renewed contact record
   assert.equal(escaped.shipments.eastmere.resolvedHour, 60);
 
   const late = createGame(2);
+  for(const p of Object.values(late.factionPatrols)){p.troops=[];p.defeatedUntil=87;}
   const threatened = late.shipments.ironford;
   threatened.status = 'under-attack';
   threatened.attackHour = 8;
