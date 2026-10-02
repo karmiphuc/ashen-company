@@ -1,4 +1,10 @@
-# Verification - version 0.45.0, 2026-10-03
+# Verification - version 0.45.1, 2026-10-02
+
+## v0.45.1 checks
+
+All 498 automated tests pass. An installed offline session previously retained evaluated ES modules even after its worker replaced the cache, so the obsolete Riding Horse left-side pose and full-size War Horse over the torso persisted. Completed cache upgrades now capture existing in-scope windows and navigate them to the cached current build. Current clients pause and verify their company save before acknowledging; failed saves prevent navigation. Legacy clients retain their existing pagehide autosave. First installation does not reload, incomplete caches never claim or remove old caches, and other applications are excluded. Activation finishes without awaiting the navigation fetch that depends on activation.
+
+Chromium reproduces the actual v0.44.5 renderer: Riding Horse head left 12/top 66 and War Horse head left 55/top 23. A deployment switch and worker update, with no manual reload, replace the open session with v0.45.1: Riding Horse left 96.5/top 66 at 0.70 scale and War Horse left 101.2/top 65 at 0.58 scale. Rendered screenshots cover all five mounts with one-handed sword, kite shield, Shogun and bear headgear. Company members, equipment and crowns remain identical through the update. All 526 offline resources are complete; offline relaunch retains the right-side renderer with no browser exceptions. Existing decoded-alpha mount/weapon and 113-helmet alignment regressions pass. Physical iPad Safari remains untested.
 
 ## v0.45.0 checks
 

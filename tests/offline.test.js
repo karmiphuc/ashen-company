@@ -128,3 +128,38 @@ test('cached MP3 requests support byte ranges without network or unnecessary ful
     assert.equal(worker.state.fetches, 0);
   }
 });
+
+async function updateWorker({oldCache=true,complete=true,modern=true,saveReady=true,navigationPending=false}={}) {
+  const source=await renderServiceWorker(),listeners=new Map(),events=[],timers=new Map();let clock=0;
+  const scope='https://example.test/ashen-company/';
+  const clients=[{url:scope,async navigate(url){events.push({type:'navigate',url});if(navigationPending)await new Promise(()=>{});},postMessage(message,ports){events.push({type:'prepare',message});if(modern)ports[0].reply({ready:saveReady});}},
+    {url:'https://example.test/another-game/',async navigate(){assert.fail('must not reload another application');},postMessage(){assert.fail('must not notify another application');}}];
+  class Channel {constructor(){this.port1={close(){}};this.port2={reply:data=>this.port1.onmessage({data})};}}
+  runInNewContext(source,{self:{registration:{scope},addEventListener(type,fn){listeners.set(type,fn);},clients:{async matchAll(options){events.push({type:'windows',options});return clients;},async claim(){events.push({type:'claim'});}}},
+    caches:{async open(){return {async match(){return complete?{}:null;}};},async keys(){return ['unrelated-cache',...(oldCache?['ashen-company-old']:[])];},async delete(key){events.push({type:'delete',key});}},MessageChannel:Channel,URL,Request,Response,Headers,
+    setTimeout(fn){const id=++clock;timers.set(id,fn);queueMicrotask(()=>{if(timers.delete(id))fn();});return id;},clearTimeout(id){timers.delete(id);}});
+  let work;listeners.get('activate')({waitUntil(promise){work=promise;}});await work;
+  return events;
+}
+
+test('complete upgrades reload existing legacy windows so old mount modules cannot survive a new cache',async()=>{
+  const events=await updateWorker({modern:false});
+  assert.deepEqual(events.map(e=>e.type),['windows','delete','claim','prepare','navigate']);
+  assert.equal(events.at(-1).url,'https://example.test/ashen-company/');
+  assert.equal(events.find(e=>e.type==='delete').key,'ashen-company-old');
+  assert.equal(events.find(e=>e.type==='prepare').message.type,'PREPARE_UPDATE');
+});
+
+test('modern update handshake precedes navigation and a failed save prevents reload',async()=>{
+  const ready=await updateWorker();assert.ok(ready.find(e=>e.type==='navigate'));
+  const blocked=await updateWorker({saveReady:false});assert.ok(blocked.find(e=>e.type==='prepare'));assert.ok(!blocked.find(e=>e.type==='navigate'));
+});
+
+test('first installs do not reload and incomplete updates never claim, delete or navigate',async()=>{
+  const first=await updateWorker({oldCache:false});assert.deepEqual(first.map(e=>e.type),['claim']);
+  await assert.rejects(updateWorker({complete:false}),/Offline cache is incomplete/);
+});
+
+test('activation completes even when a navigation waits for the new worker to activate',async()=>{
+  const events=await updateWorker({navigationPending:true});assert.ok(events.find(e=>e.type==='navigate'));
+});
