@@ -24,10 +24,10 @@ function placeCompanyAndBand(state, id, company, band) {
   return progress;
 }
 
-test('the overworld has 24 persistent patrols with four weak starters and varied frontier specialists', () => {
+test('the overworld has 28 persistent patrols with four weak starters and varied frontier specialists', () => {
   const state = createGame(91);
   const bands = getRoamingBands(state);
-  assert.equal(bands.length, 24);
+  assert.equal(bands.length, 28);
   const starters = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
   assert.ok(starters.every(id => bands.find(band => band.id === id)?.difficulty === 0));
   assert.ok(bands.filter(band => band.difficulty === 3).every(band => band.enemies.length >= 4 && band.enemies.length <= 6));

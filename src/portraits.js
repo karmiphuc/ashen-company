@@ -189,6 +189,13 @@ const PORTRAIT = VISUALS;
 
 const ITEM_IMAGES = {
   ...FANTASY_ITEM_IMAGES,
+  'frontier-scout-armor': 'frontier-scout-armor.png',
+  'frontier-scout-helmet': 'frontier-scout-helmet.png',
+  'frontier-warden-armor': 'frontier-warden-armor.png',
+  'frontier-warden-helmet': 'frontier-warden-helmet.png',
+  'frontier-sentinel-armor': 'frontier-sentinel-armor.png',
+  'frontier-sentinel-helmet': 'frontier-sentinel-helmet.png',
+
   'patched-coat': 'patched-coat.png',
   'quilted-jack': 'quilted-jack.png',
   'padded-gambeson': 'padded-gambeson.png',

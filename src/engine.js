@@ -4,6 +4,7 @@ import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
+import { FRONTIER_ITEMS } from './frontier-items.js';
 import { MOUNTS } from './mounts.js';
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression } from './enemy-progression.js';
@@ -49,6 +50,7 @@ export const ITEMS = Object.freeze([
   ...NORTHERN_ITEMS,
   ...FANTASY_ITEMS,
   ...MOUNTS,
+  ...FRONTIER_ITEMS,
 ]);
 
 export const GOODS = Object.freeze([
@@ -76,6 +78,10 @@ export const SETTLEMENTS = Object.freeze([
   { id: 'wheatmere', name: 'Wheatmere', x: 820, y: 1230, kind: 'village', description: 'Wide grain fields feed the southern frontier.', color: '#d5bf78' },
   { id: 'blackfen', name: 'Blackfen', x: 1230, y: 1135, kind: 'village', description: 'Reed cutters and hunters live above the black water.', color: '#9cae84' },
   { id: 'farhold', name: 'Farhold', x: 1860, y: 1180, kind: 'castle', description: 'The last stronghold on a road haunted by veteran raiders.', color: '#c9a28e' },
+  { id: 'ambercross', name: 'Ambercross', x: 2510, y: 410, kind: 'town', description: 'A caravan market beneath the amber hills.', color: '#c9ad82' },
+  { id: 'reedharbor', name: 'Reedharbor', x: 2550, y: 1080, kind: 'village', description: 'Reed boats bring salt to the eastern frontier.', color: '#c9ad82' },
+  { id: 'sunspire', name: 'Sunspire', x: 2930, y: 220, kind: 'castle', description: 'A watch keep guarding the high eastern road.', color: '#c9ad82' },
+  { id: 'cinderhold', name: 'Cinderhold', x: 2970, y: 850, kind: 'castle', description: 'A stone fortress overlooking the cinder woods.', color: '#c9ad82' },
 ]);
 
 export const SETTLEMENT_TYPES = Object.freeze({
@@ -141,6 +147,10 @@ const ROAMING_BANDS = Object.freeze([
   { id: 'wheatmere-pillagers', name: 'Wheatmere Pillagers', difficulty: 2, start: { x: 680, y: 1140 }, end: { x: 1030, y: 1300 } },
   { id: 'blackfen-stalkers', name: 'Blackfen Stalkers', difficulty: 3, start: { x: 1060, y: 1040 }, end: { x: 1390, y: 1300 } },
   { id: 'farhold-warbands', name: 'Farhold Warband', difficulty: 3, start: { x: 1580, y: 1080 }, end: { x: 2070, y: 1280 } },
+  { id: 'ambercross-raiders', name: 'Ambercross Raiders', difficulty: 2, start: { x: 2330, y: 470 }, end: { x: 2460, y: 350 } },
+  { id: 'reedharbor-raiders', name: 'Reedharbor Raiders', difficulty: 2, start: { x: 2370, y: 1140 }, end: { x: 2500, y: 1020 } },
+  { id: 'sunspire-raiders', name: 'Sunspire Raiders', difficulty: 3, start: { x: 2750, y: 280 }, end: { x: 2880, y: 160 } },
+  { id: 'cinderhold-raiders', name: 'Cinderhold Raiders', difficulty: 3, start: { x: 2790, y: 910 }, end: { x: 2920, y: 790 } },
 ]);
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
@@ -203,7 +213,7 @@ export function getItem(id) {
   item.bonuses = Object.freeze(bonuses.map(bonus => Object.freeze(bonus)));
   return Object.freeze(item);
 }
-const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id)]);
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
@@ -213,6 +223,10 @@ const BAND_BY_ID = new Map(ROAMING_BANDS.map(band => [band.id, band]));
 // Low factors mark local supply; high factors mark demand. The market spread
 // always makes buying and selling in the same settlement a loss.
 const MARKET_FACTORS = {
+  ambercross: { grain: .85, timber: 1.15, iron: 1.20, salt: 1.10, wool: .75 },
+  reedharbor: { grain: 1.10, timber: .90, iron: 1.40, salt: .60, wool: 1.20 },
+  sunspire: { grain: 1.45, timber: 1.30, iron: .80, salt: 1.35, wool: 1.15 },
+  cinderhold: { grain: 1.35, timber: .75, iron: 1.10, salt: 1.30, wool: 1.25 },
   oakwatch:    { grain: .70, timber: .72, iron: 1.25, salt: 1.20, wool: 1.05 },
   greyhaven:  { grain: 1.15, timber: 1.10, iron: 1.00, salt: 1.05, wool: .88 },
   ironford:   { grain: 1.25, timber: 1.20, iron: .65, salt: 1.15, wool: 1.10 },
@@ -230,9 +244,9 @@ const MARKET_FACTORS = {
   blackfen:   { grain: 1.10, timber: .80, iron: 1.30, salt: .70, wool: 1.30 },
   farhold:    { grain: 1.50, timber: 1.35, iron: 1.25, salt: 1.40, wool: 1.45 },
 };
-const GEAR_FACTORS = { oakwatch: 1, greyhaven: 1.05, ironford: .84, thornwall: 1.16, redmere: 1.08, highpass: 1.20, saltwick: 1.12, barrowfield: .96, pinecross:1.04, dunridge:1.12, eastmere:.98, stonebridge:.88, southwatch:1.08, wheatmere:1.02, blackfen:1.15, farhold:1.22 };
+const GEAR_FACTORS = { ambercross: 1.03, reedharbor: 1.12, sunspire: 1.18, cinderhold: 1.20, oakwatch: 1, greyhaven: 1.05, ironford: .84, thornwall: 1.16, redmere: 1.08, highpass: 1.20, saltwick: 1.12, barrowfield: .96, pinecross:1.04, dunridge:1.12, eastmere:.98, stonebridge:.88, southwatch:1.08, wheatmere:1.02, blackfen:1.15, farhold:1.22 };
 const SLOTS = ['armor', 'attachment', 'helmet', 'weapon', 'shield', 'mount'];
-export const WORLD_BOUNDS = Object.freeze({ minX: 180, maxX: 2120, minY: 80, maxY: 1380 });
+export const WORLD_BOUNDS = Object.freeze({ minX: 180, maxX: 3140, minY: 80, maxY: 1380 });
 const BOUNDS = WORLD_BOUNDS;
 const TOWN_RADIUS = 28;
 const ARRIVAL_RADIUS = 2;
@@ -560,6 +574,9 @@ export function terrainAt(x, y) {
   if (Math.hypot((x - 1640) / 1.6, y - 290) < 145 || Math.hypot(x - 1660, (y - 1100) / 1.5) < 155 || Math.hypot(x - 590, y - 900) < 95) return 'mountain';
   if (Math.hypot(x - 1330, (y - 450) / 1.5) < 160 || Math.hypot((x - 640) / 1.5, y - 1050) < 150 || Math.hypot(x - 1870, y - 880) < 185) return 'forest';
   if (Math.hypot((x - 1230) / 1.4, y - 1120) < 155 || Math.hypot(x - 1920, y - 500) < 120) return 'marsh';
+  if (Math.hypot(x - 2860, y - 290) < 150) return 'mountain';
+  if (Math.hypot(x - 2800, y - 820) < 160) return 'forest';
+  if (Math.hypot(x - 2470, y - 1090) < 120) return 'marsh';
   return 'plains';
 }
 
@@ -735,7 +752,7 @@ function projectedMarketStock(state, town) {
     : dailyMarketStock(state, town);
   const replenished = defaultArmoryStock(state, town, cycle);
   const equipment = existing && existingCycle === cycle
-    ? { ...Object.fromEntries(MOUNTS.map(item => [item.id, replenished[item.id]])), ...existing.equipment }
+    ? { ...Object.fromEntries([...MOUNTS, ...FRONTIER_ITEMS].map(item => [item.id, replenished[item.id]])), ...existing.equipment }
     : replenished;
   let appliedEventId = existing?.appliedEventId ?? null;
   const event = getTownEvent(state, town.id);

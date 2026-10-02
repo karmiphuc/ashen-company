@@ -28,17 +28,17 @@ function approachCamp(state) {
   return site;
 }
 
-test('twenty-four visible patrols move with time and can be intercepted', () => {
+test('twenty-eight visible patrols move with time and can be intercepted', () => {
   const state = createGame(1);
   const first = getRoamingBands(state);
-  assert.equal(first.length, 24);
+  assert.equal(first.length, 28);
   const originalIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
   const original = first.filter(band => originalIds.includes(band.id));
   const frontier = first.filter(band => !originalIds.includes(band.id));
   assert.equal(original.length, 4);
   assert.equal(original.filter(band => Math.hypot(band.x - 350, band.y - 460) < 140).length, 2);
   assert.ok(original.every(band => band.kind === 'band' && band.difficulty === 0 && band.enemies.length <= 2));
-  assert.equal(frontier.length, 20);
+  assert.equal(frontier.length, 24);
   assert.ok(frontier.every(band => band.kind === 'band' && band.difficulty >= 1 && band.enemies.length >= 2));
   assert.equal(getEncounterSites(state).length, getCampSites(state).length + first.length);
   tick(state, 1);
@@ -180,7 +180,7 @@ test('old saves migrate and malformed pursuit or band records are rejected', () 
   const old = createGame(4);
   delete old.bands;
   delete old.pursuit;
-  assert.equal(Object.keys(validateSave(old).bands).length, 24);
+  assert.equal(Object.keys(validateSave(old).bands).length, 28);
   assert.equal(validateSave(old).pursuit, null);
   const state = createGame(4);
   for (const change of [

@@ -43,13 +43,16 @@ function reachTown(state, town) {
   const until = hours(state) + 48;
   for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   assert.equal(travelTo(state, town.x, town.y).ok, true);
-  for (let step = 0; state.destination && step < 8; step++) assert.equal(tick(state, 12).ok, true);
+  for (let step = 0; state.destination && step < 16; step++) {
+    for (const progress of Object.values(state.bands)) progress.defeatedUntil = hours(state) + 48;
+    assert.equal(tick(state, 12).ok, true);
+  }
   assert.equal(state.destination, null, `${town.name} is reachable`);
   assert.equal(townAt(state)?.id, town.id);
 }
 
-test('expanded map bounds contain all 16 reachable towns and have market rows', () => {
-  assert.equal(SETTLEMENTS.length, 16);
+test('expanded map bounds contain all 20 reachable towns and have market rows', () => {
+  assert.equal(SETTLEMENTS.length, 20);
   const bounds = WORLD_BOUNDS;
   for (const town of SETTLEMENTS) {
     assert.ok(town.x >= bounds.minX && town.x <= bounds.maxX, `${town.id} x is in bounds`);
@@ -71,15 +74,15 @@ test('expanded map bounds contain all 16 reachable towns and have market rows', 
   assert.deepEqual(validateSave(edgeState), edgeState);
 });
 
-test('twenty-four roaming bands preserve four nearby light patrols and cover the new trade roads', () => {
+test('twenty-eight roaming bands preserve four nearby light patrols and cover the new trade roads', () => {
   const bands = getRoamingBands(createGame(814));
-  assert.equal(bands.length, 24);
+  assert.equal(bands.length, 28);
   const legacyIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
   const legacy = bands.filter(band => legacyIds.includes(band.id));
   const frontier = bands.filter(band => !legacyIds.includes(band.id));
   assert.equal(legacy.length, 4);
   assert.ok(legacy.every(band => band.difficulty === 0 && band.enemies.length <= 2));
-  assert.equal(frontier.length, 20);
+  assert.equal(frontier.length, 24);
   assert.ok(frontier.every(band => band.difficulty >= 1 && band.enemies.length >= 2));
   for (const band of bands) {
     assert.ok(band.x >= WORLD_BOUNDS.minX && band.x <= WORLD_BOUNDS.maxX, `${band.id} x is in bounds`);

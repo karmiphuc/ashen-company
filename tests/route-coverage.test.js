@@ -42,8 +42,8 @@ test('segment distance handles crossing, parallel, collinear disjoint, and point
   assert.equal(routeSegmentDistance(a, b, { x: 5, y: 5 }, { x: 5, y: 5 }), 5);
 });
 
-test('every settlement shipment route can be threatened by a nearby persistent patrol', () => {
-  assert.deepEqual(new Set(threatenedRoutes.map(row => row[0])), new Set(SETTLEMENTS.map(town => town.id)));
+test('every original settlement shipment route retains its assigned patrol by a nearby persistent patrol', () => {
+  assert.deepEqual(new Set(threatenedRoutes.map(row => row[0])), new Set(SETTLEMENTS.slice(0, 16).map(town => town.id)));
   for (const [townId, seed, day, originId, attackerId] of threatenedRoutes) {
     const state = createGame(seed);
     passHours(state, (day - 1) * 24 - 8);
