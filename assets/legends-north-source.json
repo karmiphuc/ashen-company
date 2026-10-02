@@ -151,19 +151,33 @@
       "itemId": "northern-animal-pelt",
       "kind": "inventory",
       "local": "assets/items/northern-animal-pelt.png",
-      "source": "gfx/ui/items/legend_armor/inventory_cloak_fur_01.png",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_cloak_fur_01.png",
-      "bytes": 10331,
-      "sha256": "fc0cf6817e6dafa46c38af08b9242e6ab6feccc78dfb7149b40132c50d403152"
+      "source": "gfx/ui/items/armor/inventory_body_armor_90.png",
+      "url": "https://raw.githubusercontent.com/kovasap/battle-bros-decompiled/e06d68df0915827967f98a05d0c705c1f53df0b7/gfx/ui/items/armor/inventory_body_armor_90.png",
+      "bytes": 15180,
+      "sha256": "b6459b8874175db868ac8c7dd246ca92f8d86041c5a92ee6a7741b85081de9a0",
+      "repository": "kovasap/battle-bros-decompiled",
+      "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+      "sourceItem": "bb-animal-hide-armor"
     },
     {
       "itemId": "northern-animal-pelt",
       "kind": "portrait",
       "local": "assets/portraits/armor-northern-animal-pelt.png",
-      "source": "unpacked/legend_armor/entity/legend_armor/cloak_fur_01.png",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/cloak_fur_01.png",
-      "bytes": 15064,
-      "sha256": "5351735fc976e947ccb757f6d03f5f8ec7e2ed64b430a7b3d2976f55733f1105"
+      "source": "gfx/entity_5.png",
+      "url": "https://raw.githubusercontent.com/kovasap/battle-bros-decompiled/e06d68df0915827967f98a05d0c705c1f53df0b7/gfx/entity_5.png",
+      "bytes": 11600,
+      "sha256": "b87c5fd3632cfeafa773487a2485d5d971c9dda3d23bcdc50224e31536efad24",
+      "repository": "kovasap/battle-bros-decompiled",
+      "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+      "sourceItem": "bb-animal-hide-armor",
+      "brush": "bust_body_90",
+      "crop": [
+        836,
+        373,
+        928,
+        445
+      ],
+      "transform": "vertical flip from entity atlas texture orientation"
     },
     {
       "itemId": "northern-rusty-mail",

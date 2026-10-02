@@ -30,7 +30,7 @@ function beginAttack(seed, attachment = 'scale-mantle') {
 }
 
 test('attachment catalog uses the independent slot and is not famed', () => {
-  assert.equal(ARMOR_ATTACHMENTS.length, 15);
+  assert.equal(ARMOR_ATTACHMENTS.length, 18);
   assert.deepEqual(ARMOR_ATTACHMENTS.slice(0, 5).map(item => [item.id, item.armor, item.fatigue, item.price]), [
     ['padded-lining', 15, 1, 80],
     ['fur-mantle', 25, 1, 130],
@@ -53,6 +53,7 @@ test('attachment armor efficiency stays near fifteen armor per fatigue', () => {
     ['horned-pauldrons', 50], ['chain-mantle', 55], ['heraldic-plates', 60],
     ['gladiator-pauldrons', 65], ['skull-chain', 65], ['spiked-chain', 70],
     ['stag-plates', 75], ['heraldic-shoulders', 82], ['kraken-mantle', 90],
+    ['northern-pelt-mantle',30], ['ancient-gilded-collar',45], ['noble-brocade-mantle',45],
   ]);
   for (const item of ARMOR_ATTACHMENTS) {
     const efficiency = item.armor / item.fatigue;

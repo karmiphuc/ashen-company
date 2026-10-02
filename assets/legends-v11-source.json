@@ -213,13 +213,15 @@
     },
     {
       "local": "assets/items/noble-mail.png",
-      "source": "gfx/ui/items/legend_armor/icon_noble_vest_01.png",
+      "source": "gfx/ui/items/armor/inventory_body_armor_87.png",
       "kind": "ui",
       "itemId": "noble-mail",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/icon_noble_vest_01.png",
-      "bytes": 15169,
-      "sha256": "61d5697a24ebd020fa2b8c7b980c97d7af16391aff1549d1389796044447094b",
-      "note": "Noble vest inventory art used as the closest available noble body-armor icon."
+      "url": "https://raw.githubusercontent.com/kovasap/battle-bros-decompiled/e06d68df0915827967f98a05d0c705c1f53df0b7/gfx/ui/items/armor/inventory_body_armor_87.png",
+      "bytes": 19652,
+      "sha256": "8d88fb8ec9d5c8c6c46a0515b48199c6f1d6f6977a724dd50d595611fb73d72e",
+      "repository": "kovasap/battle-bros-decompiled",
+      "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+      "sourceItem": "bb-noble-mail-armor"
     },
     {
       "local": "assets/items/coat-of-scales.png",
@@ -343,11 +345,22 @@
     },
     {
       "local": "assets/portraits/armor-noblemail.png",
-      "source": "unpacked/legend_armor/entity/legend_armor/noble_vest_01.png",
+      "source": "gfx/entity_0.png",
       "kind": "portrait",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/noble_vest_01.png",
-      "bytes": 18162,
-      "sha256": "2b95aa5849cdbaaab5266685808479925f9c985d00bef881606bca11f11038b4"
+      "url": "https://raw.githubusercontent.com/kovasap/battle-bros-decompiled/e06d68df0915827967f98a05d0c705c1f53df0b7/gfx/entity_0.png",
+      "bytes": 11905,
+      "sha256": "982c1a6591df4c33b30fdc61817c91f3b0cbe74aac0ff65fc4c8a9618619d158",
+      "repository": "kovasap/battle-bros-decompiled",
+      "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+      "sourceItem": "bb-noble-mail-armor",
+      "brush": "bust_body_87",
+      "crop": [
+        176,
+        214,
+        262,
+        276
+      ],
+      "transform": "vertical flip from entity atlas texture orientation"
     },
     {
       "local": "assets/portraits/armor-scales.png",

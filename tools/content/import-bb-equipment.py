@@ -72,7 +72,17 @@ for path in paths:
     icon_override = string(text, 'IconLarge') or string(text, 'Icon')
     if icon_override and icon_override.endswith('_'): icon = icon_override + suffix + '.png'
     elif icon_override: icon = icon_override
+    source_sprite = sprite
+    art_adaptation = None
+    if stem == 'ancient_lich_attire':
+        # The NPC sprite is a collar, not a full human torso. Preserve it separately as an attachment.
+        sprite = 'bust_body_60'
+        icon = 'armor/inventory_body_armor_60.png'
+        art_adaptation = 'Full dark cloth torso for human wear; original bust_body_skeleton_80 collar is preserved as ancient-gilded-collar.'
     icon_path = 'gfx/ui/items/' + icon
+    if stem == 'vizier_headgear':
+        # This NPC never defines inventory art. The inherited metal-helmet icon is unrelated.
+        icon_path = None
     available = {x['path'] for x in tree['tree']}
     if icon_path not in available:
         # Noble NPC garments do not define inventory art; use their actual worn sprite as the icon.
@@ -117,7 +127,7 @@ for path in paths:
         item['description'] = f'{name} is a rare piece with improved protection, balanced weight, and a permanent signature bonus. ' + description
         item['role'] = f'{name} provides {item["armor"]} {"body" if slot == "armor" else "head"} protection at a {item["fatigue"]} fatigue cost, with +{bonus} {label.lower()}.'
     records.append({'item': item, 'source': path, 'sourceSha256': sha(fetch(path)), 'sourceValue': value, 'sourceVision': number(text, 'Vision') or 0, 'sourceDescription': raw_description,
-        'sprite': sprite, 'icon': icon_path, 'hideHead': bool(re.search(r'this\.m\.HideCharacterHead\s*=\s*true', text)), 'hideBeard': bool(re.search(r'this\.m\.HideBeard\s*=\s*true', text))})
+        'sprite': sprite, 'sourceSprite': source_sprite, 'artAdaptation': art_adaptation, 'icon': icon_path, 'hideHead': bool(re.search(r'this\.m\.HideCharacterHead\s*=\s*true', text)), 'hideBeard': bool(re.search(r'this\.m\.HideBeard\s*=\s*true', text))})
 if len({r['item']['id'] for r in records}) != len(records): raise RuntimeError('Duplicate item IDs')
 needed = sorted({brushes[r['sprite']]['atlas'] for r in records} | {r['icon'] for r in records if r['icon']})
 with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool: list(pool.map(fetch, needed))

@@ -30,7 +30,7 @@ export const VISUALS = {
     plate: ['armor-plate.png', 5, 46],
     lamellar: ['armor-lamellar.png', 5, 46],
     nomad: ['armor-nomad.png', 5, 46],
-    noblemail: ['armor-noblemail.png', 5, 46],
+    noblemail: ['armor-noblemail.png', 10, 52],
     scales: ['armor-scales.png', 5, 46],
     southernmail: ['armor-southernmail.png', 5, 46],
     'wolf-gambeson': ['armor-wolf-gambeson.png', 5, 46],
@@ -42,7 +42,7 @@ export const VISUALS = {
     'plate-cuirass': ['armor-plate-cuirass.png', 5, 46],
     'noble-tabard': ['armor-noble-tabard.png', 5, 46],
     'northern-fur-coat': ['armor-northern-fur-coat.png', 10, 46],
-    'northern-animal-pelt': ['armor-northern-animal-pelt.png', 5, 46],
+    'northern-animal-pelt': ['armor-northern-animal-pelt.png', 5, 51],
     'northern-rusty-mail': ['armor-northern-rusty-mail.png', 5, 46],
     'northern-rusted-hauberk': ['armor-northern-rusted-hauberk.png', 5, 46],
     'northern-heavy-lamellar': ['armor-northern-heavy-lamellar.png', 5, 46],
@@ -156,6 +156,9 @@ export const VISUALS = {
     'surgeons-kit': ['../items/surgeons-kit.png'],
   },
   attachment: {
+    'northern-pelt-mantle': {front:['attachment-northern-pelt-mantle.png',5,46]},
+    'ancient-gilded-collar': {front:['attachment-ancient-gilded-collar.png',11,40]},
+    'noble-brocade-mantle': {front:['attachment-noble-brocade-mantle.png',5,46]},
     'padded-lining': {},
     'leather-reinforcement': {},
     'fur-mantle': {
@@ -192,6 +195,9 @@ export const VISUALS = {
 const PORTRAIT = VISUALS;
 
 const ITEM_IMAGES = {
+  'northern-pelt-mantle':'northern-pelt-mantle.png',
+  'ancient-gilded-collar':'ancient-gilded-collar.png',
+  'noble-brocade-mantle':'noble-brocade-mantle.png',
   ...FANTASY_ITEM_IMAGES,
   'frontier-scout-armor': 'frontier-scout-armor.png',
   'frontier-scout-helmet': 'frontier-scout-helmet.png',

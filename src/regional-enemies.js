@@ -60,6 +60,14 @@ export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true}=
     const choices=pools.get(key);
     if(choices.length)result[slot]=choices[hash(`${seed}:${index}:${slot}`)%choices.length].id;
   }
+  // Reclaimed decorative layers enter regional outfits as real armor attachments.
+  if(difficulty>=2&&hash(`${seed}:${index}:reclaimed-attachment`)%5===0){
+    const region=regionAt(x,y).id;
+    const attachments=['northern-highlands','greenwood'].includes(region)?['northern-pelt-mantle']
+      :region==='blackwater-basin'?['ancient-gilded-collar']
+      :['western-marches','eastern-frontier','southern-marches','saffron-coast','sunlands'].includes(region)?['noble-brocade-mantle']:[];
+    if(attachments.length)result.attachment=attachments[0];
+  }
   // A single elite leader may carry a named trophy; legendary relics stay out of common outfits.
   if(champions&&difficulty===3&&index===0&&hash(`${seed}:champion`)%8===0) {
     const slot=hash(`${seed}:trophy-slot`)%2?'armor':'helmet';

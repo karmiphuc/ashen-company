@@ -26,6 +26,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy chainmail hauberk worn under a thick riveted jacket and reinforced with vambraces. Adorned with trophies and lovingly maintained despite its extensive use, this is the armor of a true questing knight.",
       "sprite": "bust_body_109",
+      "sourceSprite": "bust_body_109",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_109.png",
       "hideHead": false,
       "hideBeard": false
@@ -50,6 +52,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy mail shirt covered by a quilted surcoat. An impressive and well-maintained piece, adorned with trophies and holy symbols.",
       "sprite": "bust_body_107",
+      "sourceSprite": "bust_body_107",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_107.png",
       "hideHead": false,
       "hideBeard": false
@@ -74,6 +78,8 @@
       "sourceVision": 0,
       "sourceDescription": "A long mail shirt covered by a riveted leather gambeson. Heavily worn from extensive use, but adorned with relics and well-maintained.",
       "sprite": "bust_body_108",
+      "sourceSprite": "bust_body_108",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_108.png",
       "hideHead": false,
       "hideBeard": false
@@ -98,6 +104,8 @@
       "sourceVision": 0,
       "sourceDescription": "A tarnished thick breastplate of ancient origin.",
       "sprite": "bust_body_62",
+      "sourceSprite": "bust_body_62",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_62.png",
       "hideHead": false,
       "hideBeard": false
@@ -122,6 +130,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy and rotten double-layered mail of ancient design. Not comfortable to wear but still useable.",
       "sprite": "bust_body_65",
+      "sourceSprite": "bust_body_65",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_65.png",
       "hideHead": false,
       "hideBeard": false
@@ -145,8 +155,10 @@
       "sourceValue": 0,
       "sourceVision": 0,
       "sourceDescription": "The ancient attire worn in Battle Brothers.",
-      "sprite": "bust_body_skeleton_80",
-      "icon": null,
+      "sprite": "bust_body_60",
+      "sourceSprite": "bust_body_skeleton_80",
+      "artAdaptation": "Full dark cloth torso for human wear; original bust_body_skeleton_80 collar is preserved as ancient-gilded-collar.",
+      "icon": "gfx/ui/items/armor/inventory_body_armor_60.png",
       "hideHead": false,
       "hideBeard": false
     },
@@ -170,6 +182,8 @@
       "sourceVision": 0,
       "sourceDescription": "An old and crusted heavy mail of ancient design. Some parts are missing, but it still offers decent protection.",
       "sprite": "bust_body_64",
+      "sourceSprite": "bust_body_64",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_64.png",
       "hideHead": false,
       "hideBeard": false
@@ -194,6 +208,8 @@
       "sourceVision": 0,
       "sourceDescription": "Made of thick metal plates and mail, this heavy ancient armor still offers great protection after countless years. It's crusted and rotten in parts, however, severely limiting the mobility of the wearer.",
       "sprite": "bust_body_67",
+      "sourceSprite": "bust_body_67",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_67.png",
       "hideHead": false,
       "hideBeard": false
@@ -218,6 +234,8 @@
       "sourceVision": 0,
       "sourceDescription": "An ancient mail armor with plated arm guards. Very heavy and severely limiting the mobility of the wearer.",
       "sprite": "bust_body_68",
+      "sourceSprite": "bust_body_68",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_68.png",
       "hideHead": false,
       "hideBeard": false
@@ -242,6 +260,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy coat of scales, partly reinforced with a layer of plated metal on top. It's a massive armor of ancient origin that didn't age well.",
       "sprite": "bust_body_69",
+      "sourceSprite": "bust_body_69",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_69.png",
       "hideHead": false,
       "hideBeard": false
@@ -266,6 +286,8 @@
       "sourceVision": 0,
       "sourceDescription": "The ancient priest attire worn in Battle Brothers.",
       "sprite": "bust_body_70",
+      "sourceSprite": "bust_body_70",
+      "artAdaptation": null,
       "icon": null,
       "hideHead": false,
       "hideBeard": false
@@ -290,6 +312,8 @@
       "sourceVision": 0,
       "sourceDescription": "The ripped cloth worn in Battle Brothers.",
       "sprite": "bust_body_74",
+      "sourceSprite": "bust_body_74",
+      "artAdaptation": null,
       "icon": null,
       "hideHead": false,
       "hideBeard": false
@@ -314,6 +338,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy and tarnished scale coat of ancient design that belongs in a collection, not on the battlefield.",
       "sprite": "bust_body_66",
+      "sourceSprite": "bust_body_66",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_66.png",
       "hideHead": false,
       "hideBeard": false
@@ -338,6 +364,8 @@
       "sourceVision": 0,
       "sourceDescription": "A sturdy, but heavy and partly decayed ancient scale harness.",
       "sprite": "bust_body_63",
+      "sourceSprite": "bust_body_63",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_63.png",
       "hideHead": false,
       "hideBeard": false
@@ -362,6 +390,8 @@
       "sourceVision": 0,
       "sourceDescription": "A leather apron usually worn by apprentices and craftsmen.",
       "sprite": "bust_body_10",
+      "sourceSprite": "bust_body_10",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_10.png",
       "hideHead": false,
       "hideBeard": false
@@ -387,6 +417,8 @@
       "sourceVision": 0,
       "sourceDescription": "Heavy hides patched together to create a decent makeshift armor.",
       "sprite": "bust_body_90",
+      "sourceSprite": "bust_body_90",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_90.png",
       "hideHead": false,
       "hideBeard": false
@@ -412,6 +444,8 @@
       "sourceVision": 0,
       "sourceDescription": "The ritual armor worn in Battle Brothers.",
       "sprite": "bust_body_105",
+      "sourceSprite": "bust_body_105",
+      "artAdaptation": null,
       "icon": null,
       "hideHead": false,
       "hideBeard": false
@@ -437,6 +471,8 @@
       "sourceVision": 0,
       "sourceDescription": "This armor is made from heavy metal plates, scales and pieces of chainmal. The true armor of a northern warrior.",
       "sprite": "bust_body_95",
+      "sourceSprite": "bust_body_95",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_95.png",
       "hideHead": false,
       "hideBeard": false
@@ -462,6 +498,8 @@
       "sourceVision": 0,
       "sourceDescription": "Hide and bone are common materials in the northern regions. This armor is using both for decent protection.",
       "sprite": "bust_body_92",
+      "sourceSprite": "bust_body_92",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_92.png",
       "hideHead": false,
       "hideBeard": false
@@ -487,6 +525,8 @@
       "sourceVision": 0,
       "sourceDescription": "A reinforced animal hide armor fashioned from thick leather pieces with added mail and metal scales.",
       "sprite": "bust_body_97",
+      "sourceSprite": "bust_body_97",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_97.png",
       "hideHead": false,
       "hideBeard": false
@@ -512,6 +552,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy body armor made from thick iron scales.",
       "sprite": "bust_body_93",
+      "sourceSprite": "bust_body_93",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_93.png",
       "hideHead": false,
       "hideBeard": false
@@ -537,6 +579,8 @@
       "sourceVision": 0,
       "sourceDescription": "This armor is pieced together from scavenged metal parts that are fixed to a crude leather tunic.",
       "sprite": "bust_body_94",
+      "sourceSprite": "bust_body_94",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_94.png",
       "hideHead": false,
       "hideBeard": false
@@ -562,6 +606,8 @@
       "sourceVision": 0,
       "sourceDescription": "Thick furs that are crudely dried and tied together to protect from both the cold and any incoming blows.",
       "sprite": "bust_body_91",
+      "sourceSprite": "bust_body_91",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_91.png",
       "hideHead": false,
       "hideBeard": false
@@ -587,6 +633,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy armor that is made from mostly metal. Only one chosen by the ancestors will own a set like this.",
       "sprite": "bust_body_96",
+      "sourceSprite": "bust_body_96",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_96.png",
       "hideHead": false,
       "hideBeard": false
@@ -611,6 +659,8 @@
       "sourceVision": 0,
       "sourceDescription": "A basic and simple mail shirt. Offers decent and affordable protection against slashing and piercing attacks.",
       "sprite": "bust_body_26",
+      "sourceSprite": "bust_body_26",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_26.png",
       "hideHead": false,
       "hideBeard": false
@@ -635,6 +685,8 @@
       "sourceVision": 0,
       "sourceDescription": "A padded gambeson that has seen lots of patching and repairing.",
       "sprite": "bust_body_21",
+      "sourceSprite": "bust_body_21",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_21.png",
       "hideHead": false,
       "hideBeard": false
@@ -659,6 +711,8 @@
       "sourceVision": 0,
       "sourceDescription": "A rugged apron worn by butchers to protect against accidental cuts.",
       "sprite": "bust_body_09",
+      "sourceSprite": "bust_body_09",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_09.png",
       "hideHead": false,
       "hideBeard": false
@@ -683,6 +737,8 @@
       "sourceVision": 0,
       "sourceDescription": "One layer of padding, one layer of strong mail, and heavy metal plates riveted ontop. A very heavy armor that offers great protection.",
       "sprite": "bust_body_37",
+      "sourceSprite": "bust_body_37",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_37.png",
       "hideHead": false,
       "hideBeard": false
@@ -707,6 +763,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy armor made of thick, overlapping metal scales covering most of the body.",
       "sprite": "bust_body_38",
+      "sourceSprite": "bust_body_38",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_38.png",
       "hideHead": false,
       "hideBeard": false
@@ -732,6 +790,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick leather armor covered with additional leather patches and occult insignia.",
       "sprite": "bust_body_106",
+      "sourceSprite": "bust_body_106",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_106.png",
       "hideHead": false,
       "hideBeard": false
@@ -756,6 +816,8 @@
       "sourceVision": 0,
       "sourceDescription": "A somewhat decayed coat of plates with rusted metal and brittle leather parts. Has probably been laying in the open for a while.",
       "sprite": "bust_body_48",
+      "sourceSprite": "bust_body_48",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_48.png",
       "hideHead": false,
       "hideBeard": false
@@ -780,6 +842,8 @@
       "sourceVision": 0,
       "sourceDescription": "This coat of scales is worn and parts have come lose or are missing. It still offers very good protection if you don't mind the smell.",
       "sprite": "bust_body_49",
+      "sourceSprite": "bust_body_49",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_49.png",
       "hideHead": false,
       "hideBeard": false
@@ -804,6 +868,8 @@
       "sourceVision": 0,
       "sourceDescription": "A long mail shirt in bad condition. Some rings are missing and it is covered in dirt and has an odd smell about it.",
       "sprite": "bust_body_50",
+      "sourceSprite": "bust_body_50",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_50.png",
       "hideHead": false,
       "hideBeard": false
@@ -828,6 +894,8 @@
       "sourceVision": 0,
       "sourceDescription": "A transitional armor consisting of a long mail shirt and a rivetted leather gambeson.",
       "sprite": "bust_body_84",
+      "sourceSprite": "bust_body_84",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_84.png",
       "hideHead": false,
       "hideBeard": false
@@ -852,6 +920,8 @@
       "sourceVision": 0,
       "sourceDescription": "A sturdy and heavy padded tunic that offers decent protection.",
       "sprite": "bust_body_15",
+      "sourceSprite": "bust_body_15",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_15.png",
       "hideHead": false,
       "hideBeard": false
@@ -876,6 +946,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy lamellar armor that covers most parts of the body with thick, overlapping metal plates for maximum protection.",
       "sprite": "bust_body_89",
+      "sourceSprite": "bust_body_89",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_89.png",
       "hideHead": false,
       "hideBeard": false
@@ -900,6 +972,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy and extraordinarily well crafted mail hauberk with added mail mittens and a padded undercoat. Only a true master could craft an armor like this.",
       "sprite": "bust_body_36",
+      "sourceSprite": "bust_body_36",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_36.png",
       "hideHead": false,
       "hideBeard": false
@@ -924,6 +998,8 @@
       "sourceVision": 0,
       "sourceDescription": "A body armor made of thick overlapping metal plates that cover most of the upper body.",
       "sprite": "bust_body_88",
+      "sourceSprite": "bust_body_88",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_88.png",
       "hideHead": false,
       "hideBeard": false
@@ -948,6 +1024,8 @@
       "sourceVision": 0,
       "sourceDescription": "Numerous overlapping leather plates provide decent protection for most of the upper body.",
       "sprite": "bust_body_25",
+      "sourceSprite": "bust_body_25",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_25.png",
       "hideHead": false,
       "hideBeard": false
@@ -972,6 +1050,8 @@
       "sourceVision": 0,
       "sourceDescription": "A mail shirt worn under a thick leather scale armor for added protection.",
       "sprite": "bust_body_83",
+      "sourceSprite": "bust_body_83",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_83.png",
       "hideHead": false,
       "hideBeard": false
@@ -996,6 +1076,8 @@
       "sourceVision": 0,
       "sourceDescription": "A leather vest ontop of a cloth tunic for improved protection.",
       "sprite": "bust_body_13",
+      "sourceSprite": "bust_body_13",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_13.png",
       "hideHead": false,
       "hideBeard": false
@@ -1020,6 +1102,8 @@
       "sourceVision": 0,
       "sourceDescription": "Various patches of rough leather sewn together.",
       "sprite": "bust_body_18",
+      "sourceSprite": "bust_body_18",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_18.png",
       "hideHead": false,
       "hideBeard": false
@@ -1065,6 +1149,8 @@
       "sourceVision": 0,
       "sourceDescription": "A grisly aspect of Davkul, an ancient power not from this world, and the last remnants of a fallen cultist from whose body it has been fashioned. It shall never break, but instead keep regrowing its scarred skin on the spot.",
       "sprite": "bust_body_81",
+      "sourceSprite": "bust_body_81",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_81.png",
       "hideHead": false,
       "hideBeard": false
@@ -1110,6 +1196,8 @@
       "sourceVision": 0,
       "sourceDescription": "A shining armor once worn by the emperor of an age long past, made from the most wondrous of materials, imbued with mystical energies. Light reflects easily off the polished armor, turning the wearer into a shimmering figure of light during the day.",
       "sprite": "bust_body_80",
+      "sourceSprite": "bust_body_80",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_80.png",
       "hideHead": false,
       "hideBeard": false
@@ -1155,6 +1243,8 @@
       "sourceVision": 0,
       "sourceDescription": "A shining armor once worn by the emperor of an age long past, made from the most woundrous of materials, imbued with mystical energies. Light reflects easily off the polished armor, turning the wearer into a shimmering figure of light during the day.",
       "sprite": "bust_body_80",
+      "sourceSprite": "bust_body_80",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_80.png",
       "hideHead": false,
       "hideBeard": false
@@ -1200,6 +1290,8 @@
       "sourceVision": 0,
       "sourceDescription": "Once a barbarian armor broken in battle, this piece has been bathed in the blood of the legendary Ijirok. Powers beyond your understanding mended it whole again, and will likewise mend any wounds of the wearer as well.",
       "sprite": "bust_body_98",
+      "sourceSprite": "bust_body_98",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_98.png",
       "hideHead": false,
       "hideBeard": false
@@ -1224,6 +1316,8 @@
       "sourceVision": 0,
       "sourceDescription": "A sturdy yet flexible armor composed of small, overlapping metal scales.",
       "sprite": "bust_body_85",
+      "sourceSprite": "bust_body_85",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_85.png",
       "hideHead": false,
       "hideBeard": false
@@ -1248,6 +1342,8 @@
       "sourceVision": 0,
       "sourceDescription": "A simple cloth tunic. Fashionable but offering little in protection.",
       "sprite": "bust_body_03",
+      "sourceSprite": "bust_body_03",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_03.png",
       "hideHead": false,
       "hideBeard": false
@@ -1272,6 +1368,8 @@
       "sourceVision": 0,
       "sourceDescription": "A long and heavy chainmail that offers good protection but is very fatiguing to wear.",
       "sprite": "bust_body_28",
+      "sourceSprite": "bust_body_28",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_28.png",
       "hideHead": false,
       "hideBeard": false
@@ -1296,6 +1394,8 @@
       "sourceVision": 0,
       "sourceDescription": "A mail shirt with shoulder guards providing excellent protection against most weapons.",
       "sprite": "bust_body_27",
+      "sourceSprite": "bust_body_27",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_27.png",
       "hideHead": false,
       "hideBeard": false
@@ -1320,6 +1420,8 @@
       "sourceVision": 0,
       "sourceDescription": "A rugged, large robe made of simple cloth usually worn by monks and similar individuals who don't care for fashion.",
       "sprite": "bust_body_11",
+      "sourceSprite": "bust_body_11",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_11.png",
       "hideHead": false,
       "hideBeard": false
@@ -1365,6 +1467,8 @@
       "sourceVision": 0,
       "sourceDescription": "Ancient knowledge has been used when smithing this unique set of armor. Its light mail overlapped with golden splints offers high protection with manageable encumberment.",
       "sprite": "bust_body_southern_named_02",
+      "sourceSprite": "bust_body_southern_named_02",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_named_armor_02.png",
       "hideHead": false,
       "hideBeard": false
@@ -1410,6 +1514,8 @@
       "sourceVision": 0,
       "sourceDescription": "A well-crafted and hardened leather armor supported by a padded gambeson and chainmail. Light to wear but very sturdy.",
       "sprite": "bust_body_42",
+      "sourceSprite": "bust_body_42",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_42.png",
       "hideHead": false,
       "hideBeard": false
@@ -1455,6 +1561,8 @@
       "sourceVision": 0,
       "sourceDescription": "This particular mail shirt is combined with a gambeson and covered with a sturdy, riveted leather jacket for a light yet protective armor.",
       "sprite": "bust_body_46",
+      "sourceSprite": "bust_body_46",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_46.png",
       "hideHead": false,
       "hideBeard": false
@@ -1500,6 +1608,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick mail hauberk combined with sturdy metal plates. This armor will protect its wearer even in the fiercest of battles.",
       "sprite": "bust_body_45",
+      "sourceSprite": "bust_body_45",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_45.png",
       "hideHead": false,
       "hideBeard": false
@@ -1546,6 +1656,8 @@
       "sourceVision": 0,
       "sourceDescription": "A scale armor made of small, interlocking metal scales. The style and craftsmanship hint at the armor coming from a far-away region.",
       "sprite": "bust_body_44",
+      "sourceSprite": "bust_body_44",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_44.png",
       "hideHead": false,
       "hideBeard": false
@@ -1591,6 +1703,8 @@
       "sourceVision": 0,
       "sourceDescription": "A rare coat of plates enhanced with chainmail and additional padding. A piece of true craftsmanship!",
       "sprite": "bust_body_43",
+      "sourceSprite": "bust_body_43",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_43.png",
       "hideHead": false,
       "hideBeard": false
@@ -1636,6 +1750,8 @@
       "sourceVision": 0,
       "sourceDescription": "Truly fit for a knight, this mail hauberk is made from the highest quality materials and boasts precious decorations and ornaments.",
       "sprite": "bust_body_36",
+      "sourceSprite": "bust_body_36",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_36.png",
       "hideHead": false,
       "hideBeard": false
@@ -1682,6 +1798,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy lamellar plate harness combined with fine mail and comfortable padding. A truly well made piece that is almost too precious to be torn in battle.",
       "sprite": "bust_body_southern_named_01",
+      "sourceSprite": "bust_body_southern_named_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_named_armor_01.png",
       "hideHead": false,
       "hideBeard": false
@@ -1727,6 +1845,8 @@
       "sourceVision": 0,
       "sourceDescription": "The sturdy scales of a fierce Lindwurm sewn together ontop a heavy chainmail. Not only is it a trophy to a great hunter, but it also deflects the fiercest of blows, and the shimmering scales remain untouched by any corroding Lindwurm blood.",
       "sprite": "bust_body_113",
+      "sourceSprite": "bust_body_113",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_113.png",
       "hideHead": false,
       "hideBeard": false
@@ -1773,6 +1893,8 @@
       "sourceVision": 0,
       "sourceDescription": "This armor is composed of a strange alloy, and well crafted for barbarian standards. A truly rare and remarkable piece.",
       "sprite": "bust_body_103",
+      "sourceSprite": "bust_body_103",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_103.png",
       "hideHead": false,
       "hideBeard": false
@@ -1819,6 +1941,8 @@
       "sourceVision": 0,
       "sourceDescription": "An extraordinarily well-crafted piece of lamellar armor. It is covered with beaten gold, which makes it truly stand out.",
       "sprite": "bust_body_100",
+      "sourceSprite": "bust_body_100",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_100.png",
       "hideHead": false,
       "hideBeard": false
@@ -1864,6 +1988,8 @@
       "sourceVision": 0,
       "sourceDescription": "This piece of light mail armor was once the personal item of a well known fencing master. It is as light as a tunic, but protects all vital body parts.",
       "sprite": "bust_body_99",
+      "sourceSprite": "bust_body_99",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_99.png",
       "hideHead": false,
       "hideBeard": false
@@ -1910,6 +2036,8 @@
       "sourceVision": 0,
       "sourceDescription": "A simple fur and leather armor with thick layers of metal plates rivetted ontop. A very simple and heavy design, but quite effective in combat.",
       "sprite": "bust_body_104",
+      "sourceSprite": "bust_body_104",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_104.png",
       "hideHead": false,
       "hideBeard": false
@@ -1955,6 +2083,8 @@
       "sourceVision": 0,
       "sourceDescription": "This piece of layered armor belonged to a famed mercenary once. Its high resilience and flexibility make it a remarkable piece of craftsmanship. And it even comes with extra pockets!",
       "sprite": "bust_body_101",
+      "sourceSprite": "bust_body_101",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_101.png",
       "hideHead": false,
       "hideBeard": false
@@ -2001,6 +2131,8 @@
       "sourceVision": 0,
       "sourceDescription": "A barbarian armor of crude making that has been adjusted to protect without being too cumbersome. It wears the typical markings of the northern barbarian tribes.",
       "sprite": "bust_body_102",
+      "sourceSprite": "bust_body_102",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_102.png",
       "hideHead": false,
       "hideBeard": false
@@ -2025,6 +2157,8 @@
       "sourceVision": 0,
       "sourceDescription": "The noble gear worn in Battle Brothers.",
       "sprite": "bust_body_noble_04",
+      "sourceSprite": "bust_body_noble_04",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_04.png",
       "hideHead": false,
       "hideBeard": false
@@ -2049,6 +2183,8 @@
       "sourceVision": 0,
       "sourceDescription": "A truly masterfully crafted set of mail armor. Very light and flexible to reduce encumberance while still offering good protection.",
       "sprite": "bust_body_87",
+      "sourceSprite": "bust_body_87",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_87.png",
       "hideHead": false,
       "hideBeard": false
@@ -2073,6 +2209,8 @@
       "sourceVision": 0,
       "sourceDescription": "A fine linen tunic of exquisite material, embroided with pleasing patterns. Fashionable but offering little in protection.",
       "sprite": "bust_body_08",
+      "sourceSprite": "bust_body_08",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_08.png",
       "hideHead": false,
       "hideBeard": false
@@ -2098,6 +2236,8 @@
       "sourceVision": 0,
       "sourceDescription": "The dark robes of an assassin. Fine chainmail is tied and woven tightly into the fabric.",
       "sprite": "bust_body_southern_03",
+      "sourceSprite": "bust_body_southern_03",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_03.png",
       "hideHead": false,
       "hideBeard": false
@@ -2123,6 +2263,8 @@
       "sourceVision": 0,
       "sourceDescription": "A double sash made from thick cloth that is worn across the body.",
       "sprite": "bust_body_southern_12",
+      "sourceSprite": "bust_body_southern_12",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_12.png",
       "hideHead": false,
       "hideBeard": false
@@ -2148,6 +2290,8 @@
       "sourceVision": 0,
       "sourceDescription": "A leather harness commonly worn by pit fighters in arenas of the southern city states.",
       "sprite": "bust_body_southern_11",
+      "sourceSprite": "bust_body_southern_11",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_11.png",
       "hideHead": false,
       "hideBeard": false
@@ -2173,6 +2317,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick cloth robe with added leather parts for increased protection.",
       "sprite": "bust_body_southern_13",
+      "sourceSprite": "bust_body_southern_13",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_13.png",
       "hideHead": false,
       "hideBeard": false
@@ -2198,6 +2344,8 @@
       "sourceVision": 0,
       "sourceDescription": "A breastplate made of several layers of linen.",
       "sprite": "bust_body_southern_05",
+      "sourceSprite": "bust_body_southern_05",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_05.png",
       "hideHead": false,
       "hideBeard": false
@@ -2223,6 +2371,8 @@
       "sourceVision": 0,
       "sourceDescription": "A lamellar shirt made from interlapping metal plates worn atop a mail shirt.",
       "sprite": "bust_body_southern_02",
+      "sourceSprite": "bust_body_southern_02",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_02.png",
       "hideHead": false,
       "hideBeard": false
@@ -2248,6 +2398,8 @@
       "sourceVision": 0,
       "sourceDescription": "A nomad cloth robe worn to protect against both the heat and against cuts and bruises.",
       "sprite": "bust_body_southern_16",
+      "sourceSprite": "bust_body_southern_16",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_16.png",
       "hideHead": false,
       "hideBeard": false
@@ -2273,6 +2425,8 @@
       "sourceVision": 0,
       "sourceDescription": "A heavy composite armor consisting of mail coat, padding and lamellar elements.",
       "sprite": "bust_body_southern_07",
+      "sourceSprite": "bust_body_southern_07",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_07.png",
       "hideHead": false,
       "hideBeard": false
@@ -2298,6 +2452,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick cloth vest padded with dense wool to protect against blunt hits.",
       "sprite": "bust_body_southern_06",
+      "sourceSprite": "bust_body_southern_06",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_06.png",
       "hideHead": false,
       "hideBeard": false
@@ -2323,6 +2479,8 @@
       "sourceVision": 0,
       "sourceDescription": "A slightly worn-down, thin and light mail with additional metal plates grafted onto it.",
       "sprite": "bust_body_southern_15",
+      "sourceSprite": "bust_body_southern_15",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_15.png",
       "hideHead": false,
       "hideBeard": false
@@ -2348,6 +2506,8 @@
       "sourceVision": 0,
       "sourceDescription": "A long and heavy mail shirt with a thickly padded coat.",
       "sprite": "bust_body_southern_01",
+      "sourceSprite": "bust_body_southern_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_01.png",
       "hideHead": false,
       "hideBeard": false
@@ -2373,6 +2533,8 @@
       "sourceVision": 0,
       "sourceDescription": "A mail shirt fashioned from slightly thinner and lighter metal rings than those used in the north.",
       "sprite": "bust_body_southern_04",
+      "sourceSprite": "bust_body_southern_04",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_04.png",
       "hideHead": false,
       "hideBeard": false
@@ -2398,6 +2560,8 @@
       "sourceVision": 0,
       "sourceDescription": "A leather nomad armor stitched together from various hides and scraps.",
       "sprite": "bust_body_southern_14",
+      "sourceSprite": "bust_body_southern_14",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_14.png",
       "hideHead": false,
       "hideBeard": false
@@ -2423,6 +2587,8 @@
       "sourceVision": 0,
       "sourceDescription": "A double layered robe fashioned from thick cloth.",
       "sprite": "bust_body_southern_17",
+      "sourceSprite": "bust_body_southern_17",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_southern_armor_17.png",
       "hideHead": false,
       "hideBeard": false
@@ -2448,6 +2614,8 @@
       "sourceVision": 0,
       "sourceDescription": "The vizier gear worn in Battle Brothers.",
       "sprite": "bust_desert_noble_01",
+      "sourceSprite": "bust_desert_noble_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_01.png",
       "hideHead": false,
       "hideBeard": false
@@ -2472,6 +2640,8 @@
       "sourceVision": 0,
       "sourceDescription": "A padded tunic reinforced with leather fittings for added protection.",
       "sprite": "bust_body_24",
+      "sourceSprite": "bust_body_24",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_24.png",
       "hideHead": false,
       "hideBeard": false
@@ -2496,6 +2666,8 @@
       "sourceVision": 0,
       "sourceDescription": "A cloth mantle padded with woolen filling.",
       "sprite": "bust_body_14",
+      "sourceSprite": "bust_body_14",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_14.png",
       "hideHead": false,
       "hideBeard": false
@@ -2520,6 +2692,8 @@
       "sourceVision": 0,
       "sourceDescription": "This light mail shirt has seen better times but still grants decent protection.",
       "sprite": "bust_body_22",
+      "sourceSprite": "bust_body_22",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_22.png",
       "hideHead": false,
       "hideBeard": false
@@ -2544,6 +2718,8 @@
       "sourceVision": 0,
       "sourceDescription": "A dark padded leather mantle, stuffed for added protection, with a pelt coat.",
       "sprite": "bust_body_61",
+      "sourceSprite": "bust_body_61",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_61.png",
       "hideHead": false,
       "hideBeard": false
@@ -2568,6 +2744,8 @@
       "sourceVision": 0,
       "sourceDescription": "A padded leather mantle stuffed for added protection. Usually worn under armor.",
       "sprite": "bust_body_20",
+      "sourceSprite": "bust_body_20",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_20.png",
       "hideHead": false,
       "hideBeard": false
@@ -2592,6 +2770,8 @@
       "sourceVision": 0,
       "sourceDescription": "An ominous black coat worn over a sturdy tunic, reinforced with thick leather armor and iron bracers.",
       "sprite": "bust_body_112",
+      "sourceSprite": "bust_body_112",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_112.png",
       "hideHead": false,
       "hideBeard": false
@@ -2616,6 +2796,8 @@
       "sourceVision": 0,
       "sourceDescription": "A mail hauberk reinforced with shoulder pauldrons and a riveted leather armor for added protection.",
       "sprite": "bust_body_35",
+      "sourceSprite": "bust_body_35",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_35.png",
       "hideHead": false,
       "hideBeard": false
@@ -2640,6 +2822,8 @@
       "sourceVision": 0,
       "sourceDescription": "Better than running naked.",
       "sprite": "bust_body_02",
+      "sourceSprite": "bust_body_02",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_02.png",
       "hideHead": false,
       "hideBeard": false
@@ -2664,6 +2848,8 @@
       "sourceVision": 0,
       "sourceDescription": "A body vest with overlapping scales worn over a small mail shirt.",
       "sprite": "bust_body_33",
+      "sourceSprite": "bust_body_33",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_33.png",
       "hideHead": false,
       "hideBeard": false
@@ -2688,6 +2874,8 @@
       "sourceVision": 0,
       "sourceDescription": "A long leather coat reinforced with metal plates worn over a sturdy mail hauberk.",
       "sprite": "bust_body_86",
+      "sourceSprite": "bust_body_86",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_86.png",
       "hideHead": false,
       "hideBeard": false
@@ -2712,6 +2900,8 @@
       "sourceVision": 0,
       "sourceDescription": "A mail hauberk reinforced with shoulder pauldrons, additional metal plating and a riveted leather armor, covered with a tabbard in a noble houses' colors.",
       "sprite": "bust_body_35",
+      "sourceSprite": "bust_body_35",
+      "artAdaptation": null,
       "icon": null,
       "hideHead": false,
       "hideBeard": false
@@ -2736,6 +2926,8 @@
       "sourceVision": 0,
       "sourceDescription": "Barely better than running naked.",
       "sprite": "bust_body_01",
+      "sourceSprite": "bust_body_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_01.png",
       "hideHead": false,
       "hideBeard": false
@@ -2760,6 +2952,8 @@
       "sourceVision": 0,
       "sourceDescription": "A dark and thick cloth tunic consisting of multiple layers to protect against weather and scratches.",
       "sprite": "bust_body_60",
+      "sourceSprite": "bust_body_60",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_60.png",
       "hideHead": false,
       "hideBeard": false
@@ -2784,6 +2978,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick cloth tunic consisting of multiple layers to protect against weather and scratches.",
       "sprite": "bust_body_19",
+      "sourceSprite": "bust_body_19",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_19.png",
       "hideHead": false,
       "hideBeard": false
@@ -2808,6 +3004,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick leather apron that provides protection against light cuts and scratches.",
       "sprite": "bust_body_110",
+      "sourceSprite": "bust_body_110",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_110.png",
       "hideHead": false,
       "hideBeard": false
@@ -2832,6 +3030,8 @@
       "sourceVision": 0,
       "sourceDescription": "A rugged traveling attire consisting of a layered tunic worn under a durable leather jacket.",
       "sprite": "bust_body_111",
+      "sourceSprite": "bust_body_111",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_111.png",
       "hideHead": false,
       "hideBeard": false
@@ -2856,6 +3056,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick leather armor skillfully crafted from the pelt of a giant wolf. Donning the skin of a beast like this can turn one into an imposing figure.",
       "sprite": "bust_body_16",
+      "sourceSprite": "bust_body_16",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_16.png",
       "hideHead": false,
       "hideBeard": false
@@ -2880,6 +3082,8 @@
       "sourceVision": 0,
       "sourceDescription": "A skillfully crafted mail shirt with the pelt of a giant wolf ontop. Donning the skin of a beast like this can turn one into an imposing figure.",
       "sprite": "bust_body_17",
+      "sourceSprite": "bust_body_17",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_17.png",
       "hideHead": false,
       "hideBeard": false
@@ -2904,6 +3108,8 @@
       "sourceVision": 0,
       "sourceDescription": "A cloth robe coverd in all kinds of mystical ornaments and symbols.",
       "sprite": "bust_body_12",
+      "sourceSprite": "bust_body_12",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_12.png",
       "hideHead": false,
       "hideBeard": false
@@ -2928,6 +3134,8 @@
       "sourceVision": 0,
       "sourceDescription": "A reinforced mail shirt that lost some parts over the years.",
       "sprite": "bust_body_23",
+      "sourceSprite": "bust_body_23",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/armor/inventory_body_armor_23.png",
       "hideHead": false,
       "hideBeard": false
@@ -2952,6 +3160,8 @@
       "sourceVision": -3,
       "sourceDescription": "A closed helmet with complete faceguard and mail to protect the neck. Heavily worn from extensive use, but adorned with relics and well-maintained.",
       "sprite": "bust_helmet_238",
+      "sourceSprite": "bust_helmet_238",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_238.png",
       "hideHead": false,
       "hideBeard": true
@@ -2976,6 +3186,8 @@
       "sourceVision": -3,
       "sourceDescription": "A closed metal helm with breathing holes. Adorned with relics and lovingly maintained despite its extensive use, this is the helmet of a true questing knight.",
       "sprite": "bust_helmet_239",
+      "sourceSprite": "bust_helmet_239",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_239.png",
       "hideHead": false,
       "hideBeard": true
@@ -3000,6 +3212,8 @@
       "sourceVision": 0,
       "sourceDescription": "A padded cloth cap.",
       "sprite": "bust_helmet_21",
+      "sourceSprite": "bust_helmet_21",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_21.png",
       "hideHead": false,
       "hideBeard": false
@@ -3024,6 +3238,8 @@
       "sourceVision": -3,
       "sourceDescription": "An ancient heavy helmet with intricate decoration.",
       "sprite": "bust_helmet_73",
+      "sourceSprite": "bust_helmet_73",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_73.png",
       "hideHead": true,
       "hideBeard": true
@@ -3048,6 +3264,8 @@
       "sourceVision": -1,
       "sourceDescription": "An ancient light helmet that time has taken a toll on over many years.",
       "sprite": "bust_helmet_64",
+      "sourceSprite": "bust_helmet_64",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_64.png",
       "hideHead": false,
       "hideBeard": false
@@ -3072,6 +3290,8 @@
       "sourceVision": 0,
       "sourceDescription": "The ancient laurels worn in Battle Brothers.",
       "sprite": "bust_helmet_153",
+      "sourceSprite": "bust_helmet_153",
+      "artAdaptation": null,
       "icon": null,
       "hideHead": false,
       "hideBeard": false
@@ -3096,6 +3316,8 @@
       "sourceVision": -2,
       "sourceDescription": "A well-crafted but partly decayed helmet of ancient design.",
       "sprite": "bust_helmet_66",
+      "sourceSprite": "bust_helmet_66",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_66.png",
       "hideHead": false,
       "hideBeard": false
@@ -3120,6 +3342,8 @@
       "sourceVision": 0,
       "sourceDescription": "The ancient headpiece worn in Battle Brothers.",
       "sprite": "bust_helmet_skeleton_82",
+      "sourceSprite": "bust_helmet_skeleton_82",
+      "artAdaptation": null,
       "icon": null,
       "hideHead": false,
       "hideBeard": false
@@ -3144,6 +3368,8 @@
       "sourceVision": 0,
       "sourceDescription": "The ancient priest diadem worn in Battle Brothers.",
       "sprite": "bust_helmet_79",
+      "sourceSprite": "bust_helmet_79",
+      "artAdaptation": null,
       "icon": null,
       "hideHead": false,
       "hideBeard": false
@@ -3169,6 +3395,8 @@
       "sourceVision": -3,
       "sourceDescription": "The ritual helmet worn in Battle Brothers.",
       "sprite": "bust_helmet_235",
+      "sourceSprite": "bust_helmet_235",
+      "artAdaptation": null,
       "icon": null,
       "hideHead": true,
       "hideBeard": true
@@ -3194,6 +3422,8 @@
       "sourceVision": 0,
       "sourceDescription": "The dried and prepped head of a large bear. Offers some protection, but is mostly donned for the looks.",
       "sprite": "bust_helmet_190",
+      "sourceSprite": "bust_helmet_190",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_190.png",
       "hideHead": false,
       "hideBeard": false
@@ -3219,6 +3449,8 @@
       "sourceVision": -1,
       "sourceDescription": "A headpiece with long horns, fashioned in tradition of barbarian beastmasters for generations.",
       "sprite": "bust_helmet_193",
+      "sourceSprite": "bust_helmet_193",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_193.png",
       "hideHead": false,
       "hideBeard": false
@@ -3244,6 +3476,8 @@
       "sourceVision": -2,
       "sourceDescription": "This heavy metal helmet also protects the wearer's face, albeit at the cost of visibility.",
       "sprite": "bust_helmet_192",
+      "sourceSprite": "bust_helmet_192",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_192.png",
       "hideHead": true,
       "hideBeard": true
@@ -3269,6 +3503,8 @@
       "sourceVision": -2,
       "sourceDescription": "A crude and rusty barbarian helmet. What it lacks in finesse it makes up for in thickness.",
       "sprite": "bust_helmet_191",
+      "sourceSprite": "bust_helmet_191",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_191.png",
       "hideHead": true,
       "hideBeard": true
@@ -3294,6 +3530,8 @@
       "sourceVision": -1,
       "sourceDescription": "Although crudely made and rusty, this metal helmet is a durable and sturdy piece of armor.",
       "sprite": "bust_helmet_196",
+      "sourceSprite": "bust_helmet_196",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_196.png",
       "hideHead": false,
       "hideBeard": false
@@ -3319,6 +3557,8 @@
       "sourceVision": -3,
       "sourceDescription": "This heavy helmet has ornamental horns attached. This is a sign of high standing and reputation within barbarian warbands.",
       "sprite": "bust_helmet_194",
+      "sourceSprite": "bust_helmet_194",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_194.png",
       "hideHead": true,
       "hideBeard": true
@@ -3344,6 +3584,8 @@
       "sourceVision": 0,
       "sourceDescription": "A dried and folded leather headband designed to protect the forehead.",
       "sprite": "bust_helmet_187",
+      "sourceSprite": "bust_helmet_187",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_187.png",
       "hideHead": false,
       "hideBeard": false
@@ -3369,6 +3611,8 @@
       "sourceVision": -1,
       "sourceDescription": "A thick leather helmet fashioned from cured hides. The animals these once belonged to were certainly dangerous game.",
       "sprite": "bust_helmet_189",
+      "sourceSprite": "bust_helmet_189",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_189.png",
       "hideHead": false,
       "hideBeard": false
@@ -3393,6 +3637,8 @@
       "sourceVision": -2,
       "sourceDescription": "A sturdy yet light barbute helmet, a design uncommon in these lands, made from especially light and durable steel.",
       "sprite": "bust_helmet_158",
+      "sourceSprite": "bust_helmet_158",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_158.png",
       "hideHead": false,
       "hideBeard": false
@@ -3417,6 +3663,8 @@
       "sourceVision": -2,
       "sourceDescription": "A metal bascinet worn atop a thick mail coif.",
       "sprite": "bust_helmet_54",
+      "sourceSprite": "bust_helmet_54",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_54.png",
       "hideHead": false,
       "hideBeard": false
@@ -3441,6 +3689,8 @@
       "sourceVision": -3,
       "sourceDescription": "A closed helmet with complete faceguard. Hard to breathe in and limiting the field of view.",
       "sprite": "bust_helmet_16",
+      "sourceSprite": "bust_helmet_16",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_16.png",
       "hideHead": false,
       "hideBeard": true
@@ -3465,6 +3715,8 @@
       "sourceVision": -3,
       "sourceDescription": "A closed helmet with complete faceguard and a mail coif covering the neck. Great in the way of protection but hard to breathe in and limiting the field of view.",
       "sprite": "bust_helmet_18",
+      "sourceSprite": "bust_helmet_18",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_18.png",
       "hideHead": false,
       "hideBeard": true
@@ -3489,6 +3741,8 @@
       "sourceVision": -3,
       "sourceDescription": "A closed helmet with complete faceguard and a padded coif underneath. Hard to breathe in and limiting the field of view.",
       "sprite": "bust_helmet_17",
+      "sourceSprite": "bust_helmet_17",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_17.png",
       "hideHead": false,
       "hideBeard": true
@@ -3513,6 +3767,8 @@
       "sourceVision": 0,
       "sourceDescription": "A mail coif with added protection for the face.",
       "sprite": "bust_helmet_06",
+      "sourceSprite": "bust_helmet_06",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_06.png",
       "hideHead": false,
       "hideBeard": true
@@ -3537,6 +3793,8 @@
       "sourceVision": -2,
       "sourceDescription": "A heavy conic helmet with a full closed mail skirt for additional protection.",
       "sprite": "bust_helmet_201",
+      "sourceSprite": "bust_helmet_201",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_201.png",
       "hideHead": false,
       "hideBeard": true
@@ -3561,6 +3819,8 @@
       "sourceVision": -3,
       "sourceDescription": "This conic helmet with mail has an attached metal faceguard. It is heavy and hard to see through, but offers excellent protection.",
       "sprite": "bust_helmet_200",
+      "sourceSprite": "bust_helmet_200",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_200.png",
       "hideHead": false,
       "hideBeard": true
@@ -3586,6 +3846,8 @@
       "sourceVision": -1,
       "sourceDescription": "A rough spun cloth bag with two holes in it.",
       "sprite": "bust_helmet_33",
+      "sourceSprite": "bust_helmet_33",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_33.png",
       "hideHead": false,
       "hideBeard": true
@@ -3611,6 +3873,8 @@
       "sourceVision": -1,
       "sourceDescription": "A thick leather hood that covers the head and neck but limits vision.",
       "sprite": "bust_helmet_236",
+      "sourceSprite": "bust_helmet_236",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_236.png",
       "hideHead": false,
       "hideBeard": true
@@ -3635,6 +3899,8 @@
       "sourceVision": 0,
       "sourceDescription": "A sturdy hat and cowl made out of leather and cloth.",
       "sprite": "bust_helmet_62",
+      "sourceSprite": "bust_helmet_62",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_62.png",
       "hideHead": false,
       "hideBeard": false
@@ -3659,6 +3925,8 @@
       "sourceVision": -3,
       "sourceDescription": "A worn and torn closed helmet with complete faceguard and a mail coif covering the neck. It has obviously been lying outdoors for a while.",
       "sprite": "bust_helmet_55",
+      "sourceSprite": "bust_helmet_55",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_55.png",
       "hideHead": false,
       "hideBeard": true
@@ -3683,6 +3951,8 @@
       "sourceVision": -3,
       "sourceDescription": "A worn and torn closed helmet with complete faceguard and a mail coif covering the neck, underneath a rotten cloth sack. It has obviously been lying outdoors for a while.",
       "sprite": "bust_helmet_57",
+      "sourceSprite": "bust_helmet_57",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_57.png",
       "hideHead": false,
       "hideBeard": true
@@ -3707,6 +3977,8 @@
       "sourceVision": -3,
       "sourceDescription": "This full helm suffers from rusty metal parts and brittle leather inlays but still offers good protection if you ignore its stench.",
       "sprite": "bust_helmet_56",
+      "sourceSprite": "bust_helmet_56",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_56.png",
       "hideHead": true,
       "hideBeard": true
@@ -3731,6 +4003,8 @@
       "sourceVision": -3,
       "sourceDescription": "A great helmet with torn off and rotten decorations. It must have once belonged to a renowned knight.",
       "sprite": "faction_helmet_11",
+      "sourceSprite": "faction_helmet_11",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_faction_helmet_11.png",
       "hideHead": true,
       "hideBeard": true
@@ -3755,6 +4029,8 @@
       "sourceVision": -1,
       "sourceDescription": "A dented metal nasal helmet that has seen some fighting.",
       "sprite": "bust_helmet_30",
+      "sourceSprite": "bust_helmet_30",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_30.png",
       "hideHead": false,
       "hideBeard": false
@@ -3779,6 +4055,8 @@
       "sourceVision": -3,
       "sourceDescription": "A closed metal helm with breathing holes and intricate decoration ontop. Great in the way of protection, a piece of art to behold, but hard to breathe in and limiting the field of view.",
       "sprite": "faction_helmet_01",
+      "sourceSprite": "faction_helmet_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_faction_helmet_01.png",
       "hideHead": true,
       "hideBeard": true
@@ -3803,6 +4081,8 @@
       "sourceVision": 0,
       "sourceDescription": "A fancy feathered hat usually worn by minstrels or nobles.",
       "sprite": "bust_helmet_39",
+      "sourceSprite": "bust_helmet_39",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_39.png",
       "hideHead": false,
       "hideBeard": false
@@ -3827,6 +4107,8 @@
       "sourceVision": -1,
       "sourceDescription": "A flat full-metal helmet with noseguard.",
       "sprite": "bust_helmet_12",
+      "sourceSprite": "bust_helmet_12",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_12.png",
       "hideHead": false,
       "hideBeard": false
@@ -3851,6 +4133,8 @@
       "sourceVision": -2,
       "sourceDescription": "A flat full-metal helmet with a mail coif covering the neck and face.",
       "sprite": "bust_helmet_15",
+      "sourceSprite": "bust_helmet_15",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_15.png",
       "hideHead": false,
       "hideBeard": true
@@ -3875,6 +4159,8 @@
       "sourceVision": -2,
       "sourceDescription": "A flat full-metal helmet with noseguard and a mail coif underneath.",
       "sprite": "bust_helmet_14",
+      "sourceSprite": "bust_helmet_14",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_14.png",
       "hideHead": false,
       "hideBeard": false
@@ -3899,6 +4185,8 @@
       "sourceVision": 0,
       "sourceDescription": "A large padded cloth cap also covering the neck.",
       "sprite": "bust_helmet_22",
+      "sourceSprite": "bust_helmet_22",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_22.png",
       "hideHead": false,
       "hideBeard": false
@@ -3923,6 +4211,8 @@
       "sourceVision": -3,
       "sourceDescription": "A closed metal helm with breathing holes. Great in the way of protection but hard to breathe in and limiting the field of view.",
       "sprite": "bust_helmet_04",
+      "sourceSprite": "bust_helmet_04",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_04.png",
       "hideHead": true,
       "hideBeard": true
@@ -3947,6 +4237,8 @@
       "sourceVision": 0,
       "sourceDescription": "A closed leather cap that protects the head and neck. Padded for extra protection.",
       "sprite": "bust_helmet_27",
+      "sourceSprite": "bust_helmet_27",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_27.png",
       "hideHead": false,
       "hideBeard": false
@@ -3971,6 +4263,8 @@
       "sourceVision": -1,
       "sourceDescription": "A sturdy metal helmet with added padding, covered with a large feathered hat.",
       "sprite": "faction_helmet_2_01",
+      "sourceSprite": "faction_helmet_2_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_faction_helmet_2_01.png",
       "hideHead": false,
       "hideBeard": false
@@ -3995,6 +4289,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick leather hat with ornaments and feathers.",
       "sprite": "bust_helmet_83",
+      "sourceSprite": "bust_helmet_83",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_83.png",
       "hideHead": false,
       "hideBeard": false
@@ -4019,6 +4315,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick piece of cloth wrapped around the head.",
       "sprite": "bust_helmet_26",
+      "sourceSprite": "bust_helmet_26",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_26.png",
       "hideHead": false,
       "hideBeard": false
@@ -4043,6 +4341,8 @@
       "sourceVision": 0,
       "sourceDescription": "A full mail coif, heavier and sturdier than most others of its kind. Decorated with a colorful plait.",
       "sprite": "bust_helmet_237",
+      "sourceSprite": "bust_helmet_237",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_237.png",
       "hideHead": false,
       "hideBeard": false
@@ -4067,6 +4367,8 @@
       "sourceVision": 0,
       "sourceDescription": "A simple hood to protect against weather and scratches.",
       "sprite": "bust_helmet_19",
+      "sourceSprite": "bust_helmet_19",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_19.png",
       "hideHead": false,
       "hideBeard": false
@@ -4091,6 +4393,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick felt hat decorated with feathers as a hunter's trophy.",
       "sprite": "bust_helmet_87",
+      "sourceSprite": "bust_helmet_87",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_87.png",
       "hideHead": false,
       "hideBeard": false
@@ -4115,6 +4419,8 @@
       "sourceVision": 0,
       "sourceDescription": "The colorful and iconic headpiece of jesters, entertainers and other traveling folk.",
       "sprite": "bust_helmet_86",
+      "sourceSprite": "bust_helmet_86",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_86.png",
       "hideHead": false,
       "hideBeard": false
@@ -4139,6 +4445,8 @@
       "sourceVision": -1,
       "sourceDescription": "A full-metal helmet with a broad rim.",
       "sprite": "bust_helmet_08",
+      "sourceSprite": "bust_helmet_08",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_08.png",
       "hideHead": false,
       "hideBeard": false
@@ -4163,6 +4471,8 @@
       "sourceVision": -2,
       "sourceDescription": "A full-metal helmet with a broad rim and a mail coif covering the neck and face.",
       "sprite": "bust_helmet_11",
+      "sourceSprite": "bust_helmet_11",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_11.png",
       "hideHead": false,
       "hideBeard": true
@@ -4187,6 +4497,8 @@
       "sourceVision": -2,
       "sourceDescription": "A full-metal helmet with a broad rim and a mail coif underneath.",
       "sprite": "bust_helmet_10",
+      "sourceSprite": "bust_helmet_10",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_10.png",
       "hideHead": false,
       "hideBeard": false
@@ -4232,6 +4544,8 @@
       "sourceVision": 0,
       "sourceDescription": "A golden helmet and facemask, showing the visage of an emperor from an age long past, imbued with mystical energies. When you hold it into the light, it almost looks as if the face were moving and making expressions of disgust.",
       "sprite": "bust_helmet_84",
+      "sourceSprite": "bust_helmet_84",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_84.png",
       "hideHead": true,
       "hideBeard": true
@@ -4277,6 +4591,8 @@
       "sourceVision": 0,
       "sourceDescription": "The Fangshire is a northern tiger's skull that nestles the faces of men deeply and darkly behind two ferocious fangs. Originally worn by Bjarund the Beastman, a fierce northern raider, it instilled fear into the hearts of his enemies as he went on bloody raids and burned down many a village along the coastline. When Bjarund was finally slain, Fangshire was taken as a trophy and went further south. Rumors proclaim that its wearer's eyes glow a sharpened yellow, allowing them to see through the very night.",
       "sprite": "bust_helmet_24",
+      "sourceSprite": "bust_helmet_24",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_24.png",
       "hideHead": false,
       "hideBeard": false
@@ -4322,6 +4638,8 @@
       "sourceVision": 0,
       "sourceDescription": "Once a barbarian helmet broken in battle, this piece has been bathed in the blood of the legendary Ijirok. Powers beyond your understanding mended it whole again, and will likewise mend any wounds of the wearer as well.",
       "sprite": "bust_helmet_198",
+      "sourceSprite": "bust_helmet_198",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_198.png",
       "hideHead": true,
       "hideBeard": true
@@ -4367,6 +4685,8 @@
       "sourceVision": 0,
       "sourceDescription": "The Glimpse of Davkul is a gift bestowed upon man by ancient and dark powers, a helmet merged with human skin and bones through the most unspeakable of rituals. A glimpse of a future where man shall become one with creations from a realm beyond. It shall never break, but instead keep regrowing its scarred skin on the spot.",
       "sprite": "bust_helmet_85",
+      "sourceSprite": "bust_helmet_85",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_85.png",
       "hideHead": true,
       "hideBeard": true
@@ -4391,6 +4711,8 @@
       "sourceVision": 0,
       "sourceDescription": "A mail coif that also protects the neck.",
       "sprite": "bust_helmet_05",
+      "sourceSprite": "bust_helmet_05",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_05.png",
       "hideHead": false,
       "hideBeard": false
@@ -4415,6 +4737,8 @@
       "sourceVision": -2,
       "sourceDescription": "A brimmed metal helmet with an ominous black mask to cover the face.",
       "sprite": "bust_helmet_242",
+      "sourceSprite": "bust_helmet_242",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_242.png",
       "hideHead": false,
       "hideBeard": true
@@ -4439,6 +4763,8 @@
       "sourceVision": 0,
       "sourceDescription": "A piece of cloth covering the lower face to protect from breathing in dust or prevent identification.",
       "sprite": "bust_helmet_28",
+      "sourceSprite": "bust_helmet_28",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_28.png",
       "hideHead": false,
       "hideBeard": true
@@ -4485,6 +4811,8 @@
       "sourceVision": -3,
       "sourceDescription": "This southern style helmet is not only richly decorated, but also well balanced and made from materials of the highest quality.",
       "sprite": "bust_helmet_southern_named_02",
+      "sourceSprite": "bust_helmet_southern_named_02",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_named_02.png",
       "hideHead": false,
       "hideBeard": true
@@ -4530,6 +4858,8 @@
       "sourceVision": -3,
       "sourceDescription": "A sturdy alloy helmet of foreign design, combined with a full mail coif for excellent protection.",
       "sprite": "bust_helmet_50",
+      "sourceSprite": "bust_helmet_50",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_50.png",
       "hideHead": false,
       "hideBeard": true
@@ -4575,6 +4905,8 @@
       "sourceVision": -2,
       "sourceDescription": "A heavy bascinet with a moveable visor, worn over a mail coif. A showy piece befitting a true knight.",
       "sprite": "bust_helmet_53",
+      "sourceSprite": "bust_helmet_53",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_53.png",
       "hideHead": false,
       "hideBeard": false
@@ -4620,6 +4952,8 @@
       "sourceVision": -2,
       "sourceDescription": "This helmet must have once belonged to a daring and skilled hunter for it is covered in the scales of a dreaded Lindwurm. Not only do the scales deflect blows and hits, but they also remain unscathed by the acidic Lindwurm blood.",
       "sprite": "bust_helmet_152",
+      "sourceSprite": "bust_helmet_152",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_152.png",
       "hideHead": false,
       "hideBeard": true
@@ -4665,6 +4999,8 @@
       "sourceVision": -3,
       "sourceDescription": "This conic helmet has a faceguard attached and finely fitted scales to protect the neck. The faceguard resembles a fearsome warrior that is about to strike his enemy.",
       "sprite": "bust_helmet_205",
+      "sourceSprite": "bust_helmet_205",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_205.png",
       "hideHead": false,
       "hideBeard": true
@@ -4711,6 +5047,8 @@
       "sourceVision": -3,
       "sourceDescription": "A reinforced helmet made from an extremely sturdy alloy. It is richly decorated and heavy but offers extraordinary protection.",
       "sprite": "bust_helmet_233",
+      "sourceSprite": "bust_helmet_233",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_233.png",
       "hideHead": false,
       "hideBeard": true
@@ -4757,6 +5095,8 @@
       "sourceVision": -2,
       "sourceDescription": "This helmet must have belonged to a distinct warrior of the barbarians. Its size and design appear alien to all southern folks.",
       "sprite": "bust_helmet_234",
+      "sourceSprite": "bust_helmet_234",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_234.png",
       "hideHead": true,
       "hideBeard": true
@@ -4803,6 +5143,8 @@
       "sourceVision": -2,
       "sourceDescription": "A heavy helmet typical of the northern barbarians with a skull-like facemask. This piece is as massive as it is impressive.",
       "sprite": "bust_helmet_232",
+      "sourceSprite": "bust_helmet_232",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_232.png",
       "hideHead": true,
       "hideBeard": true
@@ -4849,6 +5191,8 @@
       "sourceVision": -2,
       "sourceDescription": "This nordic helmet with faceguard is extraordinarly crafted, and as protective as it is impressive looking.",
       "sprite": "bust_helmet_206",
+      "sourceSprite": "bust_helmet_206",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_206.png",
       "hideHead": false,
       "hideBeard": true
@@ -4894,6 +5238,8 @@
       "sourceVision": -2,
       "sourceDescription": "A masterfully crafted helmet in the fashion of the steppe folks. Decorated with gold applications and equipped with additional cheek guards.",
       "sprite": "bust_helmet_204",
+      "sourceSprite": "bust_helmet_204",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_204.png",
       "hideHead": false,
       "hideBeard": false
@@ -4939,6 +5285,8 @@
       "sourceVision": -2,
       "sourceDescription": "A hardened nasal helmet with a unique neckguard made from leather scales.",
       "sprite": "bust_helmet_51",
+      "sourceSprite": "bust_helmet_51",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_51.png",
       "hideHead": false,
       "hideBeard": false
@@ -4984,6 +5332,8 @@
       "sourceVision": -1,
       "sourceDescription": "A richly ornated nordic helmet that must have belonged to a high ranking noble or exalted warrior.",
       "sprite": "bust_helmet_203",
+      "sourceSprite": "bust_helmet_203",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_203.png",
       "hideHead": false,
       "hideBeard": false
@@ -5029,6 +5379,8 @@
       "sourceVision": -2,
       "sourceDescription": "This southern style helmet is not only richly decorated, but also well balanced and made from extremely high quality metals.",
       "sprite": "bust_helmet_southern_named_01",
+      "sourceSprite": "bust_helmet_southern_named_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_named_01.png",
       "hideHead": false,
       "hideBeard": true
@@ -5074,6 +5426,8 @@
       "sourceVision": -1,
       "sourceDescription": "A masterfully crafted sallet supported by a mail coif, crested with colored ribbons.",
       "sprite": "bust_helmet_49",
+      "sourceSprite": "bust_helmet_49",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_49.png",
       "hideHead": false,
       "hideBeard": false
@@ -5119,6 +5473,8 @@
       "sourceVision": 0,
       "sourceDescription": "A sturdy metal helmet with attached mail, covered with an impressive wolf head.",
       "sprite": "bust_helmet_48",
+      "sourceSprite": "bust_helmet_48",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_48.png",
       "hideHead": false,
       "hideBeard": false
@@ -5143,6 +5499,8 @@
       "sourceVision": -1,
       "sourceDescription": "A metal helmet with added noseguard.",
       "sprite": "bust_helmet_01",
+      "sourceSprite": "bust_helmet_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_01.png",
       "hideHead": false,
       "hideBeard": false
@@ -5167,6 +5525,8 @@
       "sourceVision": -2,
       "sourceDescription": "A metal helmet with a noseguard and a closed mail coif underneath.",
       "sprite": "bust_helmet_32",
+      "sourceSprite": "bust_helmet_32",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_32.png",
       "hideHead": false,
       "hideBeard": true
@@ -5191,6 +5551,8 @@
       "sourceVision": -2,
       "sourceDescription": "A metal helmet with added noseguard and a mail coif underneath.",
       "sprite": "bust_helmet_03",
+      "sourceSprite": "bust_helmet_03",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_03.png",
       "hideHead": false,
       "hideBeard": false
@@ -5215,6 +5577,8 @@
       "sourceVision": -2,
       "sourceDescription": "A worn and used helmet with a rusty mail coif.",
       "sprite": "bust_helmet_31",
+      "sourceSprite": "bust_helmet_31",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_31.png",
       "hideHead": false,
       "hideBeard": false
@@ -5239,6 +5603,8 @@
       "sourceVision": 0,
       "sourceDescription": "The noble headgear worn in Battle Brothers.",
       "sprite": "bust_helmet_noble_01",
+      "sourceSprite": "bust_helmet_noble_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_01.png",
       "hideHead": false,
       "hideBeard": false
@@ -5263,6 +5629,8 @@
       "sourceVision": -1,
       "sourceDescription": "A nordic helmet guarding face and neck with additional metal plates.",
       "sprite": "bust_helmet_52",
+      "sourceSprite": "bust_helmet_52",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_52.png",
       "hideHead": false,
       "hideBeard": false
@@ -5287,6 +5655,8 @@
       "sourceVision": -2,
       "sourceDescription": "A metal nordic helmet with an attached closed mail neck guard.",
       "sprite": "bust_helmet_202",
+      "sourceSprite": "bust_helmet_202",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_202.png",
       "hideHead": false,
       "hideBeard": true
@@ -5311,6 +5681,8 @@
       "sourceVision": 0,
       "sourceDescription": "A sturdy leather cap that is not covering the ears and neck.",
       "sprite": "bust_helmet_25",
+      "sourceSprite": "bust_helmet_25",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_25.png",
       "hideHead": false,
       "hideBeard": false
@@ -5336,6 +5708,8 @@
       "sourceVision": -1,
       "sourceDescription": "An assassin's face mask and head wrap.",
       "sprite": "bust_helmet_southern_11",
+      "sourceSprite": "bust_helmet_southern_11",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_11.png",
       "hideHead": true,
       "hideBeard": true
@@ -5361,6 +5735,8 @@
       "sourceVision": 0,
       "sourceDescription": "The dark head wrap of an assassin.",
       "sprite": "bust_helmet_southern_10",
+      "sourceSprite": "bust_helmet_southern_10",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_10.png",
       "hideHead": false,
       "hideBeard": true
@@ -5386,6 +5762,8 @@
       "sourceVision": 0,
       "sourceDescription": "This distinct red and black head wrap is traditionally worn by the most skilled warriors of the nomad tribes.",
       "sprite": "bust_helmet_southern_23",
+      "sourceSprite": "bust_helmet_southern_23",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_23.png",
       "hideHead": false,
       "hideBeard": true
@@ -5411,6 +5789,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick head wrap with small hidden leather strings for added protection, adorned with a bronze scorpion.",
       "sprite": "bust_helmet_southern_22",
+      "sourceSprite": "bust_helmet_southern_22",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_22.png",
       "hideHead": false,
       "hideBeard": false
@@ -5436,6 +5816,8 @@
       "sourceVision": 0,
       "sourceDescription": "A finely wrapped cloth turban with insignia declaring the wearer a learned engineer from the city states.",
       "sprite": "bust_helmet_southern_06",
+      "sourceSprite": "bust_helmet_southern_06",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_06.png",
       "hideHead": false,
       "hideBeard": false
@@ -5461,6 +5843,8 @@
       "sourceVision": -3,
       "sourceDescription": "An impressive metal helmet crafted to intimidate the opponents of pit fighters in arenas of the southern city states.",
       "sprite": "bust_helmet_southern_13",
+      "sourceSprite": "bust_helmet_southern_13",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_13.png",
       "hideHead": true,
       "hideBeard": true
@@ -5486,6 +5870,8 @@
       "sourceVision": 0,
       "sourceDescription": "A finely wrapped cloth turban worn by those that practise the use of elaborate gunpowder weapons in armies of the city states.",
       "sprite": "bust_helmet_southern_09",
+      "sourceSprite": "bust_helmet_southern_09",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_09.png",
       "hideHead": false,
       "hideBeard": false
@@ -5511,6 +5897,8 @@
       "sourceVision": -2,
       "sourceDescription": "A heavy helmet made from overlapping metal plates.",
       "sprite": "bust_helmet_southern_03",
+      "sourceSprite": "bust_helmet_southern_03",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_03.png",
       "hideHead": false,
       "hideBeard": true
@@ -5536,6 +5924,8 @@
       "sourceVision": 0,
       "sourceDescription": "A thick leather head wrap that protects against cuts and bruises.",
       "sprite": "bust_helmet_southern_18",
+      "sourceSprite": "bust_helmet_southern_18",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_18.png",
       "hideHead": false,
       "hideBeard": false
@@ -5561,6 +5951,8 @@
       "sourceVision": 0,
       "sourceDescription": "A nomad style head wrap suited to protect against sun and heat.",
       "sprite": "bust_helmet_southern_16",
+      "sourceSprite": "bust_helmet_southern_16",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_16.png",
       "hideHead": false,
       "hideBeard": false
@@ -5586,6 +5978,8 @@
       "sourceVision": 0,
       "sourceDescription": "A light nomad leather cap.",
       "sprite": "bust_helmet_southern_19",
+      "sourceSprite": "bust_helmet_southern_19",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_19.png",
       "hideHead": false,
       "hideBeard": false
@@ -5611,6 +6005,8 @@
       "sourceVision": 0,
       "sourceDescription": "A light helmet typical of the southern desert regions.",
       "sprite": "bust_helmet_southern_20",
+      "sourceSprite": "bust_helmet_southern_20",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_20.png",
       "hideHead": false,
       "hideBeard": false
@@ -5636,6 +6032,8 @@
       "sourceVision": -1,
       "sourceDescription": "A nomad helmet reinforced with mail.",
       "sprite": "bust_helmet_southern_21",
+      "sourceSprite": "bust_helmet_southern_21",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_21.png",
       "hideHead": false,
       "hideBeard": false
@@ -5661,6 +6059,8 @@
       "sourceVision": 0,
       "sourceDescription": "A traditional southern head wrap suited for desert climate.",
       "sprite": "bust_helmet_southern_07",
+      "sourceSprite": "bust_helmet_southern_07",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_07.png",
       "hideHead": false,
       "hideBeard": false
@@ -5686,6 +6086,8 @@
       "sourceVision": -2,
       "sourceDescription": "A southern metal helmet with a mail coif to protect the neck.",
       "sprite": "bust_helmet_southern_05",
+      "sourceSprite": "bust_helmet_southern_05",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_05.png",
       "hideHead": false,
       "hideBeard": false
@@ -5711,6 +6113,8 @@
       "sourceVision": -1,
       "sourceDescription": "A metal skull cap with a fashionable spike worn atop a mail coif.",
       "sprite": "bust_helmet_southern_01",
+      "sourceSprite": "bust_helmet_southern_01",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_01.png",
       "hideHead": false,
       "hideBeard": false
@@ -5736,6 +6140,8 @@
       "sourceVision": -3,
       "sourceDescription": "A full helmet crafted from overlapping long metal splints in the shape of a traditional southern head wrap.",
       "sprite": "bust_helmet_southern_04",
+      "sourceSprite": "bust_helmet_southern_04",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_04.png",
       "hideHead": true,
       "hideBeard": true
@@ -5761,7 +6167,9 @@
       "sourceVision": 0,
       "sourceDescription": "The vizier headgear worn in Battle Brothers.",
       "sprite": "helmet_desert_noble_01",
-      "icon": "gfx/ui/items/helmets/inventory_helmet_01.png",
+      "sourceSprite": "helmet_desert_noble_01",
+      "artAdaptation": null,
+      "icon": null,
       "hideHead": false,
       "hideBeard": false
     },
@@ -5786,6 +6194,8 @@
       "sourceVision": -1,
       "sourceDescription": "This metal helmet is wrapped in cloth to protect against the blazingly hot sun of the southern deserts.",
       "sprite": "bust_helmet_southern_02",
+      "sourceSprite": "bust_helmet_southern_02",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_southern_02.png",
       "hideHead": false,
       "hideBeard": false
@@ -5810,6 +6220,8 @@
       "sourceVision": -1,
       "sourceDescription": "A flat full-metal helmet with noseguard and a padded coif underneath.",
       "sprite": "bust_helmet_13",
+      "sourceSprite": "bust_helmet_13",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_13.png",
       "hideHead": false,
       "hideBeard": false
@@ -5834,6 +6246,8 @@
       "sourceVision": -1,
       "sourceDescription": "A full-metal helmet with a broad rim and a padded coif underneath.",
       "sprite": "bust_helmet_09",
+      "sourceSprite": "bust_helmet_09",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_09.png",
       "hideHead": false,
       "hideBeard": false
@@ -5858,6 +6272,8 @@
       "sourceVision": -1,
       "sourceDescription": "A metal helmet with added noseguard and a padded coif underneath.",
       "sprite": "bust_helmet_02",
+      "sourceSprite": "bust_helmet_02",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_02.png",
       "hideHead": false,
       "hideBeard": false
@@ -5882,6 +6298,8 @@
       "sourceVision": -1,
       "sourceDescription": "A thick leather hood with a distinctive, bird-like mask. The beak acts as a ventilator, containing sweet-smelling herbs to ward away sickness and disease.",
       "sprite": "bust_helmet_241",
+      "sourceSprite": "bust_helmet_241",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_241.png",
       "hideHead": false,
       "hideBeard": true
@@ -5906,6 +6324,8 @@
       "sourceVision": -1,
       "sourceDescription": "A mail coif with additional metal noseguard.",
       "sprite": "bust_helmet_07",
+      "sourceSprite": "bust_helmet_07",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_07.png",
       "hideHead": false,
       "hideBeard": true
@@ -5930,6 +6350,8 @@
       "sourceVision": 0,
       "sourceDescription": "A rusty mail coif that still offers good protection - it leaves horrible stains though.",
       "sprite": "bust_helmet_29",
+      "sourceSprite": "bust_helmet_29",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_29.png",
       "hideHead": false,
       "hideBeard": false
@@ -5954,6 +6376,8 @@
       "sourceVision": 0,
       "sourceDescription": "A metal sallet helmet with an extended neckguard, a design uncommon in these lands. It is well crafted to offer maximum protection with minimum weight, and without impairing vision.",
       "sprite": "bust_helmet_163",
+      "sourceSprite": "bust_helmet_163",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_163.png",
       "hideHead": false,
       "hideBeard": false
@@ -5978,6 +6402,8 @@
       "sourceVision": -2,
       "sourceDescription": "A nasal helmet witch an attached mail neck guard fashioned in the way of the steppe folks.",
       "sprite": "bust_helmet_199",
+      "sourceSprite": "bust_helmet_199",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_199.png",
       "hideHead": false,
       "hideBeard": false
@@ -6002,6 +6428,8 @@
       "sourceVision": 0,
       "sourceDescription": "A crude straw hat to protect against the sun.",
       "sprite": "bust_helmet_34",
+      "sourceSprite": "bust_helmet_34",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_34.png",
       "hideHead": false,
       "hideBeard": false
@@ -6026,6 +6454,8 @@
       "sourceVision": 0,
       "sourceDescription": "A wide-brimmed feathered hat with a scarf to cover the mouth. Durable enough to protect against weather and scratches.",
       "sprite": "bust_helmet_240",
+      "sourceSprite": "bust_helmet_240",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_240.png",
       "hideHead": false,
       "hideBeard": true
@@ -6050,6 +6480,8 @@
       "sourceVision": 0,
       "sourceDescription": "A tough leather hat that provides decent protection against scratches.",
       "sprite": "bust_helmet_23",
+      "sourceSprite": "bust_helmet_23",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_23.png",
       "hideHead": false,
       "hideBeard": false
@@ -6074,6 +6506,8 @@
       "sourceVision": 0,
       "sourceDescription": "A pointy hat with a broad rim.",
       "sprite": "bust_helmet_35",
+      "sourceSprite": "bust_helmet_35",
+      "artAdaptation": null,
       "icon": "gfx/ui/items/helmets/inventory_helmet_35.png",
       "hideHead": false,
       "hideBeard": false
@@ -6404,28 +6838,28 @@
     },
     {
       "id": "bb-ancient-lich-attire",
-      "icon": null,
-      "iconSha256": "f31a310dbac76d1502ea6169b7d2921c43f7e7c74126bb434b884030b2c9f0a6",
+      "icon": "gfx/ui/items/armor/inventory_body_armor_60.png",
+      "iconSha256": "7022ff473bec12292a600fcb79f4a8fe03d45be25ab87c509a671546bcdf3efd",
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
-      "brush": "bust_body_skeleton_80",
+      "brush": "bust_body_60",
       "brushBounds": [
-        -41.0,
-        45.0,
-        -45.0,
-        23.0
+        -52.0,
+        44.0,
+        -60.0,
+        14.0
       ],
       "portraitOrigin": [
         52,
         63
       ],
       "crop": [
-        554,
-        76,
-        640,
-        144
+        99,
+        469,
+        195,
+        543
       ],
-      "portraitSha256": "f31a310dbac76d1502ea6169b7d2921c43f7e7c74126bb434b884030b2c9f0a6",
+      "portraitSha256": "096ed424d76ed965dd82e67156483c4aac88ff9168a7723883907e3c671b42ff",
       "transform": "vertical flip from entity atlas texture orientation"
     },
     {
@@ -11552,8 +11986,8 @@
     },
     {
       "id": "bb-vizier-headgear",
-      "icon": "gfx/ui/items/helmets/inventory_helmet_01.png",
-      "iconSha256": "2efdccd7eeb36b8ef5c850cd3653ae4ba0323cecefcdfa4c2ed473356b9ac63c",
+      "icon": null,
+      "iconSha256": "a7dcff7f52154c575e2df3038a5fa0d3dbb076822e88d691ce4acd9237e39ecf",
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "helmet_desert_noble_01",
