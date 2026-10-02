@@ -1,4 +1,10 @@
-# Verification - version 0.44.5, 2026-10-03
+# Verification - version 0.44.6, 2026-10-03
+
+## v0.44.6 checks
+
+All 482 automated tests pass. All five mounts use the same right-side stance and one connected base plate, preserving the full rider and foreground equipment. Actual decoded PNG alpha pixels verify the rear animal silhouette supports the rider and each animal head remains visible outside every shield. Coverage spans 24 seeds, all six appearances, four helmet choices and all nine shields. Mounted shields fit a 48-pixel width while unmounted shield sizes and weapon poses retain their placements. Existing all-weapon, projectile-origin and 113-helmet alignment/framing regressions pass.
+
+Astra reviewed all five mounts with ordinary equipment, the original named plumed faceguard and ornate Noble Mail/tower-shield combination, tall Gunner hats and two-handed weapons. Fresh Chromium verification checks battle-size rendering, all 523 offline assets and an offline relaunch without browser exceptions. Physical iPad Safari remains untested.
 
 ## v0.44.5 checks
 
