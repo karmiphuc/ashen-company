@@ -296,22 +296,25 @@
     },
     {
       "local": "assets/items/bandages.png",
-      "source": "gfx/ui/items/legend_armor/icon_bandages_01.png",
+      "source": "gfx/ui/items/consumables/bandages_01.png",
       "kind": "ui",
       "itemId": "bandages",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/icon_bandages_01.png",
-      "bytes": 24940,
-      "sha256": "c7cf6dae9ae278dfe2ccfb23b68d5f17fecc6b162dd2f2e6cde063eed50d2e5d"
+      "url": "https://raw.githubusercontent.com/kovasap/battle-bros-decompiled/e06d68df0915827967f98a05d0c705c1f53df0b7/gfx/ui/items/consumables/bandages_01.png",
+      "bytes": 7524,
+      "sha256": "89b981f4a5de84a8f3ee0d73ce91fd9ddfcb2c6326c0f08e74653a04782c9129",
+      "repository": "https://github.com/kovasap/battle-bros-decompiled",
+      "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7"
     },
     {
       "local": "assets/items/medical-satchel.png",
-      "source": "gfx/ui/items/legend_armor/icon_bandages_03.png",
+      "source": "gfx/ui/items/supplies/medicine_small.png",
       "kind": "ui",
       "itemId": "medical-satchel",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/icon_bandages_03.png",
-      "bytes": 23438,
-      "sha256": "9a2ff1c5c090498b33beb492a770ed7f2d2ff1e910b89ca8134e4228b14026f0",
-      "note": "A distinct bandage icon variant; no medical-satchel icon was present in the selected upstream tree."
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/supplies/medicine_small.png",
+      "bytes": 10630,
+      "sha256": "f2b5d57aadd75bf7c8b7cadfbd72975c4e6ccea559ad9c7a664ca20d49e28696",
+      "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+      "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96"
     },
     {
       "local": "assets/items/stimulant.png",

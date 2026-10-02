@@ -6279,6 +6279,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_body_109",
+      "brushBounds": [
+        -63.0,
+        45.0,
+        -55.0,
+        17.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         383,
         345,
@@ -6295,6 +6305,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_body_107",
+      "brushBounds": [
+        -48.0,
+        46.0,
+        -54.0,
+        18.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         414,
         199,
@@ -6311,6 +6331,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_body_108",
+      "brushBounds": [
+        -57.0,
+        45.0,
+        -74.0,
+        16.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         107,
         97,
@@ -6327,6 +6357,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_62",
+      "brushBounds": [
+        -46.0,
+        50.0,
+        -54.0,
+        10.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         310,
@@ -6343,6 +6383,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_65",
+      "brushBounds": [
+        -42.0,
+        42.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         930,
         314,
@@ -6359,6 +6409,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_skeleton_80",
+      "brushBounds": [
+        -41.0,
+        45.0,
+        -45.0,
+        23.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         554,
         76,
@@ -6375,6 +6435,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_64",
+      "brushBounds": [
+        -46.0,
+        42.0,
+        -53.0,
+        7.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         754,
         284,
@@ -6391,6 +6461,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_67",
+      "brushBounds": [
+        -42.0,
+        48.0,
+        -50.0,
+        10.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         374,
         49,
@@ -6407,6 +6487,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_68",
+      "brushBounds": [
+        -42.0,
+        44.0,
+        -52.0,
+        10.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         655,
         130,
@@ -6423,6 +6513,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_69",
+      "brushBounds": [
+        -45.0,
+        51.0,
+        -53.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         196,
         449,
@@ -6439,6 +6539,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_70",
+      "brushBounds": [
+        -25.0,
+        35.0,
+        -37.0,
+        3.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1523,
         397,
@@ -6455,6 +6565,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_74",
+      "brushBounds": [
+        -38.0,
+        46.0,
+        -41.0,
+        9.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         835,
         113,
@@ -6471,6 +6591,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_66",
+      "brushBounds": [
+        -51.0,
+        45.0,
+        -55.0,
+        9.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         245,
@@ -6487,6 +6617,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_63",
+      "brushBounds": [
+        -25.0,
+        45.0,
+        -58.0,
+        6.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1420,
         596,
@@ -6503,6 +6643,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_10",
+      "brushBounds": [
+        -48.0,
+        46.0,
+        -54.0,
+        10.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1857,
         1374,
@@ -6519,6 +6669,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_90",
+      "brushBounds": [
+        -47.0,
+        45.0,
+        -60.0,
+        12.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         836,
         373,
@@ -6535,6 +6695,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_105",
+      "brushBounds": [
+        -69.0,
+        67.0,
+        -54.0,
+        34.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         322,
         646,
@@ -6551,6 +6721,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_95",
+      "brushBounds": [
+        -50.0,
+        50.0,
+        -57.0,
+        15.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         533,
         320,
@@ -6567,6 +6747,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_92",
+      "brushBounds": [
+        -52.0,
+        52.0,
+        -52.0,
+        18.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         214,
         237,
@@ -6583,6 +6773,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_97",
+      "brushBounds": [
+        -61.0,
+        45.0,
+        -60.0,
+        24.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         228,
@@ -6599,6 +6799,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_93",
+      "brushBounds": [
+        -52.0,
+        52.0,
+        -52.0,
+        16.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         428,
         446,
@@ -6615,6 +6825,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_94",
+      "brushBounds": [
+        -52.0,
+        52.0,
+        -52.0,
+        16.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         321,
         275,
@@ -6631,6 +6851,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_91",
+      "brushBounds": [
+        -34.0,
+        42.0,
+        -53.0,
+        9.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1099,
         658,
@@ -6647,6 +6877,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_96",
+      "brushBounds": [
+        -52.0,
+        52.0,
+        -67.0,
+        25.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         58,
@@ -6663,6 +6903,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_26",
+      "brushBounds": [
+        -47.0,
+        41.0,
+        -51.0,
+        15.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         273,
         616,
@@ -6679,6 +6929,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_21",
+      "brushBounds": [
+        -44.0,
+        42.0,
+        -52.0,
+        26.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         730,
         845,
@@ -6695,6 +6955,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_09",
+      "brushBounds": [
+        -49.0,
+        45.0,
+        -53.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1647,
         1210,
@@ -6711,6 +6981,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_37",
+      "brushBounds": [
+        -46.0,
+        44.0,
+        -53.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         93,
         655,
@@ -6727,6 +7007,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_38",
+      "brushBounds": [
+        -45.0,
+        47.0,
+        -51.0,
+        7.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         279,
         969,
@@ -6743,6 +7033,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_106",
+      "brushBounds": [
+        -44.0,
+        42.0,
+        -56.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         449,
         567,
@@ -6759,6 +7059,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_48",
+      "brushBounds": [
+        -46.0,
+        44.0,
+        -53.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         479,
         301,
@@ -6775,6 +7085,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_49",
+      "brushBounds": [
+        -45.0,
+        47.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         285,
         212,
@@ -6791,6 +7111,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_50",
+      "brushBounds": [
+        -44.0,
+        46.0,
+        -52.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         572,
         380,
@@ -6807,6 +7137,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_84",
+      "brushBounds": [
+        -44.0,
+        44.0,
+        -65.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         417,
@@ -6823,6 +7163,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_15",
+      "brushBounds": [
+        -42.0,
+        46.0,
+        -50.0,
+        22.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         463,
         857,
@@ -6839,6 +7189,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_89",
+      "brushBounds": [
+        -52.0,
+        46.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1370,
         1353,
@@ -6855,6 +7215,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_36",
+      "brushBounds": [
+        -46.0,
+        50.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1851,
         1652,
@@ -6871,6 +7241,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_88",
+      "brushBounds": [
+        -52.0,
+        50.0,
+        -51.0,
+        17.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1660,
         1901,
@@ -6887,6 +7267,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_25",
+      "brushBounds": [
+        -48.0,
+        46.0,
+        -52.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1661,
         1342,
@@ -6903,6 +7293,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_83",
+      "brushBounds": [
+        -42.0,
+        46.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         283,
@@ -6919,6 +7319,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_13",
+      "brushBounds": [
+        -52.0,
+        48.0,
+        -51.0,
+        17.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1657,
         1832,
@@ -6935,6 +7345,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_18",
+      "brushBounds": [
+        -47.0,
+        51.0,
+        -59.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1142,
         1196,
@@ -6951,6 +7371,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_81",
+      "brushBounds": [
+        -52.0,
+        52.0,
+        -65.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1660,
         1970,
@@ -6967,6 +7397,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_80",
+      "brushBounds": [
+        -48.0,
+        52.0,
+        -53.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         936,
         1103,
@@ -6983,6 +7423,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_80",
+      "brushBounds": [
+        -48.0,
+        52.0,
+        -53.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         936,
         1103,
@@ -6999,6 +7449,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_98",
+      "brushBounds": [
+        -69.0,
+        67.0,
+        -54.0,
+        34.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         322,
         557,
@@ -7015,6 +7475,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_85",
+      "brushBounds": [
+        -43.0,
+        43.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         46,
@@ -7031,6 +7501,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_03",
+      "brushBounds": [
+        -40.0,
+        42.0,
+        -52.0,
+        10.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         346,
         83,
@@ -7047,6 +7527,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_28",
+      "brushBounds": [
+        -44.0,
+        52.0,
+        -50.0,
+        12.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1338,
         1141,
@@ -7063,6 +7553,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_27",
+      "brushBounds": [
+        -44.0,
+        46.0,
+        -52.0,
+        10.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         496,
@@ -7079,6 +7579,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_11",
+      "brushBounds": [
+        -42.0,
+        42.0,
+        -56.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         528,
         372,
@@ -7095,6 +7605,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_named_02",
+      "brushBounds": [
+        -64.0,
+        48.0,
+        -53.0,
+        19.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         619,
         514,
@@ -7111,6 +7631,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_42",
+      "brushBounds": [
+        -52.0,
+        52.0,
+        -52.0,
+        18.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1164,
         1460,
@@ -7127,6 +7657,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_46",
+      "brushBounds": [
+        -51.0,
+        45.0,
+        -53.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1239,
         1090,
@@ -7143,6 +7683,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_45",
+      "brushBounds": [
+        -48.0,
+        52.0,
+        -54.0,
+        12.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1041,
         1221,
@@ -7159,6 +7709,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_44",
+      "brushBounds": [
+        -46.0,
+        52.0,
+        -53.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1471,
         1516,
@@ -7175,6 +7735,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_43",
+      "brushBounds": [
+        -46.0,
+        44.0,
+        -64.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         279,
         890,
@@ -7191,6 +7761,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_36",
+      "brushBounds": [
+        -46.0,
+        50.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1851,
         1652,
@@ -7207,6 +7787,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_named_01",
+      "brushBounds": [
+        -53.0,
+        45.0,
+        -52.0,
+        12.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         610,
         449,
@@ -7223,6 +7813,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_113",
+      "brushBounds": [
+        -54.0,
+        56.0,
+        -52.0,
+        10.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         351,
         1043,
@@ -7239,6 +7839,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_103",
+      "brushBounds": [
+        -54.0,
+        52.0,
+        -124.0,
+        30.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         804,
         553,
@@ -7255,6 +7865,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_100",
+      "brushBounds": [
+        -56.0,
+        52.0,
+        -51.0,
+        21.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1059,
         1531,
@@ -7271,6 +7891,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_99",
+      "brushBounds": [
+        -47.0,
+        45.0,
+        -52.0,
+        18.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1837,
         1145,
@@ -7287,6 +7917,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_104",
+      "brushBounds": [
+        -55.0,
+        51.0,
+        -59.0,
+        17.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         151,
@@ -7303,6 +7943,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_101",
+      "brushBounds": [
+        -45.0,
+        43.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         643,
         967,
@@ -7319,6 +7969,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_body_102",
+      "brushBounds": [
+        -55.0,
+        51.0,
+        -66.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         214,
         434,
@@ -7335,6 +7995,16 @@
       "atlas": "gfx/entity_3.png",
       "atlasSha256": "4e2ffc192c28764f6c0e258bc759bc2c9e0c8d6fba94e291e4afbb846797d784",
       "brush": "bust_body_noble_04",
+      "brushBounds": [
+        -51.0,
+        49.0,
+        -55.0,
+        15.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         662,
         639,
@@ -7351,6 +8021,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_87",
+      "brushBounds": [
+        -42.0,
+        44.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         176,
         214,
@@ -7367,6 +8047,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_08",
+      "brushBounds": [
+        -44.0,
+        48.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         707,
@@ -7383,6 +8073,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_03",
+      "brushBounds": [
+        -52.0,
+        44.0,
+        -59.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         402,
         159,
@@ -7399,6 +8099,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_12",
+      "brushBounds": [
+        -45.0,
+        45.0,
+        -66.0,
+        16.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         600,
         99,
@@ -7415,6 +8125,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_11",
+      "brushBounds": [
+        -29.0,
+        37.0,
+        -40.0,
+        6.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         42,
@@ -7431,6 +8151,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_13",
+      "brushBounds": [
+        -45.0,
+        47.0,
+        -62.0,
+        16.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         499,
         89,
@@ -7447,6 +8177,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_05",
+      "brushBounds": [
+        -49.0,
+        49.0,
+        -93.0,
+        7.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         309,
         341,
@@ -7463,6 +8203,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_02",
+      "brushBounds": [
+        -51.0,
+        49.0,
+        -52.0,
+        18.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         206,
         306,
@@ -7479,6 +8229,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_16",
+      "brushBounds": [
+        -50.0,
+        50.0,
+        -64.0,
+        22.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         160,
@@ -7495,6 +8255,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_07",
+      "brushBounds": [
+        -56.0,
+        46.0,
+        -52.0,
+        12.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         247,
@@ -7511,6 +8281,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_06",
+      "brushBounds": [
+        -45.0,
+        49.0,
+        -96.0,
+        12.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         606,
         261,
@@ -7527,6 +8307,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_15",
+      "brushBounds": [
+        -49.0,
+        53.0,
+        -66.0,
+        24.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         397,
@@ -7543,6 +8333,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_01",
+      "brushBounds": [
+        -52.0,
+        48.0,
+        -52.0,
+        18.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         208,
         377,
@@ -7559,6 +8359,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_04",
+      "brushBounds": [
+        -48.0,
+        46.0,
+        -51.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         200,
         41,
@@ -7575,6 +8385,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_14",
+      "brushBounds": [
+        -45.0,
+        47.0,
+        -58.0,
+        20.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         804,
         345,
@@ -7591,6 +8411,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_body_southern_17",
+      "brushBounds": [
+        -45.0,
+        51.0,
+        -84.0,
+        10.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         303,
         54,
@@ -7607,6 +8437,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_desert_noble_01",
+      "brushBounds": [
+        -43.0,
+        45.0,
+        -53.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         893,
         269,
@@ -7623,6 +8463,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_24",
+      "brushBounds": [
+        -51.0,
+        49.0,
+        -52.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1160,
         1336,
@@ -7639,6 +8489,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_14",
+      "brushBounds": [
+        -42.0,
+        44.0,
+        -51.0,
+        19.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         87,
         195,
@@ -7655,6 +8515,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_22",
+      "brushBounds": [
+        -44.0,
+        42.0,
+        -51.0,
+        15.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         544,
         600,
@@ -7671,6 +8541,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_61",
+      "brushBounds": [
+        -50.0,
+        52.0,
+        -60.0,
+        22.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         814,
         580,
@@ -7687,6 +8567,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_20",
+      "brushBounds": [
+        -45.0,
+        41.0,
+        -51.0,
+        17.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         176,
         277,
@@ -7703,6 +8593,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_body_112",
+      "brushBounds": [
+        -51.0,
+        55.0,
+        -71.0,
+        17.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         0,
         176,
@@ -7719,6 +8619,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_35",
+      "brushBounds": [
+        -44.0,
+        50.0,
+        -53.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1661,
         1275,
@@ -7735,6 +8645,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_02",
+      "brushBounds": [
+        -42.0,
+        44.0,
+        -53.0,
+        11.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         449,
         502,
@@ -7751,6 +8671,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_33",
+      "brushBounds": [
+        -42.0,
+        42.0,
+        -52.0,
+        8.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         174,
         23,
@@ -7767,6 +8697,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_86",
+      "brushBounds": [
+        -43.0,
+        43.0,
+        -50.0,
+        12.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         356,
         404,
@@ -7783,6 +8723,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_35",
+      "brushBounds": [
+        -44.0,
+        50.0,
+        -53.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1661,
         1275,
@@ -7799,6 +8749,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_01",
+      "brushBounds": [
+        -39.0,
+        43.0,
+        -61.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         902,
         674,
@@ -7815,6 +8775,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_body_60",
+      "brushBounds": [
+        -52.0,
+        44.0,
+        -60.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         99,
         469,
@@ -7831,6 +8801,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_19",
+      "brushBounds": [
+        -52.0,
+        42.0,
+        -57.0,
+        13.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1766,
         1454,
@@ -7847,6 +8827,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_body_110",
+      "brushBounds": [
+        -51.0,
+        47.0,
+        -60.0,
+        28.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         315,
         180,
@@ -7863,6 +8853,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_body_111",
+      "brushBounds": [
+        -49.0,
+        43.0,
+        -61.0,
+        21.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         311,
         14,
@@ -7879,6 +8879,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_16",
+      "brushBounds": [
+        -52.0,
+        52.0,
+        -51.0,
+        43.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1059,
         1436,
@@ -7895,6 +8905,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_17",
+      "brushBounds": [
+        -52.0,
+        52.0,
+        -52.0,
+        36.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         1551,
         1871,
@@ -7911,6 +8931,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_12",
+      "brushBounds": [
+        -42.0,
+        42.0,
+        -52.0,
+        20.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         623,
         478,
@@ -7927,6 +8957,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_body_23",
+      "brushBounds": [
+        -44.0,
+        46.0,
+        -52.0,
+        14.0
+      ],
+      "portraitOrigin": [
+        52,
+        63
+      ],
       "crop": [
         372,
         976,
@@ -7943,6 +8983,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_helmet_238",
+      "brushBounds": [
+        -34.0,
+        36.0,
+        -32.0,
+        52.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         777,
         428,
@@ -7959,6 +9009,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_helmet_239",
+      "brushBounds": [
+        -28.0,
+        46.0,
+        -20.0,
+        88.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         509,
         180,
@@ -7975,6 +9035,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_21",
+      "brushBounds": [
+        -26.0,
+        32.0,
+        -19.0,
+        49.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3895,
         1587,
@@ -7991,6 +9061,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_73",
+      "brushBounds": [
+        -35.0,
+        37.0,
+        -36.0,
+        72.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1347,
         578,
@@ -8007,6 +9087,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_64",
+      "brushBounds": [
+        -19.0,
+        31.0,
+        -13.0,
+        57.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1944,
         560,
@@ -8023,6 +9113,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_153",
+      "brushBounds": [
+        -20.0,
+        30.0,
+        0.0,
+        42.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1694,
         303,
@@ -8039,6 +9139,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_66",
+      "brushBounds": [
+        -28.0,
+        36.0,
+        -14.0,
+        68.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1957,
         942,
@@ -8055,6 +9165,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_skeleton_82",
+      "brushBounds": [
+        -20.0,
+        32.0,
+        -9.0,
+        49.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1544,
         206,
@@ -8071,6 +9191,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_79",
+      "brushBounds": [
+        -42.0,
+        42.0,
+        17.0,
+        97.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         843,
         227,
@@ -8087,6 +9217,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_235",
+      "brushBounds": [
+        -38.0,
+        48.0,
+        -29.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         731,
         191,
@@ -8103,6 +9243,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_190",
+      "brushBounds": [
+        -33.0,
+        51.0,
+        -29.0,
+        65.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         818,
         171,
@@ -8119,6 +9269,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_193",
+      "brushBounds": [
+        -34.0,
+        36.0,
+        -25.0,
+        101.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1501,
         898,
@@ -8135,6 +9295,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_192",
+      "brushBounds": [
+        -58.0,
+        62.0,
+        -18.0,
+        52.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         779,
         954,
@@ -8151,6 +9321,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_191",
+      "brushBounds": [
+        -27.0,
+        35.0,
+        -25.0,
+        57.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1639,
         942,
@@ -8167,6 +9347,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_196",
+      "brushBounds": [
+        -25.0,
+        35.0,
+        -7.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1702,
         964,
@@ -8183,6 +9373,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_194",
+      "brushBounds": [
+        -48.0,
+        46.0,
+        -25.0,
+        55.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         519,
         79,
@@ -8199,6 +9399,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_187",
+      "brushBounds": [
+        -18.0,
+        30.0,
+        9.0,
+        33.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         356,
         742,
@@ -8215,6 +9425,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_189",
+      "brushBounds": [
+        -26.0,
+        34.0,
+        -20.0,
+        52.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1164,
         446,
@@ -8231,6 +9451,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_158",
+      "brushBounds": [
+        -29.0,
+        41.0,
+        -28.0,
+        56.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2482,
         1547,
@@ -8247,6 +9477,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_54",
+      "brushBounds": [
+        -28.0,
+        42.0,
+        -29.0,
+        57.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2404,
         1484,
@@ -8263,6 +9503,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_16",
+      "brushBounds": [
+        -28.0,
+        32.0,
+        -31.0,
+        51.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3418,
         1368,
@@ -8279,6 +9529,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_18",
+      "brushBounds": [
+        -30.0,
+        30.0,
+        -34.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3434,
         1451,
@@ -8295,6 +9555,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_17",
+      "brushBounds": [
+        -29.0,
+        37.0,
+        -33.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3052,
         1666,
@@ -8311,6 +9581,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_06",
+      "brushBounds": [
+        -30.0,
+        30.0,
+        -33.0,
+        49.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3570,
         1580,
@@ -8327,6 +9607,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_201",
+      "brushBounds": [
+        -30.0,
+        44.0,
+        -29.0,
+        69.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1103,
         225,
@@ -8343,6 +9633,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_200",
+      "brushBounds": [
+        -31.0,
+        43.0,
+        -28.0,
+        68.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1083,
         128,
@@ -8359,6 +9659,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_33",
+      "brushBounds": [
+        -28.0,
+        36.0,
+        -39.0,
+        57.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2298,
         678,
@@ -8375,6 +9685,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_236",
+      "brushBounds": [
+        -29.0,
+        35.0,
+        -19.0,
+        69.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2116,
         475,
@@ -8391,6 +9711,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_62",
+      "brushBounds": [
+        -40.0,
+        44.0,
+        -29.0,
+        59.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         641,
         41,
@@ -8407,6 +9737,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_55",
+      "brushBounds": [
+        -32.0,
+        34.0,
+        -26.0,
+        54.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1005,
         99,
@@ -8423,6 +9763,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_57",
+      "brushBounds": [
+        -26.0,
+        32.0,
+        -30.0,
+        54.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1594,
         437,
@@ -8439,6 +9789,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "bust_helmet_56",
+      "brushBounds": [
+        -32.0,
+        34.0,
+        -26.0,
+        54.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1819,
         895,
@@ -8455,6 +9815,16 @@
       "atlas": "gfx/entity_1.png",
       "atlasSha256": "fc462f0a51273337f15ab9c7b479e761e315c987feb105c50fdcaa4cf65eed29",
       "brush": "faction_helmet_11",
+      "brushBounds": [
+        -39.0,
+        41.0,
+        -22.0,
+        104.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1039,
         825,
@@ -8471,6 +9841,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_30",
+      "brushBounds": [
+        -30.0,
+        32.0,
+        -29.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2503,
         720,
@@ -8487,6 +9867,16 @@
       "atlas": "gfx/entity_3.png",
       "atlasSha256": "4e2ffc192c28764f6c0e258bc759bc2c9e0c8d6fba94e291e4afbb846797d784",
       "brush": "faction_helmet_01",
+      "brushBounds": [
+        -37.0,
+        43.0,
+        -29.0,
+        77.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         544,
         207,
@@ -8503,6 +9893,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_39",
+      "brushBounds": [
+        -52.0,
+        36.0,
+        -19.0,
+        47.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         368,
         708,
@@ -8519,6 +9919,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_12",
+      "brushBounds": [
+        -28.0,
+        32.0,
+        -30.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3629,
         1498,
@@ -8535,6 +9945,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_15",
+      "brushBounds": [
+        -29.0,
+        31.0,
+        -31.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3795,
         1818,
@@ -8551,6 +9971,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_14",
+      "brushBounds": [
+        -28.0,
+        32.0,
+        -30.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2501,
         318,
@@ -8567,6 +9997,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_22",
+      "brushBounds": [
+        -31.0,
+        35.0,
+        -34.0,
+        48.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2444,
         992,
@@ -8583,6 +10023,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_04",
+      "brushBounds": [
+        -28.0,
+        32.0,
+        -29.0,
+        51.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2440,
         329,
@@ -8599,6 +10049,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_27",
+      "brushBounds": [
+        -31.0,
+        37.0,
+        -34.0,
+        48.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2030,
         876,
@@ -8615,6 +10075,16 @@
       "atlas": "gfx/entity_3.png",
       "atlasSha256": "4e2ffc192c28764f6c0e258bc759bc2c9e0c8d6fba94e291e4afbb846797d784",
       "brush": "faction_helmet_2_01",
+      "brushBounds": [
+        -52.0,
+        42.0,
+        -19.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         906,
         778,
@@ -8631,6 +10101,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_83",
+      "brushBounds": [
+        -52.0,
+        40.0,
+        -18.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         0,
         902,
@@ -8647,6 +10127,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_26",
+      "brushBounds": [
+        -29.0,
+        31.0,
+        -32.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3040,
         990,
@@ -8663,6 +10153,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_helmet_237",
+      "brushBounds": [
+        -40.0,
+        48.0,
+        -32.0,
+        68.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         688,
         412,
@@ -8679,6 +10179,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_19",
+      "brushBounds": [
+        -28.0,
+        30.0,
+        -28.0,
+        48.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2857,
         542,
@@ -8695,6 +10205,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_87",
+      "brushBounds": [
+        -44.0,
+        50.0,
+        -14.0,
+        56.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1861,
         1573,
@@ -8711,6 +10231,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_86",
+      "brushBounds": [
+        -38.0,
+        50.0,
+        -14.0,
+        70.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         91,
         507,
@@ -8727,6 +10257,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_08",
+      "brushBounds": [
+        -28.0,
+        44.0,
+        -29.0,
+        51.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1707,
         193,
@@ -8743,6 +10283,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_11",
+      "brushBounds": [
+        -30.0,
+        44.0,
+        -30.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1953,
         815,
@@ -8759,6 +10309,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_10",
+      "brushBounds": [
+        -28.0,
+        44.0,
+        -29.0,
+        51.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1505,
         32,
@@ -8775,6 +10335,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_84",
+      "brushBounds": [
+        -42.0,
+        44.0,
+        -22.0,
+        80.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         457,
         638,
@@ -8791,6 +10361,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_24",
+      "brushBounds": [
+        -47.0,
+        37.0,
+        -22.0,
+        62.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         993,
         906,
@@ -8807,6 +10387,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_198",
+      "brushBounds": [
+        -44.0,
+        48.0,
+        -29.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         739,
         274,
@@ -8823,6 +10413,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_85",
+      "brushBounds": [
+        -32.0,
+        46.0,
+        -28.0,
+        64.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1956,
         1498,
@@ -8839,6 +10439,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_05",
+      "brushBounds": [
+        -30.0,
+        30.0,
+        -32.0,
+        48.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2820,
         701,
@@ -8855,6 +10465,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_helmet_242",
+      "brushBounds": [
+        -40.0,
+        50.0,
+        -41.0,
+        71.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         506,
         400,
@@ -8871,6 +10491,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_28",
+      "brushBounds": [
+        -30.0,
+        32.0,
+        -30.0,
+        20.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1797,
         11,
@@ -8887,6 +10517,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_named_02",
+      "brushBounds": [
+        -31.0,
+        37.0,
+        -45.0,
+        81.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1209,
         382,
@@ -8903,6 +10543,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_50",
+      "brushBounds": [
+        -33.0,
+        41.0,
+        -33.0,
+        71.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1457,
         580,
@@ -8919,6 +10569,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_53",
+      "brushBounds": [
+        -45.0,
+        41.0,
+        -27.0,
+        71.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         643,
         825,
@@ -8935,6 +10595,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_152",
+      "brushBounds": [
+        -29.0,
+        35.0,
+        -27.0,
+        51.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2365,
         724,
@@ -8951,6 +10621,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_205",
+      "brushBounds": [
+        -47.0,
+        51.0,
+        -27.0,
+        103.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1758,
         1764,
@@ -8967,6 +10647,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_233",
+      "brushBounds": [
+        -53.0,
+        55.0,
+        -25.0,
+        55.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         459,
         515,
@@ -8983,6 +10673,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_234",
+      "brushBounds": [
+        -45.0,
+        51.0,
+        -20.0,
+        68.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         525,
         160,
@@ -8999,6 +10699,16 @@
       "atlas": "gfx/entity_5.png",
       "atlasSha256": "bf2ce8199ac5281cd348060fed7d28ae8b9438c079139476193f1846e54fc4ce",
       "brush": "bust_helmet_232",
+      "brushBounds": [
+        -26.0,
+        46.0,
+        -23.0,
+        61.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1097,
         573,
@@ -9015,6 +10725,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_206",
+      "brushBounds": [
+        -31.0,
+        47.0,
+        -29.0,
+        61.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1157,
         705,
@@ -9031,6 +10751,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_204",
+      "brushBounds": [
+        -36.0,
+        50.0,
+        -28.0,
+        82.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         732,
         925,
@@ -9047,6 +10777,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_51",
+      "brushBounds": [
+        -40.0,
+        30.0,
+        -29.0,
+        71.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2557,
         1705,
@@ -9063,6 +10803,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_203",
+      "brushBounds": [
+        -32.0,
+        52.0,
+        -33.0,
+        57.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         817,
         725,
@@ -9079,6 +10829,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_named_01",
+      "brushBounds": [
+        -38.0,
+        40.0,
+        -48.0,
+        86.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         958,
         579,
@@ -9095,6 +10855,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_49",
+      "brushBounds": [
+        -31.0,
+        43.0,
+        -29.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1332,
         197,
@@ -9111,6 +10881,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_48",
+      "brushBounds": [
+        -30.0,
+        34.0,
+        -29.0,
+        59.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3537,
         1893,
@@ -9127,6 +10907,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_01",
+      "brushBounds": [
+        -29.0,
+        31.0,
+        -29.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3726,
         1720,
@@ -9143,6 +10933,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_32",
+      "brushBounds": [
+        -30.0,
+        30.0,
+        -31.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3208,
         1208,
@@ -9159,6 +10959,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_03",
+      "brushBounds": [
+        -29.0,
+        31.0,
+        -31.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2374,
         497,
@@ -9175,6 +10985,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_31",
+      "brushBounds": [
+        -31.0,
+        33.0,
+        -34.0,
+        56.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2227,
         609,
@@ -9191,6 +11011,16 @@
       "atlas": "gfx/entity_3.png",
       "atlasSha256": "4e2ffc192c28764f6c0e258bc759bc2c9e0c8d6fba94e291e4afbb846797d784",
       "brush": "bust_helmet_noble_01",
+      "brushBounds": [
+        -27.0,
+        37.0,
+        5.0,
+        51.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1074,
         712,
@@ -9207,6 +11037,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_52",
+      "brushBounds": [
+        -33.0,
+        33.0,
+        -33.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2593,
         1140,
@@ -9223,6 +11063,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_202",
+      "brushBounds": [
+        -29.0,
+        33.0,
+        -27.0,
+        63.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3669,
         1891,
@@ -9239,6 +11089,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_25",
+      "brushBounds": [
+        -22.0,
+        30.0,
+        -26.0,
+        48.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3987,
         1442,
@@ -9255,6 +11115,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_11",
+      "brushBounds": [
+        -38.0,
+        40.0,
+        -43.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1037,
         582,
@@ -9271,6 +11141,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_10",
+      "brushBounds": [
+        -42.0,
+        40.0,
+        -40.0,
+        52.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         869,
         73,
@@ -9287,6 +11167,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_23",
+      "brushBounds": [
+        -40.0,
+        40.0,
+        -22.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1047,
         782,
@@ -9303,6 +11193,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_22",
+      "brushBounds": [
+        -28.0,
+        42.0,
+        -24.0,
+        54.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         982,
         255,
@@ -9319,6 +11219,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_06",
+      "brushBounds": [
+        -33.0,
+        31.0,
+        -15.0,
+        59.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1567,
         762,
@@ -9335,6 +11245,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_13",
+      "brushBounds": [
+        -51.0,
+        39.0,
+        -38.0,
+        80.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         701,
         198,
@@ -9351,6 +11271,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_09",
+      "brushBounds": [
+        -34.0,
+        38.0,
+        -13.0,
+        111.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1268,
         613,
@@ -9367,6 +11297,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_03",
+      "brushBounds": [
+        -45.0,
+        31.0,
+        -27.0,
+        73.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1116,
         578,
@@ -9383,6 +11323,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_18",
+      "brushBounds": [
+        -31.0,
+        33.0,
+        -12.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1053,
         257,
@@ -9399,6 +11349,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_16",
+      "brushBounds": [
+        -28.0,
+        42.0,
+        -23.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1268,
         536,
@@ -9415,6 +11375,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_19",
+      "brushBounds": [
+        -36.0,
+        34.0,
+        -12.0,
+        54.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1065,
         320,
@@ -9431,6 +11401,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_20",
+      "brushBounds": [
+        -30.0,
+        48.0,
+        -33.0,
+        65.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1339,
         926,
@@ -9447,6 +11427,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_21",
+      "brushBounds": [
+        -44.0,
+        50.0,
+        -21.0,
+        85.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         929,
         811,
@@ -9463,6 +11453,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_07",
+      "brushBounds": [
+        -28.0,
+        34.0,
+        -11.0,
+        69.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1559,
         677,
@@ -9479,6 +11479,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_05",
+      "brushBounds": [
+        -40.0,
+        32.0,
+        -16.0,
+        74.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1065,
         387,
@@ -9495,6 +11505,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_01",
+      "brushBounds": [
+        -32.0,
+        42.0,
+        -26.0,
+        70.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1421,
         831,
@@ -9511,6 +11531,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_04",
+      "brushBounds": [
+        -30.0,
+        32.0,
+        -25.0,
+        67.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1789,
         932,
@@ -9527,6 +11557,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "helmet_desert_noble_01",
+      "brushBounds": [
+        -37.0,
+        37.0,
+        -33.0,
+        71.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1497,
         920,
@@ -9543,6 +11583,16 @@
       "atlas": "gfx/entity_6.png",
       "atlasSha256": "21c2767e7ff45992e59039a826c0d51f2329d486da0bf6e0b05be2eb40810d4e",
       "brush": "bust_helmet_southern_02",
+      "brushBounds": [
+        -30.0,
+        32.0,
+        -22.0,
+        60.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         964,
         107,
@@ -9559,6 +11609,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_13",
+      "brushBounds": [
+        -29.0,
+        37.0,
+        -33.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2164,
         787,
@@ -9575,6 +11635,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_09",
+      "brushBounds": [
+        -30.0,
+        44.0,
+        -32.0,
+        50.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1955,
         896,
@@ -9591,6 +11661,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_02",
+      "brushBounds": [
+        -30.0,
+        36.0,
+        -34.0,
+        54.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2390,
         1095,
@@ -9607,6 +11687,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_helmet_241",
+      "brushBounds": [
+        -29.0,
+        37.0,
+        -19.0,
+        55.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         509,
         105,
@@ -9623,6 +11713,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_07",
+      "brushBounds": [
+        -30.0,
+        30.0,
+        -32.0,
+        48.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3038,
         909,
@@ -9639,6 +11739,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_29",
+      "brushBounds": [
+        -30.0,
+        34.0,
+        -34.0,
+        46.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         3466,
         1830,
@@ -9655,6 +11765,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_163",
+      "brushBounds": [
+        -33.0,
+        43.0,
+        -19.0,
+        53.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1483,
         762,
@@ -9671,6 +11791,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_199",
+      "brushBounds": [
+        -37.0,
+        33.0,
+        -28.0,
+        74.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         2486,
         1735,
@@ -9687,6 +11817,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_34",
+      "brushBounds": [
+        -48.0,
+        52.0,
+        -21.0,
+        51.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1269,
         1477,
@@ -9703,6 +11843,16 @@
       "atlas": "gfx/entity_7.png",
       "atlasSha256": "e7e58ad71aabc32f4e5cd561eeaf589beabe5e194f1d62065866f6092aec950e",
       "brush": "bust_helmet_240",
+      "brushBounds": [
+        -50.0,
+        52.0,
+        -27.0,
+        57.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         0,
         2,
@@ -9719,6 +11869,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_23",
+      "brushBounds": [
+        -37.0,
+        45.0,
+        -35.0,
+        65.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         1965,
         1881,
@@ -9735,6 +11895,16 @@
       "atlas": "gfx/entity_0.png",
       "atlasSha256": "7c732fc0dfff398e798aab76db55bbd40b5802b24dab8ef5c174d97143e23780",
       "brush": "bust_helmet_35",
+      "brushBounds": [
+        -39.0,
+        45.0,
+        -36.0,
+        60.0
+      ],
+      "portraitOrigin": [
+        52,
+        48
+      ],
       "crop": [
         536,
         444,
