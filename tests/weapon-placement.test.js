@@ -24,16 +24,16 @@ function pngSize(image) {
   return [bytes.readUInt32BE(16),bytes.readUInt32BE(20)];
 }
 
-test('every shield and one-handed family share the left hand while the center chest stays clear',()=>{
+test('every shield and one-handed family share the right hand while the center chest stays clear',()=>{
   for(const weapon of weapons.filter(w=>!w.twoHanded))for(const shield of shields){
     for(const item of [weapon,getItem(`famed:${weapon.id}:73`),{visual:weapon.visual,id:weapon.id}]){
       const html=portraitHTML(person,{weapon:item,shield}),w=pose(html,'weapon'),s=pose(html,'shield');
-      assert.equal(w.x+w.gx,22,weapon.id);assert.equal(w.y+w.gy,111,weapon.id);
+      assert.equal(w.x+w.gx,82,weapon.id);assert.equal(w.y+w.gy,111,weapon.id);
       const scale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)?.[1]??1);
       const right=s.x+pngSize(s.image)[0]*scale;
-      assert.ok(right<=44,`${shield.id}: chest x=44..76 remains visible`);
-      assert.ok(s.x<=22 && right>=22,`${shield.id}: weapon and shield share the hand`);
-      const f=frame(html);assert.ok(f.x+s.x*f.scale>=-1e-8,`${shield.id}: left edge is framed`);
+      assert.ok(s.x>=60,`${shield.id}: center chest x=38..60 remains visible`);
+      assert.ok(s.x<=82 && right>=82,`${shield.id}: weapon and shield share the hand`);
+      const f=frame(html);assert.ok(f.x+right*f.scale<=104+1e-8,`${shield.id}: right edge is framed`);
       assert.match(w.image,/z-index:7/);assert.match(s.image,/z-index:6/);
     }
   }
@@ -83,5 +83,19 @@ test('all five mounts share one plate and coordinate space; equipment is above t
     for(const layer of ['shield','weapon'])assert.ok(html.indexOf('data-layer="mount-head"')<html.indexOf(`data-layer="${layer}"`));
     const anchor=portraitWeaponAnchor(equipment),w=pose(html,'weapon'),f=frame(html);
     assert.equal(anchor.x,f.x+(w.x+w.gx)*f.scale);assert.equal(anchor.y,f.y+(w.y+w.gy)*f.scale);
+  }
+});
+
+test('Riding Horse stays below the face and leaves the center chest visible on the shared plate',()=>{
+  for(let seed=0;seed<24;seed++)for(const helmet of [null,getItem('bb-fangshire'),getItem('bb-flat-top-helmet')]){
+    const html=portraitHTML({name:'Rider',seed},{mount:getItem('riding-horse'),armor:getItem('plate-harness'),helmet,weapon:getItem('arming-sword'),shield:getItem('painted-tower-shield')});
+    const h=pose(html,'mount-head'),b=pose(html,'mount-body');
+    assert.match(h.image,/scale\(0.72\)/);assert.match(b.image,/scale\(0.72\)/);
+    const [width,height]=pngSize(h.image);
+    assert.ok(h.y>=60,'horse cannot hide the rider face');
+    assert.ok(h.x+width*.72<=48,'horse leaves the center chest visible');
+    assert.ok(Math.abs(h.y+height*.72-124)<1,'horse head sits on the plate');
+    assert.match(tag(html,'head'),/top:0px/);
+    assert.equal((html.match(/data-layer="base-plate"/g)||[]).length,1);
   }
 });

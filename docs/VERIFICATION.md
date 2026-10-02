@@ -1,4 +1,12 @@
-# Verification - version 0.44.3, 2026-10-03
+# Verification - version 0.44.4, 2026-10-03
+
+## v0.44.4 checks
+
+All 480 tests pass. One-handed weapons and shields now share the **right** side of the displayed company portrait; their crop bounds are included in right-side framing while the center chest stays clear. The complete ordinary/named/display-only weapon/shield pairing regression now asserts the requested right-hand position and unclipped shields. Mirrored enemy projectile checks follow the corrected grip.
+
+Riding Horse uses reduced animal layers at the lower left, leaving the full-size rider's face and center chest visible. Its mane and head meet the same base plate at the same height. New regression checks cover multiple appearances and helmet choices, the horse's face/chest clearance, shared plate and matching animal scale. The other four mounts and two-handed weapon rest poses retain their placements.
+
+Chromium visual inspection covers right-side shields, weapon poses, all mounts and Riding Horse with multiple helmets and appearances. Fresh offline browser verification loads 523/523 assets, relaunches offline and reports no exceptions.
 
 ## v0.44.3 checks
 
