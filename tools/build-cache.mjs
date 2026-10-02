@@ -101,9 +101,30 @@ self.addEventListener('activate', event => event.waitUntil((async () => {
   const present = await Promise.all(urls.map(url => cache.match(url)));
   if (!present.every(Boolean)) throw new Error('Offline cache is incomplete.');
   const keys = await caches.keys();
-  await Promise.all(keys.filter(key => key.startsWith('ashen-company-') && key !== CACHE).map(key => caches.delete(key)));
+  const previous = keys.filter(key => key.startsWith('ashen-company-') && key !== CACHE);
+  // Capture existing windows before claiming them. Replacing their offline
+  // cache does not replace already evaluated ES modules (including portraits).
+  const windows = previous.length ? await self.clients.matchAll({type:'window',includeUncontrolled:true}) : [];
+  await Promise.all(previous.map(key => caches.delete(key)));
   await self.clients.claim();
+  await Promise.all(windows.filter(client => client.url.startsWith(self.registration.scope)).map(refreshClient));
 })()));
+
+async function refreshClient(client) {
+  const channel = new MessageChannel();
+  const ready = await new Promise(resolve => {
+    // Older builds already save on pagehide but have no update handshake.
+    const timer = setTimeout(() => {channel.port1.close();resolve(true);}, 1200);
+    channel.port1.onmessage = event => {clearTimeout(timer);channel.port1.close();resolve(event.data?.ready === true);};
+    try {client.postMessage({type:'PREPARE_UPDATE'},[channel.port2]);}
+    catch {clearTimeout(timer);channel.port1.close();resolve(false);}
+  });
+  if (ready) {
+    // Navigation fires the legacy pagehide autosave before discarding modules.
+    // Navigation fetches wait for activation; awaiting it here deadlocks.
+    client.navigate(client.url).catch(() => {});
+  }
+}
 
 function parseAudioRange(range, size) {
   const match = /^bytes=(\\d*)-(\\d*)$/i.exec(range.trim());
