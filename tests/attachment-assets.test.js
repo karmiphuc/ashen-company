@@ -10,7 +10,7 @@ const ARMOR = { id: 'mail-shirt', visual: 'mail' };
 const layerIndex = (html, name) => Number(html.match(new RegExp(`data-layer="${name}"[^>]*z-index:(\\d+)`))?.[1]);
 
 test('every attachment has its source icon and fitted overlays only where visible', () => {
-  assert.equal(ARMOR_ATTACHMENTS.length, 15);
+  assert.equal(ARMOR_ATTACHMENTS.length, 18);
   const visibleSources = [];
   for (const item of ARMOR_ATTACHMENTS) {
     assert.equal(itemImage(item), `assets/items/${item.id}.png`);
@@ -31,7 +31,7 @@ test('every attachment has its source icon and fitted overlays only where visibl
       assert.ok(layerIndex(html, 'attachment-back') > layerIndex(html, 'armor'));
     }
   }
-  assert.equal(visibleSources.length, 13);
+  assert.equal(visibleSources.length, 16);
   assert.equal(new Set(visibleSources).size, visibleSources.length);
 });
 

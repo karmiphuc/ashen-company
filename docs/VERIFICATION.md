@@ -1,4 +1,8 @@
-# Verification - version 0.44.1, 2026-10-03
+# Verification - version 0.44.2, 2026-10-03
+
+## v0.44.2 checks
+
+All 475 automated tests pass. Fresh offline browser verification loads all 523 cached assets, the four corrected item presentations and all three new attachment overlays without exceptions. Repeated importer builds are identical. Asset regressions verify cloth Vizier inventory art, native full-torso Animal Pelt/Noble Mail images and anchors, the explicitly adapted full Ancient Attire torso, preservation of all three decorative image pairs, independent attachment protection, damage-preserving equip/stow/save behavior, mounted overlays and regional enemy distribution. Existing attachment market-rotation tests cover the expanded 18-piece catalog and purchase paths. Helmet placement regressions continue to cover all 113 imported helmets.
 
 ## v0.44.1 checks
 

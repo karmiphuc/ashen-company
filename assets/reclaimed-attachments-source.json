@@ -1,0 +1,102 @@
+{
+  "scope": "Three decorative armor substitutions reclaimed as independent attachments; exact original image bytes preserved.",
+  "assets": [
+    {
+      "itemId": "northern-pelt-mantle",
+      "kind": "icon",
+      "local": "assets/items/northern-pelt-mantle.png",
+      "source": "gfx/ui/items/legend_armor/inventory_cloak_fur_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_cloak_fur_01.png",
+      "bytes": 10331,
+      "sha256": "fc0cf6817e6dafa46c38af08b9242e6ab6feccc78dfb7149b40132c50d403152",
+      "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+      "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+      "originalUse": "assets/items/northern-animal-pelt.png"
+    },
+    {
+      "itemId": "northern-pelt-mantle",
+      "kind": "portrait",
+      "local": "assets/portraits/attachment-northern-pelt-mantle.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/cloak_fur_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/cloak_fur_01.png",
+      "bytes": 15064,
+      "sha256": "5351735fc976e947ccb757f6d03f5f8ec7e2ed64b430a7b3d2976f55733f1105",
+      "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+      "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+      "originalUse": "assets/portraits/armor-northern-animal-pelt.png",
+      "anchor": [
+        5,
+        46
+      ]
+    },
+    {
+      "local": "assets/items/noble-brocade-mantle.png",
+      "source": "gfx/ui/items/legend_armor/icon_noble_vest_01.png",
+      "kind": "icon",
+      "itemId": "noble-brocade-mantle",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/icon_noble_vest_01.png",
+      "bytes": 15169,
+      "sha256": "61d5697a24ebd020fa2b8c7b980c97d7af16391aff1549d1389796044447094b",
+      "note": "Original decorative shoulder artwork reclaimed as an independent attachment.",
+      "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+      "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+      "originalUse": "assets/items/noble-mail.png"
+    },
+    {
+      "local": "assets/portraits/attachment-noble-brocade-mantle.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/noble_vest_01.png",
+      "kind": "portrait",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/noble_vest_01.png",
+      "bytes": 18162,
+      "sha256": "2b95aa5849cdbaaab5266685808479925f9c985d00bef881606bca11f11038b4",
+      "repository": "https://github.com/Battle-Brothers-Legends/Legends-public",
+      "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+      "itemId": "noble-brocade-mantle",
+      "originalUse": "assets/portraits/armor-noblemail.png",
+      "anchor": [
+        5,
+        46
+      ]
+    },
+    {
+      "local": "assets/items/ancient-gilded-collar.png",
+      "itemId": "ancient-gilded-collar",
+      "kind": "icon",
+      "repository": "kovasap/battle-bros-decompiled",
+      "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+      "source": "gfx/entity_1.png",
+      "brush": "bust_body_skeleton_80",
+      "crop": [
+        554,
+        76,
+        640,
+        144
+      ],
+      "originalUse": "bb-ancient-lich-attire",
+      "bytes": 10769,
+      "sha256": "f31a310dbac76d1502ea6169b7d2921c43f7e7c74126bb434b884030b2c9f0a6"
+    },
+    {
+      "local": "assets/portraits/attachment-ancient-gilded-collar.png",
+      "itemId": "ancient-gilded-collar",
+      "kind": "portrait",
+      "repository": "kovasap/battle-bros-decompiled",
+      "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+      "source": "gfx/entity_1.png",
+      "brush": "bust_body_skeleton_80",
+      "crop": [
+        554,
+        76,
+        640,
+        144
+      ],
+      "originalUse": "bb-ancient-lich-attire",
+      "anchor": [
+        11,
+        40
+      ],
+      "bytes": 10769,
+      "sha256": "f31a310dbac76d1502ea6169b7d2921c43f7e7c74126bb434b884030b2c9f0a6"
+    }
+  ]
+}
