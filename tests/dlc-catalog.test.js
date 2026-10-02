@@ -12,7 +12,7 @@ const manifest = JSON.parse(readFileSync(new URL('../assets/dlc-equipment-source
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const bytes = uri => Buffer.from(uri.slice('data:image/png;base64,'.length), 'base64');
 
-test('catalog covers every concrete human equipment class in the pinned source with exact protection and fatigue', () => {
+test('catalog covers every concrete human equipment class in the pinned source with recorded source baselines and deterministic rare bonuses', () => {
   assert.equal(manifest.commit, 'e06d68df0915827967f98a05d0c705c1f53df0b7');
   assert.equal(DLC_ITEMS.length, 217);
   assert.equal(DLC_ITEMS.filter(item=>item.slot==='armor').length, 104);

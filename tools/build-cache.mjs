@@ -35,6 +35,7 @@ const CORE = [
   './src/armor-attachments.js',
   './src/enemy-progression.js',
   './src/enemy-rosters.js',
+  './src/regional-enemies.js',
   './src/perks.js',
   './src/recruits.js',
   './src/town-events.js',

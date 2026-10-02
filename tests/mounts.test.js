@@ -1,3 +1,4 @@
+import { enemyRoleBonuses } from '../src/regional-enemies.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -171,7 +172,7 @@ test('rare mounted elites are visible while scouting and keep their mount in bat
   const elite = state.battle.units.find(unit => unit.id === 'enemy-1');
   assert.equal(elite.equipment.mount, band.enemies[0].mount);
   assert.ok(mountIds.includes(elite.equipment.mount));
-  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + 4);
+  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + 4 + enemyRoleBonuses(band.enemies[0],band.difficulty).initiative);
   assert.deepEqual(validateSave(state), state);
 });
 

@@ -561,52 +561,136 @@ export const DLC_ITEMS = Object.freeze([
     "name": "Aspect of Davkul",
     "slot": "armor",
     "visual": "bb-armor-of-davkul",
-    "price": 7000,
-    "armor": 270,
-    "fatigue": 18,
+    "price": 11200,
+    "armor": 319,
+    "fatigue": 16,
     "collection": "beasts-and-exploration",
     "sourceKind": "legendary",
-    "description": "An adapted aspect of davkul with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "Aspect of Davkul provides 270 body protection at a 18 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Aspect of Davkul is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of aspect of davkul is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "Aspect of Davkul provides 319 body protection at a 16 fatigue cost, with +4 ranged defense.",
+    "sourceArmor": 270,
+    "sourceFatigue": 18,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+49"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-emperors-armor",
     "name": "The Emperor's Armor",
     "slot": "armor",
     "visual": "bb-emperors-armor",
-    "price": 7000,
-    "armor": 400,
-    "fatigue": 30,
+    "price": 11200,
+    "armor": 500,
+    "fatigue": 24,
     "collection": "beasts-and-exploration",
     "sourceKind": "legendary",
-    "description": "An adapted the emperor's armor with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "The Emperor's Armor provides 400 body protection at a 30 fatigue cost; compare weight before outfitting the front rank."
+    "description": "The Emperor's Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of the emperor's armor is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "The Emperor's Armor provides 500 body protection at a 24 fatigue cost, with +6 resolve.",
+    "sourceArmor": 400,
+    "sourceFatigue": 30,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 6
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+100"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-6"
+      },
+      {
+        "label": "Resolve",
+        "value": "+6"
+      }
+    ]
   },
   {
     "id": "bb-emperors-armor-fake",
     "name": "The Emperor's Armor",
     "slot": "armor",
     "visual": "bb-emperors-armor-fake",
-    "price": 7000,
-    "armor": 380,
-    "fatigue": 30,
+    "price": 11200,
+    "armor": 475,
+    "fatigue": 25,
     "collection": "beasts-and-exploration",
     "sourceKind": "legendary",
-    "description": "An adapted the emperor's armor with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "The Emperor's Armor provides 380 body protection at a 30 fatigue cost; compare weight before outfitting the front rank."
+    "description": "The Emperor's Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of the emperor's armor is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "The Emperor's Armor provides 475 body protection at a 25 fatigue cost, with +2 melee defense.",
+    "sourceArmor": 380,
+    "sourceFatigue": 30,
+    "rarity": "named",
+    "signature": "guarded",
+    "statBonuses": {
+      "meleeDefense": 2
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+95"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Melee defense",
+        "value": "+2"
+      }
+    ]
   },
   {
     "id": "bb-ijirok-armor",
     "name": "Armor of the Ijirok",
     "slot": "armor",
     "visual": "bb-ijirok-armor",
-    "price": 4200,
-    "armor": 320,
-    "fatigue": 32,
+    "price": 6720,
+    "armor": 400,
+    "fatigue": 30,
     "collection": "beasts-and-exploration",
     "sourceKind": "legendary",
-    "description": "An adapted armor of the ijirok with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "Armor of the Ijirok provides 320 body protection at a 32 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Armor of the Ijirok is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of armor of the ijirok is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "Armor of the Ijirok provides 400 body protection at a 30 fatigue cost, with +3 melee defense.",
+    "sourceArmor": 320,
+    "sourceFatigue": 32,
+    "rarity": "named",
+    "signature": "guarded",
+    "statBonuses": {
+      "meleeDefense": 3
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+80"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Melee defense",
+        "value": "+3"
+      }
+    ]
   },
   {
     "id": "bb-light-scale-armor",
@@ -678,201 +762,516 @@ export const DLC_ITEMS = Object.freeze([
     "name": "Black And Gold Armor",
     "slot": "armor",
     "visual": "bb-black-and-gold-armor",
-    "price": 3150,
-    "armor": 210,
-    "fatigue": 25,
+    "price": 5040,
+    "armor": 258,
+    "fatigue": 20,
     "collection": "base",
     "sourceKind": "named",
-    "description": "Ancient knowledge has been used when smithing this unique set of armor. Its light mail overlapped with golden splints offers high protection with manageable encumberment.",
-    "role": "Black And Gold Armor provides 210 body protection at a 25 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Black And Gold Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. Ancient knowledge has been used when smithing this unique set of armor. Its light mail overlapped with golden splints offers high protection with manageable encumberment.",
+    "role": "Black And Gold Armor provides 258 body protection at a 20 fatigue cost, with +3 melee defense.",
+    "sourceArmor": 210,
+    "sourceFatigue": 25,
+    "rarity": "named",
+    "signature": "guarded",
+    "statBonuses": {
+      "meleeDefense": 3
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+48"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Melee defense",
+        "value": "+3"
+      }
+    ]
   },
   {
     "id": "bb-black-leather-armor",
     "name": "Black Leather Armor",
     "slot": "armor",
     "visual": "bb-black-leather-armor",
-    "price": 700,
-    "armor": 115,
-    "fatigue": 12,
+    "price": 1120,
+    "armor": 133,
+    "fatigue": 10,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A well-crafted and hardened leather armor supported by a padded gambeson and chainmail. Light to wear but very sturdy.",
-    "role": "Black Leather Armor provides 115 body protection at a 12 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Black Leather Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A well-crafted and hardened leather armor supported by a padded gambeson and chainmail. Light to wear but very sturdy.",
+    "role": "Black Leather Armor provides 133 body protection at a 10 fatigue cost, with +5 maximum fatigue.",
+    "sourceArmor": 115,
+    "sourceFatigue": 12,
+    "rarity": "named",
+    "signature": "vigorous",
+    "statBonuses": {
+      "maxFatigue": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+18"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Maximum fatigue",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-blue-studded-mail-armor",
     "name": "Blue Studded Mail Armor",
     "slot": "armor",
     "visual": "bb-blue-studded-mail-armor",
-    "price": 1400,
-    "armor": 140,
-    "fatigue": 16,
+    "price": 2240,
+    "armor": 165,
+    "fatigue": 14,
     "collection": "base",
     "sourceKind": "named",
-    "description": "This particular mail shirt is combined with a gambeson and covered with a sturdy, riveted leather jacket for a light yet protective armor.",
-    "role": "Blue Studded Mail Armor provides 140 body protection at a 16 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Blue Studded Mail Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This particular mail shirt is combined with a gambeson and covered with a sturdy, riveted leather jacket for a light yet protective armor.",
+    "role": "Blue Studded Mail Armor provides 165 body protection at a 14 fatigue cost, with +4 resolve.",
+    "sourceArmor": 140,
+    "sourceFatigue": 16,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+25"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Resolve",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-brown-coat-of-plates-armor",
     "name": "Brown Coat Of Plates Armor",
     "slot": "armor",
     "visual": "bb-brown-coat-of-plates-armor",
-    "price": 4900,
-    "armor": 300,
-    "fatigue": 36,
+    "price": 7840,
+    "armor": 372,
+    "fatigue": 34,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A thick mail hauberk combined with sturdy metal plates. This armor will protect its wearer even in the fiercest of battles.",
-    "role": "Brown Coat Of Plates Armor provides 300 body protection at a 36 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Brown Coat Of Plates Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A thick mail hauberk combined with sturdy metal plates. This armor will protect its wearer even in the fiercest of battles.",
+    "role": "Brown Coat Of Plates Armor provides 372 body protection at a 34 fatigue cost, with +5 resolve.",
+    "sourceArmor": 300,
+    "sourceFatigue": 36,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+72"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Resolve",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-golden-scale-armor",
     "name": "Golden Scale Armor",
     "slot": "armor",
     "visual": "bb-golden-scale-armor",
-    "price": 2800,
-    "armor": 240,
-    "fatigue": 28,
+    "price": 4480,
+    "armor": 290,
+    "fatigue": 26,
     "collection": "blazing-deserts",
     "sourceKind": "named",
-    "description": "A scale armor made of small, interlocking metal scales. The style and craftsmanship hint at the armor coming from a far-away region.",
-    "role": "Golden Scale Armor provides 240 body protection at a 28 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "south"
+    "description": "Golden Scale Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A scale armor made of small, interlocking metal scales. The style and craftsmanship hint at the armor coming from a far-away region.",
+    "role": "Golden Scale Armor provides 290 body protection at a 26 fatigue cost, with +4 maximum fatigue.",
+    "region": "south",
+    "sourceArmor": 240,
+    "sourceFatigue": 28,
+    "rarity": "named",
+    "signature": "vigorous",
+    "statBonuses": {
+      "maxFatigue": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+50"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Maximum fatigue",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-green-coat-of-plates-armor",
     "name": "Green Coat Of Plates Armor",
     "slot": "armor",
     "visual": "bb-green-coat-of-plates-armor",
-    "price": 5250,
-    "armor": 320,
-    "fatigue": 42,
+    "price": 8400,
+    "armor": 390,
+    "fatigue": 37,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A rare coat of plates enhanced with chainmail and additional padding. A piece of true craftsmanship!",
-    "role": "Green Coat Of Plates Armor provides 320 body protection at a 42 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Green Coat Of Plates Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A rare coat of plates enhanced with chainmail and additional padding. A piece of true craftsmanship!",
+    "role": "Green Coat Of Plates Armor provides 390 body protection at a 37 fatigue cost, with +4 ranged defense.",
+    "sourceArmor": 320,
+    "sourceFatigue": 42,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+70"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-heraldic-mail-armor",
     "name": "Heraldic Mail Armor",
     "slot": "armor",
     "visual": "bb-heraldic-mail-armor",
-    "price": 2450,
-    "armor": 210,
-    "fatigue": 26,
+    "price": 3920,
+    "armor": 248,
+    "fatigue": 20,
     "collection": "base",
     "sourceKind": "named",
-    "description": "Truly fit for a knight, this mail hauberk is made from the highest quality materials and boasts precious decorations and ornaments.",
-    "role": "Heraldic Mail Armor provides 210 body protection at a 26 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Heraldic Mail Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. Truly fit for a knight, this mail hauberk is made from the highest quality materials and boasts precious decorations and ornaments.",
+    "role": "Heraldic Mail Armor provides 248 body protection at a 20 fatigue cost, with +4 resolve.",
+    "sourceArmor": 210,
+    "sourceFatigue": 26,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+38"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-6"
+      },
+      {
+        "label": "Resolve",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-leopard-armor",
     "name": "Leopard Armor",
     "slot": "armor",
     "visual": "bb-leopard-armor",
-    "price": 5250,
-    "armor": 290,
-    "fatigue": 35,
+    "price": 8400,
+    "armor": 374,
+    "fatigue": 29,
     "collection": "blazing-deserts",
     "sourceKind": "named",
-    "description": "A heavy lamellar plate harness combined with fine mail and comfortable padding. A truly well made piece that is almost too precious to be torn in battle.",
-    "role": "Leopard Armor provides 290 body protection at a 35 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "south"
+    "description": "Leopard Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A heavy lamellar plate harness combined with fine mail and comfortable padding. A truly well made piece that is almost too precious to be torn in battle.",
+    "role": "Leopard Armor provides 374 body protection at a 29 fatigue cost, with +4 resolve.",
+    "region": "south",
+    "sourceArmor": 290,
+    "sourceFatigue": 35,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+84"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-6"
+      },
+      {
+        "label": "Resolve",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-lindwurm-armor",
     "name": "Lindwurm Armor",
     "slot": "armor",
     "visual": "bb-lindwurm-armor",
-    "price": 2625,
-    "armor": 210,
-    "fatigue": 26,
+    "price": 4200,
+    "armor": 244,
+    "fatigue": 21,
     "collection": "lindwurm",
     "sourceKind": "named",
-    "description": "An adapted lindwurm armor with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "Lindwurm Armor provides 210 body protection at a 26 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Lindwurm Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of lindwurm armor is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "Lindwurm Armor provides 244 body protection at a 21 fatigue cost, with +3 melee defense.",
+    "sourceArmor": 210,
+    "sourceFatigue": 26,
+    "rarity": "named",
+    "signature": "guarded",
+    "statBonuses": {
+      "meleeDefense": 3
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+34"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Melee defense",
+        "value": "+3"
+      }
+    ]
   },
   {
     "id": "bb-named-bronze-armor",
     "name": "Bronze Armor",
     "slot": "armor",
     "visual": "bb-named-bronze-armor",
-    "price": 3150,
-    "armor": 280,
-    "fatigue": 35,
+    "price": 5040,
+    "armor": 347,
+    "fatigue": 31,
     "collection": "blazing-deserts",
     "sourceKind": "named",
-    "description": "This armor is composed of a strange alloy, and well crafted for barbarian standards. A truly rare and remarkable piece.",
-    "role": "Bronze Armor provides 280 body protection at a 35 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "south"
+    "description": "Bronze Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This armor is composed of a strange alloy, and well crafted for barbarian standards. A truly rare and remarkable piece.",
+    "role": "Bronze Armor provides 347 body protection at a 31 fatigue cost, with +5 resolve.",
+    "region": "south",
+    "sourceArmor": 280,
+    "sourceFatigue": 35,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+67"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-4"
+      },
+      {
+        "label": "Resolve",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-named-golden-lamellar-armor",
     "name": "Golden Lamellar Armor",
     "slot": "armor",
     "visual": "bb-named-golden-lamellar-armor",
-    "price": 3850,
-    "armor": 285,
-    "fatigue": 40,
+    "price": 6160,
+    "armor": 333,
+    "fatigue": 38,
     "collection": "blazing-deserts",
     "sourceKind": "named",
-    "description": "An extraordinarily well-crafted piece of lamellar armor. It is covered with beaten gold, which makes it truly stand out.",
-    "role": "Golden Lamellar Armor provides 285 body protection at a 40 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "south"
+    "description": "Golden Lamellar Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. An extraordinarily well-crafted piece of lamellar armor. It is covered with beaten gold, which makes it truly stand out.",
+    "role": "Golden Lamellar Armor provides 333 body protection at a 38 fatigue cost, with +5 ranged defense.",
+    "region": "south",
+    "sourceArmor": 285,
+    "sourceFatigue": 40,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+48"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-named-noble-mail-armor",
     "name": "Noble Mail Armor",
     "slot": "armor",
     "visual": "bb-named-noble-mail-armor",
-    "price": 1925,
-    "armor": 160,
-    "fatigue": 15,
+    "price": 3080,
+    "armor": 187,
+    "fatigue": 9,
     "collection": "base",
     "sourceKind": "named",
-    "description": "This piece of light mail armor was once the personal item of a well known fencing master. It is as light as a tunic, but protects all vital body parts.",
-    "role": "Noble Mail Armor provides 160 body protection at a 15 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Noble Mail Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This piece of light mail armor was once the personal item of a well known fencing master. It is as light as a tunic, but protects all vital body parts.",
+    "role": "Noble Mail Armor provides 187 body protection at a 9 fatigue cost, with +4 maximum fatigue.",
+    "sourceArmor": 160,
+    "sourceFatigue": 15,
+    "rarity": "named",
+    "signature": "vigorous",
+    "statBonuses": {
+      "maxFatigue": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+27"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-6"
+      },
+      {
+        "label": "Maximum fatigue",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-named-plated-fur-armor",
     "name": "Plated Fur Armor",
     "slot": "armor",
     "visual": "bb-named-plated-fur-armor",
-    "price": 1400,
-    "armor": 130,
-    "fatigue": 14,
+    "price": 2240,
+    "armor": 165,
+    "fatigue": 8,
     "collection": "warriors-of-the-north",
     "sourceKind": "named",
-    "description": "A simple fur and leather armor with thick layers of metal plates rivetted ontop. A very simple and heavy design, but quite effective in combat.",
-    "role": "Plated Fur Armor provides 130 body protection at a 14 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "north"
+    "description": "Plated Fur Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A simple fur and leather armor with thick layers of metal plates rivetted ontop. A very simple and heavy design, but quite effective in combat.",
+    "role": "Plated Fur Armor provides 165 body protection at a 8 fatigue cost, with +2 melee defense.",
+    "region": "north",
+    "sourceArmor": 130,
+    "sourceFatigue": 14,
+    "rarity": "named",
+    "signature": "guarded",
+    "statBonuses": {
+      "meleeDefense": 2
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+35"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-6"
+      },
+      {
+        "label": "Melee defense",
+        "value": "+2"
+      }
+    ]
   },
   {
     "id": "bb-named-sellswords-armor",
     "name": "Sellswords Armor",
     "slot": "armor",
     "visual": "bb-named-sellswords-armor",
-    "price": 3500,
-    "armor": 260,
-    "fatigue": 32,
+    "price": 5600,
+    "armor": 302,
+    "fatigue": 30,
     "collection": "base",
     "sourceKind": "named",
-    "description": "This piece of layered armor belonged to a famed mercenary once. Its high resilience and flexibility make it a remarkable piece of craftsmanship. And it even comes with extra pockets!",
-    "role": "Sellswords Armor provides 260 body protection at a 32 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Sellswords Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This piece of layered armor belonged to a famed mercenary once. Its high resilience and flexibility make it a remarkable piece of craftsmanship. And it even comes with extra pockets!",
+    "role": "Sellswords Armor provides 302 body protection at a 30 fatigue cost, with +6 resolve.",
+    "sourceArmor": 260,
+    "sourceFatigue": 32,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 6
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+42"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Resolve",
+        "value": "+6"
+      }
+    ]
   },
   {
     "id": "bb-named-skull-and-chain-armor",
     "name": "Skull And Chain Armor",
     "slot": "armor",
     "visual": "bb-named-skull-and-chain-armor",
-    "price": 1925,
-    "armor": 190,
-    "fatigue": 24,
+    "price": 3080,
+    "armor": 245,
+    "fatigue": 19,
     "collection": "warriors-of-the-north",
     "sourceKind": "named",
-    "description": "A barbarian armor of crude making that has been adjusted to protect without being too cumbersome. It wears the typical markings of the northern barbarian tribes.",
-    "role": "Skull And Chain Armor provides 190 body protection at a 24 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "north"
+    "description": "Skull And Chain Armor is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A barbarian armor of crude making that has been adjusted to protect without being too cumbersome. It wears the typical markings of the northern barbarian tribes.",
+    "role": "Skull And Chain Armor provides 245 body protection at a 19 fatigue cost, with +4 ranged defense.",
+    "region": "north",
+    "sourceArmor": 190,
+    "sourceFatigue": 24,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+55"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-noble-gear",
@@ -2075,52 +2474,136 @@ export const DLC_ITEMS = Object.freeze([
     "name": "The Emperor's Countenance",
     "slot": "helmet",
     "visual": "bb-emperors-countenance",
-    "price": 7000,
-    "armor": 400,
-    "fatigue": 20,
+    "price": 11200,
+    "armor": 460,
+    "fatigue": 16,
     "collection": "beasts-and-exploration",
     "sourceKind": "legendary",
-    "description": "An adapted the emperor's countenance with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "The Emperor's Countenance provides 400 head protection at a 20 fatigue cost; compare weight before outfitting the front rank."
+    "description": "The Emperor's Countenance is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of the emperor's countenance is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "The Emperor's Countenance provides 460 head protection at a 16 fatigue cost, with +3 ranged defense.",
+    "sourceArmor": 400,
+    "sourceFatigue": 20,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 3
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+60"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-4"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+3"
+      }
+    ]
   },
   {
     "id": "bb-fangshire",
     "name": "The Fangshire",
     "slot": "helmet",
     "visual": "bb-fangshire",
-    "price": 105,
-    "armor": 60,
-    "fatigue": 5,
+    "price": 500,
+    "armor": 77,
+    "fatigue": 1,
     "collection": "supporter-edition",
     "sourceKind": "legendary",
-    "description": "An adapted the fangshire with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "The Fangshire provides 60 head protection at a 5 fatigue cost; compare weight before outfitting the front rank."
+    "description": "The Fangshire is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of the fangshire is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "The Fangshire provides 77 head protection at a 1 fatigue cost, with +5 ranged defense.",
+    "sourceArmor": 60,
+    "sourceFatigue": 5,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+17"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-4"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-ijirok-helmet",
     "name": "Helmet of the Ijirok",
     "slot": "helmet",
     "visual": "bb-ijirok-helmet",
-    "price": 4550,
-    "armor": 310,
-    "fatigue": 20,
+    "price": 7280,
+    "armor": 378,
+    "fatigue": 15,
     "collection": "beasts-and-exploration",
     "sourceKind": "legendary",
-    "description": "An adapted helmet of the ijirok with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "Helmet of the Ijirok provides 310 head protection at a 20 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Helmet of the Ijirok is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of helmet of the ijirok is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "Helmet of the Ijirok provides 378 head protection at a 15 fatigue cost, with +4 ranged defense.",
+    "sourceArmor": 310,
+    "sourceFatigue": 20,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+68"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-mask-of-davkul",
     "name": "Glimpse of Davkul",
     "slot": "helmet",
     "visual": "bb-mask-of-davkul",
-    "price": 7000,
-    "armor": 270,
-    "fatigue": 10,
+    "price": 11200,
+    "armor": 329,
+    "fatigue": 7,
     "collection": "beasts-and-exploration",
     "sourceKind": "legendary",
-    "description": "An adapted glimpse of davkul with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "Glimpse of Davkul provides 270 head protection at a 10 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Glimpse of Davkul is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of glimpse of davkul is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "Glimpse of Davkul provides 329 head protection at a 7 fatigue cost, with +5 maximum fatigue.",
+    "sourceArmor": 270,
+    "sourceFatigue": 10,
+    "rarity": "named",
+    "signature": "vigorous",
+    "statBonuses": {
+      "maxFatigue": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+59"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-3"
+      },
+      {
+        "label": "Maximum fatigue",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-mail-coif",
@@ -2166,200 +2649,515 @@ export const DLC_ITEMS = Object.freeze([
     "name": "Gold And Black Turban",
     "slot": "helmet",
     "visual": "bb-gold-and-black-turban",
-    "price": 2100,
-    "armor": 290,
-    "fatigue": 20,
+    "price": 3360,
+    "armor": 365,
+    "fatigue": 16,
     "collection": "blazing-deserts",
     "sourceKind": "named",
-    "description": "This southern style helmet is not only richly decorated, but also well balanced and made from materials of the highest quality.",
-    "role": "Gold And Black Turban provides 290 head protection at a 20 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "south"
+    "description": "Gold And Black Turban is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This southern style helmet is not only richly decorated, but also well balanced and made from materials of the highest quality.",
+    "role": "Gold And Black Turban provides 365 head protection at a 16 fatigue cost, with +3 ranged defense.",
+    "region": "south",
+    "sourceArmor": 290,
+    "sourceFatigue": 20,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 3
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+75"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-4"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+3"
+      }
+    ]
   },
   {
     "id": "bb-golden-feathers-helmet",
     "name": "Golden Feathers Helmet",
     "slot": "helmet",
     "visual": "bb-golden-feathers-helmet",
-    "price": 2100,
-    "armor": 240,
-    "fatigue": 16,
+    "price": 3360,
+    "armor": 290,
+    "fatigue": 12,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A sturdy alloy helmet of foreign design, combined with a full mail coif for excellent protection.",
-    "role": "Golden Feathers Helmet provides 240 head protection at a 16 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Golden Feathers Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A sturdy alloy helmet of foreign design, combined with a full mail coif for excellent protection.",
+    "role": "Golden Feathers Helmet provides 290 head protection at a 12 fatigue cost, with +3 ranged defense.",
+    "sourceArmor": 240,
+    "sourceFatigue": 16,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 3
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+50"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-4"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+3"
+      }
+    ]
   },
   {
     "id": "bb-heraldic-mail-helmet",
     "name": "Heraldic Mail Helmet",
     "slot": "helmet",
     "visual": "bb-heraldic-mail-helmet",
-    "price": 2800,
-    "armor": 280,
-    "fatigue": 19,
+    "price": 4480,
+    "armor": 336,
+    "fatigue": 17,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A heavy bascinet with a moveable visor, worn over a mail coif. A showy piece befitting a true knight.",
-    "role": "Heraldic Mail Helmet provides 280 head protection at a 19 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Heraldic Mail Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A heavy bascinet with a moveable visor, worn over a mail coif. A showy piece befitting a true knight.",
+    "role": "Heraldic Mail Helmet provides 336 head protection at a 17 fatigue cost, with +4 melee defense.",
+    "sourceArmor": 280,
+    "sourceFatigue": 19,
+    "rarity": "named",
+    "signature": "guarded",
+    "statBonuses": {
+      "meleeDefense": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+56"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Melee defense",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-lindwurm-helmet",
     "name": "Lindwurm Helmet",
     "slot": "helmet",
     "visual": "bb-lindwurm-helmet",
-    "price": 2625,
-    "armor": 265,
-    "fatigue": 18,
+    "price": 4200,
+    "armor": 334,
+    "fatigue": 13,
     "collection": "lindwurm",
     "sourceKind": "named",
-    "description": "An adapted lindwurm helmet with its original baseline protection and fatigue. Original scripted magical effects are not simulated.",
-    "role": "Lindwurm Helmet provides 265 head protection at a 18 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Lindwurm Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. The source design of lindwurm helmet is adapted to this campaign. Original scripted magical effects are not simulated.",
+    "role": "Lindwurm Helmet provides 334 head protection at a 13 fatigue cost, with +6 resolve.",
+    "sourceArmor": 265,
+    "sourceFatigue": 18,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 6
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+69"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Resolve",
+        "value": "+6"
+      }
+    ]
   },
   {
     "id": "bb-named-conic-helmet-with-faceguard",
     "name": "Conic Helmet With Faceguard",
     "slot": "helmet",
     "visual": "bb-named-conic-helmet-with-faceguard",
-    "price": 2800,
-    "armor": 280,
-    "fatigue": 19,
+    "price": 4480,
+    "armor": 356,
+    "fatigue": 16,
     "collection": "base",
     "sourceKind": "named",
-    "description": "This conic helmet has a faceguard attached and finely fitted scales to protect the neck. The faceguard resembles a fearsome warrior that is about to strike his enemy.",
-    "role": "Conic Helmet With Faceguard provides 280 head protection at a 19 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Conic Helmet With Faceguard is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This conic helmet has a faceguard attached and finely fitted scales to protect the neck. The faceguard resembles a fearsome warrior that is about to strike his enemy.",
+    "role": "Conic Helmet With Faceguard provides 356 head protection at a 16 fatigue cost, with +6 resolve.",
+    "sourceArmor": 280,
+    "sourceFatigue": 19,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 6
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+76"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-3"
+      },
+      {
+        "label": "Resolve",
+        "value": "+6"
+      }
+    ]
   },
   {
     "id": "bb-named-metal-bull-helmet",
     "name": "Metal Bull Helmet",
     "slot": "helmet",
     "visual": "bb-named-metal-bull-helmet",
-    "price": 2800,
-    "armor": 300,
-    "fatigue": 22,
+    "price": 4480,
+    "armor": 384,
+    "fatigue": 20,
     "collection": "blazing-deserts",
     "sourceKind": "named",
-    "description": "A reinforced helmet made from an extremely sturdy alloy. It is richly decorated and heavy but offers extraordinary protection.",
-    "role": "Metal Bull Helmet provides 300 head protection at a 22 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "south"
+    "description": "Metal Bull Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A reinforced helmet made from an extremely sturdy alloy. It is richly decorated and heavy but offers extraordinary protection.",
+    "role": "Metal Bull Helmet provides 384 head protection at a 20 fatigue cost, with +3 melee defense.",
+    "region": "south",
+    "sourceArmor": 300,
+    "sourceFatigue": 22,
+    "rarity": "named",
+    "signature": "guarded",
+    "statBonuses": {
+      "meleeDefense": 3
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+84"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Melee defense",
+        "value": "+3"
+      }
+    ]
   },
   {
     "id": "bb-named-metal-nose-horn-helmet",
     "name": "Metal Nose Horn Helmet",
     "slot": "helmet",
     "visual": "bb-named-metal-nose-horn-helmet",
-    "price": 1750,
-    "armor": 230,
-    "fatigue": 15,
+    "price": 2800,
+    "armor": 297,
+    "fatigue": 9,
     "collection": "blazing-deserts",
     "sourceKind": "named",
-    "description": "This helmet must have belonged to a distinct warrior of the barbarians. Its size and design appear alien to all southern folks.",
-    "role": "Metal Nose Horn Helmet provides 230 head protection at a 15 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "south"
+    "description": "Metal Nose Horn Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This helmet must have belonged to a distinct warrior of the barbarians. Its size and design appear alien to all southern folks.",
+    "role": "Metal Nose Horn Helmet provides 297 head protection at a 9 fatigue cost, with +4 melee defense.",
+    "region": "south",
+    "sourceArmor": 230,
+    "sourceFatigue": 15,
+    "rarity": "named",
+    "signature": "guarded",
+    "statBonuses": {
+      "meleeDefense": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+67"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-6"
+      },
+      {
+        "label": "Melee defense",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-named-metal-skull-helmet",
     "name": "Metal Skull Helmet",
     "slot": "helmet",
     "visual": "bb-named-metal-skull-helmet",
-    "price": 1750,
-    "armor": 210,
-    "fatigue": 13,
+    "price": 2800,
+    "armor": 256,
+    "fatigue": 8,
     "collection": "blazing-deserts",
     "sourceKind": "named",
-    "description": "A heavy helmet typical of the northern barbarians with a skull-like facemask. This piece is as massive as it is impressive.",
-    "role": "Metal Skull Helmet provides 210 head protection at a 13 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "south"
+    "description": "Metal Skull Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A heavy helmet typical of the northern barbarians with a skull-like facemask. This piece is as massive as it is impressive.",
+    "role": "Metal Skull Helmet provides 256 head protection at a 8 fatigue cost, with +5 ranged defense.",
+    "region": "south",
+    "sourceArmor": 210,
+    "sourceFatigue": 13,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+46"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-named-nordic-helmet-with-closed-mail",
     "name": "Nordic Helmet With Closed Mail",
     "slot": "helmet",
     "visual": "bb-named-nordic-helmet-with-closed-mail",
-    "price": 2625,
-    "armor": 265,
-    "fatigue": 18,
+    "price": 4200,
+    "armor": 334,
+    "fatigue": 14,
     "collection": "warriors-of-the-north",
     "sourceKind": "named",
-    "description": "This nordic helmet with faceguard is extraordinarly crafted, and as protective as it is impressive looking.",
-    "role": "Nordic Helmet With Closed Mail provides 265 head protection at a 18 fatigue cost; compare weight before outfitting the front rank.",
-    "region": "north"
+    "description": "Nordic Helmet With Closed Mail is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This nordic helmet with faceguard is extraordinarly crafted, and as protective as it is impressive looking.",
+    "role": "Nordic Helmet With Closed Mail provides 334 head protection at a 14 fatigue cost, with +4 ranged defense.",
+    "region": "north",
+    "sourceArmor": 265,
+    "sourceFatigue": 18,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+69"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-4"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-named-steppe-helmet-with-mail",
     "name": "Steppe Helmet With Mail",
     "slot": "helmet",
     "visual": "bb-named-steppe-helmet-with-mail",
-    "price": 1750,
-    "armor": 200,
-    "fatigue": 12,
+    "price": 2800,
+    "armor": 240,
+    "fatigue": 8,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A masterfully crafted helmet in the fashion of the steppe folks. Decorated with gold applications and equipped with additional cheek guards.",
-    "role": "Steppe Helmet With Mail provides 200 head protection at a 12 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Steppe Helmet With Mail is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A masterfully crafted helmet in the fashion of the steppe folks. Decorated with gold applications and equipped with additional cheek guards.",
+    "role": "Steppe Helmet With Mail provides 240 head protection at a 8 fatigue cost, with +4 maximum fatigue.",
+    "sourceArmor": 200,
+    "sourceFatigue": 12,
+    "rarity": "named",
+    "signature": "vigorous",
+    "statBonuses": {
+      "maxFatigue": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+40"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-4"
+      },
+      {
+        "label": "Maximum fatigue",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-nasal-feather-helmet",
     "name": "Nasal Feather Helmet",
     "slot": "helmet",
     "visual": "bb-nasal-feather-helmet",
-    "price": 2450,
-    "armor": 265,
-    "fatigue": 18,
+    "price": 3920,
+    "armor": 313,
+    "fatigue": 16,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A hardened nasal helmet with a unique neckguard made from leather scales.",
-    "role": "Nasal Feather Helmet provides 265 head protection at a 18 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Nasal Feather Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A hardened nasal helmet with a unique neckguard made from leather scales.",
+    "role": "Nasal Feather Helmet provides 313 head protection at a 16 fatigue cost, with +5 ranged defense.",
+    "sourceArmor": 265,
+    "sourceFatigue": 18,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+48"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-norse-helmet",
     "name": "Norse Helmet",
     "slot": "helmet",
     "visual": "bb-norse-helmet",
-    "price": 700,
-    "armor": 125,
-    "fatigue": 6,
+    "price": 1120,
+    "armor": 156,
+    "fatigue": 1,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A richly ornated nordic helmet that must have belonged to a high ranking noble or exalted warrior.",
-    "role": "Norse Helmet provides 125 head protection at a 6 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Norse Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A richly ornated nordic helmet that must have belonged to a high ranking noble or exalted warrior.",
+    "role": "Norse Helmet provides 156 head protection at a 1 fatigue cost, with +4 resolve.",
+    "sourceArmor": 125,
+    "sourceFatigue": 6,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+31"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Resolve",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-red-and-gold-band-helmet",
     "name": "Red And Gold Band Helmet",
     "slot": "helmet",
     "visual": "bb-red-and-gold-band-helmet",
-    "price": 2100,
-    "armor": 255,
-    "fatigue": 17,
+    "price": 3360,
+    "armor": 314,
+    "fatigue": 12,
     "collection": "base",
     "sourceKind": "named",
-    "description": "This southern style helmet is not only richly decorated, but also well balanced and made from extremely high quality metals.",
-    "role": "Red And Gold Band Helmet provides 255 head protection at a 17 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Red And Gold Band Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. This southern style helmet is not only richly decorated, but also well balanced and made from extremely high quality metals.",
+    "role": "Red And Gold Band Helmet provides 314 head protection at a 12 fatigue cost, with +4 ranged defense.",
+    "sourceArmor": 255,
+    "sourceFatigue": 17,
+    "rarity": "named",
+    "signature": "deflecting",
+    "statBonuses": {
+      "rangedDefense": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+59"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-5"
+      },
+      {
+        "label": "Ranged defense",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-sallet-green-helmet",
     "name": "Sallet Green Helmet",
     "slot": "helmet",
     "visual": "bb-sallet-green-helmet",
-    "price": 2450,
-    "armor": 265,
-    "fatigue": 18,
+    "price": 3920,
+    "armor": 337,
+    "fatigue": 16,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A masterfully crafted sallet supported by a mail coif, crested with colored ribbons.",
-    "role": "Sallet Green Helmet provides 265 head protection at a 18 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Sallet Green Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A masterfully crafted sallet supported by a mail coif, crested with colored ribbons.",
+    "role": "Sallet Green Helmet provides 337 head protection at a 16 fatigue cost, with +5 resolve.",
+    "sourceArmor": 265,
+    "sourceFatigue": 18,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 5
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+72"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-2"
+      },
+      {
+        "label": "Resolve",
+        "value": "+5"
+      }
+    ]
   },
   {
     "id": "bb-wolf-helmet",
     "name": "Wolf Helmet",
     "slot": "helmet",
     "visual": "bb-wolf-helmet",
-    "price": 700,
-    "armor": 140,
-    "fatigue": 8,
+    "price": 1120,
+    "armor": 178,
+    "fatigue": 5,
     "collection": "base",
     "sourceKind": "named",
-    "description": "A sturdy metal helmet with attached mail, covered with an impressive wolf head.",
-    "role": "Wolf Helmet provides 140 head protection at a 8 fatigue cost; compare weight before outfitting the front rank."
+    "description": "Wolf Helmet is a rare piece with improved protection, balanced weight, and a permanent signature bonus. A sturdy metal helmet with attached mail, covered with an impressive wolf head.",
+    "role": "Wolf Helmet provides 178 head protection at a 5 fatigue cost, with +4 resolve.",
+    "sourceArmor": 140,
+    "sourceFatigue": 8,
+    "rarity": "named",
+    "signature": "stalwart",
+    "statBonuses": {
+      "resolve": 4
+    },
+    "bonuses": [
+      {
+        "label": "Protection",
+        "value": "+38"
+      },
+      {
+        "label": "Fatigue cost",
+        "value": "-3"
+      },
+      {
+        "label": "Resolve",
+        "value": "+4"
+      }
+    ]
   },
   {
     "id": "bb-nasal-helmet",
@@ -2887,4 +3685,4 @@ export const DLC_ITEMS = Object.freeze([
     "description": "A pointy hat with a broad rim.",
     "role": "Wizard's Hat provides 30 head protection at a 0 fatigue cost; compare weight before outfitting the front rank."
   }
-].map(Object.freeze));
+].map(item => Object.freeze({...item, ...(item.statBonuses ? {statBonuses: Object.freeze(item.statBonuses), bonuses: Object.freeze(item.bonuses.map(Object.freeze))} : {})})));
