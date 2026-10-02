@@ -43,7 +43,7 @@ function reachTown(state, town) {
   const until = hours(state) + 48;
   for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   assert.equal(travelTo(state, town.x, town.y).ok, true);
-  for (let step = 0; state.destination && step < 16; step++) {
+  for (let step = 0; state.destination && step < 32; step++) {
     for (const progress of Object.values(state.bands)) progress.defeatedUntil = hours(state) + 48;
     assert.equal(tick(state, 12).ok, true);
   }
@@ -51,8 +51,8 @@ function reachTown(state, town) {
   assert.equal(townAt(state)?.id, town.id);
 }
 
-test('expanded map bounds contain all 20 reachable towns and have market rows', () => {
-  assert.equal(SETTLEMENTS.length, 20);
+test('expanded map bounds contain all 48 reachable towns and have market rows', () => {
+  assert.equal(SETTLEMENTS.length, 48);
   const bounds = WORLD_BOUNDS;
   for (const town of SETTLEMENTS) {
     assert.ok(town.x >= bounds.minX && town.x <= bounds.maxX, `${town.id} x is in bounds`);
@@ -74,15 +74,15 @@ test('expanded map bounds contain all 20 reachable towns and have market rows', 
   assert.deepEqual(validateSave(edgeState), edgeState);
 });
 
-test('twenty-eight roaming bands preserve four nearby light patrols and cover the new trade roads', () => {
+test('fifty-six roaming bands preserve four nearby light patrols and cover the new trade roads', () => {
   const bands = getRoamingBands(createGame(814));
-  assert.equal(bands.length, 28);
+  assert.equal(bands.length, 56);
   const legacyIds = ['road-thieves', 'hungry-deserters', 'forest-cutthroats', 'river-raiders'];
   const legacy = bands.filter(band => legacyIds.includes(band.id));
   const frontier = bands.filter(band => !legacyIds.includes(band.id));
   assert.equal(legacy.length, 4);
   assert.ok(legacy.every(band => band.difficulty === 0 && band.enemies.length <= 2));
-  assert.equal(frontier.length, 24);
+  assert.equal(frontier.length, 52);
   assert.ok(frontier.every(band => band.difficulty >= 1 && band.enemies.length >= 2));
   for (const band of bands) {
     assert.ok(band.x >= WORLD_BOUNDS.minX && band.x <= WORLD_BOUNDS.maxX, `${band.id} x is in bounds`);
@@ -123,7 +123,7 @@ test('fixed and seeded camps reopen at the exact cooldown boundary', () => {
 test('seeded camp offers regenerate deterministically by generation and do not mutate saves on read', () => {
   const state = createGame(816);
   const seeded = getCampSites(state).filter(camp => camp.random);
-  assert.equal(seeded.length, 12);
+  assert.equal(seeded.length, 36);
   const first = seeded[0];
   const before = structuredClone(first);
   state.camps[first.id] = { clearedDay: 1, respawnAt: hours(state), generation: 0 };

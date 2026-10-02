@@ -1,0 +1,27 @@
+{
+  "repository": "Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "assets": [
+    {
+      "source": "unpacked/world_tiles/world_tiles/world_desert_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_desert_01.png",
+      "local": "assets/world/world_desert_01.png",
+      "bytes": 91088,
+      "sha256": "8099d63e6dc72b02e9f2261ee9bf627825e4005de359a6f980574712578445ce"
+    },
+    {
+      "source": "unpacked/world_tiles/world_tiles/world_desert_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_desert_02.png",
+      "local": "assets/world/world_desert_02.png",
+      "bytes": 110810,
+      "sha256": "05a66af28d593f99da2a2d0b701b372ad5d92e7febf8560e31abe6a27cc55bc1"
+    },
+    {
+      "source": "unpacked/world_tiles/world_tiles/world_desert_03.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/world_tiles/world_tiles/world_desert_03.png",
+      "local": "assets/world/world_desert_03.png",
+      "bytes": 104346,
+      "sha256": "dac63339e0c651518a474e7e70dd397ce7dda1cd3fd5e39fae7692cdb3edf824"
+    }
+  ]
+}

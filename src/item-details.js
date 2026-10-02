@@ -143,6 +143,10 @@ export function getItemDetails(item, condition) {
     notes.push(`${skill.name}: ${skill.description}`);
   }
   if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
+  if (item.collection) {
+    notes.push('Protection and fatigue follow the pinned Battle Brothers definition; prices are adapted to the campaign economy.');
+    notes.push('Cosmetic variants use a fixed source design. Original helmet vision penalties and scripted magical effects are not simulated.');
+  }
   const role = item.rarity === 'famed'
     ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with the ordinary version.`
     : baseRole;

@@ -7,7 +7,7 @@ import { itemImage, portraitHTML } from '../src/portraits.js';
 import { shipmentPlan, routeSegmentDistance } from '../src/caravans.js';
 
 const ids = new Set(FRONTIER_ITEMS.map(item => item.id));
-const newTowns = SETTLEMENTS.slice(16);
+const newTowns = SETTLEMENTS.slice(16,20);
 
 test('three matching frontier sets render, equip, and persist ordinary and famed condition', () => {
   assert.equal(ids.size, 6);
@@ -39,7 +39,7 @@ test('old markets and missing frontier patrols migrate once without replenishing
   assert.deepEqual(old, before, 'import does not mutate source');
   assert.deepEqual(migrated.battle, old.battle);
   assert.equal(migrated.marketStock.oakwatch.equipment['patched-coat'], 0);
-  assert.equal(Object.keys(migrated.bands).length, 28);
+  assert.equal(Object.keys(migrated.bands).length, 56);
   for (const item of FRONTIER_ITEMS) assert.ok(Number.isInteger(migrated.marketStock.oakwatch.equipment[item.id]));
   assert.deepEqual(validateSave(migrated), migrated);
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(migrated))), migrated);

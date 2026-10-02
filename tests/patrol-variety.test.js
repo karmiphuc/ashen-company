@@ -17,7 +17,7 @@ test('patrol strength and enemy roster vary by seed but stay bounded and preserv
 
   for (let seed = 1; seed <= 64; seed++) {
     const bands = getRoamingBands(createGame(seed));
-    assert.equal(bands.length, 28);
+    assert.equal(bands.length, 56);
     for (const id of easyIds) {
       const band = bands.find(entry => entry.id === id);
       assert.equal(band.difficulty, 0);

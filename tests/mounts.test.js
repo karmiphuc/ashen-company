@@ -86,7 +86,7 @@ test('weekly large town and castle mount offers are rare, deterministic, and tra
       if (!offer && offered.length) offer = { state: structuredClone(state), itemId: offered[0].itemId };
     }
   }
-  assert.ok(opportunities > 0 && opportunities < 80, 'roughly two percent of eligible weekly armories offer a mount');
+  assert.ok(opportunities / (300 * SETTLEMENTS.filter(entry => entry.major || entry.kind === 'castle').length) > .005 && opportunities / (300 * SETTLEMENTS.filter(entry => entry.major || entry.kind === 'castle').length) < .04, 'roughly two percent of eligible weekly armories offer a mount');
   const { state, itemId } = offer;
   assert.equal(getMarket(state).equipment.find(row => row.itemId === itemId).stock, 1);
   state.gold = 5000;

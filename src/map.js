@@ -1,6 +1,8 @@
-import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getCaravans } from './engine.js';
+import { regionAt } from './geography.js';
+import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getCaravans, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = [
+  'world_desert_01', 'world_desert_02', 'world_desert_03',
   'world_grass_01', 'world_grass_02', 'world_grass_03', 'world_grass_04',
   'world_plains_01', 'world_plains_02', 'world_plains_03',
   'world_highlands_01', 'world_highlands_02', 'world_highlands_03',
@@ -115,34 +117,10 @@ function bandActivity(band) {
   return '';
 }
 
-function roadPairs() {
-  const edges = new Set();
-  const pairs = [];
-  const add = (a, b) => {
-    if (a === b || !SETTLEMENTS[a] || !SETTLEMENTS[b]) return;
-    const key = a < b ? `${a}:${b}` : `${b}:${a}`;
-    if (edges.has(key)) return;
-    edges.add(key);
-    pairs.push([a, b]);
-  };
-  [[0, 1], [1, 2], [2, 3], [2, 4], [1, 5], [0, 6], [0, 7], [7, 4], [7, 2]].forEach(([a, b]) => add(a, b));
-  const connected = new Set([0]);
-  while (connected.size < SETTLEMENTS.length) {
-    let shortest = null;
-    for (const a of connected) for (let b = 0; b < SETTLEMENTS.length; b++) {
-      if (connected.has(b)) continue;
-      const first = SETTLEMENTS[a], second = SETTLEMENTS[b];
-      const distance = Math.hypot(first.x - second.x, first.y - second.y);
-      if (!shortest || distance < shortest.distance) shortest = { a, b, distance };
-    }
-    if (!shortest) break;
-    add(shortest.a, shortest.b);
-    connected.add(shortest.b);
-  }
-  return pairs;
-}
 
 function terrainSprites(terrain) {
+  if (terrain === 'snow') return ['world_snow_01', 'world_snow_02'];
+  if (terrain === 'desert') return ['world_desert_01', 'world_desert_02', 'world_desert_03'];
   if (terrain === 'sea') return ['world_ocean_00'];
   if (terrain === 'mountain') return ['world_highlands_01', 'world_highlands_02', 'world_highlands_03'];
   if (terrain === 'forest') return ['world_forest_01', 'world_forest_02'];
@@ -152,9 +130,11 @@ function terrainSprites(terrain) {
 
 function buildBackground() {
   const surface = document.createElement('canvas');
-  surface.width = BACKGROUND_BOUNDS.width;
-  surface.height = BACKGROUND_BOUNDS.height;
+  const rasterScale = Math.min(1, 4096 / Math.max(BACKGROUND_BOUNDS.width, BACKGROUND_BOUNDS.height));
+  surface.width = Math.ceil(BACKGROUND_BOUNDS.width * rasterScale);
+  surface.height = Math.ceil(BACKGROUND_BOUNDS.height * rasterScale);
   const target = surface.getContext('2d');
+  target.scale(rasterScale, rasterScale);
   target.translate(-BACKGROUND_BOUNDS.x, -BACKGROUND_BOUNDS.y);
   target.fillStyle = '#244b47';
   target.fillRect(BACKGROUND_BOUNDS.x, BACKGROUND_BOUNDS.y, BACKGROUND_BOUNDS.width, BACKGROUND_BOUNDS.height);
@@ -172,19 +152,30 @@ function buildBackground() {
     sprite(target, choices[Math.floor(random() * choices.length)], x, y, 210, .5);
   }
 
+  // A subtle regional wash and borders make the geography readable at overview zoom.
+  target.save();
+  for (let x = WORLD_BOUNDS.minX; x < WORLD_BOUNDS.maxX; x += 80) for (let y = WORLD_BOUNDS.minY; y < WORLD_BOUNDS.maxY; y += 80) {
+    const region = regionAt(x+40,y+40);
+    target.fillStyle = region.color + (region.climate === 'desert' ? '55' : '22');
+    target.fillRect(x,y,80,80);
+    target.strokeStyle = '#ded1ae55'; target.lineWidth=2; target.setLineDash([8,10]);
+    if (regionAt(x+120,y+40).id !== region.id) { target.beginPath();target.moveTo(x+80,y);target.lineTo(x+80,y+80);target.stroke(); }
+    if (regionAt(x+40,y+120).id !== region.id) { target.beginPath();target.moveTo(x,y+80);target.lineTo(x+80,y+80);target.stroke(); }
+  }
+  target.restore();
   target.lineCap = 'round';
-  for (const [a, b] of roadPairs()) {
-    const first = SETTLEMENTS[a], second = SETTLEMENTS[b];
+  for (const road of WORLD_ROADS) {
+    const [first, second] = road.points;
     target.beginPath();
     target.moveTo(first.x, first.y);
-    target.quadraticCurveTo((first.x + second.x) / 2 + 15, (first.y + second.y) / 2 + 20, second.x, second.y);
-    target.strokeStyle = '#514c32'; target.lineWidth = 7; target.stroke();
-    target.strokeStyle = '#b1a16b'; target.lineWidth = 4; target.stroke();
+    target.lineTo(second.x, second.y);
+    target.strokeStyle = '#514c32'; target.lineWidth = road.kind === 'highway' ? 11 : 7; target.stroke();
+    target.strokeStyle = road.kind === 'highway' ? '#d7c08a' : '#b1a16b'; target.lineWidth = road.kind === 'highway' ? 6 : 4; target.stroke();
     target.strokeStyle = '#ccbb85aa'; target.lineWidth = 1; target.stroke();
   }
 
   const objects = [];
-  const objectCount = Math.min(720, Math.round(BACKGROUND_BOUNDS.width * BACKGROUND_BOUNDS.height / 5200));
+  const objectCount = Math.min(1600, Math.round(BACKGROUND_BOUNDS.width * BACKGROUND_BOUNDS.height / 5200));
   for (let index = 0; index < objectCount; index++) {
     const x = WORLD_BOUNDS.minX + random() * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
     const y = WORLD_BOUNDS.minY + random() * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
@@ -193,6 +184,10 @@ function buildBackground() {
     if (terrain === 'forest') objects.push({ x, y, name: `world_detail_forest_green_0${1 + Math.floor(random() * 4)}`, width: 65 + random() * 30 });
     else if (terrain === 'mountain') objects.push({ x, y, name: `legend_world_grass_hill_0${1 + Math.floor(random() * 3)}`, width: 100 + random() * 70 });
     else if (random() < .1) objects.push({ x, y, name: `world_detail_autumn_green_0${1 + Math.floor(random() * 2)}`, width: 45 + random() * 28 });
+  }
+  for (const region of WORLD_REGIONS) {
+    context.save();context.font=`bold ${12/camera.zoom}px Georgia`;context.textAlign='center';context.lineWidth=4;context.strokeStyle='#24251ddd';
+    context.strokeText(region.name.toUpperCase(),region.x,region.y);context.fillStyle=region.color;context.fillText(region.name.toUpperCase(),region.x,region.y);context.restore();
   }
   SETTLEMENTS.forEach((town, index) => {
     objects.push({ x: town.x, y: town.y, name: townArt(town), width: town.kind === 'village' ? 100 : 122 });
@@ -207,7 +202,7 @@ function minimumZoom() {
   if (!width || !height) return .2;
   const spanX = WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX + 120;
   const spanY = WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY + 120;
-  return clamp(Math.min(width / spanX, height / spanY), .16, 1);
+  return clamp(Math.min(width / spanX, height / spanY), .12, 1);
 }
 
 function constrainCamera() {
@@ -238,7 +233,7 @@ function campLabel(camp) {
 }
 
 export function mapHTML() {
-  return `<canvas id="world-map" role="img" aria-label="World map. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-loading">Preparing the Marches…</div>`;
+  return `<canvas id="world-map" role="img" aria-label="World map with nine named regions, roads and highways. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-loading">Preparing the Marches…</div>`;
 }
 
 export const mapSVG = mapHTML;
@@ -367,6 +362,8 @@ export function updateMap(game) { state = game; if (canvas?.isConnected) draw();
 
 function draw() {
   if (!context || !width || !height || !state) return;
+  const caption = document.querySelector('.map-caption span');
+  if (caption) caption.textContent = regionAt(state.position.x,state.position.y).name;
   context.clearRect(0, 0, width, height);
   context.save();
   context.translate(width / 2, height / 2);
@@ -474,14 +471,20 @@ function draw() {
     context.beginPath(); context.moveTo(state.position.x, state.position.y); context.lineTo(state.destination.x, state.destination.y); context.stroke(); context.setLineDash([]);
     context.beginPath(); context.arc(state.destination.x, state.destination.y, 12, 0, Math.PI * 2); context.stroke();
   }
+  for (const region of WORLD_REGIONS) {
+    context.save();context.font=`bold ${12/camera.zoom}px Georgia`;context.textAlign='center';context.lineWidth=4;context.strokeStyle='#24251ddd';
+    context.strokeText(region.name.toUpperCase(),region.x,region.y);context.fillStyle=region.color;context.fillText(region.name.toUpperCase(),region.x,region.y);context.restore();
+  }
   SETTLEMENTS.forEach((town, index) => {
     if (selection === town.id || state.contract?.to === town.id) {
       context.strokeStyle = selection === town.id ? '#f4d78f' : '#dfcb73'; context.lineWidth = 2;
       context.beginPath(); context.ellipse(town.x, town.y + 3, 45, 17, 0, 0, Math.PI * 2); context.stroke();
     }
     sprite(context, `banner_10${1 + index % 3}`, town.x + 43, town.y - 29, 22, .9);
-    context.font = 'bold 17px Georgia'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#29291edd'; context.strokeText(town.name, town.x, town.y + 25);
-    context.fillStyle = '#f0e4bd'; context.fillText(town.name, town.x, town.y + 25);
+    if (camera.zoom >= .3 || town.major || selection === town.id || state.contract?.to === town.id) {
+      context.font = `bold ${Math.max(17,9/camera.zoom)}px Georgia`; context.textAlign = 'center'; context.lineWidth = 3/camera.zoom; context.strokeStyle = '#29291edd'; context.strokeText(town.name, town.x, town.y + 25);
+      context.fillStyle = '#f0e4bd'; context.fillText(town.name, town.x, town.y + 25);
+    }
   });
   const progress = (state.day * 24 + state.hour) / 17, position = (Math.sin(progress) + 1) / 2;
   const first = SETTLEMENTS[1], second = SETTLEMENTS[2];
