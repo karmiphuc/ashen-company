@@ -365,7 +365,7 @@ function layer(name, spec, item) {
   const origin = transformOrigin ?? 'center';
   const weaponStyle = name === 'weapon' && transform ? `--layer-rest:${transform};--layer-origin:${origin};--weapon-rest:${transform};--weapon-origin:${origin};` : '';
   const transformStyle = transform ? `${weaponStyle}transform:${transform};transform-origin:${origin};` : '';
-  const famed = item?.rarity === 'famed' ? ' bb-layer-famed' : '';
+  const famed = ['famed','named'].includes(item?.rarity) ? ' bb-layer-famed' : '';
   const zIndex = { armor: 1, ear: 4, helmet: 5, shield: 6, weapon: 7 }[name] ?? 0;
   return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none;z-index:${zIndex}">`;
 }

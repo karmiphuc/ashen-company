@@ -80,3 +80,5 @@ Open `http://127.0.0.1:4173`. The site is static and can be hosted from the main
 `src/engine.js` holds campaign and combat rules. `src/app.js` binds the interface and local save. `src/battle-view.js` renders the battle, `src/campaign-ui.js` renders company and campaign screens, and `src/portraits.js` assembles character and equipment layers.
 
 See [asset credits](docs/ASSET-CREDITS.md), [research notes](docs/RESEARCH.md), [perk references and adaptations](docs/PERK-RESEARCH.md), and [verification notes](docs/VERIFICATION.md).
+
+Version 0.43 adds nine regional enemy profiles, role-aware imported gear across patrols and generated encounters, scarce named champions, and permanent named/legendary equipment bonuses. Fangshire now provides 77 protection for one fatigue with +5 ranged defense. Rare-item buybacks preserve damage, and v0.42 active battles migrate without repairs or rerolled drops.

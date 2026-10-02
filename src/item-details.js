@@ -38,7 +38,7 @@ export function getItemDetails(item, condition) {
   if (!baseRole) return null;
   const stats = [];
   const notes = [];
-  const bonuses = item.rarity === 'famed' && Array.isArray(item.bonuses) ? item.bonuses : [];
+  const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;
     stats.push(
@@ -144,17 +144,17 @@ export function getItemDetails(item, condition) {
   }
   if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
   if (item.collection) {
-    notes.push('Protection and fatigue follow the pinned Battle Brothers definition; prices are adapted to the campaign economy.');
+    notes.push('Ordinary protection and fatigue follow the pinned Battle Brothers definition. Named and legendary designs gain permanent protection, fatigue, and signature bonuses; prices are adapted to the campaign economy.');
     notes.push('Cosmetic variants use a fixed source design. Original helmet vision penalties and scripted magical effects are not simulated.');
   }
-  const role = item.rarity === 'famed'
+  const role = ['famed','named'].includes(item.rarity)
     ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with the ordinary version.`
     : baseRole;
   return {
     description: item.description,
     role,
     rarity: item.rarity,
-    baseName: item.baseId ? base.name : null,
+    baseName: item.baseId ? base.name : item.rarity==='named' ? `${item.name} source baseline` : null,
     bonuses,
     stats,
     notes,
