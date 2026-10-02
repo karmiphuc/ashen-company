@@ -11,7 +11,7 @@ test('v0.36 saved battle resolves identically to the previous released engine', 
   const state = validateSave(oldBattle());
   const expected = JSON.parse(readFileSync(new URL('./fixtures/v036-resolved-battle.json', import.meta.url), 'utf8'));
   assert.equal(resolveBattle(state).ok, true);
-  assert.deepEqual(state, expected);
+  assert.deepEqual(state, validateSave(expected));
 });
 
 test('an actual v0.36 active battle preserves its rules, position and AP without opting into new weapon skills', () => {

@@ -28,3 +28,9 @@ The checked-in manifests identify the upstream repository commit and source path
 The [Legends Nexus page](https://www.nexusmods.com/battlebrothers/mods/60) lists its credits and distribution terms. It says some included assets belong to other authors and that their permission must be sought; it also says permission from the Legends author is required to use assets, and that conversion to other games is not allowed. The manifests document provenance, not a separate permission grant. This project is personal and noncommercial.
 
 *Battle Brothers* is a game by [Overhype Studios](https://battlebrothersgame.com/). Ashen Company is an independent fan-made browser prototype and is not affiliated with or endorsed by Overhype Studios or the Legends team.
+
+The frontier Scout, Warden, and Sentinel equipment reuses the existing wolf gambeson, reinforced lamellar, plate cuirass, high kettle helm, flat-top helm, and full helm artwork. Frontier inventory PNGs are byte-identical copies of those credited local assets; no new upstream art is introduced.
+
+## Full base-game and DLC equipment
+
+Version 0.42 imports 217 human armor/helmet designs and their original inventory art and worn sprite layers from [kovasap/battle-bros-decompiled](https://github.com/kovasap/battle-bros-decompiled/tree/e06d68df0915827967f98a05d0c705c1f53df0b7), pinned to `e06d68df0915827967f98a05d0c705c1f53df0b7`. These remain Battle Brothers assets by Overhype Studios. [DLC-EQUIPMENT.md](DLC-EQUIPMENT.md) explains coverage, representative variants, atlas extraction, and game-rule adaptations. [The equipment manifest](../assets/dlc-equipment-source.json) records all source definitions, selected art, crop bounds, orientation correction, and hashes. [The regional terrain manifest](../assets/world/regional-sources.json) credits the three desert tiles to the existing pinned Legends source.

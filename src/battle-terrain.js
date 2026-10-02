@@ -46,6 +46,8 @@ export function createBattleField(seed, encounterId, biome) {
     forest: [49, 27, 18, 3, 3],
     mountain: [55, 4, 8, 2, 31],
     marsh: [48, 8, 18, 23, 3],
+    snow: [64, 6, 14, 10, 6],
+    desert: [85, 0, 3, 2, 10],
   }[biome] ?? [76, 4, 13, 4, 3];
   const hillCount = biome === 'mountain' ? 3 : biome === 'marsh' ? 1 : 2;
   const hills = Array.from({ length: hillCount }, (_, index) => ({

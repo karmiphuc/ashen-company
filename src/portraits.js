@@ -1,5 +1,7 @@
 // Local raster layers from Battle-Brothers-Legends/Legends-public.
 // See assets/portraits/legends-source.json for the pinned source manifest.
+import { DLC_ITEMS } from './dlc-items.js';
+import { DLC_ART } from './dlc-art.js';
 import { FANTASY_ARMOR_VISUALS, FANTASY_HELMET_VISUALS, FANTASY_ITEM_IMAGES, FANTASY_APPEARANCES, FANTASY_CLOSED_HELMETS, FANTASY_HIDDEN_HEADS } from './fantasy-art.js';
 
 const PORTRAIT_ROOT = 'assets/portraits/';
@@ -18,6 +20,7 @@ const APPEARANCES = [
 export const VISUALS = {
   armor: {
     ...FANTASY_ARMOR_VISUALS,
+    ...Object.fromEntries(DLC_ITEMS.filter(item=>item.slot==='armor').map(item=>[item.visual,[DLC_ART[item.id].portrait,DLC_ART[item.id].left,DLC_ART[item.id].top]])),
     padded: ['armor-padded.png', 5, 46],
     gambeson: ['armor-gambeson.png', 5, 46],
     leather: ['armor-leather.png', 5, 46],
@@ -47,6 +50,7 @@ export const VISUALS = {
   },
   helmet: {
     ...FANTASY_HELMET_VISUALS,
+    ...Object.fromEntries(DLC_ITEMS.filter(item=>item.slot==='helmet').map(item=>[item.visual,[DLC_ART[item.id].portrait,DLC_ART[item.id].left,DLC_ART[item.id].top]])),
     hood: ['helmet-hood.png', -16, -60],
     nasal: ['helmet-nasal.png', -20, -55],
     kettle: ['helmet-kettle.png', -23, -59],
@@ -189,6 +193,13 @@ const PORTRAIT = VISUALS;
 
 const ITEM_IMAGES = {
   ...FANTASY_ITEM_IMAGES,
+  'frontier-scout-armor': 'frontier-scout-armor.png',
+  'frontier-scout-helmet': 'frontier-scout-helmet.png',
+  'frontier-warden-armor': 'frontier-warden-armor.png',
+  'frontier-warden-helmet': 'frontier-warden-helmet.png',
+  'frontier-sentinel-armor': 'frontier-sentinel-armor.png',
+  'frontier-sentinel-helmet': 'frontier-sentinel-helmet.png',
+
   'patched-coat': 'patched-coat.png',
   'quilted-jack': 'quilted-jack.png',
   'padded-gambeson': 'padded-gambeson.png',
@@ -341,6 +352,8 @@ function visual(item) {
 }
 
 function layerSpec(category, item) {
+  const source = DLC_ART[item?.baseId || item?.id || visual(item)];
+  if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];
   const id = String(item?.baseId || item?.id || '').toLowerCase();
   return variants[id] || variants[visual(item)];
@@ -354,11 +367,11 @@ function layer(name, spec, item) {
   const transformStyle = transform ? `${weaponStyle}transform:${transform};transform-origin:${origin};` : '';
   const famed = item?.rarity === 'famed' ? ' bb-layer-famed' : '';
   const zIndex = { armor: 1, ear: 4, helmet: 5, shield: 6, weapon: 7 }[name] ?? 0;
-  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none;z-index:${zIndex}">`;
+  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none;z-index:${zIndex}">`;
 }
 
 function bodyLayer(file, armored, left = 11, top = 50) {
-  const source = `${PORTRAIT_ROOT}${file}`;
+  const source = `${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}`;
   if (!armored) return `<img data-layer="body" class="bb-layer bb-layer-body" src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none">`;
   return `<span data-layer="body" class="bb-layer bb-layer-body"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(0 0,22px 0,22px 60px,0 60px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(22px 0,60px 0,60px 34px,22px 34px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(60px 0,82px 0,82px 60px,60px 60px);max-width:none;pointer-events:none"></span>`;
 }
@@ -367,7 +380,7 @@ function attachmentLayer(spec, part) {
   const layerSpec = spec?.[part];
   if (!layerSpec) return '';
   const [file, left, top] = layerSpec;
-  return `<img data-layer="attachment-${part}" class="bb-layer bb-layer-attachment" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none;z-index:${part === 'back' ? 2 : 3}">`;
+  return `<img data-layer="attachment-${part}" class="bb-layer bb-layer-attachment" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none;z-index:${part === 'back' ? 2 : 3}">`;
 }
 
 function mountLayer(spec, part) {
@@ -376,7 +389,7 @@ function mountLayer(spec, part) {
   const file = part === 'body' ? body : head;
   const left = part === 'body' ? bodyLeft : headLeft;
   const top = part === 'body' ? bodyTop : headTop;
-  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT}${file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:scaleX(${facing});${filter ? `filter:${filter};` : ''}max-width:none;pointer-events:none">`;
+  return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:scaleX(${facing});${filter ? `filter:${filter};` : ''}max-width:none;pointer-events:none">`;
 }
 
 function portraitSize(size) {
@@ -400,8 +413,9 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const helmet = layerSpec('helmet', equipment.helmet);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
-  const hiddenHead = FANTASY_HIDDEN_HEADS.includes(helmetVisual);
-  const closedHelmet = helmetVisual === 'greathelm' || helmetVisual === 'full-helm' || FANTASY_CLOSED_HELMETS.includes(helmetVisual);
+  const dlcHelmet = DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
+  const hiddenHead = FANTASY_HIDDEN_HEADS.includes(helmetVisual) || dlcHelmet?.hideHead;
+  const closedHelmet = dlcHelmet?.hideBeard || helmetVisual === 'greathelm' || helmetVisual === 'full-helm' || FANTASY_CLOSED_HELMETS.includes(helmetVisual);
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
   const compositionTop = helmetVisual === 'bascinet' ? 13 : 0;
   const rider = `${bodyLayer(appearance.body, Boolean(armor), appearance.bodyLeft, appearance.bodyTop)}
@@ -434,6 +448,7 @@ export const portraitSVG = portraitHTML;
 /** Return the locally packaged inventory icon for an engine item. */
 export function itemImage(item) {
   const id = item?.baseId || item?.id;
+  if (DLC_ART[id]) return DLC_ART[id].icon;
   return ITEM_IMAGES[id] ? `${ITEM_ROOT}${ITEM_IMAGES[id]}` : null;
 }
 

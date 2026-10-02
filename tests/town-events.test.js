@@ -198,8 +198,11 @@ test('harvest, caravan, fair, shipment, and muster change their advertised marke
             'an unarrived wagon has not discounted gear yet');
         } else if (event.type === 'militia-muster') {
           assert.ok(pricedGear(during).buyPrice > pricedGear(before).buyPrice);
-          const count = market => market.equipment.filter(row => ITEMS.find(item => item.id === row.itemId)?.price >= 250 && row.stock > 0).length;
-          assert.ok(count(during) < count(before), 'the muster visibly reserves ordinary gear');
+          // Hold the armory fixed so weekly rotation and random empty shelves cannot mask reservations.
+          state.marketStock[town.id] = { day, food: during.food.stock, goods: Object.fromEntries(during.goods.map(row=>[row.goodId,row.stock])), supplies: Object.fromEntries(during.supplies.map(row=>[row.kind,row.stock])), equipment: Object.fromEntries(ITEMS.map(item=>[item.id,1])), armoryCycle: Math.floor((day-1)/7), appliedEventId: null, buyback: [] };
+          const reserved = getMarket(state);
+          assert.ok(reserved.equipment.some(row => ITEMS.find(item=>item.id===row.itemId)?.price>=250 && row.stock===0), 'the muster visibly reserves stocked ordinary gear');
+          delete state.marketStock[town.id];
           const buyback = createGame(seed);
           buyback.day = day;
           atTown(buyback, town.id);
@@ -208,7 +211,7 @@ test('harvest, caravan, fair, shipment, and muster change their advertised marke
           buyback.inventoryCondition.push(null);
           assert.equal(sellItem(buyback, famedId).ok, true);
           assert.equal(getMarket(buyback).equipment.find(row => row.itemId === famedId).stock, 1);
-          buyback.day = event.endDay + 1;
+          while (buyback.day <= event.endDay) assert.equal(tick(buyback, 24).ok, true);
           assert.equal(getMarket(buyback).equipment.find(row => row.itemId === famedId).stock, 1,
             'the muster does not erase a famed buyback');
           assert.deepEqual(validateSave(JSON.parse(JSON.stringify(buyback))), buyback);

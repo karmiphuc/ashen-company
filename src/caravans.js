@@ -1,3 +1,5 @@
+import { REGIONAL_SETTLEMENTS, regionAt, roadRoute } from './geography.js';
+const regionalIds = new Set(REGIONAL_SETTLEMENTS.map(town => town.id));
 export const CARAVAN_TRAVEL_HOURS = 60;
 export const CARAVAN_ATTACK_WARNING_HOURS = 7;
 export const CARAVAN_SHORTAGE_HOURS = 96;
@@ -8,15 +10,22 @@ export function shipmentId(townId, startDay) {
 
 export function shipmentPlan(town, settlements, event, travelHours = CARAVAN_TRAVEL_HOURS, travelStartHour = (event.startDay - 1) * 24) {
   // Eastmere's eastern trade road crosses Stonebridge rather than the northern pass.
-  const origin = town.id === 'eastmere' ? settlements.find(place => place.id === 'stonebridge') : settlements.filter(place => place.id !== town.id)
+  const candidates = regionalIds.has(town.id) ? settlements.filter(place => place.id !== town.id && place.kind !== 'village' && regionAt(place.x,place.y).id === regionAt(town.x,town.y).id) : settlements.filter(place => !regionalIds.has(place.id));
+  const origin = town.id === 'eastmere' ? settlements.find(place => place.id === 'stonebridge') : (candidates.length ? candidates : settlements).filter(place => place.id !== town.id)
     .sort((a, b) => Math.hypot(a.x - town.x, a.y - town.y) - Math.hypot(b.x - town.x, b.y - town.y) || a.id.localeCompare(b.id))[0];
   const departureHour = (event.startDay - 1) * 24;
   return { id: shipmentId(town.id, event.startDay), originId: origin.id, destinationId: town.id,
-    departureHour, travelHours, travelStartHour, arrivalHour: travelStartHour + travelHours };
+    departureHour, travelHours, travelStartHour, ...(regionalIds.has(town.id) ? { roadPoints: roadRoute(settlements, origin.id, town.id) } : {}), arrivalHour: travelStartHour + travelHours };
 }
 
 export function shipmentPosition(plan, origin, destination, hour) {
   const fraction = Math.max(0, Math.min(1, (hour - plan.travelStartHour) / plan.travelHours));
+  if (plan.roadPoints?.length > 1) {
+    const segments = plan.roadPoints.slice(1).map((point,index)=>({start:plan.roadPoints[index],end:point,length:Math.hypot(point.x-plan.roadPoints[index].x,point.y-plan.roadPoints[index].y)}));
+    let remaining = segments.reduce((sum,part)=>sum+part.length,0)*fraction;
+    for (const segment of segments) { if(remaining<=segment.length){const t=segment.length?remaining/segment.length:0;return {x:segment.start.x+(segment.end.x-segment.start.x)*t,y:segment.start.y+(segment.end.y-segment.start.y)*t};} remaining-=segment.length; }
+    return { x: destination.x, y: destination.y };
+  }
   return { x: origin.x + (destination.x - origin.x) * fraction,
     y: origin.y + (destination.y - origin.y) * fraction };
 }

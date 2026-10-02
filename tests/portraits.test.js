@@ -152,7 +152,7 @@ test('v0.11 item art exists and matches its pinned-source manifest', () => {
     const bytes = readFileSync(new URL(`../${asset.local}`, import.meta.url));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), asset.sha256, asset.local);
   }
-  for (const item of ITEMS) {
+  for (const item of ITEMS.filter(item=>!item.collection)) {
     const image = itemImage(item);
     assert.ok(image, `${item.id} has an item-image mapping`);
     assert.doesNotThrow(() => readFileSync(new URL(`../${image}`, import.meta.url)), `${item.id} image exists`);
@@ -175,7 +175,7 @@ test('v0.12 expansion art exists and matches its pinned-source manifest', () => 
 
 test('actual engine visuals select distinct authored body equipment layers', () => {
   for (const slot of ['armor', 'helmet', 'weapon', 'shield']) {
-    const visuals = [...new Set(ITEMS.filter(item => item.slot === slot).map(item => item.visual))];
+    const visuals = [...new Set(ITEMS.filter(item => item.slot === slot && !item.collection).map(item => item.visual))];
     const sources = visuals.map(value => {
       const html = portraitHTML(PERSON, equipped(slot, value));
       return html.match(new RegExp(`data-layer="${slot}"[^>]*src="([^"]+)"`))?.[1];
@@ -187,7 +187,8 @@ test('actual engine visuals select distinct authored body equipment layers', () 
 
 test('engine item IDs resolve to packaged inventory icons and unknown items are safe', () => {
   for (const item of ITEMS) {
-    assert.match(itemImage(item), new RegExp(`^assets/items/${item.id}\\.png$`));
+    if (item.collection) assert.match(itemImage(item), /^data:image\/png;base64,/);
+    else assert.match(itemImage(item), new RegExp(`^assets/items/${item.id}\\.png$`));
   }
   assert.equal(itemImage({ id: 'not-an-item' }), null);
   assert.equal(itemImage(null), null);

@@ -4,6 +4,9 @@ import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
+import { DLC_ITEMS } from './dlc-items.js';
+import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad } from './geography.js';
+import { FRONTIER_ITEMS } from './frontier-items.js';
 import { MOUNTS } from './mounts.js';
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression } from './enemy-progression.js';
@@ -49,6 +52,8 @@ export const ITEMS = Object.freeze([
   ...NORTHERN_ITEMS,
   ...FANTASY_ITEMS,
   ...MOUNTS,
+  ...FRONTIER_ITEMS,
+  ...DLC_ITEMS,
 ]);
 
 export const GOODS = Object.freeze([
@@ -76,6 +81,11 @@ export const SETTLEMENTS = Object.freeze([
   { id: 'wheatmere', name: 'Wheatmere', x: 820, y: 1230, kind: 'village', description: 'Wide grain fields feed the southern frontier.', color: '#d5bf78' },
   { id: 'blackfen', name: 'Blackfen', x: 1230, y: 1135, kind: 'village', description: 'Reed cutters and hunters live above the black water.', color: '#9cae84' },
   { id: 'farhold', name: 'Farhold', x: 1860, y: 1180, kind: 'castle', description: 'The last stronghold on a road haunted by veteran raiders.', color: '#c9a28e' },
+  { id: 'ambercross', name: 'Ambercross', x: 2510, y: 410, kind: 'town', description: 'A caravan market beneath the amber hills.', color: '#c9ad82' },
+  { id: 'reedharbor', name: 'Reedharbor', x: 2550, y: 1080, kind: 'village', description: 'Reed boats bring salt to the eastern frontier.', color: '#c9ad82' },
+  { id: 'sunspire', name: 'Sunspire', x: 2930, y: 220, kind: 'castle', description: 'A watch keep guarding the high eastern road.', color: '#c9ad82' },
+  { id: 'cinderhold', name: 'Cinderhold', x: 2970, y: 850, kind: 'castle', description: 'A stone fortress overlooking the cinder woods.', color: '#c9ad82' },
+  ...REGIONAL_SETTLEMENTS,
 ]);
 
 export const SETTLEMENT_TYPES = Object.freeze({
@@ -141,6 +151,11 @@ const ROAMING_BANDS = Object.freeze([
   { id: 'wheatmere-pillagers', name: 'Wheatmere Pillagers', difficulty: 2, start: { x: 680, y: 1140 }, end: { x: 1030, y: 1300 } },
   { id: 'blackfen-stalkers', name: 'Blackfen Stalkers', difficulty: 3, start: { x: 1060, y: 1040 }, end: { x: 1390, y: 1300 } },
   { id: 'farhold-warbands', name: 'Farhold Warband', difficulty: 3, start: { x: 1580, y: 1080 }, end: { x: 2070, y: 1280 } },
+  { id: 'ambercross-raiders', name: 'Ambercross Raiders', difficulty: 2, start: { x: 2330, y: 470 }, end: { x: 2460, y: 350 } },
+  { id: 'reedharbor-raiders', name: 'Reedharbor Raiders', difficulty: 2, start: { x: 2370, y: 1140 }, end: { x: 2500, y: 1020 } },
+  { id: 'sunspire-raiders', name: 'Sunspire Raiders', difficulty: 3, start: { x: 2750, y: 280 }, end: { x: 2880, y: 160 } },
+  { id: 'cinderhold-raiders', name: 'Cinderhold Raiders', difficulty: 3, start: { x: 2790, y: 910 }, end: { x: 2920, y: 790 } },
+  ...REGIONAL_SETTLEMENTS.map((town, index) => ({ id: `${town.id}-patrol`, name: `${town.name} ${town.kind === 'castle' ? 'Deserters' : 'Waylayers'}`, difficulty: town.kind === 'village' ? 1 : town.kind === 'castle' ? 3 : 2, start: { x: town.x - 100, y: town.y + 50 }, end: { x: Math.min(4950, town.x + 130), y: Math.max(85, town.y - 50) } })),
 ]);
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
@@ -197,22 +212,27 @@ export function getItem(id) {
     item.armorDamage = Math.round(((original.armorDamage ?? 1) + .1 + roll(12) % 3 * .05) * 100) / 100;
     bonuses.push({ label: 'Damage', value: `+${low} to +${high}` }, { label: 'Hit modifier', value: `+${item.hitBonus - (original.hitBonus ?? 0)}` }, { label: 'Armor damage', value: `+${Math.round((item.armorDamage - (original.armorDamage ?? 1)) * 100)}%` });
   }
-  item.price = Math.min(5000, Math.round(original.price * 2.4 + (original.slot === 'armor' || original.slot === 'helmet' ? item.armor - original.armor : 0)));
+  item.price = Math.min(original.collection ? 20000 : 5000, Math.round(original.price * 2.4 + (original.slot === 'armor' || original.slot === 'helmet' ? item.armor - original.armor : 0)));
   if (!item.signature) item.name = `${FAMED_NAMES[seed % FAMED_NAMES.length]} ${original.name}`;
   item.description = item.signature ? item.description : `A rare, finely worked ${original.name.toLowerCase()}. ${original.description}`;
   item.bonuses = Object.freeze(bonuses.map(bonus => Object.freeze(bonus)));
   return Object.freeze(item);
 }
-const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id)]);
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
-const RANDOM_CAMP_IDS = Array.from({ length: 12 }, (_, index) => `wild-camp-${index + 1}`);
+const RANDOM_CAMP_IDS = Array.from({ length: 36 }, (_, index) => `wild-camp-${index + 1}`);
 const isCampId = id => CAMP_BY_ID.has(id) || RANDOM_CAMP_IDS.includes(id);
 const BAND_BY_ID = new Map(ROAMING_BANDS.map(band => [band.id, band]));
 // Low factors mark local supply; high factors mark demand. The market spread
 // always makes buying and selling in the same settlement a loss.
 const MARKET_FACTORS = {
+  ...Object.fromEntries(REGIONAL_SETTLEMENTS.map(town => { const region = regionAt(town.x,town.y); return [town.id, Object.fromEntries(GOODS.map(good => [good.id, region[good.id]]))]; })),
+  ambercross: { grain: .85, timber: 1.15, iron: 1.20, salt: 1.10, wool: .75 },
+  reedharbor: { grain: 1.10, timber: .90, iron: 1.40, salt: .60, wool: 1.20 },
+  sunspire: { grain: 1.45, timber: 1.30, iron: .80, salt: 1.35, wool: 1.15 },
+  cinderhold: { grain: 1.35, timber: .75, iron: 1.10, salt: 1.30, wool: 1.25 },
   oakwatch:    { grain: .70, timber: .72, iron: 1.25, salt: 1.20, wool: 1.05 },
   greyhaven:  { grain: 1.15, timber: 1.10, iron: 1.00, salt: 1.05, wool: .88 },
   ironford:   { grain: 1.25, timber: 1.20, iron: .65, salt: 1.15, wool: 1.10 },
@@ -230,9 +250,11 @@ const MARKET_FACTORS = {
   blackfen:   { grain: 1.10, timber: .80, iron: 1.30, salt: .70, wool: 1.30 },
   farhold:    { grain: 1.50, timber: 1.35, iron: 1.25, salt: 1.40, wool: 1.45 },
 };
-const GEAR_FACTORS = { oakwatch: 1, greyhaven: 1.05, ironford: .84, thornwall: 1.16, redmere: 1.08, highpass: 1.20, saltwick: 1.12, barrowfield: .96, pinecross:1.04, dunridge:1.12, eastmere:.98, stonebridge:.88, southwatch:1.08, wheatmere:1.02, blackfen:1.15, farhold:1.22 };
+const GEAR_FACTORS = { ...Object.fromEntries(REGIONAL_SETTLEMENTS.map(town => [town.id, regionAt(town.x,town.y).gear])), ambercross: 1.03, reedharbor: 1.12, sunspire: 1.18, cinderhold: 1.20, oakwatch: 1, greyhaven: 1.05, ironford: .84, thornwall: 1.16, redmere: 1.08, highpass: 1.20, saltwick: 1.12, barrowfield: .96, pinecross:1.04, dunridge:1.12, eastmere:.98, stonebridge:.88, southwatch:1.08, wheatmere:1.02, blackfen:1.15, farhold:1.22 };
 const SLOTS = ['armor', 'attachment', 'helmet', 'weapon', 'shield', 'mount'];
-export const WORLD_BOUNDS = Object.freeze({ minX: 180, maxX: 2120, minY: 80, maxY: 1380 });
+export const WORLD_BOUNDS = WORLD_LIMITS;
+export const WORLD_REGIONS = REGIONS;
+export const WORLD_ROADS = roadNetwork(SETTLEMENTS);
 const BOUNDS = WORLD_BOUNDS;
 const TOWN_RADIUS = 28;
 const ARRIVAL_RADIUS = 2;
@@ -241,6 +263,7 @@ const MAX_LOG = 30;
 const MAX_INVENTORY = 512;
 const MAX_CARGO = 30;
 export const MAX_COMPANY_SIZE = 12;
+export const MAX_SAVE_FILE_BYTES = 4 * 1024 * 1024;
 const CAMP_RADIUS = 35;
 const BAND_RADIUS = 28;
 const BAND_AGGRO_RADIUS = 120;
@@ -560,11 +583,24 @@ export function terrainAt(x, y) {
   if (Math.hypot((x - 1640) / 1.6, y - 290) < 145 || Math.hypot(x - 1660, (y - 1100) / 1.5) < 155 || Math.hypot(x - 590, y - 900) < 95) return 'mountain';
   if (Math.hypot(x - 1330, (y - 450) / 1.5) < 160 || Math.hypot((x - 640) / 1.5, y - 1050) < 150 || Math.hypot(x - 1870, y - 880) < 185) return 'forest';
   if (Math.hypot((x - 1230) / 1.4, y - 1120) < 155 || Math.hypot(x - 1920, y - 500) < 120) return 'marsh';
+  // Preserve terrain in the original footprint; new regions introduce distinct climates.
+  if (x > 2120 || y > 1380) {
+    const region = regionAt(x,y);
+    if (region.climate === 'snow') return y < 180 ? 'snow' : 'mountain';
+    if (region.climate === 'desert') return Math.hypot(x-2400,y-1900)<140 ? 'plains' : 'desert';
+    if (region.climate === 'marsh') return 'marsh';
+    if (region.climate === 'forest') return 'forest';
+    if (region.climate === 'temperate' && Math.hypot(x-1000,y-1450)<180) return 'forest';
+    if (region.climate === 'coastal' && Math.hypot(x-1600,y-1900)<150) return 'marsh';
+  }
+  if (Math.hypot(x - 2860, y - 290) < 150) return 'mountain';
+  if (Math.hypot(x - 2800, y - 820) < 160) return 'forest';
+  if (Math.hypot(x - 2470, y - 1090) < 120) return 'marsh';
   return 'plains';
 }
 
 function terrainSpeed(terrain) {
-  return SPEED * ({ plains: 1, forest: 0.64, mountain: 0.44, marsh: 0.55 }[terrain] ?? 1);
+  return SPEED * ({ plains: 1, forest: 0.64, mountain: 0.44, marsh: 0.55, snow: .60, desert: .75 }[terrain] ?? 1);
 }
 
 export function townAt(state) {
@@ -672,7 +708,8 @@ function rotatedItems(items, state, town, cycle, label) {
 
 function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
   const equipment = Object.fromEntries(ITEMS.map(item => [item.id, 0]));
-  const gear = ITEMS.filter(item => item.slot !== 'mount');
+  // Existing towns keep their original opening-week stock; DLC designs join later rotations.
+  const gear = ITEMS.filter(item => item.slot !== 'mount' && (!item.collection || cycle % 2 === 1 || town.regionId));
   const halfStock = (item, count, source) => Array.from({ length: count }, (_, copy) => {
     let roll = townEventHash(`${state.seed}:${town.id}:${cycle}:${source}:${item.id}:${copy}`);
     roll ^= roll >>> 16;
@@ -685,9 +722,10 @@ function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
   const premium = gear.filter(item => item.price >= 450);
   const armoryChoices = (items, slots, label) => {
     const rotated = rotatedItems(items, state, town, cycle, label);
-    if (town.y > 300) return rotated.slice(0, slots);
-    const northern = rotated.filter(item => item.region === 'north').slice(0, Math.ceil(slots / 2));
-    return [...northern, ...rotated.filter(item => !northern.includes(item)).slice(0, slots - northern.length)];
+    const region = town.y <= (town.regionId ? 360 : 300) ? 'north' : town.y >= 1700 || town.x >= 3400 ? 'south' : null;
+    if (!region) return rotated.slice(0, slots);
+    const regional = rotated.filter(item => item.region === region).slice(0, Math.ceil(slots / 2));
+    return [...regional, ...rotated.filter(item => !regional.includes(item)).slice(0, slots - regional.length)];
   };
   for (const item of common) equipment[item.id] = halfStock(item, 1 + Number(townEventHash(`${state.seed}:${town.id}:${cycle}:common:${item.id}`) % 4 === 0), 'base');
   const betterSlots = SETTLEMENT_TYPES[town.kind].better + Number(Boolean(town.major));
@@ -735,7 +773,7 @@ function projectedMarketStock(state, town) {
     : dailyMarketStock(state, town);
   const replenished = defaultArmoryStock(state, town, cycle);
   const equipment = existing && existingCycle === cycle
-    ? { ...Object.fromEntries(MOUNTS.map(item => [item.id, replenished[item.id]])), ...existing.equipment }
+    ? { ...Object.fromEntries([...MOUNTS, ...FRONTIER_ITEMS, ...DLC_ITEMS].map(item => [item.id, replenished[item.id]])), ...existing.equipment }
     : replenished;
   let appliedEventId = existing?.appliedEventId ?? null;
   const event = getTownEvent(state, town.id);
@@ -966,6 +1004,20 @@ export function getCaravans(state) {
   return caravans;
 }
 
+const frontierOutfitPools = new Map();
+function frontierOutfit(enemy, seed, index, x, y, difficulty) {
+  if (x <= 2120 && y <= 1380) return enemy;
+  const region = regionAt(x,y), collection = region.id === 'northern-highlands' ? 'warriors-of-the-north' : ['sunlands','saffron-coast','far-steppe'].includes(region.id) ? 'blazing-deserts' : 'base';
+  const max = [0,100,190,320][difficulty], min = [0,20,70,140][difficulty];
+  for (const slot of ['armor','helmet']) {
+    const key = `${collection}:${difficulty}:${slot}`;
+    if (!frontierOutfitPools.has(key)) frontierOutfitPools.set(key, DLC_ITEMS.filter(item=>item.collection===collection && item.sourceKind==='ordinary' && item.slot===slot && item.armor>=min && item.armor<=max));
+    const choices = frontierOutfitPools.get(key);
+    if (choices.length) enemy[slot]=choices[hashSeed(`${seed}:${index}:${slot}`)%choices.length].id;
+  }
+  return enemy;
+}
+
 function roamingBand(state, band) {
   const progress = state.bands?.[band.id];
   if ((progress?.defeatedUntil ?? 0) > worldHours(state)) return null;
@@ -978,7 +1030,7 @@ function roamingBand(state, band) {
   const count = tier === 0 ? strength === 1 ? 1 : 2 : tier === 1 ? 2 + Number(strength === 3) : tier === 2 ? 2 + strength : 3 + strength;
   const pool = tier ? getRegionalEnemyTemplates(band.start.x, band.start.y, tier) : band.enemies;
   const offset = Math.floor(random() * pool.length);
-  const enemies = Array.from({ length: Math.min(12, count + progression.reinforcements) }, (_, index) => ({ ...pool[(index + offset) % pool.length] }));
+  const enemies = Array.from({ length: Math.min(12, count + progression.reinforcements) }, (_, index) => { const enemy = { ...pool[(index + offset) % pool.length] }; return band.id.endsWith('-patrol') ? frontierOutfit(enemy, `${state.seed}:${band.id}:${spawnCycle}`, index, band.start.x, band.start.y, tier) : enemy; });
   if (progression.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, band.id, spawnCycle);
   const position = activeBandProgress(state, band);
   const target = position.behavior === 'raiding-caravan' ? getCaravans(state).find(caravan => caravan.id === position.targetId
@@ -1298,7 +1350,8 @@ export function tick(state, hours) {
     }
     if (state.destination) {
       const distanceLeft = distance(state.position, state.destination);
-      const speed = terrainSpeed(terrainAt(state.position.x, state.position.y)) * (1 + getCompanyTravelBonus(state));
+      const onNewRoad = (state.position.x > 2120 || state.position.y > 1380) && distanceToRoad(state.position.x,state.position.y,WORLD_ROADS) <= 18;
+      const speed = (onNewRoad ? SPEED * 1.15 : terrainSpeed(terrainAt(state.position.x, state.position.y))) * (1 + getCompanyTravelBonus(state));
       const movement = Math.min(distanceLeft, speed * step);
       if (distanceLeft > 0) {
         state.position.x += (state.destination.x - state.position.x) * movement / distanceLeft;
@@ -1952,7 +2005,8 @@ const FAMED_BASES = {
 function famedDropForCamp(seed, camp) {
   const chance = FAMED_CHANCES[camp.difficulty] ?? 0;
   if (hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-roll`) % 10000 >= chance * 10000) return null;
-  const bases = FAMED_BASES[camp.difficulty];
+  const newCamp = /^wild-camp-(?:1[3-9]|[2-3][0-9])$/.test(camp.id);
+  const bases = newCamp ? [...FAMED_BASES[camp.difficulty], ...DLC_ITEMS.filter(item => item.armor > 0 && item.armor <= [0,110,220,400][camp.difficulty]).map(item=>item.id)] : FAMED_BASES[camp.difficulty];
   const baseId = bases[hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-base`) % bases.length];
   return createFamedItemId(baseId, hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-item`));
 }
@@ -1968,15 +2022,21 @@ function randomCamp(state, id, index, generation) {
   const column = index % 4, row = Math.floor(index / 4);
   let x, y;
   for (let attempt=0;attempt<60;attempt++) {
-    x = Math.round(BOUNDS.minX + column * 485 + 65 + random() * 355);
-    y = Math.round(BOUNDS.minY + row * (1300/3) + 65 + random() * (1300/3-130));
+    if (index < 12) {
+      x = Math.round(BOUNDS.minX + column * 485 + 65 + random() * 355);
+      y = Math.round(BOUNDS.minY + row * (1300/3) + 65 + random() * (1300/3-130));
+    } else {
+      const cell = FRONTIER_CAMP_CELLS[(index-12) % FRONTIER_CAMP_CELLS.length];
+      x = Math.round(cell.x + 40 + random() * (cell.width-80));
+      y = Math.round(cell.y + 30 + random() * (cell.height-60));
+    }
     if (!SETTLEMENTS.some(town => Math.hypot(town.x-x,town.y-y)<90) && !CAMP_SITES.some(camp => Math.hypot(camp.x-x,camp.y-y)<85)) break;
   }
   const difficulty = column === 0 && row < 2 ? 1 : 1 + Math.floor(random() * 3);
   const pool = getRegionalEnemyTemplates(x, y, difficulty);
   const count = 2 + difficulty + Math.floor(random() * 2);
   const offset = Math.floor(random() * pool.length);
-  const enemies = Array.from({ length: count }, (_, enemyIndex) => ({ ...pool[(offset + enemyIndex) % pool.length] }));
+  const enemies = Array.from({ length: count }, (_, enemyIndex) => { const enemy={ ...pool[(offset + enemyIndex) % pool.length] }; return index>=12 ? frontierOutfit(enemy, `${state.seed}:${id}:${generation}`, enemyIndex, x, y, difficulty) : enemy; });
   const text = getRegionalCampText(x, y, difficulty, enemies.length, index);
   return {id,...text,x,y,difficulty,enemies,reward:100+difficulty*95,random:true};
 }
@@ -4047,7 +4107,7 @@ function passableHex(point, field) { return validHex(point, field) && tileAt(fie
 function validateBattleField(input) {
   if (input === undefined) return legacyBattleField();
   assert(recordObject(input) && (input.columns === 14 && [8, 16].includes(input.rows) || input.columns === 10 && input.rows === 5), 'battle field size');
-  assert(['plains', 'forest', 'mountain', 'marsh'].includes(input.biome), 'battle field biome');
+  assert(['plains', 'forest', 'mountain', 'marsh', 'snow', 'desert'].includes(input.biome), 'battle field biome');
   assert(Array.isArray(input.tiles) && input.tiles.length === input.columns * input.rows, 'battle field tiles');
   const tiles = input.tiles.map((tile, index) => {
     const q = Math.floor(index / input.rows);
