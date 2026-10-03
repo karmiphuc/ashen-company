@@ -229,8 +229,8 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     ...effects.map(effect => `effect-${effect.id}`),
   ].filter(Boolean).join(' ');
   const health = percent(unit.hp, unit.maxHp ?? 100);
-  const bodyArmor = number(unit.bodyArmor) + number(unit.attachmentArmor);
-  const maxBodyArmor = number(unit.maxBodyArmor ?? unit.bodyArmor) + number(unit.maxAttachmentArmor);
+  const bodyArmor = number(unit.bodyArmor) + number(unit.attachmentArmor) + number(unit.attachment2Armor);
+  const maxBodyArmor = number(unit.maxBodyArmor ?? unit.bodyArmor) + number(unit.maxAttachmentArmor) + number(unit.maxAttachment2Armor);
   const body = percent(bodyArmor, Math.max(maxBodyArmor, 1));
   const head = percent(unit.headArmor, unit.maxHeadArmor ?? Math.max(number(unit.headArmor), 1));
   const shield = shieldCondition(unit);

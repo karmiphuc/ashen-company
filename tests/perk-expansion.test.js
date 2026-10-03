@@ -70,7 +70,7 @@ function compareAttack({ weapon, perk, distance = 1, armored = false, shield = t
 
 test('expanded perk catalog is unique, grouped, saveable, and uses bundled icon IDs', () => {
   assert.equal(added.length, 22);
-  assert.equal(PERKS.length, 46);
+  assert.equal(PERKS.length, 47);
   assert.ok(added.every(id => PERKS.some(perk => perk.id === id && perk.category && perk.icon)));
   const state = createGame(211);
   state.party[0].level = 20;

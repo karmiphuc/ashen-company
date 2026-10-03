@@ -1,6 +1,14 @@
-# Verification - version 0.46.4, 2026-10-03
+# Verification - version 0.46.5, 2026-10-03
 
 
+
+## v0.46.5 checks
+
+All 565 tests pass. Nimble and Fleet Footed now check only body armor plus helmet fatigue, excluding either armor attachment. Brawny and Relentless also exclude attachment weight from their discounts; each attachment still applies its normal maximum-fatigue and initiative cost. Newly started battles use attachmentRulesVersion 1; historical active battles preserve their saved equipment shape and fatigue rules through reload and weapon swaps.
+
+Layered Armor is a level-4 defense perk costing one normal perk point. It unlocks a second attachment slot requiring body armor. Both layers render on the portrait and retain independent durability through equipping, swaps, camp/Smithy repairs, save/reload, battle results and casualty recovery. Body damage consumes slot 2, then slot 1, then body armor; head damage uses the helmet. Stowing body armor stows both layers atomically and fails without enough stash space. Validation rejects second layers without the perk or body armor and invalid durability/maxima.
+
+Native Chromium learned the perk through the actual picker, equipped a Scale Mantle in slot 2 at 13/80 durability while keeping a Kraken Mantle in slot 1 at 21/90, verified the item inspector, and stowed slot 2 with its condition preserved. Both attachment slots and durability bars are visible in `/workspace/ashen-layered-armor-v0465.png`. No JavaScript exceptions occurred. A fresh-profile offline reload cached all 557 resources under `ashen-company-aa639c08a21b7cbf`, loaded v0.46.5, learned the perk and equipped/validated the second attachment while offline.
 
 ## v0.46.4 checks
 

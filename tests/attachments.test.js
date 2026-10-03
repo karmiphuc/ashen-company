@@ -158,7 +158,7 @@ test('body hits exhaust attachment armor before body armor while head hits leave
   assert.ok(head.target.headArmor < head.target.maxHeadArmor);
 });
 
-test('attachment fatigue participates in armor perks and its damage repairs independently', () => {
+test('attachment fatigue reduces stamina and its damage repairs independently', () => {
   const state = createGame(72);
   addItem(state, 'leather-reinforcement');
   const before = getCompanyStats(state.party[0]).maxFatigue;

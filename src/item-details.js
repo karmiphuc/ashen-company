@@ -97,9 +97,9 @@ export function getItemDetails(item, condition) {
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
       { label: 'Armor per fatigue', value: item.fatigue > 0 ? String(Math.round(maximum / item.fatigue * 10) / 10) : 'Weightless' },
     );
-    notes.push('Fits one dedicated attachment slot and requires body armor. It absorbs body armor damage before the main suit; head hits still use the helmet.');
-    notes.push('Swapping body armor keeps the attachment fitted. Stowing body armor also stows its attachment, preserving both items and their condition.');
-    notes.push('Its weight lowers maximum fatigue and initiative. Camp tools and the Smithy repair its durability. Padding and leather reinforcement sit beneath the armor; outer mantles and pauldrons appear on the portrait.');
+    notes.push('This attachment requires body armor. Layered Armor unlocks a second attachment slot; each layer has independent durability. Slot 2 absorbs body damage first, then slot 1, before the main suit; head hits use the helmet.');
+    notes.push('Swapping body armor keeps the attachment fitted. Stowing body armor also stows both fitted attachments, preserving every item and its condition.');
+    notes.push('Its weight lowers maximum fatigue and initiative, but is excluded from armor-weight perk checks and Brawny/Relentless weight reductions. Camp tools and the Smithy repair its durability. Padding and leather reinforcement sit beneath the armor; outer mantles and pauldrons appear on the portrait.');
   } else if (item.slot === 'armor' || item.slot === 'helmet') {
     const maximum = item.armor ?? 0;
     const current = Number.isFinite(condition) ? Math.max(0, Math.min(maximum, Math.floor(condition))) : maximum;
