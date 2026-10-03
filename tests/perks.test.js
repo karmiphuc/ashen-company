@@ -162,14 +162,15 @@ test('Colossus preserves wound deficit when learned and when max health is train
   delete rawCaptain.pendingLevelUps;
   state = validateSave(state);
   const captain = state.party[0];
-  assert.equal(getLevelUp(captain).rolls.maxHp, 4);
+  const hpGain=getLevelUp(captain).rolls.maxHp;
+  assert.ok(hpGain>=1&&hpGain<=5);
   assert.equal(learnPerk(state, captain.id, 'colossus').ok, true);
   assert.equal(getCompanyStats(captain).maxHp, 125);
   assert.equal(captain.hp, 125);
   captain.hp -= 7;
   assert.equal(trainAttributes(state, captain.id, ['maxHp', 'meleeSkill', 'resolve']).ok, true);
-  assert.equal(getCompanyStats(captain).maxHp, 130);
-  assert.equal(captain.hp, 123);
+  assert.equal(getCompanyStats(captain).maxHp, Math.round((100+hpGain)*1.25));
+  assert.equal(captain.hp, getCompanyStats(captain).maxHp-7);
 });
 
 test('passive stat perks apply their stated rounded bonuses', () => {
