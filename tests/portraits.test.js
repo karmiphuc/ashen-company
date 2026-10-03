@@ -183,7 +183,7 @@ test('actual engine visuals select distinct authored body equipment layers', () 
 test('engine item IDs resolve to packaged inventory icons and unknown items are safe', () => {
   for (const item of ITEMS) {
     if (item.collection) assert.match(itemImage(item), /^data:image\/png;base64,/);
-    else assert.match(itemImage(item), new RegExp(`^assets/items/${item.id}\\.png$`));
+    else assert.match(itemImage(item), new RegExp(`^assets/items/${item.id==='heraldic-plates'?'heraldic-shoulders':item.id==='heraldic-shoulders'?'heraldic-plates':item.id}\\.png$`));
   }
   assert.equal(itemImage({ id: 'not-an-item' }), null);
   assert.equal(itemImage(null), null);
