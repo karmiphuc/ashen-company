@@ -1,5 +1,14 @@
-# Verification - version 0.45.7, 2026-10-03
+# Verification - version 0.45.8, 2026-10-03
 
+
+
+## v0.45.8 checks
+
+All 517 automated tests pass. Settlements now have distinct untargetable outlying furnaces/anvils for blacksmiths, armor workshops with shield racks for armorsmiths, and farms, timber yards, iron mines, salt works, fishing huts, wool yards or garrisons reflecting existing local supply factors and castle services. Permanent workshops use exactly the seeded facilities that determine market stock. A dedicated depth-sorted draw layer fixes the previous workshop decorations being erased after drawing to the wrong canvas during background preparation. Dirt spurs join yards to the settlement; buildings avoid neighboring settlements, initial camps and one another while retaining permanent placement through time and camp clearance.
+
+Town-condition scenery updates with the actual campaign: incoming/threatened/delivered/lost armorer wagons, trade caravans, market fairs, militia musters, good harvests and poor harvests. Poor harvests show bare furrows, a waiting civilian and a warning pennant; simultaneous shipment activity remains visible separately. Shortage hints expire with the economic event. No new famine or workshop economy rule is introduced. The decorative trader unrelated to real shipments is removed; real mobile caravans retain their existing targets and rescue mechanics.
+
+Chromium captures real seeded campaign states with a threatened armorer wagon and an active poor harvest. Native pointer events prove an outlying forge is inert while the settlement center still selects Ironford. Selected-settlement accessibility text lists its scenery; labels and legend explain visual hints. The eleven pinned PNG sources match their manifest sizes and SHA-256 hashes. A fresh offline relaunch verifies all 556 resources, loads the scenery module and decodes all eleven new images, with no browser exceptions. Physical iPad Safari remains untested.
 
 ## v0.45.7 checks
 

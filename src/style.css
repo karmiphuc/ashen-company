@@ -12,3 +12,6 @@
 @media(max-width:620px){.hero-portrait .bb-portrait{transform:scale(.82)}.company-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.character-card,.equipment-panel{min-width:0}}
 @media(max-width:380px){.hero-portrait .bb-portrait{transform:scale(.74)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.map-scenery-key{position:absolute;top:70px;left:12px;right:65px;display:flex;flex-wrap:wrap;gap:4px 12px;max-width:max-content;padding:7px 10px;background:#211e16e8;border:1px solid #8b795044;color:#d8c69d;font:11px/1.25 Georgia,serif;pointer-events:none;z-index:2}
+@media(max-width:600px){.map-scenery-key{top:65px;left:8px;gap:3px 8px;font-size:10px;padding:5px 7px}}

@@ -1,8 +1,9 @@
-import { townFacilities } from './town-facilities.js';
+import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
 import { regionAt } from './geography.js';
 import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getFactionPatrols, getCaravans, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = [
+  ...SETTLEMENT_SCENERY_ASSETS,
   'world_desert_01', 'world_desert_02', 'world_desert_03',
   'world_grass_01', 'world_grass_02', 'world_grass_03', 'world_grass_04',
   'world_plains_01', 'world_plains_02', 'world_plains_03',
@@ -51,6 +52,7 @@ const camera = {
 let canvas, context, state, selection = null, townCallback, campCallback, activationCallback, background = null, resizeObserver;
 let width = 0, height = 0, pointers = new Map(), dragOrigin = null, pinchStart = null, dragged = false;
 let activationTracker = createMapActivationTracker();
+let settlementStructures = [];
 
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
@@ -187,17 +189,80 @@ function buildBackground() {
     else if (terrain === 'mountain') objects.push({ x, y, name: `legend_world_grass_hill_0${1 + Math.floor(random() * 3)}`, width: 100 + random() * 70 });
     else if (random() < .1) objects.push({ x, y, name: `world_detail_autumn_green_0${1 + Math.floor(random() * 2)}`, width: 45 + random() * 28 });
   }
-  SETTLEMENTS.forEach((town, index) => {
-    const facilities=townFacilities(state.seed,town);
-    facilities.forEach((facility,i)=>sprite(context,facility.id==='blacksmith'?'houses_01_01':'houses_02_01',town.x-33+i*63,town.y+15,25,.9));
-    if(facilities.length&&camera.zoom>=.65){context.font='bold 9px Arial';context.textAlign='center';context.lineWidth=3;context.strokeStyle='#241a14';const label=facilities.map(f=>f.name).join(' · ');context.strokeText(label,town.x,town.y+48);context.fillStyle='#edcf89';context.fillText(label,town.x,town.y+48);}
-
-    objects.push({ x: town.x, y: town.y, name: townArt(town), width: town.kind === 'village' ? 100 : 122 });
-    if (town.kind === 'village') objects.push({ x: town.x - 60, y: town.y + 40, name: index % 2 ? 'wheat_farm_01' : 'wheat_field_01', width: 100 });
-    if (town.id === 'saltwick') objects.push({ x: town.x - 68, y: town.y + 32, name: 'harbor_sw', width: 83 });
-  });
   objects.sort((a, b) => a.y - b.y).forEach(object => sprite(target, object.name, object.x, object.y, object.width));
   background = { canvas: surface, ...BACKGROUND_BOUNDS };
+}
+
+const SCENERY_COLORS = { danger: '#efb095', good: '#c5d895', trade: '#e5ca89' };
+function drawWorkshopEmblem(structure) {
+  const { x, y, emblem } = structure;
+  context.save(); context.translate(x, y - 2);
+  context.strokeStyle = '#2b241a'; context.lineWidth = 1.2;
+  if (emblem === 'armorsmith') {
+    // Three shields on an outdoor armor rack, rather than a generic house icon.
+    context.fillStyle = '#453426'; context.fillRect(-15, -4, 30, 3); context.fillRect(-14, -4, 2, 14); context.fillRect(12, -4, 2, 14);
+    for (const [offset, color] of [[-8, '#b8b7a6'], [0, '#75908c'], [8, '#bba16c']]) {
+      context.beginPath(); context.moveTo(offset - 3, -2); context.lineTo(offset + 3, -2); context.lineTo(offset + 3, 3);
+      context.lineTo(offset, 7); context.lineTo(offset - 3, 3); context.closePath(); context.fillStyle = color; context.fill(); context.stroke();
+    }
+  } else if (emblem === 'blacksmith') {
+    context.fillStyle = '#c6b99d44';
+    for (let puff = 0; puff < 3; puff++) { context.beginPath(); context.ellipse(-10 + puff * 3, -31 - puff * 5, 4 + puff, 2 + puff, -.4, 0, Math.PI * 2); context.fill(); }
+    context.fillStyle = '#888a7e'; context.beginPath(); context.moveTo(-12, -4); context.lineTo(11, -4);
+    context.lineTo(5, 0); context.lineTo(2, 0); context.lineTo(2, 5); context.lineTo(7, 7);
+    context.lineTo(-6, 7); context.lineTo(-2, 5); context.lineTo(-2, 0); context.lineTo(-9, 0); context.closePath(); context.fill(); context.stroke();
+  }
+  context.restore();
+}
+function drawSettlementScenery() {
+  const towns = new Map(SETTLEMENTS.map(town => [town.id, town]));
+  const visible = settlementStructures.filter(structure => Math.abs(structure.x - camera.x) < width / (2 * camera.zoom) + 140
+    && Math.abs(structure.y - camera.y) < height / (2 * camera.zoom) + 140);
+  // Short dirt spurs connect the outlying yards to their parent settlement.
+  context.save(); context.lineCap = 'round'; context.strokeStyle = '#ad956b77'; context.lineWidth = 4;
+  for (const structure of visible) {
+    const town = towns.get(structure.townId), dx = structure.x - town.x, dy = structure.y - town.y, length = Math.hypot(dx, dy);
+    context.beginPath(); context.moveTo(town.x + dx / length * 53, town.y + dy / length * 40);
+    context.lineTo(structure.x, structure.y); context.stroke();
+  }
+  context.restore();
+  const townBuildings = SETTLEMENTS.filter(town => Math.abs(town.x - camera.x) < width / (2 * camera.zoom) + 140
+    && Math.abs(town.y - camera.y) < height / (2 * camera.zoom) + 140).map(town => ({ ...town, townBuilding: true }));
+  for (const structure of [...visible, ...townBuildings].sort((a, b) => a.y - b.y)) {
+    if (structure.townBuilding) { sprite(context, townArt(structure), structure.x, structure.y, structure.kind === 'village' ? 100 : 122); continue; }
+    context.save();
+    const { x, y, width: size } = structure;
+    context.beginPath(); context.ellipse(x, y + 1, size * .43, size * .12, 0, 0, Math.PI * 2);
+    context.fillStyle = '#342d1b44'; context.fill();
+    if (structure.state === 'hungry') {
+      // Bare furrows and a waiting civilian communicate scarce food without inventing a new economy rule.
+      context.fillStyle = '#796b4688'; context.fillRect(x - 24, y - 8, 48, 18);
+      context.strokeStyle = '#423e2f'; context.lineWidth = 1.5;
+      for (let row = 0; row < 4; row++) { context.beginPath(); context.moveTo(x - 23, y - 6 + row * 5); context.lineTo(x + 22, y - 10 + row * 5); context.stroke(); }
+      sprite(context, structure.art, x, y - 8, size, .83);
+      sprite(context, 'figure_player_beggar', x + 22, y + 6, 16, .8);
+    } else {
+      if (structure.state === 'harvest') sprite(context, 'wheat_field_02', x - 14, y + 5, 56, .83);
+      if (structure.state === 'lost') context.globalAlpha = .45;
+      sprite(context, structure.art, x, y, size, .83);
+    }
+    context.globalAlpha = 1;
+    if (structure.emblem) drawWorkshopEmblem(structure);
+    if (structure.symbol) {
+      const color = SCENERY_COLORS[structure.tone];
+      context.strokeStyle = '#443628'; context.lineWidth = 1.5; context.beginPath(); context.moveTo(x + 20, y - 28); context.lineTo(x + 20, y - 7); context.stroke();
+      context.fillStyle = color; context.beginPath(); context.moveTo(x + 20, y - 28); context.lineTo(x + 37, y - 25); context.lineTo(x + 20, y - 16); context.closePath(); context.fill();
+      context.font = 'bold 11px Arial'; context.textAlign = 'center'; context.fillStyle = '#392b20'; context.fillText(structure.symbol, x + 27, y - 20);
+    }
+    if (camera.zoom >= .85 || selection === structure.townId && camera.zoom >= .5) {
+      context.font = `bold ${Math.max(10, 9 / camera.zoom)}px Georgia`; context.textAlign = 'center'; context.lineWidth = 3 / camera.zoom;
+      context.strokeStyle = '#231f16dd'; context.strokeText(structure.label, x, y + 16);
+      context.fillStyle = SCENERY_COLORS[structure.tone] ?? '#e7d8b2'; context.fillText(structure.label, x, y + 16);
+    }
+    context.restore();
+  }
+  const chosen = towns.get(selection), details = settlementStructures.filter(structure => structure.townId === selection).map(structure => structure.label);
+  canvas.setAttribute('aria-label', `World map with nine regions, roads, and settlement outskirts. Drag to pan; pinch to zoom.${chosen ? ` ${chosen.name}: ${details.join(', ') || 'general traders'}.` : ''} Outlying structures are scenery; select the settlement to visit.`);
 }
 
 function minimumZoom() {
@@ -235,7 +300,7 @@ function campLabel(camp) {
 }
 
 export function mapHTML() {
-  return `<canvas id="world-map" role="img" aria-label="World map with nine named regions, roads and highways. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-loading">Preparing the Marches…</div>`;
+  return `<canvas id="world-map" role="img" aria-label="World map with nine named regions, roads, settlements and their outlying smiths, industries and town conditions. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-scenery-key" aria-label="Settlement scenery legend"><span>⚒ Blacksmith</span><span>⬟ Armory</span><span>Wagons · trade</span><span>Fields · harvest</span></div><div class="map-loading">Preparing the Marches…</div>`;
 }
 
 export const mapSVG = mapHTML;
@@ -247,7 +312,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
   canvas = document.querySelector('#world-map');
   if (!canvas) return;
   context = canvas.getContext('2d');
-  state = game; townCallback = onChooseTown; campCallback = onChooseCamp; activationCallback = onActivate;
+  state = game; settlementStructures = worldSettlementScenery(game); townCallback = onChooseTown; campCallback = onChooseCamp; activationCallback = onActivate;
   const resize = () => {
     const rectangle = canvas.getBoundingClientRect();
     width = rectangle.width; height = rectangle.height;
@@ -328,7 +393,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       if ((target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
-      else if (!target) onTravel(world.x, world.y);
+      else if (!target && !sceneryAt(settlementStructures, world)) onTravel(world.x, world.y);
       const activation = activationTracker.tap(target, current, Number(event.timeStamp));
       if (activation && activationCallback) activationCallback(activation);
     } else activationTracker.cancel();
@@ -361,7 +426,7 @@ export function zoomMap(factor) {
 
 export function selectMapTown(town) { selection = town?.id || null; draw(); }
 export function selectMapCamp(id) { selection = id; draw(); }
-export function updateMap(game) { state = game; if (canvas?.isConnected) draw(); }
+export function updateMap(game) { state = game; settlementStructures = worldSettlementScenery(game); if (canvas?.isConnected) draw(); }
 
 function draw() {
   if (!context || !width || !height || !state) return;
@@ -381,6 +446,8 @@ function draw() {
     context.fillStyle = `rgba(14,23,43,${darkness})`;
     context.fillRect(viewX, viewY, width / camera.zoom, height / camera.zoom);
   }
+
+  drawSettlementScenery();
 
   getCampSites(state).forEach((camp, index) => {
     context.save();
@@ -498,9 +565,6 @@ function draw() {
       context.fillStyle = '#f0e4bd'; context.fillText(town.name, town.x, town.y + 25);
     }
   });
-  const progress = (state.day * 24 + state.hour) / 17, position = (Math.sin(progress) + 1) / 2;
-  const first = SETTLEMENTS[1], second = SETTLEMENTS[2];
-  sprite(context, 'figure_player_trader', first.x + (second.x - first.x) * position, first.y + (second.y - first.y) * position, 30);
   context.beginPath(); context.ellipse(state.position.x, state.position.y + 9, 20, 8, 0, 0, Math.PI * 2); context.fillStyle = '#15201666'; context.fill();
   sprite(context, 'figure_player_party', state.position.x, state.position.y, 36, .7);
   sprite(context, 'banner_101', state.position.x + 14, state.position.y - 23, 25, .8);
