@@ -110,6 +110,7 @@ function bandCount(band) {
 }
 
 function bandActivity(band) {
+  if(band.battleHoursRemaining!==undefined)return `Fighting · ${Math.ceil(band.battleHoursRemaining)}h`;
   if (band.behavior === 'hunting-company') return 'Hunting company';
   if (band.behavior === 'raiding-caravan') {
     const caravan = caravans().find(item => item.id === band.targetId);
@@ -575,7 +576,7 @@ function draw() {
     drawActorGround(p.id,p.x,p.y);sprite(context,'figure_player_assassin',p.x,p.y,30,.85,actorPoses.get(p.id)?.flip);
     context.font='bold 10px Arial';context.textAlign='center';context.strokeStyle='#142016';context.lineWidth=3;
     const label=camera.zoom>=.4||selection===p.id?`${p.factionLabel} · ${p.enemies.length}`:`${p.enemies.length}`;
-    context.strokeText(label,p.x,p.y+28);context.fillStyle=p.color;context.fillText(label,p.x,p.y+28);context.restore();
+    context.strokeText(label,p.x,p.y+28);context.fillStyle=p.color;context.fillText(label,p.x,p.y+28);if(p.battleHoursRemaining!==undefined){context.fillStyle='#efd191';context.fillText(`⚔ Fighting · ${Math.ceil(p.battleHoursRemaining)}h`,p.x,p.y+40);}context.restore();
   });
 
   if (state.destination) {

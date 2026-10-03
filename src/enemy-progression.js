@@ -20,7 +20,8 @@ export function enemyRosterSize(state,difficulty,baseCount){
  const progression=enemyProgression(state,difficulty);
  const normal=Math.min(12,baseCount+progression.reinforcements);
  if(difficulty!==3||!progression.rank)return normal;
- const living=Math.min(15,state.party.filter(person=>person.hp>0).length);
+ const deployed=Array.isArray(state.formation)?new Set(state.formation):null;
+ const living=Math.min(15,state.party.filter(person=>person.hp>0&&(!deployed||deployed.has(person.id))).length);
  const target=living+Math.floor(progression.rank*1.4)-3+(baseCount%3)-1;
- return Math.min(20,Math.max(normal,target));
+ return Math.min(living===15?20:17,Math.max(normal,Math.min(living===15?20:living+3,target)));
 }

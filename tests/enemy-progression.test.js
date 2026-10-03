@@ -109,3 +109,11 @@ test('20-enemy battles and world casualties survive reload while enemy 21 is rej
  const bad=structuredClone(state);bad.battle.units.find(u=>u.id==='enemy-20').id='enemy-21';assert.throws(()=>validateSave(bad),/battle unit ownership/);
  state.battle=null;state.worldLosses={[site.id]:{cycle:0,size:20,survivors:[0,19]}};assert.doesNotThrow(()=>validateSave(state));
 });
+
+test('18–20 troops require fifteen living deployed brothers, regardless of campaign age or veteran rank',()=>{
+ for(const size of [3,6,9,12,14]){const s=company(30,300,size);for(const base of [5,6,7])assert.ok(enemyRosterSize(s,3,base)<=17,`${size} brothers cannot roll 18–20 enemies`);}
+ const full=company(30,300,15);assert.equal(enemyRosterSize(full,3,6),20);
+ const reserves=company(30,300,18);reserves.formation[14]=null;reserves.formation[15]=null;reserves.formation[16]=null;reserves.formation[17]=null;
+ assert.ok(enemyRosterSize(reserves,3,6)<=17,'reserve headcount cannot unlock twenty');
+ full.party[0].hp=0;assert.ok(enemyRosterSize(full,3,6)<=17,'a fallen deployed brother does not count');
+});
