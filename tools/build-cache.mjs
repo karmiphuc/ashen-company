@@ -56,6 +56,7 @@ const CORE = [
   './src/town-events.js',
   './src/caravans.js',
   './src/map.js',
+  './src/map-illustration.js',
   './src/portraits.js',
   './manifest.webmanifest',
   './assets/icon.svg',
