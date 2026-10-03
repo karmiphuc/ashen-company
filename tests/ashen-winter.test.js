@@ -364,8 +364,11 @@ test('engine NPC battles against undead persist valid reports and no player rewa
   Object.assign(progress,{x:host.x,y:host.y,troops:Array.from({length:definition.size},(_,i)=>i),cooldownUntil:0,behavior:'touring'});
   for(const band of Object.values(s.bands))band.defeatedUntil=campaignHour(s)+48;
   const gold=s.gold;tick(s,.25);
+  const fight=s.worldSkirmishes.find(f=>f.bId===host.id);assert.ok(fight);assert.ok(!s.factionReports.some(r=>r.kind==='undead-host'));
+  const point={x:host.x,y:host.y};tick(s,.25);assert.deepEqual({x:host.x,y:host.y},point);assert.deepEqual(validateSave(s),s);
+  tick(s,fight.endHour-campaignHour(s));
   assert.ok(s.factionReports.some(r=>r.kind==='undead-host'));
-  assert.equal(s.gold,gold);assert.equal(s.ashenWinter.liberationCount,0);
+  assert.ok(s.gold<=gold);assert.equal(s.ashenWinter.liberationCount,0);
   assert.deepEqual(validateSave(s),s);
 });
 

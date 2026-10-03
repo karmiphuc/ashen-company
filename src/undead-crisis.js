@@ -134,6 +134,7 @@ export function advanceAshenWinter(state, context) {
   const reserved = new Set([state.pursuit, state.destinationAction?.id, state.battle?.campId]);
   let displacement = null;
   for (const host of Object.values(crisis.hosts)) {
+    if(state.worldSkirmishes?.some(f=>f.bId===host.id))continue;
     redirectRoadHost(state,host,context);
     if (reserved.has(host.id) && distance(state.position, host) <= 40) continue;
     moveHost(host);

@@ -56,7 +56,8 @@ export function factionPatrols(state,settlements){
   const now=(state.day-1)*24+state.hour;
   return patrolDefinitions(settlements).map(definition=>{
     const progress=state.factionPatrols?.[definition.id]??initialPatrolProgress(state,definition),faction=SOLDIER_FACTIONS.find(f=>f.id===definition.factionId);
-    return {...definition,x:progress.x,y:progress.y,kind:'patrol',playerRelation:faction.relation,color:faction.color,factionLabel:faction.name,rivalLabel:SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name,enemies:roster(state,definition,progress),active:progress.troops.length>0&&progress.defeatedUntil<=now,behavior:progress.behavior,targetId:progress.targetId,wins:progress.wins,losses:progress.losses,respawnHours:Math.max(0,Math.ceil(progress.defeatedUntil-now)),description:`${faction.relation==='ally'?'Allied':'Neutral'} city soldiers tour the roads, hunt roaming brigands and fight ${SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name} patrols. Casualties persist until they recover at a city.`};
+    const fight=worldSkirmishFor(state,definition.id),remaining=fight?Math.max(0,fight.endHour-now):0;
+    return {...(fight?{battleHoursRemaining:remaining}:{}),...definition,x:progress.x,y:progress.y,kind:'patrol',playerRelation:faction.relation,color:faction.color,factionLabel:faction.name,rivalLabel:SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name,enemies:roster(state,definition,progress),active:progress.troops.length>0&&progress.defeatedUntil<=now,behavior:progress.behavior,targetId:progress.targetId,wins:progress.wins,losses:progress.losses,respawnHours:Math.max(0,Math.ceil(progress.defeatedUntil-now)),description: fight?`Fighting ${fight.aId===definition.id?fight.bName:patrolDefinitions(settlements).find(d=>d.id===fight.aId)?.name}. About ${Math.ceil(remaining)} hours remain; troops are committed until the battle ends.`:`${faction.relation==='ally'?'Allied':'Neutral'} city soldiers tour the roads, hunt roaming brigands and fight ${SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name} patrols. Casualties persist until they recover at a city.`};
   });
 }
 function strength(enemies,getItem){return enemies.reduce((sum,e)=>sum+18+(getItem(e.armor)?.armor??0)*.07+(getItem(e.helmet)?.armor??0)*.04+((getItem(e.weapon)?.damageMin??20)+(getItem(e.weapon)?.damageMax??30))*.16+(getItem(e.shield)?.defense??0)*.4+(e.mount?7:0),0);}
@@ -72,10 +73,29 @@ function move(progress,target,distance){const length=Math.hypot(target.x-progres
 function addReport(state,patrol,target,outcome,losses,now){
   state.factionReports??=[];state.factionReports.push({patrolId:patrol.id,factionId:patrol.factionId,opponentId:target.id,opponentName:target.name,kind:target.kind,outcome,losses,hour:now});if(state.factionReports.length>24)state.factionReports.splice(0,state.factionReports.length-24);
 }
+export function skirmishDuration(aCount,bCount){return Math.min(72,Math.max(3,Math.ceil(2+(aCount+bCount)**2/18)));}
+export function worldSkirmishFor(state,id){return state.worldSkirmishes?.find(f=>f.aId===id||f.bId===id)??null;}
+export function cancelWorldSkirmish(state,id){
+ const cancelled=(state.worldSkirmishes??[]).filter(f=>f.aId===id||f.bId===id);
+ for(const fight of cancelled)for(const participant of [fight.aId,fight.bId]){const p=state.factionPatrols?.[participant];if(p){p.behavior=p.troops.length?'touring':'reforming';p.targetId=null;}}
+ state.worldSkirmishes=(state.worldSkirmishes??[]).filter(f=>!cancelled.includes(f));
+}
+function finishWorldSkirmish(state,fight,context,byId,now){
+ const d=byId.get(fight.aId),p=state.factionPatrols[fight.aId],army={...d,kind:'patrol'},target={id:fight.bId,name:fight.bName,kind:fight.bKind,spawnCycle:fight.bCycle},battle=fight.result,old=p.troops.length;
+ p.troops=battle.aSurvivors.map(index=>fight.aTroops[index]);p.cooldownUntil=now+6;p.targetId=null;p.behavior=p.troops.length?'touring':'reforming';
+ if(!p.troops.length){p.defeatedUntil=now+72;p.x=d.home.x;p.y=d.home.y;}
+ p[battle.aWins?'wins':'losses']+=1;addReport(state,army,target,battle.aWins?'victory':'defeat',old-p.troops.length,now);
+ if(target.kind==='patrol'){
+  const rival=state.factionPatrols[target.id],rd=byId.get(target.id),before=rival.troops.length;
+  rival.troops=battle.bSurvivors.map(index=>fight.bTroops[index]);rival.cooldownUntil=now+6;rival[battle.aWins?'losses':'wins']+=1;rival.targetId=null;rival.behavior=rival.troops.length?'touring':'reforming';
+  if(!rival.troops.length){rival.defeatedUntil=now+72;rival.x=rd.home.x;rival.y=rd.home.y;}
+  addReport(state,rd,army,battle.aWins?'defeat':'victory',before-rival.troops.length,now);
+ }else context.hostileResult(target,battle.bSurvivors,battle.aWins,fight);
+}
 export function advanceFactionSimulation(state,context){
   const now=(state.day-1)*24+state.hour;
   if(state.factionSimulationHour===now)return;
-  state.factionPatrols??={};
+  state.factionPatrols??={};state.worldSkirmishes??=[];
   const homeFor = definition => {
     const available = context.settlements.filter(t => t.kind === 'town' && soldierFactionAt(t.x,t.y).id === definition.factionId && (context.servicesAvailable?.(t.id) ?? true));
     return available.find(t => t.id === definition.homeId) ?? available.sort((a,b) => Math.hypot(a.x-definition.home.x,a.y-definition.home.y)-Math.hypot(b.x-definition.home.x,b.y-definition.home.y)||a.id.localeCompare(b.id))[0] ?? null;
@@ -85,13 +105,19 @@ export function advanceFactionSimulation(state,context){
     const p=state.factionPatrols[d.id]??=initialPatrolProgress(state,d);
     if(!p.troops.length&&p.defeatedUntil<=now&&homeFor(d)){const cycle=p.spawnCycle+1;state.factionPatrols[d.id]={...initialPatrolProgress(state,d),x:homeFor(d).x,y:homeFor(d).y,spawnCycle:cycle,wins:p.wins,losses:p.losses};}
   }
+  const reserved=new Set([state.pursuit,state.destinationAction?.id,state.contract?.campId,state.battle?.campId]);
+  for(const fight of [...state.worldSkirmishes]){
+    const a=state.factionPatrols[fight.aId],b=fight.bKind==='patrol'?state.factionPatrols[fight.bId]:context.currentHostile(fight.bId);
+    const bCycle=fight.bKind==='patrol'?b?.spawnCycle:b?.spawnCycle??b?.force?.generation;
+    if(!a||a.spawnCycle!==fight.aCycle||!b||bCycle!==fight.bCycle||reserved.has(fight.bId)){cancelWorldSkirmish(state,fight.aId);continue;}
+    if(now>=fight.endHour){finishWorldSkirmish(state,fight,context,byId,now);state.worldSkirmishes=state.worldSkirmishes.filter(f=>f!==fight);}
+  }
   const armies=factionPatrols(state,context.settlements).filter(p=>p.active),hostiles=context.hostiles().filter(target=>target.kind==='band'||target.kind==='undead-host');
-  const reserved=new Set([state.pursuit,state.destinationAction?.id,state.contract?.campId]);
   for(const army of armies){
     const p=state.factionPatrols[army.id],d=byId.get(army.id);
-    if(!p.troops.length||p.defeatedUntil>now)continue;
+    if(!p.troops.length||p.defeatedUntil>now||worldSkirmishFor(state,army.id))continue;
     const recovering=p.troops.length<Math.ceil(d.size/2)||(p.behavior==='returning'&&p.troops.length<d.size);
-    const threats=[...hostiles.filter(b=>b.difficulty>0&&!reserved.has(b.id)),...armies.filter(other=>other.id!==army.id&&soldierRelations(army.factionId,other.factionId)==='hostile')];
+    const threats=[...hostiles.filter(b=>b.difficulty>0&&!reserved.has(b.id)&&!worldSkirmishFor(state,b.id)),...armies.filter(other=>other.id!==army.id&&!worldSkirmishFor(state,other.id)&&soldierRelations(army.factionId,other.factionId)==='hostile')];
     const target=p.cooldownUntil<=now?threats.filter(t=>Math.hypot(t.x-p.x,t.y-p.y)<=(recovering?35:180)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)||a.id.localeCompare(b.id))[0]:null;
     if(target){p.behavior=recovering?'returning':'engaging';p.targetId=target.id;move(p,target,52*.25);}
     else {p.behavior=recovering?'returning':'touring';p.targetId=null;const goal=p.behavior==='returning'?(homeFor(d)??p):d.waypoints[p.waypoint];if(move(p,goal,55*.25)&&p.behavior==='touring')p.waypoint=(p.waypoint+1)%d.waypoints.length;}
@@ -102,17 +128,12 @@ export function advanceFactionSimulation(state,context){
     // Both opponents are rebuilt from current surviving troops before a simulated battle.
     const ours=roster(state,d,p),other=target.kind==='patrol'?roster(state,byId.get(target.id),state.factionPatrols[target.id]):context.currentHostile(target.id)?.enemies;
     if(!other?.length)continue;
-    const battle=simulateSkirmish(ours,other,context.getItem,`${state.seed}:${Math.round(now*4)}:${army.id}:${target.id}:${p.spawnCycle}`),old=p.troops.length;
-    p.troops=battle.aSurvivors.map(index=>p.troops[index]);p.cooldownUntil=now+6;
-    if(!p.troops.length){p.defeatedUntil=now+72;p.behavior='reforming';p.x=d.home.x;p.y=d.home.y;}
-    p[battle.aWins?'wins':'losses']+=1;
-    addReport(state,army,target,battle.aWins?'victory':'defeat',old-p.troops.length,now);
-    if(target.kind==='patrol'){
-      const rival=state.factionPatrols[target.id],rivalDefinition=byId.get(target.id),before=rival.troops.length;
-      rival.troops=battle.bSurvivors.map(index=>rival.troops[index]);rival.cooldownUntil=now+6;rival[battle.aWins?'losses':'wins']+=1;
-      if(!rival.troops.length){rival.defeatedUntil=now+72;rival.behavior='reforming';rival.x=rivalDefinition.home.x;rival.y=rivalDefinition.home.y;}
-      addReport(state,target,army,battle.aWins?'defeat':'victory',before-rival.troops.length,now);
-    }else context.hostileResult(target,battle.bSurvivors,battle.aWins);
+    const startHour=now,endHour=now+skirmishDuration(ours.length,other.length);
+    const aTroops=[...p.troops],bTroops=target.kind==='patrol'?[...state.factionPatrols[target.id].troops]:other.map((e,i)=>target.kind==='undead-host'?e.troopIndex:e.worldIndex??i);
+    state.worldSkirmishes.push({id:`skirmish:${army.id}:${target.id}:${Math.round(now*4)}`,aId:army.id,bId:target.id,bName:target.name,bKind:target.kind,aCycle:p.spawnCycle,bCycle:target.spawnCycle??target.force?.generation??0,startHour,endHour,x:p.x,y:p.y,aTroops,bTroops,result:simulateSkirmish(ours,other,context.getItem,`${state.seed}:${Math.round(now*4)}:${army.id}:${target.id}:${p.spawnCycle}`)});
+    p.behavior='engaging';p.targetId=target.id;
+    if(target.kind==='patrol'){state.factionPatrols[target.id].behavior='engaging';state.factionPatrols[target.id].targetId=army.id;}
+
   }
   state.factionSimulationHour=now;
 }

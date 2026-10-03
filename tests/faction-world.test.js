@@ -36,11 +36,12 @@ test('world simulation is chunk invariant, causes persistent casualties without 
 test('rival soldier battles can defeat either army, retain losses and reform after three days',()=>{
  const state=createGame(88),[a]=getFactionPatrols(state),b=getFactionPatrols(state).find(p=>p.factionId==='eastern-march');
  Object.assign(state.factionPatrols[b.id],{x:a.x,y:a.y});state.hour+=.25;advanceFactionSimulation(state,emptyContext);
+ assert.equal(state.factionReports.length,0);assert.ok(state.worldSkirmishes.length);const end=Math.max(...state.worldSkirmishes.map(f=>f.endHour));state.day=Math.floor(end/24)+1;state.hour=end%24;advanceFactionSimulation(state,emptyContext);
  assert.ok(state.factionReports.some(r=>r.kind==='patrol'&&r.outcome==='defeat'));
  assert.ok(state.factionReports.some(r=>r.kind==='patrol'&&r.outcome==='victory'));
  assert.ok(state.factionPatrols[a.id].troops.length<a.size);assert.ok(state.factionPatrols[b.id].troops.length<b.size);
  assert.deepEqual(validateSave(state),state);
- const p=state.factionPatrols[a.id],cycle=p.spawnCycle;p.troops=[];p.defeatedUntil=8.5;state.hour=8.5;advanceFactionSimulation(state,{...emptyContext,hostiles:()=>[]});
+ const p=state.factionPatrols[a.id],cycle=p.spawnCycle;p.troops=[];p.defeatedUntil=(state.day-1)*24+state.hour+.25;state.hour+=.25;advanceFactionSimulation(state,{...emptyContext,hostiles:()=>[]});
  assert.equal(state.factionPatrols[a.id].spawnCycle,cycle+1);
  const weak=[{weapon:'wood-axe',armor:'patched-coat'}],strong=Array.from({length:8},()=>({weapon:'arming-sword',armor:'bb-coat-of-plates'}));
  assert.equal(simulateSkirmish(weak,strong,getItem,'loss').aWins,false);assert.equal(simulateSkirmish(strong,weak,getItem,'win').aWins,true);
@@ -84,6 +85,7 @@ test('patrols ignore adjacent camps and only engage roving bands, even when a ca
  assert.equal(reads,0);assert.deepEqual(battles,[]);assert.equal(p.behavior,'touring');assert.equal(p.targetId,null);
  const band={...getRoamingBands(state).find(b=>b.difficulty>0),x:p.x,y:p.y};
  state.hour+=.25;advanceFactionSimulation(state,{...context,hostiles:()=>[camp,band],currentHostile:id=>id===band.id?band:null});
+ assert.equal(battles.length,0);assert.ok(state.worldSkirmishes.some(f=>f.bId===band.id));const end=state.worldSkirmishes.find(f=>f.bId===band.id).endHour;state.day=Math.floor(end/24)+1;state.hour=end%24;advanceFactionSimulation(state,{...context,hostiles:()=>[camp,band],currentHostile:id=>id===band.id?band:null});
  assert.ok(battles.some(target=>target.id===band.id));assert.ok(battles.every(target=>target.kind==='band'));
  assert.ok(state.factionReports.some(r=>r.kind==='band'));assert.ok(state.factionReports.every(r=>r.kind!=='camp'));
  assert.equal(reads,0);assert.deepEqual(state.camps,campsBefore);

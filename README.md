@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.48.9 gates 18–20 elite enemies behind 15 living brothers in formation. Smaller companies remain below 18. World-map soldier skirmishes now last 3–72 hours based on participating troop count, lock both sides in place, show fighting time remaining, and apply casualties/reports only at completion. Pending engagements survive save/reload and release safely when the company intervenes.
+
 Version 0.48.8 expands new combat fields to 22×24, leaving retreat space beyond enemy deployment. Enemies cannot complete escape in their first fleeing round. Camps have two rear exits in addition to two assault entrances. Allied reinforcements deploy above/below the battle near the center, away from company formation lanes. Existing saved battles keep their battlefield and escape rules.
 
 Version 0.48.7 swaps Heraldic Plates/Shoulders inventory and worn artwork, adds Double Mail and Unhold/Direwolf/Hyena Fur attachments, and raises Bone Platings to 55 armor with rarer stock. Both attachment slots apply their bonuses; Unhold Fur reduces ranged damage by 25%, Direwolf Fur adds melee morale damage, and regional veterans can carry the new gear.
