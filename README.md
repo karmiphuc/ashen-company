@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.48 adds **Ashen Winter**, the first endgame crisis. From day 60, a company whose six strongest equipped members average level seven can receive a seven-day invasion warning. Three Ancient Legion commanders send hosts along the roads. Besieged and occupied settlements close every service until your company liberates them; waiting will not reopen them. Defeating commanders stops new attacks, and freeing all blocked settlements ends the crisis with crowns, renown, and a saved equipment reward. Existing ancient enemies, artwork, and armory are reused. Old saves receive the full scheduling and warning period; active battles retain their rules. Faction war remains planned for a later release. See [implementation rules](docs/ASHEN-WINTER-IMPLEMENTATION-SPEC.md).
+
 Version 0.47.4 combines named armor traits and weapon/shield craftsmanship with the newer BB-style rolls. Owned newer named gear upgrades with its existing seed and damage outside combat; inspection shows every bonus. See [named-item rules](docs/NAMED-ROLLS.md).
 
 
