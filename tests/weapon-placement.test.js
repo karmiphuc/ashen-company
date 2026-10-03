@@ -44,7 +44,7 @@ test('every two-handed melee family is enlarged at the opposite hand and fits co
   for(const weapon of weapons.filter(w=>w.twoHanded&&!w.ranged))for(const mount of [null,...mounts]){
     for(const item of [weapon,getItem(`famed:${weapon.id}:73`),{id:weapon.id,visual:weapon.visual}]){
       const html=portraitHTML(person,{weapon:item,mount,helmet:getItem('bb-flat-top-helmet')}),w=pose(html,'weapon'),f=frame(html);
-      assert.equal(w.x+w.gx,78,weapon.id);assert.equal(w.y+w.gy,116,weapon.id);
+      assert.equal(w.x+w.gx,78,weapon.id);assert.equal(w.y+w.gy,116+(mount?36:0),weapon.id);
       const scale=Number(w.image.match(/transform:scale\(([\d.]+)\)/)[1]);
       const angle=Number(w.image.match(/rotate\(([\d.-]+)deg\)/)[1])*Math.PI/180;
       assert.ok(scale>=1.05,`${weapon.id}: native art is enlarged`);
@@ -148,14 +148,17 @@ test('every mount stays low on the right, visibly supports the rider and remains
 });
 
 
-test('framed mounts have an exposed body below the torso and a visibly larger natural head',()=>{
-  for(const mount of mounts)for(const helmet of [getItem('bb-fangshire'),getItem('bb-gunner-hat')])for(const shield of shields){
-    const html=portraitHTML(person,{mount,helmet,shield,armor:getItem('noble-mail'),weapon:getItem('arming-sword')}),head=mountGeometry(html,'head'),body=mountGeometry(html,'body'),f=frame(html),s=pose(html,'shield');
-    const shieldScale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)?.[1]??1),[sw,sh]=pngSize(s.image);
-    const exposed=body.pixels.filter(([x,y])=>y>=112&&(x<s.x||x>s.x+sw*shieldScale||y>s.y+sh*shieldScale)).length*Math.abs(body.sx*body.sy)*f.scale**2;
-    assert.ok((body.bottom-110)*f.scale>=24,`${mount.id}: visible depth below the torso survives token framing`);
-    assert.ok(exposed>350,`${mount.id}: lower animal body is visibly exposed below armor and shield (${exposed})`);
-    assert.ok(Math.abs(Math.abs(head.sx)-head.sy)<1e-8,'head art retains natural proportions');
-    assert.ok((head.bottom-head.top)*f.scale>=.75*110*f.scale,'displayed head is substantial relative to the rider, after framing');
+test('mounted pawns touch the shared base without changing any animal pose',()=>{
+  const appearances=new Set();
+  const heads={'riding-horse':[78,54,1.25],'war-horse':[90,52,1.04],'armored-war-horse':[90,52,1.04],'warg-mount':[139,70,.98],'dire-wolf-mount':[139,70,.98]};
+  for(let seed=0;seed<24;seed++)for(const mount of mounts){
+    const html=portraitHTML({name:'Rider',seed},{mount}),body=pose(html,'body'),raster=opaquePixels(body.image),head=pose(html,'mount-head');
+    const rider=html.match(/data-layer="rider" style="([^"]+)"/)[1],drop=value(rider,'top');
+    appearances.add(html.match(/data-appearance="(\d+)"/)[1]);
+    const touching=raster.pixels.filter(([x,y])=>{x+=body.x;y+=body.y+drop;return y>=140&&y<=160&&((x-70)/70)**2+((y-149)/11)**2<=1;});
+    assert.ok(touching.length>40,`${mount.id}: actual pawn pixels reach the base (${touching.length})`);
+    assert.deepEqual([head.x,head.y,Number(head.image.match(/ scale\(([\d.]+)\)/)[1])],heads[mount.id],'horse/animal position and size stay unchanged');
   }
+  assert.equal(appearances.size,6);
+  assert.doesNotMatch(portraitHTML(person),/data-layer="rider"/,'unmounted portraits keep their original position');
 });

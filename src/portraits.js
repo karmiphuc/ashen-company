@@ -267,8 +267,14 @@ function mountedShield(spec, mount) {
   if (!spec || !mount) return spec;
   const [file, left, top, transform, origin] = spec;
   const authoredScale = Number(transform?.match(/scale\(([\d.]+)\)/)?.[1] ?? 1);
-  const scale = Math.min(authoredScale, 48 / SHIELD_WIDTHS[file]);
-  return [file, left, Math.max(54, top), scale === 1 ? transform : `scale(${scale})`, scale === 1 ? origin : '0 0'];
+  const scale = Math.min(authoredScale, 36 / SHIELD_WIDTHS[file]);
+  return [file, left, Math.max(54, top) + 28, scale === 1 ? transform : `scale(${scale})`, scale === 1 ? origin : '0 0'];
+}
+
+function mountedWeapon(spec, mount) {
+  if (!spec || !mount) return spec;
+  const [file,left,top,transform,origin] = spec;
+  return [file,left,top+36,transform,origin];
 }
 
 function weaponRest(spec, item) {
@@ -524,13 +530,13 @@ function mountLayer(spec, part) {
   return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT+file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:${transform};transform-origin:top left;${filter?`filter:${filter};`:''}z-index:${part==='head'?5:0};max-width:none;pointer-events:none">`;
 }
 
-function portraitFrame(equipment, weapon = layerSpec('weapon', equipment.weapon), shield = mountedShield(layerSpec('shield', equipment.shield), equipment.mount)) {
+function portraitFrame(equipment, weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount), shield = mountedShield(layerSpec('shield', equipment.shield), equipment.mount)) {
   const dlcHelmet = DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
   const helmetVisual = visual(equipment.helmet);
   const weaponBounds = weaponFrame(weapon);
   // Preserve the helmet/head relationship while fitting tall crowns and wide horns.
   // Move and scale the whole composition; never push only the helmet down onto the brow.
-  const headroom = Math.max(0, -weaponBounds.top, dlcHelmet ? -dlcHelmet.top : helmetVisual === 'bascinet' ? 13 : 0);
+  const headroom = Math.max(0, -weaponBounds.top, dlcHelmet ? -dlcHelmet.top - (equipment.mount ? 36 : 0) : helmetVisual === 'bascinet' ? 13 : 0);
   const leftRoom = Math.max(0, -weaponBounds.left, -(shield?.[1] ?? 0), -(dlcHelmet?.left ?? 0));
   const shieldScale = Number(shield?.[3]?.match(/scale\(([\d.]+)\)/)?.[1] ?? 1);
   const shieldRight = shield ? shield[1] + SHIELD_WIDTHS[shield[0]] * shieldScale : 0;
@@ -547,7 +553,7 @@ function portraitFrame(equipment, weapon = layerSpec('weapon', equipment.weapon)
 
 /** Grip in the shared 104×142 coordinate space, including equipment framing. */
 export function portraitWeaponAnchor(equipment = {}) {
-  const weapon = layerSpec('weapon', equipment.weapon);
+  const weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount);
   if (!weapon) return {x: 52, y: 95};
   const [, left, top, , origin] = weapon;
   const [gx, gy] = origin.split(' ').map(parseFloat);
@@ -574,7 +580,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const mount = layerSpec('mount', equipment.mount);
   const helmet = layerSpec('helmet', equipment.helmet);
   const shield = mountedShield(layerSpec('shield', equipment.shield), mount);
-  const weapon = layerSpec('weapon', equipment.weapon);
+  const weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
   const dlcHelmet = DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
@@ -597,7 +603,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
       <span class="bb-portrait-composition" style="display:block;position:absolute;left:${compositionLeft}px;top:${compositionTop}px;width:104px;height:142px;${compositionTransform}">
         ${mount ? `<span data-layer="base-plate" class="bb-portrait-base" style="position:absolute;left:${MOUNT_PLATE.left}px;top:${MOUNT_PLATE.top}px;width:${MOUNT_PLATE.width}px;height:${MOUNT_PLATE.height}px;border-radius:50%;background:linear-gradient(#c4c5bc,#81847c 45%,#535850);border:2px solid #363b34;box-shadow:inset 0 -3px 0 #3d433a;box-sizing:border-box;z-index:0"></span>` : ''}
         ${mountLayer(mount, 'body')}
-        ${rider}
+        ${mount ? `<span data-layer="rider" style="position:absolute;left:0;top:36px;width:104px;height:142px;z-index:1">${rider}</span>` : rider}
         ${mountLayer(mount, 'head')}
         ${layer('shield', shield, equipment.shield)}
         ${layer('weapon', weapon, equipment.weapon)}

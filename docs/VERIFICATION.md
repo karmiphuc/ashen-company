@@ -1,4 +1,10 @@
-# Verification - version 0.45.3, 2026-10-03
+# Verification - version 0.45.4, 2026-10-03
+
+## v0.45.4 checks
+
+All 499 automated tests pass. The mounted pawn itself now moves down 36 portrait units to reach the existing shared base. Its body, armor, head, hair and helmet move as one group, preserving all internal anchors. All animal body/head assets, poses, sizes and plate coordinates retain their v0.45.3 values. Mounted weapons move with the pawn; shields sit beside its lowered torso and fit above the base. Unmounted poses remain unchanged. Projectile anchors and token framing include the lowered weapons.
+
+A decoded-alpha regression verifies actual pawn pixels overlap the shared plate ellipse for every mount and all six pawn appearances, while asserting the animal head positions and scales are exactly unchanged. Existing mount body coordinates, opaque grounding, weapon/helmet alignment and projectile checks pass. Chromium screenshots cover the final five mounts and 15 sword/shield/tower-shield/two-handed combinations without image failures or browser exceptions. A fresh install caches all 526 resources and offline relaunch retains the lowered pawn. Physical iPad Safari remains untested.
 
 ## v0.45.3 checks
 
