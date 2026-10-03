@@ -255,6 +255,13 @@ const MARKET_FACTORS = {
   blackfen:   { grain: 1.10, timber: .80, iron: 1.30, salt: .70, wool: 1.30 },
   farhold:    { grain: 1.50, timber: 1.35, iron: 1.25, salt: 1.40, wool: 1.45 },
 };
+// Map industry hints use the same local-supply factors as trade prices.
+export function getTownLocalSupply(townId) {
+  const factors = MARKET_FACTORS[townId];
+  if (!factors) return null;
+  const good = [...GOODS].sort((a, b) => factors[a.id] - factors[b.id])[0];
+  return factors[good.id] <= .9 ? { goodId: good.id, name: good.name, factor: factors[good.id] } : null;
+}
 const GEAR_FACTORS = { ...Object.fromEntries(REGIONAL_SETTLEMENTS.map(town => [town.id, regionAt(town.x,town.y).gear])), ambercross: 1.03, reedharbor: 1.12, sunspire: 1.18, cinderhold: 1.20, oakwatch: 1, greyhaven: 1.05, ironford: .84, thornwall: 1.16, redmere: 1.08, highpass: 1.20, saltwick: 1.12, barrowfield: .96, pinecross:1.04, dunridge:1.12, eastmere:.98, stonebridge:.88, southwatch:1.08, wheatmere:1.02, blackfen:1.15, farhold:1.22 };
 const SLOTS = ['armor', 'attachment', 'helmet', 'weapon', 'shield', 'mount'];
 export const WORLD_BOUNDS = WORLD_LIMITS;

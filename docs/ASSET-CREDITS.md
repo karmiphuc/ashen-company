@@ -1,5 +1,9 @@
 # Asset credits
 
+## Settlement outskirts (v0.45.8)
+
+Eleven unchanged PNGs from the pinned **Battle-Brothers-Legends/Legends-public** revision `b014cdf8520e69b2383116d1654977e9dbb10d96` provide dedicated workshop, ore-furnace, militia-yard, crop, lumber, wool, salt, iron, fishing and wagon scenery. The [settlement source manifest](../assets/world/settlement-sources.json) records original paths, URLs, sizes and SHA-256 hashes. The two wagon images are scaled from the repository's tool-item art. Armor racks, anvil emblems, dirt spurs, bare furrows, smoke and status flags are drawn by the map renderer. Existing farm and beggar artwork is reused for poor-harvest hints. These assets follow the Battle Brothers/Legends provenance and personal noncommercial prototype restrictions described below.
+
 ## Town workshop scenery (v0.45.0)
 
 Blacksmith and armorsmith map structures reuse the credited `houses_01_01.png` and `houses_02_01.png` settlement artwork as small workshop buildings. This release introduces no new source images; regional and ancient outfits use the existing credited equipment catalog.

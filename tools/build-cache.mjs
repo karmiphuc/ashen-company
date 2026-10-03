@@ -40,6 +40,7 @@ const CORE = [
   './src/regional-enemies.js',
   './src/armory-themes.js',
   './src/town-facilities.js',
+  './src/settlement-scenery.js',
   './src/deserters.js',
   './src/perks.js',
   './src/recruits.js',

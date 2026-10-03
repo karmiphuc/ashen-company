@@ -1,0 +1,83 @@
+{
+  "repository": "Battle-Brothers-Legends/Legends-public",
+  "commit": "b014cdf8520e69b2383116d1654977e9dbb10d96",
+  "assets": [
+    {
+      "local": "assets/world/workshop_01.png",
+      "source": "unpacked/legend_world/world_settlement/workshop_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/workshop_01.png",
+      "bytes": 56794,
+      "sha256": "f0edd674dab7fa1bd5e88f32212cdf6195521db33b7b8193167a3bf9c09281ae"
+    },
+    {
+      "local": "assets/world/ore_smelters_01.png",
+      "source": "unpacked/legend_world/world_settlement/ore_smelters_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/ore_smelters_01.png",
+      "bytes": 63011,
+      "sha256": "08a65355c02aca97d31c7910b60d6ab60856433b5764500a066a5d1a434d3f8b"
+    },
+    {
+      "local": "assets/world/militia_trainingcamp_01.png",
+      "source": "unpacked/legend_world/world_settlement/militia_trainingcamp_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/militia_trainingcamp_01.png",
+      "bytes": 68506,
+      "sha256": "6b7a55fd70ec4e582a7a54c31bcf61e3d18148d791e5c9a71daa0ebb0cca77b3"
+    },
+    {
+      "local": "assets/world/wheat_field_02.png",
+      "source": "unpacked/legend_world/world_settlement/wheat_field_02.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/wheat_field_02.png",
+      "bytes": 23045,
+      "sha256": "9ccab65950a3d68014eb7d1f643969d6b6f26bec9bb929b21b1a6f1288aae300"
+    },
+    {
+      "local": "assets/world/lumber_camp_01.png",
+      "source": "unpacked/legend_world/world_settlement/lumber_camp_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/lumber_camp_01.png",
+      "bytes": 71479,
+      "sha256": "3699513e43b5710306d4d5154187f2d4477100e092366aa6e950aebfeb460a27"
+    },
+    {
+      "local": "assets/world/wool_spinner_01.png",
+      "source": "unpacked/legend_world/world_settlement/wool_spinner_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/wool_spinner_01.png",
+      "bytes": 59121,
+      "sha256": "2830ecef7bebc82fedf2f780a08fcd8dbf0148dbe06f22f8c8e5e8fbda9b37da"
+    },
+    {
+      "local": "assets/world/salt_mine_01.png",
+      "source": "unpacked/legend_world/world_settlement/salt_mine_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/salt_mine_01.png",
+      "bytes": 62429,
+      "sha256": "37a4198421e364f5ec7b6e81acfb9d927a49944a7a317152a031af707fe767f8"
+    },
+    {
+      "local": "assets/world/iron_mine_01.png",
+      "source": "unpacked/legend_world/world_settlement/iron_mine_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/iron_mine_01.png",
+      "bytes": 68124,
+      "sha256": "501a5900e03be86d260f067419c62c3a6b790b2769378c0aac1712331c1c6277"
+    },
+    {
+      "local": "assets/world/fishing_huts_01.png",
+      "source": "unpacked/legend_world/world_settlement/fishing_huts_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_world/world_settlement/fishing_huts_01.png",
+      "bytes": 68057,
+      "sha256": "e1a48d42e410062afdf1de6e193d2050933791d6a85f6132ba2f36cd20ce6099"
+    },
+    {
+      "local": "assets/world/trade_cart.png",
+      "source": "gfx/ui/items/tools/cart_01_70x70.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/tools/cart_01_70x70.png",
+      "bytes": 12192,
+      "sha256": "c585fb8030c9f3306aea90e9932a011bc9055e3b22e5d285110eb06ac6dcb151"
+    },
+    {
+      "local": "assets/world/arms_cart.png",
+      "source": "gfx/ui/items/tools/cart_02_70x70.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/tools/cart_02_70x70.png",
+      "bytes": 13801,
+      "sha256": "211fefa0d4863d357f954fdc72ab4dcca4a9f261cc393d5e2b8cce9654bb027e"
+    }
+  ]
+}
