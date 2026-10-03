@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.48.3 adds a saved **Default battle speed** setting in Save / Menu. New battles start at 3× by default; choose 1× in the Menu if preferred. Reloading, importing, hiding the app and opening dialogs still pause combat.
+
 Version 0.48.2 restores readable equipped weapons and shields: one-handed/ranged foreground art is 20% larger, mounted shields regain up to 48px width, and unmounted shields gain 12%. Grip placement limits extra framing shrink; shield bottoms stay inside the pawn/base frame. Two-handed rest poses and size limits remain intact.
 
 Version 0.48.1 enriches the world map with seeded terrain variation, regional details, curved roads, settlement footprints and clearer village/city/castle silhouettes. Real travellers gain shadows and directional facing; night adds warm settlement lights. Campaign mechanics and saves stay compatible. See [map rendering and validation](docs/MAP-IMMERSION.md).
