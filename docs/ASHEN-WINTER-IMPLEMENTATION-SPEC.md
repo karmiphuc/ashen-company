@@ -1,6 +1,6 @@
 # Ashen Winter implementation specification
 
-Status: implemented in v0.48.0. Release publication has not been performed.
+Status: implemented in v0.48.0 and integrated with v0.47.6 for release.
 
 This specification takes precedence over the broader ENDGAME-CRISES-PLAN.md for Ashen Winter. Faction war, changing ownership, and political borders are a subsequent release.
 

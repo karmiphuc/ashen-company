@@ -29,7 +29,7 @@ test('daily recruit offers are deterministic, varied, visible, and pure', () => 
 
   for (const offer of offers) {
     assert.match(offer.id, /^hire:oakwatch:1:[0-2]$/);
-    assert.ok(offer.cost >= 120 && offer.cost <= 540);
+    assert.ok(offer.cost >= 120 && offer.cost <= 2200);
     assert.equal(offer.cost, offer.background.cost);
     assert.equal(offer.person.hp, offer.stats.maxHp);
     assert.equal(offer.person.level, 1);
@@ -189,9 +189,9 @@ test('the deterministic catalog reaches every background and trait without cance
 
 test('ordinary recruit backgrounds match settlement type while rare specialists remain available', () => {
   const ordinaryByKind = {
-    town: new Set(['wayfarer', 'farmhand', 'sailor', 'tinker', 'pilgrim', 'deserter', 'caravan-guard', 'hunter', 'outrider', 'brawler']),
-    village: new Set(['farmhand', 'brawler', 'tinker', 'hunter', 'wayfarer', 'pilgrim']),
-    castle: new Set(['deserter', 'caravan-guard', 'hunter', 'outrider']),
+    town: new Set(['wayfarer', 'farmhand', 'sailor', 'tinker', 'pilgrim', 'deserter', 'caravan-guard', 'hunter', 'outrider', 'brawler', 'militia', 'miner', 'poacher', 'fisherman', 'squire']),
+    village: new Set(['farmhand', 'brawler', 'militia', 'miner', 'tinker', 'hunter', 'poacher', 'wayfarer', 'pilgrim', 'fisherman']),
+    castle: new Set(['deserter', 'caravan-guard', 'hunter', 'outrider', 'squire']),
   };
   const specialIds = new Set(RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220).map(background => background.id));
   for (const [kind, ordinary] of Object.entries(ordinaryByKind)) {
@@ -218,7 +218,7 @@ test('ordinary recruit backgrounds match settlement type while rare specialists 
   }
 });
 
-test('fantasy race bonuses and their hiring premiums double without changing other special backgrounds', () => {
+test('fantasy race bonuses and their hiring premiums double while elite backgrounds have distinct premiums', () => {
   const fantasy = {
     'elf-wanderer': { cost: 460, bonuses: { rangedSkill: 16, initiative: 10, rangedDefense: 4 } },
     'half-orc-mercenary': { cost: 500, bonuses: { maxHp: 18, maxFatigue: 10, meleeSkill: 2 } },
@@ -230,17 +230,17 @@ test('fantasy race bonuses and their hiring premiums double without changing oth
     assert.equal(background.cost, expected.cost, id);
     assert.deepEqual(background.bonuses, expected.bonuses, id);
   }
-  assert.deepEqual(RECRUIT_BACKGROUND_BY_ID.get('samurai').bonuses, { meleeSkill: 8, meleeDefense: 4, initiative: 3 });
-  assert.equal(RECRUIT_BACKGROUND_BY_ID.get('samurai').cost, 420);
+  assert.deepEqual(RECRUIT_BACKGROUND_BY_ID.get('samurai').bonuses, { meleeSkill: 18, meleeDefense: 10, resolve: 10, maxFatigue: 8, initiative: 3 });
+  assert.equal(RECRUIT_BACKGROUND_BY_ID.get('samurai').cost, 2000);
 
   const specials = RECRUIT_BACKGROUNDS.filter(background => background.cost >= 220);
   const byId = Object.fromEntries(specials.map(background => [background.id, background.bonuses]));
-  assert.equal(specials.length, 8);
+  assert.equal(specials.length, 13);
   assert.equal(new Set(specials.map(background => JSON.stringify(background.bonuses))).size, specials.length);
   for (const background of specials) {
     assert.ok(Object.keys(background.bonuses).every(key => STAT_KEYS.includes(key)), background.id);
     const total = Object.values(background.bonuses).reduce((sum, value) => sum + value, 0);
-    assert.ok(total >= 8 && total <= (fantasy[background.id] ? 30 : 16), `${background.id} bonus total: ${total}`);
+    assert.ok(total >= 8 && total <= (fantasy[background.id] ? 30 : background.cost>=700 ? 60 : 16), `${background.id} bonus total: ${total}`);
   }
 
   assert.ok(byId['elf-wanderer'].rangedSkill > byId['goblin-scout'].rangedSkill);
@@ -252,7 +252,8 @@ test('fantasy race bonuses and their hiring premiums double without changing oth
   assert.ok(byId.samurai.meleeDefense > byId.ronin.meleeDefense);
   assert.ok(byId.ronin.initiative > byId.samurai.initiative);
   assert.ok(byId.ninja.rangedSkill > 0 && byId.ninja.rangedDefense > 0);
-  assert.ok(byId['elf-wanderer'].initiative > byId.ninja.initiative);
+  assert.ok(byId.ninja.initiative > byId['elf-wanderer'].initiative);
+  for(const [id,cost,bonuses] of [['ronin',1000,{meleeSkill:14,initiative:10,meleeDefense:7,maxFatigue:6}],['ninja',1200,{rangedSkill:14,meleeSkill:8,initiative:16,rangedDefense:6,meleeDefense:4,maxFatigue:4}],['warrior-monk',900,{resolve:14,maxFatigue:12,meleeDefense:6,meleeSkill:8}]]){assert.equal(RECRUIT_BACKGROUND_BY_ID.get(id).cost,cost);assert.deepEqual(byId[id],bonuses);}
   assert.ok(byId['warrior-monk'].resolve > 0 && byId['warrior-monk'].maxFatigue > 0);
 });
 
@@ -271,7 +272,7 @@ test('rare special recruits span towns and days while ordinary offers remain', (
         assert.ok(rare.length <= 1);
         assert.ok(offers.filter(offer => offer.cost < 220).length >= offers.length - 1);
         for (const offer of rare) {
-          assert.ok(offer.cost <= 540);
+          assert.ok(offer.cost <= 2200);
           assert.equal(offer.person.appearanceId, offer.background.appearanceId);
           if (!found.has(offer.background.id)) found.set(offer.background.id, { seed, day, town });
         }
@@ -285,15 +286,16 @@ test('rare special recruits span towns and days while ordinary offers remain', (
     const { seed, day, town } = found.get(background.id);
     const state = createGame(seed);
     state.day = day;
+    state.shipments = {};
     state.position = { x: town.x, y: town.y };
-    state.gold = 1000;
+    state.gold = 5000;
     const offer = getRecruitOffers(state).find(entry => entry.background.id === background.id);
     const withoutBackground = getCompanyStats({ ...offer.person, background: 'Untrained', backgroundId: undefined });
     for (const key of STAT_KEYS) {
       assert.equal(offer.stats[key] - withoutBackground[key], background.bonuses[key] ?? 0, `${background.id} ${key}`);
     }
     assert.equal(recruit(state, offer.id).ok, true);
-    assert.equal(state.gold, 1000 - background.cost);
+    assert.equal(state.gold, 5000 - background.cost);
     assert.equal(state.party.at(-1).appearanceId, background.appearanceId);
     assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
   }

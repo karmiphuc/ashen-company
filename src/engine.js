@@ -18,7 +18,7 @@ import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.
 import { enemyProgression } from './enemy-progression.js';
 import { getRegionalCampText } from './enemy-rosters.js';
 import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk, weaponTrainingVisual } from './perks.js';
-import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile } from './recruits.js';
+import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile, makeTalents, talentGain } from './recruits.js';
 import { BOUNTY_HUNTER_COST, discoveryEvent, discoveryBonuses, championRoster, bountyOffer } from './discovery.js';
 import { deserterOffer, deserterEncounter, deserterEquipmentReward } from './deserters.js';
 import { ARMORY_STOCK_VERSION, townFacilities, townArmoryBudget, townDesign } from './town-facilities.js';
@@ -341,8 +341,8 @@ function hashSeed(seed) {
   return hash >>> 0;
 }
 
-function levelRolls(seed, level) {
-  return Object.fromEntries(ATTRIBUTES.map(key => [key, 1 + hashSeed(`${seed}:${level}:${key}`) % 5]));
+function levelRolls(seed, level, talents = {}) {
+  return Object.fromEntries(ATTRIBUTES.map(key => [key, talentGain(1 + hashSeed(`${seed}:${level}:${key}`) % 5,talents[key]??0)]));
 }
 
 function result(ok, message) { return { ok, message }; }
@@ -425,16 +425,18 @@ function restoredCondition(itemId, condition) {
   return (getItem(itemId)?.slot === 'shield' || getItem(itemId)?.throwing) && condition === null ? itemCondition(itemId) : condition;
 }
 function normalizeMember(person) {
+  const talents = person.talents ?? makeTalents(person.seed,person.backgroundId);
   const level = person.level ?? 1;
   const unspent = person.trainingPoints ?? 0;
   const pendingLevelUps = person.pendingLevelUps === undefined
     ? Array.from({ length: unspent }, (_, index) => {
       const earnedLevel = level - unspent + index + 1;
-      return { level: earnedLevel, rolls: levelRolls(person.seed, earnedLevel) };
+      return { level: earnedLevel, rolls: levelRolls(person.seed, earnedLevel,talents) };
     })
-    : person.pendingLevelUps.map(entry => ({ level: entry.level, rolls: { ...entry.rolls } }));
+    : person.pendingLevelUps.map(entry => ({ level: entry.level, rolls: person.talents===undefined?Object.fromEntries(ATTRIBUTES.map(key=>[key,talentGain(entry.rolls[key],talents[key]??0)])):{ ...entry.rolls } }));
   return {
     ...person,
+    talents: {...talents},
     combatRole: person.combatRole ?? 'auto', skillPreference: person.skillPreference ?? 'balanced',
     equipment: { ...person.equipment, attachment: person.equipment.attachment ?? null, attachment2:person.equipment.attachment2??null, mount: person.equipment.mount ?? null },
     traits: [...(person.traits ?? [])],
@@ -573,7 +575,7 @@ export function getCompanyStats(person) {
     xp: person.xp ?? 0,
     nextLevelXp: level * 50,
     trainingPoints: person.pendingLevelUps?.length ?? person.trainingPoints ?? 0,
-    dailyWage: Math.max(1, 5 + level - 1),
+    dailyWage: Math.max(1, 5 + level - 1 + ((RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId)?.cost??0)>=700?Math.ceil(RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId).cost/200):0)),
     bodyArmor: person.armorDurability?.body ?? maxBodyArmor,
     attachmentArmor: person.armorDurability?.attachment ?? maxAttachmentArmor,
     attachment2Armor:person.armorDurability?.attachment2??maxAttachment2Armor,
@@ -4486,7 +4488,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     while (person.xp >= person.level * 50 && person.level < 30) {
       person.xp -= person.level * 50;
       person.level += 1;
-      person.pendingLevelUps.push({ level: person.level, rolls: levelRolls(person.seed, person.level) });
+      person.pendingLevelUps.push({ level: person.level, rolls: levelRolls(person.seed, person.level,person.talents) });
     }
     if (person.level === 30) person.xp = Math.min(person.xp, person.level * 50 - 1);
     person.trainingPoints = person.pendingLevelUps.length;
@@ -5052,6 +5054,7 @@ export function validateSave(input) {
     assert(Array.isArray(traits) && traits.length <= 2 && traits.every(id => typeof id === 'string' && RECRUIT_TRAIT_BY_ID.has(id)) && new Set(traits).size === traits.length, 'person traits');
     assert(backgroundDefinition ? traits.length >= 1 && RECRUIT_TRAIT_BY_ID.get(traits[0]).kind === 'positive' && (traits.length === 1 || RECRUIT_TRAIT_BY_ID.get(traits[1]).kind === 'tradeoff') : traits.length === 0, 'person trait kinds');
     assert(validCount(person.seed) && person.seed <= 0xffffffff, 'person seed');
+    assert(person.talents===undefined||recordObject(person.talents)&&Object.keys(person.talents).length===3&&Object.entries(person.talents).every(([key,stars])=>ATTRIBUTES.includes(key)&&Number.isSafeInteger(stars)&&stars>=1&&stars<=3), 'person talents');
     assert(Number.isFinite(person.morale) && person.morale >= 0 && person.morale <= 100, 'person morale');
     assert(person.equipment && typeof person.equipment === 'object' && !Array.isArray(person.equipment), 'equipment');
     for (const slot of SLOTS) {
@@ -5081,7 +5084,7 @@ export function validateSave(input) {
         const entry = pending[index];
         const level = earnedLevel - pending.length + index + 1;
         assert(recordObject(entry) && Object.keys(entry).length === 2 && entry.level === level && recordObject(entry.rolls), 'pending level');
-        assert(Object.keys(entry.rolls).length === ATTRIBUTES.length && ATTRIBUTES.every(key => Number.isSafeInteger(entry.rolls[key]) && entry.rolls[key] >= 1 && entry.rolls[key] <= 5 && entry.rolls[key] === levelRolls(person.seed, level)[key]), 'level rolls');
+        assert(Object.keys(entry.rolls).length === ATTRIBUTES.length && ATTRIBUTES.every(key => Number.isSafeInteger(entry.rolls[key]) && entry.rolls[key] >= 1 && entry.rolls[key] <= 5 && entry.rolls[key] === levelRolls(person.seed, level,person.talents)[key]), 'level rolls');
       }
     }
     const member = normalizeMember(person);
@@ -5232,6 +5235,7 @@ export function validateSave(input) {
     level: person.level, xp: person.xp, trainingPoints: person.trainingPoints,
     perks: [...(person.perks ?? [])],
     pendingLevelUps: person.pendingLevelUps,
+    talents: person.talents?{...person.talents}:undefined,
     attributes: person.attributes ? { ...person.attributes } : undefined,
     armorDurability: person.armorDurability ? { body: person.armorDurability.body, attachment: person.armorDurability.attachment, attachment2:person.armorDurability.attachment2, head: person.armorDurability.head,
       shield: person.armorDurability.shield, reserveShield: person.armorDurability.reserveShield } : undefined,
