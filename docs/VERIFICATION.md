@@ -1,4 +1,13 @@
-# Verification - version 0.45.6, 2026-10-03
+# Verification - version 0.45.7, 2026-10-03
+
+
+## v0.45.7 checks
+
+All 511 automated tests pass. Recorded weapon profiles distinguish sword/cleaver cuts, dagger/spear/polearm thrusts, axe chops, mace/hammer blows, flail chains, whip cracks, bows, crossbows, slings and throws. Named weapons retain their base weapon family. Wood shield deflections, ringing armor, heavy armor dents and body contacts are separate. Clean misses do not play an impact; multi-target actions choose one actual contact; counters carry their own weapon identity and play their own cues. Contact scheduling follows battle speed. Pause, mute and hidden-page handling stop active and scheduled effects; eight simultaneous voices bound playback work. The manifest records licenses, conversions, bytes and SHA-256 hashes. Audio totals approximately 1.3 MB.
+
+All attack and movement events show escaped skill/move labels over their actor. Structured Battle Flow, Killing Frenzy and Berserk triggers survive save/reload and validate their bounded metadata. Multi-target kills aggregate recovery once; counter kills and wolf finishers credit the correct fighter. Battle Flow displays a teal burst and fatigue recovery; Killing Frenzy adds a persistent warm outline and status icon until its actual expiry; Berserk labels deferred counter AP accurately. Perk labels stack above the actor, flip below near the upper edge, and align inside side edges. Reduced-motion mode keeps readable static cues; paused/restored battles retain active Frenzy without replaying transient callouts.
+
+Chromium screenshot review uses a combat-feedback fixture with animation frozen mid-action for inspection. All images load; skill/proc labels are visible and do not overlap each other. Web Audio decodes all 22 effect buffers online and after a fresh offline relaunch; all 544 resources are cached. No browser exceptions occur. Visual feedback and decoding are verified; physical-device listening balance and iPad Safari remain untested.
 
 ## v0.45.6 checks
 

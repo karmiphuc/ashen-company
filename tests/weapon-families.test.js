@@ -152,6 +152,9 @@ test('off-turn Riposte kill carries Berserk AP into the reactor next activation'
   assert.equal(actor.pendingBerserkAp, 4);
   assert.equal(actor.ap, 0);
   assert.match(battle.log.at(-1), /Berserk: \+4 AP next turn/);
+  assert.equal(battle.lastEvent.effects,undefined);
+  assert.equal(battle.lastEvent.reactions[0].weaponId,'arming-sword');
+  assert.deepEqual(battle.lastEvent.reactions[0].effects,[{id:'berserk',amount:4,nextTurn:true}]);
   assert.deepEqual(validateSave(structuredClone(state)), state);
   let steps = 0;
   while (battle.status === 'active' && battle.activeId !== actor.id && steps < 100) {
@@ -460,4 +463,16 @@ test('stance-heavy tactics resolve in bounds and match stepwise save reloads', a
     assert.notEqual(state.battle.status, 'active', `stalled after ${steps} actions`);
     assert.deepEqual(state, instant);
   });
+});
+
+
+test('multi-target kills aggregate Battle Flow and emit Frenzy/Berserk once', () => {
+  const {state,battle,actor,at}=battleWith('greatsword',911);
+  state.party[0].level=20;state.party[0].perks=['battle-flow','killing-frenzy','berserk'];actor.perks=[...state.party[0].perks];
+  Object.assign(actor,{meleeSkill:200,fatigue:40,turnStartedRound:1});
+  for(const [id,q,r] of [['enemy-1',3,2],['enemy-2',4,2]]) Object.assign(at(id,q,r),{hp:1,bodyArmor:0,headArmor:0});
+  battle.rng=0;advanceBattle(state);
+  assert.equal(battle.lastEvent.affectedTargets.filter(target=>target.fallen).length,2);
+  assert.deepEqual(battle.lastEvent.effects,[{id:'battle-flow',amount:20},{id:'killing-frenzy',amount:25},{id:'berserk',amount:4}]);
+  assert.deepEqual(validateSave(structuredClone(state)),state);
 });

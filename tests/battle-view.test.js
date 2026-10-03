@@ -278,3 +278,36 @@ test('a riposte reaction animates beside the initiating miss and damages its own
   assert.match(html,/>Riposte<\/span>/);
   assert.match(html,/--action-time:0\.275s/);
 });
+
+
+test('weapon moves and kill effects belong to the actor, with persistent Frenzy only while active', () => {
+  const fight=structuredClone(battle);
+  Object.assign(fight.units[0],{alive:true,frenzyUntilRound:3});
+  Object.assign(fight.lastEvent,{weaponId:'warhammer',ranged:false,skillName:'Crush Armor',effects:[{id:'battle-flow',amount:10},{id:'killing-frenzy',amount:25},{id:'berserk',amount:4}]});
+  const html=battleHTML(fight,3,true);
+  const actor=html.match(/<article[^>]*data-unit-id="captain"[\s\S]*?<\/article>/)[0];
+  const victim=html.match(/<article[^>]*data-unit-id="enemy"[\s\S]*?<\/article>/)[0];
+  assert.match(actor,/battle-order">Crush Armor/);assert.match(actor,/proc-battle-flow/);assert.match(actor,/−10 fatigue/);
+  assert.match(actor,/has-killing-frenzy|battle-status-frenzy/);assert.doesNotMatch(victim,/proc-battle-flow|has-killing-frenzy/);
+  const paused=battleHTML(fight,0);
+  assert.doesNotMatch(paused,/battle-order">|battle-perk-proc/);assert.match(paused,/battle-status-frenzy/);
+  fight.round=4;assert.doesNotMatch(battleHTML(fight,0),/battle-status-frenzy|has-killing-frenzy/);
+  delete fight.lastEvent.skillName;assert.match(battleHTML(fight,1,true),/battle-order">Smash/);
+});
+
+test('counters display their own skill and proc over the reactor, and callouts escape HTML', () => {
+  const fight=structuredClone(battle);
+  Object.assign(fight.lastEvent,{type:'miss',skillName:'<script>',reactions:[{actorId:'enemy',targetId:'captain',type:'attack',skillName:'Riposte',weaponId:'arming-sword',hpDamage:5,effects:[{id:'berserk',amount:4,nextTurn:true}]}]});
+  const html=battleHTML(fight,1,true);
+  const reactor=html.match(/<article[^>]*data-unit-id="enemy"[\s\S]*?<\/article>/)[0];
+  assert.match(reactor,/battle-order">Riposte/);assert.match(reactor,/proc-berserk/);assert.match(reactor,/AP next turn/);
+  assert.match(html,/&lt;script&gt;/);assert.doesNotMatch(html,/<script>/);
+});
+
+
+test('perk labels flip below fighters near the upper edge and align inside side edges', () => {
+  const fight=structuredClone(battle);fight.units[0].q=0;fight.units[0].r=0;
+  Object.assign(fight.lastEvent,{effects:[{id:'battle-flow',amount:10},{id:'killing-frenzy',amount:25},{id:'berserk',amount:4}]});
+  const html=battleHTML(fight,1,true);
+  assert.match(html,/<article class="[^"]*perks-below[^"]*feedback-at-left[^"]*" data-unit-id="captain"/);
+});

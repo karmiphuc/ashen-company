@@ -10,9 +10,11 @@ All five mounts reuse the existing credited PNG files unchanged. The renderer no
 
 ## Battle audio
 
-The battle loop is [Heartfelt Battle](https://opengameart.org/content/heartfelt-battle-loopable-fantasy-stringspianohorn) by **request**. Weapon whooshes and cloth sounds come from [Kenney RPG Audio](https://kenney.nl/assets/rpg-audio); metal and body impacts come from [Kenney Impact Sounds](https://kenney.nl/assets/impact-sounds). All five source recordings are released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+The battle loop is [Heartfelt Battle](https://opengameart.org/content/heartfelt-battle-loopable-fantasy-stringspianohorn) by **request**. Weapon whooshes and cloth sounds come from [Kenney RPG Audio](https://kenney.nl/assets/rpg-audio); metal and body impacts come from [Kenney Impact Sounds](https://kenney.nl/assets/impact-sounds). The original five source recordings are released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
-The [audio manifest](../assets/audio/source-manifest.json) records each source file, conversion, size and SHA-256 hash. Mono MP3 conversions total about 1.2 MB. One looping music element and at most three short effect voices keep memory and playback work bounded. Audio is cached for offline play; the world map has no music. Music and effects can be muted independently in the Save menu.
+The v0.45.7 weapon effects add bow and three swish recordings from [Battle Sound Effects](https://opengameart.org/content/battle-sound-effects) by **artisticdude**, used under its offered CC0 license, plus chopping, chain/gear handling, wood, metal, soft-tissue and blunt contacts from the Kenney packs above (CC0). [Whip Sound](https://opengameart.org/content/whip-sound) by **Reemax** is used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). That recording is trimmed and converted to mono MP3; the other new recordings are silence-trimmed, limited, faded and capped at 0.65 seconds. Each conversion is documented in the manifest. Weapon profiles combine these recordings at action-speed-aware timings; chain and sling sounds are adapted foley, rather than recordings of every individual weapon.
+
+The [audio manifest](../assets/audio/source-manifest.json) records each source file, conversion, size and SHA-256 hash. Mono MP3 conversions total about 1.3 MB. One looping music element and at most eight short effect voices keep memory and playback work bounded. Audio is cached for offline play; the world map has no music. Music and effects can be muted independently in the Save menu.
 
 Fantasy Brothers 6.2 and Samurai 2.1 recruit and equipment artwork is documented
 in [FANTASY-SAMURAI.md](FANTASY-SAMURAI.md) and

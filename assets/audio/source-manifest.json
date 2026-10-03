@@ -50,6 +50,187 @@
       "conversion": "mono MP3, 22.05 kHz, 64 kbps",
       "bytes": 4222,
       "sha256": "a0919a25fa7685d5becc2bac06f4e51d0584e56a2c8dc639909ab4b755d9cb51"
+    },
+    {
+      "path": "assets/audio/sword-swish.mp3",
+      "author": "artisticdude",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/battle-sound-effects",
+      "original": "battle_sound_effects/swish_2.wav",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 3687,
+      "sha256": "9c648fcfa9160153e91985c62ddf23d1f27dd5cdb446b85d7a345fed85fbb124"
+    },
+    {
+      "path": "assets/audio/heavy-swish.mp3",
+      "author": "artisticdude",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/battle-sound-effects",
+      "original": "battle_sound_effects/swish_3.wav",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 5568,
+      "sha256": "8d82091debb690600f6c078401ffa35ba9b06479dd277ead19e016a99c813ba2"
+    },
+    {
+      "path": "assets/audio/thrust.mp3",
+      "author": "artisticdude",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/battle-sound-effects",
+      "original": "battle_sound_effects/swish_4.wav",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 3687,
+      "sha256": "188ce9a4577620a1df9a66363c61ecea3f73064a56bdc2d595f14a025f4f57f7"
+    },
+    {
+      "path": "assets/audio/bow-release.mp3",
+      "author": "artisticdude",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/battle-sound-effects",
+      "original": "battle_sound_effects/Bow.wav",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 4222,
+      "sha256": "c23ffe8fe0609769d779d96410e79b72320e1b1c333228ec86869308bbf6e05a"
+    },
+    {
+      "path": "assets/audio/dagger-swish.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "original": "Audio/knifeSlice2.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 5267,
+      "sha256": "d5c9200b5e948bf030c1fca2fbebdb1746630d19978ab13c62092ad1d1d8c477"
+    },
+    {
+      "path": "assets/audio/axe-chop.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "original": "Audio/chop.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 2550,
+      "sha256": "1adbc9c3ca7a772b3f433360507efb980b7ec9965cf582d5ea6b4db6a411001a"
+    },
+    {
+      "path": "assets/audio/chain.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "original": "Audio/handleCoins2.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 2968,
+      "sha256": "bdd6b4b02d470a1606ea5328a78b6e9e81bf801db3baf18504f9ed1a8f6c05a3"
+    },
+    {
+      "path": "assets/audio/crossbow-release.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "original": "Audio/metalLatch.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 2759,
+      "sha256": "3859e18da2a797b23663858468e597f925365d67d4d68e693937dded97c55702"
+    },
+    {
+      "path": "assets/audio/sling-release.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "original": "Audio/clothBelt.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 5894,
+      "sha256": "3c3782b6f19b20702e6d590703ed32a3338eed391fd7e442c1af3aa4eb9e0794"
+    },
+    {
+      "path": "assets/audio/whip-release.mp3",
+      "author": "Reemax",
+      "license": "CC-BY-4.0",
+      "source": "https://opengameart.org/content/whip-sound",
+      "original": "whip.wav",
+      "conversion": "silence-trimmed, limiter, excerpt capped 0.65 seconds; mono MP3, 22.05 kHz, 64 kbps",
+      "bytes": 5894,
+      "sha256": "f6b9e4dd211fae3fdac2e89162259c862a44a9806e714fe8d4ddd27229a3ae59",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "path": "assets/audio/reload.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "original": "Audio/creak2.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 5894,
+      "sha256": "993a26722e7fa5df4c36620573430977d29b48cbbdfce313fe7868ffbbb7c039"
+    },
+    {
+      "path": "assets/audio/shield-wood.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactWood_heavy_002.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 3177,
+      "sha256": "4434617d691b189d0ebe55719635d6c0a96e926907db315204eeaca777223a56"
+    },
+    {
+      "path": "assets/audio/armor-clang.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactMetal_light_001.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 2759,
+      "sha256": "a7958c994dd767e348cdd271b47373cfcb2f97192fc1720524587e75d4e08cfb"
+    },
+    {
+      "path": "assets/audio/armor-dent.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactMetal_heavy_001.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 3595,
+      "sha256": "112c6dfc3040753f1aecd333729f9db32c0514ddbbec048e116fbce80d4fa588"
+    },
+    {
+      "path": "assets/audio/blunt-hit.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactPunch_heavy_001.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 5058,
+      "sha256": "313f0a5fd937adba8bf4d99c7a930bf8b1c328e3e113d5f19b1f848011359830"
+    },
+    {
+      "path": "assets/audio/pierce-hit.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactSoft_medium_002.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 1923,
+      "sha256": "bf12eab70475d01c44284ccb48ae8a5ca184761beaf65ed3423451a864fa8cbd"
+    },
+    {
+      "path": "assets/audio/cut-hit.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactSoft_heavy_003.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 5058,
+      "sha256": "9f207455d91b265c51369d5e550d80d925096636f834242b2fbbc0be34804e24"
+    },
+    {
+      "path": "assets/audio/hammer-hit.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": "Audio/impactMining_002.ogg",
+      "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
+      "bytes": 5894,
+      "sha256": "412f590047831fbe28e5b688a675964bbf29510d99d0419d7ff59ab3c221968d"
     }
   ]
 }
