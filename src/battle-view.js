@@ -24,7 +24,7 @@ export function battleActionDuration(speed = 1) { return speed === 3 ? .275 : sp
 
 export function tacticsHTML(tactic = 'offense', disabled = false) {
   const current = TACTICS.find(entry => entry[0] === tactic) || TACTICS[0];
-  return `<div class="battle-tactics"><div role="group" aria-label="Company tactics">${TACTICS.map(([id, label]) => `<button data-tactic="${id}" aria-pressed="${current[0] === id}" ${disabled ? 'disabled' : ''}>${label}</button>`).join('')}</div><p>${current[2]}</p></div>`;
+  return `<div class="battle-tactics"><div role="group" aria-label="Company tactics">${TACTICS.map(([id, label]) => `<button data-tactic="${id}" aria-pressed="${current[0] === id}" ${disabled ? 'disabled' : ''}>${label}</button>`).join('')}</div><label class="battle-tactic-picker"><span>Tactic</span><select data-battle-tactic aria-label="Company tactic" ${disabled?'disabled':''}>${TACTICS.map(([id,label])=>`<option value="${id}" ${current[0]===id?'selected':''}>${label}</option>`).join('')}</select></label><p>${current[2]}</p></div>`;
 }
 
 function esc(value) {
@@ -305,12 +305,25 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
   const moralePercent = Math.round(morale.modifier * 100);
   const skillName = animateEvent && battle.lastEvent?.actorId === active?.id ? battle.lastEvent?.skillName : null;
 
+  const brothers=units.filter(u=>u.side==='company'&&!u.ally&&u.alive&&!u.escaped).length,enemies=units.filter(u=>u.side==='enemy'&&u.alive&&!u.escaped).length,allies=units.filter(u=>u.ally&&u.alive&&!u.escaped).length;
   return `<section class="battle-view battle-status-${esc(status)}" style="--action-time:${battleActionDuration(speed)}s" aria-label="Tactical battle">
     <header class="battle-topbar">
-      <div><span class="battle-kicker">TACTICAL ENGAGEMENT</span><strong>Round ${Math.max(1, Math.round(number(battle.round, 1)))}</strong></div>
+      <div><span class="battle-kicker">TACTICAL ENGAGEMENT</span><strong>Round ${Math.max(1, Math.round(number(battle.round, 1)))}</strong><small class="battle-counts">${brothers} ${brothers===1?'brother':'brothers'} · ${enemies} ${enemies===1?'enemy':'enemies'}${allies?` · ${allies} ${allies===1?'ally':'allies'}`:''}</small></div>
       <div class="battle-turn"><span>TURN</span><strong>${esc(active?.name || 'Resolving')} ${active ? animateEvent ? 'acting' : 'to act' : ''}</strong></div>
       <strong class="battle-status">${statusText(status)}</strong>
     </header>
+    <div class="battle-controls">
+      <div class="battle-speed" aria-label="Battle speed">
+        <button class="${selectedSpeed === 0 ? 'is-selected' : ''}" data-battle-speed="0" aria-pressed="${selectedSpeed === 0}">Pause</button>
+        <button class="${selectedSpeed === 1 ? 'is-selected' : ''}" data-battle-speed="1" aria-pressed="${selectedSpeed === 1}">1x</button>
+        <button class="${selectedSpeed === 3 ? 'is-selected' : ''}" data-battle-speed="3" aria-pressed="${selectedSpeed === 3}">3x</button>
+      </div>
+      <div class="battle-camera" role="group" aria-label="Battlefield camera"><button data-battle-camera="company" aria-label="Center battlefield on your company">Company</button><button data-battle-camera="enemy" aria-label="Center battlefield on enemies" ${units.some(u=>u.side==='enemy'&&u.alive&&!u.escaped)?'':'disabled'}>Enemies</button><button data-battle-camera="active" aria-label="Center battlefield on the acting fighter" ${active?.alive&&!active.escaped?'':'disabled'}>Acting</button></div>
+      <button class="battle-retreat" data-action="retreat-battle" ${status === 'active' ? '' : 'disabled'}>Retreat</button>
+      <button class="battle-resolve" data-action="resolve-battle" ${status === 'active' ? '' : 'disabled'}>Resolve battle</button>
+    </div>
+    ${tacticsHTML(battle.tactic, status !== 'active')}
+
     <div class="battle-layout">
       <div class="battle-scroll" tabindex="0" aria-label="Battlefield scroll area">
         ${terrainLegend(field)}
@@ -320,21 +333,12 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         </div>
       </div>
       <aside class="battle-log" aria-label="Battle event log">
-        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<small>Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale.</small></section>` : ''}
-        <h3>Combat log</h3>
-        <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol>
+        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<p class="battle-vitals">HP ${Math.round(number(active.hp))}/${Math.round(number(active.maxHp))} · AP ${Math.round(number(active.ap))}/${battle.rulesVersion===2?9:2}<br>Fatigue ${Math.round(number(active.fatigue))}/${Math.round(number(active.maxFatigue))}</p><details class="battle-morale-help"><summary>Morale effects</summary><small>Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale.</small></details></section>` : ''}
+        <details class="battle-log-details" open><summary>Combat log</summary>
+        <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol></details>
       </aside>
     </div>
-    ${tacticsHTML(battle.tactic, status !== 'active')}
-    <footer class="battle-controls">
-      <div class="battle-speed" aria-label="Battle speed">
-        <button class="${selectedSpeed === 0 ? 'is-selected' : ''}" data-battle-speed="0" aria-pressed="${selectedSpeed === 0}">Pause</button>
-        <button class="${selectedSpeed === 1 ? 'is-selected' : ''}" data-battle-speed="1" aria-pressed="${selectedSpeed === 1}">1x</button>
-        <button class="${selectedSpeed === 3 ? 'is-selected' : ''}" data-battle-speed="3" aria-pressed="${selectedSpeed === 3}">3x</button>
-      </div>
-      <button class="battle-retreat" data-action="retreat-battle" ${status === 'active' ? '' : 'disabled'}>Retreat</button>
-      <button class="battle-resolve" data-action="resolve-battle" ${status === 'active' ? '' : 'disabled'}>Resolve battle</button>
-    </footer>
+
   </section>`;
 }
 
