@@ -231,6 +231,100 @@
       "conversion": "silence-trimmed, fade/limiter, mono MP3 22.05 kHz 64 kbps; capped 0.65 seconds",
       "bytes": 5894,
       "sha256": "412f590047831fbe28e5b688a675964bbf29510d99d0419d7ff59ab3c221968d"
+    },
+    {
+      "path": "assets/audio/flesh-hit.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactSoft_heavy_001.ogg",
+        "Audio/impactPunch_medium_003.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "bf714433c592d6d3aa531cbd4e181c5b982fa71fdbcadc751e7fee9ecb557326"
+    },
+    {
+      "path": "assets/audio/arrow-pierce.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactSoft_medium_000.ogg",
+        "Audio/impactWood_light_003.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "1b30a06119573778ebdaaf4c7628c8c78901258ab3eb0d27868f100ef3b33a7a"
+    },
+    {
+      "path": "assets/audio/throwing-pierce.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactSoft_heavy_002.ogg",
+        "Audio/impactPunch_medium_002.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "6e6aee60c5067608999cf82091d0946e66cf3c8d11ec63f6297c782d96bcdc6d"
+    },
+    {
+      "path": "assets/audio/bolt-pierce.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactWood_medium_001.ogg",
+        "Audio/impactSoft_medium_004.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "5bd3086131c3a605c6c8be03f25e5fa147f310feb686727d2c50149b266d4895"
+    },
+    {
+      "path": "assets/audio/slash-hit.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactSoft_heavy_004.ogg",
+        "Audio/impactPunch_medium_004.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "92282406f7b24db678ade59413451435fa48600cfd6f80d1bcbb8c68756a1245"
+    },
+    {
+      "path": "assets/audio/cavalry-hooves.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactWood_medium_000.ogg",
+        "Audio/impactWood_medium_000.ogg",
+        "Audio/impactWood_medium_000.ogg",
+        "Audio/impactWood_medium_000.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "a844a57542f8c847d6e5bf1ece2556573ca93ce8c728fee794770f2574c363fa"
+    },
+    {
+      "path": "assets/audio/charge-hit.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactPunch_heavy_003.ogg",
+        "Audio/impactWood_heavy_000.ogg",
+        "Audio/impactSoft_heavy_000.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "835b2d5ec6c66e7859e422ddc1f275fe1ba62a9b192431184f6768627996c48d"
     }
   ]
 }
