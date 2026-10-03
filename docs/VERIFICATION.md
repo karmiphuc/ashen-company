@@ -1,6 +1,20 @@
-# Verification - version 0.46.1, 2026-10-03
+# Verification - version 0.46.2, 2026-10-03
 
 
+
+## v0.46.2 checks
+
+All 552 automated tests pass, including eleven champion/retinue/discovery regressions. Champions can appear at difficulties 1/2/3 with additional 1%/3%/6% seeded leader rolls; existing regional named elite leaders are promoted too. Weak difficulty-0 starter bands remain ordinary. Champions retain their regional armory and receive a unique named variant of their actual weapon, +40% health, +12 melee/ranged skill, +8 defense, +20 resolve/fatigue capacity and +8 initiative. Gold stars mark scouting, map labels and battle pawns.
+
+Defeated champions reserve their equipped named weapons, shields, armor and helmets before ordinary loot fills its 24-item limit. Destroyed armor/shields recover with a repairable 25% durability floor; each piece drops once. Escaping champions retain their gear and do not complete a wanted contract. Ordinary salvage remains governed by its existing damage thresholds and probabilities.
+
+Rare wanted champion contracts use stable 6% weekly town/castle board rolls, remain distinct from Deserter contracts, and contain one champion plus seven elite faction retainers. Completing and returning the contract pays 1,000 crowns and unlocks the Bounty Hunter. Hiring at a settlement costs 5,000 crowns once and permanently adds 5 percentage points to champion rolls, without food, wages or a formation slot. Repeated hiring and incomplete/escaped objectives cannot grant the retinue. Boards remain within one to three offers.
+
+Three seeded temporary discovery events have a 30% weekly opportunity and last three days: Age of Challengers adds 8 percentage points to champion rolls, Relic Rumors adds 15 points to named camp-drop chances, and Great Beast Migration raises elite wild-camp mount rewards from 12% to 24%. Mount pools retain regional suitability, including armored war horses and northern/woodland wargs. A map banner announces the duration and benefit; the chronicle records event transitions. Engaging locks a camp generation or band's spawn-cycle bonuses, preventing retreat/reload/event expiry from rerolling its champion or loot. New generations use current bonuses. Existing active battle snapshots retain their rules; old saves default to an unhired retinue.
+
+Native Chromium exercised the actual map selection, gold-star scouting and combat, result-screen trophy collection, and retinue hiring. The wanted Western League champion carried Thornheart Longsword (`famed:longsword:577268568`). Hiring reduced 6,500 crowns to 1,500 and disabled the repeated hire action. At 390×844 the event banner was readable with no horizontal overflow; there were no JavaScript exceptions. Screenshots: `/workspace/ashen-champion-scouting-v0462.png`, `/workspace/ashen-champion-battle-v0462.png`, `/workspace/ashen-bounty-hunter-v0462.png`, and `/workspace/ashen-champion-event-mobile-v0462.png`.
+
+Fresh-profile Chromium cached all 557 resources under `ashen-company-67eefcf47e5510ce`, reloaded with networking disabled, imported the discovery module and retinue API, and generated a champion-containing camp roster offline without exceptions.
 
 ## v0.46.1 checks
 

@@ -44,5 +44,5 @@ test('quest boards offer one to three stable jobs, vary locally, and retain acce
     }
   }
   assert.deepEqual(counts, new Set([1, 2, 3]));
-  assert.deepEqual(types, new Set(['courier', 'supply', 'hunt', 'assault', 'rescue', 'deserters']));
+  assert.deepEqual(types, new Set(['courier', 'supply', 'hunt', 'assault', 'rescue', 'deserters', 'bounty']));
 });

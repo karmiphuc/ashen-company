@@ -172,7 +172,7 @@ test('rare mounted elites are visible while scouting and keep their mount in bat
   const elite = state.battle.units.find(unit => unit.id === 'enemy-1');
   assert.equal(elite.equipment.mount, band.enemies[0].mount);
   assert.ok(mountIds.includes(elite.equipment.mount));
-  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + getItem(elite.equipment.mount).initiativeBonus + enemyRoleBonuses(band.enemies[0],band.difficulty).initiative);
+  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + getItem(elite.equipment.mount).initiativeBonus + enemyRoleBonuses(band.enemies[0],band.difficulty).initiative + (elite.champion?8:0));
   assert.deepEqual(validateSave(state), state);
 });
 

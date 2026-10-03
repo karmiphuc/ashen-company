@@ -15,8 +15,8 @@ export function cityMountOffer(seed,town,cycle) {
   } else if(town.kind==='castle'&&chance<3) return chance===0?'armored-war-horse':'war-horse';
   return null;
 }
-export function campMountReward(seed,camp) {
-  if(!camp.random||camp.difficulty!==3||roll(`${seed}:${camp.id}:${camp.generation}:mount-reward`)%100>=12)return null;
+export function campMountReward(seed,camp,bonus=0) {
+  if(!camp.random||camp.difficulty!==3||roll(`${seed}:${camp.id}:${camp.generation}:mount-reward`)%100>=12+bonus)return null;
   const pool=regionalMountPool(camp.x,camp.y,{reward:true});
   return pool[roll(`${seed}:${camp.id}:${camp.generation}:mount-kind`)%pool.length];
 }
