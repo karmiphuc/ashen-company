@@ -53,3 +53,5 @@ npm test
 ```
 
 The actual `named/*.nut`, `scripts/config/item_names.nut`, `brushes/entity_icons.brush`, `gfx/entity_icons.png`, and `split_shield.nut`/`lunge_skill.nut` rules were inspected. BB art attribution remains in [ASSET-CREDITS.md](ASSET-CREDITS.md).
+
+The v0.47.1 portrait correction bounds the complete rotated named two-handed sprite above the pawn ground anchor. Designs with grips above long handle butts move upward individually, preserving their size and mounted rider offset, with a shallower opposite-shoulder resting angle. Pixel-based regression coverage checks every named two-hander, alternate rolls and all mount species.
