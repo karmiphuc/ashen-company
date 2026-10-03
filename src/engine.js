@@ -280,7 +280,8 @@ const SPEED = 55;
 const MAX_LOG = 30;
 const MAX_INVENTORY = 512;
 const MAX_CARGO = 30;
-export const MAX_COMPANY_SIZE = 12;
+export const MAX_COMPANY_SIZE = 18;
+export const MAX_BATTLE_SIZE = 15;
 export const MAX_SAVE_FILE_BYTES = 4 * 1024 * 1024;
 const CAMP_RADIUS = 35;
 const BAND_RADIUS = 28;
@@ -339,7 +340,7 @@ function seedFormation(party) {
   const slots = Array(36).fill(null);
   const ranged = party.filter(person => getItem(person.equipment?.weapon)?.ranged === true);
   const melee = party.filter(person => !ranged.includes(person));
-  for (const person of [...melee, ...ranged]) {
+  for (const person of [...melee, ...ranged].slice(0,MAX_BATTLE_SIZE)) {
     const preferred = ranged.includes(person) ? [...REAR_FORMATION, ...MIDDLE_FORMATION, ...FRONT_FORMATION] : [...FRONT_FORMATION, ...MIDDLE_FORMATION, ...REAR_FORMATION];
     slots[preferred.find(index => slots[index] === null)] = person.id;
   }
@@ -350,18 +351,30 @@ export function getFormation(state) {
   return expandedFormation(state.formation ?? seedFormation(state.party));
 }
 
+export function getReserveSlots(state) {
+  return state.reserveIds ? [...state.reserveIds] : Array(3).fill(null);
+}
+
+export function getBattleRoster(state) {
+  return getFormation(state).filter(Boolean).map(id=>personById(state,id)).filter(Boolean);
+}
+
 export function moveFormation(state, fromIndex, toIndex) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
-  if (!Number.isSafeInteger(fromIndex) || !Number.isSafeInteger(toIndex) || fromIndex < 0 || fromIndex >= 36 || toIndex < 0 || toIndex >= 36) return result(false, 'Choose two formation slots.');
-  const formation = getFormation(state);
+  if (!Number.isSafeInteger(fromIndex) || !Number.isSafeInteger(toIndex) || fromIndex < 0 || fromIndex >= 39 || toIndex < 0 || toIndex >= 39) return result(false, 'Choose two formation or reserve slots.');
+  const formation = [...getFormation(state),...getReserveSlots(state)];
   if (!formation[fromIndex]) return result(false, 'Select a company member to move.');
   [formation[fromIndex], formation[toIndex]] = [formation[toIndex], formation[fromIndex]];
-  state.formation = formation;
+  if(formation.slice(0,36).filter(Boolean).length>MAX_BATTLE_SIZE)return result(false,'Only 15 brothers can be fielded. Swap with a fielded brother or move one to reserve first.');
+  state.formation = formation.slice(0,36);
+  state.reserveIds = formation.slice(36);
   const message = 'Company formation updated.';
   record(state, message);
+  applyCompanyAutomation(state);
   return result(true, message);
 }
+
 function armorMaximum(itemId) { return getItem(itemId)?.armor ?? 0; }
 export function shieldMaximum(itemId) {
   const item = getItem(itemId);
@@ -577,6 +590,7 @@ export function createGame(seed = Date.now()) {
     shipmentLegacyThroughDay: 0,
     mountRewards: Object.fromEntries(getMountRewardDefinitions().map(reward => [reward.id, false])),
     supplies: { tools: 8, medicine: 5, ammo: 16 },
+    automation:{buyAmmo:false,equipBandages:false}, reserveIds:[null,null,null],
     camps: {},
     bands: {},
     factionPatrols: {}, factionReports: [], worldLosses: {}, factionSimulationHour: 8,
@@ -1305,6 +1319,7 @@ function onArrival(state) {
   }
   if (!state.visited.includes(town.id)) state.visited.push(town.id);
   record(state, `The company arrives at ${town.name}.`);
+  applyCompanyAutomation(state);
   if (state.contract?.to === town.id && !completeContract(state, town)) {
     if (state.contract.type === 'supply') {
       const good = GOOD_BY_ID.get(state.contract.goodId);
@@ -1481,6 +1496,7 @@ export function tick(state, hours) {
     remaining -= step;
     if (engagement) break;
   }
+  applyCompanyAutomation(state);
   return engagement ?? result(true, state.destination ? 'The company is on the road.' : 'Time passes.');
 }
 
@@ -1612,6 +1628,7 @@ export function buyItem(state, itemId, quantity = 1) {
   }
   const message = `Bought ${quantity > 1 ? `${quantity} x ` : ''}${item.name} for ${cost} crowns.`;
   record(state, message);
+  applyCompanyAutomation(state);
   return result(true, message);
 }
 
@@ -1717,6 +1734,37 @@ export function buySupplies(state, kind, quantity = 1) {
   const message = `Bought ${quantity} ${SUPPLY_INFO[kind].name.toLowerCase()} for ${cost} crowns.`;
   record(state, message);
   return result(true, message);
+}
+
+export function setCompanyAutomation(state, key, enabled) {
+  const blocked=actionBlocked(state);if(blocked)return blocked;
+  if(!['buyAmmo','equipBandages'].includes(key)||typeof enabled!=='boolean')return result(false,'Choose a valid company automation option.');
+  state.automation={buyAmmo:false,equipBandages:false,...state.automation,[key]:enabled};
+  applyCompanyAutomation(state);
+  return result(true,`${key==='buyAmmo'?'Auto-buy ammunition':'Auto-equip bandages'} ${enabled?'enabled':'disabled'}.`);
+}
+
+export function applyCompanyAutomation(state) {
+  if(state.battle||state.gameOver)return;
+  if(state.automation?.buyAmmo&&townAt(state)&&!state.destination){
+    refillThrowingAmmo(state);
+    while(state.supplies.ammo<10000){
+      const offer=getMarket(state).supplies.find(s=>s.kind==='ammo');
+      const amount=Math.min(100,10000-state.supplies.ammo,offer.stock,Math.floor(state.gold/offer.buyPrice));
+      if(amount<=0||!buySupplies(state,'ammo',amount).ok)break;
+    }
+  }
+  if(state.automation?.equipBandages){
+    const fielded=getBattleRoster(state),members=[...fielded,...state.party.filter(p=>!fielded.includes(p))];
+    for(const person of members){
+      const best=state.inventory.map(getItem).filter(i=>i?.consumable==='heal').sort((a,b)=>b.heal-a.heal||a.id.localeCompare(b.id))[0];
+      if(!best)break;
+      const carried=person.accessories.map(getItem),healing=carried.map((i,index)=>({i,index})).filter(e=>e.i?.consumable==='heal');
+      if(healing.some(e=>e.i.heal>=best.heal))continue;
+      const slot=healing.length?healing.sort((a,b)=>a.i.heal-b.i.heal)[0].index:person.accessories.findIndex(id=>id===null);
+      if(slot>=0)equipItem(state,person.id,best.id,`accessory-${slot+1}`);
+    }
+  }
 }
 
 export function getTownServiceQuote(state, service, memberId = null) {
@@ -1930,25 +1978,27 @@ export function recruit(state, offerId) {
   if (blocked) return blocked;
   const access = requireTown(state);
   if (access.error) return access.error;
-  if (state.party.length >= MAX_COMPANY_SIZE) return result(false, 'The company has room for only twelve members.');
+  if (state.party.length >= MAX_COMPANY_SIZE) return result(false, 'The company has room for only eighteen members (15 fielded and 3 reserves).');
   const offers = getRecruitOffers(state);
   const offer = offerId === undefined ? offers[0] : offers.find(entry => entry.id === offerId);
   if (!offer) return result(false, 'That recruit is no longer available here today.');
   if (state.gold < offer.cost) return result(false, `Recruitment costs ${offer.cost} crowns.`);
   const formation = getFormation(state);
-  const vacancy = [...FRONT_FORMATION, ...MIDDLE_FORMATION, ...REAR_FORMATION].find(index => formation[index] === null);
-  if (vacancy === undefined) return result(false, 'The company formation has no open place.');
+  const reserves=getReserveSlots(state),fielded=formation.filter(Boolean).length;
+  const vacancy = fielded<MAX_BATTLE_SIZE ? [...FRONT_FORMATION, ...MIDDLE_FORMATION, ...REAR_FORMATION].find(index => formation[index] === null) : reserves.findIndex(id=>id===null);
+  if (vacancy === undefined || vacancy < 0) return result(false, 'The company formation has no open place.');
   const person = normalizeMember(offer.person);
   state.party.push(person);
-  formation[vacancy] = person.id;
-  state.formation = formation;
+  if(fielded<MAX_BATTLE_SIZE)formation[vacancy]=person.id;else reserves[vacancy]=person.id;
+  state.formation = formation;state.reserveIds=reserves;
   state.gold -= offer.cost;
   state.recruitSerial += 1;
   state.hiredRecruitOffers = [
     ...(state.hiredRecruitOffers ?? []).filter(id => recruitOfferDay(id) === state.day),
     offer.id,
   ];
-  const message = `${person.name} joins the Ashen Company for ${offer.cost} crowns.`;
+  applyCompanyAutomation(state);
+  const message = `${person.name} joins the Ashen Company${fielded>=MAX_BATTLE_SIZE?' in reserve':''} for ${offer.cost} crowns.`;
   record(state, message);
   return result(true, message);
 }
@@ -2040,6 +2090,7 @@ function advanceStationaryTime(state, hours) {
     state.destination = target ? { x: target.x, y: target.y } : null;
     if (!target) state.pursuit = null;
   }
+  applyCompanyAutomation(state);
   return null;
 }
 
@@ -2316,7 +2367,8 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
   if (!camp) return result(false, 'That hostile group is no longer here.');
   if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${camp.respawnHours} hours.`);
   if (state.destination || distance(state.position, camp) > (encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
-  if (!state.party.length) return result(false, 'No company members can fight.');
+  if (!getBattleRoster(state).length) return result(false, 'Move a brother from reserve into the formation before fighting.');
+  applyCompanyAutomation(state);
   if(['camp','band'].includes(encounterType)){state.discoveryRolls??={};state.discoveryRolls[camp.id]={cycle:camp.generation??camp.spawnCycle,...discoveryBonuses(state,camp)};}
   refillThrowingAmmo(state);
   const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y), {fortified:encounterType === 'camp'});
@@ -4252,7 +4304,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   const survivors = [];
   for (const person of state.party) {
     const unit = battle.units.find(entry => entry.id === person.id);
-    if (!unit) continue;
+    if (!unit) {survivors.push(person);continue;}
     const battleAmmo = unit.throwingAmmo ?? {
       active: throwingCapacity(unit.equipment.weapon),
       reserve: throwingCapacity(unit.reserveEquipment?.weapon),
@@ -4299,6 +4351,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   state.party = survivors;
   const survivingIds = new Set(survivors.map(person => person.id));
   state.formation = formation.map(id => survivingIds.has(id) ? id : null);
+  state.reserveIds=getReserveSlots(state).map(id=>survivingIds.has(id)?id:null);
   if (victory) {
     const loot = battle.loot;
     state.gold += loot.gold;
@@ -4350,6 +4403,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   if (sharing?.selectedCount) record(state, `Shared ${sharing.selectedCount} spoils worth ${sharing.value} crowns at ${sharing.townName}: each surviving brother receives ${sharing.xp} XP and up to ${sharing.morale} morale.`);
   record(state, message);
   state.battle = null;
+  applyCompanyAutomation(state);
   return result(true, message);
 }
 
@@ -4426,7 +4480,7 @@ function validateBattle(input, party, worldState) {
   const lootSeed = input.lootSeed ?? hashSeed(input.id);
   assert(validCount(lootSeed) && lootSeed <= 0xffffffff, 'battle loot seed');
   const field = validateBattleField(input.field);
-  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_COMPANY_SIZE + 15, 'battle units');
+  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + 15, 'battle units');
   const ids = new Set();
   const partyIds = new Set(party.map(person => person.id));
   const questAllies = encounterType === 'rescue' || encounterType === 'camp' && worldState.contract?.type === 'assault'
@@ -4579,7 +4633,8 @@ function validateBattle(input, party, worldState) {
   assert(new Set(units.filter(unit => unit.alive).map(unit => `${unit.q},${unit.r}`)).size === units.filter(unit => unit.alive).length, 'battle occupied hexes');
   const focusTargetId = input.focusTargetId ?? null;
   assert(focusTargetId === null || units.some(unit => unit.side === 'enemy' && unit.id === focusTargetId), 'battle focus target');
-  assert(units.filter(unit => unit.side === 'company' && !unit.ally).length === party.length, 'battle company roster');
+  const fieldedIds=new Set(getBattleRoster(worldState).map(p=>p.id));
+  assert(units.filter(unit => unit.side === 'company' && !unit.ally).length === fieldedIds.size && units.filter(unit=>unit.side==='company'&&!unit.ally).every(unit=>fieldedIds.has(unit.id)), 'battle company roster');
   assert(units.filter(unit => unit.ally).length === (questAllies ? 3 : 0), 'battle allied roster');
   assert(units.filter(unit => unit.side === 'company' && !unit.ally).every(unit => party.some(person => person.id === unit.id)), 'battle company roster');
   const formationAdvanceInput = input.formationAdvance ?? null;
@@ -4880,7 +4935,10 @@ export function validateSave(input) {
     assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
   }
   const formation = input.formation === undefined ? seedFormation(input.party) : input.formation;
-  assert(Array.isArray(formation) && [12, 36].includes(formation.length) && formation.every(id => id === null || ids.has(id)) && formation.filter(id => id !== null).length === ids.size && new Set(formation.filter(id => id !== null)).size === ids.size, 'formation');
+  const reserveIds=input.reserveIds===undefined?[null,null,null]:input.reserveIds,automation=input.automation===undefined?{buyAmmo:false,equipBandages:false}:input.automation;
+  assert(Array.isArray(reserveIds)&&reserveIds.length===3&&reserveIds.every(id=>id===null||ids.has(id)),'reserves');
+  assert(recordObject(automation)&&typeof automation.buyAmmo==='boolean'&&typeof automation.equipBandages==='boolean','company automation');
+  assert(Array.isArray(formation) && [12, 36].includes(formation.length) && formation.every(id => id === null || ids.has(id)) && formation.filter(Boolean).length<=MAX_BATTLE_SIZE && [...formation,...reserveIds].filter(Boolean).length===ids.size && new Set([...formation,...reserveIds].filter(Boolean)).size===ids.size,'formation');
   const camps = input.camps === undefined ? {} : input.camps;
   assert(recordObject(camps) && Object.keys(camps).every(isCampId), 'camps');
   for (const [id,entry] of Object.entries(camps)) {
@@ -5023,7 +5081,7 @@ export function validateSave(input) {
   return {
     version: 1, seed: input.seed, day: input.day, hour: input.hour,
     gold: input.gold, food: input.food, renown: input.renown,
-    party, formation: expandedFormation(formation),
+    party, formation: expandedFormation(formation), reserveIds:[...reserveIds],automation:{buyAmmo:automation.buyAmmo,equipBandages:automation.equipBandages},
     inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
     marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => {
       const town = TOWN_BY_ID.get(id);
