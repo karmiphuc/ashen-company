@@ -394,3 +394,19 @@ test('Berserk keeps the 2 AP effect in legacy active battles', () => {
   assert.match(fight.battle.lastEvent.message, /Berserk: \+2 AP\./);
   assert.equal(validateSave(fight.state).battle.units.find(unit => unit.id === 'captain').ap, 2);
 });
+
+
+test('kill procs have structured actor effects that survive saves and reject malformed metadata', () => {
+  const fight=battleWithCaptain(['battle-flow','killing-frenzy','berserk']);
+  Object.assign(fight.captain,{meleeSkill:200,fatigue:40,turnStartedRound:1});
+  Object.assign(fight.target,{hp:1,maxHp:100});fight.battle.rng=0;
+  advanceBattle(fight.state);
+  assert.deepEqual(fight.battle.lastEvent.effects,[{id:'battle-flow',amount:10},{id:'killing-frenzy',amount:25},{id:'berserk',amount:4}]);
+  assert.equal(fight.battle.lastEvent.actorId,fight.captain.id);
+  const saved=JSON.parse(JSON.stringify(fight.state));
+  assert.deepEqual(validateSave(saved).battle.lastEvent.effects,fight.battle.lastEvent.effects);
+  for(const effects of [[{id:'invented',amount:10}],[{id:'battle-flow',amount:-1}],[{id:'battle-flow',amount:1001}],[{id:'berserk',amount:4,nextTurn:'yes'}]]){
+    const malformed=structuredClone(saved);malformed.battle.lastEvent.effects=effects;
+    assert.throws(()=>validateSave(malformed),/battle event effects/);
+  }
+});

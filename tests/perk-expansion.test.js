@@ -280,10 +280,12 @@ test('Battle Flow refunds fatigue only when an attack kills', () => {
   assert.equal(fight.battle.lastEvent.fallen, true);
   assert.equal(plain.battle.units.find(unit => unit.id === 'captain').fatigue - fight.actor.fatigue, 10);
   assert.match(fight.battle.lastEvent.message, /Battle Flow: -10 fatigue/);
+  assert.deepEqual(fight.battle.lastEvent.effects,[{id:'battle-flow',amount:10}]);
 
   const surviving = battleWith('arming-sword', ['battle-flow']);
   advanceBattle(surviving.state);
   assert.equal(surviving.battle.lastEvent.fallen, false);
+  assert.equal(surviving.battle.lastEvent.effects,undefined);
   assert.equal(surviving.actor.fatigue, 11);
 });
 

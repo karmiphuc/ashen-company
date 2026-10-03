@@ -3030,7 +3030,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
       battle.lastEvent = { ...attackEvent, reactions: [{ actorId: target.id, targetId: actor.id, type: reactionEvent.type,
         from: { q: target.q, r: target.r }, to: { q: actor.q, r: actor.r }, hpDamage: counter.hpDamage,
         armorDamage: counter.armorDamage, shieldDamage: counter.shieldDamage, head: counter.head,
-        fallen: counter.fallen, skillName: 'Riposte' }] };
+        fallen: counter.fallen, weaponId: counterWeapon?.id ?? null, effects: reactionEvent.effects ?? [], skillName: 'Riposte' }] };
     }
     return { hit: false, hpDamage: 0, armorDamage: 0, shieldDamage, head: false, fallen: false };
   }
@@ -3052,7 +3052,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
   }
   changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0)));
   const fallen = target.hp === 0;
-  const perkProcs = [];
+  const perkProcs = [], effects = [];
   if (fallen) {
     target.alive = false;
     target.ap = 0;
@@ -3065,21 +3065,24 @@ function attackTarget(state, actor, target, weapon, option = null) {
       const recovered = Math.min(10, actor.fatigue);
       actor.fatigue -= recovered;
       perkProcs.push(`Battle Flow: -${recovered} fatigue.`);
+      effects.push({ id: 'battle-flow', amount: recovered });
     }
     if (!option?.deferKillPerks && hasPerk(actor, 'killing-frenzy')) {
       actor.frenzyUntilRound = battle.round + 2;
       perkProcs.push('Killing Frenzy: +25% damage.');
+      effects.push({ id: 'killing-frenzy', amount: 25 });
     }
     if (!option?.deferKillPerks && hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round) {
       if (battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup) actor.pendingBerserkAp = 4;
       else actor.ap = battle.rulesVersion === 2 ? actor.ap + 4 : 2;
       actor.berserkRound = battle.round;
+      effects.push({ id: 'berserk', amount: battle.rulesVersion === 2 ? 4 : 2, ...(battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup ? { nextTurn: true } : {}) });
       perkProcs.push(battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup ? 'Berserk: +4 AP next turn.'
         : `Berserk: +${battle.rulesVersion === 2 ? 4 : 2} AP.`);
     }
   }
   const message = `${actor.name}${option?.freeFollowup ? "'s mount uses Wolf Bite against" : ' hits'} ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}`;
-  battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, fallen,
+  battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, fallen, ...(effects.length ? { effects } : {}),
     ...(option?.name ? { skillName: option.name } : {}) });
   battleLog(battle, message);
   return { hit: true, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, head, fallen };
@@ -3165,7 +3168,7 @@ function wolfFollowup(state, actor, preferred) {
   battle.lastEvent = { ...original, reactions: [...(original.reactions ?? []), {
     actorId: actor.id, targetId: target.id, type: event.type, from: { q: actor.q, r: actor.r }, to: { q: target.q, r: target.r },
     hpDamage: impact.hpDamage, armorDamage: impact.armorDamage, shieldDamage: impact.shieldDamage,
-    head: impact.head, fallen: impact.fallen, skillName: 'Wolf Bite',
+    head: impact.head, fallen: impact.fallen, weaponId: null, effects: event.effects ?? [], skillName: 'Wolf Bite',
   }] };
 }
 
@@ -3309,7 +3312,7 @@ function spearwallReactionsOnMove(state, mover, from) {
     reactions.push({ actorId: defender.id, targetId: mover.id, type: event.type,
       from: { q: defender.q, r: defender.r }, to: destination,
       hpDamage: impact.hpDamage, armorDamage: impact.armorDamage, shieldDamage: impact.shieldDamage,
-      head: impact.head, fallen: impact.fallen, skillName: 'Spearwall' });
+      head: impact.head, fallen: impact.fallen, weaponId: defender.equipment.weapon, effects: event.effects ?? [], skillName: 'Spearwall' });
     if (!impact.hit) defender.spearwallActive = false;
     if (impact.hit || !mover.alive) {
       mover.q = from.q; mover.r = from.r;
@@ -3371,7 +3374,7 @@ function fleeBattleEnemy(state, actor, enemies) {
     const impact = attackTarget(state, enemy, actor, weapon, { reaction: true, name: 'Opportunity Strike' });
     const event = battle.lastEvent;
     reactions.push({ actorId: enemy.id, targetId: actor.id, type: event.type,
-      from: { q: enemy.q, r: enemy.r }, to: from, ...impact, skillName: 'Opportunity Strike' });
+      from: { q: enemy.q, r: enemy.r }, to: from, ...impact, weaponId: weapon.id ?? null, effects: event.effects ?? [], skillName: 'Opportunity Strike' });
     if (!actor.alive) break;
   }
   let message;
@@ -3720,22 +3723,26 @@ function advanceBattleV2(state) {
     battle.lastEvent = primaryEvent ?? battle.lastEvent;
     battle.lastEvent.affectedTargets = affectedTargets;
     if (deferredKills.kills) {
-      const procs = [];
+      const procs = [], effects = [];
       if (hasPerk(actor, 'battle-flow')) {
         const recovered = Math.min(actor.fatigue, 10 * deferredKills.kills);
         actor.fatigue -= recovered;
         procs.push(`Battle Flow: -${recovered} fatigue.`);
+        effects.push({ id: 'battle-flow', amount: recovered });
       }
       if (hasPerk(actor, 'killing-frenzy')) {
         actor.frenzyUntilRound = battle.round + 2;
         procs.push('Killing Frenzy: +25% damage.');
+        effects.push({ id: 'killing-frenzy', amount: 25 });
       }
       if (hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round) {
         actor.ap += 4;
         actor.berserkRound = battle.round;
         procs.push('Berserk: +4 AP.');
+        effects.push({ id: 'berserk', amount: 4 });
       }
       if (procs.length) {
+        battle.lastEvent.effects = effects;
         battle.lastEvent.message += ` ${procs.join(' ')}`;
         battleLog(battle, procs.join(' '));
       }
@@ -4443,6 +4450,13 @@ function validateBattle(input, party, worldState) {
         && ['hpDamage', 'armorDamage', 'shieldDamage'].every(key => validCount(reaction[key]) && reaction[key] <= 1000)
         && typeof reaction.head === 'boolean' && typeof reaction.fallen === 'boolean'), 'battle event reactions');
   }
+  for (const entry of [event, ...(event?.reactions ?? [])].filter(Boolean)) {
+    if (entry.effects !== undefined) assert(Array.isArray(entry.effects) && entry.effects.length <= 3
+      && new Set(entry.effects.map(effect => effect?.id)).size === entry.effects.length
+      && entry.effects.every(effect => recordObject(effect) && ['battle-flow', 'killing-frenzy', 'berserk'].includes(effect.id)
+        && validCount(effect.amount) && effect.amount <= 100 && (effect.nextTurn === undefined || effect.id === 'berserk' && typeof effect.nextTurn === 'boolean')), 'battle event effects');
+    if (entry.weaponId !== undefined) assert(entry.weaponId === null || getItem(entry.weaponId)?.slot === 'weapon', 'battle event weapon');
+  }
   const actor = units.find(unit => unit.id === event?.actorId);
   const target = units.find(unit => unit.id === event?.targetId);
   const weaponId = event?.weaponId === undefined ? actor?.equipment.weapon ?? null : event.weaponId;
@@ -4451,6 +4465,7 @@ function validateBattle(input, party, worldState) {
     actorId: event.actorId, targetId: event.targetId, type: event.type === 'hit' || event.type === 'fall' ? 'attack' : event.type,
     weaponId, ranged, projectile: event.projectile === undefined ? ranged && ['attack', 'miss', 'hit', 'fall'].includes(event.type) ? projectileForWeapon(getItem(weaponId)) : null : event.projectile,
     ...(event.itemId === undefined ? {} : { itemId: event.itemId }),
+    ...(event.effects === undefined ? {} : { effects: event.effects.map(effect => ({ id: effect.id, amount: effect.amount, ...(effect.nextTurn === undefined ? {} : { nextTurn: effect.nextTurn }) })) }),
     ...(event.skillName === undefined ? {} : { skillName: event.skillName }),
     ...(event.pushedFrom === undefined ? {} : { pushedFrom: { q: event.pushedFrom.q, r: event.pushedFrom.r } }),
     from: event.from === undefined ? actor ? { q: actor.q, r: actor.r } : null : event.from === null ? null : { q: event.from.q, r: event.from.r },
@@ -4465,7 +4480,8 @@ function validateBattle(input, party, worldState) {
     ...(event.friendlyFire === undefined ? {} : { friendlyFire: event.friendlyFire }),
     ...(event.affectedTargets === undefined ? {} : { affectedTargets: event.affectedTargets.map(impact => ({ ...impact })) }),
     ...(event.reactions === undefined ? {} : { reactions: event.reactions.map(reaction => ({ ...reaction,
-      from: { ...reaction.from }, to: { ...reaction.to } })) }),
+      from: { ...reaction.from }, to: { ...reaction.to },
+      ...(reaction.effects === undefined ? {} : { effects: reaction.effects.map(effect => ({ id: effect.id, amount: effect.amount, ...(effect.nextTurn === undefined ? {} : { nextTurn: effect.nextTurn }) })) }) })) }),
   } : null;
   const loot = input.loot;
   assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= 24 && loot.items.every(id => getItem(id)), 'battle loot');

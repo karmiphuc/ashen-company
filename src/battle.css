@@ -60,3 +60,28 @@
 
 .battle-projectile.is-stone>span{width:8px;height:7px;border:1px solid #332d26;border-radius:45%;background:#aea48e;box-shadow:0 1px 2px #17140f}.battle-projectile.is-stone>span::before,.battle-projectile.is-stone>span::after{display:none}
 .action-bite [data-layer="mount-head"]{animation:mount-bite var(--action-time) ease-in-out}@keyframes mount-bite{0%,45%,100%{translate:0 0}70%{translate:var(--strike-x) var(--strike-y)}}@media(prefers-reduced-motion:reduce){.action-bite [data-layer="mount-head"]{animation:none}}
+
+/* Skill labels sit above bars; perk bursts sit beside the actor, away from damage text. */
+.battle-order{top:-25px;left:50%;transform:translateX(-50%);background:#191711e8;border:1px solid #bfa267;border-radius:3px;padding:4px 6px;color:#fff0c6;animation-duration:max(var(--action-time),.75s)}
+.battle-perk-effects{position:absolute;z-index:23;left:calc(100% - 5px);top:28px;display:flex;flex-direction:column;gap:3px;pointer-events:none}
+.battle-perk-proc{position:relative;display:block;white-space:nowrap;padding:4px 7px 4px 18px;border:1px solid currentColor;background:#15221fee;color:#8fe6d2;border-radius:3px;font:bold 11px/1.1 Georgia,serif;box-shadow:0 2px 4px #0009;animation:perk-rise max(var(--action-time),1s) ease-out both}
+.battle-perk-proc small{display:block;font-size:10px;color:inherit;margin-top:3px}.battle-perk-proc i{position:absolute;left:6px;top:7px;width:6px;height:6px;background:currentColor;transform:rotate(45deg)}
+.proc-killing-frenzy{color:#ffad8c;background:#341b16ed}.proc-berserk{color:#f6d17b;background:#302517ed}
+.has-killing-frenzy .battle-pawn{filter:drop-shadow(0 0 3px #ea683599)}
+.battle-status-frenzy{color:#ffae7c!important;background:#502618!important;border-color:#f78c51!important}
+.effect-battle-flow .battle-pawn::after{content:"";position:absolute;inset:10px 1px -3px;border:2px solid #8fe6d2;border-radius:50%;box-shadow:0 0 7px #70d9c5;pointer-events:none;animation:flow-release max(var(--action-time),.8s) ease-out both}
+@keyframes perk-rise{0%{opacity:0;transform:translateY(5px)}15%,78%{opacity:1}100%{opacity:0;transform:translateY(-15px)}}
+@keyframes flow-release{0%{opacity:0;transform:scale(.6)}25%{opacity:.9}100%{opacity:0;transform:scale(1.3) translateY(-8px)}}
+@media(prefers-reduced-motion:reduce){.battle-order,.battle-perk-proc{animation:none!important;opacity:1;transform:none}.battle-order{transform:translateX(-50%)}.effect-battle-flow .battle-pawn::after{animation:none!important;opacity:.8;transform:none}}
+
+.battle-orders{position:absolute;z-index:22;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+.battle-orders .battle-order{position:relative;top:auto;left:auto;transform:none;animation-name:skill-callout}
+@keyframes skill-callout{0%{opacity:0;transform:translateY(5px)}20%,80%{opacity:1}100%{opacity:0;transform:translateY(-7px)}}
+@media(prefers-reduced-motion:reduce){.battle-orders .battle-order{animation:none!important;transform:none}}
+.battle-unit.effect-battle-flow,.battle-unit.effect-killing-frenzy,.battle-unit.effect-berserk{z-index:500}
+.battle-perk-effects{left:50%;top:auto;bottom:calc(100% + 34px);transform:translateX(-50%);align-items:center}
+.battle-perk-proc small{position:static;left:auto;bottom:auto;transform:none;z-index:auto;font:10px/1.2 Georgia,serif}
+
+.perks-below .battle-perk-effects{bottom:auto;top:calc(100% + 5px)}
+.feedback-at-left .battle-orders,.feedback-at-left .battle-perk-effects{left:0;transform:none}
+.feedback-at-right .battle-orders,.feedback-at-right .battle-perk-effects{left:auto;right:0;transform:none}

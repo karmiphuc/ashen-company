@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { combatSoundCue, createGameAudio } from '../src/audio.js';
+import { createFamedItemId, ITEMS } from '../src/engine.js';
+import { createHash } from 'node:crypto';
+import { combatSoundCue, createGameAudio, EFFECT_NAMES } from '../src/audio.js';
 
 const battle = { active: true, playing: true, hidden: false, battleId: 'battle-1' };
 const flush = () => new Promise(resolve => setImmediate(resolve));
@@ -88,17 +90,34 @@ test('music stays silent before a gesture, then plays only during an active visi
   assert.equal(music.paused, false);
 });
 
-test('combat cues distinguish misses, ranged flight, armor hits, and item use', () => {
-  assert.deepEqual(combatSoundCue({ type: 'miss', ranged: false }), [
-    { name: 'swing', delay: 0, volume: .4, rate: 1 },
-  ]);
-  assert.deepEqual(combatSoundCue({ type: 'attack', ranged: true, armorDamage: 0 }).map(cue => [cue.name, cue.delay]), [
-    ['swing', 0], ['impact', .14],
-  ]);
-  assert.deepEqual(combatSoundCue({ type: 'attack', ranged: false, armorDamage: 3 }).map(cue => cue.name), ['swing', 'metal']);
-  assert.deepEqual(combatSoundCue({ type: 'miss', ranged: true, shieldDamage: 18 }).map(cue => cue.name), ['swing', 'metal']);
-  assert.deepEqual(combatSoundCue({ type: 'use' }).map(cue => cue.name), ['cloth']);
-  assert.deepEqual(combatSoundCue({ type: 'movement' }), []);
+test('weapon families use distinct release and contact recordings, including named gear', () => {
+  const cases = [['arming-sword','sword-swish','cut-hit'],['greatsword','heavy-swish','cut-hit'],
+    ['rondel-dagger','dagger-swish','pierce-hit'],['spear','thrust','pierce-hit'],['wood-axe','heavy-swish','axe-chop'],
+    ['winged-mace','heavy-swish','blunt-hit'],['warhammer','heavy-swish','hammer-hit'],
+    ['whip','whip-release','cut-hit'],['northern-sling','sling-release','blunt-hit'],['javelins','thrust','pierce-hit'],['throwing-axes','heavy-swish','axe-chop'],['military-cleaver','heavy-swish','axe-chop'],['billhook','thrust','cut-hit'],['flail','chain','blunt-hit'],['hunting-bow','bow-release','pierce-hit'],['light-crossbow','crossbow-release','pierce-hit']];
+  for (const [weaponId, release, contact] of cases) {
+    const cues = combatSoundCue({type:'attack',weaponId});
+    assert.equal(cues[0].name,release,weaponId);
+    assert.equal(cues.at(-1).name,contact,weaponId);
+    assert.ok(cues.every(cue=>EFFECT_NAMES.includes(cue.name)));
+  }
+  const named = createFamedItemId('warhammer',42);
+  assert.equal(combatSoundCue({type:'attack',weaponId:named})[0].name,'heavy-swish');
+  for(const weapon of ITEMS.filter(item=>item.slot==='weapon')) assert.ok(combatSoundCue({type:'attack',weaponId:weapon.id}).every(cue=>EFFECT_NAMES.includes(cue.name)),weapon.id);
+});
+
+test('misses, shield deflection, armor, area targets and reaction audio follow actual contacts', () => {
+  assert.equal(combatSoundCue({type:'miss',weaponId:'hunting-bow'}).length,1);
+  assert.equal(combatSoundCue({type:'miss',weaponId:'arming-sword',shieldDamage:18}).at(-1).name,'shield-wood');
+  assert.equal(combatSoundCue({type:'attack',weaponId:'arming-sword',armorDamage:3}).at(-1).name,'armor-clang');
+  assert.equal(combatSoundCue({type:'attack',weaponId:'winged-mace',armorDamage:3}).at(-1).name,'armor-dent');
+  assert.equal(combatSoundCue({type:'miss',weaponId:'greatsword',affectedTargets:[{hit:false},{hit:true,hpDamage:20}]}).at(-1).name,'cut-hit');
+  const counter = combatSoundCue({type:'move',reactions:[{type:'attack',skillName:'Riposte',weaponId:'arming-sword'}]},.275);
+  assert.deepEqual(counter.map(cue=>cue.name),['sword-swish','cut-hit']);
+  assert.equal(counter[1].delay,.04+.275*.65);
+  assert.deepEqual(combatSoundCue({type:'use'}).map(cue=>cue.name),['cloth']);
+  assert.equal(combatSoundCue({type:'recover',skillName:'Reload'})[0].name,'reload');
+  assert.deepEqual(combatSoundCue({type:'move'}),[]);
 });
 
 test('effects require explicit events and stay within the voice and timing limits', async () => {
@@ -112,18 +131,21 @@ test('effects require explicit events and stay within the voice and timing limit
   audio.sync(battle);
   assert.equal(context.sources.length, 0, 'sync and repaint do not play event audio');
   audio.playEvent({ type: 'attack', ranged: true, armorDamage: 0 });
-  assert.deepEqual(context.sources.map(source => [source.buffer.name, source.at]), [['swing', 4], ['impact', 4.14]]);
+  assert.deepEqual(context.sources.map(source => [source.buffer.name, source.at]), [['swing', 4], ['impact', 4 + .55 * .65]]);
   now = 50;
   audio.playEvent({ type: 'attack', armorDamage: 4 });
   assert.equal(context.sources.length, 2, 'rapid events are throttled');
   now = 120;
   audio.playEvent({ type: 'attack', armorDamage: 4 });
-  assert.equal(context.sources.length, 3, 'at most three voices play together');
+  assert.equal(context.sources.length, 4);
   now = 240;
   audio.playEvent({ type: 'attack', armorDamage: 4 });
-  assert.equal(context.sources.length, 3);
+  assert.equal(context.sources.length, 6);
+  now = 350;
+  audio.playEvent({type:'attack',reactions:[{type:'attack'}]});
+  assert.equal(context.sources.length,8,'at most eight voices, including scheduled reactions');
   context.sources[0].onended();
-  now = 360;
+  now = 470;
   audio.playEvent({ type: 'use' });
   assert.equal(context.sources.at(-1).buffer.name, 'cloth');
   audio.sync({ ...battle, playing: false });
@@ -131,7 +153,7 @@ test('effects require explicit events and stay within the voice and timing limit
 });
 
 test('offline audio references are valid MP3s within the advertised download budget', async () => {
-  const names = ['heartfelt-battle', 'swing', 'metal', 'impact', 'cloth'];
+  const names = ['heartfelt-battle', ...EFFECT_NAMES];
   let bytes = 0;
   for (const name of names) {
     const file = fileURLToPath(new URL(`../assets/audio/${name}.mp3`, import.meta.url));
@@ -140,5 +162,20 @@ test('offline audio references are valid MP3s within the advertised download bud
     assert.ok(data.length > 1000, `${name} is nonempty`);
     assert.ok(data.subarray(0, 3).toString() === 'ID3' || data[0] === 0xff && (data[1] & 0xe0) === 0xe0, `${name} has an MP3 header`);
   }
-  assert.ok(bytes <= 1_300_000, `audio uses ${bytes} bytes`);
+  assert.ok(bytes <= 1_450_000, `audio uses ${bytes} bytes`);
+});
+
+
+test('recorded effects have traceable licenses, hashes and different encoded samples', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../assets/audio/source-manifest.json',import.meta.url),'utf8'));
+  const hashes = new Set();
+  for(const name of EFFECT_NAMES){
+    const entry = manifest.files.find(entry=>entry.path===`assets/audio/${name}.mp3`);
+    assert.ok(entry?.author && entry.source.startsWith('https://'));
+    assert.ok(['CC0-1.0','CC-BY-4.0'].includes(entry.license));
+    const data=await readFile(new URL(`../${entry.path}`,import.meta.url));
+    const hash=createHash('sha256').update(data).digest('hex');
+    assert.equal(hash,entry.sha256);assert.equal(data.length,entry.bytes);
+    assert.ok(!hashes.has(hash),`${name} has its own recording`);hashes.add(hash);
+  }
 });

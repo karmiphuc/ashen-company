@@ -1,3 +1,4 @@
+import { weaponSkillFamily } from './combat-skills.js';
 import { getEquipment, getItem, getMoraleEffects, shieldMaximum, throwingCapacity } from './engine.js';
 import { portraitHTML, portraitWeaponAnchor, itemImage } from './portraits.js';
 
@@ -108,8 +109,23 @@ function shieldCondition(unit) {
   return max ? { current: unit.shieldDurability ?? max, max } : null;
 }
 
+const WEAPON_MOVES = { sword: 'Slash', 'two-handed-sword': 'Overhead Strike', dagger: 'Stab', qatal: 'Stab',
+  spear: 'Thrust', polearm: 'Strike', axe: 'Chop', cleaver: 'Cleave', mace: 'Bash', hammer: 'Smash',
+  flail: 'Lash', whip: 'Whip Crack', bow: 'Loose Arrow', crossbow: 'Fire Bolt', sling: 'Sling Stone', throwing: 'Throw' };
+function actionCallout(event, weapon) {
+  if (event.skillName) return event.skillName;
+  if (['attack', 'miss', 'hit', 'fall'].includes(event.type)) return WEAPON_MOVES[weaponSkillFamily(weapon)] ?? 'Strike';
+  return { move: 'Move', recover: event.message?.includes(' reloads ') ? 'Reload' : 'Recover',
+    hold: 'Hold', swap: 'Swap set', use: 'Use item' }[event.type] ?? '';
+}
+function perkEffectsHTML(effects) {
+  const names = { 'battle-flow': 'Battle Flow', 'killing-frenzy': 'Killing Frenzy', berserk: 'Berserk' };
+  return effects.filter(effect => names[effect.id]).map(effect => `<span class="battle-perk-proc proc-${effect.id}" role="status"><i aria-hidden="true"></i>${names[effect.id]}<small>${effect.id === 'battle-flow' ? `−${number(effect.amount)} fatigue` : effect.id === 'killing-frenzy' ? '+25% damage' : `+${number(effect.amount)} AP${effect.nextTurn ? ' next turn' : ''}`}</small></span>`).join('');
+}
+
 function statusIconsHTML(unit, battle) {
   const statuses = [
+    unit.alive !== false && unit.hp > 0 && unit.frenzyUntilRound > 0 && unit.frenzyUntilRound >= battle.round ? ['frenzy', 'Killing Frenzy: +25% damage', '<path d="m8 1 2 5 3-2-1 7-4 4-4-4-1-7 3 2z"/>'] : null,
     unit.alive && unit.fleeRound === battle.round ? ['fleeing', 'Fleeing', '<path d="M1 7h10L8 4l1-1 5 5-5 5-1-1 3-3H1z"/>'] : null,
     unit.shieldWallActive ? ['shieldwall', 'Shield wall active', '<path d="M8 1 14 3v4.5c0 3.2-2.1 5.9-6 7.5-3.9-1.6-6-4.3-6-7.5V3z"/>'] : null,
     unit.spearwallActive ? ['spearwall', 'Spearwall active', '<path d="M2 14 11.3 4.7l.9.9L2.9 15zM11 2l3 3-1 1-3-3z"/>'] : null,
@@ -156,6 +172,10 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const primaryActor = event.actorId === unit.id;
   const reaction = reactions.find(entry => entry?.actorId === unit.id);
   const reactionTarget = reactions.some(entry => entry?.targetId === unit.id);
+  const effects = [...(primaryActor ? event.effects ?? [] : []), ...reactions.filter(entry => entry.actorId === unit.id).flatMap(entry => entry.effects ?? [])];
+  const frenzy = alive && unit.frenzyUntilRound > 0 && unit.frenzyUntilRound >= battle.round;
+  const callouts = [...new Set([...(primaryActor ? [actionCallout(event, getItem(event.weaponId) ?? equipmentFor(unit).weapon)] : []),
+    ...reactions.filter(entry => entry.actorId === unit.id).map(entry => actionCallout(entry, getItem(entry.weaponId) ?? equipmentFor(unit).weapon))].filter(Boolean))];
   const primaryTarget = event.targetId === unit.id;
   const impacts = impactsFor(event, unit.id);
   const hasImpact = impacts.length > 0;
@@ -199,6 +219,10 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     hasHit || shieldDamage > 0 ? 'action-hit' : '',
     impactFallen ? 'action-fall' : '',
     friendlyFire ? 'is-friendly-fire' : '',
+    frenzy ? 'has-killing-frenzy' : '',
+    effects.length && y < effects.length * 35 + 40 ? 'perks-below' : '',
+    x < 85 ? 'feedback-at-left' : x > grid.fieldWidth - 85 ? 'feedback-at-right' : '',
+    ...effects.map(effect => `effect-${effect.id}`),
   ].filter(Boolean).join(' ');
   const health = percent(unit.hp, unit.maxHp ?? 100);
   const bodyArmor = number(unit.bodyArmor) + number(unit.attachmentArmor);
@@ -229,7 +253,8 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     <strong>${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))}/${maxAp} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
     ${hasImpact || primaryMiss ? `<span class="battle-impact" aria-hidden="true">${hasHit ? `${friendlyFire ? 'Friendly fire · ' : ''}${hpDamage}${bodyDamage + headDamage ? ` / ${bodyDamage + headDamage}` : ''}${shieldDamage ? ` · Shield -${shieldDamage}` : ''}${hasMiss ? ' · Miss' : ''}` : shieldDamage ? `Deflected · Shield -${shieldDamage}` : 'Miss'}</span>` : ''}
-    ${reaction ? `<span class="battle-order">${esc(reaction.skillName || String(reaction.type || 'Reaction').replace(/^./, letter => letter.toUpperCase()))}</span>` : primaryActor && event.skillName === 'Charge' ? '<span class="battle-order">Charge</span>' : primaryActor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? `<span class="battle-order">${event.type === 'hold' ? 'Hold' : event.type === 'swap' ? 'Swap set' : event.type === 'use' ? 'Use item' : event.message?.includes(' reloads ') ? 'Reload' : 'Recover'}</span>` : ''}
+    ${callouts.length ? `<span class="battle-orders">${callouts.map(label => `<span class="battle-order">${esc(label)}</span>`).join('')}</span>` : ''}
+    ${effects.length ? `<span class="battle-perk-effects">${perkEffectsHTML(effects)}</span>` : ''}
   </article>`;
 }
 
