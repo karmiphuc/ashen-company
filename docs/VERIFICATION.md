@@ -1,6 +1,16 @@
-# Verification - version 0.46.5, 2026-10-03
+# Verification - version 0.46.6, 2026-10-03
 
 
+
+## v0.46.6 checks
+
+All 569 tests pass. The map sidebar removes nearby band, soldier patrol and caravan list cards, roaming/patrol destination lists, and the duplicate idle contract pitch. Map targets remain selectable, active contracts remain visible, and the caravan destination dropdown remains available. Local workshops, active town events, incoming arms wagons and unclaimed mount opportunities use a compact status-icon strip. Each focusable icon has a labelled tooltip with descriptions, effects and event expiry; hover, keyboard focus and tap expose it. Rare mount offers retain their actual claim button while at the issuer.
+
+Marketplace/Hiring/Contracts are only rendered when at the selected settlement. Doctor appears only when someone needs healing; Smithy only when equipped armor, either attachment or an active/reserve shield needs repairs. Visibility uses missing health/durability rather than affordability, so cash shortages do not hide needed services. The settlement page shares this same service rule.
+
+Native Chromium verified a healthy company hides both services, wounds show only Doctor despite zero crowns, damaged armor shows only Smithy, and travel away hides all town service actions. Sidebar list/description boxes are absent. Event tooltips preserve exact effects and time, work on mouse hover/focus, and fit the screen at 1440px and 390px with no page overflow or JavaScript exceptions. Screenshots: `/workspace/ashen-sidebar-v0466.png` and `/workspace/ashen-sidebar-mobile-v0466.png`.
+
+A fresh-profile offline reload cached all 557 resources under `ashen-company-141051ce839056a4`, loaded v0.46.6, rendered status icons and confirmed town actions disappear away from settlement.
 
 ## v0.46.5 checks
 
