@@ -121,3 +121,5 @@ See [asset credits](docs/ASSET-CREDITS.md), [research notes](docs/RESEARCH.md), 
 Version 0.43 adds nine regional enemy profiles, role-aware imported gear across patrols and generated encounters, scarce named champions, and permanent named/legendary equipment bonuses. Fangshire now provides 77 protection for one fatigue with +5 ranged defense. Rare-item buybacks preserve damage, and v0.42 active battles migrate without repairs or rerolled drops.
 
 Version 0.47.0 fixes tactical hex proportions, neighbor-aware elevation faces and ground-aligned pawns. Camps now have original BB palisade art with movement-blocking walls and open entrances. New enemy formations defend with at least three live ranged fighters, switch to offense below that threshold, and retain a four-quiet-round anti-stalemate fallback. See [battle terrain notes](docs/BATTLE-TERRAIN.md).
+
+Combat impacts distinguish blunt, flesh, slash, arrow, thrown piercing and bolt hits. Cavalry charges add hoofbeat foley and a collision on contact; armor penetration layers the armor and body sounds. Effects remain gesture-unlocked, independently mutable and cached offline.

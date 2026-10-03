@@ -91,10 +91,10 @@ test('music stays silent before a gesture, then plays only during an active visi
 });
 
 test('weapon families use distinct release and contact recordings, including named gear', () => {
-  const cases = [['arming-sword','sword-swish','cut-hit'],['greatsword','heavy-swish','cut-hit'],
+  const cases = [['arming-sword','sword-swish','slash-hit'],['greatsword','heavy-swish','slash-hit'],
     ['rondel-dagger','dagger-swish','pierce-hit'],['spear','thrust','pierce-hit'],['wood-axe','heavy-swish','axe-chop'],
     ['winged-mace','heavy-swish','blunt-hit'],['warhammer','heavy-swish','hammer-hit'],
-    ['whip','whip-release','cut-hit'],['northern-sling','sling-release','blunt-hit'],['javelins','thrust','pierce-hit'],['throwing-axes','heavy-swish','axe-chop'],['military-cleaver','heavy-swish','axe-chop'],['billhook','thrust','cut-hit'],['flail','chain','blunt-hit'],['hunting-bow','bow-release','pierce-hit'],['light-crossbow','crossbow-release','pierce-hit']];
+    ['whip','whip-release','slash-hit'],['northern-sling','sling-release','blunt-hit'],['javelins','thrust','throwing-pierce'],['throwing-axes','heavy-swish','axe-chop'],['military-cleaver','heavy-swish','axe-chop'],['billhook','thrust','slash-hit'],['flail','chain','blunt-hit'],['hunting-bow','bow-release','arrow-pierce'],['light-crossbow','crossbow-release','bolt-pierce']];
   for (const [weaponId, release, contact] of cases) {
     const cues = combatSoundCue({type:'attack',weaponId});
     assert.equal(cues[0].name,release,weaponId);
@@ -111,9 +111,9 @@ test('misses, shield deflection, armor, area targets and reaction audio follow a
   assert.equal(combatSoundCue({type:'miss',weaponId:'arming-sword',shieldDamage:18}).at(-1).name,'shield-wood');
   assert.equal(combatSoundCue({type:'attack',weaponId:'arming-sword',armorDamage:3}).at(-1).name,'armor-clang');
   assert.equal(combatSoundCue({type:'attack',weaponId:'winged-mace',armorDamage:3}).at(-1).name,'armor-dent');
-  assert.equal(combatSoundCue({type:'miss',weaponId:'greatsword',affectedTargets:[{hit:false},{hit:true,hpDamage:20}]}).at(-1).name,'cut-hit');
+  assert.deepEqual(combatSoundCue({type:'miss',weaponId:'greatsword',affectedTargets:[{hit:false},{hit:true,hpDamage:20}]}).map(c=>c.name),['heavy-swish','slash-hit','flesh-hit']);
   const counter = combatSoundCue({type:'move',reactions:[{type:'attack',skillName:'Riposte',weaponId:'arming-sword'}]},.275);
-  assert.deepEqual(counter.map(cue=>cue.name),['sword-swish','cut-hit']);
+  assert.deepEqual(counter.map(cue=>cue.name),['sword-swish','slash-hit']);
   assert.equal(counter[1].delay,.04+.275*.65);
   assert.deepEqual(combatSoundCue({type:'use'}).map(cue=>cue.name),['cloth']);
   assert.equal(combatSoundCue({type:'recover',skillName:'Reload'})[0].name,'reload');
@@ -178,4 +178,52 @@ test('recorded effects have traceable licenses, hashes and different encoded sam
     assert.equal(hash,entry.sha256);assert.equal(data.length,entry.bytes);
     assert.ok(!hashes.has(hash),`${name} has its own recording`);hashes.add(hash);
   }
+});
+
+
+test('piercing projectiles retain distinct contact sounds through armor and named weapon rolls', () => {
+  const cases = [['hunting-bow', 'arrow-pierce'], ['light-crossbow', 'bolt-pierce'], ['javelins', 'throwing-pierce']];
+  for (const [base, impact] of cases) for (const weaponId of [base, createFamedItemId(base, 73)]) {
+    const names = combatSoundCue({type:'attack',weaponId,hpDamage:12,armorDamage:30}).map(c=>c.name);
+    assert.ok(names.includes('armor-clang'), weaponId);
+    assert.ok(names.includes(impact), weaponId);
+    assert.ok(!names.includes('flesh-hit'), 'pierce samples include body contact');
+    assert.ok(!combatSoundCue({type:'miss',weaponId,hit:false}).some(c=>c.name===impact));
+  }
+  assert.deepEqual(combatSoundCue({type:'attack',weaponId:'arming-sword',hpDamage:12,armorDamage:20}).map(c=>c.name),
+    ['sword-swish','armor-clang','slash-hit','flesh-hit']);
+  assert.deepEqual(combatSoundCue({type:'attack',weaponId:'winged-mace',hpDamage:12}).map(c=>c.name),
+    ['heavy-swish','blunt-hit','flesh-hit']);
+  assert.deepEqual(combatSoundCue({type:'attack',weaponId:'arming-sword',hit:false}).map(c=>c.name),['sword-swish']);
+});
+
+test('cavalry charges have timed hoofbeats and collision only on contact, including stopped charges', () => {
+  const charge = {type:'attack',weaponId:'spear',skillName:'Charge',moveFrom:{q:1,r:1},hpDamage:20,armorDamage:10};
+  for (const duration of [.55,.275]) {
+    const cues = combatSoundCue(charge,duration);
+    assert.deepEqual(cues.map(c=>c.name),['thrust','cavalry-hooves','armor-clang','pierce-hit','charge-hit']);
+    assert.equal(cues.find(c=>c.name==='charge-hit').delay,duration*.65);
+    assert.equal(cues.find(c=>c.name==='cavalry-hooves').delay,0);
+  }
+  const miss = {...charge,type:'miss',hit:false,hpDamage:0,armorDamage:0};
+  assert.deepEqual(combatSoundCue(miss).map(c=>c.name),['thrust','cavalry-hooves']);
+  const stopped = {...miss,type:'hold',reactions:[{type:'attack',weaponId:'spear',skillName:'Spearwall',hpDamage:20}]};
+  assert.deepEqual(combatSoundCue(stopped).map(c=>c.name),['cavalry-hooves','thrust','pierce-hit']);
+  assert.ok(!combatSoundCue({...charge,skillName:'Thrust'}).some(c=>c.name.startsWith('cavalry')||c.name==='charge-hit'));
+});
+
+test('area and reaction damage layers stay bounded and cancel when muted or hidden', async () => {
+  const event = {type:'attack',weaponId:'greatsword',affectedTargets:Array.from({length:3},()=>({hit:true,hpDamage:20,armorDamage:15})),
+    reactions:[{type:'attack',weaponId:'spear',skillName:'Spearwall',hpDamage:8}]};
+  const cues = combatSoundCue(event);
+  assert.equal(cues.filter(c=>c.name==='slash-hit').length,1);
+  assert.equal(cues.filter(c=>c.name==='armor-dent').length,1);
+  const context=fakeContext();
+  const audio=createGameAudio({createMusic:()=>null,createContext:()=>context,fetcher,storage:emptyStorage,clock:()=>500});
+  audio.sync(battle);audio.unlock();await flush();audio.playEvent(event,.275);
+  assert.equal(context.sources.length,cues.length);
+  assert.ok(context.sources.length<=8);
+  audio.toggle('effects');assert.ok(context.sources.every(s=>s.stopped));
+  const count=context.sources.length;audio.playEvent(event);assert.equal(context.sources.length,count);
+  audio.toggle('effects');audio.sync({...battle,hidden:true});audio.playEvent(event);assert.equal(context.sources.length,count);
 });

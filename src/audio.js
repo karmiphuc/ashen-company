@@ -3,15 +3,16 @@ import { weaponSkillFamily } from './combat-skills.js';
 const MUSIC_URL = new URL('../assets/audio/heartfelt-battle.mp3', import.meta.url).href;
 export const EFFECT_NAMES = Object.freeze(['swing', 'metal', 'impact', 'cloth', 'sword-swish', 'heavy-swish', 'thrust',
   'bow-release', 'dagger-swish', 'axe-chop', 'chain', 'crossbow-release', 'sling-release', 'whip-release', 'reload',
-  'shield-wood', 'armor-clang', 'armor-dent', 'blunt-hit', 'pierce-hit', 'cut-hit', 'hammer-hit']);
+  'shield-wood', 'armor-clang', 'armor-dent', 'blunt-hit', 'pierce-hit', 'cut-hit', 'hammer-hit', 'flesh-hit', 'arrow-pierce', 'throwing-pierce', 'bolt-pierce',
+  'slash-hit', 'cavalry-hooves', 'charge-hit']);
 const EFFECT_URLS = Object.freeze(Object.fromEntries(EFFECT_NAMES.map(name => [name, new URL(`../assets/audio/${name}.mp3`, import.meta.url).href])));
 const SETTINGS_KEY = 'ashen-company-audio-v1';
 const PROFILES = {
-  sword: ['sword-swish', 'cut-hit'], 'two-handed-sword': ['heavy-swish', 'cut-hit'], cleaver: ['heavy-swish', 'axe-chop'],
+  sword: ['sword-swish', 'slash-hit'], 'two-handed-sword': ['heavy-swish', 'slash-hit'], cleaver: ['heavy-swish', 'axe-chop'],
   dagger: ['dagger-swish', 'pierce-hit'], qatal: ['dagger-swish', 'pierce-hit'], spear: ['thrust', 'pierce-hit'],
-  polearm: ['thrust', 'cut-hit'], axe: ['heavy-swish', 'axe-chop'], mace: ['heavy-swish', 'blunt-hit'],
-  hammer: ['heavy-swish', 'hammer-hit'], flail: ['chain', 'blunt-hit'], whip: ['whip-release', 'cut-hit'],
-  bow: ['bow-release', 'pierce-hit'], crossbow: ['crossbow-release', 'pierce-hit'], sling: ['sling-release', 'blunt-hit'],
+  polearm: ['thrust', 'slash-hit'], axe: ['heavy-swish', 'axe-chop'], mace: ['heavy-swish', 'blunt-hit'],
+  hammer: ['heavy-swish', 'hammer-hit'], flail: ['chain', 'blunt-hit'], whip: ['whip-release', 'slash-hit'],
+  bow: ['bow-release', 'arrow-pierce'], crossbow: ['crossbow-release', 'bolt-pierce'], sling: ['sling-release', 'blunt-hit'],
 };
 
 export function combatSoundCue(event, duration = .55) {
@@ -21,25 +22,37 @@ export function combatSoundCue(event, duration = .55) {
   function action(entry, offset = 0) {
     if (entry.type === 'use') return [cue('cloth', offset)];
     if (entry.skillName === 'Reload') return [cue('reload', offset), cue('crossbow-release', offset + duration * .5, .25)];
-    if (!['attack', 'miss'].includes(entry.type)) return [];
+    const charging = entry.skillName === 'Charge' && !!entry.moveFrom;
+    if (!['attack', 'miss'].includes(entry.type)) return charging ? [cue('cavalry-hooves', offset, .42)] : [];
     const weapon = getItem(entry.weaponId), family = weaponSkillFamily(weapon);
     const heavy = weapon?.twoHanded && !weapon.ranged;
     const profile = entry.skillName === 'Wolf Bite' ? ['thrust', 'pierce-hit']
       : family === 'throwing' ? entry.projectile === 'axe' || /axe/.test(weapon?.trainingVisual ?? weapon?.visual ?? '')
-        ? ['heavy-swish', 'axe-chop'] : ['thrust', 'pierce-hit']
+        ? ['heavy-swish', 'axe-chop'] : ['thrust', 'throwing-pierce']
       : PROFILES[family] ?? ['swing', 'impact'];
     const cues = [cue(profile[0], offset, family === 'bow' ? .55 : .35, heavy ? .88 : 1)];
+    if (charging) cues.push(cue('cavalry-hooves', offset, .42, 1));
     if (family === 'crossbow') cues.push(cue('bow-release', offset + .025, .35, 1.2));
     if (family === 'flail') cues.push(cue('heavy-swish', offset + .02, .22));
     if (family === 'sling') cues.push(cue('thrust', offset + .04, .2, 1.15));
-    // One contact per strike: misses stay silent unless a shield actually deflects it.
+    // Layer material and health contact separately: armor penetration still sounds like flesh.
+    // Area attacks use one representative contact per layer to keep volleys bounded.
     const impacts = entry.affectedTargets ?? [entry];
-    const contact = impacts.find(impact => impact.shieldDamage > 0)
-      ?? impacts.find(impact => impact.armorDamage > 0)
-      ?? impacts.find(impact => impact.hit === true || impact.type === 'attack' || !entry.affectedTargets && entry.type === 'attack');
-    if (contact) cues.push(cue(contact.shieldDamage > 0 ? 'shield-wood' : contact.armorDamage > 0
-      ? ['mace', 'hammer', 'axe', 'flail', 'sling'].includes(family) || heavy ? 'armor-dent' : 'armor-clang'
-      : profile[1], offset + duration * .65, heavy ? .55 : .45));
+    const at = offset + duration * .65;
+    const shield = impacts.some(impact => impact.shieldDamage > 0);
+    const armor = impacts.some(impact => impact.armorDamage > 0);
+    const flesh = impacts.some(impact => impact.hpDamage > 0);
+    const hit = impacts.some(impact => impact.hit === true || impact.hit !== false && impact.type === 'attack');
+    if (shield || armor) cues.push(cue(shield ? 'shield-wood'
+      : ['mace', 'hammer', 'axe', 'flail', 'sling'].includes(family) || heavy ? 'armor-dent' : 'armor-clang',
+      at, heavy ? .5 : .38));
+    if (flesh || hit && !shield && !armor) {
+      cues.push(cue(profile[1], at, heavy ? .55 : .45));
+      // Blunt and edged attacks get a low body thump; piercing samples already include it.
+      if (flesh && ['blunt-hit', 'hammer-hit', 'slash-hit', 'axe-chop'].includes(profile[1]))
+        cues.push(cue('flesh-hit', at + .012, .24, heavy ? .9 : 1));
+    }
+    if (charging && (flesh || armor || hit)) cues.push(cue('charge-hit', at, .55));
     return cues;
   }
   return [...action(event), ...(event.reactions ?? []).slice(0, 3).flatMap((reaction, index) => action(reaction, .04 * (index + 1)))];
