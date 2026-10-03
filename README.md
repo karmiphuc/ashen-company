@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.47.6 buffs Ronin, Ninja and Warrior Monk into veteran specialists with stronger combat stats, matching hiring fees and guaranteed attack-skill talent for new recruits.
+
 Version 0.47.5 adds 10 backgrounds and fixed star talents to hiring and advancement. Samurai now costs 2,000 crowns with elite melee stats and at least two-star melee skill and defense. See [backgrounds and talents](docs/BACKGROUNDS-TALENTS.md).
 
 
