@@ -21,24 +21,24 @@
 .battle-terrain,.battle-units{position:absolute;inset:0;width:100%;height:100%}
 .battle-terrain{top:0;z-index:auto}
 .battle-units{top:0;z-index:auto;pointer-events:none}
-.battle-hex{appearance:none;display:block;width:76px;height:85px;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;color:inherit;cursor:pointer;clip-path:none;overflow:visible;z-index:calc(10 + var(--tile-row) * 10);filter:none;background:none}
+.battle-hex{appearance:none;display:block;width:76px;height:44px;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;color:inherit;cursor:pointer;clip-path:none;overflow:visible;z-index:calc(10 + var(--tile-row) * 10);filter:none;background:none}
 .battle-hex{box-shadow:none}
 .battle-hex::after{display:none}
 .battle-hex-top{position:absolute;inset:0;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#566636 url('../assets/battle/grass-01.png') center/200% 200%;box-shadow:inset 0 -2px #a6ad6940;pointer-events:none}
 .battle-morale-flag{position:absolute;z-index:8;right:0;top:20px;width:15px;height:16px;background:#595844;border:1px solid #b2a579;color:#eee3c3;font:700 9px/14px Georgia;text-align:center;clip-path:polygon(0 0,100% 0,85% 50%,100% 100%,0 100%)}.battle-morale-flag.morale-confident{background:#526c43;color:#eff1b0}.battle-morale-flag.morale-wavering{background:#936b31}.battle-morale-flag.morale-breaking{background:#8a3c32}.battle-morale-report{padding:8px;margin-bottom:12px;border:1px solid #655a41;background:#17170f}.battle-morale-report strong{font:12px Georgia;color:#dacb9e}.battle-morale-report p{margin:6px 0;font:11px/1.3 Georgia;color:#d0bd93}.battle-morale-report small{font:10px/1.4 Georgia;color:#ab9f81}.battle-morale-report.morale-confident strong{color:#baca86}.battle-morale-report.morale-wavering strong{color:#ddac65}.battle-morale-report.morale-breaking strong{color:#e49a83}
 .battle-hex-top::after{content:"";position:absolute;inset:0;background:linear-gradient(150deg,#d9daa517,transparent 40%,#10180728);pointer-events:none}
-.battle-hex-wall{position:absolute;left:0;top:63.75px;width:76px;height:calc(21.25px + var(--tile-rise));clip-path:polygon(0 0,50% 21.25px,100% 0,100% var(--tile-rise),50% 100%,0 var(--tile-rise));background:repeating-linear-gradient(0deg,#12130d38 0 1px,transparent 1px 8px),linear-gradient(90deg,#645238 50%,#3c3828 50%);filter:drop-shadow(0 3px 1px #080c07a8);pointer-events:none}
+.battle-hex-wall{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;filter:drop-shadow(0 2px 1px #080c0755)}.battle-cliff-se{fill:#5e5038;stroke:#51452f;stroke-width:.65}.battle-cliff-sw{fill:#807051;stroke:#62563d;stroke-width:.65}
 .battle-height-1 .battle-hex-top,.battle-height-2 .battle-hex-top{box-shadow:inset 0 -3px #adad7280}
-.battle-height-label{position:absolute;left:29px;top:65px;min-width:18px;padding:1px 2px;border:1px solid #b7a7697a;background:#292b1dcc;color:#e5d99f;font:bold 9px/1 Arial,sans-serif;pointer-events:none}
+.battle-height-label{position:absolute;right:6px;top:26px;min-width:18px;padding:1px 2px;border:1px solid #b7a7697a;background:#292b1dcc;color:#e5d99f;font:bold 9px/1 Arial,sans-serif;pointer-events:none}
 .battle-hex:focus-visible{outline:none;filter:drop-shadow(0 0 4px #f0cf78)}
 .battle-terrain-open.battle-hex-grass-alt .battle-hex-top{background-image:url('../assets/battle/grass-02.png')}
 .battle-terrain-brush .battle-hex-top{background-image:url('../assets/world/world_detail_autumn_green_01.png'),url('../assets/battle/grass-02.png');background-repeat:no-repeat,repeat;background-position:center 55%,center;background-size:72% auto,200% 200%}
 .battle-terrain-trees .battle-hex-top{background-image:url('../assets/world/world_detail_forest_green_01.png'),url('../assets/battle/grass-01.png');background-repeat:no-repeat,repeat;background-position:center 58%,center;background-size:86% auto,200% 200%}
 .battle-terrain-mud .battle-hex-top{background-image:url('../assets/battle/earth-01.png');filter:saturate(.62) brightness(.72)}
 .battle-terrain-rock .battle-hex-top{background-image:url('../assets/battle/earth-01.png');filter:saturate(.42) brightness(1.12)}
-.battle-tree-obstacle{position:absolute;left:-5px;top:-31px;width:86px;height:110px;background:url('../assets/world/world_detail_forest_green_01.png') center bottom/100% auto no-repeat;filter:drop-shadow(3px 5px 2px #0b100bbb);pointer-events:none}
+.battle-tree-obstacle{position:absolute;left:-5px;bottom:22px;width:86px;height:86px;background:url('../assets/world/world_detail_forest_green_01.png') center bottom/100% auto no-repeat;filter:drop-shadow(3px 5px 2px #0b100bbb);pointer-events:none}
 .battle-terrain-dense-trees .battle-hex-top{filter:brightness(.65)}
-.battle-unit,.battle-unit.is-active,.battle-unit.action-swing,.battle-unit.action-thrust,.battle-unit.action-shoot{z-index:calc(150 + var(--unit-depth,15))}
+.battle-unit,.battle-unit.is-active,.battle-unit.action-swing,.battle-unit.action-thrust,.battle-unit.action-shoot{z-index:var(--unit-depth,15)}
 .battle-projectile{z-index:250}
 .battle-biome-forest{background-color:#3d4d30}
 .battle-biome-mountain{background-color:#4c4c3d}
@@ -102,3 +102,13 @@
 .battle-controls{position:static;flex-wrap:wrap;justify-content:flex-start;gap:8px}.battle-camera{display:flex;gap:4px;margin-left:auto}.battle-camera button{min-height:44px;padding:5px 10px;border:1px solid #716340;background:#211f18;color:#d6c79f;font:700 11px Arial,sans-serif}.battle-camera button:focus-visible{outline:2px solid #e0c06e;outline-offset:2px}.battle-camera button:disabled{opacity:.48}.battle-counts{margin-top:5px;color:#c6b994;font:11px/1.2 Arial,sans-serif;letter-spacing:0}.battle-tactic-picker{display:none}.battle-log-details>summary,.battle-morale-help>summary{cursor:pointer;min-height:32px;display:list-item;list-style-position:inside;padding:7px 0;color:#e2cc96;font:12px Georgia,serif}.battle-log-details>summary:focus-visible,.battle-morale-help>summary:focus-visible{outline:2px solid #e0c06e}.battle-morale-help>summary{font-size:11px}.battle-log-details ol{margin-top:5px}.battle-terrain-key{gap:7px}.battle-vitals{color:#e5d6b1!important}.battle-log{min-height:0}.battle-layout{align-items:start}.battle-tactics{border-top:0;border-bottom:1px solid #625b43}@media(max-width:720px){.battle-controls{gap:6px;padding:7px}.battle-camera{margin-left:0}.battle-camera button{padding-inline:9px}.battle-controls .battle-retreat{margin-left:auto}.battle-tactics{padding:7px}.battle-tactics [role=group]{display:none}.battle-tactic-picker{display:flex;align-items:center;gap:10px;color:#d6c79f;font-size:12px}.battle-tactic-picker select{flex:1;min-width:0;min-height:44px;border:1px solid #89734a;color:#efdfb9;background:#211f18;padding:6px;font:12px Georgia,serif}.battle-tactics p{font-size:11px}.battle-scroll{max-height:55dvh;min-height:260px}.battle-log{max-height:none;overflow:visible}.battle-morale-report{margin-bottom:3px}.battle-log-details>summary{min-height:44px;padding:13px 0}.battle-log-details ol{max-height:180px;overflow:auto}.battle-terrain-key{min-width:0;width:100%;flex-wrap:wrap;gap:6px}.battle-terrain-key small{display:none}.battle-turn strong{max-width:120px}.battle-counts{font-size:10px}}
 
 .battle-speed button,.battle-camera button{min-width:44px}.battle-morale-help>summary{min-height:44px;padding-top:12px;padding-bottom:12px}
+
+/* Ground tops, exposed cliffs, obstacles and pawns share row depth. */
+.battle-palisade{position:absolute;left:0;bottom:22px;width:76px;height:auto;max-width:none;pointer-events:none;filter:drop-shadow(1px 3px 1px #17120b88)}
+.battle-terrain-palisade .battle-hex-top{background-image:url('../assets/battle/earth-01.png')}
+.battle-unit.is-active::before{top:calc(var(--pawn-foot,80px) - 10px)}
+.battle-enemy-intent{margin:0;padding:6px 11px;color:#cfb786;background:#211e17;font:11px Georgia,serif;border-bottom:1px solid #625b43}
+.battle-key-palisade{background:repeating-linear-gradient(90deg,#ad8750 0 2px,#382a19 2px 4px)!important}
+
+.battle-unit strong{bottom:auto;top:calc(var(--pawn-foot,80px) + 1px)}
+.battle-unit small{bottom:auto;top:calc(var(--pawn-foot,80px) + 12px)}

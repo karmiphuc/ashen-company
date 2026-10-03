@@ -60,3 +60,5 @@ Version 0.44.4 corrects the requested display side: one-handed weapons and shiel
 ## Named weapon designs
 
 Version 0.46.9 imports 46 named weapon designs and an explicit Impaler crossbow from the same pinned BB source. Their original inventory icons and worn entity-icon sprites are embedded in `src/named-weapon-art.js`. The [named weapon manifest](../assets/named-weapons-source.json) records definition/name-pool hashes, actual icon paths, source brush bounds, cropped atlas regions and final PNG hashes. Source art remains Battle Brothers artwork by Overhype Studios. Handgonne art is excluded. See [implementation and adaptations](NAMED-WEAPONS.md).
+
+Battle terrain/camp update (v0.47.0): `assets/battle/camp-wall-01.png` through `camp-wall-07.png` and `socket-earth.png` are exact vertically flipped atlas crops from the same pinned BB source (`brushes/object_1.brush`, `brushes/terrain.brush`, `gfx/object_1.png`, `gfx/terrain.png`). `assets/battle/camp-source.json` records source bounds, crop rectangles and output SHA-256; `tools/content/import-bb-camp-art.py` reproduces them. Original art remains the property of Overhype Studios.

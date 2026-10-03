@@ -90,3 +90,5 @@ Open `http://127.0.0.1:4173`. The site is static and can be hosted from the main
 See [asset credits](docs/ASSET-CREDITS.md), [research notes](docs/RESEARCH.md), [perk references and adaptations](docs/PERK-RESEARCH.md), and [verification notes](docs/VERIFICATION.md).
 
 Version 0.43 adds nine regional enemy profiles, role-aware imported gear across patrols and generated encounters, scarce named champions, and permanent named/legendary equipment bonuses. Fangshire now provides 77 protection for one fatigue with +5 ranged defense. Rare-item buybacks preserve damage, and v0.42 active battles migrate without repairs or rerolled drops.
+
+Version 0.47.0 fixes tactical hex proportions, neighbor-aware elevation faces and ground-aligned pawns. Camps now have original BB palisade art with movement-blocking walls and open entrances. New enemy formations defend with at least three live ranged fighters, switch to offense below that threshold, and retain a four-quiet-round anti-stalemate fallback. See [battle terrain notes](docs/BATTLE-TERRAIN.md).

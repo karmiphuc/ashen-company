@@ -1,0 +1,190 @@
+{
+  "repository": "kovasap/battle-bros-decompiled",
+  "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+  "assets": [
+    {
+      "file": "camp-wall-01.png",
+      "brush": "camp_18_01",
+      "brushFile": "brushes/object_1.brush",
+      "atlas": "gfx/object_1.png",
+      "crop": [
+        1301,
+        1593,
+        1460,
+        1709
+      ],
+      "bounds": [
+        -79.0,
+        80.0,
+        -58.0,
+        58.0
+      ],
+      "size": [
+        159,
+        116
+      ],
+      "sha256": "a684cc6cf102bf769a1d12375ac58601f0e4898148efcd2037d120e6b83ab8e8"
+    },
+    {
+      "file": "camp-wall-02.png",
+      "brush": "camp_18_02",
+      "brushFile": "brushes/object_1.brush",
+      "atlas": "gfx/object_1.png",
+      "crop": [
+        151,
+        914,
+        301,
+        1030
+      ],
+      "bounds": [
+        -70.0,
+        80.0,
+        -58.0,
+        58.0
+      ],
+      "size": [
+        150,
+        116
+      ],
+      "sha256": "947d43eaf26e68a2402cc884ddc60a5c49ff32e01362f837ddb4a1a6bd0cabb1"
+    },
+    {
+      "file": "camp-wall-03.png",
+      "brush": "camp_18_03",
+      "brushFile": "brushes/object_1.brush",
+      "atlas": "gfx/object_1.png",
+      "crop": [
+        895,
+        1185,
+        1054,
+        1298
+      ],
+      "bounds": [
+        -79.0,
+        80.0,
+        -57.0,
+        56.0
+      ],
+      "size": [
+        159,
+        113
+      ],
+      "sha256": "dbc12c89a0a76affc78caf37537af43bd0346f8dec3bea4b4e5ebca757ca2ac9"
+    },
+    {
+      "file": "camp-wall-04.png",
+      "brush": "camp_18_04",
+      "brushFile": "brushes/object_1.brush",
+      "atlas": "gfx/object_1.png",
+      "crop": [
+        0,
+        760,
+        150,
+        896
+      ],
+      "bounds": [
+        -76.0,
+        74.0,
+        -68.0,
+        68.0
+      ],
+      "size": [
+        150,
+        136
+      ],
+      "sha256": "10e5f7be73326a875ccb44568d66fe79c9ffeeb68467147bfbb02d8cf2937eea"
+    },
+    {
+      "file": "camp-wall-05.png",
+      "brush": "camp_18_05",
+      "brushFile": "brushes/object_1.brush",
+      "atlas": "gfx/object_1.png",
+      "crop": [
+        1682,
+        1935,
+        1841,
+        2048
+      ],
+      "bounds": [
+        -79.0,
+        80.0,
+        -57.0,
+        56.0
+      ],
+      "size": [
+        159,
+        113
+      ],
+      "sha256": "dbc12c89a0a76affc78caf37537af43bd0346f8dec3bea4b4e5ebca757ca2ac9"
+    },
+    {
+      "file": "camp-wall-06.png",
+      "brush": "camp_18_06",
+      "brushFile": "brushes/object_1.brush",
+      "atlas": "gfx/object_1.png",
+      "crop": [
+        541,
+        64,
+        635,
+        197
+      ],
+      "bounds": [
+        -47.0,
+        47.0,
+        -67.0,
+        66.0
+      ],
+      "size": [
+        94,
+        133
+      ],
+      "sha256": "859fe08ecf904f7ab2c42949db89aabb9d432abf4209c15b2e2de82a7e4a067a"
+    },
+    {
+      "file": "camp-wall-07.png",
+      "brush": "camp_18_07",
+      "brushFile": "brushes/object_1.brush",
+      "atlas": "gfx/object_1.png",
+      "crop": [
+        1927,
+        1424,
+        2021,
+        1557
+      ],
+      "bounds": [
+        -47.0,
+        47.0,
+        -67.0,
+        66.0
+      ],
+      "size": [
+        94,
+        133
+      ],
+      "sha256": "011e6ecf718717f84eac85392cac95175fa71877d93b684752277e4cafce3879"
+    },
+    {
+      "file": "socket-earth.png",
+      "brush": "socket_earth",
+      "brushFile": "brushes/terrain.brush",
+      "atlas": "gfx/terrain.png",
+      "crop": [
+        1,
+        707,
+        181,
+        807
+      ],
+      "bounds": [
+        -90.0,
+        90.0,
+        -50.0,
+        50.0
+      ],
+      "size": [
+        180,
+        100
+      ],
+      "sha256": "8cc64f379bed3ab4696cc6a27cdda6cd06bd8d020df9e1dbc18d04c5ee4ff45e"
+    }
+  ]
+}

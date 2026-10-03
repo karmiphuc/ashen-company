@@ -584,6 +584,13 @@ function portraitFrame(equipment, weapon = mountedWeapon(layerSpec('weapon', equ
   return {left: compositionLeft, top: compositionTop, scale: compositionScale, transform: compositionTransform};
 }
 
+/** Ground contact in the same framed coordinate space as the rendered pawn. */
+export function portraitGroundAnchor(equipment = {}) {
+  const frame=portraitFrame(equipment);
+  const foot=equipment.mount?MOUNT_PLATE.top+MOUNT_PLATE.height:116;
+  return {x:frame.left+(equipment.mount?70:52)*frame.scale,y:frame.top+foot*frame.scale};
+}
+
 /** Grip in the shared 104×142 coordinate space, including equipment framing. */
 export function portraitWeaponAnchor(equipment = {}) {
   const weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount);
