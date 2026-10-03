@@ -174,15 +174,16 @@ export const VISUALS = {
       front: ['attachment-horned-pauldrons-front.png', 2, 46],
     },
     'chain-mantle': { front: ['attachment-chain-mantle.png', 5, 46] },
-    'heraldic-plates': { front: ['attachment-heraldic-plates.png', 5, 46] },
+    'heraldic-plates': { back: ['attachment-heraldic-shoulders-back.png', 65, 53], front: ['attachment-heraldic-shoulders-front.png', 5, 51] },
     'gladiator-pauldrons': { front: ['attachment-gladiator-pauldrons.png', 5, 46] },
     'skull-chain': { front: ['attachment-skull-chain.png', 5, 46] },
     'spiked-chain': { front: ['attachment-spiked-chain.png', 5, 46] },
     'stag-plates': { front: ['attachment-stag-plates.png', 5, 46] },
-    'heraldic-shoulders': {
-      back: ['attachment-heraldic-shoulders-back.png', 65, 53],
-      front: ['attachment-heraldic-shoulders-front.png', 5, 51],
-    },
+    'heraldic-shoulders': { front: ['attachment-heraldic-plates.png', 5, 46] },
+    'double-mail': { front: ['attachment-double-mail.png', 5, 44] },
+    'direwolf-fur': { front: ['attachment-direwolf-fur.png', 5, 44] },
+    'unhold-fur': { back: ['attachment-unhold-fur-back.png', 2, 42], front: ['attachment-unhold-fur-front.png', 5, 44] },
+    'hyena-fur': { back: ['attachment-hyena-fur-back.png', 0, 42, 'scale(.8)'], front: ['attachment-hyena-fur-front.png', 5, 44] },
     'kraken-mantle': { front: ['attachment-kraken-mantle.png', 5, 46] },
   },
   mount: {
@@ -492,14 +493,18 @@ const ITEM_IMAGES = {
   'iron-pauldrons': 'iron-pauldrons.png',
   'scale-mantle': 'scale-mantle.png',
   'bone-platings': 'bone-platings.png',
+  'double-mail': 'double-mail.png',
+  'direwolf-fur': 'direwolf-fur.png',
+  'unhold-fur': 'unhold-fur.png',
+  'hyena-fur': 'hyena-fur.png',
   'horned-pauldrons': 'horned-pauldrons.png',
   'chain-mantle': 'chain-mantle.png',
-  'heraldic-plates': 'heraldic-plates.png',
+  'heraldic-plates': 'heraldic-shoulders.png',
   'gladiator-pauldrons': 'gladiator-pauldrons.png',
   'skull-chain': 'skull-chain.png',
   'spiked-chain': 'spiked-chain.png',
   'stag-plates': 'stag-plates.png',
-  'heraldic-shoulders': 'heraldic-shoulders.png',
+  'heraldic-shoulders': 'heraldic-plates.png',
   'kraken-mantle': 'kraken-mantle.png',
 };
 
@@ -561,8 +566,8 @@ function bodyLayer(file, armored, left = 11, top = 50) {
 function attachmentLayer(spec, part, slot='attachment') {
   const layerSpec = spec?.[part];
   if (!layerSpec) return '';
-  const [file, left, top] = layerSpec;
-  return `<img data-layer="${slot}-${part}" class="bb-layer bb-layer-attachment" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none;z-index:${part === 'back' ? 2 : 3}">`;
+  const [file, left, top, transform] = layerSpec;
+  return `<img data-layer="${slot}-${part}" class="bb-layer bb-layer-attachment" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transform ? `transform:${transform};transform-origin:top left;` : ''}max-width:none;pointer-events:none;z-index:${part === 'back' ? 2 : 3}">`;
 }
 
 function mountLayer(spec, part) {

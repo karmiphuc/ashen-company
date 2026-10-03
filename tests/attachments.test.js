@@ -30,7 +30,7 @@ function beginAttack(seed, attachment = 'scale-mantle') {
 }
 
 test('attachment catalog uses the independent slot and is not famed', () => {
-  assert.equal(ARMOR_ATTACHMENTS.length, 18);
+  assert.equal(ARMOR_ATTACHMENTS.length, 22);
   assert.deepEqual(ARMOR_ATTACHMENTS.slice(0, 5).map(item => [item.id, item.armor, item.fatigue, item.price]), [
     ['padded-lining', 15, 1, 80],
     ['fur-mantle', 25, 1, 130],
@@ -49,10 +49,11 @@ test('attachment catalog uses the independent slot and is not famed', () => {
 test('attachment armor efficiency stays near fifteen armor per fatigue', () => {
   assert.deepEqual(ARMOR_ATTACHMENTS.map(item => [item.id, item.armor]), [
     ['padded-lining', 15], ['fur-mantle', 25], ['leather-reinforcement', 35],
-    ['iron-pauldrons', 60], ['scale-mantle', 80], ['bone-platings', 40],
+    ['iron-pauldrons', 60], ['scale-mantle', 80], ['bone-platings', 55],
     ['horned-pauldrons', 50], ['chain-mantle', 55], ['heraldic-plates', 60],
     ['gladiator-pauldrons', 65], ['skull-chain', 65], ['spiked-chain', 70],
     ['stag-plates', 75], ['heraldic-shoulders', 82], ['kraken-mantle', 90],
+    ['double-mail',45], ['unhold-fur',70], ['direwolf-fur',60], ['hyena-fur',50],
     ['northern-pelt-mantle',30], ['ancient-gilded-collar',45], ['noble-brocade-mantle',45],
   ]);
   for (const item of ARMOR_ATTACHMENTS) {
@@ -93,7 +94,7 @@ test('all attachments appear in rotating shop stock within specialist shelf budg
   assert.deepEqual(seen, attachmentIds, 'every attachment can enter the city armory rotation');
   assert.deepEqual(purchased, newIds, 'every new attachment can be bought');
   assert.ok(total < 500 * 4, 'the expanded catalog does not fill every attachment slot each week');
-  assert.ok(bonePlatings > 10 && bonePlatings < 180, 'common attachments rotate through a few shelves instead of every design being common stock');
+  assert.ok(bonePlatings > 0 && bonePlatings < 45, 'bone armor is rare rather than common stock');
 });
 
 test('saved markets from before the attachment expansion gain valid new stock', () => {

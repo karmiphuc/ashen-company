@@ -524,6 +524,10 @@ function recruitBonuses(person) {
   return bonuses;
 }
 
+function attachmentItems(equipment){return ['attachment','attachment2'].map(slot=>getItem(equipment?.[slot])).filter(Boolean);}
+function attachmentBonus(equipment,key){return attachmentItems(equipment).reduce((sum,item)=>sum+(item[key]??0),0);}
+function attachmentEffect(equipment,key){return Math.max(0,...attachmentItems(equipment).map(item=>item[key]??0));}
+
 export function getCompanyStats(person) {
   const attributes = person.attributes ?? {};
   const level = person.level ?? 1;
@@ -554,7 +558,7 @@ export function getCompanyStats(person) {
   const effectiveRangedShieldDefense=(hasPerk(person,'shield-expert')?Math.ceil(rangedShieldDefense*1.25):rangedShieldDefense)+(rangedShieldDefense&&hasPerk(person,'shield-bearer')?5:0);
   const effectiveShieldDefense = (hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense)
     + (shieldDefense && hasPerk(person, 'shield-bearer') ? 5 : 0);
-  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) + mountInitiative
+  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) + mountInitiative + attachmentBonus(person.equipment,'initiativeBonus')
     - (hasPerk(person, 'relentless') ? Math.ceil(perkFatigue / 2)+attachmentFatigue : fatigue));
   const dodgeDefense = hasPerk(person, 'dodge') ? Math.floor(initiative * .15) : 0;
   const nimbleDefense = armorFatigue <= 15 && hasPerk(person, 'nimble') ? 5 : 0;
@@ -567,7 +571,7 @@ export function getCompanyStats(person) {
     meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0) + giftedSkill + mountHit,
     rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0) + giftedSkill + mountHit,
     meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + reachDefense + giftedDefense + famedStatBonus('meleeDefense') + (mount?.meleeDefenseBonus ?? 0),
-    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveRangedShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('rangedDefense') + (mount?.rangedDefenseBonus ?? 0),
+    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveRangedShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('rangedDefense') + (mount?.rangedDefenseBonus ?? 0) + attachmentBonus(person.equipment,'rangedDefenseBonus'),
     maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue - (mount?.fatigue ?? 0) + famedStatBonus('maxFatigue')),
     initiative,
     resolve: (hasPerk(person, 'fortified-mind') ? Math.ceil(baseResolve * 1.25) : baseResolve) + famedStatBonus('resolve'),
@@ -832,7 +836,7 @@ function rotatedItems(items, state, town, cycle, label) {
 function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
   const equipment = Object.fromEntries(ITEMS.map(item => [item.id, 0]));
   const facilities = townFacilities(state.seed,town), budget=townArmoryBudget(state.seed,town);
-  const gear = ITEMS.filter(item=>item.slot!=='mount'&&!['named','famed'].includes(item.rarity)&&townDesign(item,town));
+  const gear = ITEMS.filter(item=>item.slot!=='mount'&&!['named','famed'].includes(item.rarity)&&townDesign(item,town)&&(!item.marketChance||townEventHash(`${state.seed}:${town.id}:${cycle}:rare-attachment:${item.id}`)%100<item.marketChance*100));
   const selected=[];
   for(const slot of ['armor','helmet','weapon','shield','attachment','accessory']) {
     const specialist=facilities.some(f=>f.id===(['armor','helmet','attachment'].includes(slot)?'armorsmith':'blacksmith'));
@@ -2567,8 +2571,8 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
       spearwallActive: false, riposteActive: false, stunnedTurns: 0, stunProtected: false, pendingBerserkAp: 0,
       meleeSkill: 30 + championSkill + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill, rangedSkill: 28 + championSkill + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill,
       meleeDefense: 2 + championDefense + camp.difficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),
-      rangedDefense: 2 + championDefense + camp.difficulty * 2 + rank * 2 + (getItem(gear.shield)?.rangedDefense ?? shieldDefense) + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0),
-      maxFatigue: 85 + (enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + camp.difficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative, resolve: 32 + (enemy.champion?20:0) + camp.difficulty * 8 + rank * 4 + bonus('resolve'),
+      rangedDefense: 2 + championDefense + camp.difficulty * 2 + rank * 2 + (getItem(gear.shield)?.rangedDefense ?? shieldDefense) + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0) + attachmentBonus(gear,'rangedDefenseBonus'),
+      maxFatigue: 85 + (enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + camp.difficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (enemy.champion?20:0) + camp.difficulty * 8 + rank * 4 + bonus('resolve'),
     };
   });
   const jointBattle = encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && state.contract?.type === 'assault'
@@ -3240,7 +3244,7 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
     * (actor.howlTurns > 0 ? .8 : 1)
     * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
   const before = head ? target.headArmor : target.attachmentArmor + (target.attachment2Armor??0) + target.bodyArmor;
-  const armorDamage = option?.id === 'puncture' ? 0 : Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1)
+  let armorDamage = option?.id === 'puncture' ? 0 : Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1)
     * (head ? 1.1 : 1) * (option?.id === 'crush-armor' ? 1.5 : 1)
     * (hasPerk(actor, 'axe-training') && weaponMasteryMatches('axe-training', weapon) ? 1.15 : 1)
     * (hasPerk(target, 'battle-forged') && before > 0 ? .85 : 1)));
@@ -3253,6 +3257,8 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   if (head && !hasPerk(target, 'steel-brow')) hp = Math.round(hp * 1.25);
   if (hasPerk(actor, 'mace-training') && weaponMasteryMatches('mace-training', weapon)) hp = Math.round(hp * 1.1);
   if (hasPerk(target, 'iron-jaw')) hp = Math.max(1, Math.round(hp * .8));
+  // Fur reduces final received missile damage at either hit location.
+  if(ranged){const multiplier=1-attachmentEffect(target.equipment,'rangedDamageReduction');hp=Math.max(1,Math.round(hp*multiplier));armorDamage=armorDamage?Math.max(1,Math.round(armorDamage*multiplier)):0;}
   // Trample health damage bypasses armor, head multipliers and damage-reduction perks.
   hp += battle.mountBalanceVersion === 1 && option?.id === 'charge' ? mount?.chargeDirectDamage ?? 0 : 0;
   return { hp, armorDamage, before };
@@ -3334,7 +3340,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
     target.stunnedTurns = 1;
     target.stunProtected = true;
   }
-  changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0)));
+  changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0) + (!ranged ? attachmentEffect(actor.equipment,'meleeMoraleDamage') : 0)));
   const fallen = target.hp === 0;
   const perkProcs = [], effects = [];
   if (fallen) {

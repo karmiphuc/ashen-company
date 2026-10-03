@@ -63,6 +63,12 @@ export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true,t
       :['western-marches','eastern-frontier','southern-marches','saffron-coast','sunlands'].includes(region)?['noble-brocade-mantle']:[];
     if(attachments.length)result.attachment=attachments[0];
   }
+  // Regional veteran pelts/mail can be recovered through the normal equipment loot rolls.
+  if(difficulty>=2&&hash(`${seed}:${index}:fur-mail-attachment`)%5===0&&theme!=='ancient'&&theme!=='cult'){
+    const choices=theme==='north'?['unhold-fur','direwolf-fur','double-mail']:theme==='forest'?['direwolf-fur','hyena-fur']:theme==='south'?['hyena-fur','double-mail']:['double-mail','direwolf-fur'];
+    result.attachment=choices[hash(`${seed}:${index}:fur-mail-design`)%choices.length];
+  }
+  if(difficulty>=2&&hash(`${seed}:${index}:rare-bone-attachment`)%100===0)result.attachment='bone-platings';
   // A single elite leader may carry a named trophy; legendary relics stay out of common outfits.
   if(champions&&difficulty===3&&index===0&&hash(`${seed}:champion`)%8===0) {
     const slot=hash(`${seed}:trophy-slot`)%2?'armor':'helmet';

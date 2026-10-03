@@ -100,6 +100,11 @@ export function getItemDetails(item, condition) {
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
       { label: 'Armor per fatigue', value: item.fatigue > 0 ? String(Math.round(maximum / item.fatigue * 10) / 10) : 'Weightless' },
     );
+    if(item.rangedDefenseBonus)stats.push({label:'Ranged defense',value:signed(item.rangedDefenseBonus)});
+    if(item.initiativeBonus)stats.push({label:'Initiative',value:signed(item.initiativeBonus)});
+    if(item.rangedDamageReduction)stats.push({label:'Incoming ranged damage',value:`−${Math.round(item.rangedDamageReduction*100)}%`});
+    if(item.meleeMoraleDamage)stats.push({label:'Melee morale damage',value:signed(item.meleeMoraleDamage)});
+    if(item.rangedDamageReduction||item.meleeMoraleDamage)notes.push('Fur effects work while equipped, even after its armor is depleted. Duplicate ranged reduction and intimidation do not stack; flat stat bonuses from both slots add together. Morale damage is reduced by resolve and does not affect undead.');
     notes.push('This attachment requires body armor. Layered Armor unlocks a second attachment slot; each layer has independent durability. Slot 2 absorbs body damage first, then slot 1, before the main suit; head hits use the helmet.');
     notes.push('Swapping body armor keeps the attachment fitted. Stowing body armor also stows both fitted attachments, preserving every item and its condition.');
     notes.push('Its weight lowers maximum fatigue and initiative, but is excluded from armor-weight perk checks and Brawny/Relentless weight reductions. Camp tools and the Smithy repair its durability. Padding and leather reinforcement sit beneath the armor; outer mantles and pauldrons appear on the portrait.');

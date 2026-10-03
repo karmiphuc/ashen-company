@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.48.7 swaps Heraldic Plates/Shoulders inventory and worn artwork, adds Double Mail and Unhold/Direwolf/Hyena Fur attachments, and raises Bone Platings to 55 armor with rarer stock. Both attachment slots apply their bonuses; Unhold Fur reduces ranged damage by 25%, Direwolf Fur adds melee morale damage, and regional veterans can carry the new gear.
+
 Version 0.48.6 enlarges equipped one-handed weapons by 30% and two-handed weapons by 50% relative to the pawn. Shields retain their authored size and placement. Named weapon handles stay above the base, mounted grips and combat animation anchors stay aligned, and inventory icons keep their existing sizes.
 
 Version 0.48.5 rolls champions independently for every eligible enemy, with no per-party champion cap. Veteran top-tier camps and bands scale toward 18–20 troops against a full company; their veteran stat ranks keep growing to 10 as player levels and campaign age rise. Starter encounters stay small. New battles support 20 enemies and preserve every defeated champion’s named trophies beyond the ordinary loot limit; existing active battles retain their saved roster and rules.
