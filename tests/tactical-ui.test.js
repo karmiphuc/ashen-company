@@ -19,7 +19,7 @@ test('company sheet exposes saved role and skill preference with automatic defau
   const configured = companySheetHTML(state, person, 'all', '');
   assert.match(configured, /<option value="flanker" selected>Flanker<\/option>/);
   assert.match(configured, /<option value="control" selected>Control<\/option>/);
-  assert.match(configured, /Looks for side routes to reach exposed enemies/);
+  assert.match(configured, /Prefers ranged and polearm enemies/);
 });
 
 test('battle pawn shows rules-version AP maximum and shield-wall status, with current skill in the report', () => {

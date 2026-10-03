@@ -50,8 +50,6 @@ test('unpressured empty-ammo archers use backups or follow their melee tactic', 
         if (backup) {
           assert.equal(battle.lastEvent.type, 'swap', `${weapon}/${backup}/${tactic}`);
           assert.equal(actor.equipment.weapon, backup === 'pocket' ? 'rondel-dagger' : backup);
-        } else if (tactic === 'defense') {
-          assert.equal(battle.lastEvent.type, 'hold');
         } else {
           assert.equal(battle.lastEvent.type, 'move');
           assert.ok(actor.q > 2, `${weapon}/${tactic} did not close for unarmed combat`);

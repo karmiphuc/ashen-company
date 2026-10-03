@@ -57,7 +57,8 @@ test('advance formation moves one hex per round without rear ranks catching a st
   const beforeContactRound = new Map(company.map(unit => [unit.id, unit.q]));
   const contactRound = battle.round;
   while (battle.round === contactRound && battle.status === 'active') advanceBattle(state);
-  for (const unit of company.filter(unit => unit.alive)) assert.equal(unit.q, beforeContactRound.get(unit.id), 'contact prevents a new bound');
+  for (const unit of company.filter(unit => unit.alive && unit !== scout)) assert.equal(unit.q, beforeContactRound.get(unit.id), 'contact prevents a new bound');
+  assert.ok(scout.q <= beforeContactRound.get(scout.id), 'an archer can retreat from pressure while the formation holds');
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
 });
 

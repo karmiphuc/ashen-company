@@ -29,6 +29,10 @@ test('dual crossbows fire before reloading, preserve both loading states and rel
     while(state.battle.activeId===actor.id)advanceBattle(state);
     while(state.battle.activeId!==actor.id&&state.battle.status==='active')advanceBattle(state);
     assert.equal(state.battle.status,'active');advanceBattle(state);
+    // A threatened loaded weapon stays loaded while its wielder first finds space.
+    for(let step=0;step<3&&state.battle.lastEvent.type==='move';step++){
+      assert.equal(actor.reload,1);assert.equal(actor.reserveReload,1);advanceBattle(state);
+    }
     assert.equal(state.battle.lastEvent.skillName,'Reload');assert.equal(actor.reload,0);assert.equal(actor.reserveReload,1);
     assert.equal(state.supplies.ammo,ammo);validateSave(structuredClone(state));
   }

@@ -1,3 +1,5 @@
+import { hexDistance, hexLine } from './battle-terrain.js';
+
 export const COMBAT_ROLES = Object.freeze(['auto', 'frontliner', 'skirmisher', 'ranged', 'flanker']);
 export const SKILL_PREFERENCES = Object.freeze(['balanced', 'damage', 'control']);
 
@@ -26,6 +28,8 @@ export function scoreTacticalAction(actor, action, context = {}) {
   if (['defense', 'advance-formation', 'shield-wall'].includes(context.tactic)) score -= 4 * value('formationDistance');
   if (role === 'ranged' || role === 'skirmisher') score += 3 * value('spacingGain');
   if (role === 'flanker') score += 4 * value('flankGain');
+  if (context.targetPriorities !== false && action.target) score += tacticalTargetPriority(role, action.target, action.targetWeapon,
+    value('targetDistance'), context.nearestDistance ?? value('targetDistance'));
   return score + value('bonus');
 }
 
@@ -43,4 +47,26 @@ export function enemyBattleTactic(battle, getItem) {
     && getItem(unit.equipment?.weapon)?.ranged
     && (!getItem(unit.equipment.weapon).throwing || unit.throwingAmmo?.active > 0));
   return ranged.length >= 3 ? 'defense' : 'offense';
+}
+
+
+export function tacticalTargetPriority(role, target, weapon, distance, nearest = distance) {
+  if (role === 'flanker') return weapon?.ranged ? 40 : (weapon?.range ?? 1) > 1 ? 30 : 0;
+  if (role === 'skirmisher') return -Math.min(48, Math.max(0, distance-nearest)*16) + (!weapon?.ranged ? 6 : 0);
+  if (role === 'ranged') return (weapon?.ranged ? 10 : 0)
+    + (target.equipment?.shield && target.shieldDurability > 0 ? 0 : 8)
+    + Math.max(-10, Math.min(10, (20-(target.rangedDefense ?? 0))*.3));
+  return 0;
+}
+
+// An intact friendly shield within two hexes screens shots through its hex.
+// The best screen applies once, so stacking soldiers cannot make a target unhittable.
+export function rangedScreenModifier(battle, from, target) {
+  const line = new Set(hexLine(from,target).map(p=>`${p.q},${p.r}`));
+  let penalty = 0;
+  for (const unit of battle.units) if (unit.id !== target.id && unit.side === target.side
+    && unit.alive && !unit.escaped && unit.equipment?.shield && unit.shieldDurability > 0
+    && hexDistance(unit,target) <= 2 && line.has(`${unit.q},${unit.r}`))
+    penalty = Math.max(penalty,unit.shieldWallActive ? 18 : 12);
+  return penalty ? -penalty : 0;
 }

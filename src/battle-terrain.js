@@ -157,12 +157,20 @@ export function rangedCoverModifier(field, from, to) {
   const target = tileAt(field, to.q, to.r);
   if (!target) return 0;
   let penalty = target.terrain === 'trees' || target.terrain === 'dense-trees' ? 20 : target.terrain === 'brush' ? 10 : 0;
-  const distance = hexDistance(from, to);
-  for (let step = 1; step < distance; step++) {
-    const point = roundedHex(from.q + (to.q - from.q) * step / distance, from.r + (to.r - from.r) * step / distance);
+  for (const point of hexLine(from, to)) {
     const terrain = tileAt(field, point.q, point.r)?.terrain;
     if (terrain === 'trees' || terrain === 'dense-trees' || terrain === 'palisade') penalty += 8;
     else if (terrain === 'brush') penalty += 4;
   }
   return -Math.min(36, penalty);
+}
+
+
+// Interior hexes only, shared by terrain cover and shield screening.
+export function hexLine(from, to) {
+  const distance = hexDistance(from, to);
+  return Array.from({length:Math.max(0,distance-1)}, (_, index) => {
+    const step = index + 1;
+    return roundedHex(from.q + (to.q-from.q)*step/distance, from.r + (to.r-from.r)*step/distance);
+  });
 }

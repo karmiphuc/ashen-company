@@ -24,7 +24,8 @@ function battleWithCaptain(weapon = 'arming-sword', shield = null, seed = 51) {
 }
 
 test('new fights use 9 AP and two bow Quick Shots, while old saved fights keep 2 AP', () => {
-  const { state, battle, actor } = battleWithCaptain('hunting-bow');
+  const { state, battle, actor, at } = battleWithCaptain('hunting-bow');
+  at('enemy-1',5,2); // Safe distance isolates the two-shot AP economy.
   const target = battle.units.find(unit => unit.id === 'enemy-1');
   target.hp = target.maxHp = 300;
   assert.equal(battle.rulesVersion, 2);
