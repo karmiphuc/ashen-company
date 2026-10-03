@@ -148,8 +148,8 @@ test('allied guards deploy above or below the whole formation without occupying 
   for(let seed=1;seed<=24;seed++)for(const type of ['assault','rescue']){
     const state=createGame(seed);accept(state,type);const site=getContractTarget(state);state.position={x:site.x,y:site.y};startBattle(state,site.id);
     const allies=questAllies(state.battle),company=state.battle.units.filter(u=>u.side==='company'&&!u.ally);
-    assert.ok(allies.every(u=>u.r<2||u.r>13));assert.equal(new Set(allies.map(u=>u.r<2?'top':'bottom')).size,1);
-    assert.deepEqual(company.map(u=>({id:u.id,q:u.q,r:u.r})),state.formation.flatMap((id,index)=>id?[{id,q:2-Math.floor(index/12),r:2+index%12}]:[]));
+    assert.ok(allies.every(u=>u.r<6||u.r>17));assert.ok(allies.every(u=>u.q>=8&&u.q<=10));assert.equal(new Set(allies.map(u=>u.r<6?'top':'bottom')).size,1);
+    assert.deepEqual(company.map(u=>({id:u.id,q:u.q,r:u.r})),state.formation.flatMap((id,index)=>id?[{id,q:2-Math.floor(index/12),r:6+index%12}]:[]));
     assert.equal(new Set(state.battle.units.map(u=>`${u.q},${u.r}`)).size,state.battle.units.length);
     assert.deepEqual(validateSave(state),state);
   }

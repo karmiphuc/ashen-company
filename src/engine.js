@@ -2,7 +2,7 @@ import { armoryTheme } from './armory-themes.js';
 import { NAMED_WEAPONS } from './named-weapons.js';
 import { rollNamedItem } from './named-rolls.js';
 // Pure game rules for the offline overworld. The UI owns rendering and real time.
-import { createBattleField, blockedTerrain, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
+import { createBattleField, DEPLOYMENT_ROW_OFFSET, blockedTerrain, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
@@ -2523,7 +2523,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     if (!person) return [];
     const stats = getCompanyStats(person);
     return [{
-      id: person.id, name: person.name, side: 'company', q: 2 - Math.floor(index / 12), r: 2 + index % 12,
+      id: person.id, name: person.name, side: 'company', q: 2 - Math.floor(index / 12), r: 2 + DEPLOYMENT_ROW_OFFSET + index % 12,
       hp: person.hp, maxHp: stats.maxHp, bodyArmor: stats.bodyArmor, attachmentArmor: stats.attachmentArmor, attachment2Armor:stats.attachment2Armor, headArmor: stats.headArmor,
       maxBodyArmor: stats.maxBodyArmor, maxAttachmentArmor: stats.maxAttachmentArmor, maxAttachment2Armor:stats.maxAttachment2Armor, maxHeadArmor: stats.maxHeadArmor,
       shieldDurability: stats.shieldDurability, maxShieldDurability: stats.maxShieldDurability,
@@ -2557,7 +2557,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     const hp=enemy.champion?Math.ceil(baseHp*1.4):baseHp,championSkill=enemy.champion?12:0,championDefense=enemy.champion?8:0;
     return {
       ...(enemy.champion?{champion:true,championItemId:enemy.championItemId}:{}),
-      id: `enemy-${(enemy.troopIndex ?? index) + 1}`, ...(undead ? { undeadTraitsVersion: 1, troopIndex: enemy.troopIndex } : {}), name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + FRONT_FORMATION[index % 12],
+      id: `enemy-${(enemy.troopIndex ?? index) + 1}`, ...(undead ? { undeadTraitsVersion: 1, troopIndex: enemy.troopIndex } : {}), name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + DEPLOYMENT_ROW_OFFSET + FRONT_FORMATION[index % 12],
       hp: enemy.savedDamage?.hp ?? hp, maxHp: hp, bodyArmor: enemy.savedDamage?.bodyArmor ?? armorMaximum(gear.armor), attachmentArmor: armorMaximum(gear.attachment), attachment2Armor:0, maxAttachment2Armor:0, headArmor: enemy.savedDamage?.headArmor ?? armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: armorMaximum(gear.attachment), maxHeadArmor: armorMaximum(gear.helmet),
       shieldDurability: enemy.savedDamage?.shieldDurability ?? shieldMaximum(gear.shield), maxShieldDurability: shieldMaximum(gear.shield),
@@ -2584,7 +2584,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
   for(const unit of enemies){
     if(!passableHex(unit,field)||enemyOccupied.has(`${unit.q},${unit.r}`)){
       const columns=getItem(unit.equipment.weapon)?.ranged?[12,11,10,9]:[11,10,9,12];
-      const rows=[unit.r,...FRONT_FORMATION.map(r=>r+2).filter(r=>r!==unit.r)];
+      const rows=[unit.r,...FRONT_FORMATION.map(r=>r+2+DEPLOYMENT_ROW_OFFSET).filter(r=>r!==unit.r)];
       const point=columns.flatMap(q=>rows.map(r=>({q,r}))).find(h=>passableHex(h,field)&&!enemyOccupied.has(`${h.q},${h.r}`));
       if(!point)return result(false,'No room to deploy the enemy force.');
       Object.assign(unit,point);
@@ -2597,9 +2597,10 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     const gear = { armor: 'patched-coat', attachment: null, attachment2:null, helmet: 'cloth-hood',
       weapon: ['arming-sword', 'spear', 'bludgeon'][index], shield: index === 1 ? 'round-shield' : 'buckler', mount: null };
     const occupied = new Set([...company, ...enemies, ...allies].map(unit => `${unit.q},${unit.r}`));
-    const edgeRows=hashSeed(`${state.seed}:${camp.id}:ally-edge`)%2?[15,14]:[0,1];
-    const point = edgeRows.flatMap(r => [2,1,0].map(q => ({q,r})))
+    const edgeRows=hashSeed(`${state.seed}:${camp.id}:ally-edge`)%2?[19,20]:[4,3];
+    const point = edgeRows.flatMap(r => [9,10,8,7,6].map(q => ({q,r})))
       .find(hex => passableHex(hex, field) && !occupied.has(`${hex.q},${hex.r}`));
+    if(!point)return result(false,'No room to deploy allied reinforcements.');
     const shield = shieldMaximum(gear.shield);
     allies.push({ id: `ally-${index + 1}`, name: encounterType === 'rescue' ? ['Caravan Guard', 'Wagon Spearman', 'Caravan Veteran'][index]
       : ['Militia Captain', 'Militia Spearman', 'Militia Fighter'][index], side: 'company', ally: true,
@@ -2620,7 +2621,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', escapeRulesVersion:1, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -3703,7 +3704,9 @@ function fleeBattleEnemy(state, actor, enemies) {
   const routeStep = fleeRoute(battle, actor, enemies, occupied);
   const apCost = routeStep ? battleMoveApCost(battle, actor, actor, routeStep) : Infinity;
   const point = apCost <= actor.ap ? { ...routeStep, apCost } : null;
-  const exiting = edgeDistance(actor) === 0;
+  if(battle.escapeRulesVersion===1)actor.firstFleeRound??=battle.round;
+  const atEdge = edgeDistance(actor) === 0;
+  const exiting = atEdge && (battle.escapeRulesVersion!==1 || battle.round>actor.firstFleeRound);
   const reactions = [];
   if (point || exiting) for (const enemy of enemies.filter(unit => hexDistance(actor, unit) === 1
     && !unit.stunnedTurns && unit.fatigue + 5 <= unit.maxFatigue)) {
@@ -3730,7 +3733,7 @@ function fleeBattleEnemy(state, actor, enemies) {
     const interception = spearwallReactionsOnMove(state, actor, from);
     reactions.push(...interception.reactions);
     message = interception.blocked ? `${actor.name} tries to flee but is stopped by Spearwall.` : `${actor.name} flees from the company.`;
-  } else { actor.ap = 0; message = `${actor.name} tries to flee but cannot find a way out.`; }
+  } else { actor.ap = 0; message = atEdge ? `${actor.name} reaches the boundary but is still within reach.` : `${actor.name} tries to flee but cannot find a way out.`; }
   battle.lastEvent = makeBattleEvent(actor, null, actor.alive && point ? 'move' : 'hold', message,
     getItem(actor.equipment.weapon), from, { skillName: 'Flee', ...(reactions.length ? { reactions } : {}) });
   battleLog(battle, message);
@@ -4589,7 +4592,7 @@ function passableHex(point, field) { return validHex(point, field) && !blockedTe
 
 function validateBattleField(input) {
   if (input === undefined) return legacyBattleField();
-  assert(recordObject(input) && (input.columns === 14 && [8, 16].includes(input.rows) || input.columns === 10 && input.rows === 5), 'battle field size');
+  assert(recordObject(input) && (input.columns === 22 && input.rows === 24 || input.columns === 14 && [8, 16].includes(input.rows) || input.columns === 10 && input.rows === 5), 'battle field size');
   assert(['plains', 'forest', 'mountain', 'marsh', 'snow', 'desert'].includes(input.biome), 'battle field biome');
   assert(Array.isArray(input.tiles) && input.tiles.length === input.columns * input.rows, 'battle field tiles');
   const tiles = input.tiles.map((tile, index) => {
@@ -4656,6 +4659,7 @@ function validateBattle(input, party, worldState) {
   const lootSeed = input.lootSeed ?? hashSeed(input.id);
   assert(validCount(lootSeed) && lootSeed <= 0xffffffff, 'battle loot seed');
   const field = validateBattleField(input.field);
+  assert(input.escapeRulesVersion===undefined||input.escapeRulesVersion===1,'battle escape rules');
   assert(input.enemyScalingVersion===undefined||input.enemyScalingVersion===1,'battle enemy scaling rules');
   const enemyLimit=input.enemyScalingVersion===1?20:12;
   const validEnemyId=id=>new RegExp(`^enemy-([1-9]|1[0-9]${enemyLimit===20?'|20':''})$`).test(id)&&Number(id.slice(6))<=enemyLimit;
@@ -4774,6 +4778,8 @@ function validateBattle(input, party, worldState) {
     for (const key of ['fleeRollRound', 'fleeRound']) assert(unit[key] === undefined
       || weaponSkillsVersion === 1 && unit.side === 'enemy' && validCount(unit[key]) && unit[key] >= 1 && unit[key] <= input.round, `battle ${key}`);
     assert(unit.fleeRound === undefined || unit.fleeRollRound >= unit.fleeRound, 'battle flee roll');
+    assert(unit.firstFleeRound===undefined||input.escapeRulesVersion===1&&unit.side==='enemy'&&validCount(unit.firstFleeRound)&&unit.firstFleeRound>=1&&unit.firstFleeRound<=input.round,'first fleeing round');
+    assert(!unit.escaped||input.escapeRulesVersion!==1||unit.firstFleeRound<input.round,'two-turn escape');
     assert(unit.escaped === undefined || weaponSkillsVersion === 1 && unit.side === 'enemy' && unit.escaped === true && !unit.alive && unit.hp === 0, 'battle escaped');
     if (weaponSkillsVersion === 1) assert((unit.stunnedTurns ?? 0) === 0 || unit.stunProtected === true, 'battle stun protection');
     if (unit.spearwallActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'spear', 'battle spearwall weapon');
@@ -4796,6 +4802,7 @@ function validateBattle(input, party, worldState) {
       ...(unit.champion?{champion:true,championItemId:unit.championItemId}:{}),
       ...(unit.howlTurns === undefined ? {} : { howlTurns: unit.howlTurns }),
       ...(unit.fleeRollRound === undefined ? {} : { fleeRollRound: unit.fleeRollRound }),
+      ...(unit.firstFleeRound===undefined?{}:{firstFleeRound:unit.firstFleeRound}),
       ...(unit.fleeRound === undefined ? {} : { fleeRound: unit.fleeRound }),
       ...(unit.escaped === undefined ? {} : { escaped: unit.escaped }),
       ...(rulesVersion === 2 ? { shieldWallActive: unit.shieldWallActive ?? false } : {}),
@@ -4922,6 +4929,7 @@ function validateBattle(input, party, worldState) {
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
     ...(input.attachmentRulesVersion===undefined?{}:{attachmentRulesVersion:1}),
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),
+    ...(input.escapeRulesVersion===undefined?{}:{escapeRulesVersion:1}),
     ...(input.enemyScalingVersion===undefined?{}:{enemyScalingVersion:1}),
     ...(input.rulesVersion === undefined ? {} : { rulesVersion }),
     ...(input.weaponSkillsVersion === undefined ? {} : { weaponSkillsVersion }),

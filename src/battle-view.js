@@ -45,8 +45,8 @@ function percent(value, maximum) {
 
 function fieldModel(battle) {
   const source = battle?.field && typeof battle.field === 'object' ? battle.field : LEGACY_FIELD;
-  const columns = Math.max(4, Math.min(20, Math.floor(number(source.columns, 10))));
-  const rows = Math.max(3, Math.min(16, Math.floor(number(source.rows, 5))));
+  const columns = Math.max(4, Math.min(22, Math.floor(number(source.columns, 10))));
+  const rows = Math.max(3, Math.min(24, Math.floor(number(source.rows, 5))));
   const supplied = Array.isArray(source.tiles) ? source.tiles : [];
   const byCoordinate = new Map();
   for (const tile of supplied) {
@@ -82,7 +82,7 @@ function tileHTML(tile, grid, field) {
   const variant = tile.terrain === 'open' && (tile.q + tile.r) % 3 === 1 ? ' battle-hex-grass-alt' : '';
   const faces=elevationFaces(tile,(q,r)=>q>=0&&q<field.columns&&r>=0&&r<field.rows?fieldTile(field,q,r):null,grid);
   const wall=faces.length?`<svg class="battle-hex-wall" width="${grid.width}" height="${grid.height+tile.height*grid.elevation}" aria-hidden="true"><defs><pattern id="cliff-${tile.q}-${tile.r}" width="76" height="44" patternUnits="userSpaceOnUse"><image href="assets/battle/socket-earth.png" width="76" height="44" preserveAspectRatio="none"/></pattern></defs>${faces.map(face=>`<polygon data-edge="${face.edge}" data-drop="${face.drop}" points="${face.points.map(p=>p.join(',')).join(' ')}" class="battle-cliff-${face.edge.toLowerCase()}"/><polygon points="${face.points.map(p=>p.join(',')).join(' ')}" fill="url(#cliff-${tile.q}-${tile.r})" opacity=".4"/>`).join('')}</svg>`:'';
-  const obstacle = tile.terrain === 'dense-trees' ? '<span class="battle-tree-obstacle" aria-hidden="true"></span>' : tile.terrain === 'palisade' ? `<img class="battle-palisade" src="assets/battle/camp-wall-${tile.r===1||tile.r===14?'01':'02'}.png" alt="" draggable="false" aria-hidden="true">` : '';
+  const obstacle = tile.terrain === 'dense-trees' ? '<span class="battle-tree-obstacle" aria-hidden="true"></span>' : tile.terrain === 'palisade' ? `<img class="battle-palisade" src="assets/battle/camp-wall-${[1,14,5,18].includes(tile.r)?'01':'02'}.png" alt="" draggable="false" aria-hidden="true">` : '';
   return `<button type="button" class="battle-hex battle-terrain-${tile.terrain} battle-height-${tile.height}${variant}" style="left:${x}px;top:${y}px;--tile-row:${tile.r};--tile-height:${tile.height};--tile-rise:${tile.height * grid.elevation}px" data-action="inspect-terrain" data-q="${tile.q}" data-r="${tile.r}" data-terrain="${tile.terrain}" data-height="${tile.height}" data-detail="${esc(detail)}" title="${esc(detail)}" aria-label="Column ${tile.q + 1}, row ${tile.r + 1}: ${esc(detail)}">${wall}<span class="battle-hex-top" aria-hidden="true"></span>${obstacle}${tile.height ? `<span class="battle-height-label" aria-hidden="true">+${tile.height}</span>` : ''}</button>`;
 }
 

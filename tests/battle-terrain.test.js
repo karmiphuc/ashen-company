@@ -25,10 +25,10 @@ test('procedural fields are deterministic, complete and connected', () => {
   for (const biome of ['plains', 'forest', 'mountain', 'marsh']) {
     const field = createBattleField(7391, 'quarry-camp:1', biome);
     assert.deepEqual(field, createBattleField(7391, 'quarry-camp:1', biome));
-    assert.equal(field.columns, 14);
-    assert.equal(field.rows, 16);
-    assert.equal(field.tiles.length, 224);
-    assert.equal(new Set(field.tiles.map(tile => `${tile.q},${tile.r}`)).size, 224);
+    assert.equal(field.columns, 22);
+    assert.equal(field.rows, 24);
+    assert.equal(field.tiles.length, 528);
+    assert.equal(new Set(field.tiles.map(tile => `${tile.q},${tile.r}`)).size, 528);
     const walkable = field.tiles.filter(tile => tile.terrain !== 'dense-trees');
     const seen = new Set([`${walkable[0].q},${walkable[0].r}`]);
     const queue = [walkable[0]];
@@ -37,7 +37,7 @@ test('procedural fields are deterministic, complete and connected', () => {
       if (!seen.has(key)) { seen.add(key); queue.push(next); }
     }
     assert.equal(seen.size, walkable.length);
-    assert.ok(field.tiles.filter(tile => tile.q <= 2 || tile.q >= 10).every(tile => tile.terrain !== 'dense-trees'));
+    assert.ok(field.tiles.filter(tile => tile.q <= 2 || tile.q >= 10 && tile.q <= 13).every(tile => tile.terrain !== 'dense-trees'));
     assert.ok(field.tiles.every(tile => tile.height >= 0 && tile.height <= 2));
   }
   assert.notDeepEqual(createBattleField(1, 'quarry', 'forest'), createBattleField(2, 'quarry', 'forest'));
@@ -87,8 +87,8 @@ test('trees, mud, elevation and intervening cover affect travel and shots', () =
 test('battle movement spends terrain cost and deployed units never overlap', () => {
   const base = createGame(5);
   approach(base);
-  assert.equal(base.battle.field.columns, 14);
-  assert.equal(base.battle.field.rows, 16);
+  assert.equal(base.battle.field.columns, 22);
+  assert.equal(base.battle.field.rows, 24);
   assert.equal(new Set(base.battle.units.map(unit => `${unit.q},${unit.r}`)).size, base.battle.units.length);
   assert.ok(base.battle.units.every(unit => tileAt(base.battle.field, unit.q, unit.r).terrain !== 'dense-trees'));
   const open = structuredClone(base);
@@ -207,7 +207,7 @@ test('new fields round-trip, malformed fields fail, and fieldless active saves s
     save => { save.battle.field.tiles[1].terrain = 'lava'; },
     save => { save.battle.field.tiles.pop(); },
     save => { save.battle.field.rows = 9; },
-    save => { save.battle.units[0].q = 14; },
+    save => { save.battle.units[0].q = 22; },
     save => { save.battle.units[1].q = save.battle.units[0].q; save.battle.units[1].r = save.battle.units[0].r; },
     save => { tileAt(save.battle.field, save.battle.units[0].q, save.battle.units[0].r).terrain = 'dense-trees'; },
   ]) {

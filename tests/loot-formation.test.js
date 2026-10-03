@@ -82,7 +82,7 @@ test('formation saves 36 unique slots, recruits into a vacancy, and deploys by r
   const lockedFormation = structuredClone(state.formation);
   assert.equal(moveFormation(state, 0, 1).ok, false, 'formation cannot change during battle');
   assert.deepEqual(state.formation, lockedFormation);
-  const expected = new Map(getFormation(state).flatMap((id, slot) => id ? [[id, { q: 2 - Math.floor(slot / 12), r: 2 + slot % 12 }]] : []));
+  const expected = new Map(getFormation(state).flatMap((id, slot) => id ? [[id, { q: 2 - Math.floor(slot / 12), r: 6 + slot % 12 }]] : []));
   for (const unit of state.battle.units.filter(entry => entry.side === 'company')) {
     assert.deepEqual({ q: unit.q, r: unit.r }, expected.get(unit.id));
   }
@@ -96,11 +96,11 @@ test('all three formation ranks and outer rows deploy with flank space', () => {
   }
   const site = approachCamp(state);
   assert.equal(startBattle(state, site.id).ok, true);
-  for (const [id, q, r] of [['captain', 2, 2], ['guard', 1, 13], ['scout', 0, 13]]) {
+  for (const [id, q, r] of [['captain', 2, 6], ['guard', 1, 17], ['scout', 0, 17]]) {
     const unit = state.battle.units.find(unit => unit.id === id);
     assert.deepEqual({ q: unit.q, r: unit.r }, { q, r });
   }
-  assert.equal(state.battle.field.rows, 16);
+  assert.equal(state.battle.field.rows, 24);
   assert.deepEqual(validateSave(structuredClone(state)), state);
 });
 
@@ -112,8 +112,10 @@ test('old twelve-slot formations expand without moving an active eight-row battl
   state.formation[0] = 'captain';
   state.formation[5] = 'guard';
   state.formation[11] = 'scout';
+  state.battle.field.columns = 14;
   state.battle.field.rows = 8;
-  state.battle.field.tiles = state.battle.field.tiles.filter(tile => tile.r < 8);
+  delete state.battle.escapeRulesVersion;
+  state.battle.field.tiles = state.battle.field.tiles.filter(tile => tile.r < 8 && tile.q < 14).map(tile=>({...tile,terrain:'open'}));
   state.battle.units.forEach((unit, index) => { unit.r = index % 6 + 1; });
   const originalBattle = structuredClone(state.battle);
   const restored = validateSave(state);
