@@ -4171,6 +4171,14 @@ export function getLootShareQuote(state, indices = []) {
   return { townId: marketTown.id, townName: marketTown.name, prices, value, count, xpPool, xp, morale, selectedCount: indices.length };
 }
 
+// The loot screen selects copies to keep; donation always uses the exact complement.
+export function getLootKeepQuote(state, keepIndices = []) {
+  if (!getLootShareQuote(state, keepIndices)) return null;
+  const kept = new Set(keepIndices);
+  const donateIndices = state.battle.loot.items.map((_, index) => index).filter(index => !kept.has(index));
+  return { ...getLootShareQuote(state, donateIndices), keepIndices: [...keepIndices], donateIndices };
+}
+
 export function finishBattle(state, { shareLootIndices = [] } = {}) {
   const battle = state.battle;
   if (!battle || battle.status === 'active') return result(false, 'Finish the fight before claiming its result.');

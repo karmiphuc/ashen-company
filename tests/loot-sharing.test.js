@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, getCampSites, startBattle, advanceBattle, finishBattle, getLootShareQuote,
+import { createGame, getCampSites, startBattle, advanceBattle, finishBattle, getLootShareQuote, getLootKeepQuote,
   getItem, getMarket, getTownEvent, SETTLEMENTS, createFamedItemId, sellItem, tick, validateSave } from '../src/engine.js';
 import { battleResultsHTML } from '../src/campaign-ui.js';
 
@@ -109,12 +109,13 @@ test('sharing works with a full stash and saved result screens quote and resolve
   assert.deepEqual(restored,state);assert.equal(state.inventory.length,512);
 });
 
-test('loot controls distinguish selection from inspecting, show live rewards, and default to keeping everything',()=>{
-  const state=victory(),quote=getLootShareQuote(state,[1]),html=battleResultsHTML(state,[1]);
-  assert.match(html,/data-share-loot="1" checked/);assert.match(html,/data-loot-index="1"/);
-  assert.match(html,new RegExp(`\\+${quote.xp} XP`));assert.match(html,/Shared items are consumed/);
-  assert.match(html,/Share selected &amp; take the rest/);assert.match(html,/Take all loot and continue/);
-  assert.match(battleResultsHTML(state),/data-action="share-loot" disabled/);
+test('loot controls select copies to keep and preview the donation of all unticked items',()=>{
+  const state=victory(),quote=getLootKeepQuote(state,[1]),html=battleResultsHTML(state,[1]);
+  assert.match(html,/data-keep-loot="1" checked/);assert.match(html,/data-loot-index="1"/);
+  assert.match(html,new RegExp(`\\+${quote.xp} XP`));assert.match(html,/Unticked items are donated/);
+  assert.match(html,/Keep selected &amp; donate the rest/);assert.match(html,/Donate all/);assert.match(html,/Take all loot and continue/);
+  assert.match(html,/1 kept · 2 donated/);assert.match(battleResultsHTML(state),/data-action="keep-loot" disabled/);
+  assert.match(battleResultsHTML(state),/0 kept · 3 donated/);assert.match(battleResultsHTML(state,[0,1,2]),/All items kept · no donation/);
 });
 
 test('10,000 crowns of sale value produces a 500 XP pool shared across surviving brothers',()=>{
@@ -125,8 +126,26 @@ test('10,000 crowns of sale value produces a 500 XP pool shared across surviving
   assert.equal(quote.value,10000);assert.equal(quote.xpPool,500);assert.equal(quote.count,3);assert.equal(quote.xp,167);
   assert.ok(quote.xp*quote.count>=quote.xpPool&&quote.xp*quote.count<quote.xpPool+quote.count);
   const totalXp=p=>p.xp+25*p.level*(p.level-1),before=state.party.map(p=>totalXp(p)),combat=structuredClone(state.battle.xp);
-  const html=battleResultsHTML(state,indices);assert.match(html,/500 XP pool/);assert.match(html,/Maximum 500 XP/);assert.match(html,/5% of sale value/);
+  const html=battleResultsHTML(state);assert.match(html,/500 XP pool/);assert.match(html,/Maximum 500 XP/);assert.match(html,/5% of sale value/);
   assert.equal(finishBattle(state,{shareLootIndices:indices}).ok,true);
   for(const [index,person]of state.party.entries())assert.equal(totalXp(person)-before[index],167+(combat[person.id]??0));
   validateSave(structuredClone(state));
+});
+
+
+test('keeping a duplicate copy donates the exact complement, preserving its durability and the quoted rewards',()=>{
+  const state=victory(),before=structuredClone(state),quote=getLootKeepQuote(state,[1]);
+  assert.deepEqual(quote.keepIndices,[1]);assert.deepEqual(quote.donateIndices,[0,2]);
+  assert.equal(quote.value,getLootShareQuote(state,[0,2]).value);assert.deepEqual(state,before);
+  assert.equal(finishBattle(state,{shareLootIndices:quote.donateIndices}).ok,true);
+  assert.equal(state.inventory.filter(id=>id==='mail-shirt').length,1);assert.equal(state.inventoryCondition[state.inventory.indexOf('mail-shirt')],29);
+  assert.ok(!state.inventory.includes('arming-sword'));assert.equal(state.party[0].xp,(before.battle.xp.captain??0)+quote.xp);validateSave(structuredClone(state));
+});
+
+test('Donate all uses an empty keep selection; keeping all grants no donation XP and invalid selections reject',()=>{
+  const state=victory(),before=structuredClone(state),all=getLootKeepQuote(state),keep=getLootKeepQuote(state,[0,1,2]);
+  assert.deepEqual(all.donateIndices,[0,1,2]);assert.deepEqual(keep.donateIndices,[]);assert.equal(keep.xp,0);assert.equal(keep.morale,0);
+  for(const indices of [[0,0],[-1],[3],[.5],null,'0'])assert.equal(getLootKeepQuote(state,indices),null);
+  assert.deepEqual(state,before);assert.equal(finishBattle(state,{shareLootIndices:all.donateIndices}).ok,true);
+  assert.ok(!state.inventory.includes('mail-shirt'));assert.ok(!state.inventory.includes('arming-sword'));assert.equal(state.gold,before.gold+before.battle.loot.gold);validateSave(structuredClone(state));
 });
