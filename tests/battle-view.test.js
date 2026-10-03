@@ -311,3 +311,24 @@ test('perk labels flip below fighters near the upper edge and align inside side 
   const html=battleHTML(fight,1,true);
   assert.match(html,/<article class="[^"]*perks-below[^"]*feedback-at-left[^"]*" data-unit-id="captain"/);
 });
+
+
+test('generic Hold is silent while defensive stances still have callouts',()=>{
+  const f=structuredClone(battle);Object.assign(f.lastEvent,{type:'hold',skillName:undefined});
+  assert.doesNotMatch(battleHTML(f,0,true),/battle-order">/);
+  f.lastEvent.skillName='Hold';assert.doesNotMatch(battleHTML(f,0,true),/battle-order">/);
+  f.lastEvent.skillName='Spearwall';assert.match(battleHTML(f,0,true),/battle-order">Spearwall/);
+});
+
+test('Frenzy radiates from the killer and Howling exposes its debuff duration',()=>{
+  const f=structuredClone(battle);Object.assign(f.units[0],{alive:true,frenzyUntilRound:3});
+  f.units[1].howlTurns=2;f.units[1].alive=true;
+  f.lastEvent.effects=[{id:'killing-frenzy',amount:25},{id:'howling',amount:20}];
+  const html=battleHTML(f,0,true);
+  assert.match(html,/battle-frenzy-aura/);assert.match(html,/battle-howl-waves/);
+  assert.match(html,/Howled: −20% damage for 2 more turns/);assert.match(html,/is-howled/);
+  const paused=battleHTML(f,0,false);
+  assert.match(paused,/battle-frenzy-aura/);assert.doesNotMatch(paused,/battle-howl-waves|effect-killing-frenzy/);
+  f.units[0].hp=0;f.units[0].alive=false;
+  assert.doesNotMatch(battleHTML(f,0,false),/battle-frenzy-aura/);
+});

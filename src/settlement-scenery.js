@@ -5,7 +5,7 @@ const INDUSTRIES = {
   grain: ['wheat_farm_01', 'Grain farm'], timber: ['lumber_camp_01', 'Timber yard'],
   iron: ['iron_mine_01', 'Iron mine'], salt: ['salt_mine_01', 'Salt works'], wool: ['wool_spinner_01', 'Wool yard'],
 };
-const SLOTS = { blacksmith: [-87, 4], armorsmith: [88, 4], industry: [-76, 85], condition: [76, 88], shipment: [0, -102] };
+const SLOTS = { blacksmith: [-65, 4], armorsmith: [65, 4], industry: [-48, 60], condition: [48, 60], shipment: [0, -70] };
 export const SETTLEMENT_SCENERY_ASSETS = Object.freeze(['workshop_01', 'ore_smelters_01', 'militia_trainingcamp_01',
   'wheat_field_02', 'lumber_camp_01', 'wool_spinner_01', 'salt_mine_01', 'iron_mine_01', 'fishing_huts_01', 'trade_cart', 'arms_cart']);
 
@@ -40,21 +40,21 @@ export function settlementScenery(state, town, { event = getTownEvent(state, tow
   const structures = townFacilities(state.seed, town).map(facility => ({ slot: facility.id,
     art: facility.id === 'blacksmith' ? 'ore_smelters_01' : 'workshop_01',
     label: facility.id === 'blacksmith' ? 'Blacksmith' : 'Armory', detail: facility.description,
-    emblem: facility.id, width: 64 }));
+    emblem: facility.id, width: 54 }));
   const supply = getTownLocalSupply(town.id);
   if (supply) {
     const coastal = /harbor|fisher/i.test(`${town.id} ${town.description}`) && supply.goodId === 'salt';
     const [art, label] = coastal ? ['fishing_huts_01', 'Fishing harbor'] : INDUSTRIES[supply.goodId];
-    structures.push({ slot: 'industry', art, label, detail: `Local ${supply.name.toLowerCase()} supply keeps base prices below the usual market rate.`, width: 66 });
+    structures.push({ slot: 'industry', art, label, detail: `Local ${supply.name.toLowerCase()} supply keeps base prices below the usual market rate.`, width: 56 });
   } else if (town.kind === 'castle') structures.push({ slot: 'industry', art: 'militia_trainingcamp_01', label: 'Garrison',
-    detail: 'Military recruits and supplies are available at this castle.', width: 64 });
+    detail: 'Military recruits and supplies are available at this castle.', width: 54 });
   const activity = condition(event, caravans.filter(wagon => wagon.destinationId === town.id),
     caravans.filter(wagon => wagon.originId === town.id && ['en-route', 'under-attack'].includes(wagon.status)));
-  if (activity) structures.push({ slot: 'condition', ...activity, width: activity.state === 'muster' ? 60 : 48 });
+  if (activity) structures.push({ slot: 'condition', ...activity, width: activity.state === 'muster' ? 54 : 44 });
   if (['hungry', 'harvest'].includes(activity?.state)) {
     const wagon = condition(null, caravans.filter(wagon => wagon.destinationId === town.id),
       caravans.filter(wagon => wagon.originId === town.id && ['en-route', 'under-attack'].includes(wagon.status)));
-    if (wagon) structures.push({ slot: 'shipment', ...wagon, width: 48 });
+    if (wagon) structures.push({ slot: 'shipment', ...wagon, width: 44 });
   }
   const placed = [], obstacles = initialCampLayout(state);
   for (const structure of structures) {
@@ -62,14 +62,14 @@ export function settlementScenery(state, town, { event = getTownEvent(state, tow
     // Keep land buildings on land, while coastal fishing huts can sit on the shore.
     const start = Math.atan2(dy, dx);
     const candidates = [[dx, dy], [dx, -dy - 20], [-dx, dy], [-dx, -dy],
-      ...[96, 112, 136, 160].flatMap(radius => Array.from({ length: 24 }, (_, index) => [Math.cos(start + index * Math.PI / 12) * radius, Math.sin(start + index * Math.PI / 12) * radius]))];
+      ...[64, 76, 88, 96].flatMap(radius => Array.from({ length: 24 }, (_, index) => [Math.cos(start + index * Math.PI / 12) * radius, Math.sin(start + index * Math.PI / 12) * radius]))];
     const offset = candidates.find(([ox, oy]) => {
       const x = town.x + ox, y = town.y + oy;
       return x >= WORLD_BOUNDS.minX && x <= WORLD_BOUNDS.maxX && y >= WORLD_BOUNDS.minY && y <= WORLD_BOUNDS.maxY
         && (structure.art === 'fishing_huts_01' || terrainAt(x, y) !== 'sea')
         && !SETTLEMENTS.some(other => other.id !== town.id && Math.hypot(x - other.x, y - other.y) < 95)
         && !obstacles.some(camp => Math.hypot(x - camp.x, y - camp.y) < 75)
-        && !placed.some(other => Math.hypot(x - other.x, y - other.y) < (structure.width + other.width) / 2 + 12);
+        && !placed.some(other => Math.hypot(x - other.x, y - other.y) < (structure.width + other.width) / 2 + 8);
     }) ?? [dx, dy];
     placed.push({ ...structure, townId: town.id, key: `${town.id}:${structure.slot}`, x: town.x + offset[0], y: town.y + offset[1], targetable: false });
   }

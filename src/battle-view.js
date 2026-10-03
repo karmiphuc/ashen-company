@@ -113,19 +113,21 @@ const WEAPON_MOVES = { sword: 'Slash', 'two-handed-sword': 'Overhead Strike', da
   spear: 'Thrust', polearm: 'Strike', axe: 'Chop', cleaver: 'Cleave', mace: 'Bash', hammer: 'Smash',
   flail: 'Lash', whip: 'Whip Crack', bow: 'Loose Arrow', crossbow: 'Fire Bolt', sling: 'Sling Stone', throwing: 'Throw' };
 function actionCallout(event, weapon) {
+  if (event.skillName === 'Hold' || event.type === 'hold' && !event.skillName) return '';
   if (event.skillName) return event.skillName;
   if (['attack', 'miss', 'hit', 'fall'].includes(event.type)) return WEAPON_MOVES[weaponSkillFamily(weapon)] ?? 'Strike';
   return { move: 'Move', recover: event.message?.includes(' reloads ') ? 'Reload' : 'Recover',
     hold: 'Hold', swap: 'Swap set', use: 'Use item' }[event.type] ?? '';
 }
 function perkEffectsHTML(effects) {
-  const names = { 'battle-flow': 'Battle Flow', 'killing-frenzy': 'Killing Frenzy', berserk: 'Berserk' };
-  return effects.filter(effect => names[effect.id]).map(effect => `<span class="battle-perk-proc proc-${effect.id}" role="status"><i aria-hidden="true"></i>${names[effect.id]}<small>${effect.id === 'battle-flow' ? `−${number(effect.amount)} fatigue` : effect.id === 'killing-frenzy' ? '+25% damage' : `+${number(effect.amount)} AP${effect.nextTurn ? ' next turn' : ''}`}</small></span>`).join('');
+  const names = { 'battle-flow': 'Battle Flow', 'killing-frenzy': 'Killing Frenzy', berserk: 'Berserk', howling: 'Howling' };
+  return effects.filter(effect => names[effect.id]).map(effect => `<span class="battle-perk-proc proc-${effect.id}" role="status"><i aria-hidden="true"></i>${names[effect.id]}<small>${effect.id === 'battle-flow' ? `−${number(effect.amount)} fatigue` : effect.id === 'killing-frenzy' ? '+25% damage' : effect.id === 'howling' ? 'Enemy damage −20% · 2 turns' : `+${number(effect.amount)} AP${effect.nextTurn ? ' next turn' : ''}`}</small></span>`).join('');
 }
 
 function statusIconsHTML(unit, battle) {
   const statuses = [
     unit.alive !== false && unit.hp > 0 && unit.frenzyUntilRound > 0 && unit.frenzyUntilRound >= battle.round ? ['frenzy', 'Killing Frenzy: +25% damage', '<path d="m8 1 2 5 3-2-1 7-4 4-4-4-1-7 3 2z"/>'] : null,
+    unit.alive && unit.howlTurns > 0 ? ['howled', `Howled: −20% damage for ${unit.howlTurns} more turn${unit.howlTurns === 1 ? '' : 's'}`, '<path d="M1 7h2v2H1zm4-3h2v8H5zm4-2h2v12H9zm4 3h2v6h-2z"/>'] : null,
     unit.alive && unit.fleeRound === battle.round ? ['fleeing', 'Fleeing', '<path d="M1 7h10L8 4l1-1 5 5-5 5-1-1 3-3H1z"/>'] : null,
     unit.shieldWallActive ? ['shieldwall', 'Shield wall active', '<path d="M8 1 14 3v4.5c0 3.2-2.1 5.9-6 7.5-3.9-1.6-6-4.3-6-7.5V3z"/>'] : null,
     unit.spearwallActive ? ['spearwall', 'Spearwall active', '<path d="M2 14 11.3 4.7l.9.9L2.9 15zM11 2l3 3-1 1-3-3z"/>'] : null,
@@ -220,7 +222,8 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     impactFallen ? 'action-fall' : '',
     friendlyFire ? 'is-friendly-fire' : '',
     frenzy ? 'has-killing-frenzy' : '',
-    effects.length && y < effects.length * 35 + 40 ? 'perks-below' : '',
+    alive && unit.howlTurns > 0 ? 'is-howled' : '',
+    effects.length && y < effects.length * 45 + Math.max(80, callouts.length * 26 + 30) ? 'perks-below' : '',
     x < 85 ? 'feedback-at-left' : x > grid.fieldWidth - 85 ? 'feedback-at-right' : '',
     ...effects.map(effect => `effect-${effect.id}`),
   ].filter(Boolean).join(' ');
@@ -239,14 +242,14 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const morale = getMoraleEffects(unit);
   const moraleLabel = `${morale.name} morale: ${Math.round(number(unit.morale, 50))}/100; resolve ${Math.round(number(unit.resolve, 50))}`;
 
-  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${unit.ally?'Allied fighter, ':''}${esc(unit.name)}: ${Math.round(number(unit.hp))} health${friendlyFire?', friendly fire impact':''}">
+  return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--callout-space:${Math.max(34, callouts.length * 26 + 8)}px;--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${unit.ally?'Allied fighter, ':''}${esc(unit.name)}: ${Math.round(number(unit.hp))} health${friendlyFire?', friendly fire impact':''}">
     <div class="battle-unit-bars" aria-hidden="true">
       <span class="battle-unit-bar battle-unit-head"><i style="width:${head}%;--before-width:${beforeHead}%;--after-width:${head}%"></i></span>
       <span class="battle-unit-bar battle-unit-body"><i style="width:${body}%;--before-width:${beforeBody}%;--after-width:${body}%"></i></span>
       ${shield ? `<span class="battle-unit-bar battle-unit-shield" title="Shield: ${shield.current} / ${shield.max} durability${shield.current===0?' · Broken':''}"><i style="width:${percent(shield.current,shield.max)}%;--before-width:${beforeShield}%;--after-width:${percent(shield.current,shield.max)}%;background:#a98b55"></i></span>` : ''}
       <span class="battle-unit-bar battle-unit-health"><i style="width:${health}%;--before-width:${beforeHealth}%;--after-width:${health}%"></i></span>
     </div>
-    <span class="battle-pawn">${portraitHTML(display, equipmentFor(unit), 64)}</span>
+    <span class="battle-pawn">${frenzy ? '<span class="battle-frenzy-aura" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${effects.some(effect => effect.id === 'howling') ? '<span class="battle-howl-waves" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${portraitHTML(display, equipmentFor(unit), 64)}</span>
     <span class="battle-morale-flag morale-${morale.name.toLowerCase()}" title="${esc(moraleLabel)}" aria-label="${esc(moraleLabel)}">${morale.name[0]}</span>
     ${statusIconsHTML(unit, battle)}
     ${battleKitHTML(unit)}

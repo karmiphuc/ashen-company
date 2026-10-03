@@ -11,15 +11,16 @@ test('mount equipment and item details expose costs and additive company benefit
   const html=companySheetHTML(state,state.party[0],'mount','');
   assert.match(html,/data-unequip="mount" data-equipment-location="active"/);
   assert.match(html,/data-slot="mount"/);
-  assert.match(html,/\+2 movement · \+4 initiative/);
+  assert.match(html,/1 AP per walkable hex/);
+  assert.match(html,/\+5 melee defense/);
   assert.match(html,/Company travel bonus: \+20%/);
   assert.equal(getDailyFood(state),6);
   assert.match(resourceHTML(state,0),/Provisions · 5 days/);
   for(const id of ['riding-horse','warg-mount','dire-wolf-mount']){
     const details=getItemDetails(getItem(id));
     assert.equal(details.stats.find(row=>row.label==='Company travel speed').value,'+10% while equipped');
-    assert.equal(details.stats.find(row=>row.label==='Combat movement').value,'+2 movement points per turn');
-    assert.equal(details.stats.find(row=>row.label==='Initiative').value,'+4');
+    assert.equal(details.stats.find(row=>row.label==='Combat movement').value,'1 AP per walkable hex');
+    assert.equal(details.stats.find(row=>row.label==='Initiative').value,`+${getItem(id).initiativeBonus}`);
     assert.equal(details.stats.find(row=>row.label==='Extra daily food').value,String(getItem(id).foodUpkeep));
     assert.ok(details.notes.some(note=>note.includes('formation tactics')));
     assert.ok(details.stats.some(row=>row.label===(id==='riding-horse'?'Charge':'Wolf Bite')));

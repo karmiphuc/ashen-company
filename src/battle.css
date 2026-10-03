@@ -79,9 +79,22 @@
 @keyframes skill-callout{0%{opacity:0;transform:translateY(5px)}20%,80%{opacity:1}100%{opacity:0;transform:translateY(-7px)}}
 @media(prefers-reduced-motion:reduce){.battle-orders .battle-order{animation:none!important;transform:none}}
 .battle-unit.effect-battle-flow,.battle-unit.effect-killing-frenzy,.battle-unit.effect-berserk{z-index:500}
-.battle-perk-effects{left:50%;top:auto;bottom:calc(100% + 34px);transform:translateX(-50%);align-items:center}
+.battle-perk-effects{left:50%;top:auto;bottom:calc(100% + var(--callout-space,34px));transform:translateX(-50%);align-items:center}
 .battle-perk-proc small{position:static;left:auto;bottom:auto;transform:none;z-index:auto;font:10px/1.2 Georgia,serif}
 
 .perks-below .battle-perk-effects{bottom:auto;top:calc(100% + 5px)}
 .feedback-at-left .battle-orders,.feedback-at-left .battle-perk-effects{left:0;transform:none}
 .feedback-at-right .battle-orders,.feedback-at-right .battle-perk-effects{left:auto;right:0;transform:none}
+
+/* Frenzy leaves a warm ground aura; the killing blow sends three ripples out from the killer. */
+.battle-frenzy-aura{position:absolute;left:50%;bottom:0;width:54px;height:20px;transform:translateX(-50%);pointer-events:none;background:radial-gradient(ellipse,#ffae4d55,#e64d252b 48%,transparent 74%);border-radius:50%}
+.battle-frenzy-aura i{position:absolute;inset:3px 5px;border:1px solid #ff925b88;border-radius:50%;box-shadow:0 0 5px #ee6a3555}
+.battle-frenzy-aura i:nth-child(2){inset:0;opacity:.45}.battle-frenzy-aura i:nth-child(3){inset:-3px -7px;opacity:.2}
+.effect-killing-frenzy .battle-frenzy-aura i{animation:frenzy-ripple max(var(--action-time),1.25s) ease-out both}
+.effect-killing-frenzy .battle-frenzy-aura i:nth-child(2){animation-delay:.14s}.effect-killing-frenzy .battle-frenzy-aura i:nth-child(3){animation-delay:.28s}
+@keyframes frenzy-ripple{0%{opacity:0;transform:scale(.35)}20%{opacity:1;box-shadow:0 0 9px #ffa45d}100%{opacity:0;transform:scale(2.5)}}
+.effect-berserk .battle-pawn::before{content:"";position:absolute;inset:5px -3px 0;background:radial-gradient(ellipse at 50% 70%,#ffc95d44,transparent 65%);border-bottom:2px solid #ffd17999;border-radius:50%;pointer-events:none;animation:flow-release max(var(--action-time),.8s) ease-out both}
+.battle-howl-waves{position:absolute;inset:5px -4px 0;pointer-events:none}.battle-howl-waves i{position:absolute;inset:0;border:2px solid #abd9ef;border-radius:50%;animation:howl-spread max(var(--action-time),1.2s) ease-out both}.battle-howl-waves i:nth-child(2){animation-delay:.12s}.battle-howl-waves i:nth-child(3){animation-delay:.24s}
+@keyframes howl-spread{0%{opacity:0;transform:scale(.55)}25%{opacity:.85}100%{opacity:0;transform:scale(2.1)}}
+.proc-howling{color:#acd9ed;background:#192b35ed}.battle-status-howled{color:#b5dbea!important;background:#243b49!important;border-color:#789cac!important}.is-howled .battle-pawn{filter:drop-shadow(0 0 3px #89b6d055)}
+@media(prefers-reduced-motion:reduce){.effect-killing-frenzy .battle-frenzy-aura i,.battle-howl-waves i,.effect-berserk .battle-pawn::before{animation:none!important;transform:none;opacity:.65}}

@@ -1,6 +1,18 @@
-# Verification - version 0.45.9, 2026-10-03
+# Verification - version 0.46.0, 2026-10-03
 
 
+
+## v0.46.0 checks
+
+All 533 automated tests pass. Settlement outbuildings are smaller and stay within 96 world units of their parent (previous candidates extended to 160), with 8px screen-space labels at 55% opacity, rising to 78% for the selected settlement. Land, initial-camp and permanent placement safeguards remain. The shared regional art mapping gives towns the former village house clusters and villages the former town hall, consistently on the map, sidebar and settlement scene. Castle fortification variants remain. Native Chromium pointer checks confirm outlying smiths stay inert and the actual Ironford center selects normally.
+
+Mounted stats now distinguish every animal: Riding Horse +5 melee defense/−5 ranged defense/−5 maximum fatigue/+10% all-weapon damage; War Horse +10/−5/−5/+15%; Armored War Horse +20/+5/−12/+15% all-weapon damage, with +20% Charge weapon damage and exactly 15 direct HP on a hit after armor and head modifiers. Wolves gain +5 both defenses/+3 initiative, no equipment fatigue penalty or weapon damage bonus; wargs gain +12 both defenses/+8 initiative with the same baseline. New battles charge precisely 1 AP per legal mounted movement step, including rough terrain, while preserving movement fatigue, blockers and mounted control. Charge retains its total 6 AP and horses-only rule. Free Wolf Bite retains no AP/fatigue/ammo cost and rider XP/kill perks. Item detail and company-sheet descriptions expose the actual bonuses and skills.
+
+Howling rolls once after a warg rider's normal or area attack (including a miss), after its bite, with a 20% chance. Living opponents within three hexes deal 20% less damage for their next two complete activations; another howl refreshes two turns without stacking. Both company and enemy wargs use it. The damage model and AI prediction share the modifier; bounded duration and proc metadata persist through reload. Tests cover enemy use, refresh, radius, damage, expiry, armored trample kill credit, all-weapon bonuses and instant versus step/reload resolution for horse, wolf and warg. A separate mount-balance marker keeps old active battles' stored stats, original damage bonuses and movement credits; old snapshots do not adopt Howling.
+
+Generic Hold has no floating callout; actual defensive stances retain labels. Killing Frenzy has a warm persistent ground aura and three expanding rings on a kill. Berserk adds a gold flare; Howling sends pale blue waves and marks victims with a duration tooltip. Multi-callout spacing and conservative top-edge placement prevent skill/proc overlap. Paused/restored views retain active aura and status icons without replaying transient rings, and reduced-motion mode disables the new animations.
+
+Chromium screenshots compare identical mounted loadouts with and without shields. War/armored horses are 18% taller, their rear bodies are broader, and their heads are enlarged; a pixel-based regression verifies the rider frame, rider grounding and muzzle/base contacts remain unchanged. Other mount poses retain their geometry. Real engine kill/proc events drive the Frenzy and Howling screenshots; every image loads, with no browser exceptions. A fresh offline relaunch verifies all 556 resources and the updated app/engine. Physical iPad Safari remains untested.
 
 ## v0.45.9 checks
 

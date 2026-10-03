@@ -114,5 +114,8 @@ export function distanceToRoad(x,y,roads){
   for(const road of roads){const[a,b]=road.points,dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy)));nearest=Math.min(nearest,Math.hypot(x-a.x-dx*t,y-a.y-dy*t));}
   return nearest;
 }
-export function regionalTownArt(town) { return town.kind==='castle'?'stronghold_02':town.kind==='village'?'houses_03_01':town.major?'townhall_02':'townhall_01'; }
+export function regionalTownArt(town) {
+  if (town.kind === 'castle') return ({ironford:'stronghold_01',highpass:'fortified_outpost_01',southwatch:'stronghold_01',farhold:'fortified_outpost_01'})[town.id] ?? 'stronghold_02';
+  return town.kind === 'village' ? 'townhall_01' : town.major ? 'houses_02_01' : 'houses_03_01';
+}
 export function regionalTownSpecialty(town) { const region=regionAt(town.x,town.y);return `${region.name} · ${town.kind==='castle'?'Military armory':town.kind==='village'?'Provisions & local goods':'Trade & regional equipment'}`; }

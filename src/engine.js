@@ -480,6 +480,7 @@ export function getCompanyStats(person) {
   const famedStatBonus = key => (equipped.armor?.statBonuses?.[key] ?? 0) + (equipped.helmet?.statBonuses?.[key] ?? 0);
   const mountHit = person.hp > 0 ? equipped.mount?.hitBonus ?? 0 : 0;
   const mountInitiative = person.hp > 0 ? equipped.mount?.initiativeBonus ?? 0 : 0;
+  const mount = person.hp > 0 ? equipped.mount : null;
   const armorFatigue = (equipped.armor?.fatigue ?? 0) + (equipped.attachment?.fatigue ?? 0) + (equipped.helmet?.fatigue ?? 0);
   const otherFatigue = (equipped.weapon?.fatigue ?? 0) + (equipped.shield?.fatigue ?? 0);
   const fatigue = otherFatigue + (hasPerk(person, 'brawny') ? Math.floor(armorFatigue * .7) : armorFatigue);
@@ -507,9 +508,9 @@ export function getCompanyStats(person) {
     maxHp,
     meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0) + giftedSkill + mountHit,
     rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0) + giftedSkill + mountHit,
-    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + reachDefense + giftedDefense + famedStatBonus('meleeDefense'),
-    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('rangedDefense'),
-    maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue + famedStatBonus('maxFatigue')),
+    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + reachDefense + giftedDefense + famedStatBonus('meleeDefense') + (mount?.meleeDefenseBonus ?? 0),
+    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('rangedDefense') + (mount?.rangedDefenseBonus ?? 0),
+    maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue - (mount?.fatigue ?? 0) + famedStatBonus('maxFatigue')),
     initiative,
     resolve: (hasPerk(person, 'fortified-mind') ? Math.ceil(baseResolve * 1.25) : baseResolve) + famedStatBonus('resolve'),
     level,
@@ -2325,9 +2326,9 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
       morale: 55 + camp.difficulty * 8, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
       spearwallActive: false, riposteActive: false, stunnedTurns: 0, stunProtected: false, pendingBerserkAp: 0,
       meleeSkill: 30 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill, rangedSkill: 28 + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill,
-      meleeDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense'),
-      rangedDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense + bonus('rangedDefense'),
-      maxFatigue: 85 + bonus('maxFatigue'), initiative: 75 + camp.difficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative, resolve: 32 + camp.difficulty * 8 + rank * 4 + bonus('resolve'),
+      meleeDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),
+      rangedDefense: 2 + camp.difficulty * 2 + rank * 2 + shieldDefense + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0),
+      maxFatigue: 85 + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + camp.difficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative, resolve: 32 + camp.difficulty * 8 + rank * 4 + bonus('resolve'),
     };
   });
   const jointBattle = encounterType === 'rescue' || encounterType === 'camp' && state.contract?.type === 'assault'
@@ -2360,7 +2361,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', rulesVersion: 2, weaponSkillsVersion: 1, mountSkillsVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', rulesVersion: 2, weaponSkillsVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -2368,7 +2369,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [], itemConditions: [] },
     casualties: [], xp: {},
   };
-  for (const unit of battle.units) unit.movementCredit = Math.max(0, movementBudget(unit) - 2) * 2;
+  for (const unit of battle.units) unit.movementCredit = Math.max(0, movementBudget(unit, battle) - 2) * 2;
   battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(battle.tactic) ? makeFormationAdvancePlan(battle) : null;
   battle.turnOrder = sortTurnOrder(battle);
   orderCompanyTurnsForFormation(battle);
@@ -2385,6 +2386,8 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
 }
 
 function nextBattleTurn(battle) {
+  const previous = battle.units.find(unit => unit.id === battle.activeId);
+  if (previous?.howlTurns > 0) previous.howlTurns -= 1;
   let next = battle.turnIndex + 1;
   while (true) {
     if (next >= battle.turnOrder.length) {
@@ -2405,7 +2408,7 @@ function nextBattleTurn(battle) {
           unit.riposteActive = false;
           unit.pendingBerserkAp = 0;
         }
-        unit.movementCredit = Math.max(0, movementBudget(unit) - 2) * 2;
+        unit.movementCredit = Math.max(0, movementBudget(unit, battle) - 2) * 2;
       }
       return;
     }
@@ -2488,10 +2491,10 @@ function movementFatigue(actor, cost) {
   return cost * (hasPerk(actor, 'marathoner') ? 2 : 3);
 }
 
-function movementBudget(actor) {
+function movementBudget(actor, battle) {
   const lightArmor = (getItem(actor.equipment.armor)?.fatigue ?? 0) + (getItem(actor.equipment.attachment)?.fatigue ?? 0)
     + (getItem(actor.equipment.helmet)?.fatigue ?? 0) <= 15;
-  return 2 + (getItem(actor.equipment.mount)?.movementBonus ?? 0) + Number(lightArmor && hasPerk(actor, 'fleet-footed'));
+  return 2 + (getItem(actor.equipment.mount) && battle?.mountBalanceVersion !== 1 ? 2 : 0) + Number(lightArmor && hasPerk(actor, 'fleet-footed'));
 }
 
 function pathCost(battle, actor, origin, path) {
@@ -2969,7 +2972,11 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
       && (option?.areaAction && option.shieldWasUsable !== undefined ? !option.shieldWasUsable
         : !target.equipment.shield || target.shieldDurability === 0) ? 1.1 : 1)
     * (hasPerk(actor, 'volley-fire') && ranged && distance >= 3 ? 1.1 : 1) * bonus;
-  const raw = Math.round(base * damageMultiplier * (1 + (getItem(actor.equipment.mount)?.damageBonus ?? 0))
+  const mount = getItem(actor.equipment.mount);
+  const mountDamage = mount ? battle.mountBalanceVersion === 1 ? mount.damageBonus : mount.visual === 'armoredhorse' ? .2 : .15 : 0;
+  const chargeBonus = battle.mountBalanceVersion === 1 && option?.id === 'charge' ? mount?.chargeDamageBonus ?? 0 : 0;
+  const raw = Math.round(base * damageMultiplier * (1 + mountDamage) * (1 + chargeBonus)
+    * (actor.howlTurns > 0 ? .8 : 1)
     * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
   const before = head ? target.headArmor : target.attachmentArmor + target.bodyArmor;
   const armorDamage = option?.id === 'puncture' ? 0 : Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1)
@@ -2985,6 +2992,8 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   if (head && !hasPerk(target, 'steel-brow')) hp = Math.round(hp * 1.25);
   if (hasPerk(actor, 'mace-training') && weaponMasteryMatches('mace-training', weapon)) hp = Math.round(hp * 1.1);
   if (hasPerk(target, 'iron-jaw')) hp = Math.max(1, Math.round(hp * .8));
+  // Trample health damage bypasses armor, head multipliers and damage-reduction perks.
+  hp += battle.mountBalanceVersion === 1 && option?.id === 'charge' ? mount?.chargeDirectDamage ?? 0 : 0;
   return { hp, armorDamage, before };
 }
 
@@ -3179,6 +3188,18 @@ function wolfFollowup(state, actor, preferred) {
   }] };
 }
 
+function wargHowl(state, actor) {
+  const battle = state.battle, mount = getItem(actor.equipment.mount);
+  if (battle.mountBalanceVersion !== 1 || !actor.alive || !mount?.howlChance) return;
+  const targets = battle.units.filter(unit => unit.alive && unit.side !== actor.side && hexDistance(actor, unit) <= mount.howlRadius);
+  if (!targets.length || battleRoll(battle) >= mount.howlChance) return;
+  for (const target of targets) target.howlTurns = 2;
+  const message = `${actor.name}'s warg uses Howling: nearby enemies deal 20% less damage for their next 2 turns.`;
+  battle.lastEvent.effects = [...(battle.lastEvent.effects ?? []), { id: 'howling', amount: 20 }];
+  battle.lastEvent.message = (battle.lastEvent.message + ' Howling: nearby enemy damage −20% for 2 turns.').slice(0, 300);
+  battleLog(battle, message);
+}
+
 function areaTargets(battle, actor, primary, skillId) {
   const dq = primary.q - actor.q, dr = primary.r - actor.r;
   if (hexDistance(actor, primary) !== 1) return [];
@@ -3353,7 +3374,9 @@ function skillOptionForTarget(family, actor, target, weapon, battle) {
 
 function battleMoveApCost(battle, actor, from, to) {
   const cost = battleMovementCost(battle, actor, from, to);
-  return Number.isFinite(cost) ? Math.max(0, cost * 2 - (actor.movementCredit ?? 0)) : Infinity;
+  if (!Number.isFinite(cost)) return Infinity;
+  if (battle.mountBalanceVersion === 1 && getItem(actor.equipment.mount)) return 1;
+  return Math.max(0, cost * 2 - (actor.movementCredit ?? 0));
 }
 
 function consumeMovementCredit(battle, actor, from, to) {
@@ -3585,7 +3608,7 @@ function advanceBattleV2(state) {
     const aimed = isBow(weapon) ? predictAttack(battle, actor, target, weapon, 15) : null;
     const charge = ['offense', 'focus'].includes(companyTactic) && horseChargePlan(battle, actor, target, weapon);
     if (charge) {
-      const predicted = predictAttack(battle, { ...actor, ...charge.path.at(-1) }, target, weapon);
+      const predicted = predictAttack(battle, { ...actor, ...charge.path.at(-1) }, target, weapon, COMBAT_SKILLS.charge);
       candidates.push({ id: 'charge', type: 'charge', targetId: target.id, target, plan: charge, apCost: 6,
         fatigueCost: charge.fatigueCost, ...predicted, preventedDamage: target.meleeSkill * .25, bonus: 24 });
     }
@@ -3729,6 +3752,7 @@ function advanceBattleV2(state) {
     }
     if (retreatFrom) battle.lastEvent.moveFrom = retreatFrom;
     wolfFollowup(state, actor, choice.target);
+    wargHowl(state, actor);
   } else if (choice.type === 'area') {
     actor.aiTargetId = choice.target.id;
     const option = COMBAT_SKILLS[choice.id];
@@ -3782,6 +3806,7 @@ function advanceBattleV2(state) {
       battleLog(battle, 'A necessary finishing strike risks friendly fire.');
     }
     wolfFollowup(state, actor, choice.target);
+    wargHowl(state, actor);
   } else if (choice.type === 'stance') {
     actor.ap -= choice.apCost;
     actor.fatigue += choice.fatigueCost;
@@ -4268,6 +4293,8 @@ function validateBattle(input, party, worldState) {
   const weaponSkillsVersion = input.weaponSkillsVersion ?? 0;
   assert((weaponSkillsVersion === 0 || weaponSkillsVersion === 1) && (weaponSkillsVersion === 0 || rulesVersion === 2), 'battle weapon skills version');
   const mountSkillsVersion = input.mountSkillsVersion ?? 0;
+  const mountBalanceVersion = input.mountBalanceVersion ?? 0;
+  assert((mountBalanceVersion === 0 || mountBalanceVersion === 1) && (mountBalanceVersion === 0 || mountSkillsVersion === 1), 'battle mount balance version');
   assert((mountSkillsVersion === 0 || mountSkillsVersion === 1) && (mountSkillsVersion === 0 || weaponSkillsVersion === 1), 'battle mount skills version');
   assert(Number.isSafeInteger(input.round) && input.round >= 1 && input.round <= 1000, 'battle round');
   const tactic = input.tactic ?? 'offense';
@@ -4320,12 +4347,13 @@ function validateBattle(input, party, worldState) {
     const movementCredit = unit.movementCredit ?? 0;
     assert(validCount(adaptation) && adaptation <= 1000, 'battle adaptation');
     assert(validCount(berserkRound) && berserkRound <= input.round, 'battle berserk round');
+    if (unit.howlTurns !== undefined) assert(mountBalanceVersion === 1 && validCount(unit.howlTurns) && unit.howlTurns <= 2, 'battle howl turns');
     assert(validCount(frenzyUntilRound) && frenzyUntilRound <= input.round + 2, 'battle frenzy round');
     assert(validCount(turnStartedRound) && turnStartedRound <= input.round, 'battle turn started round');
     assert(validCount(freeSwapRound) && freeSwapRound <= input.round && validCount(freeHealRound) && freeHealRound <= input.round, 'battle free actions');
     assert(validCount(formationMovedRound) && formationMovedRound <= input.round && (aiTargetId === null || partyIds.has(aiTargetId)
       || /^ally-[1-3]$/.test(aiTargetId) || /^enemy-([1-9]|1[0-2])$/.test(aiTargetId)), 'battle AI state');
-    assert(validCount(movementCredit) && movementCredit <= Math.max(0, movementBudget(unit) - 2) * 2, 'battle movement credit');
+    assert(validCount(movementCredit) && movementCredit <= Math.max(0, movementBudget(unit, { mountBalanceVersion }) - 2) * 2, 'battle movement credit');
     assert(recordObject(reserveEquipment) && (reserveEquipment.weapon === null || getItem(reserveEquipment.weapon)?.slot === 'weapon') && (reserveEquipment.shield === null || getItem(reserveEquipment.shield)?.slot === 'shield') && (!getItem(reserveEquipment.weapon)?.twoHanded || reserveEquipment.shield === null), 'battle reserve equipment');
     assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'battle accessories');
     const pocketDrawnFrom = unit.pocketDrawnFrom ?? null;
@@ -4404,6 +4432,7 @@ function validateBattle(input, party, worldState) {
       shieldDurability, maxShieldDurability, reserveShieldDurability, maxReserveShieldDurability, battleSetSwapped,
       throwingAmmo: { active: throwingAmmo.active, reserve: throwingAmmo.reserve },
       perks: perks.filter(id => PERK_BY_ID.has(id)), adaptation, berserkRound, frenzyUntilRound, turnStartedRound, freeSwapRound, freeHealRound,
+      ...(unit.howlTurns === undefined ? {} : { howlTurns: unit.howlTurns }),
       ...(unit.fleeRollRound === undefined ? {} : { fleeRollRound: unit.fleeRollRound }),
       ...(unit.fleeRound === undefined ? {} : { fleeRound: unit.fleeRound }),
       ...(unit.escaped === undefined ? {} : { escaped: unit.escaped }),
@@ -4479,9 +4508,10 @@ function validateBattle(input, party, worldState) {
         && typeof reaction.head === 'boolean' && typeof reaction.fallen === 'boolean'), 'battle event reactions');
   }
   for (const entry of [event, ...(event?.reactions ?? [])].filter(Boolean)) {
-    if (entry.effects !== undefined) assert(Array.isArray(entry.effects) && entry.effects.length <= 3
+    if (entry.effects !== undefined) assert(Array.isArray(entry.effects) && entry.effects.length <= 4
       && new Set(entry.effects.map(effect => effect?.id)).size === entry.effects.length
-      && entry.effects.every(effect => recordObject(effect) && ['battle-flow', 'killing-frenzy', 'berserk'].includes(effect.id)
+      && entry.effects.every(effect => recordObject(effect) && ['battle-flow', 'killing-frenzy', 'berserk', 'howling'].includes(effect.id)
+        && (effect.id !== 'howling' || mountBalanceVersion === 1 && effect.amount === 20)
         && validCount(effect.amount) && effect.amount <= 100 && (effect.nextTurn === undefined || effect.id === 'berserk' && typeof effect.nextTurn === 'boolean')), 'battle event effects');
     if (entry.weaponId !== undefined) assert(entry.weaponId === null || getItem(entry.weaponId)?.slot === 'weapon', 'battle event weapon');
   }
@@ -4526,6 +4556,7 @@ function validateBattle(input, party, worldState) {
     ...(input.rulesVersion === undefined ? {} : { rulesVersion }),
     ...(input.weaponSkillsVersion === undefined ? {} : { weaponSkillsVersion }),
     ...(input.mountSkillsVersion === undefined ? {} : { mountSkillsVersion }),
+    ...(input.mountBalanceVersion === undefined ? {} : { mountBalanceVersion }),
     field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng, lootSeed,
     log: [...input.log], lastEvent: normalizedEvent,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items], itemConditions: [...itemConditions] },

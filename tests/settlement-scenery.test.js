@@ -88,3 +88,12 @@ test('seeded yards avoid initial camps and keep their placement through clearing
     assert.deepEqual(mixed.filter(s=>['blacksmith','armorsmith','industry'].includes(s.slot)),before);
   }
 });
+
+
+test('outskirts remain tightly grouped around their parent settlement',()=>{
+  for (const seed of [1,2,10,42,7391]) for (const s of worldSettlementScenery(createGame(seed))) {
+    const place=town(s.townId);
+    assert.ok(Math.hypot(s.x-place.x,s.y-place.y)<=96.01,`${seed}: ${s.key}`);
+    assert.ok(s.width<=56);assert.equal(s.targetable,false);
+  }
+});

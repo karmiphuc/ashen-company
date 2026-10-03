@@ -70,3 +70,10 @@ test('roads speed frontier travel and snow/desert positions round trip without a
   assert.deepEqual(validateSave(state),state);
   assert.equal(travelTo(state,WORLD_BOUNDS.maxX+1,1800).ok,false);
 });
+
+
+test('town and village art swaps consistently while castles retain their distinct fortifications',()=>{
+  assert.equal(regionalTownArt(SETTLEMENTS.find(t=>t.id==='greyhaven')),'houses_03_01');
+  assert.equal(regionalTownArt(SETTLEMENTS.find(t=>t.id==='barrowfield')),'townhall_01');
+  assert.equal(regionalTownArt(SETTLEMENTS.find(t=>t.id==='thornwall')),'stronghold_02');
+});

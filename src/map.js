@@ -1,5 +1,5 @@
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
-import { regionAt } from './geography.js';
+import { regionAt, regionalTownArt } from './geography.js';
 import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getFactionPatrols, getCaravans, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = [
@@ -27,11 +27,6 @@ const loaded = typeof Image === 'undefined' ? Promise.resolve() : Promise.all(na
   images.set(name, image);
 })));
 
-const knownTownArt = {
-  oakwatch: 'houses_02_01', greyhaven: 'townhall_02', ironford: 'stronghold_01', thornwall: 'stronghold_02',
-  redmere: 'townhall_01', highpass: 'fortified_outpost_01', saltwick: 'houses_01_01', barrowfield: 'houses_03_01',
-};
-const buildingByKind = { town: 'townhall_01', castle: 'stronghold_02', village: 'houses_03_01' };
 const WORLD_PAD = 170;
 const DOUBLE_TAP_DELAY = 350;
 const DOUBLE_TAP_DISTANCE = 24;
@@ -89,7 +84,7 @@ function sprite(target, name, x, y, spriteWidth, anchor = .83) {
 }
 
 function townArt(town) {
-  return knownTownArt[town.id] || buildingByKind[town.kind] || 'houses_02_01';
+  return regionalTownArt(town);
 }
 
 function bands() {
@@ -255,7 +250,8 @@ function drawSettlementScenery() {
       context.font = 'bold 11px Arial'; context.textAlign = 'center'; context.fillStyle = '#392b20'; context.fillText(structure.symbol, x + 27, y - 20);
     }
     if (camera.zoom >= .85 || selection === structure.townId && camera.zoom >= .5) {
-      context.font = `bold ${Math.max(10, 9 / camera.zoom)}px Georgia`; context.textAlign = 'center'; context.lineWidth = 3 / camera.zoom;
+      context.globalAlpha = selection === structure.townId ? .78 : .55;
+      context.font = `${8 / camera.zoom}px Georgia`; context.textAlign = 'center'; context.lineWidth = 1.5 / camera.zoom;
       context.strokeStyle = '#231f16dd'; context.strokeText(structure.label, x, y + 16);
       context.fillStyle = SCENERY_COLORS[structure.tone] ?? '#e7d8b2'; context.fillText(structure.label, x, y + 16);
     }
