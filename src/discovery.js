@@ -29,16 +29,16 @@ export function championRoster(state,encounter,getItem,createFamedItemId,{force=
   const bonus=discoveryBonuses(state,encounter),cycle=encounter.generation??encounter.spawnCycle??encounter.acceptedDay??0;
   const key=`${state.seed}:${encounter.id}:${cycle}:true-champion`;
   const chance=championChance(state,encounter.difficulty,bonus.champion);
-  // Existing named elite leaders are promoted into the full champion system too.
-  const leader=encounter.enemies.findIndex(enemy=>/ Champion$/.test(enemy.name));
-  const index=leader>=0?leader:0;
-  const appears=force||leader>=0||hash(`${key}:roll`)%100<chance;
+  // Every fighter rolls independently; forced bounties guarantee their leader
+  // without preventing retainers or existing named elites from being champions.
   return encounter.enemies.map((enemy,i)=>{
-    if(!appears||i!==index)return {...enemy};
+    const rollKey=i===0?`${key}:roll`:`${key}:${i}:roll`;
+    const appears=enemy.champion||/ Champion$/.test(enemy.name)||(force&&i===0)||hash(rollKey)%100<chance;
+    if(!appears)return {...enemy};
     const weapon=getItem(enemy.weapon);
     if(!weapon)return {...enemy};
     const named=['famed','named'].includes(weapon.rarity)?weapon.id:createFamedItemId(weapon.id,hash(`${key}:${i}:weapon`));
-    const title=['the Blooded','the Unbroken','the Crow','the Oathless'][hash(`${key}:title`)%4];
+    const title=['the Blooded','the Unbroken','the Crow','the Oathless'][hash(i===0?`${key}:title`:`${key}:${i}:title`)%4];
     return {...enemy,weapon:named,champion:true,championItemId:named,name:`${enemy.name.replace(/ Champion$/,'')} ${title} Champion`.slice(0,80)};
   });
 }

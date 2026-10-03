@@ -1,6 +1,6 @@
 {
   "name": "ashen-company",
-  "version": "0.48.4",
+  "version": "0.48.5",
   "private": true,
   "type": "module",
   "description": "An offline mercenary company game for iPad",

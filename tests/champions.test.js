@@ -136,3 +136,25 @@ test('champion trophies are reserved before the ordinary 24-item loot limit fill
   state.battle.units=state.battle.units.filter(u=>u!==champion).concat(champion);win(state);
   assert.equal(state.battle.loot.items.length,24);assert.equal(state.battle.loot.items[0],trophy);assert.equal(state.battle.loot.items.filter(id=>id===trophy).length,1);m.validateSave(structuredClone(state));
 });
+
+
+test('every fighter rolls independently with no champion cap, including ten champions and existing named leaders',()=>{
+ const enemies=Array.from({length:10},(_,i)=>({name:`Raider ${i}`,weapon:'arming-sword',armor:'mail-shirt',helmet:'iron-helm',shield:null}));
+ const state={seed:73,day:1,discoveryRolls:{uncapped:{cycle:0,champion:100,famed:0,mount:0}}},encounter={id:'uncapped',generation:0,difficulty:3,enemies};
+ const roster=championRoster(state,encounter,m.getItem,m.createFamedItemId);assert.equal(roster.filter(e=>e.champion).length,10);assert.equal(new Set(roster.map(e=>e.championItemId)).size,10);assert.deepEqual(roster,championRoster(state,encounter,m.getItem,m.createFamedItemId));
+ const ordinary={...state,discoveryRolls:{}};let multi=false;for(let seed=1;seed<=100;seed++){ordinary.seed=seed;if(championRoster(ordinary,encounter,m.getItem,m.createFamedItemId).filter(e=>e.champion).length>1)multi=true;}assert.ok(multi,'normal independent rolls permit multiple champions');
+ const promoted=championRoster(ordinary,{...encounter,enemies:enemies.map(e=>({...e,name:e.name+' Champion'}))},m.getItem,m.createFamedItemId);assert.ok(promoted.every(e=>e.champion));
+});
+
+test('twenty defeated champions keep all forty named trophies through result save and reload',()=>{
+ const state=m.createGame(7391),original=structuredClone(state.party[0]);
+ while(state.party.length<15)state.party.push({...structuredClone(original),id:`fighter-${state.party.length}`,name:'Veteran'});
+ for(const p of state.party)p.level=13;state.formation=Array.from({length:36},(_,i)=>state.party[i]?.id??null);state.day=60;state.shipments={};state.shipmentLegacyThroughDay=60;
+ const site=m.getCampSites(state).find(s=>s.enemies.length===20);state.position={x:site.x,y:site.y};assert.equal(m.startBattle(state,site.id).ok,true);
+ const trophies=[];for(const [i,e]of state.battle.units.filter(u=>u.side==='enemy').entries()){
+  const weapon=m.createFamedItemId('arming-sword',1000+i),armor=m.createFamedItemId('mail-shirt',2000+i);trophies.push(weapon,armor);
+  e.champion=true;e.championItemId=weapon;e.equipment.weapon=weapon;e.equipment.armor=armor;e.bodyArmor=0;e.maxBodyArmor=m.getItem(armor).armor;
+ }
+ win(state);assert.equal(state.battle.loot.items.length,40);for(const id of trophies)assert.ok(state.battle.loot.items.includes(id),id);
+ const loaded=m.validateSave(JSON.parse(JSON.stringify(state)));assert.deepEqual(loaded.battle.loot,state.battle.loot);
+});
