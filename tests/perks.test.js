@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ITEMS, PERKS, createFamedItemId, createGame, getCampSites, getCompanyStats,
+  ITEMS, PERKS, getItem, createFamedItemId, createGame, getCampSites, getCompanyStats,
   getLevelUp, getPerkChoices, getPerkPoints, learnPerk, startBattle,
   advanceBattle, finishBattle, trainAttributes, validateSave, getCompanyTravelBonus,
 } from '../src/engine.js';
@@ -278,7 +278,7 @@ test('weapon masteries cover every bow and crossbow visual, including famed copi
       assert.equal(mastered.battle.lastEvent.type, 'attack', `${weaponId} should attack at mastery range`);
       const skillFatigue = mastered.battle.lastEvent.skillName === 'Piercing Bolt' ? 16
         : mastered.battle.lastEvent.skillName === 'Aimed Shot' ? 15 : weapon.fatigueCost ?? 9;
-      assert.equal(mastered.captain.fatigue, Math.ceil(skillFatigue * .75), `${weaponId} mastery discounts the selected shot`);
+      assert.equal(mastered.captain.fatigue, Math.ceil(Math.max(0,skillFatigue+(getItem(weaponId).fatigueOnSkillUse??0)) * .75), `${weaponId} mastery discounts the selected shot`);
     }
   }
 });

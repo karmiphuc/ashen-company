@@ -31,6 +31,7 @@ export function townDesign(item,town) {
   if(item.slot==='accessory'||item.slot==='attachment')return true;
   if(item.slot==='weapon'||item.slot==='shield') {
     const theme=townGearTheme(town);
+    if(item.sourceNamedWeapon){if(['ancient','greenskin'].includes(item.sourceCulture))return false;if(theme==='forest'&&item.fatigue>12)return false;}
     return item.region ? item.region===(theme==='north'?'north':theme==='south'?'south':null) : true;
   }
   if(/^(fantasy-|samurai-)/.test(item.id)&&townGearTheme(town)==='mercenary')return true;

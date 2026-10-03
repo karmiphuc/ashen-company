@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {inflateSync} from 'node:zlib';
+import {NAMED_WEAPON_ART} from '../src/named-weapon-art.js';
 import {ITEMS, getItem} from '../src/engine.js';
 import {portraitHTML, portraitWeaponAnchor} from '../src/portraits.js';
 
@@ -21,7 +22,7 @@ function frame(html) {
 }
 function pngSize(image) {
   const src=image.match(/src="([^"]+)"/)[1];
-  const bytes=readFileSync(new URL('../'+src,import.meta.url));
+  const bytes=src.startsWith('data:')?Buffer.from(src.split(',')[1],'base64'):readFileSync(new URL('../'+src,import.meta.url));
   return [bytes.readUInt32BE(16),bytes.readUInt32BE(20)];
 }
 function transformedPoint(image,x,y) {
@@ -56,7 +57,9 @@ test('every shield and one-handed family share the right hand while the center c
 test('one-handed melee weapons keep a 30-degree facing tilt at the hand anchor',()=>{
   for(const weapon of weapons.filter(w=>!w.twoHanded&&!w.ranged))for(const mount of [null,...mounts]){
     const html=portraitHTML(person,{weapon,mount}),w=pose(html,'weapon');
-    assert.match(w.image,/transform:scaleX\(-1\) rotate\(-30deg\)/,weapon.id);
+    const source=NAMED_WEAPON_ART[weapon.id];
+    if(source){const [tx,ty]=transformedPoint(w.image,...source.tip),[gx,gy]=transformedPoint(w.image,...source.grip);const tilt=Math.atan2(tx-gx,gy-ty)*180/Math.PI;assert.ok(Math.abs(tilt-30)<.001,`${weapon.id}: native shaft leans 30 degrees`);}
+    else assert.match(w.image,/transform:scaleX\(-1\) rotate\(-30deg\)/,weapon.id);
     assert.equal(w.x+w.gx,82,`${weapon.id}: tilt pivots around the right-hand grip`);
     assert.equal(w.y+w.gy,111+(mount?36:0),`${weapon.id}: tilt preserves the grip height and mounted offset`);
   }
@@ -82,15 +85,16 @@ test('mace shaft tilts about 30 degrees from upright toward the enemy',()=>{
   // Battle enemies mirror the whole portrait, so the same pose leans left toward them.
 });
 
-test('every two-handed melee family is enlarged at the opposite hand and fits completely, including named mounted variants',()=>{
+test('every two-handed melee family stays in proportion to the pawn and fits, including named mounted variants',()=>{
   for(const weapon of weapons.filter(w=>w.twoHanded&&!w.ranged))for(const mount of [null,...mounts]){
     for(const item of [weapon,getItem(`famed:${weapon.id}:73`),{id:weapon.id,visual:weapon.visual}]){
       const html=portraitHTML(person,{weapon:item,mount,helmet:getItem('bb-flat-top-helmet')}),w=pose(html,'weapon'),f=frame(html);
-      assert.equal(w.x+w.gx,78,weapon.id);assert.equal(w.y+w.gy,116+(mount?36:0),weapon.id);
+      assert.equal(w.x+w.gx,78,weapon.id);assert.equal(w.y+w.gy,100+(mount?36:0),weapon.id);
       const scale=Number(w.image.match(/transform:scale\(([\d.]+)\)/)[1]);
       const angle=Number(w.image.match(/rotate\(([\d.-]+)deg\)/)[1])*Math.PI/180;
-      assert.ok(scale>=1.05,`${weapon.id}: native art is enlarged`);
+      assert.ok(scale>0,`${weapon.id}: valid scale`);
       const [width,height]=pngSize(w.image);
+      assert.ok(Math.hypot(width,height)*scale<=96.02,`${weapon.id}: weapon silhouette cannot exceed the pawn's 96px crown-to-base height`);
       for(const x of [0,width])for(const y of [0,height]){
         const px=f.x+(w.x+w.gx+scale*((x-w.gx)*Math.cos(angle)-(y-w.gy)*Math.sin(angle)))*f.scale;
         const py=f.y+(w.y+w.gy+scale*((x-w.gx)*Math.sin(angle)+(y-w.gy)*Math.cos(angle)))*f.scale;
@@ -108,9 +112,9 @@ test('reference sword, axe and falx axes cross from the opposite shoulder to the
     const angle=Number(w.image.match(/rotate\(([\d.-]+)deg\)/)[1])*Math.PI/180;
     const x=w.x+w.gx+scale*((tip[0]-w.gx)*Math.cos(angle)-(tip[1]-w.gy)*Math.sin(angle));
     const y=w.y+w.gy+scale*((tip[0]-w.gx)*Math.sin(angle)+(tip[1]-w.gy)*Math.cos(angle));
-    assert.ok(x<15&&y<40,`${id}: blade starts beyond the opposite shoulder`);
-    const shoulderX=x+(78-x)*(55-y)/(116-y);
-    assert.ok(shoulderX<38,`${id}: crosses shoulder at x<38, leaving the face clear`);
+    assert.ok(x<38&&y<70,`${id}: blade starts beyond the opposite shoulder`);
+    const shoulderX=x+(78-x)*(55-y)/(100-y);
+    assert.ok(shoulderX<44,`${id}: crosses the left shoulder below the face`);
   }
 });
 
@@ -133,7 +137,7 @@ test('all five mounts share one plate and coordinate space; equipment is above t
 const rasterCache=new Map();
 function opaquePixels(image) {
   const src=image.match(/src="([^"]+)"/)[1];if(rasterCache.has(src))return rasterCache.get(src);
-  const bytes=readFileSync(new URL('../'+src,import.meta.url));
+  const bytes=src.startsWith('data:')?Buffer.from(src.split(',')[1],'base64'):readFileSync(new URL('../'+src,import.meta.url));
   const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);
   assert.equal(bytes[24],8);assert.equal(bytes[25],6);assert.equal(bytes[28],0,'noninterlaced RGBA mount art');
   const chunks=[];for(let offset=8;offset<bytes.length;){const size=bytes.readUInt32BE(offset),type=bytes.toString('ascii',offset+4,offset+8);if(type==='IDAT')chunks.push(bytes.subarray(offset+8,offset+8+size));offset+=12+size;}

@@ -1,6 +1,7 @@
 // Local raster layers from Battle-Brothers-Legends/Legends-public.
 // See assets/portraits/legends-source.json for the pinned source manifest.
 import { DLC_ITEMS } from './dlc-items.js';
+import { NAMED_WEAPON_ART } from './named-weapon-art.js';
 import { DLC_ART } from './dlc-art.js';
 import { FANTASY_ARMOR_VISUALS, FANTASY_HELMET_VISUALS, FANTASY_ITEM_IMAGES, FANTASY_APPEARANCES, FANTASY_CLOSED_HELMETS, FANTASY_HIDDEN_HEADS } from './fantasy-art.js';
 
@@ -299,9 +300,10 @@ function weaponRest(spec, item) {
   if (shoulder) {
     const [tipX, tipY] = SHOULDER_TIPS[file] ?? [0, 0];
     const length = Math.hypot(tipX - gripX, tipY - gripY);
-    const scale = Math.max(1.05, 108 / length);
+    const [width,height]=SHOULDER_DIMENSIONS[file];
+    const scale = Math.min(80 / length, 96 / Math.hypot(width,height));
     const rotation = -130 - Math.atan2(tipY - gripY, tipX - gripX) * 180 / Math.PI;
-    return [file, 78 - gripX, 116 - gripY,
+    return [file, 78 - gripX, 100 - gripY,
       `scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`, origin];
   }
   if (RANGED_WEAPONS.has(visual(item)) || /crossbow|(?:^|-)bow$/.test(file.replace('weapon-', '').replace('.png', ''))) return spec;
@@ -313,7 +315,8 @@ function weaponRest(spec, item) {
 function weaponFrame(spec, item) {
   const key = item?.baseId || item?.id;
   const shoulder = Boolean(item?.twoHanded && !item.ranged) || SHOULDER_WEAPONS.has(key);
-  const dimensions = SHOULDER_DIMENSIONS[spec?.[0]] ??
+  const named=NAMED_WEAPON_ART[item?.baseId||item?.id];
+  const dimensions = (named?[named.width,named.height]:null) ?? SHOULDER_DIMENSIONS[spec?.[0]] ??
     (!shoulder && !item?.ranged ? ONE_HANDED_DIMENSIONS[spec?.[0]] : null);
   if (!dimensions) return {left: 0, right: 104, top: 0, bottom: 142};
   const [, left, top, transform, origin] = spec;
@@ -502,6 +505,8 @@ function visual(item) {
 }
 
 function layerSpec(category, item) {
+  const named=NAMED_WEAPON_ART[item?.baseId||item?.id];
+  if(category==='weapon'&&named){const [gx,gy]=named.grip,[tx,ty]=named.tip;const angle=Math.atan2(ty-gy,tx-gx)*180/Math.PI;const ranged=item.ranged??named.ranged,heavy=(item.twoHanded??named.twoHanded)&&!ranged,rangedPose=ranged&&!(item.throwing??named.throwing);const scale=heavy?Math.min(80/Math.hypot(tx-gx,ty-gy),96/Math.hypot(named.width,named.height)):1;return [named.portrait,(heavy?78:rangedPose?70:82)-gx,(heavy?100:rangedPose?105:111)-gy,`scale(${scale.toFixed(4)}) rotate(${(rangedPose?0:heavy?-130-angle:-60-angle).toFixed(4)}deg)`,`${gx}px ${gy}px`];}
   const source = DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];
@@ -647,6 +652,7 @@ export const portraitSVG = portraitHTML;
 /** Return the locally packaged inventory icon for an engine item. */
 export function itemImage(item) {
   const id = item?.baseId || item?.id;
+  if(NAMED_WEAPON_ART[id])return NAMED_WEAPON_ART[id].icon;
   if (DLC_ART[id]) return DLC_ART[id].icon;
   return ITEM_IMAGES[id] ? `${ITEM_ROOT}${ITEM_IMAGES[id]}` : null;
 }
