@@ -95,3 +95,62 @@ test('an opportunity kill stops flight and forged flight state is rejected',()=>
   const wrongSide=structuredClone(state);wrongSide.battle.units.find(u=>u.id===actor.id).fleeRound=1;
   assert.throws(()=>validateSave(wrongSide),/fleeRound/);
 });
+
+function escapeCorridor(open, companyPoint, enemyPoint) {
+  const fixture = fight();
+  const { battle, actor, enemy } = fixture;
+  const walkable = new Set([...open, companyPoint].map(([q, r]) => `${q},${r}`));
+  for (const tile of battle.field.tiles) tile.terrain = walkable.has(`${tile.q},${tile.r}`) ? 'open' : 'dense-trees';
+  Object.assign(actor, { q: companyPoint[0], r: companyPoint[1], meleeSkill: 200, fatigue: 0 });
+  actor.equipment.weapon = 'arming-sword';
+  for (const unit of battle.units) if (!unit.alive) { unit.q = companyPoint[0]; unit.r = companyPoint[1]; }
+  Object.assign(enemy, { q: enemyPoint[0], r: enemyPoint[1], hp: 300, maxHp: 300, morale: 10 });
+  battle.activeId = enemy.id; battle.turnIndex = battle.turnOrder.indexOf(enemy.id); battle.rng = 0;
+  return fixture;
+}
+
+test('flight routes around a cul-de-sac without backtracking, including action save reloads', () => {
+  const route = [[6,6],[6,7],[7,7],[8,7],[9,7],[10,7],[11,7],[12,7],[13,7]];
+  let { state, enemy } = escapeCorridor([...route,[6,5],[6,4]], [5,6], route[0]);
+  const id = enemy.id;
+  for (const expected of route.slice(1)) {
+    enemy = state.battle.units.find(unit => unit.id === id);
+    enemy.ap = 9;
+    advanceBattle(state);
+    assert.equal(state.battle.lastEvent.skillName, 'Flee');
+    assert.deepEqual([enemy.q,enemy.r], expected);
+    state = validateSave(structuredClone(state));
+  }
+  advanceBattle(state);
+  assert.equal(state.battle.units.find(unit => unit.id === id).escaped, true);
+});
+
+test('sideways flight inside a melee defender’s reach still triggers an opportunity strike', () => {
+  const route = Array.from({ length: 7 }, (_, index) => [6,6-index]);
+  const { state, battle, actor, enemy } = escapeCorridor(route, [5,6], route[0]);
+  const ap = actor.ap;
+  advanceBattle(state);
+  assert.deepEqual([enemy.q,enemy.r], [6,5]); // Both origin and destination border the defender.
+  assert.equal(battle.lastEvent.reactions.length, 1);
+  assert.equal(battle.lastEvent.reactions[0].actorId, actor.id);
+  assert.equal(battle.lastEvent.reactions[0].skillName, 'Opportunity Strike');
+  assert.equal(battle.lastEvent.reactions[0].weaponId, 'arming-sword');
+  assert.ok(enemy.hp < 300);
+  assert.equal(actor.ap, ap);
+  assert.equal(actor.fatigue, 5);
+});
+
+test('stunned or exhausted defenders cannot react, and trapped fleeing units hold', () => {
+  for (const unavailable of [{ stunnedTurns: 1 }, { fatigue: 100, maxFatigue: 100 }]) {
+    const { state, battle, actor } = escapeCorridor([[6,6],[6,5],[6,4],[6,3],[6,2],[6,1],[6,0]], [5,6], [6,6]);
+    Object.assign(actor, unavailable);
+    advanceBattle(state);
+    assert.equal(battle.lastEvent.reactions, undefined);
+  }
+  const { state, battle, enemy } = escapeCorridor([[6,6],[6,5]], [5,6], [6,6]);
+  advanceBattle(state);
+  assert.deepEqual([enemy.q,enemy.r], [6,6]);
+  assert.equal(enemy.ap, 0);
+  assert.equal(battle.lastEvent.type, 'hold');
+  assert.equal(battle.lastEvent.reactions, undefined);
+});
