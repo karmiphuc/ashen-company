@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.48.5 rolls champions independently for every eligible enemy, with no per-party champion cap. Veteran top-tier camps and bands scale toward 18–20 troops against a full company; their veteran stat ranks keep growing to 10 as player levels and campaign age rise. Starter encounters stay small. New battles support 20 enemies and preserve every defeated champion’s named trophies beyond the ordinary loot limit; existing active battles retain their saved roster and rules.
+
 Version 0.48.4 makes Company & Equipment easier to scan. Preparation, morale, background, behavior, armor, reserve, mount, accessory and recovery guidance moves into labelled ? hints: hover or focus to preview, tap to keep open, tap outside or press Escape to close. Stats, injuries, talents, fatigue, item names and equipment actions stay visible. Wider equipment columns and compact protection slots reduce scrolling; hints fit tablet and phone viewports.
 
 Version 0.48.3 adds a saved **Default battle speed** setting in Save / Menu. New battles start at 3× by default; choose 1× in the Menu if preferred. Reloading, importing, hiding the app and opening dialogs still pause combat.

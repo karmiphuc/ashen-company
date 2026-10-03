@@ -15,7 +15,7 @@ import { MOUNTS } from './mounts.js';
 import { factionPatrols, soldierFactionAt, patrolDefinitions, initialPatrolProgress, advanceFactionSimulation } from './faction-patrols.js';
 import { cityMountOffer, campMountReward, regionalMountPool } from './mount-distribution.js';
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
-import { enemyProgression } from './enemy-progression.js';
+import { enemyProgression, enemyRosterSize } from './enemy-progression.js';
 import { getRegionalCampText } from './enemy-rosters.js';
 import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk, weaponTrainingVisual } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile, makeTalents, talentGain } from './recruits.js';
@@ -1172,7 +1172,7 @@ function roamingBand(state, band) {
   const count = tier === 0 ? strength === 1 ? 1 : 2 : tier === 1 ? 2 + Number(strength === 3) : tier === 2 ? 2 + strength : 3 + strength;
   const pool = tier ? worldEnemyTemplates(band.start.x, band.start.y, tier) : band.enemies;
   const offset = Math.floor(random() * pool.length);
-  const enemies = Array.from({ length: Math.min(12, count + progression.reinforcements) }, (_, index) => { const enemy = { ...pool[(index + offset) % pool.length] }; return regionalOutfit(enemy, `${state.seed}:${band.id}:${spawnCycle}`, index, band.start.x, band.start.y, tier); });
+  const enemies = Array.from({ length: enemyRosterSize(state,tier,count) }, (_, index) => { const enemy = { ...pool[(index + offset) % pool.length] }; return regionalOutfit(enemy, `${state.seed}:${band.id}:${spawnCycle}`, index, band.start.x, band.start.y, tier); });
   if (progression.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, band.id, spawnCycle, band.start.x, band.start.y);
   const position = activeBandProgress(state, band);
   const target = position.behavior === 'raiding-caravan' ? getCaravans(state).find(caravan => caravan.id === position.targetId
@@ -2361,7 +2361,7 @@ export function getCampSites(state) {
     const progress = campRecord(state,id), fixed = CAMP_BY_ID.get(id);
     const camp = fixed || randomCamp(state,id,index-CAMP_SITES.length,progress.generation);
     const scaling = enemyProgression(state, camp.difficulty);
-    const enemies = Array.from({ length: Math.min(12, camp.enemies.length + scaling.reinforcements) }, (_, enemyIndex) => { const enemy={...camp.enemies[enemyIndex % camp.enemies.length]}; return !fixed && enemyIndex>=camp.enemies.length ? regionalOutfit(enemy, `${state.seed}:${id}:${progress.generation}`, enemyIndex, camp.x, camp.y, camp.difficulty, {champions:false,theme:camp.factionId==='ancient'?'ancient':undefined}) : enemy; });
+    const enemies = Array.from({ length: enemyRosterSize(state,camp.difficulty,camp.enemies.length) }, (_, enemyIndex) => { const enemy={...camp.enemies[enemyIndex % camp.enemies.length]}; return !fixed && enemyIndex>=camp.enemies.length ? regionalOutfit(enemy, `${state.seed}:${id}:${progress.generation}`, enemyIndex, camp.x, camp.y, camp.difficulty, {champions:false,theme:camp.factionId==='ancient'?'ancient':undefined}) : enemy; });
     if (scaling.cavalry && enemies.length && camp.factionId!=='ancient') enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation, camp.x, camp.y);
     const discovery=discoveryBonuses(state,{...camp,generation:progress.generation});
     const champions=championRoster(state,{...camp,generation:progress.generation,enemies:rollEncounterNamed(state,{id:camp.id,generation:progress.generation},enemies)},getItem,championWeaponFactory(camp.factionId==='ancient'?'ancient':armoryTheme(regionAt(camp.x,camp.y).id)));
@@ -2573,6 +2573,20 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
   });
   const jointBattle = encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && state.contract?.type === 'assault'
     && state.contract.campId === camp.id && state.contract.campGeneration === camp.generation && !huntComplete(state);
+  // Additional ranged ranks cannot occupy q=13, the camp's rear palisade.
+  // Keep legal original cells and place overflow in free walkable deployment
+  // cells, preserving deterministic placement and troop identity.
+  const enemyOccupied=new Set(company.map(u=>`${u.q},${u.r}`));
+  for(const unit of enemies){
+    if(!passableHex(unit,field)||enemyOccupied.has(`${unit.q},${unit.r}`)){
+      const columns=getItem(unit.equipment.weapon)?.ranged?[12,11,10,9]:[11,10,9,12];
+      const rows=[unit.r,...FRONT_FORMATION.map(r=>r+2).filter(r=>r!==unit.r)];
+      const point=columns.flatMap(q=>rows.map(r=>({q,r}))).find(h=>passableHex(h,field)&&!enemyOccupied.has(`${h.q},${h.r}`));
+      if(!point)return result(false,'No room to deploy the enemy force.');
+      Object.assign(unit,point);
+    }
+    enemyOccupied.add(`${unit.q},${unit.r}`);
+  }
   const allies = [];
   if (jointBattle) for (let index = 0; index < 3; index++) {
     const allyRank = camp.veteranRank ?? 0;
@@ -2602,7 +2616,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -2664,11 +2678,11 @@ function victoryLoot(battle, enemies) {
   const roll = (key, count) => hashSeed(`${seed}:${key}`) % count;
   const items = [];
   const itemConditions = [];
-  const addItem = (id, condition = itemCondition(id)) => {
-    if (id && items.length < 24) { items.push(id); itemConditions.push(condition); }
+  const addItem = (id, condition = itemCondition(id), trophy=false) => {
+    if (id && items.length < (trophy&&battle.enemyScalingVersion===1?80:24)) { items.push(id); itemConditions.push(condition); }
   };
   const guaranteed=new Set();
-  for(const enemy of enemies)if(enemy.champion&&!enemy.escaped)for(const slot of ['weapon','shield','armor','helmet']){const id=enemy.equipment[slot];if(!['famed','named'].includes(getItem(id)?.rarity))continue;const maximum=itemCondition(id),worn=slot==='armor'?enemy.bodyArmor:slot==='helmet'?enemy.headArmor:slot==='shield'?enemy.shieldDurability:getItem(id)?.throwing?enemy.throwingAmmo?.active:null;addItem(id,maximum===null?null:Math.max(Math.ceil(maximum*.25),worn??maximum));guaranteed.add(`${enemy.id}:${slot}`);}
+  for(const enemy of enemies)if(enemy.champion&&!enemy.escaped)for(const slot of ['weapon','shield','armor','helmet']){const id=enemy.equipment[slot];if(!['famed','named'].includes(getItem(id)?.rarity))continue;const maximum=itemCondition(id),worn=slot==='armor'?enemy.bodyArmor:slot==='helmet'?enemy.headArmor:slot==='shield'?enemy.shieldDurability:getItem(id)?.throwing?enemy.throwingAmmo?.active:null;addItem(id,maximum===null?null:Math.max(Math.ceil(maximum*.25),worn??maximum),true);guaranteed.add(`${enemy.id}:${slot}`);}
   if (!band) {addItem(battle.famedDrop);addItem(battle.mountReward);}
   for (const enemy of enemies) {
     for (const slot of ['weapon', 'shield', 'armor', 'attachment', 'attachment2', 'helmet']) {
@@ -4636,7 +4650,11 @@ function validateBattle(input, party, worldState) {
   const lootSeed = input.lootSeed ?? hashSeed(input.id);
   assert(validCount(lootSeed) && lootSeed <= 0xffffffff, 'battle loot seed');
   const field = validateBattleField(input.field);
-  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + 15, 'battle units');
+  assert(input.enemyScalingVersion===undefined||input.enemyScalingVersion===1,'battle enemy scaling rules');
+  const enemyLimit=input.enemyScalingVersion===1?20:12;
+  const validEnemyId=id=>new RegExp(`^enemy-([1-9]|1[0-9]${enemyLimit===20?'|20':''})$`).test(id)&&Number(id.slice(6))<=enemyLimit;
+  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + 3 + enemyLimit, 'battle units');
+  assert(input.units.filter(u=>u.side==='enemy').length<=enemyLimit,'battle enemy count');
   const ids = new Set();
   const partyIds = new Set(party.map(person => person.id));
   const questAllies = encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && worldState.contract?.type === 'assault'
@@ -4651,7 +4669,7 @@ function validateBattle(input, party, worldState) {
     else assert(unit.undeadTraitsVersion === undefined && unit.troopIndex === undefined, 'unexpected undead traits');
     assert(unit.ally === undefined || unit.ally === true, 'battle ally marker');
     assert(unit.ally ? questAllies && unit.side === 'company' && /^ally-[1-3]$/.test(unit.id)
-      : unit.side === 'company' ? partyIds.has(unit.id) : /^enemy-([1-9]|1[0-2])$/.test(unit.id), 'battle unit ownership');
+      : unit.side === 'company' ? partyIds.has(unit.id) : validEnemyId(unit.id), 'battle unit ownership');
     assert(typeof unit.name === 'string' && unit.name.length > 0 && unit.name.length <= 80, 'battle unit name');
     assert(passableHex(unit, field), 'battle hex');
     assert(validCount(unit.maxHp) && unit.maxHp >= 1 && unit.maxHp <= 300 && validCount(unit.hp) && unit.hp <= unit.maxHp && unit.alive === (unit.hp > 0), 'battle health');
@@ -4687,7 +4705,7 @@ function validateBattle(input, party, worldState) {
     assert(validCount(turnStartedRound) && turnStartedRound <= input.round, 'battle turn started round');
     assert(validCount(freeSwapRound) && freeSwapRound <= input.round && validCount(freeHealRound) && freeHealRound <= input.round, 'battle free actions');
     assert(validCount(formationMovedRound) && formationMovedRound <= input.round && (aiTargetId === null || partyIds.has(aiTargetId)
-      || /^ally-[1-3]$/.test(aiTargetId) || /^enemy-([1-9]|1[0-2])$/.test(aiTargetId)), 'battle AI state');
+      || /^ally-[1-3]$/.test(aiTargetId) || validEnemyId(aiTargetId)), 'battle AI state');
     assert(validCount(movementCredit) && movementCredit <= Math.max(0, movementBudget(unit, { mountBalanceVersion,attachmentRulesVersion:input.attachmentRulesVersion }) - 2) * 2, 'battle movement credit');
     assert(recordObject(reserveEquipment) && (reserveEquipment.weapon === null || getItem(reserveEquipment.weapon)?.slot === 'weapon') && (reserveEquipment.shield === null || getItem(reserveEquipment.shield)?.slot === 'shield') && (!getItem(reserveEquipment.weapon)?.twoHanded || reserveEquipment.shield === null), 'battle reserve equipment');
     assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'battle accessories');
@@ -4882,7 +4900,7 @@ function validateBattle(input, party, worldState) {
       ...(reaction.effects === undefined ? {} : { effects: reaction.effects.map(effect => ({ id: effect.id, amount: effect.amount, ...(effect.nextTurn === undefined ? {} : { nextTurn: effect.nextTurn }) })) }) })) }),
   } : null;
   const loot = input.loot;
-  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= 24 && loot.items.every(id => getItem(id)), 'battle loot');
+  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= (input.enemyScalingVersion===1?80:24) && loot.items.every(id => getItem(id)), 'battle loot');
   const itemConditions = (loot.itemConditions ?? loot.items.map(itemCondition)).map((condition, index) => restoredCondition(loot.items[index], condition));
   assert(Array.isArray(itemConditions) && itemConditions.length === loot.items.length && itemConditions.every((condition, index) => {
     const maximum = itemCondition(loot.items[index]);
@@ -4898,6 +4916,7 @@ function validateBattle(input, party, worldState) {
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
     ...(input.attachmentRulesVersion===undefined?{}:{attachmentRulesVersion:1}),
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),
+    ...(input.enemyScalingVersion===undefined?{}:{enemyScalingVersion:1}),
     ...(input.rulesVersion === undefined ? {} : { rulesVersion }),
     ...(input.weaponSkillsVersion === undefined ? {} : { weaponSkillsVersion }),
     ...(input.mountSkillsVersion === undefined ? {} : { mountSkillsVersion }),
@@ -5173,7 +5192,7 @@ export function validateSave(input) {
   }
   const worldLosses=input.worldLosses??{};
   assert(recordObject(worldLosses)&&Object.keys(worldLosses).length<=ROAMING_BANDS.length+CAMP_SITES.length+RANDOM_CAMP_IDS.length,'world casualties');
-  for(const [id,p]of Object.entries(worldLosses))assert((BAND_BY_ID.has(id)||isCampId(id))&&recordObject(p)&&Object.keys(p).length===3&&validCount(p.cycle)&&p.cycle<=1000000&&validCount(p.size)&&p.size>0&&p.size<=12
+  for(const [id,p]of Object.entries(worldLosses))assert((BAND_BY_ID.has(id)||isCampId(id))&&recordObject(p)&&Object.keys(p).length===3&&validCount(p.cycle)&&p.cycle<=1000000&&validCount(p.size)&&p.size>0&&p.size<=20
     &&Array.isArray(p.survivors)&&p.survivors.length>0&&p.survivors.length<p.size&&new Set(p.survivors).size===p.survivors.length&&p.survivors.every(i=>validCount(i)&&i<p.size),'world casualty state');
   const factionReports=input.factionReports??[];
   assert(Array.isArray(factionReports)&&factionReports.length<=24&&factionReports.every(r=>recordObject(r)&&Object.keys(r).length===8&&knownPatrols.has(r.patrolId)&&definitions.find(d=>d.id===r.patrolId).factionId===r.factionId
