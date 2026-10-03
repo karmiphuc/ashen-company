@@ -90,7 +90,7 @@ test('invalid selections and non-victory sharing reject before changing any stat
 });
 
 test('large shares cap XP/morale and normal level-ups work; fallen and allied fighters receive no reward',()=>{
-  const state=victory(),famed=createFamedItemId('plate-harness',10);
+  const state=victory(),famed=createFamedItemId('plate-harness',10,1);
   state.battle.loot.items=Array(24).fill(famed);state.battle.loot.itemConditions=Array(24).fill(getItem(famed).armor);
   const fallen=state.battle.units.find(u=>u.id==='guard');fallen.alive=false;fallen.hp=0;
   const quote=getLootShareQuote(state,Array.from({length:24},(_,i)=>i));assert.equal(quote.count,2);assert.equal(quote.xp,500);assert.equal(quote.morale,15);
@@ -119,7 +119,7 @@ test('loot controls select copies to keep and preview the donation of all untick
 });
 
 test('10,000 crowns of sale value produces a 500 XP pool shared across surviving brothers',()=>{
-  const state=victory(),famed=createFamedItemId('plate-harness',10);
+  const state=victory(),famed=createFamedItemId('plate-harness',10,1);
   state.battle.loot.items=[...Array(11).fill(famed),'quilted-jack','goedendag'];
   state.battle.loot.itemConditions=state.battle.loot.items.map(id=>getItem(id).armor??null);
   const indices=state.battle.loot.items.map((_,i)=>i),quote=getLootShareQuote(state,indices);

@@ -12,7 +12,7 @@ const signatures = [
   { id: 'vigorous', key: 'maxFatigue', label: 'Maximum fatigue', minimum: 4, count: 4 },
 ];
 
-test('famed armor and helmets keep their protection roll while fatigue relief scales 1.5 to 2 times', () => {
+test('legacy famed armor and helmets keep their protection roll while fatigue relief scales 1.5 to 2 times', () => {
   const factors = new Set();
   const reliefs = new Set();
   const seenSignatures = new Set();
@@ -20,7 +20,7 @@ test('famed armor and helmets keep their protection roll while fatigue relief sc
     const base = getItem(baseId);
     for (let index = 0; index < 1024; index++) {
       const seed = (Math.imul(index, 0x9e3779b9) + 0x12345678) >>> 0;
-      const id = createFamedItemId(baseId, seed);
+      const id = createFamedItemId(baseId, seed, 1);
       const item = getItem(id);
       const oldReduction = 1 + ((seed >>> 4) & 15) % 3;
       const factor = 1.5 + (((seed >>> 8) & 15) % 3) * .25;
@@ -50,7 +50,7 @@ test('famed armor and helmets keep their protection roll while fatigue relief sc
   assert.deepEqual([...seenSignatures].sort(), signatures.map(entry => entry.id).sort());
 });
 
-test('famed armor and helmet signatures add their stats once and stack when equipped', () => {
+test('legacy famed armor and helmet signatures add their stats once and stack when equipped', () => {
   const state = createGame(733);
   const captain = state.party[0];
   const ids = ['mail-shirt', 'greathelm'];
@@ -59,7 +59,7 @@ test('famed armor and helmet signatures add their stats once and stack when equi
     const baseId = ids[index % 2];
     const slot = getItem(baseId).slot;
     const seed = index * 4096 + 3 * 65536;
-    const famedId = createFamedItemId(baseId, seed);
+    const famedId = createFamedItemId(baseId, seed, 1);
     const famed = getItem(famedId);
     assert.equal(famed.signature, signature.id);
     state.inventory.push(baseId, famedId);
@@ -111,10 +111,10 @@ test('an existing famed armor ID survives equip, damaged stow, resale, buyback, 
   assert.deepEqual(getItem(id), item);
 });
 
-test('famed shields and weapons keep their existing rolls and gain no armor signature', () => {
+test('legacy famed shields and weapons keep their existing rolls and gain no armor signature', () => {
   for (let seed = 0; seed < 512; seed++) {
-    const shield = getItem(createFamedItemId('round-shield', seed));
-    const weapon = getItem(createFamedItemId('arming-sword', seed));
+    const shield = getItem(createFamedItemId('round-shield', seed, 1));
+    const weapon = getItem(createFamedItemId('arming-sword', seed, 1));
     const baseShield = getItem('round-shield');
     const baseWeapon = getItem('arming-sword');
     assert.equal(shield.defense, baseShield.defense + 2 + (seed & 15) % 4);
