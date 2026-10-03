@@ -185,11 +185,11 @@ export const VISUALS = {
     'kraken-mantle': { front: ['attachment-kraken-mantle.png', 5, 46] },
   },
   mount: {
-    horse: {body:'mount-horse-body.png',head:'mount-horse-head.png',headLeft:96.5,headTop:66,scale:.70,facing:1},
-    warhorse: {body:'mount-war-horse-body.png',head:'mount-war-horse-head.png',headLeft:101.2,headTop:65,scale:.58,facing:1},
-    armoredhorse: {body:'mount-armored-war-horse-body.png',head:'mount-armored-war-horse-head.png',headLeft:101.2,headTop:65,scale:.58,facing:1},
-    warg: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:132,headTop:73,scale:.58,facing:-1,filter:'sepia(.85) saturate(.7) brightness(.7)'},
-    wolf: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:132,headTop:73,scale:.58,facing:-1},
+    horse: {body:'mount-horse-body.png',head:'mount-horse-head.png',headLeft:84.4,headTop:46.6,scale:.98,facing:1},
+    warhorse: {body:'mount-war-horse-body.png',head:'mount-war-horse-head.png',headLeft:90.6,headTop:44.8,scale:.812,facing:1},
+    armoredhorse: {body:'mount-armored-war-horse-body.png',head:'mount-armored-war-horse-head.png',headLeft:90.6,headTop:44.8,scale:.812,facing:1},
+    warg: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:132,headTop:55,scale:.812,facing:-1,filter:'sepia(.85) saturate(.7) brightness(.7)'},
+    wolf: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:132,headTop:55,scale:.812,facing:-1},
   },
 };
 const SHIELD_WIDTHS = {
@@ -256,7 +256,7 @@ const SHOULDER_DIMENSIONS = {
 // A mounted pawn is one silhouette, not a miniature rider beside an animal.
 // All species share this plate/envelope. Natural foreground heads sit on
 // connected rear bodies; compact shields keep the mounted silhouette readable.
-const MOUNT_PLATE = {left: 4, top: 108, width: 131, height: 22};
+const MOUNT_PLATE = {left: 0, top: 108, width: 135, height: 22};
 const MOUNT_BODY_BOUNDS = {
   'mount-horse-body.png':[4,9,74,96],
   'mount-war-horse-body.png':[37,20,115,117],
@@ -514,8 +514,8 @@ function mountLayer(spec, part) {
     // beside them. Normalize its opaque crop beneath the torso; the rider
     // masks the upper portion and the species' foreground head stays natural.
     const [x1,y1,x2,y2]=MOUNT_BODY_BOUNDS[body];
-    const sx=99/(x2-x1),sy=50/(y2-y1);
-    left=facing===1?30-x1*sx:129+x1*sx;top=76-y1*sy;
+    const sx=129/(x2-x1),sy=70/(y2-y1);
+    left=facing===1?0-x1*sx:129+x1*sx;top=56-y1*sy;
     transform=`scale(${facing*sx},${sy})`;
   }
   return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT+file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:${transform};transform-origin:top left;${filter?`filter:${filter};`:''}z-index:${part==='head'?5:0};max-width:none;pointer-events:none">`;
