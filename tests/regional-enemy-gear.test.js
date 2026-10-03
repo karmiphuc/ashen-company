@@ -59,7 +59,7 @@ test('elite role perks and signature benefits enter new combat snapshots and sur
   const leader=state.battle.units.find(u=>u.id==='enemy-1'),bonuses=enemyRoleBonuses(site.enemies[0],3);
   assert.deepEqual(leader.perks,bonuses.perks);
   const defense=[leader.equipment.armor,leader.equipment.helmet].reduce((sum,id)=>sum+(getItem(id).statBonuses?.rangedDefense??0),0);
-  assert.equal(leader.rangedDefense,8+(getItem(leader.equipment.shield)?.defense??0)+defense);
+  assert.equal(leader.rangedDefense,8+(getItem(leader.equipment.shield)?.defense??0)+defense+(leader.champion?8:0));
   assert.deepEqual(validateSave(validateSave(state)),state);
   const bad=structuredClone(state);bad.battle.units.find(u=>u.id==='enemy-1').perks=['berserk'];assert.throws(()=>validateSave(bad),/perk owner/);
   const rareId=[leader.equipment.armor,leader.equipment.helmet].find(id=>getItem(id)?.rarity==='named');

@@ -89,7 +89,7 @@ function townArt(town) {
 
 function bands() {
   const quest=state?getQuestEncounter(state):null;
-  const value = state ? [...getRoamingBands(state),...(quest?.kind==='deserters'?[quest]:[])] : [];
+  const value = state ? [...getRoamingBands(state),...(['deserters','bounty'].includes(quest?.kind)?[quest]:[])] : [];
   return Array.isArray(value) ? value : [];
 }
 
@@ -292,7 +292,7 @@ function campDifficulty(camp) {
 
 function campLabel(camp) {
   if (camp.cleared && camp.respawnHours > 0) return `${camp.name} · returns in ${camp.respawnHours}h`;
-  return `${camp.name} · ${['', 'Low', 'Medium', 'High'][campDifficulty(camp)]}`;
+  return `${camp.enemies?.some(e=>e.champion)?'★ ':''}${camp.name} · ${['', 'Low', 'Medium', 'High'][campDifficulty(camp)]}`;
 }
 
 export function mapHTML() {
@@ -378,7 +378,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const band = bands().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
       const caravan = caravans().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 24);
       const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
-      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind==='deserters'?'deserters':'band', id: band.id, entity: band }
+      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: ['deserters','bounty'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }
         : camp ? { type: 'camp', id: camp.id, entity: camp }
           : town ? { type: 'town', id: town.id, entity: town }
             : null;
@@ -386,7 +386,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const target = caravan && caravanDistance <= existingDistance
         ? { type: 'caravan', id: caravan.id, entity: caravan }
         : existingTarget;
-      if ((target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
+      if ((target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
       else if (!target && !sceneryAt(settlementStructures, world)) onTravel(world.x, world.y);
@@ -521,7 +521,7 @@ function draw() {
     if (count > 1) sprite(context, ['figure_player_berserker', 'figure_player_ranger', 'figure_player_slave'][index % 3], band.x - 8, band.y + 1, 25, .72);
     sprite(context, art, band.x + (count > 1 ? 7 : 0), band.y, 29, .72);
     sprite(context, `banner_10${clamp(Number(band.difficulty) || Math.ceil(count / 2), 1, 3)}`, band.x + 16, band.y - 20, 17, .82);
-    const label = `${band.name || 'Wandering Brigands'} · ${count} ${band.kind==='deserters'?'deserters':`brigand${count===1?'':'s'}`}`;
+    const label = `${band.enemies.some(e=>e.champion)?'★ ':''}${band.name || 'Wandering Brigands'} · ${count} ${band.kind==='deserters'?'deserters':`brigand${count===1?'':'s'}`}`;
     context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913cc'; context.strokeText(label, band.x, band.y + 24);
     context.fillStyle = band.behavior==='hunting-company'?'#ed6558':'#f29b46'; context.fillText(label, band.x, band.y + 24);
     const activity = bandActivity(band);

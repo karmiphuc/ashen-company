@@ -210,6 +210,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     'battle-unit',
     unit.side === 'company' ? 'battle-unit-company' : 'battle-unit-enemy',
     unit.ally ? 'battle-unit-ally' : '',
+    unit.champion ? 'battle-unit-champion' : '',
     alive ? 'battle-unit-alive' : 'battle-unit-down',
     (animateEvent && event.actorId ? event.actorId : battle.activeId) === unit.id || reaction ? 'is-active' : '',
     primaryActor || reaction ? 'is-acting' : '',
@@ -253,7 +254,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     <span class="battle-morale-flag morale-${morale.name.toLowerCase()}" title="${esc(moraleLabel)}" aria-label="${esc(moraleLabel)}">${morale.name[0]}</span>
     ${statusIconsHTML(unit, battle)}
     ${battleKitHTML(unit)}
-    <strong>${esc(pawnName(unit))}</strong>
+    <strong>${unit.champion?'<span class="champion-star" title="Champion · guaranteed named trophy">★</span> ':''}${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))}/${maxAp} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
     ${hasImpact || primaryMiss ? `<span class="battle-impact" aria-hidden="true">${hasHit ? `${friendlyFire ? 'Friendly fire · ' : ''}${hpDamage}${bodyDamage + headDamage ? ` / ${bodyDamage + headDamage}` : ''}${shieldDamage ? ` · Shield -${shieldDamage}` : ''}${hasMiss ? ' · Miss' : ''}` : shieldDamage ? `Deflected · Shield -${shieldDamage}` : 'Miss'}</span>` : ''}
     ${callouts.length ? `<span class="battle-orders">${callouts.map(label => `<span class="battle-order">${esc(label)}</span>`).join('')}</span>` : ''}

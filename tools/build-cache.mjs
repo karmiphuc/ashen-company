@@ -42,6 +42,7 @@ const CORE = [
   './src/town-facilities.js',
   './src/settlement-scenery.js',
   './src/deserters.js',
+  './src/discovery.js',
   './src/perks.js',
   './src/recruits.js',
   './src/town-events.js',
