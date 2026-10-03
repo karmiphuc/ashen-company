@@ -1,6 +1,7 @@
+import { visualRandom, REGION_STYLE, terrainStamp, roadCurve, settlementProfile, settlementGround, overviewBorderAlpha, showActorLabel, movementPose } from './map-illustration.js';
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
 import { regionAt, regionalTownArt } from './geography.js';
-import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
+import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = [
   ...SETTLEMENT_SCENERY_ASSETS,
@@ -48,6 +49,7 @@ let canvas, context, state, selection = null, townCallback, campCallback, activa
 let width = 0, height = 0, pointers = new Map(), dragOrigin = null, pinchStart = null, dragged = false;
 let activationTracker = createMapActivationTracker();
 let settlementStructures = [];
+let actorPoses = new Map(), previousPositions = new Map();
 
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
@@ -76,11 +78,12 @@ export function createMapActivationTracker() {
   };
 }
 
-function sprite(target, name, x, y, spriteWidth, anchor = .83) {
+function sprite(target, name, x, y, spriteWidth, anchor = .83, flip = false) {
   const image = images.get(name);
   if (!image?.naturalWidth) return;
   const spriteHeight = spriteWidth * image.naturalHeight / image.naturalWidth;
-  target.drawImage(image, x - spriteWidth / 2, y - spriteHeight * anchor, spriteWidth, spriteHeight);
+  target.save();target.translate(x,y);if(flip)target.scale(-1,1);
+  target.drawImage(image, -spriteWidth / 2, -spriteHeight * anchor, spriteWidth, spriteHeight);target.restore();
 }
 
 function townArt(town) {
@@ -137,7 +140,7 @@ function buildBackground() {
   target.translate(-BACKGROUND_BOUNDS.x, -BACKGROUND_BOUNDS.y);
   target.fillStyle = '#244b47';
   target.fillRect(BACKGROUND_BOUNDS.x, BACKGROUND_BOUNDS.y, BACKGROUND_BOUNDS.width, BACKGROUND_BOUNDS.height);
-  let seed = 71491;
+  let seed = (state.seed ^ 71491) >>> 0;
   const random = () => {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
     return seed / 4294967296;
@@ -147,30 +150,21 @@ function buildBackground() {
   for (let row = -1; row < rows; row++) for (let column = -1; column < columns; column++) {
     const x = BACKGROUND_BOUNDS.x + 80 + column * 80 + (row % 2) * 40;
     const y = BACKGROUND_BOUNDS.y + row * 40;
-    const choices = terrainSprites(terrainAt(x, y));
-    sprite(target, choices[Math.floor(random() * choices.length)], x, y, 210, .5);
+    const terrain=terrainAt(x,y),region=regionAt(x,y),stamp=terrainStamp(state.seed,row,column,x,y,terrain,terrainAt(x+40,y+20),region.id);
+    const choices=terrainSprites(stamp.family);
+    sprite(target,choices[Math.floor(stamp.variant*choices.length)],stamp.x,stamp.y,stamp.width,.5);
   }
-
-  // A subtle regional wash and borders make the geography readable at overview zoom.
-  target.save();
-  for (let x = WORLD_BOUNDS.minX; x < WORLD_BOUNDS.maxX; x += 80) for (let y = WORLD_BOUNDS.minY; y < WORLD_BOUNDS.maxY; y += 80) {
-    const region = regionAt(x+40,y+40);
-    target.fillStyle = region.color + (region.climate === 'desert' ? '55' : '22');
-    target.fillRect(x,y,80,80);
-    target.strokeStyle = '#ded1ae55'; target.lineWidth=2; target.setLineDash([8,10]);
-    if (regionAt(x+120,y+40).id !== region.id) { target.beginPath();target.moveTo(x+80,y);target.lineTo(x+80,y+80);target.stroke(); }
-    if (regionAt(x+40,y+120).id !== region.id) { target.beginPath();target.moveTo(x,y+80);target.lineTo(x+80,y+80);target.stroke(); }
+  // Soft regional color variation, with no square color tiles or baked border grid.
+  for(let x=WORLD_BOUNDS.minX;x<WORLD_BOUNDS.maxX;x+=180)for(let y=WORLD_BOUNDS.minY;y<WORLD_BOUNDS.maxY;y+=140){
+    const style=REGION_STYLE[regionAt(x,y).id],g=target.createRadialGradient(x,y,0,x,y,170);
+    g.addColorStop(0,style.color+'28');g.addColorStop(1,style.color+'00');target.fillStyle=g;target.fillRect(x-170,y-170,340,340);
   }
-  target.restore();
-  target.lineCap = 'round';
-  for (const road of WORLD_ROADS) {
-    const [first, second] = road.points;
-    target.beginPath();
-    target.moveTo(first.x, first.y);
-    target.lineTo(second.x, second.y);
-    target.strokeStyle = '#514c32'; target.lineWidth = road.kind === 'highway' ? 11 : 7; target.stroke();
-    target.strokeStyle = road.kind === 'highway' ? '#d7c08a' : '#b1a16b'; target.lineWidth = road.kind === 'highway' ? 6 : 4; target.stroke();
-    target.strokeStyle = '#ccbb85aa'; target.lineWidth = 1; target.stroke();
+  target.lineCap='round';
+  for(const road of WORLD_ROADS){const [a,b]=road.points,c=roadCurve(state.seed,road),high=road.kind==='highway';
+    target.beginPath();target.moveTo(a.x,a.y);target.quadraticCurveTo(c.x,c.y,b.x,b.y);
+    target.strokeStyle='#433e2b88';target.lineWidth=high?15:11;target.stroke();
+    target.strokeStyle=high?'#c5ad79':'#a99b70';target.lineWidth=high?7:4;target.stroke();
+    target.strokeStyle='#6a5c4144';target.lineWidth=1;target.stroke();
   }
 
   const objects = [];
@@ -180,13 +174,52 @@ function buildBackground() {
     const y = WORLD_BOUNDS.minY + random() * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
     if (SETTLEMENTS.some(town => Math.hypot(x - town.x, y - town.y) < 66)) continue;
     const terrain = terrainAt(x, y);
-    if (terrain === 'forest') objects.push({ x, y, name: `world_detail_forest_green_0${1 + Math.floor(random() * 4)}`, width: 65 + random() * 30 });
-    else if (terrain === 'mountain') objects.push({ x, y, name: `legend_world_grass_hill_0${1 + Math.floor(random() * 3)}`, width: 100 + random() * 70 });
-    else if (random() < .1) objects.push({ x, y, name: `world_detail_autumn_green_0${1 + Math.floor(random() * 2)}`, width: 45 + random() * 28 });
+    const style=REGION_STYLE[regionAt(x,y).id];
+    if(random()>style.density*(.35+.9*visualRandom(state.seed,`cluster:${Math.floor(x/240)}:${Math.floor(y/180)}`)))continue;
+    if (terrain === 'forest') objects.push({ x, y, name: `world_detail_forest_green_0${1 + Math.floor(random() * 4)}`, width: 85 + random() * 55 });
+    else if (terrain === 'mountain') objects.push({ x, y, name: `legend_world_grass_hill_0${1 + Math.floor(random() * 3)}`, width: 125 + random() * 65 });
+    else if(terrain!=='sea')objects.push({x,y,detail:style.detail,width:20+random()*20});
+
   }
-  objects.sort((a, b) => a.y - b.y).forEach(object => sprite(target, object.name, object.x, object.y, object.width));
-  background = { canvas: surface, ...BACKGROUND_BOUNDS };
+  objects.sort((a,b)=>a.y-b.y).forEach(o=>o.name?sprite(target,o.name,o.x,o.y,o.width):drawMicroDetail(target,o));
+  for(const town of SETTLEMENTS)drawSettlementGround(target,town);
+  const borders=[];
+  for(let x=WORLD_BOUNDS.minX;x<WORLD_BOUNDS.maxX;x+=80)for(let y=WORLD_BOUNDS.minY;y<WORLD_BOUNDS.maxY;y+=80){
+    const id=regionAt(x+40,y+40).id;
+    if(regionAt(x+120,y+40).id!==id)borders.push([{x:x+80,y},{x:x+80,y:y+80}]);
+    if(regionAt(x+40,y+120).id!==id)borders.push([{x,y:y+80},{x:x+80,y:y+80}]);
+  }
+  background = { canvas: surface, seed:state.seed, borders, ...BACKGROUND_BOUNDS };
 }
+
+function drawMicroDetail(target,o){
+ target.save();target.translate(o.x,o.y);target.globalAlpha=.48;target.strokeStyle='#4b5540';target.fillStyle='#797d65';target.lineWidth=1.4;
+ if(o.detail==='reeds'){target.fillStyle='#465f57';target.beginPath();target.ellipse(0,0,o.width*.7,5,0,0,Math.PI*2);target.fill();for(let i=-3;i<=3;i++){target.beginPath();target.moveTo(i*3,2);target.lineTo(i*4,-10-Math.abs(i));target.stroke();}}
+ else if(o.detail==='snowdrift'){target.fillStyle='#d4ded8';target.beginPath();target.ellipse(0,0,o.width,5,-.15,0,Math.PI*2);target.fill();}
+ else if(o.detail==='deadwood'){target.lineWidth=3;target.strokeStyle='#514a36';target.beginPath();target.moveTo(-12,4);target.lineTo(9,-4);target.moveTo(2,-1);target.lineTo(6,-12);target.stroke();}
+ else if(o.detail==='furrows'){target.strokeStyle='#8c7950';for(let i=0;i<3;i++){target.beginPath();target.moveTo(-12,i*4);target.lineTo(12,i*4-5);target.stroke();}}
+ else if(o.detail==='stones'){for(let i=0;i<3;i++){target.beginPath();target.ellipse(i*8-8,-i*2,5+i,3+i*.5,-.2,0,Math.PI*2);target.fill();}}
+ else{for(let i=0;i<3;i++){target.beginPath();target.moveTo(i*6-6,2);target.lineTo(i*6-9,-6);target.moveTo(i*6-6,2);target.lineTo(i*6-3,-7);target.stroke();}}
+ target.restore();
+}
+function drawSettlementGround(target,town){
+ const g=settlementGround(state.seed,town);target.save();target.beginPath();g.points.forEach((p,i)=>i?target.lineTo(p.x,p.y):target.moveTo(p.x,p.y));target.closePath();target.fillStyle=regionAt(town.x,town.y).climate==='desert'?'#ae906244':'#927e5344';target.fill();
+ for(let i=0;i<g.yards;i++){const angle=visualRandom(state.seed,`${town.id}:yard:${i}`)*Math.PI*2,x=town.x+Math.cos(angle)*g.radius*.8,y=town.y+Math.sin(angle)*g.radius*.32;
+   target.strokeStyle='#685c3d66';target.lineWidth=2;target.beginPath();target.moveTo(x-9,y+3);target.lineTo(x+9,y+3);target.moveTo(x-8,y-1);target.lineTo(x-8,y+6);target.moveTo(x+8,y-1);target.lineTo(x+8,y+6);target.stroke();
+   if(g.military){target.fillStyle='#675d4844';target.fillRect(x-8,y-5,16,6);}else{target.fillStyle='#b8a26a33';target.fillRect(x-8,y-4,16,7);}
+ }
+ if(!g.military&&['grain','wool'].includes(getTownLocalSupply(town.id)?.goodId)){target.save();target.translate(town.x-g.radius*.7,town.y+19);target.rotate(-.2);target.fillStyle='#94895366';target.fillRect(-20,-6,40,17);target.strokeStyle='#5d634955';target.lineWidth=1;for(let i=0;i<5;i++){target.beginPath();target.moveTo(-18,i*3-4);target.lineTo(18,i*3-4);target.stroke();}target.restore();}
+ target.restore();
+}
+function drawOverviewBorders(){const alpha=overviewBorderAlpha(camera.zoom);if(!alpha)return;context.save();context.strokeStyle=`rgba(232,218,184,${alpha})`;context.lineWidth=1.2/camera.zoom;
+ for(const [a,b] of background?.borders??[]){const c=roadCurve(state.seed,{id:`border:${a.x}:${a.y}`,points:[a,b]});context.beginPath();context.moveTo(a.x,a.y);context.quadraticCurveTo(c.x,c.y,b.x,b.y);context.stroke();}context.restore();}
+function drawActorGround(id,x,y,wagon=false){const pose=actorPoses.get(id);context.save();context.fillStyle='#18201766';context.beginPath();context.ellipse(x+4,y+8,wagon?25:20,wagon?6:5,-.18,0,Math.PI*2);context.fill();
+ if(pose?.moving&&terrainAt(x,y)!=='sea'){const length=Math.hypot(pose.dx,pose.dy);context.fillStyle='#c2ad7540';for(let i=1;i<=3;i++){context.beginPath();context.ellipse(x-pose.dx/length*(12+i*5),y+6-pose.dy/length*(12+i*5),5-i,2,0,0,Math.PI*2);context.fill();}}context.restore();}
+function drawNightLights(){const glow=(x,y,radius,strength)=>{const g=context.createRadialGradient(x,y,0,x,y,radius);g.addColorStop(0,`rgba(255,194,92,${strength})`);g.addColorStop(.28,`rgba(243,175,75,${strength*.35})`);g.addColorStop(1,'rgba(235,170,70,0)');context.fillStyle=g;context.fillRect(x-radius,y-radius,radius*2,radius*2);};context.save();
+ for(const town of SETTLEMENTS){if(Math.abs(town.x-camera.x)>width/(2*camera.zoom)+160||Math.abs(town.y-camera.y)>height/(2*camera.zoom)+160||!getSettlementAccess(state,town.id).servicesAvailable)continue;
+  const p=settlementProfile(town);if(p.military){for(const dx of [-27,0,27])glow(town.x+dx,town.y-10,27,.4);}else glow(town.x,town.y-9,p.radius*1.1,town.kind==='village'?.37:.28);
+ }
+ for(const c of caravans())glow(c.x+5,c.y-9,18,.42);context.restore();}
 
 const SCENERY_COLORS = { danger: '#efb095', good: '#c5d895', trade: '#e5ca89' };
 function drawWorkshopEmblem(structure) {
@@ -224,7 +257,7 @@ function drawSettlementScenery() {
   const townBuildings = SETTLEMENTS.filter(town => Math.abs(town.x - camera.x) < width / (2 * camera.zoom) + 140
     && Math.abs(town.y - camera.y) < height / (2 * camera.zoom) + 140).map(town => ({ ...town, townBuilding: true }));
   for (const structure of [...visible, ...townBuildings].sort((a, b) => a.y - b.y)) {
-    if (structure.townBuilding) { sprite(context, townArt(structure), structure.x, structure.y, structure.kind === 'village' ? 100 : 122); continue; }
+    if (structure.townBuilding) { sprite(context, townArt(structure), structure.x, structure.y, settlementProfile(structure).width); continue; }
     context.save();
     const { x, y, width: size } = structure;
     context.beginPath(); context.ellipse(x, y + 1, size * .43, size * .12, 0, 0, Math.PI * 2);
@@ -308,6 +341,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
   canvas = document.querySelector('#world-map');
   if (!canvas) return;
   context = canvas.getContext('2d');
+  if(state?.seed!==game.seed){previousPositions.clear();actorPoses.clear();}
   state = game; settlementStructures = worldSettlementScenery(game); townCallback = onChooseTown; campCallback = onChooseCamp; activationCallback = onActivate;
   const resize = () => {
     const rectangle = canvas.getBoundingClientRect();
@@ -405,7 +439,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
   };
   canvas.onwheel = event => { event.preventDefault(); setZoom(camera.zoom * (event.deltaY > 0 ? .9 : 1.1)); draw(); };
   loaded.then(() => {
-    if (!background) buildBackground();
+    if (!background || background.seed!==state.seed) buildBackground();
     document.querySelector('.map-loading')?.remove();
     draw();
   });
@@ -422,7 +456,9 @@ export function zoomMap(factor) {
 
 export function selectMapTown(town) { selection = town?.id || null; draw(); }
 export function selectMapCamp(id) { selection = id; draw(); }
-export function updateMap(game) { state = game; settlementStructures = worldSettlementScenery(game); if (canvas?.isConnected) draw(); }
+export function updateMap(game) { if(state?.seed!==game.seed){previousPositions.clear();actorPoses.clear();}state = game;
+  const actors=[{id:'company',...game.position,destination:game.destination},...bands(),...caravans(),...getFactionPatrols(game).filter(p=>p.active)];
+  const next=new Map();for(const actor of actors){actorPoses.set(actor.id,movementPose(previousPositions.get(actor.id),actor,actor.destination));next.set(actor.id,{x:actor.x,y:actor.y,flip:actorPoses.get(actor.id).flip});}previousPositions=next;actorPoses=new Map(actors.map(a=>[a.id,actorPoses.get(a.id)])); settlementStructures = worldSettlementScenery(game); if (canvas?.isConnected) { if (background && background.seed!==game.seed) buildBackground(); draw(); } }
 
 function draw() {
   if (!context || !width || !height || !state) return;
@@ -437,13 +473,15 @@ function draw() {
   context.fillStyle = '#244b47';
   context.fillRect(viewX, viewY, width / camera.zoom, height / camera.zoom);
   if (background) context.drawImage(background.canvas, background.x, background.y, background.width, background.height);
+  drawOverviewBorders();
+  drawSettlementScenery();
   const darkness = state.hour < 5 || state.hour > 21 ? .20 : state.hour < 7 || state.hour > 19 ? .10 : 0;
   if (darkness) {
     context.fillStyle = `rgba(14,23,43,${darkness})`;
     context.fillRect(viewX, viewY, width / camera.zoom, height / camera.zoom);
   }
 
-  drawSettlementScenery();
+  if(darkness)drawNightLights();
 
   getCampSites(state).forEach((camp, index) => {
     context.save();
@@ -455,8 +493,8 @@ function draw() {
     sprite(context, index % 3 === 1 ? 'stone_watchtower_01' : 'fortified_outpost_01', camp.x, camp.y, 70);
     sprite(context, `banner_10${campDifficulty(camp)}`, camp.x + 25, camp.y - 27, 18, .86);
     context.font = 'bold 12px Georgia'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#241a14';
-    context.strokeText(campLabel(camp), camp.x, camp.y + 20);
-    context.fillStyle = camp.cleared ? '#b4a78a' : '#f29b46'; context.fillText(campLabel(camp), camp.x, camp.y + 20);
+    if(showActorLabel(camera.zoom,selection===camp.id))context.strokeText(campLabel(camp), camp.x, camp.y + 20);
+    context.fillStyle = camp.cleared ? '#b4a78a' : '#f29b46'; if(showActorLabel(camera.zoom,selection===camp.id))context.fillText(campLabel(camp), camp.x, camp.y + 20);
     context.restore();
   });
 
@@ -483,20 +521,19 @@ function draw() {
       context.lineTo(tipX - Math.cos(angle + .55) * 8, tipY - Math.sin(angle + .55) * 8); context.closePath();
       context.fillStyle = inContact ? '#f06455' : '#dd9860'; context.fill();
     }
-    context.beginPath(); context.ellipse(caravan.x, caravan.y + 8, 20, 7, 0, 0, Math.PI * 2);
-    context.fillStyle = '#14201688'; context.fill();
+    drawActorGround(caravan.id,caravan.x,caravan.y,true);
     if (chosen || underAttack) {
       context.beginPath(); context.ellipse(caravan.x, caravan.y + 4, chosen ? 27 : 24, chosen ? 11 : 9, 0, 0, Math.PI * 2);
       context.strokeStyle = underAttack ? (inContact ? '#e46c5e' : '#dd9860') : '#f1d380'; context.lineWidth = 2 / camera.zoom; context.stroke();
     }
-    sprite(context, 'figure_player_trader', caravan.x, caravan.y, 34, .72);
+    sprite(context, 'figure_player_trader', caravan.x, caravan.y, 34, .72,actorPoses.get(caravan.id)?.flip);
     const eta = Math.max(0, Math.ceil(Number(caravan.etaHours) || 0));
     const label = caravan.quest ? `${caravan.name} · Awaiting rescue` : attacker ? `${caravan.name} · ${inContact ? 'Wagon intercepted' : 'Raiders closing'}${inContact && Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
       : underAttack ? `${caravan.name} · ${inContact ? 'Wagon intercepted' : 'Raiders closing'}${inContact && Number.isFinite(Number(caravan.attackHoursRemaining)) ? ` · ${Math.max(0, Math.ceil(Number(caravan.attackHoursRemaining)))}h` : ''}`
       : `${caravan.name} · ${eta}h`;
     context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913dd';
-    context.strokeText(label, caravan.x, caravan.y + 25);
-    context.fillStyle = underAttack ? (inContact ? '#f08d7e' : '#e5ad78') : chosen ? '#f0d998' : '#e3d8b7'; context.fillText(label, caravan.x, caravan.y + 25);
+    if(showActorLabel(camera.zoom,chosen,underAttack))context.strokeText(label, caravan.x, caravan.y + 25);
+    context.fillStyle = underAttack ? (inContact ? '#f08d7e' : '#e5ad78') : chosen ? '#f0d998' : '#e3d8b7'; if(showActorLabel(camera.zoom,chosen,underAttack))context.fillText(label, caravan.x, caravan.y + 25);
     context.restore();
   });
 
@@ -517,15 +554,15 @@ function draw() {
       context.lineWidth = selected?3:2; context.strokeStyle = band.behavior==='hunting-company'?'#ed6558':'#f29b46'; context.setLineDash(hunted ? [3, 3] : []);
       context.beginPath(); context.ellipse(band.x, band.y + 7, 25, 10, 0, 0, Math.PI * 2); context.stroke(); context.setLineDash([]);
     }
-    context.beginPath(); context.ellipse(band.x, band.y + 8, 16, 6, 0, 0, Math.PI * 2); context.fillStyle = '#14201688'; context.fill();
-    if (count > 1) sprite(context, ['figure_player_berserker', 'figure_player_ranger', 'figure_player_slave'][index % 3], band.x - 8, band.y + 1, 25, .72);
-    sprite(context, art, band.x + (count > 1 ? 7 : 0), band.y, 29, .72);
+    drawActorGround(band.id,band.x,band.y);
+    if (count > 1) sprite(context, ['figure_player_berserker', 'figure_player_ranger', 'figure_player_slave'][index % 3], band.x - 8, band.y + 1, 25, .72,actorPoses.get(band.id)?.flip);
+    sprite(context, art, band.x + (count > 1 ? 7 : 0), band.y, 29, .72,actorPoses.get(band.id)?.flip);
     sprite(context, `banner_10${clamp(Number(band.difficulty) || Math.ceil(count / 2), 1, 3)}`, band.x + 16, band.y - 20, 17, .82);
     const label = `${band.enemies.some(e=>e.champion)?'★ ':''}${band.name || 'Wandering Brigands'} · ${count} ${band.kind.startsWith('undead-')?'undead':band.kind==='deserters'?'deserters':`brigand${count===1?'':'s'}`}`;
-    context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913cc'; context.strokeText(label, band.x, band.y + 24);
-    context.fillStyle = band.behavior==='hunting-company'?'#ed6558':'#f29b46'; context.fillText(label, band.x, band.y + 24);
+    context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913cc'; if(showActorLabel(camera.zoom,selected,hunted||band.behavior==='hunting-company'))context.strokeText(label, band.x, band.y + 24);
+    context.fillStyle = band.behavior==='hunting-company'?'#ed6558':'#f29b46'; if(showActorLabel(camera.zoom,selected,hunted||band.behavior==='hunting-company'))context.fillText(label, band.x, band.y + 24);
     const activity = bandActivity(band);
-    if (activity) {
+    if (activity && showActorLabel(camera.zoom,selected,hunted)) {
       context.font = 'bold 9px Arial'; context.strokeStyle = '#1c1913cc'; context.strokeText(activity, band.x, band.y + 36);
       context.fillStyle = band.behavior === 'hunting-company' ? '#f08072' : '#e3a267'; context.fillText(activity, band.x, band.y + 36);
     }
@@ -535,7 +572,7 @@ function draw() {
   getFactionPatrols(state).filter(p=>p.active).forEach(p=>{
     context.save();context.translate(24,-24);
     context.beginPath();context.arc(p.x,p.y+3,18,0,Math.PI*2);context.strokeStyle=p.color;context.lineWidth=selection===p.id?4:2;context.stroke();
-    sprite(context,'figure_player_assassin',p.x,p.y,30,.85);
+    drawActorGround(p.id,p.x,p.y);sprite(context,'figure_player_assassin',p.x,p.y,30,.85,actorPoses.get(p.id)?.flip);
     context.font='bold 10px Arial';context.textAlign='center';context.strokeStyle='#142016';context.lineWidth=3;
     const label=camera.zoom>=.4||selection===p.id?`${p.factionLabel} · ${p.enemies.length}`:`${p.enemies.length}`;
     context.strokeText(label,p.x,p.y+28);context.fillStyle=p.color;context.fillText(label,p.x,p.y+28);context.restore();
@@ -558,13 +595,13 @@ function draw() {
       context.beginPath(); context.ellipse(town.x, town.y + 3, 45, 17, 0, 0, Math.PI * 2); context.stroke();
     }
     sprite(context, `banner_10${1 + index % 3}`, town.x + 43, town.y - 29, 22, .9);
-    if (camera.zoom >= .3 || town.major || selection === town.id || state.contract?.to === town.id) {
+    if (camera.zoom >= .65 || town.major || selection === town.id || state.contract?.to === town.id) {
       context.font = `bold ${Math.max(17,9/camera.zoom)}px Georgia`; context.textAlign = 'center'; context.lineWidth = 3/camera.zoom; context.strokeStyle = '#29291edd'; context.strokeText(town.name, town.x, town.y + 25);
       context.fillStyle = '#f0e4bd'; context.fillText(town.name, town.x, town.y + 25);
     }
   });
-  context.beginPath(); context.ellipse(state.position.x, state.position.y + 9, 20, 8, 0, 0, Math.PI * 2); context.fillStyle = '#15201666'; context.fill();
-  sprite(context, 'figure_player_party', state.position.x, state.position.y, 36, .7);
+  drawActorGround('company',state.position.x,state.position.y);
+  sprite(context, 'figure_player_party', state.position.x, state.position.y, 36, .7,actorPoses.get('company')?.flip);
   sprite(context, 'banner_101', state.position.x + 14, state.position.y - 23, 25, .8);
   context.restore();
 }
