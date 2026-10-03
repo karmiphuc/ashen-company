@@ -1,3 +1,4 @@
+import {getItem,mergedNamedItemId} from './engine.js';
 import { NAMED_WEAPONS } from './named-weapons.js';
 import { DLC_ITEMS } from './dlc-items.js';
 import { itemImage } from './portraits.js';
@@ -5,6 +6,6 @@ const esc = text => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'
 export const EQUIPMENT_COLLECTIONS = Object.freeze({ all: 'All collections', 'named-weapons':'Named weapons', base: 'Base game', 'warriors-of-the-north': 'Warriors of the North', 'blazing-deserts': 'Blazing Deserts', 'beasts-and-exploration': 'Beasts & Exploration', 'of-flesh-and-faith': 'Of Flesh and Faith', lindwurm: 'Lindwurm', 'supporter-edition': 'Supporter Edition' });
 export function equipmentCatalogHTML(collection = 'all') {
   const selected = Object.hasOwn(EQUIPMENT_COLLECTIONS,collection) ? collection : 'all';
-  const items = [...DLC_ITEMS,...NAMED_WEAPONS].filter(item=>selected==='all'||item.collection===selected).sort((a,b)=>a.slot.localeCompare(b.slot)||a.name.localeCompare(b.name)||a.id.localeCompare(b.id));
+  const items = [...DLC_ITEMS,...NAMED_WEAPONS.map(i=>getItem(mergedNamedItemId(i.id)))].filter(item=>selected==='all'||item.collection===selected).sort((a,b)=>a.slot.localeCompare(b.slot)||a.name.localeCompare(b.name)||a.id.localeCompare(b.id));
   return `<p>Discover ${DLC_ITEMS.length} armor and helmet designs plus ${NAMED_WEAPONS.length} named weapon designs across the base game and expansions. Northern and southern armories favor their local equipment. Weekly stock rotates; frontier raiders and camps can yield regional gear.</p><label for="equipment-collection">Collection</label><select id="equipment-collection" data-catalog-filter>${Object.entries(EQUIPMENT_COLLECTIONS).map(([id,name])=>`<option value="${id}"${id===selected?' selected':''}>${esc(name)}</option>`).join('')}</select><p>${items.length} designs · Select a piece to inspect protection, weight, and handling.</p><div class="shop-grid">${items.map(item=>`<button class="shop-tile" data-inspect="${item.id}" data-item-source="catalog"><img class="equipment-icon" src="${itemImage(item)}" alt="${esc(item.name)}" loading="lazy"><strong>${esc(item.name)}</strong><small>${item.slot==='weapon'?`Named weapon · ${item.damageMin}–${item.damageMax} damage · ${item.fatigue} fatigue`:`${item.slot==='armor'?'Body armor':'Helmet'} · ${item.armor} protection · ${item.fatigue} fatigue`}</small><small>${esc(EQUIPMENT_COLLECTIONS[item.collection])}</small></button>`).join('')}</div>`;
 }

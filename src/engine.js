@@ -169,12 +169,12 @@ const ROAMING_BANDS = Object.freeze([
 ].map(band=>Object.freeze({...band,start:compactPoint(band.start),end:compactPoint(band.end)})));
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
-const FAMED_ID = /^(famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
+const FAMED_ID = /^(famed3|famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
 const FAMED_NAMES = ['Ashen', 'Blackthorn', 'Dawnward', 'Grimwolf', 'Ironbound', 'Oathkeeper', 'Ravenmark', 'Stormborn', 'Thornheart', 'Wolfguard'];
 
-export function createFamedItemId(baseId, seed, rulesVersion = 2) {
-  if (![1, 2].includes(rulesVersion) || !ITEM_BY_ID.has(baseId) || ['accessory', 'attachment', 'mount'].includes(ITEM_BY_ID.get(baseId).slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
-  return `${rulesVersion === 1 ? 'famed' : 'famed2'}:${baseId}:${seed}`;
+export function createFamedItemId(baseId, seed, rulesVersion = 3) {
+  if (![1, 2, 3].includes(rulesVersion) || !ITEM_BY_ID.has(baseId) || ['accessory', 'attachment', 'mount'].includes(ITEM_BY_ID.get(baseId).slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
+  return `${rulesVersion === 1 ? 'famed' : rulesVersion===2?'famed2':'famed3'}:${baseId}:${seed}`;
 }
 
 export function getItem(id) {
@@ -186,7 +186,7 @@ export function getItem(id) {
   const original = ITEM_BY_ID.get(match[2]);
   const seed = Number(match[3]);
   if (!original || ['accessory', 'attachment', 'mount'].includes(original.slot) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
-  if(match[1]==='famed2')return rollNamedItem(original,id,seed,{shieldDurability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
+  if(match[1]==='famed2'||match[1]==='famed3')return rollNamedItem(original,id,seed,{merged:match[1]==='famed3',shieldDurability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
   const roll = shift => (seed >>> shift) & 15;
   const bonuses = [];
   const item = { ...original, id, baseId: original.id, rarity: 'famed' };
@@ -229,6 +229,34 @@ export function getItem(id) {
   item.bonuses = Object.freeze(bonuses.map(bonus => Object.freeze(bonus)));
   return Object.freeze(item);
 }
+export function mergedNamedItemId(id) {
+  if(typeof id!=='string')return id;
+  if(id.startsWith('famed2:'))return `famed3:${id.slice(7)}`;
+  const index=NAMED_WEAPONS.findIndex(item=>item.id===id);
+  return index<0?id:createFamedItemId(id,0x42420000+index,3);
+}
+
+export function mergeOwnedNamedBonuses(state) {
+  if(state.battle)return false;
+  let changed=false;
+  const merge=id=>{const next=mergedNamedItemId(id);if(next!==id)changed=true;return next;};
+  state.inventory=state.inventory.map(merge);
+  for(const person of state.party){
+    for(const slot of Object.keys(person.equipment))person.equipment[slot]=merge(person.equipment[slot]);
+    for(const slot of Object.keys(person.reserveEquipment))person.reserveEquipment[slot]=merge(person.reserveEquipment[slot]);
+    person.accessories=person.accessories.map(merge);
+  }
+  for(const market of Object.values(state.marketStock??{})){
+    for(const [id,count] of Object.entries(market.equipment)){
+      const next=mergedNamedItemId(id);
+      if(next!==id&&(!ITEM_BY_ID.has(id)||count>0)&&count+(market.equipment[next]??0)<=1024){market.equipment[next]=(market.equipment[next]??0)+count;if(ITEM_BY_ID.has(id))market.equipment[id]=0;else delete market.equipment[id];changed=true;}
+    }
+    for(const entry of market.buyback??[])entry.itemId=merge(entry.itemId);
+  }
+  if(changed)record(state,'Named equipment regains its legacy traits and craftsmanship alongside the newer stat rolls. Existing damage and roll seeds are preserved.');
+  return changed;
+}
+
 const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...NAMED_WEAPONS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
@@ -1628,6 +1656,7 @@ export function buyItem(state, itemId, quantity = 1) {
   }
   const message = `Bought ${quantity > 1 ? `${quantity} x ` : ''}${item.name} for ${cost} crowns.`;
   record(state, message);
+  mergeOwnedNamedBonuses(state);
   applyCompanyAutomation(state);
   return result(true, message);
 }
@@ -4403,6 +4432,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   if (sharing?.selectedCount) record(state, `Shared ${sharing.selectedCount} spoils worth ${sharing.value} crowns at ${sharing.townName}: each surviving brother receives ${sharing.xp} XP and up to ${sharing.morale} morale.`);
   record(state, message);
   state.battle = null;
+  mergeOwnedNamedBonuses(state);
   applyCompanyAutomation(state);
   return result(true, message);
 }
@@ -4452,7 +4482,7 @@ function validateBattle(input, party, worldState) {
   const famedRoll = hashSeed(`${worldState.seed}:${encounter.id}:${campGeneration}:famed-roll`) % 10000;
   assert(famedDrop === null || encounterType === 'camp' && ['famed','named'].includes(famedItem?.rarity)
     && famedBasesForCamp({...encounter,difficulty})?.includes(famedItem.baseId)
-    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
+    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,2)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
     && famedRoll < ((FAMED_CHANCES[difficulty] ?? 0)+discovery.famed/100) * 10000, 'battle famed drop');
   const previousRegionalCampName=encounterType==='camp'&&/^wild-camp-/.test(encounter.id)?worldCampText(encounter.x,encounter.y,encounter.enemies.length,Number(encounter.id.slice(10))-1).name:null;
   const legacyCampName = encounterType==='camp' && /^wild-camp-/.test(encounter.id) ? getRegionalCampText(authoredPoint(encounter).x,authoredPoint(encounter).y,difficulty,1,Number(encounter.id.slice(10))-1).name : null;
@@ -4570,7 +4600,7 @@ function validateBattle(input, party, worldState) {
     for (const [slot,key] of [['armor','maxBodyArmor'],['helmet','maxHeadArmor']]) {
       const item = getItem(unit.equipment[slot]);
       const original = item?.baseId ? getItem(item.baseId) : item;
-      if (original?.sourceArmor !== undefined && item.rollVersion !== 2) {
+      if (original?.sourceArmor !== undefined && ![2,3].includes(item.rollVersion)) {
         const seed = item.baseId ? Number(item.id.split(':')[2]) : null;
         const legacy = seed === null ? original.sourceArmor : Math.min(500,original.sourceArmor + Math.max(8,Math.round(original.sourceArmor * (.15 + (seed & 15) / 100))));
         if (unit[key] === legacy) unit[key] = item.armor;
