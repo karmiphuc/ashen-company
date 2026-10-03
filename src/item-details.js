@@ -39,6 +39,7 @@ export function getItemDetails(item, condition) {
   if (!baseRole) return null;
   const stats = [];
   const notes = [];
+  if(item.signatureDescription)notes.push(item.signatureDescription);
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;
@@ -156,13 +157,13 @@ export function getItemDetails(item, condition) {
     notes.push('Cosmetic variants use a fixed source design. Original helmet vision penalties and scripted magical effects are not simulated.');
   }
   const role = ['famed','named'].includes(item.rarity)
-    ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with ${item.rollVersion === 2 && (item.sourceArmor !== undefined || item.sourceNamedWeapon) ? 'the unrolled source design' : 'the ordinary version'}.`
+    ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with ${item.rollVersion >= 2 && (item.sourceArmor !== undefined || item.sourceNamedWeapon) ? 'the unrolled source design' : 'the ordinary version'}.`
     : baseRole;
   return {
     description: item.description,
     role,
     rarity: item.rarity,
-    baseName: item.baseId ? `${base.name}${item.rollVersion === 2 && (item.sourceArmor !== undefined || item.sourceNamedWeapon) ? ' source baseline' : ''}` : item.rarity==='named' ? `${item.name} source baseline` : null,
+    baseName: item.baseId ? `${base.name}${item.rollVersion >= 2 && (item.sourceArmor !== undefined || item.sourceNamedWeapon) ? ' source baseline' : ''}` : item.rarity==='named' ? `${item.name} source baseline` : null,
     bonuses,
     stats,
     notes,

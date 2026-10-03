@@ -1,6 +1,6 @@
-# Named-item rolls — v0.46.8
+# Named-item rolls — v0.47.4
 
-New named rewards use Battle Brothers' modifier ranges rather than the previous small flat boosts. Each weapon or shield gets **two different modifiers** from its eligible pool; body armor and helmets always roll protection and weight independently. Rolls are deterministic per item, with no reload rerolls.
+New named rewards combine the older campaign traits and craftsmanship with Battle Brothers' modifier ranges. Each weapon or shield gets **two different modifiers** from its eligible pool; body armor and helmets always roll protection and weight independently. Rolls are deterministic per item, with no reload rerolls.
 
 | Equipment | Eligible roll | Range |
 |---|---|---|
@@ -19,9 +19,13 @@ New named rewards use Battle Brothers' modifier ranges rather than the previous 
 | Shield | Durability | 120–160% |
 | Shield | Equipment fatigue | 70–90% |
 
-Armor protection is rounded down. Weapon damage, shield stats and proportional weight rolls are rounded to the nearest integer. Body armor fatigue bottoms out at 8; helmet fatigue at 4. Ultra-light campaign bases below those floors never become heavier. Imported named armor uses its original `sourceArmor` / `sourceFatigue`, avoiding a second boost on top of its old catalog premium. Fangshire retains its innate campaign +5 ranged defense; random armor resolve/defense signatures are no longer added to new rolls.
+Armor protection is rounded down. Weapon damage, shield stats and proportional weight rolls are rounded to the nearest integer. Body armor fatigue bottoms out at 8; helmet fatigue at 4. Ultra-light campaign bases below those floors never become heavier. Imported named armor uses its original `sourceArmor` / `sourceFatigue`, avoiding a second boost on top of its old catalog premium. Fangshire retains its innate campaign +5 ranged defense; merged armor also retains a Guard, Deflection, Resolve or Vigor trait. Imported rare armor keeps its existing signature and passive bonus without doubling it.
 
 The combat engine uses the rolled head chance, penetration, armor damage, shield wear, ammunition capacity and fatigue costs. Separate shield melee/ranged rolls affect company stats, combat snapshots, Shieldwall, weapon swaps, and shield breakage. Inspection lists both rolled modifiers and actual costs.
+
+## Restored campaign bonuses
+
+Weapons keep their two BB modifiers and also receive the older damage bonus (+2–6 minimum and +3–9 maximum), accuracy (+2–8) and armor damage (+10–20 percentage points). Shields retain their two modifiers plus +2–5 to both defenses and 1–3 fatigue relief, bounded by zero fatigue. Armor retains its protection and weight rolls plus one passive trait: +2–4 melee defense, +3–5 ranged defense, +4–7 resolve or +4–7 maximum fatigue. Inspection shows the combined bonuses. These are campaign bonuses added to the BB roll rules, not exact BB statistics.
 
 ## Sources and campaign adaptations
 
@@ -36,6 +40,8 @@ The campaign's ordinary weapon damage and prices remain its own. Ordinary campai
 
 ## Persistence
 
-New items use `famed2:<base-id>:<seed>` identities. Camp finds, champions, Deserter upgrades, regional named trophies and new weekly town offers use the versioned rolls. Existing `famed:` identities and plain named catalog IDs keep their previous values, remaining durability, buyback conditions and active-battle snapshots. Loading old markets does not duplicate their existing named stock. Old items are not silently rerolled.
+New items use `famed3:<base-id>:<seed>` identities. Owned `famed2` equipment and concrete named weapon designs upgrade with the same seed when loading outside combat, purchasing equipment or claiming a finished battle. Inventory condition, equipment damage and buyback condition stay intact. Active and unclaimed battles keep their existing equipment rules until claimed; old `famed:` identities retain their original rules. Town stock keeps its quantities, including sold-out offers.
+
+Camp finds, champions, Deserter upgrades, regional named trophies and new weekly town offers use the merged rules. The v2 resolver remains available for saved battle snapshots; migration preserves its selected modifiers without rerolling them.
 
 Regression coverage checks all campaign weapon pools across 256 seeds each, armor/shield ranges, source-based imported armor, Fangshire, live attack fatigue before masteries, Aimed Shot, Shieldwall, real head hits, shield breakage, throwing bundles, market buybacks and legacy save compatibility.

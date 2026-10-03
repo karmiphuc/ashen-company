@@ -4,7 +4,7 @@ import { ITEMS, SETTLEMENTS, createGame, createFamedItemId, getItem, getCompanyS
 import { rollNamedItem } from '../src/named-rolls.js';
 import { getItemDetails } from '../src/item-details.js';
 
-const named=(base,seed)=>getItem(createFamedItemId(base,seed));
+const named=(base,seed)=>getItem(createFamedItemId(base,seed,2));
 function find(base,mod,predicate=()=>true){for(let seed=0;seed<4096;seed++){const item=named(base,seed);if(item.rollModifiers.includes(mod)&&predicate(item))return item;}throw Error(`Missing ${base} ${mod}`);}
 const within=(x,min,max)=>assert.ok(x>=min-1e-9&&x<=max+1e-9,`${x} outside ${min}–${max}`);
 function arm(state,item,slot='active'){state.inventory.push(item.id);state.inventoryCondition.push(item.armor??(item.slot==='shield'?shieldMaximum(item.id):item.throwing?throwingCapacity(item):null));assert.equal(equipItem(state,'captain',item.id,slot).ok,true);}
@@ -74,13 +74,13 @@ test('increased throwing capacity survives attacks, stowing, weapon swaps and re
 });
 
 test('modern named armor market finds retain their two source-based rolls through purchase, damage and buyback',()=>{
- let state,row;for(let seed=1;seed<100&&!row;seed++){state=createGame(seed);for(const town of SETTLEMENTS){state.position={x:town.x,y:town.y};row=getMarket(state).equipment.find(r=>r.stock>0&&getItem(r.itemId)?.rollVersion===2);if(row)break;}}
+ let state,row;for(let seed=1;seed<100&&!row;seed++){state=createGame(seed);for(const town of SETTLEMENTS){state.position={x:town.x,y:town.y};row=getMarket(state).equipment.find(r=>r.stock>0&&getItem(r.itemId)?.rollVersion===3);if(row)break;}}
  assert.ok(row);const item=getItem(row.itemId);assert.equal(item.rarity,'named');assert.ok(item.sourceArmor!==undefined);state.gold=50000;assert.equal(buyItem(state,item.id).ok,true);assert.equal(getMarket(state).equipment.find(r=>r.itemId===item.id).stock,0);const index=state.inventory.indexOf(item.id);state.inventoryCondition[index]-=5;const damaged=state.inventoryCondition[index];assert.deepEqual(validateSave(structuredClone(state)),state);assert.equal(sellItem(state,item.id).ok,true);assert.equal(getMarket(state).equipment.find(r=>r.itemId===item.id).stock,1);assert.equal(buyItem(state,item.id).ok,true);assert.equal(state.inventoryCondition[state.inventory.indexOf(item.id)],damaged);assert.deepEqual(validateSave(structuredClone(state)),state);
 });
 
 test('legacy famed identities preserve stats in active battles and versioned malformed IDs are rejected',()=>{
  const old=getItem(createFamedItemId('mail-shirt',987654321,1));assert.equal(old.rollVersion,undefined);assert.ok(old.signature);const {state}=fight(getItem(createFamedItemId('arming-sword',42,1)));assert.deepEqual(validateSave(structuredClone(state)),state);
- for(const id of ['famed2:arming-sword:01','famed2:arming-sword:4294967296','famed2:unknown:1','famed2:war-horse:1','famed2:arming-sword:-1'])assert.equal(getItem(id),undefined);assert.throws(()=>createFamedItemId('arming-sword',1,3),TypeError);
+ for(const id of ['famed2:arming-sword:01','famed2:arming-sword:4294967296','famed2:unknown:1','famed2:war-horse:1','famed2:arming-sword:-1'])assert.equal(getItem(id),undefined);assert.throws(()=>createFamedItemId('arming-sword',1,4),TypeError);
 });
 
 test('head-chance rolls change actual strike locations using the same combat random numbers',()=>{
@@ -94,6 +94,6 @@ test('breaking an asymmetric named shield removes its exact melee and ranged bon
 });
 
 test('legacy market stock remains stable and does not acquire an extra named offer on import',()=>{
- const state=createGame(19);state.gold=50000;const offer=getMarket(state).equipment.find(r=>r.stock>0&&!getItem(r.itemId).rarity);assert.ok(offer);buyItem(state,offer.itemId);const market=Object.values(state.marketStock)[0];for(const id of Object.keys(market.equipment)){if(id.startsWith('famed2:')){market.equipment[getItem(id).baseId]=market.equipment[id];delete market.equipment[id];}}
+ const state=createGame(19);state.gold=50000;const offer=getMarket(state).equipment.find(r=>r.stock>0&&!getItem(r.itemId).rarity);assert.ok(offer);buyItem(state,offer.itemId);const market=Object.values(state.marketStock)[0];for(const id of Object.keys(market.equipment)){if(/^famed[23]:/.test(id)){market.equipment[getItem(id).baseId]=market.equipment[id];delete market.equipment[id];}}
  const before=structuredClone(market.equipment),restored=validateSave(structuredClone(state));assert.deepEqual(Object.values(restored.marketStock)[0].equipment,before);assert.deepEqual(validateSave(restored),restored);
 });

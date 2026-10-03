@@ -1,5 +1,8 @@
 # Ashen Company
 
+Version 0.47.4 combines named armor traits and weapon/shield craftsmanship with the newer BB-style rolls. Owned newer named gear upgrades with its existing seed and damage outside combat; inspection shows every bonus. See [named-item rules](docs/NAMED-ROLLS.md).
+
+
 Version 0.47.3 supports **18 hired brothers: 15 fielded and 3 reserves**, with reserve swaps in the formation editor. Saved preparation checkboxes buy all affordable town ammunition regardless of current stores and equip the best stash bandages first. See [company preparation and reserves](docs/COMPANY-PREPARATION.md).
 
 Version 0.46.9 adds 46 sourced BB named weapon designs plus Impaler, with their actual inventory and worn art. Named finds remain scarce and regional. The weapon-skill audit fixes Split Shield to damage only shields in new battles, adds fencing Lunge and two-hex Spetum Spearwall, and preserves active old fights. Handgonne is deferred. See [named weapons and skill checks](docs/NAMED-WEAPONS.md).
