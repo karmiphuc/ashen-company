@@ -1,6 +1,16 @@
-# Verification - version 0.46.6, 2026-10-03
+# Verification - version 0.46.7, 2026-10-03
 
 
+
+## v0.46.7 checks
+
+All 573 tests pass. This UI review captured and inspected six steps: desktop world (usable), desktop company/equipment (usable), desktop battle (improved), tablet battle (improved), phone battle (fixed), and phone company/equipment (usable but dense). Full before/after screenshot review: `/workspace/ui-audit-0467/review.html`. The phone battle previously showed no fighters because its opening camera started too far left, and its five tactics controls lay below the viewport.
+
+Battle commands now precede the field. Company/Enemies/Acting camera buttons center both axes on surviving, present fighters and recenter the selected group on viewport resize; regular battle renders retain manual pan. Phone tactics use a labelled native selector with the same saved engine actions as desktop buttons. Speed/camera buttons have minimum 44px touch targets. Header counts separate surviving brothers/enemies/allies. The active report shows actual HP, AP and fatigue. Morale help is expandable; the combat log defaults closed on phones/open on wider screens. Expansion and keyboard focus persist across live combat renders. Terrain keys wrap inside narrow battle viewports.
+
+Native Chromium verified all three company fighters visible on initial phone load, enemy/company camera jumps, saved Shield Wall via phone selector, focus and log state across live combat updates, and no page overflow or undersized command targets at 320/390/820/1440px. No JavaScript exceptions occurred. World and company captures showed no page overflow; the long mobile company sheet remains dense. This review does not claim full screen-reader/contrast coverage or every encounter layout.
+
+A fresh-profile offline reload cached all 557 resources under `ashen-company-bc1a1279913421f0`, loaded v0.46.7 and confirmed camera/tactic/count/log UI rendering from cached modules.
 
 ## v0.46.6 checks
 
