@@ -13,16 +13,18 @@ export function deserterEncounter(seed,contract,getItem) {
   const faction=SOLDIER_FACTIONS.find(f=>f.id===contract.factionId);
   const key=`${seed}:${contract.deserterId}:${contract.acceptedDay}`;
   const enemies=factionTroops(key,faction.id,3,8).map(e=>({...e,name:`Deserter ${e.name}`}));
-  // Exactly one worn piece becomes a named-quality variant on a 25% encounter roll.
-  // Its original artwork/culture survives; the enemy really wears and benefits from it.
-  if(townEventHash(`${key}:named-roll`)%4===0) {
-    const candidates=enemies.flatMap((e,index)=>['armor','helmet','weapon','shield'].filter(slot=>e[slot]&&e[slot].length<=40&&!getItem(e[slot])?.rarity).map(slot=>({index,slot,id:e[slot]})));
-    if(candidates.length){const chosen=candidates[townEventHash(`${key}:named-slot`)%candidates.length];
-      enemies[chosen.index][chosen.slot]=`famed:${chosen.id}:${townEventHash(`${key}:named-item`)}`;
-      enemies[chosen.index].name+=' Champion';
-    }
-  }
   return {id:contract.deserterId,kind:'deserters',name:`${faction.name} Deserters`,...contract.deserterPoint,
     difficulty:3,veteranRank:2,factionId:faction.id,factionLabel:faction.name,enemies,reward:contract.reward,cleared:false,
-    description:`Eight elite ${faction.name} deserters keep their faction's arms and armor. Hard contract: one worn item has a 25% chance to be named-quality. Recover it through battle salvage; destroyed armor is lost.`};
+    description:`Eight elite ${faction.name} deserters keep their faction's arms and armor. Hard contract: on completion, a 25% chance upgrades one non-named item equipped by your company to named quality.`};
+}
+
+export function deserterEquipmentReward(seed,contract,party,getItem) {
+  const key=`${seed}:${contract.deserterId}:${contract.acceptedDay}`;
+  if(townEventHash(`${key}:named-roll`)%4!==0)return null;
+  const candidates=party.filter(p=>p.hp>0).flatMap(person=>['armor','helmet','weapon','shield'].flatMap(slot=>{
+    const id=person.equipment?.[slot],item=getItem(id);
+    return item&&id.length<=40&&!['named','famed'].includes(item.rarity)?[{personId:person.id,slot,id}]:[];
+  }));
+  if(!candidates.length)return null;
+  return {...candidates[(townEventHash(`${key}:company-slot`)>>>8)%candidates.length],seed:townEventHash(`${key}:company-item`)};
 }

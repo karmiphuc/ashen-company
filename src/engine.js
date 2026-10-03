@@ -16,7 +16,7 @@ import { enemyProgression } from './enemy-progression.js';
 import { getRegionalCampText } from './enemy-rosters.js';
 import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk, weaponTrainingVisual } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile } from './recruits.js';
-import { deserterOffer, deserterEncounter } from './deserters.js';
+import { deserterOffer, deserterEncounter, deserterEquipmentReward } from './deserters.js';
 import { ARMORY_STOCK_VERSION, townFacilities, townArmoryBudget, townDesign } from './town-facilities.js';
 import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-events.js';
 import { CARAVAN_ATTACK_WARNING_HOURS, CARAVAN_SHORTAGE_HOURS, CARAVAN_TRAVEL_HOURS, routeSegmentDistance, shipmentId, shipmentPlan, shipmentPosition } from './caravans.js';
@@ -1320,6 +1320,20 @@ function completeContract(state, town) {
       record(state, `${town.name}'s factor adds ${item.name} to the local armory stock.`);
     }
   }
+  if(contract.type==='deserters'){
+    const upgrade=deserterEquipmentReward(state.seed,contract,state.party,getItem);
+    if(upgrade){
+      const person=state.party.find(p=>p.id===upgrade.personId),original=getItem(upgrade.id);
+      const namedId=createFamedItemId(upgrade.id,upgrade.seed),named=getItem(namedId);
+      const condition=equippedCondition(person,'active',upgrade.slot);
+      person.equipment[upgrade.slot]=namedId;
+      const oldMax=upgrade.slot==='shield'?shieldMaximum(upgrade.id):original.armor;
+      const newMax=upgrade.slot==='shield'?shieldMaximum(namedId):named.armor;
+      // Preserve existing damage; the named item's additional capacity is real.
+      setEquippedCondition(person,'active',upgrade.slot,Number.isFinite(oldMax)?condition+newMax-oldMax:condition);
+      record(state,`${person.name}'s ${original.name} is upgraded to ${named.name}, a named-quality Deserter contract reward.`);
+    }
+  }
   state.contract = null;
   return true;
 }
@@ -1503,7 +1517,7 @@ export function acceptContract(state, townId, offerId) {
   state.contract = { id: `delivery-${state.contractSerial}`, ...terms, acceptedDay: state.day,
     ...(offer.type === 'rescue' ? { rescued: false } : offer.type === 'deserters' ? {defeated:false} : {}) };
   const destination = TOWN_BY_ID.get(offer.to);
-  const message = offer.type === 'deserters' ? `Hunt elite faction deserters and return to ${town.name} for ${offer.reward} crowns. Hard fight; 25% named-quality worn-item chance.` : offer.type === 'supply'
+  const message = offer.type === 'deserters' ? `Hunt elite faction deserters and return to ${town.name} for ${offer.reward} crowns. Hard fight; on completion, 25% chance to upgrade one non-named item equipped by your company.` : offer.type === 'supply'
     ? `Deliver ${offer.quantity} ${GOOD_BY_ID.get(offer.goodId).name.toLowerCase()} to ${destination.name} for ${offer.reward} crowns.`
     : offer.type === 'hunt'
       ? `Clear ${getCampSites(state).find(camp=>camp.id===offer.campId).name} and return to ${town.name} for ${offer.reward} crowns.`
