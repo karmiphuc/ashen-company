@@ -38,7 +38,7 @@ test('portrait output is deterministic and preserves authored raster draw order'
   const openHelm = portraitSVG(PERSON, { helmet: { id: 'iron-helm', visual: 'nasal' } });
   assert.ok(!openHelm.includes('data-layer="hair"'));
   assert.ok(openHelm.includes('data-layer="beard"'));
-  assert.match(one, /data-layer="weapon"[^>]*left:55px;top:53px;--layer-rest:rotate\(-30deg\) scale\(1.2\);--layer-origin:27px 42px;--weapon-rest:rotate\(-30deg\) scale\(1.2\);--weapon-origin:27px 42px;transform:rotate\(-30deg\) scale\(1.2\);transform-origin:27px 42px/);
+  assert.match(one, /data-layer="weapon"[^>]*left:55px;top:53px;--layer-rest:rotate\(-30deg\) scale\(1.56\);--layer-origin:27px 42px;--weapon-rest:rotate\(-30deg\) scale\(1.56\);--weapon-origin:27px 42px;transform:rotate\(-30deg\) scale\(1.56\);transform-origin:27px 42px/);
 });
 
 test('equipment visuals use their own authored layers and aligned head anchors', () => {

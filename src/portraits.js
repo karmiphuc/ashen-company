@@ -294,10 +294,12 @@ function mountedWeapon(spec, mount, item) {
   const [file,left,top,transform,origin] = spec;
   const named = NAMED_WEAPON_ART[item?.baseId || item?.id];
   const shoulder = Boolean((item?.twoHanded??named?.twoHanded) && !(item?.ranged??named?.ranged)) || SHOULDER_WEAPONS.has(item?.baseId || item?.id) || SHOULDER_WEAPONS.has(visual(item));
-  const boost = shoulder ? 1 : 1.2;
+  // Apply the requested increase to the previous equipped size, not inventory art.
+  const twoHanded = item?.twoHanded ?? named?.twoHanded ?? shoulder;
+  const boost = shoulder ? 1.5 : twoHanded ? 1.8 : 1.56;
   const result=[file,left-(mount||shoulder?0:8),top+(mount?36:0),
     boost===1?transform:`${transform} scale(${boost})`,origin];
-  if(named&&!shoulder){const bottom=weaponFrame(result,item).rawBottom;result[2]-=Math.max(0,bottom-(115+(mount?36:0)));}
+  if(named){const bottom=weaponFrame(result,item).rawBottom;result[2]-=Math.max(0,bottom-(115+(mount?36:0)));}
   return result;
 }
 

@@ -90,11 +90,11 @@ test('every two-handed melee family stays in proportion to the pawn and fits, in
     for(const item of [weapon,getItem(`famed:${weapon.id}:73`),{id:weapon.id,visual:weapon.visual}]){
       const html=portraitHTML(person,{weapon:item,mount,helmet:getItem('bb-flat-top-helmet')}),w=pose(html,'weapon'),f=frame(html);
       assert.equal(w.x+w.gx,78,weapon.id);if(NAMED_WEAPON_ART[weapon.id])assert.ok(w.y+w.gy<=100+(mount?36:0),weapon.id);else assert.equal(w.y+w.gy,100+(mount?36:0),weapon.id);
-      const scale=Number(w.image.match(/transform:scale\(([\d.]+)\)/)[1]);
+      const scale=[...w.image.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].reduce((n,m)=>n*Number(m[1]),1);
       const angle=Number(w.image.match(/rotate\(([\d.-]+)deg\)/)[1])*Math.PI/180;
       assert.ok(scale>0,`${weapon.id}: valid scale`);
       const [width,height]=pngSize(w.image);
-      assert.ok(Math.hypot(width,height)*scale<=96.02,`${weapon.id}: weapon silhouette cannot exceed the pawn's 96px crown-to-base height`);
+      assert.ok(Math.hypot(width,height)*scale<=144.03,`${weapon.id}: enlarged silhouette stays within 150% of the former 96px limit`);
       for(const x of [0,width])for(const y of [0,height]){
         const px=f.x+(w.x+w.gx+scale*((x-w.gx)*Math.cos(angle)-(y-w.gy)*Math.sin(angle)))*f.scale;
         const py=f.y+(w.y+w.gy+scale*((x-w.gx)*Math.sin(angle)+(y-w.gy)*Math.cos(angle)))*f.scale;
@@ -108,7 +108,7 @@ test('every two-handed melee family stays in proportion to the pawn and fits, in
 test('reference sword, axe and falx axes cross from the opposite shoulder to the hand rather than covering the face upright',()=>{
   for(const [id,tip] of [['greatsword',[5,8]],['greataxe',[18,9]],['falx',[35,7]]]){
     const w=pose(portraitHTML(person,{weapon:getItem(id)}),'weapon');
-    const scale=Number(w.image.match(/transform:scale\(([\d.]+)\)/)[1]);
+    const scale=[...w.image.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].reduce((n,m)=>n*Number(m[1]),1);
     const angle=Number(w.image.match(/rotate\(([\d.-]+)deg\)/)[1])*Math.PI/180;
     const x=w.x+w.gx+scale*((tip[0]-w.gx)*Math.cos(angle)-(tip[1]-w.gy)*Math.sin(angle));
     const y=w.y+w.gy+scale*((tip[0]-w.gx)*Math.sin(angle)+(tip[1]-w.gy)*Math.cos(angle));
@@ -239,7 +239,7 @@ test('foreground equipment keeps readable proportions after framing, including m
   const html=portraitHTML(person,{weapon:getItem('arming-sword'),shield:getItem('round-shield'),mount}),w=pose(html,'weapon'),s=pose(html,'shield'),f=frame(html);
   const scale=im=>[...im.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].reduce((n,m)=>n*Number(m[1]),1);
   assert.ok(scale(w.image)*f.scale>=(mount ? .88 : .95),'sword must remain readable after final framing');
-  assert.ok(pngSize(s.image)[0]*scale(s.image)*f.scale>=(mount?35:39),'shield cannot regress into a miniature');
+  assert.ok(pngSize(s.image)[0]*scale(s.image)>=44,'shield retains its size relative to the pawn while the larger composition is framed');
  }
  for(const mount of mounts)for(const shield of shields){
   const html=portraitHTML(person,{shield,mount}),s=pose(html,'shield');
@@ -253,5 +253,16 @@ test('enlarged named one-handed handles stay above the pawn base on every mount'
  for(const weapon of weapons.filter(w=>!w.twoHanded&&NAMED_WEAPON_ART[w.id]))for(const mount of [null,...mounts]){
   const w=pose(portraitHTML(person,{weapon,mount}),'weapon'),[width,height]=pngSize(w.image);
   for(const x of [0,width])for(const y of [0,height]){const [,ty]=transformedPoint(w.image,x,y);assert.ok(w.y+ty<=116+(mount?36:0),weapon.id);}
+ }
+});
+
+
+test('equipped weapons use the requested additional scale for ordinary and named variants',()=>{
+ for(const weapon of weapons)for(const mount of [null,...mounts])for(const item of [weapon,getItem(`famed:${weapon.id}:73`)]){
+  const w=pose(portraitHTML(person,{weapon:item,mount}),'weapon');
+  if(!w)continue;
+  const boosts=[...w.image.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].map(m=>Number(m[1]));
+  const shoulder=weapon.twoHanded&&!weapon.ranged;
+  assert.equal(boosts.at(-1),shoulder?1.5:weapon.twoHanded?1.8:1.56,`${weapon.id}: requested growth pivots around its grip`);
  }
 });
