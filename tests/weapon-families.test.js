@@ -139,6 +139,7 @@ test('off-turn Riposte kill carries Berserk AP into the reactor next activation'
   state.party.find(person => person.id === actor.id).perks.push('berserk');
   actor.perks.push('berserk');
   actor.riposteActive = true;
+  actor.equipment.shield=null;actor.shieldDurability=actor.maxShieldDurability=0;
   actor.ap = 0;
   actor.meleeSkill = 200;
   actor.meleeDefense = 200;
@@ -366,7 +367,7 @@ test('each weapon family chooses its situational signature over an ordinary atta
   const scenarios = [
     ['rondel-dagger', 'Puncture', target => { target.bodyArmor = 100; }],
     ['qatal-dagger', 'Deathblow', target => { target.stunnedTurns = 1; target.stunProtected = true; }],
-    ['wood-axe', 'Split Shield', target => { target.equipment.shield = 'kite-shield'; target.shieldDurability = 80; }],
+    ['wood-axe', 'Split Shield', target => { target.equipment.shield = 'kite-shield'; target.shieldDurability = 80; target.meleeDefense=200;target.shieldWallActive=true; }],
     ['warhammer', 'Crush Armor', target => { target.bodyArmor = target.headArmor = 100; }],
     ['military-cleaver', 'Decapitate', target => { target.hp = 150; target.maxHp = 250; }],
     ['flail', 'Lash', target => { target.headArmor = 0; target.bodyArmor = 100; }],

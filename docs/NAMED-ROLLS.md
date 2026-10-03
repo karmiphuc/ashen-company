@@ -32,7 +32,7 @@ Ranges and selection rules were checked against the pinned public [Battle Brothe
 - [`named_helmet.nut`](https://github.com/kovasap/battle-bros-decompiled/blob/e06d68df0915827967f98a05d0c705c1f53df0b7/scripts/items/helmets/named/named_helmet.nut), `randomizeValues`
 - [`named_shield.nut`](https://github.com/kovasap/battle-bros-decompiled/blob/e06d68df0915827967f98a05d0c705c1f53df0b7/scripts/items/shields/named/named_shield.nut), `randomizeValues`
 
-The campaign's ordinary weapon damage and prices remain its own. Weapons have no equipment weight or durability in the current campaign, so their pool excludes nonexistent weight penalties and weapon-condition rolls. Bows/crossbows use company ammunition rather than per-item quivers, so the extra-ammo roll applies to throwing bundles. Shield-damage eligibility uses this campaign's existing shield-wear values. Head chance uses the campaign's existing 22% baseline. Penetration cannot exceed 100%. These are explicit mechanical adaptations, not an exact conversion of every BB base item.
+The campaign's ordinary weapon damage and prices remain its own. Ordinary campaign weapons have no equipment weight or durability. Imported named weapon designs carry their source equipment load and can roll reduced weight when that load is at least 10; weapon-condition rolls remain excluded. Bows/crossbows use company ammunition rather than per-item quivers, so the extra-ammo roll applies to throwing bundles. Shield-damage eligibility uses this campaign's existing shield-wear values. Head chance uses the campaign's existing 22% baseline. Penetration cannot exceed 100%. These are explicit mechanical adaptations, not an exact conversion of every BB base item.
 
 ## Persistence
 

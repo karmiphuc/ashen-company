@@ -103,7 +103,7 @@ test('a campaign trading in every settlement stays exportable with the expanded 
 
 test('collection browser lists every design, filters expansions, escapes text, and exposes safe inspection actions', async () => {
   const { equipmentCatalogHTML } = await import('../src/equipment-catalog.js');
-  const all=equipmentCatalogHTML();assert.equal((all.match(/data-item-source="catalog"/g)||[]).length,217);
+  const all=equipmentCatalogHTML();assert.equal((all.match(/data-item-source="catalog"/g)||[]).length,264);
   const south=equipmentCatalogHTML('blazing-deserts');
   assert.equal((south.match(/data-item-source="catalog"/g)||[]).length,DLC_ITEMS.filter(item=>item.collection==='blazing-deserts').length);
   assert.ok(!south.includes('data-inspect="bb-heavy-iron-armor"'));

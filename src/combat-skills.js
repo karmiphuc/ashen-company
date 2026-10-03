@@ -1,6 +1,7 @@
 import { weaponTrainingVisual } from './perks.js';
 
 export const COMBAT_SKILLS = Object.freeze({
+  lunge: {id:'lunge',name:'Lunge',ap:4,fatigue:25,description:'With a fencing sword, step toward a target exactly two hexes away and thrust. Damage scales with current initiative, up to double. Requires a free, level path and no adjacent enemy; Spearwall can stop the step.'},
   charge: { id: 'charge', name: 'Charge', ap: 6, description: 'Ride 2-3 clear hexes in a straight line, then make a normal melee attack. A hit always stuns and pushes the survivor one hex if it is free. Costs normal attack plus movement fatigue; weapon mastery does not reduce the 6 AP.' },
   howling: { id: 'howling', name: 'Howling', ap: 0, description: '20% chance after a warg rider attacks: enemies within 3 hexes deal 20% less damage for their next 2 turns. Repeated howls refresh the duration without stacking.' },
   'wolf-bite': { id: 'wolf-bite', name: 'Wolf Bite', ap: 0, description: 'After a rider attack, bite one adjacent surviving enemy for 12-20 damage with 40% armor penetration. Separate hit roll; no AP, fatigue or ammunition cost. No bite after reactions.' },
@@ -15,7 +16,7 @@ export const COMBAT_SKILLS = Object.freeze({
   'knock-out': { id: 'knock-out', name: 'Knock Out', ap: 4, fatigue: 25, description: 'A half-damage mace strike that stuns on a hit; two-handed maces cost 6 AP.' },
   puncture: { id: 'puncture', name: 'Puncture', ap: 4, fatigue: 20, hitBonus: -15, description: 'A body-only dagger thrust that bypasses armor without damaging it.' },
   deathblow: { id: 'deathblow', name: 'Deathblow', ap: 3, fatigue: 10, description: 'A Qatal strike that deals 50% more damage to a stunned target.' },
-  'split-shield': { id: 'split-shield', name: 'Split Shield', ap: 4, fatigue: 18, description: 'An axe strike aimed at an active shield, dealing extra shield wear.' },
+  'split-shield': { id: 'split-shield', name: 'Split Shield', ap: 4, fatigue: 18, description: 'An axe strike aimed at an active shield. New audited battles always damage the shield, without damaging health or body/head armor.' },
   'crush-armor': { id: 'crush-armor', name: 'Crush Armor', ap: 4, fatigue: 18, description: 'A hammer blow that deals 50% more armor damage.' },
   decapitate: { id: 'decapitate', name: 'Decapitate', ap: 4, fatigue: 18, description: 'A cleaver cut that deals 40% more damage to an injured target.' },
   'flail-headshot': { id: 'flail-headshot', name: 'Lash', ap: 4, fatigue: 18, hitBonus: -10, description: 'A flail strike that targets the head and bypasses an active shield at -10 hit chance.' },
@@ -35,7 +36,7 @@ export function weaponSkillFamily(item) {
   if (visual === 'qatal') return 'qatal';
   if (visual === 'dagger' || visual === 'fighting-knife') return 'dagger';
   if (visual === 'whip') return 'whip';
-  if (!item.twoHanded && /spear/.test(visual)) return 'spear';
+  if (item.spearwall || !item.twoHanded && /spear/.test(visual)) return 'spear';
   if (visual.includes('flail')) return 'flail';
   if (visual.includes('hammer')) return 'hammer';
   if (visual.includes('mace') || visual === 'goedendag') return 'mace';
@@ -57,7 +58,7 @@ export function equipmentSkills(item) {
   if (!item) return [];
   if (item.slot === 'mount') return [COMBAT_SKILLS[/horse/.test(item.visual) ? 'charge' : 'wolf-bite'], ...(item.howlChance ? [COMBAT_SKILLS.howling] : [])];
   if (item.slot === 'shield') return [COMBAT_SKILLS.shieldwall, COMBAT_SKILLS['knock-back']];
-  return (FAMILY_SKILLS[weaponSkillFamily(item)] ?? []).map(id => {
+  return [...(FAMILY_SKILLS[weaponSkillFamily(item)] ?? []),...(item.fencing?['lunge']:[])].map(id => {
     const skill = COMBAT_SKILLS[id];
     return item.twoHanded && !item.ranged && skill.ap < 6
       ? { ...skill, ap: 6 } : skill;

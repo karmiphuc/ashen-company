@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.46.9 adds 46 sourced BB named weapon designs plus Impaler, with their actual inventory and worn art. Named finds remain scarce and regional. The weapon-skill audit fixes Split Shield to damage only shields in new battles, adds fencing Lunge and two-hex Spetum Spearwall, and preserves active old fights. Handgonne is deferred. See [named weapons and skill checks](docs/NAMED-WEAPONS.md).
+
 Version 0.46.8 brings Battle Brothers-style named rolls: weapons and shields get two distinct eligible modifiers; armor and helmets roll 110–125% protection with source-based weight relief. Combat and inspection honor the rolls, while existing saved items retain their stats. See [ranges, sources and compatibility](docs/NAMED-ROLLS.md).
 
 Version 0.44 reduces world area by **33%**, preserving nine regions, all 48 settlements and the road network. City stables now rotate horses and warhorses; armored horses are scarce, and wolves/wargs favor northern, forest and marsh cities. High-tier frontier camp clears have an independent **12% extra mount reward**, alongside named loot.

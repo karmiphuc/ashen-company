@@ -19,6 +19,8 @@ const CORE = [
   './src/item-details.js',
   './src/engine.js',
   './src/named-rolls.js',
+  './src/named-weapons.js',
+  './src/named-weapon-art.js',
   './src/combat-skills.js',
   './src/area-safety.js',
   './src/tactical-ai.js',

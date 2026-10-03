@@ -1,10 +1,11 @@
 // Battle Brothers named-item rules, pinned to kovasap/battle-bros-decompiled e06d68df.
 // Existing unversioned famed IDs remain handled by the legacy resolver in engine.js.
 export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=0}={}) {
+  if(original.sourceStats)original={...original,...original.sourceStats};
   let state=seed>>>0;
   const roll=(min,max)=>{state=(state+0x6D2B79F5)>>>0;let x=state;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return min+((x^(x>>>14))>>>0)%(max-min+1);};
   const design=original.sourceArmor!==undefined;
-  const item={...original,id,baseId:original.id,rarity:design?'named':'famed',rollVersion:2};
+  const item={...original,id,baseId:original.id,rarity:design||original.sourceNamedWeapon?'named':'famed',rollVersion:2};
   const bonuses=[],mods=[];
   delete item.signature;
   if(design){item.armor=original.sourceArmor;item.fatigue=original.sourceFatigue;delete item.statBonuses;}
@@ -36,7 +37,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
     pool.push(()=>{const relief=roll(1,3);item.fatigueOnSkillUse=(original.fatigueOnSkillUse??0)-relief;add('skill-fatigue','Skill fatigue',`-${relief}`);});
     for(let n=0;n<2;n++)pool.splice(roll(0,pool.length-1),1)[0]();
   }
-  item.name=design?original.name:`${['Ashen','Blackthorn','Dawnward','Grimwolf','Ironbound','Oathkeeper','Ravenmark','Stormborn','Thornheart','Wolfguard'][seed%10]} ${original.name}`;
+  item.name=original.sourceNamedWeapon?(original.fixedName?original.name:`${['Ashen','Blackthorn','Dawnward','Grimwolf','Ironbound','Oathkeeper','Ravenmark','Stormborn','Thornheart','Wolfguard'][seed%10]} ${original.namePool[(seed>>>8)%original.namePool.length]}`):design?original.name:`${['Ashen','Blackthorn','Dawnward','Grimwolf','Ironbound','Oathkeeper','Ravenmark','Stormborn','Thornheart','Wolfguard'][seed%10]} ${original.name}`;
   item.description=`A rare ${original.name.toLowerCase()} with independently rolled Battle Brothers-style modifiers. ${original.description}`;
   item.price=Math.min(original.collection?20000:5000,Math.round(original.price*2.4+(['armor','helmet'].includes(item.slot)?item.armor-(design?original.sourceArmor:original.armor):0)));
   item.rollModifiers=Object.freeze(mods);item.bonuses=Object.freeze(bonuses);

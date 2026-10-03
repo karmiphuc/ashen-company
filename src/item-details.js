@@ -32,7 +32,8 @@ const ROLES = {
 function signed(value) { return value > 0 ? `+${value}` : String(value); }
 
 export function getItemDetails(item, condition) {
-  const base = item?.baseId ? getItem(item.baseId) : item;
+  const definition = item?.baseId ? getItem(item.baseId) : item;
+  const base=definition?.sourceStats?{...definition,...definition.sourceStats}:definition;
   if (!item || !base) return null;
   const baseRole = ROLES[base.id] || base.role;
   if (!baseRole) return null;
@@ -43,7 +44,7 @@ export function getItemDetails(item, condition) {
     const ranged = item.ranged === true;
     stats.push(
       { label: 'Base damage', value: `${item.damageMin}-${item.damageMax}` },
-      { label: 'Hit modifier', value: signed(item.hitBonus ?? 0) },
+      { label: 'Hit modifier', value: signed((item.hitBonus ?? 0)+(item.skillHitBonus ?? 0)) },
       { label: 'Armor damage', value: `${Math.round((item.armorDamage ?? 1) * 100)}% of base hit` },
       { label: 'Damage through armor', value: `${Math.round((item.armorPiercing ?? .30) * 100)}% of base hit` },
       { label: 'Reach', value: `${item.range ?? 1} ${item.range === 1 || item.range === undefined ? 'hex' : 'hexes'}` },
@@ -72,6 +73,7 @@ export function getItemDetails(item, condition) {
     if (item.pocketWeapon) {
       notes.push('The battle AI draws this pocket weapon when a ranged fighter is forced into close combat and returns it to the pocket when range opens and ammunition remains. Drawing or returning it costs 4 AP in new battles.');
     }
+    if(item.sourceNamedWeapon)notes.push('Named BB weapon design: base damage is adapted to campaign health. Inventory and worn art use its actual source design; the two modifiers roll against its unrolled source baseline.');
     notes.push('Hit modifier changes hit chance in percentage points before other bonuses and penalties.');
     notes.push('Remaining armor reduces direct health damage. Damage that breaks through armor can add more health damage.');
     notes.push(`Ordinary attacks: ${Math.round((item.headChance ?? .22) * 100)}% of landed hits strike the head. A head hit adds 10% armor damage and 25% health damage. Body-only and head-targeting skills override this chance.`);
@@ -154,13 +156,13 @@ export function getItemDetails(item, condition) {
     notes.push('Cosmetic variants use a fixed source design. Original helmet vision penalties and scripted magical effects are not simulated.');
   }
   const role = ['famed','named'].includes(item.rarity)
-    ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with ${item.rollVersion === 2 && item.sourceArmor !== undefined ? 'the unrolled source design' : 'the ordinary version'}.`
+    ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with ${item.rollVersion === 2 && (item.sourceArmor !== undefined || item.sourceNamedWeapon) ? 'the unrolled source design' : 'the ordinary version'}.`
     : baseRole;
   return {
     description: item.description,
     role,
     rarity: item.rarity,
-    baseName: item.baseId ? `${base.name}${item.rollVersion === 2 && item.sourceArmor !== undefined ? ' source baseline' : ''}` : item.rarity==='named' ? `${item.name} source baseline` : null,
+    baseName: item.baseId ? `${base.name}${item.rollVersion === 2 && (item.sourceArmor !== undefined || item.sourceNamedWeapon) ? ' source baseline' : ''}` : item.rarity==='named' ? `${item.name} source baseline` : null,
     bonuses,
     stats,
     notes,

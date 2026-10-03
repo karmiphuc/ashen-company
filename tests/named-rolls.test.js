@@ -12,7 +12,8 @@ function fight(weapon,shield=null){const state=createGame(51);arm(state,weapon);
 
 test('named weapons roll exactly two eligible BB modifiers across all campaign weapon types',()=>{
  const seen=new Set();
- for(const base of ITEMS.filter(i=>i.slot==='weapon')){
+ for(const catalog of ITEMS.filter(i=>i.slot==='weapon')){
+  const base=catalog.sourceStats?{...catalog,...catalog.sourceStats,fatigueOnSkillUse:catalog.sourceStats.fatigueOnSkillUse,ammoMax:catalog.sourceStats.ammoMax}:catalog;
   const snapshot=structuredClone(base);
   for(let seed=0;seed<256;seed++){
    const item=named(base.id,seed),mods=new Set(item.rollModifiers);assert.equal(mods.size,2);assert.equal(item.bonuses.length,2);assert.deepEqual(item,named(base.id,seed));assert.ok(Object.isFrozen(item)&&Object.isFrozen(item.rollModifiers));
@@ -25,10 +26,11 @@ test('named weapons roll exactly two eligible BB modifiers across all campaign w
    if(mods.has('ammo')){assert.ok(base.throwing);within(item.ammoMax,6,8);}else assert.equal(item.ammoMax,base.ammoMax);
    if(mods.has('shield-damage')){assert.ok(shieldImpactDamage(base)>=16);within(item.shieldDamage,Math.round(shieldImpactDamage(base)*1.5),shieldImpactDamage(base)*2);}else assert.equal(item.shieldDamage,base.shieldDamage);
    if(mods.has('skill-fatigue'))within(item.fatigueOnSkillUse,-3,-1);else assert.equal(item.fatigueOnSkillUse,base.fatigueOnSkillUse);
+   if(mods.has('weight')){assert.ok(base.fatigue>=10);within(item.fatigue,Math.round(base.fatigue*.5),Math.round(base.fatigue*.8));}else assert.equal(item.fatigue,base.fatigue);
   }
   assert.deepEqual(base,snapshot,'source definition remains unchanged');
  }
- assert.deepEqual([...seen].sort(),['damage','armor-damage','head-chance','piercing','accuracy','ammo','shield-damage','skill-fatigue'].sort());
+ assert.deepEqual([...seen].sort(),['damage','armor-damage','head-chance','piercing','accuracy','ammo','shield-damage','skill-fatigue','weight'].sort());
 });
 
 test('weapon load reduction is restricted to heavy bases, while accuracy respects the eligibility pool',()=>{
