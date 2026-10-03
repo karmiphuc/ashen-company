@@ -69,7 +69,7 @@ test('leaving adjacency grants a free melee strike, and escape grants no kill or
   const ap=actor.ap,ammo=state.supplies.ammo;
   advanceBattle(state);assert.equal(battle.lastEvent.reactions[0].skillName,'Opportunity Strike');
   assert.equal(actor.ap,ap);assert.equal(state.supplies.ammo,ammo);assert.ok(enemy.hp<300);
-  enemy.q=13;enemy.ap=9;advanceBattle(state);
+  enemy.q=battle.field.columns-1;enemy.ap=9;battle.round=2;enemy.fleeRound=2;enemy.fleeRollRound=2;advanceBattle(state);
   assert.equal(enemy.escaped,true);assert.equal(battle.status,'victory');assert.equal(battle.xp[actor.id],30);
   assert.ok(!battle.loot.items.includes('northern-sling'));validateSave(structuredClone(state));
   assert.ok(!battleHTML(battle).includes('data-unit-id="enemy-1"'));
@@ -110,7 +110,7 @@ function escapeCorridor(open, companyPoint, enemyPoint) {
 }
 
 test('flight routes around a cul-de-sac without backtracking, including action save reloads', () => {
-  const route = [[6,6],[6,7],[7,7],[8,7],[9,7],[10,7],[11,7],[12,7],[13,7]];
+  const route = [[6,6],[6,7],...Array.from({length:15},(_,i)=>[7+i,7])];
   let { state, enemy } = escapeCorridor([...route,[6,5],[6,4]], [5,6], route[0]);
   const id = enemy.id;
   for (const expected of route.slice(1)) {
@@ -121,7 +121,7 @@ test('flight routes around a cul-de-sac without backtracking, including action s
     assert.deepEqual([enemy.q,enemy.r], expected);
     state = validateSave(structuredClone(state));
   }
-  advanceBattle(state);
+  state.battle.round=2;enemy.ap=9;enemy.fleeRound=2;enemy.fleeRollRound=2;advanceBattle(state);
   assert.equal(state.battle.units.find(unit => unit.id === id).escaped, true);
 });
 

@@ -8,7 +8,7 @@ import {portraitGroundAnchor,portraitHTML} from '../src/portraits.js';
 import {battleHTML} from '../src/battle-view.js';
 import * as m from '../src/engine.js';
 function fight(seed=51){const state=m.createGame(seed),site=m.getCampSites(state)[3];state.position={x:site.x,y:site.y};assert.equal(m.startBattle(state,site.id).ok,true);return state;}
-function roster(state,count){const battle=state.battle,base=battle.units.find(u=>u.side==='enemy');battle.units=battle.units.filter(u=>u.side==='company');for(let i=0;i<4;i++){const unit=structuredClone(base);Object.assign(unit,{id:`enemy-${i+1}`,q:i<count?12:11,r:2+i,equipment:{...unit.equipment,weapon:i<count?'hunting-bow':'arming-sword'},alive:true,throwingAmmo:{active:0,reserve:0}});battle.units.push(unit);}battle.turnOrder=battle.units.map(u=>u.id);battle.activeId='enemy-4';battle.turnIndex=battle.turnOrder.indexOf(battle.activeId);return battle;}
+function roster(state,count){const battle=state.battle,base=battle.units.find(u=>u.side==='enemy');battle.units=battle.units.filter(u=>u.side==='company');for(let i=0;i<4;i++){const unit=structuredClone(base);Object.assign(unit,{id:`enemy-${i+1}`,q:i<count?12:11,r:6+i,equipment:{...unit.equipment,weapon:i<count?'hunting-bow':'arming-sword'},alive:true,throwingAmmo:{active:0,reserve:0}});battle.units.push(unit);}battle.turnOrder=battle.units.map(u=>u.id);battle.activeId='enemy-4';battle.turnIndex=battle.turnOrder.indexOf(battle.activeId);return battle;}
 
 test('BB-shaped hex projection keeps equal-height shared edges aligned and raises only the surface',()=>{
  const g=BATTLE_PROJECTION;assert.ok(g.width/g.height>1.7);assert.equal(g.stepY,g.height*.75);
@@ -25,18 +25,18 @@ test('plateau interiors have no walls; exposed faces match each neighbor height 
 test('camp walls are deterministic, impassable and have connected wide entrances in every biome',()=>{
  for(const biome of ['plains','forest','mountain','marsh','snow','desert'])for(let seed=1;seed<=8;seed++){
   const field=createBattleField(seed,'fort',biome,{fortified:true});assert.deepEqual(field,createBattleField(seed,'fort',biome,{fortified:true}));
-  assert.equal(tileAt(field,8,3).terrain,'palisade');assert.equal(movementCost(field,{q:7,r:3},{q:8,r:3}),Infinity);
-  for(const r of [4,5,9,10]){assert.equal(tileAt(field,8,r).terrain,'open');assert.ok(Number.isFinite(movementCost(field,{q:7,r},{q:8,r})));}
+  assert.equal(tileAt(field,8,7).terrain,'palisade');assert.equal(movementCost(field,{q:7,r:7},{q:8,r:7}),Infinity);
+  for(const r of [8,9,13,14]){assert.equal(tileAt(field,8,r).terrain,'open');assert.ok(Number.isFinite(movementCost(field,{q:7,r},{q:8,r})));}
   const walkable=field.tiles.filter(t=>!blockedTerrain(t.terrain)),seen=new Set([`${walkable[0].q},${walkable[0].r}`]),queue=[walkable[0]];
   for(const t of queue)for(const n of hexNeighbors(field,t)){const key=`${n.q},${n.r}`;if(!seen.has(key)&&Number.isFinite(movementCost(field,t,n))){seen.add(key);queue.push(n);}}
-  assert.equal(seen.size,walkable.length,`${biome}:${seed}`);assert.ok(rangedCoverModifier(field,{q:7,r:3},{q:10,r:3})<0);
+  assert.equal(seen.size,walkable.length,`${biome}:${seed}`);assert.ok(rangedCoverModifier(field,{q:7,r:7},{q:10,r:7})<0);
  }
  assert.ok(!createBattleField(4,'road','plains').tiles.some(t=>t.terrain==='palisade'));
 });
 
 test('new camp battles deploy safely behind walls, roaming encounters stay unwalled and saves reject wall occupancy',()=>{
  const state=fight(),b=state.battle;assert.equal(b.enemyTacticsVersion,1);assert.ok(b.field.tiles.some(t=>t.terrain==='palisade'));assert.ok(b.units.every(u=>!blockedTerrain(tileAt(b.field,u.q,u.r).terrain)));assert.deepEqual(m.validateSave(structuredClone(state)),state);
- const bad=structuredClone(state);Object.assign(bad.battle.units.find(u=>u.side==='company'),{q:8,r:3});assert.throws(()=>m.validateSave(bad));
+ const bad=structuredClone(state);Object.assign(bad.battle.units.find(u=>u.side==='company'),{q:8,r:7});assert.throws(()=>m.validateSave(bad));
  const bandState=m.createGame(4),band=m.getRoamingBands(bandState)[0];bandState.position={x:band.x,y:band.y};assert.equal(m.startBattle(bandState,band.id).ok,true);assert.ok(!bandState.battle.field.tiles.some(t=>t.terrain==='palisade'));
 });
 
@@ -50,7 +50,7 @@ test('defending infantry hold independently of company orders and advance after 
 });
 
 test('ranged defenders shoot in reach, defense releases after four quiet rounds and old battles keep offense',()=>{
- const state=fight(),b=roster(state,3),archer=b.units.find(u=>u.id==='enemy-1'),target=b.units.find(u=>u.side==='company');Object.assign(target,{q:9,r:2});b.activeId=archer.id;b.turnIndex=b.turnOrder.indexOf(archer.id);m.advanceBattle(state);assert.ok(['attack','miss'].includes(b.lastEvent.type));
+ const state=fight(),b=roster(state,3),archer=b.units.find(u=>u.id==='enemy-1'),target=b.units.find(u=>u.side==='company');Object.assign(target,{q:9,r:6});b.activeId=archer.id;b.turnIndex=b.turnOrder.indexOf(archer.id);m.advanceBattle(state);assert.ok(['attack','miss'].includes(b.lastEvent.type));
  for(const legacy of [false,true]){const s=fight(),battle=roster(s,3),actor=battle.units.find(u=>u.id==='enemy-4');actor.equipment.shield=null;actor.shieldDurability=actor.maxShieldDurability=0;if(legacy)delete battle.enemyTacticsVersion;else battle.round=5;m.advanceBattle(s);assert.equal(battle.lastEvent.type,'move');}
 });
 

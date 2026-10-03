@@ -229,7 +229,7 @@ test('shield-wall archer retreat refreshes the saved bound plan and still resolv
   Object.assign(scout, { q: 1, r: 3 });
   Object.assign(enemy, { q: 2, r: 3 });
   for (const [index, other] of battle.units.filter(unit => unit.side === 'enemy' && unit.id !== enemy.id).entries()) {
-    Object.assign(other, { q: 10 + index, r: 5 + index });
+    Object.assign(other, { q: 10 + index, r: 9 + index });
   }
   setBattleTactic(state, 'focus');
   setBattleTactic(state, 'shield-wall');

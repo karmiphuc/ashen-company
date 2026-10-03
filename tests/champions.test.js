@@ -81,7 +81,7 @@ test('champion combat stats, markers, guaranteed destroyed named armor and named
 
 test('escaping champions keep their named trophy; ordinary survivors cannot grant it',()=>{
   const {state}=wanted(),site=m.getQuestEncounter(state);state.position={x:site.x,y:site.y};m.startBattle(state,site.id);
-  const champion=state.battle.units.find(u=>u.champion),trophy=champion.championItemId;champion.escaped=true;win(state);
+  const champion=state.battle.units.find(u=>u.champion),trophy=champion.championItemId;champion.escaped=true;champion.firstFleeRound=1;champion.fleeRound=2;champion.fleeRollRound=2;state.battle.round=2;win(state);
   assert.ok(!state.battle.loot.items.includes(trophy));m.validateSave(structuredClone(state));m.finishBattle(state);assert.equal(state.contract.defeated,false);assert.equal(state.retinue.bountyHunterUnlocked,false);
 });
 

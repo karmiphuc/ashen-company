@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.48.8 expands new combat fields to 22×24, leaving retreat space beyond enemy deployment. Enemies cannot complete escape in their first fleeing round. Camps have two rear exits in addition to two assault entrances. Allied reinforcements deploy above/below the battle near the center, away from company formation lanes. Existing saved battles keep their battlefield and escape rules.
+
 Version 0.48.7 swaps Heraldic Plates/Shoulders inventory and worn artwork, adds Double Mail and Unhold/Direwolf/Hyena Fur attachments, and raises Bone Platings to 55 armor with rarer stock. Both attachment slots apply their bonuses; Unhold Fur reduces ranged damage by 25%, Direwolf Fur adds melee morale damage, and regional veterans can carry the new gear.
 
 Version 0.48.6 enlarges equipped one-handed weapons by 30% and two-handed weapons by 50% relative to the pawn. Shields retain their authored size and placement. Named weapon handles stay above the base, mounted grips and combat animation anchors stay aligned, and inventory icons keep their existing sizes.

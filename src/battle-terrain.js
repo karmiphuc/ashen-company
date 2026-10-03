@@ -1,5 +1,6 @@
-export const BATTLE_COLUMNS = 14;
-export const BATTLE_ROWS = 16;
+export const BATTLE_COLUMNS = 22;
+export const BATTLE_ROWS = 24;
+export const DEPLOYMENT_ROW_OFFSET = 4;
 export const TILE_TERRAINS = Object.freeze(['open', 'trees', 'brush', 'mud', 'rock', 'dense-trees', 'palisade']);
 
 export function blockedTerrain(terrain) { return terrain === 'dense-trees' || terrain === 'palisade'; }
@@ -22,7 +23,7 @@ function random(seed) {
 }
 
 function deploymentTile(q) {
-  return q <= 2 || q >= BATTLE_COLUMNS - 4;
+  return q <= 2 || q >= 10 && q <= 13;
 }
 
 function walkableTilesConnected(tiles) {
@@ -73,6 +74,8 @@ export function createBattleField(seed, encounterId, biome, {fortified = false} 
       tiles.push({ q, r, terrain, height });
     }
   }
+  // Central reinforcement pockets stay clear above and below both deployment lines.
+  for(const tile of tiles)if(tile.q>=8&&tile.q<=10&&[3,4,19,20].includes(tile.r))tile.terrain='open';
   const denseChance = biome === 'forest' ? .7 : .4;
   const denseCandidates = tiles.filter(tile => tile.terrain === 'trees' && !deploymentTile(tile.q)
     && random(`${seed}:${encounterId}:dense:${tile.q}:${tile.r}`) < denseChance);
@@ -81,12 +84,12 @@ export function createBattleField(seed, encounterId, biome, {fortified = false} 
     if (!walkableTilesConnected(tiles)) tile.terrain = 'trees';
   }
   if (fortified) {
-    // Enclose the enemy deployment, with two wide entrances on the assault side.
+    // Two wide assault entrances and two rear exits, with a walkable run-out.
+    const gates=[8,9,13,14];
     for (const tile of tiles) {
-      if (tile.q >= 8 && (tile.r === 1 || tile.r === 14)
-        || tile.q === 13 && tile.r >= 1 && tile.r <= 14
-        || tile.q === 8 && tile.r >= 2 && tile.r <= 13 && ![4,5,9,10].includes(tile.r)) tile.terrain = 'palisade';
-      if (tile.q >= 7 && tile.q <= 9 && [4,5,9,10].includes(tile.r)) tile.terrain = 'open';
+      if (tile.q >= 8 && tile.q <= 13 && (tile.r === 5 || tile.r === 18)
+        || [8,13].includes(tile.q) && tile.r >= 6 && tile.r <= 17 && !gates.includes(tile.r)) tile.terrain = 'palisade';
+      if ((tile.q >= 7 && tile.q <= 9 || tile.q >= 12 && tile.q <= 15) && gates.includes(tile.r)) tile.terrain = 'open';
     }
     // Trees must not seal an entrance or isolate a walkable pocket behind the wall.
     for (const tile of tiles.filter(t => t.terrain === 'dense-trees')) {

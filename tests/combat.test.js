@@ -24,9 +24,9 @@ test('the first camp is reachable and a deterministic battle survives save/load'
   assert.equal(startBattle(first, campSite.id).ok, true);
   assert.equal(first.battle.status, 'active');
   assert.equal(first.battle.units.length, 6);
-  assert.equal(first.battle.field.columns, 14);
-  assert.equal(first.battle.field.rows, 16);
-  assert.ok(first.battle.units.every(unit => unit.q >= 0 && unit.q < 14 && unit.r >= 0 && unit.r < 16));
+  assert.equal(first.battle.field.columns, 22);
+  assert.equal(first.battle.field.rows, 24);
+  assert.ok(first.battle.units.every(unit => unit.q >= 0 && unit.q < 22 && unit.r >= 0 && unit.r < 24));
   assert.equal(advanceBattle(first).ok, true);
   assert.deepEqual(validateSave(first), first);
 
@@ -253,7 +253,7 @@ test('old saves gain defaults while malformed battle and resource records are re
   const variants = [
     save => { save.supplies.tools = -1; },
     save => { save.camps.fake = { clearedDay: 1 }; },
-    save => { save.battle.units[0].q = 14; },
+    save => { save.battle.units[0].q = 22; },
     save => { save.battle.units[0].bodyArmor = -1; },
     save => { save.battle.turnOrder = ['missing']; },
     save => { save.battle.status = 'unknown'; },
