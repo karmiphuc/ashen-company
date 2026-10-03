@@ -1,4 +1,10 @@
-# Verification - version 0.45.4, 2026-10-03
+# Verification - version 0.45.5, 2026-10-03
+
+## v0.45.5 checks
+
+All 501 automated tests pass. The Deserter contract's fixed 25% named-quality roll now upgrades one ordinary actively equipped company weapon, body armor, helmet or shield when the company returns for payment. Surviving members' active equipment is eligible; existing named/famed gear, reserve gear, inventory, attachments and mounts are excluded. The item keeps its original design and gains the established generated named-quality bonuses. Armor/shield upgrades preserve existing damage while adding the new maximum capacity. There is no replacement item in the pack and no repeat payment/upgrade.
+
+Elite deserters retain normal faction outfits. Offer, target and acceptance text describe the company equipment reward. Deterministic tests cover the 25% distribution, named exclusions, all eligible selection slots, actual quest travel/battle/retreat/completion, exactly one equipped-item mutation, no eligible gear, payment, damage preservation and save/reload. A real v0.45.4 active Deserter battle validates identically under the new build, including its already worn named enemy gear. The regenerated offline cache contains all 526 resources. Physical iPad Safari remains untested.
 
 ## v0.45.4 checks
 
