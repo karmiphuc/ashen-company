@@ -2,7 +2,7 @@ import { armoryTheme } from './armory-themes.js';
 import { NAMED_WEAPONS } from './named-weapons.js';
 import { rollNamedItem } from './named-rolls.js';
 // Pure game rules for the offline overworld. The UI owns rendering and real time.
-import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
+import { createBattleField, blockedTerrain, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
@@ -26,7 +26,7 @@ import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-ev
 import { CARAVAN_ATTACK_WARNING_HOURS, CARAVAN_SHORTAGE_HOURS, CARAVAN_TRAVEL_HOURS, routeSegmentDistance, shipmentId, shipmentPlan, shipmentPosition } from './caravans.js';
 import { COMBAT_SKILLS, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
-import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, rankTacticalActions } from './tactical-ai.js';
+import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, rankTacticalActions, enemyBattleTactic } from './tactical-ai.js';
 
 export { PERKS } from './perks.js';
 
@@ -2319,7 +2319,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
   if (!state.party.length) return result(false, 'No company members can fight.');
   if(['camp','band'].includes(encounterType)){state.discoveryRolls??={};state.discoveryRolls[camp.id]={cycle:camp.generation??camp.spawnCycle,...discoveryBonuses(state,camp)};}
   refillThrowingAmmo(state);
-  const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y));
+  const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y), {fortified:encounterType === 'camp'});
   const company = getFormation(state).flatMap((personId, index) => {
     const person = personById(state, personId);
     if (!person) return [];
@@ -2407,7 +2407,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -2986,7 +2986,7 @@ function attackHitChance(battle, actor, target, weapon, hitBonus = 0, option = n
     + (!shieldBypass && target.shieldWallActive && target.shieldDurability > 0 ? shieldDefenseFor(target, target.equipment.shield,target.shieldDurability,ranged) : 0)
     + (!ranged ? reachDefense : 0)
     + (hasPerk(target, 'last-stand') && target.hp * 2 <= target.maxHp ? 8 : 0)
-    + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
+    + ((target.side === 'company' && battle.tactic === 'defense' || target.side === 'enemy' && enemyBattleTactic(battle,getItem) === 'defense') ? 5 : 0);
   const terrainHit = ranged ? rangedTerrainModifier(battle, actor, actor, target) : heightHitModifier(battle.field, actor, target);
   const adjacentAllies = !ranged && hasPerk(actor, 'backstabber')
     ? battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id && hexDistance(unit, target) <= 1).length : 0;
@@ -3580,7 +3580,7 @@ function advanceBattleV2(state) {
   const skillFamily = battle.weaponSkillsVersion === 1 && !noAmmo ? weaponSkillFamily(weapon) : null;
   const candidates = [];
   const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
-  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : 'offense';
+  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
   const nearbyTarget = enemies.some(enemy => hexDistance(actor, enemy) <= range);
   if (companyTactic === 'focus' && !enemies.some(enemy => enemy.id === battle.focusTargetId)) {
     battle.focusTargetId = enemies.filter(enemy => pathToTarget(battle, actor, enemy, range, weapon.ranged === true) !== null)
@@ -3793,7 +3793,7 @@ function advanceBattleV2(state) {
       if (offensive(candidates[index]) && !hitsFocus(candidates[index])) candidates.splice(index, 1);
     }
   }
-  const ranked = rankTacticalActions(actor, candidates, { tactic: battle.tactic, focusTargetId: battle.focusTargetId,
+  const ranked = rankTacticalActions(actor, candidates, { tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
     previousTargetId: enemies.some(enemy => enemy.id === actor.aiTargetId) ? actor.aiTargetId : null });
   const permittedExceptions = ranked.filter(entry => entry.type === 'area' && entry.safety.exception)
     .sort((a, b) => compareAreaSafety(a.safety, b.safety));
@@ -4034,7 +4034,7 @@ export function advanceBattle(state) {
           - rangedTerrainModifier(battle, actor, actor, b.target) : 0)
       || hexDistance(actor, a.target) - hexDistance(actor, b.target) || a.target.id.localeCompare(b.target.id));
   if (actor.side === 'company' && battle.focusTargetId && !enemies.some(enemy => enemy.id === battle.focusTargetId)) battle.focusTargetId = null;
-  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : 'offense';
+  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
   let choice = targets[0];
   if (companyTactic === 'focus') {
     const shared = targets.find(entry => entry.target.id === battle.focusTargetId);
@@ -4358,7 +4358,7 @@ function validCount(value) { return Number.isSafeInteger(value) && value >= 0; }
 function validPoint(point) { return point && typeof point === 'object' && !Array.isArray(point) && inBounds(point.x, point.y); }
 function recordObject(value) { return value && typeof value === 'object' && !Array.isArray(value); }
 function validHex(point, field) { return recordObject(point) && Number.isSafeInteger(point.q) && point.q >= 0 && point.q < field.columns && Number.isSafeInteger(point.r) && point.r >= 0 && point.r < field.rows; }
-function passableHex(point, field) { return validHex(point, field) && tileAt(field, point.q, point.r)?.terrain !== 'dense-trees'; }
+function passableHex(point, field) { return validHex(point, field) && !blockedTerrain(tileAt(field, point.q, point.r)?.terrain); }
 
 function validateBattleField(input) {
   if (input === undefined) return legacyBattleField();
@@ -4368,7 +4368,7 @@ function validateBattleField(input) {
   const tiles = input.tiles.map((tile, index) => {
     const q = Math.floor(index / input.rows);
     const r = index % input.rows;
-    assert(recordObject(tile) && tile.q === q && tile.r === r && ['open', 'trees', 'brush', 'mud', 'rock', 'dense-trees'].includes(tile.terrain) && Number.isSafeInteger(tile.height) && tile.height >= 0 && tile.height <= 2, 'battle field tile');
+    assert(recordObject(tile) && tile.q === q && tile.r === r && ['open', 'trees', 'brush', 'mud', 'rock', 'dense-trees', 'palisade'].includes(tile.terrain) && Number.isSafeInteger(tile.height) && tile.height >= 0 && tile.height <= 2, 'battle field tile');
     return { q, r, terrain: tile.terrain, height: tile.height };
   });
   return { columns: input.columns, rows: input.rows, biome: input.biome, tiles };
@@ -4387,6 +4387,7 @@ function validateBattle(input, party, worldState) {
   assert(Number.isSafeInteger(difficulty) && difficulty >= 0 && difficulty <= 3, 'battle difficulty');
   const campGeneration = input.campGeneration ?? (encounterType === 'camp' ? encounter.generation : null);
   assert(encounterType === 'camp' ? validCount(campGeneration) && campGeneration <= 1000000 && campGeneration === encounter.generation : campGeneration === null, 'battle camp generation');
+  assert(input.enemyTacticsVersion===undefined||input.enemyTacticsVersion===1,'battle enemy tactic rules');
   assert(input.weaponAuditVersion===undefined||input.weaponAuditVersion===1,'battle weapon audit rules');
   assert(input.attachmentRulesVersion===undefined||input.attachmentRulesVersion===1,'battle attachment rules');
   assert(input.championRulesVersion===undefined||input.championRulesVersion===1,'battle champion rules');
@@ -4678,6 +4679,7 @@ function validateBattle(input, party, worldState) {
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
     id: input.id, campId: input.campId, ...(input.enemyOpening===undefined?{}:{enemyOpening:input.enemyOpening}), encounterType, encounterName, difficulty, campGeneration, famedDrop, ...(input.mountReward===undefined?{}:{mountReward}), tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
+    ...(input.enemyTacticsVersion===undefined?{}:{enemyTacticsVersion:1}),
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
     ...(input.attachmentRulesVersion===undefined?{}:{attachmentRulesVersion:1}),
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),

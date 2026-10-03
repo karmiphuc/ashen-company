@@ -1,6 +1,8 @@
 export const BATTLE_COLUMNS = 14;
 export const BATTLE_ROWS = 16;
-export const TILE_TERRAINS = Object.freeze(['open', 'trees', 'brush', 'mud', 'rock', 'dense-trees']);
+export const TILE_TERRAINS = Object.freeze(['open', 'trees', 'brush', 'mud', 'rock', 'dense-trees', 'palisade']);
+
+export function blockedTerrain(terrain) { return terrain === 'dense-trees' || terrain === 'palisade'; }
 
 const DIRECTIONS = [[1, 0], [1, -1], [0, 1], [0, -1], [-1, 0], [-1, 1]];
 
@@ -24,7 +26,7 @@ function deploymentTile(q) {
 }
 
 function walkableTilesConnected(tiles) {
-  const walkable = tiles.filter(tile => tile.terrain !== 'dense-trees');
+  const walkable = tiles.filter(tile => !blockedTerrain(tile.terrain));
   if (!walkable.length) return false;
   const byPoint = new Map(tiles.map(tile => [`${tile.q},${tile.r}`, tile]));
   const seen = new Set([`${walkable[0].q},${walkable[0].r}`]);
@@ -32,7 +34,7 @@ function walkableTilesConnected(tiles) {
   for (const point of queue) for (const [dq, dr] of DIRECTIONS) {
     const next = byPoint.get(`${point.q + dq},${point.r + dr}`);
     const key = next && `${next.q},${next.r}`;
-    if (next && next.terrain !== 'dense-trees' && !seen.has(key)) {
+    if (next && !blockedTerrain(next.terrain) && !seen.has(key)) {
       seen.add(key);
       queue.push(next);
     }
@@ -40,7 +42,7 @@ function walkableTilesConnected(tiles) {
   return seen.size === walkable.length;
 }
 
-export function createBattleField(seed, encounterId, biome) {
+export function createBattleField(seed, encounterId, biome, {fortified = false} = {}) {
   const terrainWeights = {
     plains: [76, 4, 13, 4, 3],
     forest: [49, 27, 18, 3, 3],
@@ -78,6 +80,20 @@ export function createBattleField(seed, encounterId, biome) {
     tile.terrain = 'dense-trees';
     if (!walkableTilesConnected(tiles)) tile.terrain = 'trees';
   }
+  if (fortified) {
+    // Enclose the enemy deployment, with two wide entrances on the assault side.
+    for (const tile of tiles) {
+      if (tile.q >= 8 && (tile.r === 1 || tile.r === 14)
+        || tile.q === 13 && tile.r >= 1 && tile.r <= 14
+        || tile.q === 8 && tile.r >= 2 && tile.r <= 13 && ![4,5,9,10].includes(tile.r)) tile.terrain = 'palisade';
+      if (tile.q >= 7 && tile.q <= 9 && [4,5,9,10].includes(tile.r)) tile.terrain = 'open';
+    }
+    // Trees must not seal an entrance or isolate a walkable pocket behind the wall.
+    for (const tile of tiles.filter(t => t.terrain === 'dense-trees')) {
+      if (walkableTilesConnected(tiles)) break;
+      tile.terrain = 'trees';
+    }
+  }
   return { columns: BATTLE_COLUMNS, rows: BATTLE_ROWS, biome, tiles };
 }
 
@@ -107,7 +123,7 @@ export function hexNeighbors(field, point) {
 export function movementCost(field, from, to) {
   const tile = tileAt(field, to.q, to.r);
   const origin = tileAt(field, from.q, from.r);
-  if (!tile || !origin || tile.terrain === 'dense-trees' || origin.terrain === 'dense-trees' || hexDistance(from, to) !== 1) return Infinity;
+  if (!tile || !origin || blockedTerrain(tile.terrain) || blockedTerrain(origin.terrain) || hexDistance(from, to) !== 1) return Infinity;
   const ground = tile.terrain === 'trees' || tile.terrain === 'mud' ? 2 : 1;
   return Math.min(2, ground + (tile.height > origin.height ? 1 : 0));
 }
@@ -142,7 +158,7 @@ export function rangedCoverModifier(field, from, to) {
   for (let step = 1; step < distance; step++) {
     const point = roundedHex(from.q + (to.q - from.q) * step / distance, from.r + (to.r - from.r) * step / distance);
     const terrain = tileAt(field, point.q, point.r)?.terrain;
-    if (terrain === 'trees' || terrain === 'dense-trees') penalty += 8;
+    if (terrain === 'trees' || terrain === 'dense-trees' || terrain === 'palisade') penalty += 8;
     else if (terrain === 'brush') penalty += 4;
   }
   return -Math.min(36, penalty);

@@ -35,3 +35,12 @@ export function rankTacticalActions(actor, candidates, context = {}) {
     .sort((a, b) => b.score - a.score || String(a.id ?? a.type).localeCompare(String(b.id ?? b.type))
       || String(a.targetId ?? '').localeCompare(String(b.targetId ?? '')) || a.candidateIndex - b.candidateIndex);
 }
+
+/** New battles use the live ranged contingent; legacy fights retain offense. */
+export function enemyBattleTactic(battle, getItem) {
+  if (battle.enemyTacticsVersion !== 1) return 'offense';
+  const ranged = battle.units.filter(unit => unit.side === 'enemy' && unit.alive && !unit.escaped
+    && getItem(unit.equipment?.weapon)?.ranged
+    && (!getItem(unit.equipment.weapon).throwing || unit.throwingAmmo?.active > 0));
+  return ranged.length >= 3 ? 'defense' : 'offense';
+}
