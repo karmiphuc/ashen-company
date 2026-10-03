@@ -2,6 +2,7 @@ import { weaponTrainingVisual } from './perks.js';
 
 export const COMBAT_SKILLS = Object.freeze({
   charge: { id: 'charge', name: 'Charge', ap: 6, description: 'Ride 2-3 clear hexes in a straight line, then make a normal melee attack. A hit always stuns and pushes the survivor one hex if it is free. Costs normal attack plus movement fatigue; weapon mastery does not reduce the 6 AP.' },
+  howling: { id: 'howling', name: 'Howling', ap: 0, description: '20% chance after a warg rider attacks: enemies within 3 hexes deal 20% less damage for their next 2 turns. Repeated howls refresh the duration without stacking.' },
   'wolf-bite': { id: 'wolf-bite', name: 'Wolf Bite', ap: 0, description: 'After a rider attack, bite one adjacent surviving enemy for 12-20 damage with 40% armor penetration. Separate hit roll; no AP, fatigue or ammunition cost. No bite after reactions.' },
   'quick-shot': { id: 'quick-shot', name: 'Quick Shot', ap: 4, description: 'A normal bow shot; leaves AP for another shot or movement.' },
   'aimed-shot': { id: 'aimed-shot', name: 'Aimed Shot', ap: 7, fatigue: 15, hitBonus: 15, rangeBonus: 1, description: 'Aim carefully: +15 hit chance and +1 range.' },
@@ -54,7 +55,7 @@ const FAMILY_SKILLS = Object.freeze({
 
 export function equipmentSkills(item) {
   if (!item) return [];
-  if (item.slot === 'mount') return [COMBAT_SKILLS[/horse/.test(item.visual) ? 'charge' : 'wolf-bite']];
+  if (item.slot === 'mount') return [COMBAT_SKILLS[/horse/.test(item.visual) ? 'charge' : 'wolf-bite'], ...(item.howlChance ? [COMBAT_SKILLS.howling] : [])];
   if (item.slot === 'shield') return [COMBAT_SKILLS.shieldwall, COMBAT_SKILLS['knock-back']];
   return (FAMILY_SKILLS[weaponSkillFamily(item)] ?? []).map(id => {
     const skill = COMBAT_SKILLS[id];

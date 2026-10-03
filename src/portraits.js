@@ -186,8 +186,8 @@ export const VISUALS = {
   },
   mount: {
     horse: {body:'mount-horse-body.png',head:'mount-horse-head.png',headLeft:78,headTop:54,scale:1.25,facing:1},
-    warhorse: {body:'mount-war-horse-body.png',head:'mount-war-horse-head.png',headLeft:90,headTop:52,scale:1.04,facing:1},
-    armoredhorse: {body:'mount-armored-war-horse-body.png',head:'mount-armored-war-horse-head.png',headLeft:90,headTop:52,scale:1.04,facing:1},
+    warhorse: {body:'mount-war-horse-body.png',head:'mount-war-horse-head.png',headLeft:81,headTop:33.6544,scale:1.2272,facing:1},
+    armoredhorse: {body:'mount-armored-war-horse-body.png',head:'mount-armored-war-horse-head.png',headLeft:81,headTop:33.28,scale:1.2272,facing:1},
     warg: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:139,headTop:70,scale:.98,facing:-1,filter:'sepia(.85) saturate(.7) brightness(.7)'},
     wolf: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:139,headTop:70,scale:.98,facing:-1},
   },
@@ -546,9 +546,12 @@ function mountLayer(spec, part) {
     // the armor instead of enlarging only the concealed crop.
     const [x1,y1,x2,y2]=MOUNT_BODY_BOUNDS[body];
     const wolfBody = body === 'mount-wolf-body.png';
-    const bodyTop = wolfBody ? 78 : 58;
-    const sx=129/(x2-x1),sy=(156-bodyTop)/(y2-y1);
-    left=facing===1?0-x1*sx:129+x1*sx;top=bodyTop-y1*sy;
+    const warHorse = body.includes('war-horse');
+    const size = warHorse ? 1.18 : 1;
+    const bodyTop = wolfBody ? 78 : 156 - 98 * size;
+    const bodyWidth = warHorse ? 140 : 129;
+    const sx=bodyWidth/(x2-x1),sy=(156-bodyTop)/(y2-y1);
+    left=facing===1?0-x1*sx:bodyWidth+x1*sx;top=bodyTop-y1*sy;
     transform=`scale(${facing*sx},${sy})`;
   }
   return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT+file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:${transform};transform-origin:top left;${filter?`filter:${filter};`:''}z-index:${part==='head'?5:0};max-width:none;pointer-events:none">`;
@@ -564,7 +567,8 @@ function portraitFrame(equipment, weapon = mountedWeapon(layerSpec('weapon', equ
   const leftRoom = Math.max(0, -weaponBounds.left, -(shield?.[1] ?? 0), -(dlcHelmet?.left ?? 0));
   const shieldScale = Number(shield?.[3]?.match(/scale\(([\d.]+)\)/)?.[1] ?? 1);
   const shieldRight = shield ? shield[1] + SHIELD_WIDTHS[shield[0]] * shieldScale : 0;
-  const mountRight = layerSpec('mount', equipment.mount) ? MOUNT_PLATE.left + MOUNT_PLATE.width : 0;
+  const mountSpec = layerSpec('mount', equipment.mount);
+  const mountRight = mountSpec ? Math.max(MOUNT_PLATE.left + MOUNT_PLATE.width, /war-horse/.test(mountSpec.body) ? 140 : 0) : 0;
   const rightRoom = Math.max(0, mountRight - CANVAS.width, shieldRight - CANVAS.width, weaponBounds.right - CANVAS.width, dlcHelmet ? dlcHelmet.left + dlcHelmet.width - CANVAS.width : 0);
   const footroom = Math.max(0, weaponBounds.bottom - CANVAS.height, mountRight ? MOUNT_PLATE.top + MOUNT_PLATE.height - CANVAS.height : 0);
   const framed = Boolean(dlcHelmet || leftRoom || rightRoom || weaponBounds.top < 0 || footroom);

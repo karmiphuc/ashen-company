@@ -29,15 +29,15 @@ test('mounts use their own slot, conserve ownership, and migrate old saves', () 
   assert.equal(equipItem(state, 'captain', 'warg-mount', 'reserve').ok, false);
 });
 
-test('living mounted members add world speed, daily food, initiative, and battle skill', () => {
+test('living mounted members add world speed, daily food, initiative, and defenses', () => {
   const mounted = createGame(28);
   const plain = createGame(28);
   mounted.inventory.push('dire-wolf-mount');
   mounted.inventoryCondition.push(null);
   assert.equal(equipItem(mounted, 'captain', 'dire-wolf-mount').ok, true);
-  assert.equal(getCompanyStats(mounted.party[0]).meleeSkill, getCompanyStats(plain.party[0]).meleeSkill + 5);
-  assert.equal(getCompanyStats(mounted.party[0]).rangedSkill, getCompanyStats(plain.party[0]).rangedSkill + 5);
-  assert.equal(getCompanyStats(mounted.party[0]).initiative, getCompanyStats(plain.party[0]).initiative + 4);
+  assert.equal(getCompanyStats(mounted.party[0]).meleeSkill, getCompanyStats(plain.party[0]).meleeSkill);
+  assert.equal(getCompanyStats(mounted.party[0]).rangedSkill, getCompanyStats(plain.party[0]).rangedSkill);
+  assert.equal(getCompanyStats(mounted.party[0]).initiative, getCompanyStats(plain.party[0]).initiative + 3);
   assert.equal(getDailyFood(mounted), getDailyFood(plain) + 3);
   assert.equal(getCompanyTravelBonus(mounted), .1);
   for (const state of [mounted, plain]) for (const band of Object.values(state.bands)) band.defeatedUntil = 1000;
@@ -52,15 +52,15 @@ test('living mounted members add world speed, daily food, initiative, and battle
   for (const id of mountIds) {
     const item = getItem(id);
     assert.equal(item.slot, 'mount');
-    assert.equal(item.damageBonus, id === 'armored-war-horse' ? .2 : .15);
-    assert.equal(item.movementBonus, 2);
-    assert.equal(item.initiativeBonus, 4);
+    assert.equal(item.damageBonus, id === 'riding-horse' ? .10 : /horse/.test(id) ? .15 : 0);
+    assert.equal(item.movementBonus, 0);
+    assert.equal(item.initiativeBonus, id === 'warg-mount' ? 8 : id === 'dire-wolf-mount' ? 3 : 0);
   }
 });
 
 test('fantasy war horses carry their catalog trade-offs into company stats', () => {
   const plain = createGame(280);
-  for (const [id, hit, food, price] of [['war-horse', 5, 2, 1800], ['armored-war-horse', 7, 3, 2600]]) {
+  for (const [id, hit, food, price] of [['war-horse', 0, 2, 1800], ['armored-war-horse', 0, 3, 2600]]) {
     const state = createGame(280);
     const item = getItem(id);
     assert.equal(item.price, price);
@@ -172,7 +172,7 @@ test('rare mounted elites are visible while scouting and keep their mount in bat
   const elite = state.battle.units.find(unit => unit.id === 'enemy-1');
   assert.equal(elite.equipment.mount, band.enemies[0].mount);
   assert.ok(mountIds.includes(elite.equipment.mount));
-  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + 4 + enemyRoleBonuses(band.enemies[0],band.difficulty).initiative);
+  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + getItem(elite.equipment.mount).initiativeBonus + enemyRoleBonuses(band.enemies[0],band.difficulty).initiative);
   assert.deepEqual(validateSave(state), state);
 });
 
@@ -187,7 +187,7 @@ test('a mount can carry its rider farther in a combat turn', () => {
     startBattle(mounted, 'quarry-camp');
     const plain = structuredClone(mounted);
     const mountedRider = mounted.battle.units.find(unit => unit.id === 'captain');
-    assert.equal(mountedRider.movementCredit, 4, 'the +2 movement points cover two extra open-ground hexes at start of turn');
+    assert.equal(mountedRider.movementCredit, 0, 'mounted movement costs 1 AP per step instead of starting with free movement credits');
     for (const state of [mounted, plain]) {
       const battle = state.battle;
       battle.turnIndex = battle.turnOrder.indexOf('captain');
