@@ -527,11 +527,11 @@ function bodyLayer(file, armored, left = 11, top = 50) {
   return `<span data-layer="body" class="bb-layer bb-layer-body"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(0 0,22px 0,22px 60px,0 60px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(22px 0,60px 0,60px 34px,22px 34px);max-width:none;pointer-events:none"><img src="${source}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;clip-path:polygon(60px 0,82px 0,82px 60px,60px 60px);max-width:none;pointer-events:none"></span>`;
 }
 
-function attachmentLayer(spec, part) {
+function attachmentLayer(spec, part, slot='attachment') {
   const layerSpec = spec?.[part];
   if (!layerSpec) return '';
   const [file, left, top] = layerSpec;
-  return `<img data-layer="attachment-${part}" class="bb-layer bb-layer-attachment" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none;z-index:${part === 'back' ? 2 : 3}">`;
+  return `<img data-layer="${slot}-${part}" class="bb-layer bb-layer-attachment" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;max-width:none;pointer-events:none;z-index:${part === 'back' ? 2 : 3}">`;
 }
 
 function mountLayer(spec, part) {
@@ -605,6 +605,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const scale = Number((width / CANVAS.width).toFixed(6));
   const armor = layerSpec('armor', equipment.armor);
   const attachment = layerSpec('attachment', equipment.attachment);
+  const attachment2=layerSpec('attachment',equipment.attachment2);
   const mount = layerSpec('mount', equipment.mount);
   const helmet = layerSpec('helmet', equipment.helmet);
   const shield = mountedShield(layerSpec('shield', equipment.shield), mount);
@@ -617,9 +618,9 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
   const {left: compositionLeft, top: compositionTop, transform: compositionTransform} = portraitFrame(equipment, weapon, shield);
   const rider = `${bodyLayer(appearance.body, Boolean(armor), appearance.bodyLeft, appearance.bodyTop)}
-        ${attachmentLayer(attachment, 'back')}
+        ${attachmentLayer(attachment, 'back')}${attachmentLayer(attachment2,'back','attachment2')}
         ${layer('armor', armor, equipment.armor)}
-        ${attachmentLayer(attachment, 'front')}
+        ${attachmentLayer(attachment, 'front')}${attachmentLayer(attachment2,'front','attachment2')}
         ${hiddenHead ? '' : `<img data-layer="head" class="bb-layer bb-layer-head" src="${PORTRAIT_ROOT}${appearance.head}" alt="" draggable="false" style="position:absolute;left:${appearance.headLeft}px;top:${appearance.headTop ?? 0}px;${faceClip}max-width:none;pointer-events:none;z-index:4">`}
         ${coveredHead || !appearance.ear ? '' : layer('ear', appearance.ear)}
         ${coveredHead || !appearance.hair ? '' : `<img data-layer="hair" class="bb-layer bb-layer-hair" src="${PORTRAIT_ROOT}${appearance.hair}" alt="" draggable="false" style="position:absolute;left:${appearance.hairLeft ?? 25}px;top:${appearance.hairTop ?? 0}px;max-width:none;pointer-events:none;z-index:4">`}

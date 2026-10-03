@@ -1,7 +1,7 @@
 const PERK_CATEGORIES = {
   general: ['colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist'],
   weapon: ['backstabber', 'sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training', 'shield-strike'],
-  defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'reach-advantage', 'last-stand'],
+  defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'layered-armor', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'reach-advantage', 'last-stand'],
   ranged: ['bullseye', 'anticipation', 'bow-mastery', 'crossbow-mastery', 'marksman', 'point-blank', 'volley-fire', 'reload-drill'],
   mobility: ['pathfinder', 'recover', 'fleet-footed', 'relentless', 'marathoner', 'high-ground', 'quick-hands', 'combat-bandaging'],
 };
@@ -26,7 +26,8 @@ export const PERKS = Object.freeze([
   { id: 'shield-expert', name: 'Shield Expert', description: 'Gain 25% more melee and ranged defense from shields and halve shield durability wear.', minLevel: 4 },
   { id: 'backstabber', name: 'Backstabber', description: 'Gain +5 melee hit chance for each other ally adjacent to the target.', minLevel: 4 },
   { id: 'anticipation', name: 'Anticipation', description: 'Gain 10% of current ranged defense per tile of distance, with a minimum +10.', minLevel: 4 },
-  { id: 'brawny', name: 'Brawny', description: 'Reduce armor and helmet fatigue penalties by 30%.', minLevel: 4 },
+  { id: 'layered-armor', name: 'Layered Armor', description: 'Unlock a second armor attachment slot. Both attachments add protection and keep independent durability. Attachment fatigue is excluded from armor-weight perk checks.', minLevel: 4 },
+  { id: 'brawny', name: 'Brawny', description: 'Reduce armor and helmet fatigue penalties by 30%. Attachments keep their full fatigue cost.', minLevel: 4 },
   { id: 'bow-mastery', name: 'Bow Mastery', description: 'Gain +1 range with bows and reduce their attack fatigue by 25%. Matching attacks and weapon skills cost 1 less AP in new weapon-skill battles.', minLevel: 5 },
   { id: 'crossbow-mastery', name: 'Crossbow Mastery', description: 'Crossbow attacks gain +20 percentage points of armor penetration and cost 25% less fatigue. Matching attacks and weapon skills cost 1 less AP in new weapon-skill battles.', minLevel: 5 },
   { id: 'berserk', name: 'Berserk', description: 'After a kill in a new battle, gain 4 AP for immediate actions, once per round. Old battles retain 2 AP.', minLevel: 7 },
@@ -44,7 +45,7 @@ export const PERKS = Object.freeze([
   { id: 'shield-strike', name: 'Shield Strike', description: 'Deal 10% more melee damage while using a shield.', minLevel: 3 },
   { id: 'iron-jaw', name: 'Iron Jaw', description: 'Take 20% less health damage from every hit.', minLevel: 4 },
   { id: 'battle-forged', name: 'Battle Forged', description: 'Armor takes 15% less damage from hits.', minLevel: 5 },
-  { id: 'nimble', name: 'Nimble', description: 'Gain +5 melee and ranged defense when armor, attachment, and helmet fatigue total at most 15.', minLevel: 4 },
+  { id: 'nimble', name: 'Nimble', description: 'Gain +5 melee and ranged defense when armor and helmet fatigue total at most 15.', minLevel: 4 },
   { id: 'reach-advantage', name: 'Reach Advantage', description: 'Gain +5 melee defense while wielding a two-handed melee weapon.', minLevel: 4 },
   { id: 'duelist', name: 'Duelist', description: 'Deal 12% more melee damage with a one-handed weapon and no shield.', minLevel: 4 },
   { id: 'opportunist', name: 'Opportunist', description: 'Deal 10% more melee damage to enemies without a shield.', minLevel: 4 },
@@ -53,8 +54,8 @@ export const PERKS = Object.freeze([
   { id: 'point-blank', name: 'Point Blank', description: 'Remove the 12-point hit penalty for shooting an adjacent enemy.', minLevel: 3 },
   { id: 'volley-fire', name: 'Volley Fire', description: 'Deal 10% more ranged damage from at least three hexes away.', minLevel: 4 },
   { id: 'reload-drill', name: 'Reload Drill', description: 'Recover 12 fatigue when spending a turn reloading.', minLevel: 3 },
-  { id: 'fleet-footed', name: 'Fleet Footed', description: 'Gain one movement point when advancing toward a target if armor, attachment, and helmet fatigue total at most 15.', minLevel: 3 },
-  { id: 'relentless', name: 'Relentless', description: 'Halve equipment fatigue lost from initiative and combat fatigue lost from Dodge defense.', minLevel: 3 },
+  { id: 'fleet-footed', name: 'Fleet Footed', description: 'Gain one movement point when advancing toward a target if armor and helmet fatigue total at most 15.', minLevel: 3 },
+  { id: 'relentless', name: 'Relentless', description: 'Halve equipment fatigue lost from initiative, excluding attachment weight, and combat fatigue lost from Dodge defense.', minLevel: 3 },
   { id: 'marathoner', name: 'Marathoner', description: 'Spend 2 fatigue per combat movement point instead of 3.', minLevel: 3 },
   { id: 'high-ground', name: 'High Ground', description: 'Gain +8 hit chance when attacking from a higher hex.', minLevel: 3 },
 ].map(perk => {
