@@ -252,7 +252,8 @@ test('fantasy race bonuses and their hiring premiums double while elite backgrou
   assert.ok(byId.samurai.meleeDefense > byId.ronin.meleeDefense);
   assert.ok(byId.ronin.initiative > byId.samurai.initiative);
   assert.ok(byId.ninja.rangedSkill > 0 && byId.ninja.rangedDefense > 0);
-  assert.ok(byId['elf-wanderer'].initiative > byId.ninja.initiative);
+  assert.ok(byId.ninja.initiative > byId['elf-wanderer'].initiative);
+  for(const [id,cost,bonuses] of [['ronin',1000,{meleeSkill:14,initiative:10,meleeDefense:7,maxFatigue:6}],['ninja',1200,{rangedSkill:14,meleeSkill:8,initiative:16,rangedDefense:6,meleeDefense:4,maxFatigue:4}],['warrior-monk',900,{resolve:14,maxFatigue:12,meleeDefense:6,meleeSkill:8}]]){assert.equal(RECRUIT_BACKGROUND_BY_ID.get(id).cost,cost);assert.deepEqual(byId[id],bonuses);}
   assert.ok(byId['warrior-monk'].resolve > 0 && byId['warrior-monk'].maxFatigue > 0);
 });
 

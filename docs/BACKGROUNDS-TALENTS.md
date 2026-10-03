@@ -1,4 +1,4 @@
-# Backgrounds and talents — v0.47.5
+# Backgrounds and talents — v0.47.6
 
 The hiring roster grows from 18 to 28 backgrounds. Ordinary workers and hunters retain affordable fees, while veterans have distinct starting strengths, guaranteed potential in their main combat skill and higher wages. Recruits arrive without equipment; the hiring screen shows current stats, background bonuses, traits, talents and daily upkeep before purchase.
 
@@ -39,3 +39,13 @@ The existing rule of choosing three different attributes per level remains. Earn
 Old brothers without talent data receive the same deterministic three talents on import. Pending old level-up rolls gain their talent bonuses once; already learned attributes remain unchanged. Old unspent training points generate equivalent boosted choices. Existing battles retain their recorded unit stats and combat state. Talents persist in reserve brothers and apply when they eventually earn experience.
 
 Coverage includes all backgrounds and talent tiers, exact growth arithmetic, real battle XP and queued levels, hiring preview consistency, equipment changes, old save migration, old active battles, malformed saves, training, Colossus health rounding and the three UI surfaces.
+
+## Specialist buffs — v0.47.6
+
+| Background | Fee | Starting bonuses | Level-one wage |
+|---|---:|---|---:|
+| Ronin | 1,000 | +14 melee skill, +7 melee defense, +10 initiative, +6 maximum fatigue | 10 |
+| Ninja | 1,200 | +14 ranged skill, +8 melee skill, +16 initiative, +6 ranged defense, +4 melee defense, +4 maximum fatigue | 11 |
+| Warrior Monk | 900 | +14 resolve, +12 maximum fatigue, +6 melee defense, +8 melee skill | 10 |
+
+Existing brothers receive the stronger background stats, with their fixed talents, learned attributes and current battle snapshots preserved. New specialist recruits have at least two stars in their primary attack skill under the existing veteran talent rule.
