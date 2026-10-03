@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.48.2 restores readable equipped weapons and shields: one-handed/ranged foreground art is 20% larger, mounted shields regain up to 48px width, and unmounted shields gain 12%. Grip placement limits extra framing shrink; shield bottoms stay inside the pawn/base frame. Two-handed rest poses and size limits remain intact.
+
 Version 0.48.1 enriches the world map with seeded terrain variation, regional details, curved roads, settlement footprints and clearer village/city/castle silhouettes. Real travellers gain shadows and directional facing; night adds warm settlement lights. Campaign mechanics and saves stay compatible. See [map rendering and validation](docs/MAP-IMMERSION.md).
 
 Version 0.48 adds **Ashen Winter**, the first endgame crisis. From day 60, a company whose six strongest equipped members average level seven can receive a seven-day invasion warning. Three Ancient Legion commanders send hosts along the roads. Besieged and occupied settlements close every service until your company liberates them; waiting will not reopen them. Defeating commanders stops new attacks, and freeing all blocked settlements ends the crisis with crowns, renown, and a saved equipment reward. Existing ancient enemies, artwork, and armory are reused. Old saves receive the full scheduling and warning period; active battles retain their rules. Faction war remains planned for a later release. See [implementation rules](docs/ASHEN-WINTER-IMPLEMENTATION-SPEC.md).
