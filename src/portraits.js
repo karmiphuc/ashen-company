@@ -251,6 +251,19 @@ const SHOULDER_DIMENSIONS = {
   'weapon-northern-rusty-greatsword.png': [110, 127],
   'weapon-northern-heavy-flail.png': [74, 108],
 };
+const ONE_HANDED_DIMENSIONS = {
+  'weapon-axe.png': [44, 46], 'weapon-dagger.png': [38, 50],
+  'weapon-falchion.png': [70, 140], 'weapon-fighting-knife.png': [36, 40],
+  'weapon-fighting-spear.png': [56, 74], 'weapon-flail.png': [44, 72],
+  'weapon-hand-axe.png': [54, 62], 'weapon-mace.png': [48, 64],
+  'weapon-military-cleaver.png': [78, 108], 'weapon-military-spear.png': [60, 80],
+  'weapon-northern-broadhead-spear.png': [62, 86], 'weapon-northern-crude-club.png': [38, 54],
+  'weapon-northern-serrated-axe.png': [91, 126], 'weapon-northern-sling.png': [64, 74],
+  'weapon-qatal.png': [34, 64], 'weapon-shamshir.png': [64, 78],
+  'weapon-spear.png': [60, 80], 'weapon-sword.png': [42, 56],
+  'weapon-three-headed-flail.png': [52, 82], 'weapon-warhammer.png': [42, 66],
+  'weapon-winged-mace.png': [42, 58], 'weapon-whip.png': [66, 70],
+};
 
 
 // A mounted pawn is one silhouette, not a miniature rider beside an animal.
@@ -294,20 +307,31 @@ function weaponRest(spec, item) {
   if (RANGED_WEAPONS.has(visual(item)) || /crossbow|(?:^|-)bow$/.test(file.replace('weapon-', '').replace('.png', ''))) return spec;
   const reverse = REVERSED_ONE_HANDERS.has(item?.baseId || item?.id) || REVERSED_ONE_HANDERS.has(visual(item));
   return [file, 82 - gripX, 111 - gripY,
-    `scaleX(-1) ${reverse ? 'scale(.75) rotate(-30deg) scaleX(-1)' : rest}`, origin];
+    `scaleX(-1) rotate(-30deg) ${reverse ? 'scale(.75) rotate(-30deg) scaleX(-1)' : rest}`, origin];
 }
 
-function weaponFrame(spec) {
-  const dimensions = SHOULDER_DIMENSIONS[spec?.[0]];
+function weaponFrame(spec, item) {
+  const key = item?.baseId || item?.id;
+  const shoulder = Boolean(item?.twoHanded && !item.ranged) || SHOULDER_WEAPONS.has(key);
+  const dimensions = SHOULDER_DIMENSIONS[spec?.[0]] ??
+    (!shoulder && !item?.ranged ? ONE_HANDED_DIMENSIONS[spec?.[0]] : null);
   if (!dimensions) return {left: 0, right: 104, top: 0, bottom: 142};
   const [, left, top, transform, origin] = spec;
   const [gx, gy] = origin.split(' ').map(parseFloat);
-  const scale = Number(transform.match(/scale\(([\d.]+)\)/)[1]);
-  const angle = Number(transform.match(/rotate\(([\d.-]+)deg\)/)[1]) * Math.PI / 180;
-  const points = [0, dimensions[0]].flatMap(x => [0, dimensions[1]].map(y => [
-    left + gx + scale * ((x - gx) * Math.cos(angle) - (y - gy) * Math.sin(angle)),
-    top + gy + scale * ((x - gx) * Math.sin(angle) + (y - gy) * Math.cos(angle)),
-  ]));
+  const operations = [...transform.matchAll(/(scaleX|scale|rotate)\(([^)]+)\)/g)].reverse();
+  const transformPoint = (x, y) => operations.reduce(([px, py], [, kind, args]) => {
+    if (kind === 'rotate') {
+      const angle = Number(args.replace('deg', '')) * Math.PI / 180;
+      return [px * Math.cos(angle) - py * Math.sin(angle), px * Math.sin(angle) + py * Math.cos(angle)];
+    }
+    if (kind === 'scaleX') return [px * Number(args), py];
+    const scale = Number(args);
+    return [px * scale, py * scale];
+  }, [x - gx, y - gy]);
+  const points = [0, dimensions[0]].flatMap(x => [0, dimensions[1]].map(y => {
+    const [px, py] = transformPoint(x, y);
+    return [left + gx + px, top + gy + py];
+  }));
   return {left: Math.min(0, ...points.map(p => p[0])), right: Math.max(104, ...points.map(p => p[0])),
     top: Math.min(0, ...points.map(p => p[1])), bottom: Math.max(142, ...points.map(p => p[1]))};
 }
@@ -533,7 +557,7 @@ function mountLayer(spec, part) {
 function portraitFrame(equipment, weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount), shield = mountedShield(layerSpec('shield', equipment.shield), equipment.mount)) {
   const dlcHelmet = DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
   const helmetVisual = visual(equipment.helmet);
-  const weaponBounds = weaponFrame(weapon);
+  const weaponBounds = weaponFrame(weapon, equipment.weapon);
   // Preserve the helmet/head relationship while fitting tall crowns and wide horns.
   // Move and scale the whole composition; never push only the helmet down onto the brow.
   const headroom = Math.max(0, -weaponBounds.top, dlcHelmet ? -dlcHelmet.top - (equipment.mount ? 36 : 0) : helmetVisual === 'bascinet' ? 13 : 0);
