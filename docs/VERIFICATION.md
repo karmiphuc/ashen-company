@@ -1,6 +1,16 @@
-# Verification - version 0.46.0, 2026-10-03
+# Verification - version 0.46.1, 2026-10-03
 
 
+
+## v0.46.1 checks
+
+All 541 automated tests pass, including eight loot-sharing and resale regressions. Ordinary equipment now sells for 20% of its local purchase quote. Named/famed items retain 50%; equipment town events retain their existing sale prices and trade commodities remain unchanged.
+
+Victory loot cards have separate inspection buttons and share checkboxes. Sharing consumes only selected copies and collects the rest with their original durability, resources and crowns. Rewards use the nearest settlement's actual market sell quotes, including applicable events, divided among surviving company brothers: ceil(value / (10 × survivors)) XP and ceil(value / (25 × survivors)) morale, capped at 100 XP and 15 morale each; total morale stays at or below 100. Existing level-up rules apply. Allies and casualties receive no share. Invalid selections fail before mutation; completion prevents a second claim. Full stashes and save/reload remain supported.
+
+Native Chromium checked the actual loot screen, focus retention, inspecting a selected copy, and committing the reward. Sharing one 64-crown Mail Shirt awarded each of three survivors 3 XP and 1 morale, retained the other copy at 17 durability, and collected all other loot and 125 crowns. No JavaScript exceptions occurred. Screenshot: `/workspace/ashen-loot-sharing-v0461.png`.
+
+A fresh Chromium profile cached all 556 offline resources, reloaded with networking disabled, and loaded the v0.46.1 engine and new loot-sharing API from the service worker. No JavaScript exceptions occurred.
 
 ## v0.46.0 checks
 

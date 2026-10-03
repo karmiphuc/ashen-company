@@ -715,7 +715,7 @@ function equipmentPrices(state, town, item) {
     ? Math.max(1, Math.min(buyPrice - 1, Math.max(
       Math.floor(baseBuyPrice * modifiers.equipmentSell),
       Math.ceil(Math.min(...SETTLEMENTS.filter(place => place.id !== town.id).map(place => Math.round(item.price * GEAR_FACTORS[place.id]))) * 1.05),
-    ))) : Math.max(1, Math.floor(buyPrice / 2));
+    ))) : Math.max(1, Math.floor(buyPrice * (['famed','named'].includes(item.rarity) || ordinaryGear && modifiers.equipmentBuy ? .5 : .2)));
   return { buyPrice, sellPrice };
 }
 
@@ -4136,10 +4136,31 @@ export function retreatBattle(state) {
   return result(true, battle.lastEvent.message);
 }
 
-export function finishBattle(state) {
+// Loot is quoted against the nearest real market, using exactly the same sale rules as the trader.
+export function getLootShareQuote(state, indices = []) {
+  const battle = state.battle;
+  if (battle?.status !== 'victory' || !Array.isArray(indices) || indices.length > battle.loot.items.length
+    || new Set(indices).size !== indices.length || [...indices].some(index => !Number.isSafeInteger(index) || index < 0 || index >= battle.loot.items.length)) return null;
+  const marketTown = [...SETTLEMENTS].sort((a, b) => Math.hypot(a.x - state.position.x, a.y - state.position.y)
+    - Math.hypot(b.x - state.position.x, b.y - state.position.y) || a.id.localeCompare(b.id))[0];
+  const survivors = battle.units.filter(unit => unit.side === 'company' && !unit.ally && unit.alive
+    && state.party.some(person => person.id === unit.id));
+  const prices = battle.loot.items.map(id => equipmentPrices(state, marketTown, getItem(id)).sellPrice);
+  const value = indices.reduce((sum, index) => sum + prices[index], 0);
+  const count = survivors.length;
+  const xp = value && count ? Math.min(100, Math.ceil(value / (10 * count))) : 0;
+  const morale = value && count ? Math.min(15, Math.ceil(value / (25 * count))) : 0;
+  return { townId: marketTown.id, townName: marketTown.name, prices, value, count, xp, morale, selectedCount: indices.length };
+}
+
+export function finishBattle(state, { shareLootIndices = [] } = {}) {
   const battle = state.battle;
   if (!battle || battle.status === 'active') return result(false, 'Finish the fight before claiming its result.');
   const victory = battle.status === 'victory';
+  if (!Array.isArray(shareLootIndices) || !victory && shareLootIndices.length) return result(false, 'Only victory spoils can be shared.');
+  const sharing = victory ? getLootShareQuote(state, shareLootIndices) : null;
+  if (victory && !sharing) return result(false, 'Choose valid, distinct spoils to share.');
+  const shared = new Set(shareLootIndices);
   const formation = getFormation(state);
   const survivors = [];
   for (const person of state.party) {
@@ -4172,12 +4193,12 @@ export function finishBattle(state) {
       continue;
     }
     person.hp = unit.hp;
-    person.morale = unit.morale;
+    person.morale = Math.min(100, unit.morale + (sharing?.morale ?? 0));
     person.accessories = carriedAccessories;
     person.throwingAmmo = throwingAmmo;
     person.armorDurability = { body: unit.bodyArmor, attachment: unit.attachmentArmor, head: unit.headArmor,
       shield: activeShieldCondition, reserveShield: reserveShieldCondition };
-    const earnedXp = battle.xp[person.id] ?? 0;
+    const earnedXp = (battle.xp[person.id] ?? 0) + (sharing?.xp ?? 0);
     person.xp += earnedXp;
     while (person.xp >= person.level * 50 && person.level < 30) {
       person.xp -= person.level * 50;
@@ -4197,6 +4218,7 @@ export function finishBattle(state) {
     state.food += loot.food;
     for (const kind of ['tools', 'medicine', 'ammo']) state.supplies[kind] += loot[kind];
     for (let index = 0; index < loot.items.length; index++) {
+      if (shared.has(index)) continue;
       if (state.inventory.length >= MAX_INVENTORY) break;
       const itemId = loot.items[index];
       state.inventory.push(itemId);
@@ -4234,6 +4256,7 @@ export function finishBattle(state) {
     state.bands[battle.campId].targetId = null;
   }
   const message = victory ? `The company claims ${battle.loot.gold} crowns and defeats ${battle.encounterName}.` : state.gameOver ? 'The company has fallen.' : 'The company survives and leaves the battlefield behind.';
+  if (sharing?.selectedCount) record(state, `Shared ${sharing.selectedCount} spoils worth ${sharing.value} crowns at ${sharing.townName}: each surviving brother receives ${sharing.xp} XP and up to ${sharing.morale} morale.`);
   record(state, message);
   state.battle = null;
   return result(true, message);
