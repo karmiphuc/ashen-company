@@ -14,9 +14,9 @@ const combatRoles = {auto:'Auto',frontliner:'Frontliner',skirmisher:'Skirmisher'
 const combatRoleHelp = {
   auto:'Auto follows current gear: shielded melee leads; bows and crossbows stay behind.',
   frontliner:'Closes with the enemy and holds the front.',
-  skirmisher:'Keeps space for mobile and reach weapons.',
-  ranged:'Keeps distance and falls back to melee when pressured.',
-  flanker:'Looks for side routes to reach exposed enemies.',
+  skirmisher:'Keeps space and pressures the nearest front line; closes when ammunition runs out.',
+  ranged:'Keeps space, seeks defensive cover and picks exposed or finishing targets; closes when ammunition runs out.',
+  flanker:'Prefers ranged and polearm enemies, taking safe routes around their front line.',
 };
 const skillPreferences = {balanced:'Balanced',damage:'Damage',control:'Control'};
 

@@ -50,7 +50,7 @@ test('defending infantry hold independently of company orders and advance after 
 });
 
 test('ranged defenders shoot in reach, defense releases after four quiet rounds and old battles keep offense',()=>{
- const state=fight(),b=roster(state,3),archer=b.units.find(u=>u.id==='enemy-1'),target=b.units.find(u=>u.side==='company');Object.assign(target,{q:9,r:6});b.activeId=archer.id;b.turnIndex=b.turnOrder.indexOf(archer.id);m.advanceBattle(state);assert.ok(['attack','miss'].includes(b.lastEvent.type));
+ const state=fight(),b=roster(state,3),archer=b.units.find(u=>u.id==='enemy-1'),target=b.units.find(u=>u.side==='company');Object.assign(target,{q:9,r:6});b.activeId=archer.id;b.turnIndex=b.turnOrder.indexOf(archer.id);m.advanceBattle(state);for(let step=0;step<3&&b.lastEvent.type==='move';step++){assert.equal(b.activeId,archer.id);m.advanceBattle(state);}assert.ok(['attack','miss'].includes(b.lastEvent.type));
  for(const legacy of [false,true]){const s=fight(),battle=roster(s,3),actor=battle.units.find(u=>u.id==='enemy-4');actor.equipment.shield=null;actor.shieldDurability=actor.maxShieldDurability=0;if(legacy)delete battle.enemyTacticsVersion;else battle.round=5;m.advanceBattle(s);assert.equal(battle.lastEvent.type,'move');}
 });
 

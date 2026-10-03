@@ -29,7 +29,7 @@ import { settlementAccess } from './settlement-access.js';
 import { UNDEAD_TYPES, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
 import { COMBAT_SKILLS, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
-import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, rankTacticalActions, enemyBattleTactic } from './tactical-ai.js';
+import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, rankTacticalActions, enemyBattleTactic, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
 
 export { PERKS } from './perks.js';
 
@@ -172,12 +172,14 @@ const ROAMING_BANDS = Object.freeze([
 ].map(band=>Object.freeze({...band,start:compactPoint(band.start),end:compactPoint(band.end)})));
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
-const FAMED_ID = /^(famed3|famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
+const FAMED_ID = /^(famed4|famed3|famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
 const FAMED_NAMES = ['Ashen', 'Blackthorn', 'Dawnward', 'Grimwolf', 'Ironbound', 'Oathkeeper', 'Ravenmark', 'Stormborn', 'Thornheart', 'Wolfguard'];
 
-export function createFamedItemId(baseId, seed, rulesVersion = 3) {
-  if (![1, 2, 3].includes(rulesVersion) || !ITEM_BY_ID.has(baseId) || ['accessory', 'attachment', 'mount'].includes(ITEM_BY_ID.get(baseId).slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
-  return `${rulesVersion === 1 ? 'famed' : rulesVersion===2?'famed2':'famed3'}:${baseId}:${seed}`;
+export function createFamedItemId(baseId, seed, rulesVersion) {
+  const base=ITEM_BY_ID.get(baseId),rangedWeapon=base?.slot==='weapon'&&(base.ranged??base.sourceStats?.ranged)===true;
+  const version=rulesVersion??(rangedWeapon?4:3);
+  if (![1, 2, 3, 4].includes(version) || version===4&&!rangedWeapon || !base || ['accessory', 'attachment', 'mount'].includes(base.slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
+  return `${version === 1 ? 'famed' : version===2?'famed2':version===3?'famed3':'famed4'}:${baseId}:${seed}`;
 }
 
 export function getItem(id) {
@@ -188,8 +190,8 @@ export function getItem(id) {
   if (!match) return undefined;
   const original = ITEM_BY_ID.get(match[2]);
   const seed = Number(match[3]);
-  if (!original || ['accessory', 'attachment', 'mount'].includes(original.slot) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
-  if(match[1]==='famed2'||match[1]==='famed3')return rollNamedItem(original,id,seed,{merged:match[1]==='famed3',shieldDurability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
+  if (!original || ['accessory', 'attachment', 'mount'].includes(original.slot) || match[1]==='famed4'&&!(original.ranged??original.sourceStats?.ranged) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
+  if(match[1]==='famed2'||match[1]==='famed3'||match[1]==='famed4')return rollNamedItem(original,id,seed,{merged:match[1]==='famed3'||match[1]==='famed4',rangeRoll:match[1]==='famed4',rulesVersion:Number(match[1].slice(5)),shieldDurability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
   const roll = shift => (seed >>> shift) & 15;
   const bonuses = [];
   const item = { ...original, id, baseId: original.id, rarity: 'famed' };
@@ -3018,11 +3020,13 @@ function shieldWallReformStep(state, actor) {
 
 function rangedTerrainModifier(battle, actor, from, target) {
   return heightHitModifier(battle.field, from, target)
-    + (hasPerk(actor, 'bullseye') ? 0 : rangedCoverModifier(battle.field, from, target));
+    + (hasPerk(actor, 'bullseye') ? 0 : rangedCoverModifier(battle.field, from, target))
+    + (battle.weaponSkillsVersion === 1 && !hasPerk(actor, 'bullseye') ? rangedScreenModifier(battle,from,target) : 0);
 }
 
-function pathToTarget(battle, actor, target, range, keepRangedSpace = false) {
+function pathToTarget(battle, actor, target, range, keepRangedSpace = false, flank = false) {
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  const flankThreats = flank ? battle.units.filter(unit=>unit.alive && unit.side!==actor.side && unit.id!==target.id) : [];
   const queue = [{ q: actor.q, r: actor.r, path: [], cost: 0 }];
   const best = new Map([[`${actor.q},${actor.r}`, 0]]);
   let goal = null;
@@ -3039,6 +3043,7 @@ function pathToTarget(battle, actor, target, range, keepRangedSpace = false) {
       continue;
     }
     for (const next of openNeighbors(battle, point, occupied)) {
+      if (flankThreats.some(unit=>hexDistance(next,unit)<=1)) continue;
       if (keepRangedSpace && nearestEnemyDistance(battle, actor, next) < 2) continue;
       const key = `${next.q},${next.r}`;
       const cost = point.cost + battleMovementCost(battle, actor, point, next);
@@ -3082,6 +3087,78 @@ function betterRangedPosition(battle, actor, target, range) {
     .map(point => ({ point, cost: battleMovementCost(battle, actor, actor, point), quality: rangedTerrainModifier(battle, actor, point, target) }))
     .filter(option => Number.isFinite(option.cost) && option.quality >= current + 10)
     .sort((a, b) => b.quality - a.quality || a.cost - b.cost || a.point.q - b.point.q || a.point.r - b.point.r)[0]?.point ?? null;
+}
+
+function rangedProtectionAt(battle, actor, point, threats) {
+  if (!threats.length) return 0;
+  const target = {...actor,...point};
+  return threats.reduce((sum, enemy) => sum + (hasPerk(enemy,'bullseye') ? 0
+    : -rangedCoverModifier(battle.field,enemy,target) - rangedScreenModifier(battle,enemy,target)),0)/threats.length;
+}
+
+function rangedPositionStep(state, actor, enemies, weapon, tactic) {
+  const battle = state.battle;
+  const nearest = nearestEnemyDistance(battle,actor,actor);
+  const spacing = nearest <= 1;
+  const defensive = ['defense','shield-wall'].includes(tactic);
+  if (!spacing && !defensive) return null;
+  const shooters = enemies.filter(enemy=>getItem(enemy.equipment.weapon)?.ranged
+    && battleWeaponHasAmmo(state,enemy,getItem(enemy.equipment.weapon)));
+  // With no shooters, shelter still faces the enemy approach and keeps the rear behind shields.
+  const threats = shooters.length ? shooters : enemies;
+  const shootRange = effectiveWeaponRange(actor,weapon) + (isBow(weapon) ? 1 : 0);
+  const canShootHere = enemies.some(enemy=>hexDistance(actor,enemy)<=shootRange);
+  const reserveAp = actor.reload > 0 ? 4 : attackApCost(weapon,battle,actor);
+  const budget = Math.min(6, spacing && actor.ap<reserveAp+2 ? actor.ap : Math.max(0,actor.ap-reserveAp));
+  const baseline = rangedProtectionAt(battle,actor,actor,threats);
+  const occupied = new Set(battle.units.filter(u=>u.alive && u.id!==actor.id).map(u=>`${u.q},${u.r}`));
+  const queue = [{q:actor.q,r:actor.r,path:[],cost:0,fatigue:0}];
+  const best = new Map([[`${actor.q},${actor.r}`,0]]);
+  const options = [];
+  while (queue.length) {
+    queue.sort((a,b)=>a.cost-b.cost || a.q-b.q || a.r-b.r);
+    const point = queue.shift();
+    if (point.cost>best.get(`${point.q},${point.r}`)) continue;
+    const distance = nearestEnemyDistance(battle,actor,point);
+    const protection = rangedProtectionAt(battle,actor,point,threats);
+    const withinRange = enemies.some(enemy=>hexDistance(point,enemy)<=shootRange);
+    if (point.path.length && distance >= 2 && (!canShootHere || withinRange)
+      && (spacing ? distance>nearest : protection>=baseline+6)) {
+      // Distance wins when threatened. Cover gains must outweigh the extra travel.
+      const quality = (spacing ? Math.min(2,distance)*40 : 0) + (protection-baseline)*2 - point.cost*2;
+      options.push({...point,quality});
+    }
+    if (point.path.length >= 3) continue;
+    for (const next of openNeighbors(battle,point,occupied)) {
+      if (nearestEnemyDistance(battle,actor,next)<=1) continue;
+      const mover = point.path.length ? {...actor,movementCredit:0} : actor;
+      const step = battleMoveApCost(battle,mover,point,next);
+      const cost = point.cost+step;
+      const fatigue = point.fatigue+movementFatigue(actor,battleMovementCost(battle,actor,point,next));
+      const key = `${next.q},${next.r}`;
+      if (cost<=budget && fatigue<=actor.maxFatigue-actor.fatigue && cost<(best.get(key)??Infinity)) {
+        best.set(key,cost);queue.push({...next,path:[...point.path,next],cost,fatigue});
+      }
+    }
+  }
+  const choice = options.sort((a,b)=>b.quality-a.quality || a.cost-b.cost || a.q-b.q || a.r-b.r)[0];
+  return choice ? {point:choice.path[0],spacing} : null;
+}
+
+function moveToRangedPosition(state, actor, position, tactic) {
+  const battle = state.battle, from = {q:actor.q,r:actor.r}, point = position.point;
+  actor.ap -= battleMoveApCost(battle,actor,from,point);
+  actor.fatigue += movementFatigue(actor,battleMovementCost(battle,actor,from,point));
+  Object.assign(actor,point);clearWeaponStances(actor);consumeMovementCredit(battle,actor,from,point);
+  const interception = spearwallReactionsOnMove(state,actor,from);
+  if (!interception.blocked && tactic==='shield-wall') battle.formationAdvance=makeFormationAdvancePlan(battle);
+  const message = interception.blocked ? `${actor.name} is stopped by Spearwall.`
+    : position.spacing ? `${actor.name} keeps distance from the enemy.` : `${actor.name} moves into cover.`;
+  battle.lastEvent=makeBattleEvent(actor,null,interception.blocked?'hold':'move',message,getItem(actor.equipment.weapon),from,
+    interception.reactions.length?{reactions:interception.reactions}:{});
+  battleLog(battle,message);
+  if (!finishBattlePhase(battle) && (actor.ap<=0 || !actor.alive)) nextBattleTurn(battle);
+  return result(true,message);
 }
 
 function isBow(weapon) {
@@ -3786,7 +3863,30 @@ function advanceBattleV2(state) {
     switchBattleSet(state, actor, `${actor.name} draws a loaded ${reserve.name} instead of reloading.`);
     return result(true, battle.lastEvent.message);
   }
-  if (actor.reload > 0 && actor.ap >= 4) {
+  const rangedAI = battle.weaponSkillsVersion === 1;
+  const noAmmo = equipped?.ranged && !battleWeaponHasAmmo(state, actor, equipped);
+  const weapon = noAmmo || !equipped ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equipped;
+  const role = actor.tacticalRole ?? (weapon.ranged ? weapon.throwing ? 'skirmisher' : 'ranged' : 'frontliner');
+  const rangedSets = [[equipped,'active'],[reserve,'reserve'],[getItem(actor.pocketStowedWeapon),'active']]
+    .filter(([item])=>item?.ranged);
+  const ammunitionSpent = noAmmo || ['ranged','skirmisher'].includes(role) && rangedSets.length>0
+    && rangedSets.every(([item,set])=>!battleWeaponHasAmmo(state,actor,item,set));
+  const spacingWeapon = weapon.ranged ? weapon : ['ranged','skirmisher'].includes(role)
+    ? rangedSets.find(([item,set])=>battleWeaponHasAmmo(state,actor,item,set))?.[0] : null;
+  const range = effectiveWeaponRange(actor, weapon);
+  const attackCost = attackApCost(weapon, battle, actor);
+  const skillFamily = battle.weaponSkillsVersion === 1 && !noAmmo ? weaponSkillFamily(weapon) : null;
+  const candidates = [];
+  const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
+  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
+  if (rangedAI && spacingWeapon) {
+    const position = rangedPositionStep(state,actor,enemies,spacingWeapon,companyTactic);
+    const canRetreatAndShoot = position?.spacing && weapon.ranged && actor.reload===0
+      && actor.ap>=battleMoveApCost(battle,actor,actor,position.point)+attackCost
+      && companyTactic!=='advance-formation';
+    if (position && !canRetreatAndShoot) return moveToRangedPosition(state,actor,position,companyTactic);
+  }
+  if ((!rangedAI || !noAmmo) && actor.reload > 0 && actor.ap >= 4) {
     actor.reload -= 1;
     actor.ap -= 4;
     if (hasPerk(actor, 'reload-drill')) actor.fatigue = Math.max(0, actor.fatigue - 12);
@@ -3796,14 +3896,6 @@ function advanceBattleV2(state) {
     if (actor.ap <= 0) nextBattleTurn(battle);
     return result(true, message);
   }
-  const noAmmo = equipped?.ranged && !battleWeaponHasAmmo(state, actor, equipped);
-  const weapon = noAmmo || !equipped ? { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 } : equipped;
-  const range = effectiveWeaponRange(actor, weapon);
-  const attackCost = attackApCost(weapon, battle, actor);
-  const skillFamily = battle.weaponSkillsVersion === 1 && !noAmmo ? weaponSkillFamily(weapon) : null;
-  const candidates = [];
-  const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
-  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
   const nearbyTarget = enemies.some(enemy => hexDistance(actor, enemy) <= range);
   if (companyTactic === 'focus' && !enemies.some(enemy => enemy.id === battle.focusTargetId)) {
     battle.focusTargetId = enemies.filter(enemy => pathToTarget(battle, actor, enemy, range, weapon.ranged === true) !== null)
@@ -3811,7 +3903,7 @@ function advanceBattleV2(state) {
         - b.hp - (b.bodyArmor + b.attachmentArmor + (b.attachment2Armor??0) + b.headArmor) * .15 - b.meleeDefense * .3
         || hexDistance(actor, a) - hexDistance(actor, b) || a.id.localeCompare(b.id))[0]?.id ?? null;
   }
-  if (companyTactic === 'defense' && !nearbyTarget && (battle.round - battle.lastContactRound < 4)
+  if (companyTactic === 'defense' && (!rangedAI || !ammunitionSpent) && !nearbyTarget && (battle.round - battle.lastContactRound < 4)
     && !(battle.engaged && nearest <= 3)
     && !(skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies) && actor.ap >= attackApCost(weapon, battle, actor, COMBAT_SKILLS.spearwall)
       && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall) <= actor.maxFatigue)) {
@@ -3847,7 +3939,7 @@ function advanceBattleV2(state) {
       return result(true, message);
     }
   }
-  if (companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round && (weapon.ranged || !nearbyTarget)) {
+  if ((!rangedAI || !spacingWeapon && !ammunitionSpent) && companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round && (weapon.ranged || !nearbyTarget)) {
     const reform = shieldWallReformStep(state, actor);
     if (reform) {
       const cost = battleMoveApCost(battle, actor, actor, reform);
@@ -3971,23 +4063,28 @@ function advanceBattleV2(state) {
     const candidate = areaAttackCandidate(state, actor, ally, weapon, option);
     if (candidate) candidates.push(candidate);
   }
-  const targetPaths = enemies.map(target => ({ target, path: pathToTarget(battle, actor, target, range, weapon.ranged === true) }))
-    .filter(entry => entry.path?.length).sort((a, b) => pathCost(battle, actor, actor, a.path) - pathCost(battle, actor, actor, b.path)
-      || a.target.id.localeCompare(b.target.id));
-  const pursuit = (companyTactic === 'focus' && targetPaths.find(entry => entry.target.id === battle.focusTargetId))
-    || targetPaths.find(entry => entry.target.id === actor.aiTargetId) || targetPaths[0];
+  const targetPaths = enemies.map(target => {
+    const priority = rangedAI ? tacticalTargetPriority(role,target,getItem(target.equipment.weapon),hexDistance(actor,target),nearest) : 0;
+    const flanking = role==='flanker' && priority>0 && nearest>1;
+    return {target,priority,path:pathToTarget(battle,actor,target,range,weapon.ranged===true,flanking)};
+  }).filter(entry=>entry.path?.length).sort((a,b)=>(['flanker','skirmisher'].includes(role) ? b.priority-a.priority : 0)
+    || pathCost(battle,actor,actor,a.path)-pathCost(battle,actor,actor,b.path)
+    || b.priority-a.priority || a.target.id.localeCompare(b.target.id));
+  const specialFlank = role==='flanker' && nearest>1 && targetPaths[0]?.priority>0 ? targetPaths[0] : null;
+  const pursuit = (companyTactic === 'focus' && targetPaths.find(entry=>entry.target.id===battle.focusTargetId))
+    || specialFlank || (role==='skirmisher' ? targetPaths[0] : targetPaths.find(entry=>entry.target.id===actor.aiTargetId)) || targetPaths[0];
   const formationLocked = companyTactic === 'advance-formation' && (actor.formationMovedRound === battle.round
     || companyInMeleeContact(battle) || battle.formationAdvance?.completedRound >= battle.round);
-  const wallLocked = companyTactic === 'shield-wall' && (actor.formationMovedRound === battle.round
+  const wallLocked = (!rangedAI || !ammunitionSpent) && companyTactic === 'shield-wall' && (actor.formationMovedRound === battle.round
     || battle.round - battle.lastContactRound < 4);
-  for (const entry of formationLocked || wallLocked || nearbyTarget || !pursuit ? [] : [pursuit]) {
+  for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank || !pursuit ? [] : [pursuit]) {
     const point = entry.path[0];
     const apCost = battleMoveApCost(battle, actor, actor, point);
     const alliesOnTarget = battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id
       && hexDistance(unit, entry.target) <= 1).length;
     const adjacentThreats = enemies.filter(enemy => hexDistance(point, enemy) <= 1).length;
     candidates.push({ id: `move-${entry.target.id}`, type: 'move', targetId: entry.target.id, point, apCost,
-      fatigueCost: movementFatigue(actor, battleMovementCost(battle, actor, actor, point)), bonus: 14 + (noAmmo ? 15 : 0)
+      fatigueCost: movementFatigue(actor, battleMovementCost(battle, actor, actor, point)), bonus: 14 + ((rangedAI ? ammunitionSpent : noAmmo) ? 15 : 0) + (specialFlank && pursuit===specialFlank ? 35 : 0)
         + (companyTactic === 'advance-formation' || companyTactic === 'shield-wall' ? 20 : 0),
       spacingGain: weapon.ranged ? nearestEnemyDistance(battle, actor, point) - nearest : 0,
       flankGain: alliesOnTarget && hexDistance(point, entry.target) <= 1 && hexDistance(actor, entry.target) > 1 ? 1 : 0,
@@ -4016,7 +4113,11 @@ function advanceBattleV2(state) {
       if (offensive(candidates[index]) && !hitsFocus(candidates[index])) candidates.splice(index, 1);
     }
   }
-  const ranked = rankTacticalActions(actor, candidates, { tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
+  for (const action of candidates) if (action.targetId) {
+    action.target ??= enemies.find(enemy=>enemy.id===action.targetId);
+    if (action.target) {action.targetWeapon=getItem(action.target.equipment.weapon);action.targetDistance=hexDistance(actor,action.target);}
+  }
+  const ranked = rankTacticalActions(actor, candidates, { role, targetPriorities:rangedAI, nearestDistance:nearest, tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
     previousTargetId: enemies.some(enemy => enemy.id === actor.aiTargetId) ? actor.aiTargetId : null });
   const permittedExceptions = ranked.filter(entry => entry.type === 'area' && entry.safety.exception)
     .sort((a, b) => compareAreaSafety(a.safety, b.safety));
@@ -4636,7 +4737,7 @@ function validateBattle(input, party, worldState) {
   const famedRoll = hashSeed(`${worldState.seed}:${encounter.id}:${campGeneration}:famed-roll`) % 10000;
   assert(famedDrop === null || encounterType === 'camp' && ['famed','named'].includes(famedItem?.rarity)
     && famedBasesForCamp({...encounter,difficulty})?.includes(famedItem.baseId)
-    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,2)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
+    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,2)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,3)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
     && famedRoll < ((FAMED_CHANCES[difficulty] ?? 0)+discovery.famed/100) * 10000, 'battle famed drop');
   const previousRegionalCampName=encounterType==='camp'&&/^wild-camp-/.test(encounter.id)?worldCampText(encounter.x,encounter.y,encounter.enemies.length,Number(encounter.id.slice(10))-1).name:null;
   const legacyCampName = encounterType==='camp' && /^wild-camp-/.test(encounter.id) ? getRegionalCampText(authoredPoint(encounter).x,authoredPoint(encounter).y,difficulty,1,Number(encounter.id.slice(10))-1).name : null;

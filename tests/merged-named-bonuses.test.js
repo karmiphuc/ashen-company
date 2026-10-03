@@ -10,7 +10,7 @@ function equip(s,id,slot='active'){const i=getItem(id);s.inventory.push(id);s.in
 
 test('merged weapons retain the same two BB rolls and add exactly the older damage, accuracy and armor damage bonuses',()=>{
  for(const base of ITEMS.filter(i=>i.slot==='weapon'))for(let seed=0;seed<128;seed++){
-  const old=v(base.id,seed,1),rolled=v(base.id,seed,2),merged=v(base.id,seed,3);assert.equal(merged.rollVersion,3);assert.equal(createFamedItemId(base.id,seed),merged.id);assert.deepEqual(merged.rollModifiers,rolled.rollModifiers);assert.equal(new Set(merged.rollModifiers).size,2);
+  const old=v(base.id,seed,1),rolled=v(base.id,seed,2),merged=v(base.id,seed,3);assert.equal(merged.rollVersion,3);assert.equal(createFamedItemId(base.id,seed,3),merged.id);assert.deepEqual(merged.rollModifiers,rolled.rollModifiers);assert.equal(new Set(merged.rollModifiers).size,2);
   assert.equal(merged.damageMin,rolled.damageMin+old.damageMin-base.damageMin);assert.equal(merged.damageMax,rolled.damageMax+old.damageMax-base.damageMax);assert.equal(merged.hitBonus,rolled.hitBonus+old.hitBonus-(base.hitBonus??0));assert.ok(Math.abs(merged.armorDamage-(rolled.armorDamage+old.armorDamage-(base.armorDamage??1)))<1e-9);
   for(const key of ['armorPiercing','headChance','fatigue','ammoMax','fatigueOnSkillUse','shieldDamage'])assert.equal(merged[key],rolled[key]);assert.equal(merged.bonuses.length,5);assert.deepEqual(merged,v(base.id,seed,3));assert.ok(Object.isFrozen(merged)&&Object.isFrozen(merged.bonuses));
  }

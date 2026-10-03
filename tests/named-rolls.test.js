@@ -4,7 +4,7 @@ import { ITEMS, SETTLEMENTS, createGame, createFamedItemId, getItem, getCompanyS
 import { rollNamedItem } from '../src/named-rolls.js';
 import { getItemDetails } from '../src/item-details.js';
 
-const named=(base,seed)=>getItem(createFamedItemId(base,seed,2));
+const named=(base,seed,version=2)=>getItem(createFamedItemId(base,seed,version));
 function find(base,mod,predicate=()=>true){for(let seed=0;seed<4096;seed++){const item=named(base,seed);if(item.rollModifiers.includes(mod)&&predicate(item))return item;}throw Error(`Missing ${base} ${mod}`);}
 const within=(x,min,max)=>assert.ok(x>=min-1e-9&&x<=max+1e-9,`${x} outside ${min}–${max}`);
 function arm(state,item,slot='active'){state.inventory.push(item.id);state.inventoryCondition.push(item.armor??(item.slot==='shield'?shieldMaximum(item.id):item.throwing?throwingCapacity(item):null));assert.equal(equipItem(state,'captain',item.id,slot).ok,true);}
@@ -16,21 +16,42 @@ test('named weapons roll exactly two eligible BB modifiers across all campaign w
   const base=catalog.sourceStats?{...catalog,...catalog.sourceStats,fatigueOnSkillUse:catalog.sourceStats.fatigueOnSkillUse,ammoMax:catalog.sourceStats.ammoMax}:catalog;
   const snapshot=structuredClone(base);
   for(let seed=0;seed<256;seed++){
-   const item=named(base.id,seed),mods=new Set(item.rollModifiers);assert.equal(mods.size,2);assert.equal(item.bonuses.length,2);assert.deepEqual(item,named(base.id,seed));assert.ok(Object.isFrozen(item)&&Object.isFrozen(item.rollModifiers));
+   const version=base.ranged&&!catalog.sourceNamedWeapon?4:2,item=named(base.id,seed,version),mods=new Set(item.rollModifiers);assert.equal(mods.size,2);assert.ok(item.bonuses.length>=2);assert.deepEqual(item,named(base.id,seed,version));assert.ok(Object.isFrozen(item)&&Object.isFrozen(item.rollModifiers));
    for(const mod of mods)seen.add(mod);
-   if(mods.has('damage')){within(item.damageMin,Math.round(base.damageMin*1.1),Math.round(base.damageMin*1.3));within(item.damageMax,Math.round(base.damageMax*1.1),Math.round(base.damageMax*1.3));assert.ok(Array.from({length:21},(_,n)=>110+n).some(p=>item.damageMin===Math.round(base.damageMin*p/100)&&item.damageMax===Math.round(base.damageMax*p/100)));}else{assert.equal(item.damageMin,base.damageMin);assert.equal(item.damageMax,base.damageMax);}
-   if(mods.has('armor-damage'))within(item.armorDamage-(base.armorDamage??1),.1,.3);else assert.equal(item.armorDamage,base.armorDamage);
+   if(mods.has('damage')){const legacyLow=version===4?2+(seed&15)%5:0,legacyHigh=version===4?legacyLow+1+((seed>>>4)&15)%3:0;within(item.damageMin,Math.round(base.damageMin*1.1)+legacyLow,Math.round(base.damageMin*1.3)+legacyLow);within(item.damageMax,Math.round(base.damageMax*1.1)+legacyHigh,Math.round(base.damageMax*1.3)+legacyHigh);assert.ok(Array.from({length:21},(_,n)=>110+n).some(p=>item.damageMin===Math.round(base.damageMin*p/100)+legacyLow&&item.damageMax===Math.round(base.damageMax*p/100)+legacyHigh));}else{assert.equal(item.damageMin,base.damageMin+(version===4?2+(seed&15)%5:0));assert.equal(item.damageMax,base.damageMax+(version===4?3+(seed&15)%5+((seed>>>4)&15)%3:0));}
+   if(mods.has('armor-damage'))within(item.armorDamage-(base.armorDamage??1)-(version===4?(((seed>>>12)&15)%3)*.05+.1:0),.1,.3);else assert.ok(Math.abs(item.armorDamage-((base.armorDamage??1)+(version===4?(((seed>>>12)&15)%3)*.05+.1:0)))<1e-9);
    if(mods.has('head-chance'))within(item.headChance-(base.headChance??.22),.1,.2);else assert.equal(item.headChance,base.headChance);
    if(mods.has('piercing'))within(item.armorPiercing-(base.armorPiercing??.3),.08,.16);else assert.equal(item.armorPiercing,base.armorPiercing);
-   if(mods.has('accuracy')){assert.ok(base.hitBonus||base.ranged);within(item.hitBonus-(base.hitBonus??0),5,15);}else assert.equal(item.hitBonus,base.hitBonus);
+   if(mods.has('accuracy')){assert.ok(base.hitBonus||base.ranged);within(item.hitBonus-(base.hitBonus??0)-(version===4?2+((seed>>>8)&15)%7:0),5,15);}else assert.equal(item.hitBonus,(base.hitBonus??0)+(version===4?2+((seed>>>8)&15)%7:0));
    if(mods.has('ammo')){assert.ok(base.throwing);within(item.ammoMax,6,8);}else assert.equal(item.ammoMax,base.ammoMax);
+   if(mods.has('range')){assert.ok(base.ranged);assert.equal(item.range,(base.range??1)+1);assert.ok(item.bonuses.some(bonus=>bonus.label==='Range'&&bonus.value==='+1 hex'));}else assert.equal(item.range,base.range);
    if(mods.has('shield-damage')){assert.ok(shieldImpactDamage(base)>=16);within(item.shieldDamage,Math.round(shieldImpactDamage(base)*1.5),shieldImpactDamage(base)*2);}else assert.equal(item.shieldDamage,base.shieldDamage);
    if(mods.has('skill-fatigue'))within(item.fatigueOnSkillUse,-3,-1);else assert.equal(item.fatigueOnSkillUse,base.fatigueOnSkillUse);
    if(mods.has('weight')){assert.ok(base.fatigue>=10);within(item.fatigue,Math.round(base.fatigue*.5),Math.round(base.fatigue*.8));}else assert.equal(item.fatigue,base.fatigue);
   }
   assert.deepEqual(base,snapshot,'source definition remains unchanged');
  }
- assert.deepEqual([...seen].sort(),['damage','armor-damage','head-chance','piercing','accuracy','ammo','shield-damage','skill-fatigue','weight'].sort());
+ assert.deepEqual([...seen].sort(),['damage','armor-damage','head-chance','piercing','accuracy','ammo','range','shield-damage','skill-fatigue','weight'].sort());
+});
+
+test('named ranged weapons can roll +1 range and use it for actual crossbow targeting',()=>{
+ let item;for(let seed=0;seed<4096&&!item;seed++){const candidate=getItem(createFamedItemId('light-crossbow',seed));if(candidate.rollModifiers.includes('range'))item=candidate;}assert.ok(item);assert.equal(item.rollVersion,4);assert.match(item.id,/^famed4:/);assert.equal(item.range,getItem('light-crossbow').range+1);
+ const {state,battle,actor,at}=fight(item);at('enemy-1',2+item.range,2);const start={q:actor.q,r:actor.r};
+ advanceBattle(state);
+ assert.equal(battle.lastEvent.type,'attack');assert.equal(battle.lastEvent.weaponId,item.id);assert.equal(battle.lastEvent.skillName,'Piercing Bolt');
+ assert.deepEqual({q:actor.q,r:actor.r},start,'the added range lets the crossbow fire without moving');
+ assert.ok(item.rollModifiers.includes('range'));assert.deepEqual(validateSave(structuredClone(state)),state);
+ let namedDesign;for(let seed=0;seed<4096&&!namedDesign;seed++){const candidate=getItem(createFamedItemId('bb-named-warbow',seed));if(candidate.rollModifiers.includes('range'))namedDesign=candidate;}
+ assert.ok(namedDesign);assert.equal(namedDesign.rollVersion,4);assert.equal(namedDesign.range,getItem('bb-named-warbow').range+1);assert.ok(namedDesign.sourceNamedWeapon);
+});
+
+test('legacy ranged named IDs keep their pre-range rolls and new defaults use v4 only for ranged weapons',()=>{
+ const old2=getItem('famed2:hunting-bow:12345'),old3=getItem('famed3:hunting-bow:12345');
+ assert.equal(old2.rollVersion,2);assert.equal(old3.rollVersion,3);assert.ok(!old2.rollModifiers.includes('range'));assert.ok(!old3.rollModifiers.includes('range'));
+ assert.deepEqual(old2.rollModifiers,['piercing','damage']);assert.equal(old2.range,getItem('hunting-bow').range);assert.equal(old2.damageMin,18);assert.equal(old2.damageMax,30);assert.equal(old2.armorPiercing,.44);
+ assert.deepEqual(old3.rollModifiers,['piercing','damage']);assert.equal(old3.range,getItem('hunting-bow').range);assert.equal(old3.damageMin,24);assert.equal(old3.damageMax,37);assert.equal(old3.armorPiercing,.44);assert.equal(old3.hitBonus,2);
+ assert.equal(createFamedItemId('hunting-bow',12345),'famed4:hunting-bow:12345');assert.equal(createFamedItemId('arming-sword',12345),'famed3:arming-sword:12345');
+ assert.throws(()=>createFamedItemId('arming-sword',1,4),TypeError);assert.equal(getItem('famed4:arming-sword:1'),undefined);
 });
 
 test('weapon load reduction is restricted to heavy bases, while accuracy respects the eligibility pool',()=>{
@@ -60,7 +81,7 @@ test('skill fatigue rolls reduce attacks before mastery, with no accidental mast
 });
 
 test('named bow skill fatigue also changes Aimed Shot and is visible in inspection',()=>{
- const item=find('hunting-bow','skill-fatigue');for(const mastery of [false,true]){const {state,battle,actor,at}=fight(item);at('enemy-1',mastery?8:7,2);if(mastery){actor.perks.push('bow-mastery');state.party[0].perks.push('bow-mastery');}advanceBattle(state);assert.equal(battle.lastEvent.skillName,'Aimed Shot');assert.equal(actor.fatigue,mastery?Math.ceil((15+item.fatigueOnSkillUse)*.75):15+item.fatigueOnSkillUse);}
+ const item=find('hunting-bow','skill-fatigue');for(const mastery of [false,true]){const {state,battle,actor,at}=fight(item);at('enemy-1',2+item.range+(mastery?1:0)+1,2);if(mastery){actor.perks.push('bow-mastery');state.party[0].perks.push('bow-mastery');}advanceBattle(state);assert.equal(battle.lastEvent.skillName,'Aimed Shot');assert.equal(actor.fatigue,mastery?Math.ceil((15+item.fatigueOnSkillUse)*.75):15+item.fatigueOnSkillUse);}
  const details=getItemDetails(item);assert.ok(details.notes.some(n=>n.includes('less fatigue before masteries')));assert.equal(details.stats.find(s=>s.label==='Attack fatigue').value,String(9+item.fatigueOnSkillUse));
 });
 
@@ -69,7 +90,7 @@ test('shield fatigue rolls apply to Shieldwall independently of the weapon',()=>
 });
 
 test('increased throwing capacity survives attacks, stowing, weapon swaps and reload',()=>{
- const item=find('heavy-javelins','ammo');const {state,battle,actor}=fight(item);assert.equal(actor.throwingAmmo.active,item.ammoMax);advanceBattle(state);assert.equal(battle.lastEvent.weaponId,item.id);assert.equal(actor.throwingAmmo.active,item.ammoMax-1);assert.deepEqual(validateSave(structuredClone(state)),state);
+ const item=find('heavy-javelins','ammo');const {state,battle,actor,at}=fight(item);at('enemy-1',5,2);assert.equal(actor.throwingAmmo.active,item.ammoMax);advanceBattle(state);assert.equal(battle.lastEvent.weaponId,item.id);assert.equal(actor.throwingAmmo.active,item.ammoMax-1);assert.deepEqual(validateSave(structuredClone(state)),state);
  const peaceful=createGame(7);arm(peaceful,item);peaceful.party[0].throwingAmmo.active=item.ammoMax-2;arm(peaceful,getItem('javelins'),'reserve');assert.equal(swapWeaponSet(peaceful,'captain').ok,true);assert.equal(peaceful.party[0].throwingAmmo.reserve,item.ammoMax-2);swapWeaponSet(peaceful,'captain');assert.equal(unequipItem(peaceful,'captain','weapon').ok,true);assert.equal(peaceful.inventoryCondition[peaceful.inventory.indexOf(item.id)],item.ammoMax-2);assert.deepEqual(validateSave(structuredClone(peaceful)),peaceful);assert.equal(throwingCapacity('javelins'),5);
 });
 
@@ -96,4 +117,15 @@ test('breaking an asymmetric named shield removes its exact melee and ranged bon
 test('legacy market stock remains stable and does not acquire an extra named offer on import',()=>{
  const state=createGame(19);state.gold=50000;const offer=getMarket(state).equipment.find(r=>r.stock>0&&!getItem(r.itemId).rarity);assert.ok(offer);buyItem(state,offer.itemId);const market=Object.values(state.marketStock)[0];for(const id of Object.keys(market.equipment)){if(/^famed[23]:/.test(id)){market.equipment[getItem(id).baseId]=market.equipment[id];delete market.equipment[id];}}
  const before=structuredClone(market.equipment),restored=validateSave(structuredClone(state));assert.deepEqual(Object.values(restored.marketStock)[0].equipment,before);assert.deepEqual(validateSave(restored),restored);
+});
+
+
+test('pre-range named camp rewards survive import with their original v3 identity',()=>{
+ const state=createGame(6),camp=getCampSites(state).find(c=>c.id==='wild-camp-6');
+ state.position={x:camp.x,y:camp.y};assert.ok(startBattle(state,camp.id).ok);
+ assert.equal(state.battle.famedDrop,'famed4:heavy-crossbow:1566254893');
+ state.battle.famedDrop=state.battle.famedDrop.replace('famed4:','famed3:');
+ assert.deepEqual(validateSave(structuredClone(state)),state);
+ const bad=structuredClone(state);bad.battle.famedDrop='famed3:heavy-crossbow:1';
+ assert.throws(()=>validateSave(bad),/battle famed drop/);
 });

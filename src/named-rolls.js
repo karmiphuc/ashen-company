@@ -1,11 +1,11 @@
 // Battle Brothers named-item rules, pinned to kovasap/battle-bros-decompiled e06d68df.
 // Existing unversioned famed IDs remain handled by the legacy resolver in engine.js.
-export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=0,merged=false}={}) {
+export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=0,merged=false,rangeRoll=false,rulesVersion=merged?3:2}={}) {
   if(original.sourceStats)original={...original,...original.sourceStats};
   let state=seed>>>0;
   const roll=(min,max)=>{state=(state+0x6D2B79F5)>>>0;let x=state;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return min+((x^(x>>>14))>>>0)%(max-min+1);};
   const design=original.sourceArmor!==undefined;
-  const item={...original,id,baseId:original.id,rarity:design||original.sourceNamedWeapon?'named':'famed',rollVersion:merged?3:2};
+  const item={...original,id,baseId:original.id,rarity:design||original.sourceNamedWeapon?'named':'famed',rollVersion:rulesVersion};
   const bonuses=[],mods=[];
   delete item.signature;
   if(design){item.armor=original.sourceArmor;item.fatigue=original.sourceFatigue;delete item.statBonuses;}
@@ -33,6 +33,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
       if(shieldDamage>=16)pool.push(()=>{item.shieldDamage=Math.round(shieldDamage*roll(150,200)/100);add('shield-damage','Shield damage',`+${item.shieldDamage-shieldDamage}`);});
       if(original.throwing)pool.push(()=>{const extra=roll(1,3);item.ammoMax=(original.ammoMax??5)+extra;add('ammo','Bundle throws',`+${extra}`);});
       if(original.hitBonus||original.ranged)pool.push(()=>{const extra=roll(5,15);item.hitBonus=(original.hitBonus??0)+extra;add('accuracy','Hit modifier',`+${extra}`);});
+      if(rangeRoll&&original.ranged)pool.push(()=>{item.range=(original.range??1)+1;add('range','Range','+1 hex');});
     }
     pool.push(()=>{const relief=roll(1,3);item.fatigueOnSkillUse=(original.fatigueOnSkillUse??0)-relief;add('skill-fatigue','Skill fatigue',`-${relief}`);});
     for(let n=0;n<2;n++)pool.splice(roll(0,pool.length-1),1)[0]();
