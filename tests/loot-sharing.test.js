@@ -59,7 +59,7 @@ test('sharing quotes use the nearest market and add duplicate copies separately 
   const state=victory(),before=structuredClone(state),quote=getLootShareQuote(state,[0,1]);
   const town=SETTLEMENTS.find(t=>t.id===quote.townId),marketState=structuredClone(state);marketState.position={x:town.x,y:town.y};
   const price=getMarket(marketState).equipment.find(r=>r.itemId==='mail-shirt').sellPrice;
-  assert.equal(quote.value,price*2);assert.equal(quote.xp,Math.min(100,Math.ceil(price*2/(10*quote.count))));
+  assert.equal(quote.value,price*2);assert.equal(quote.xp,Math.min(500,Math.ceil(price*2/(20*quote.count))));
   assert.equal(quote.morale,Math.min(15,Math.ceil(price*2/(25*quote.count))));
   assert.deepEqual(state,before);
   assert.equal(getLootShareQuote(state,[0,0]),null);
@@ -93,7 +93,7 @@ test('large shares cap XP/morale and normal level-ups work; fallen and allied fi
   const state=victory(),famed=createFamedItemId('plate-harness',10);
   state.battle.loot.items=Array(24).fill(famed);state.battle.loot.itemConditions=Array(24).fill(getItem(famed).armor);
   const fallen=state.battle.units.find(u=>u.id==='guard');fallen.alive=false;fallen.hp=0;
-  const quote=getLootShareQuote(state,Array.from({length:24},(_,i)=>i));assert.equal(quote.count,2);assert.equal(quote.xp,100);assert.equal(quote.morale,15);
+  const quote=getLootShareQuote(state,Array.from({length:24},(_,i)=>i));assert.equal(quote.count,2);assert.equal(quote.xp,500);assert.equal(quote.morale,15);
   const captain=state.party[0];captain.xp=49;
   assert.equal(finishBattle(state,{shareLootIndices:Array.from({length:24},(_,i)=>i)}).ok,true);
   assert.ok(!state.party.some(p=>p.id==='guard'));assert.equal(state.party[0].morale,100);
@@ -115,4 +115,18 @@ test('loot controls distinguish selection from inspecting, show live rewards, an
   assert.match(html,new RegExp(`\\+${quote.xp} XP`));assert.match(html,/Shared items are consumed/);
   assert.match(html,/Share selected &amp; take the rest/);assert.match(html,/Take all loot and continue/);
   assert.match(battleResultsHTML(state),/data-action="share-loot" disabled/);
+});
+
+test('10,000 crowns of sale value produces a 500 XP pool shared across surviving brothers',()=>{
+  const state=victory(),famed=createFamedItemId('plate-harness',10);
+  state.battle.loot.items=[...Array(11).fill(famed),'quilted-jack','goedendag'];
+  state.battle.loot.itemConditions=state.battle.loot.items.map(id=>getItem(id).armor??null);
+  const indices=state.battle.loot.items.map((_,i)=>i),quote=getLootShareQuote(state,indices);
+  assert.equal(quote.value,10000);assert.equal(quote.xpPool,500);assert.equal(quote.count,3);assert.equal(quote.xp,167);
+  assert.ok(quote.xp*quote.count>=quote.xpPool&&quote.xp*quote.count<quote.xpPool+quote.count);
+  const totalXp=p=>p.xp+25*p.level*(p.level-1),before=state.party.map(p=>totalXp(p)),combat=structuredClone(state.battle.xp);
+  const html=battleResultsHTML(state,indices);assert.match(html,/500 XP pool/);assert.match(html,/Maximum 500 XP/);assert.match(html,/5% of sale value/);
+  assert.equal(finishBattle(state,{shareLootIndices:indices}).ok,true);
+  for(const [index,person]of state.party.entries())assert.equal(totalXp(person)-before[index],167+(combat[person.id]??0));
+  validateSave(structuredClone(state));
 });
