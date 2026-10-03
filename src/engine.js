@@ -3361,21 +3361,42 @@ function consumeMovementCredit(battle, actor, from, to) {
   actor.movementCredit = Math.max(0, (actor.movementCredit ?? 0) - cost);
 }
 
+// Follow a complete cheapest escape route rather than greedily circling a local obstacle.
+// Recomputing needs no saved route and adapts to casualties and moving blockers.
+function fleeRoute(battle, actor, enemies, occupied) {
+  const queue = [{ q: actor.q, r: actor.r, cost: 0, first: null }];
+  const best = new Map([[`${actor.q},${actor.r}`, 0]]);
+  const safety = point => Math.min(...enemies.map(enemy => hexDistance(point, enemy)));
+  while (queue.length) {
+    queue.sort((a, b) => a.cost - b.cost || safety(b.first ?? b) - safety(a.first ?? a)
+      || a.q - b.q || a.r - b.r);
+    const point = queue.shift();
+    if (point.cost > best.get(`${point.q},${point.r}`)) continue;
+    if (point.q === 0 || point.r === 0 || point.q === battle.field.columns - 1 || point.r === battle.field.rows - 1) return point.first;
+    for (const next of openNeighbors(battle, point, occupied)) {
+      const cost = point.cost + battleMovementCost(battle, actor, point, next);
+      const key = `${next.q},${next.r}`;
+      if (cost < (best.get(key) ?? Infinity)) {
+        best.set(key, cost);
+        queue.push({ ...next, cost, first: point.first ?? next });
+      }
+    }
+  }
+  return null;
+}
+
 function fleeBattleEnemy(state, actor, enemies) {
   const battle = state.battle;
   const from = { q: actor.q, r: actor.r };
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   const edgeDistance = point => Math.min(point.q, point.r, battle.field.columns - 1 - point.q, battle.field.rows - 1 - point.r);
-  const destinations = openNeighbors(battle, actor, occupied)
-    .map(point => ({ ...point, apCost: battleMoveApCost(battle, actor, actor, point),
-      distance: Math.min(...enemies.map(enemy => hexDistance(point, enemy))) }))
-    .filter(point => point.apCost <= actor.ap && point.distance >= Math.min(...enemies.map(enemy => hexDistance(actor, enemy))))
-    .sort((a, b) => edgeDistance(a) - edgeDistance(b) || b.distance - a.distance || a.apCost - b.apCost || a.q - b.q || a.r - b.r);
-  const point = destinations[0];
+  const routeStep = fleeRoute(battle, actor, enemies, occupied);
+  const apCost = routeStep ? battleMoveApCost(battle, actor, actor, routeStep) : Infinity;
+  const point = apCost <= actor.ap ? { ...routeStep, apCost } : null;
   const exiting = edgeDistance(actor) === 0;
   const reactions = [];
   if (point || exiting) for (const enemy of enemies.filter(unit => hexDistance(actor, unit) === 1
-    && (exiting || hexDistance(point, unit) > 1) && !unit.stunnedTurns && unit.fatigue + 5 <= unit.maxFatigue)) {
+    && !unit.stunnedTurns && unit.fatigue + 5 <= unit.maxFatigue)) {
     const equipped = getItem(enemy.equipment.weapon);
     const weapon = equipped && !equipped.ranged ? equipped : { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 };
     const impact = attackTarget(state, enemy, actor, weapon, { reaction: true, name: 'Opportunity Strike' });

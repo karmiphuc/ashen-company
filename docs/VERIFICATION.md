@@ -1,6 +1,14 @@
-# Verification - version 0.45.8, 2026-10-03
+# Verification - version 0.45.9, 2026-10-03
 
 
+
+## v0.45.9 checks
+
+All 520 automated tests pass. Broken-morale flight now searches a complete lowest-movement-cost route to a reachable battlefield edge, respecting terrain, occupied tiles, Pathfinder and mounted pinning. Equal-cost options prefer safer initial steps. Static obstacles cannot create the previous one/two-tile greedy retreat loop; an enclosed unit holds instead. Route recomputation adapts to changing blockers and needs no new persisted save state. Existing once-per-round flight rolls remain unchanged.
+
+Every attempted fleeing step from melee adjacency grants eligible defenders a free Opportunity Strike, including sideways steps that remain adjacent. Stun and fatigue restrictions remain in effect; reactions spend fatigue but no AP or ammunition, preserve weapon/effect feedback, and can kill a fleeing enemy before movement. Existing escape XP/salvage rules remain intact. Regression fixtures exercise a misleading cul-de-sac, deterministic route progression with saves between actions, sideways strikes, incapacitated defenders and fully trapped flight. Existing flee kill, escape, and whole-battle reload comparisons pass.
+
+A fresh Chromium offline relaunch verifies all 556 resources and loads the updated v0.45.9 app and fleeing-route engine without browser exceptions.
 
 ## v0.45.8 checks
 
