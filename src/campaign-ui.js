@@ -1,4 +1,4 @@
-import { SETTLEMENTS, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum, getMountRewardEvents, getLootKeepQuote, getDiscoveryEvent, getRetinue } from './engine.js';
+import { SETTLEMENTS, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum, getMountRewardEvents, getLootKeepQuote, getDiscoveryEvent, getRetinue, getTownServiceQuote } from './engine.js';
 import { townFacilities } from './town-facilities.js';
 import { portraitHTML, itemImage } from './portraits.js';
 import { SETTLEMENT_TYPES, townAt } from './engine.js';
@@ -29,6 +29,28 @@ export function townFacilitiesHTML(state,townId) {
   const facilities=townFacilities(state.seed,town(townId));
   return `<section class="town-facilities" aria-label="Local workshops">${facilities.length?facilities.map(f=>`<article><strong>${esc(f.name)}</strong><p>${esc(f.description)}</p></article>`).join(''):'<p>General traders carry a small rotating selection. Specialist workshops can be found in other settlements.</p>'}</section>`;
 }
+// Shared by the map sidebar and settlement services; affordability never hides needed care.
+export function townActionsHTML(state, townId, cards=false) {
+  if(townAt(state)?.id!==townId)return '';
+  const actions=[['market','Marketplace','Equipment, trade goods and supplies'],['recruit','Hiring','Find brothers to fight under your banner'],['contracts','Contracts','Work for the local settlement']];
+  if(cards)actions.push(['retinue','Retinue','Company bonuses and rare finds']);
+  if(getTownServiceQuote(state,'doctor').totalAmount>0)actions.push(['doctor','Doctor','Instantly heal all brothers for crowns']);
+  if(getTownServiceQuote(state,'smithy').totalAmount>0)actions.push(['smithy','Smithy','Instantly repair equipped armor, attachments and shields']);
+  return actions.map(([action,label,description])=>`<button data-action="${action}">${cards?`<strong>${label}</strong><span>${description}</span>`:label}</button>`).join('');
+}
+
+export function townStatusHTML(state,townId) {
+  const icons=townFacilities(state.seed,town(townId)).map(f=>({id:f.id,label:f.name,detail:f.description,art:f.id==='blacksmith'?'ore_smelters_01':'workshop_01'}));
+  if(!icons.length)icons.push({id:'general-traders',label:'General traders',detail:'A small rotating selection. Specialist workshops are available in other settlements.',art:'trade_cart'});
+  const event=getTownEvent(state,townId),arts={'good-harvest':'wheat_field_02','poor-harvest':'wheat_field_02','trade-caravan':'trade_cart','market-fair':'trade_cart','armorer-shipment':'arms_cart','arms-shortage':'arms_cart','militia-muster':'militia_trainingcamp_01'};
+  if(event)icons.push({id:'event',label:event.name,detail:`${event.description} ${event.effects.join(' ')} Through day ${event.endDay} · ${event.daysRemaining} ${event.daysRemaining===1?'day':'days'} left.`,art:arts[event.type]||'trade_cart',tone:['poor-harvest','arms-shortage'].includes(event.type)?'danger':'good'});
+  for(const wagon of getCaravans(state).filter(c=>c.destinationId===townId&&['en-route','under-attack'].includes(c.status)))icons.push({id:wagon.id,label:wagon.status==='under-attack'?'Arms wagon threatened':'Arms incoming',detail:`${wagon.description} Arrival in ${Math.ceil(wagon.etaHours)} hours.`,art:'arms_cart',tone:wagon.status==='under-attack'?'danger':'trade'});
+  const reward=getMountRewardEvents(state).find(e=>e.townId===townId&&!e.claimed);
+  if(reward)icons.push({id:reward.id,label:reward.title,detail:reward.available?reward.scene:`${reward.name} may be offered around day ${reward.availableDay}.`,art:'figure_player_trader',tone:reward.available?'good':'trade'});
+  const claim=reward?.available&&townAt(state)?.id===townId?`<button class="mount-status-claim" data-action="claim-mount-reward" data-claim-mount-reward="${esc(reward.id)}">${esc(reward.acceptLabel)}</button>`:'';
+  return `<div class="town-status-strip" role="group" aria-label="Settlement status">${icons.map(icon=>{const tooltip=`town-status-${townId}-${icon.id}`;return `<span class="town-status"><button type="button" class="town-status-icon ${icon.tone||''}" aria-label="${esc(icon.label)}" aria-describedby="${esc(tooltip)}"><img src="./assets/world/${icon.art}.png" alt="" draggable="false">${icon.tone==='danger'?'<span class="town-status-warning" aria-hidden="true">!</span>':''}</button><span class="town-status-tooltip" id="${esc(tooltip)}" role="tooltip"><strong>${esc(icon.label)}</strong><span>${esc(icon.detail)}</span></span></span>`;}).join('')}</div>${claim}`;
+}
+
 export function inventoryProtectionText(item,condition,maximum=item.armor) {
   return `${condition??maximum} / ${maximum} durability · ${item.fatigue??0} fatigue`;
 }
