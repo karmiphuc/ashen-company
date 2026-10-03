@@ -36,7 +36,8 @@ export function townActionsHTML(state, townId, cards=false) {
   if(cards)actions.push(['retinue','Retinue','Company bonuses and rare finds']);
   if(getTownServiceQuote(state,'doctor').totalAmount>0)actions.push(['doctor','Doctor','Instantly heal all brothers for crowns']);
   if(getTownServiceQuote(state,'smithy').totalAmount>0)actions.push(['smithy','Smithy','Instantly repair equipped armor, attachments and shields']);
-  return actions.map(([action,label,description])=>`<button data-action="${action}">${cards?`<strong>${label}</strong><span>${description}</span>`:label}</button>`).join('');
+  const art={market:'trade_cart',recruit:'militia_trainingcamp_01',contracts:'townhall_02',retinue:'figure_player_troupe',doctor:'figure_player_seer',smithy:'workshop_01'};
+  return actions.map(([action,label,description])=>`<button data-action="${action}"${cards?` class="settlement-service" title="${esc(description)}" aria-label="${label}: ${esc(description)}"`:''}>${cards?`<img src="./assets/world/${art[action]}.png" alt="" draggable="false"><strong>${label}</strong>`:label}</button>`).join('');
 }
 
 export function townStatusHTML(state,townId) {
