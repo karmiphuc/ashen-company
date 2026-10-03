@@ -1,4 +1,12 @@
-# Verification - version 0.45.2, 2026-10-03
+# Verification - version 0.45.3, 2026-10-03
+
+## v0.45.3 checks
+
+All 499 automated tests pass. Enlarging the previous rear crop left too much of it concealed behind armor. The shared plate now sits 30 portrait units lower, with exposed animal bodies reaching down to it instead of ending at the rider's torso. Horse bodies extend to 98 units tall; wolf bodies retain their lower, furry silhouette and meet the same plate. Larger, uniformly scaled heads stay on the right. Framing includes the entire lower plate so tall helmets and weapons remain inside the token.
+
+The new visible-depth regression requires at least 24 framed units of lower animal body below the torso, substantial actual opaque body area outside the armor/shield region, and a head height substantial relative to the rider. The obsolete compact v0.45.2 composition fails these checks. Existing all-mount, all-shield, six-appearance, 113-helmet and weapon/projectile framing checks pass. Ground-contact checks use the lower plate ellipse rather than a body bounding box.
+
+Chromium screenshots show the v0.45.2/v0.45.3 Fangshire/Noble Mail/Riding Horse comparison and all five mounts with ordinary shields, tower shields and two-handed weapons. A separate capture is explicitly labeled AFTER and contains only the final five mounts. All images decode without browser errors. A fresh install verifies all 526 cached resources and retains the longer body and larger head after offline relaunch. Physical iPad Safari remains untested.
 
 ## v0.45.2 checks
 
