@@ -10,7 +10,7 @@ const weapons = ITEMS.filter(item=>item.slot==='weapon');
 const shields = ITEMS.filter(item=>item.slot==='shield');
 const mounts = ITEMS.filter(item=>item.slot==='mount');
 const tag = (html, name)=>html.match(new RegExp(`<img data-layer="${name}"[^>]+>`))?.[0];
-const value = (text, key)=>Number(text.match(new RegExp(`${key}:([\\d.-]+)px`))[1]);
+const value = (text, key)=>Number(text.match(new RegExp(`${key}:([\\d.eE+-]+)px`))[1]);
 function pose(html, name) {
   const image=tag(html,name),origin=image.match(/transform-origin:([\d.-]+)px ([\d.-]+)px/);
   return {image,x:value(image,'left'),y:value(image,'top'),gx:Number(origin?.[1]??0),gy:Number(origin?.[2]??0)};
@@ -23,6 +23,19 @@ function pngSize(image) {
   const src=image.match(/src="([^"]+)"/)[1];
   const bytes=readFileSync(new URL('../'+src,import.meta.url));
   return [bytes.readUInt32BE(16),bytes.readUInt32BE(20)];
+}
+function transformedPoint(image,x,y) {
+  const [gx,gy]=image.match(/transform-origin:([\d.-]+)px ([\d.-]+)px/).slice(1).map(Number);
+  const transform=image.match(/transform:([^;]+)/)[1];
+  const point=[x-gx,y-gy];
+  for(const [,kind,args] of [...transform.matchAll(/(scaleX|scale|rotate)\(([^)]+)\)/g)].reverse()){
+    if(kind==='rotate'){
+      const angle=Number(args.replace('deg',''))*Math.PI/180,[px,py]=point;
+      point[0]=px*Math.cos(angle)-py*Math.sin(angle);point[1]=px*Math.sin(angle)+py*Math.cos(angle);
+    }else if(kind==='scaleX')point[0]*=Number(args);
+    else {point[0]*=Number(args);point[1]*=Number(args);}
+  }
+  return [gx+point[0],gy+point[1]];
 }
 
 test('every shield and one-handed family share the right hand while the center chest stays clear',()=>{
@@ -38,6 +51,35 @@ test('every shield and one-handed family share the right hand while the center c
       assert.match(w.image,/z-index:7/);assert.match(s.image,/z-index:6/);
     }
   }
+});
+
+test('one-handed melee weapons keep a 30-degree facing tilt at the hand anchor',()=>{
+  for(const weapon of weapons.filter(w=>!w.twoHanded&&!w.ranged))for(const mount of [null,...mounts]){
+    const html=portraitHTML(person,{weapon,mount}),w=pose(html,'weapon');
+    assert.match(w.image,/transform:scaleX\(-1\) rotate\(-30deg\)/,weapon.id);
+    assert.equal(w.x+w.gx,82,`${weapon.id}: tilt pivots around the right-hand grip`);
+    assert.equal(w.y+w.gy,111+(mount?36:0),`${weapon.id}: tilt preserves the grip height and mounted offset`);
+  }
+});
+
+test('tilted sword, mace, spear, axe and cleaver art fits the frame at every mount height',()=>{
+  for(const id of ['arming-sword','bludgeon','spear','wood-axe','military-cleaver'])for(const mount of [null,...mounts]){
+    const weapon=getItem(id),html=portraitHTML(person,{weapon,mount}),w=pose(html,'weapon'),f=frame(html),[width,height]=pngSize(w.image);
+    for(const x of [0,width])for(const y of [0,height]){
+      const [wx,wy]=transformedPoint(w.image,x,y);
+      const px=f.x+(w.x+wx)*f.scale,py=f.y+(w.y+wy)*f.scale;
+      assert.ok(px>=-1e-8&&px<=104+1e-8&&py>=-1e-8&&py<=142+1e-8,`${id}${mount?` on ${mount.id}`:''}: art corner fits (${px},${py})`);
+    }
+  }
+});
+
+test('mace shaft tilts about 30 degrees from upright toward the enemy',()=>{
+  const w=pose(portraitHTML(person,{weapon:getItem('bludgeon')}),'weapon');
+  const [tipX,tipY]=transformedPoint(w.image,39,9),[gripX,gripY]=transformedPoint(w.image,8,57);
+  assert.ok(tipX>gripX&&tipY<gripY,'the mace head leans up and toward friendly-right');
+  const tiltFromVertical=Math.atan2(tipX-gripX,gripY-tipY)*180/Math.PI;
+  assert.ok(25<=tiltFromVertical&&tiltFromVertical<=35,`shaft tilt is ${tiltFromVertical} degrees`);
+  // Battle enemies mirror the whole portrait, so the same pose leans left toward them.
 });
 
 test('every two-handed melee family is enlarged at the opposite hand and fits completely, including named mounted variants',()=>{

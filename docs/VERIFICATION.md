@@ -1,4 +1,10 @@
-# Verification - version 0.45.5, 2026-10-03
+# Verification - version 0.45.6, 2026-10-03
+
+## v0.45.6 checks
+
+All 504 automated tests pass. Luna adds a 30-degree forward tilt to one-handed weapon rest poses around their existing hand grip. Mounted offsets remain intact and enemy portrait mirroring points the same pose toward the company. A native mace tip/grip regression checks the actual displayed shaft leans approximately 30 degrees from upright, rather than merely checking a CSS angle.
+
+Tilted one-handed melee crops now contribute to token framing. Bounds compose all CSS rotations and reflections in their actual order, keeping spear tips and cleaver blades inside the portrait. Regression checks cover representative sword, mace, spear, axe and cleaver corners at every mount height, alongside existing two-handed, helmet, mount-base and projectile-origin checks. Chromium captures 15 normal/mounted/mirrored poses without missing images or exceptions. Fresh offline launch verifies all 526 resources and retains the new tilt. Physical iPad Safari remains untested.
 
 ## v0.45.5 checks
 
