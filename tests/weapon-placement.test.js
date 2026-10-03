@@ -43,8 +43,8 @@ test('every shield and one-handed family share the right hand while the center c
   for(const weapon of weapons.filter(w=>!w.twoHanded))for(const shield of shields){
     for(const item of [weapon,getItem(`famed:${weapon.id}:73`),{visual:weapon.visual,id:weapon.id}]){
       const html=portraitHTML(person,{weapon:item,shield}),w=pose(html,'weapon'),s=pose(html,'shield');
-      assert.equal(w.x+w.gx,82,weapon.id);assert.equal(w.y+w.gy,111,weapon.id);
-      const scale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)?.[1]??1);
+      assert.equal(w.x+w.gx,74,weapon.id);if(NAMED_WEAPON_ART[weapon.id])assert.ok(w.y+w.gy<=111,weapon.id);else assert.equal(w.y+w.gy,111,weapon.id);
+      const scale=[...s.image.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].reduce((n,m)=>n*Number(m[1]),1);
       const right=s.x+pngSize(s.image)[0]*scale;
       assert.ok(s.x>=60,`${shield.id}: center chest x=38..60 remains visible`);
       assert.ok(s.x<=82 && right>=82,`${shield.id}: weapon and shield share the hand`);
@@ -60,8 +60,8 @@ test('one-handed melee weapons keep a 30-degree facing tilt at the hand anchor',
     const source=NAMED_WEAPON_ART[weapon.id];
     if(source){const [tx,ty]=transformedPoint(w.image,...source.tip),[gx,gy]=transformedPoint(w.image,...source.grip);const tilt=Math.atan2(tx-gx,gy-ty)*180/Math.PI;assert.ok(Math.abs(tilt-30)<.001,`${weapon.id}: native shaft leans 30 degrees`);}
     else assert.match(w.image,/transform:scaleX\(-1\) rotate\(-30deg\)/,weapon.id);
-    assert.equal(w.x+w.gx,82,`${weapon.id}: tilt pivots around the right-hand grip`);
-    assert.equal(w.y+w.gy,111+(mount?36:0),`${weapon.id}: tilt preserves the grip height and mounted offset`);
+    assert.equal(w.x+w.gx,mount?82:74,`${weapon.id}: tilt pivots around the right-hand grip`);
+    if(source)assert.ok(w.y+w.gy<=111+(mount?36:0),`${weapon.id}: grip keeps the enlarged butt above the base`);else assert.equal(w.y+w.gy,111+(mount?36:0),`${weapon.id}: tilt preserves the grip height and mounted offset`);
   }
 });
 
@@ -182,7 +182,7 @@ test('every mount stays low on the right, visibly supports the rider and remains
     const grounded=body.pixels.filter(([x,y])=>x>=8&&x<=35&&y>=140&&y<=156&&((x-70)/70)**2+((y-149)/11)**2<=1).length*Math.abs(body.sx*body.sy);
     assert.ok(grounded>30,`${mount.id}: lower-left haunch touches the actual plate ellipse (${grounded})`);
     assert.ok(support>100,`${mount.id}: actual opaque pixels support the rider (${support})`);
-    const scale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)?.[1]??1),right=s.x+pngSize(s.image)[0]*scale;
+    const scale=[...s.image.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].reduce((n,m)=>n*Number(m[1]),1),right=s.x+pngSize(s.image)[0]*scale;
     assert.ok(right-s.x<=48+1e-8,'mounted shields cannot hide the whole animal');
     const visible=head.pixels.filter(([x])=>x>right+1).length*Math.abs(head.sx*head.sy);
     assert.ok(visible>100,`${mount.id}: recognizable mount remains visible beyond ${shield.id} (${visible})`);
@@ -230,5 +230,28 @@ test('every named two-handed handle stays above the pawn ground anchor, includin
   for(const [x,y] of opaquePixels(w.image).pixels){const [,ty]=transformedPoint(w.image,x,y);assert.ok(w.y+ty<=ground,`${weapon.id}: visible handle reaches ${w.y+ty}, below base ${ground}`);}
   const [width,height]=pngSize(w.image);
   for(const x of [0,width])for(const y of [0,height]){const [,ty]=transformedPoint(w.image,x,y);assert.ok(w.y+ty<=ground,`${weapon.id}: entire sprite is bounded above the base`);}
+ }
+});
+
+
+test('foreground equipment keeps readable proportions after framing, including mounted shields',()=>{
+ for(const mount of [null,...mounts]){
+  const html=portraitHTML(person,{weapon:getItem('arming-sword'),shield:getItem('round-shield'),mount}),w=pose(html,'weapon'),s=pose(html,'shield'),f=frame(html);
+  const scale=im=>[...im.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].reduce((n,m)=>n*Number(m[1]),1);
+  assert.ok(scale(w.image)*f.scale>=(mount ? .88 : .95),'sword must remain readable after final framing');
+  assert.ok(pngSize(s.image)[0]*scale(s.image)*f.scale>=(mount?35:39),'shield cannot regress into a miniature');
+ }
+ for(const mount of mounts)for(const shield of shields){
+  const html=portraitHTML(person,{shield,mount}),s=pose(html,'shield');
+  const scale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)[1]);
+  assert.ok(s.y+pngSize(s.image)[1]*scale<=156+1e-8,`${shield.id}: enlarged shield stays above the shared base`);
+ }
+});
+
+
+test('enlarged named one-handed handles stay above the pawn base on every mount',()=>{
+ for(const weapon of weapons.filter(w=>!w.twoHanded&&NAMED_WEAPON_ART[w.id]))for(const mount of [null,...mounts]){
+  const w=pose(portraitHTML(person,{weapon,mount}),'weapon'),[width,height]=pngSize(w.image);
+  for(const x of [0,width])for(const y of [0,height]){const [,ty]=transformedPoint(w.image,x,y);assert.ok(w.y+ty<=116+(mount?36:0),weapon.id);}
  }
 });

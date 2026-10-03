@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {battleHTML, tacticsHTML} from '../src/battle-view.js';
+import {portraitWeaponAnchor} from '../src/portraits.js';
+import {getItem} from '../src/engine.js';
 
 const battleCSS=readFileSync(new URL('../src/battle.css',import.meta.url),'utf8');
 
@@ -89,10 +91,11 @@ test('enemy projectiles start at the mirrored weapon hand and travel toward the 
   const projectile=html.match(/class="battle-projectile is-javelin"[^>]*style="([^"]+)"/)[1];
   // Enemy's one-handed javelin is now on the right; mirroring puts its grip on the left.
   const px=Number(projectile.match(/left:([\d.]+)px/)[1]),py=Number(projectile.match(/top:([\d.]+)px/)[1]);
-  assert.ok(Math.abs(px-(662-30*64/104))<1e-8);
+  const hand=portraitWeaponAnchor({weapon:getItem('javelins')});
+  assert.ok(Math.abs(px-(662+(52-hand.x)*64/104))<1e-8);
   const enemyY=Number(html.match(/data-unit-id="enemy" style="left:[^;]+;top:([\d.-]+)px/)[1]);
   const companyY=Number(html.match(/data-unit-id="captain" style="left:[^;]+;top:([\d.-]+)px/)[1]);
-  assert.ok(Math.abs(py-(enemyY+10+111*64/104))<1e-8);
+  assert.ok(Math.abs(py-(enemyY+10+hand.y*64/104))<1e-8);
   assert.ok(Math.abs(Number(projectile.match(/--flight-x:([\d.-]+)px/)[1])-(282-px))<1e-8);
   assert.ok(Math.abs(Number(projectile.match(/--flight-y:([\d.-]+)px/)[1])-(companyY+50-py))<1e-8);
   assert.match(html, /--strike-x:-13.00px;--strike-y:0.00px/);
