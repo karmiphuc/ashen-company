@@ -1,8 +1,12 @@
 # Ashen Company
 
+Version 0.48 adds **Ashen Winter**, the first endgame crisis. From day 60, a company whose six strongest equipped members average level seven can receive a seven-day invasion warning. Three Ancient Legion commanders send hosts along the roads. Besieged and occupied settlements close every service until your company liberates them; waiting will not reopen them. Defeating commanders stops new attacks, and freeing all blocked settlements ends the crisis with crowns, renown, and a saved equipment reward. Existing ancient enemies, artwork, and armory are reused. Old saves receive the full scheduling and warning period; active battles retain their rules. Faction war remains planned for a later release. See [implementation rules](docs/ASHEN-WINTER-IMPLEMENTATION-SPEC.md).
+
 Version 0.47.6 buffs Ronin, Ninja and Warrior Monk into veteran specialists with stronger combat stats, matching hiring fees and guaranteed attack-skill talent for new recruits.
 
 Version 0.47.5 adds 10 backgrounds and fixed star talents to hiring and advancement. Samurai now costs 2,000 crowns with elite melee stats and at least two-star melee skill and defense. See [backgrounds and talents](docs/BACKGROUNDS-TALENTS.md).
+
+Version 0.47.4 combines named armor traits and weapon/shield craftsmanship with the newer BB-style rolls. Owned newer named gear upgrades with its existing seed and damage outside combat; inspection shows every bonus. See [named-item rules](docs/NAMED-ROLLS.md).
 
 
 Version 0.47.3 supports **18 hired brothers: 15 fielded and 3 reserves**, with reserve swaps in the formation editor. Saved preparation checkboxes buy all affordable town ammunition regardless of current stores and equip the best stash bandages first. See [company preparation and reserves](docs/COMPANY-PREPARATION.md).

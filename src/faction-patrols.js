@@ -76,12 +76,16 @@ export function advanceFactionSimulation(state,context){
   const now=(state.day-1)*24+state.hour;
   if(state.factionSimulationHour===now)return;
   state.factionPatrols??={};
+  const homeFor = definition => {
+    const available = context.settlements.filter(t => t.kind === 'town' && soldierFactionAt(t.x,t.y).id === definition.factionId && (context.servicesAvailable?.(t.id) ?? true));
+    return available.find(t => t.id === definition.homeId) ?? available.sort((a,b) => Math.hypot(a.x-definition.home.x,a.y-definition.home.y)-Math.hypot(b.x-definition.home.x,b.y-definition.home.y)||a.id.localeCompare(b.id))[0] ?? null;
+  };
   const definitions=patrolDefinitions(context.settlements),byId=new Map(definitions.map(d=>[d.id,d]));
   for(const d of definitions){
     const p=state.factionPatrols[d.id]??=initialPatrolProgress(state,d);
-    if(!p.troops.length&&p.defeatedUntil<=now){const cycle=p.spawnCycle+1;state.factionPatrols[d.id]={...initialPatrolProgress(state,d),spawnCycle:cycle,wins:p.wins,losses:p.losses};}
+    if(!p.troops.length&&p.defeatedUntil<=now&&homeFor(d)){const cycle=p.spawnCycle+1;state.factionPatrols[d.id]={...initialPatrolProgress(state,d),x:homeFor(d).x,y:homeFor(d).y,spawnCycle:cycle,wins:p.wins,losses:p.losses};}
   }
-  const armies=factionPatrols(state,context.settlements).filter(p=>p.active),hostiles=context.hostiles().filter(target=>target.kind==='band');
+  const armies=factionPatrols(state,context.settlements).filter(p=>p.active),hostiles=context.hostiles().filter(target=>target.kind==='band'||target.kind==='undead-host');
   const reserved=new Set([state.pursuit,state.destinationAction?.id,state.contract?.campId]);
   for(const army of armies){
     const p=state.factionPatrols[army.id],d=byId.get(army.id);
@@ -90,8 +94,8 @@ export function advanceFactionSimulation(state,context){
     const threats=[...hostiles.filter(b=>b.difficulty>0&&!reserved.has(b.id)),...armies.filter(other=>other.id!==army.id&&soldierRelations(army.factionId,other.factionId)==='hostile')];
     const target=p.cooldownUntil<=now?threats.filter(t=>Math.hypot(t.x-p.x,t.y-p.y)<=(recovering?35:180)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)||a.id.localeCompare(b.id))[0]:null;
     if(target){p.behavior=recovering?'returning':'engaging';p.targetId=target.id;move(p,target,52*.25);}
-    else {p.behavior=recovering?'returning':'touring';p.targetId=null;const goal=p.behavior==='returning'?d.home:d.waypoints[p.waypoint];if(move(p,goal,55*.25)&&p.behavior==='touring')p.waypoint=(p.waypoint+1)%d.waypoints.length;}
-    const atCity=context.settlements.some(t=>t.kind==='town'&&Math.hypot(t.x-p.x,t.y-p.y)<=28&&soldierFactionAt(t.x,t.y).id===army.factionId);
+    else {p.behavior=recovering?'returning':'touring';p.targetId=null;const goal=p.behavior==='returning'?(homeFor(d)??p):d.waypoints[p.waypoint];if(move(p,goal,55*.25)&&p.behavior==='touring')p.waypoint=(p.waypoint+1)%d.waypoints.length;}
+    const atCity=context.settlements.some(t=>t.kind==='town'&&Math.hypot(t.x-p.x,t.y-p.y)<=28&&soldierFactionAt(t.x,t.y).id===army.factionId&&(context.servicesAvailable?.(t.id)??true));
     if(atCity&&now-p.lastReinforcedHour>=12&&p.troops.length<d.size){const missing=Array.from({length:d.size},(_,i)=>i).find(i=>!p.troops.includes(i));p.troops.push(missing);p.troops.sort((a,b)=>a-b);p.lastReinforcedHour=now;}
     if(!target||Math.hypot(target.x-p.x,target.y-p.y)>35||p.cooldownUntil>now)continue;
     if(target.kind==='patrol'&&(state.factionPatrols[target.id].cooldownUntil>now||!state.factionPatrols[target.id].troops.length))continue;

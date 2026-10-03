@@ -1,6 +1,6 @@
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
 import { regionAt, regionalTownArt } from './geography.js';
-import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getFactionPatrols, getCaravans, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
+import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = [
   ...SETTLEMENT_SCENERY_ASSETS,
@@ -89,7 +89,7 @@ function townArt(town) {
 
 function bands() {
   const quest=state?getQuestEncounter(state):null;
-  const value = state ? [...getRoamingBands(state),...(['deserters','bounty'].includes(quest?.kind)?[quest]:[])] : [];
+  const value = state ? [...getRoamingBands(state),...getUndeadEncounters(state),...(['deserters','bounty'].includes(quest?.kind)?[quest]:[])] : [];
   return Array.isArray(value) ? value : [];
 }
 
@@ -378,7 +378,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const band = bands().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
       const caravan = caravans().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 24);
       const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
-      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: ['deserters','bounty'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }
+      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind.startsWith('undead-')?band.kind:['deserters','bounty'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }
         : camp ? { type: 'camp', id: camp.id, entity: camp }
           : town ? { type: 'town', id: town.id, entity: town }
             : null;
@@ -386,7 +386,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const target = caravan && caravanDistance <= existingDistance
         ? { type: 'caravan', id: caravan.id, entity: caravan }
         : existingTarget;
-      if ((target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
+      if ((target?.type?.startsWith('undead-') || target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
       else if (!target && !sceneryAt(settlementStructures, world)) onTravel(world.x, world.y);
@@ -521,7 +521,7 @@ function draw() {
     if (count > 1) sprite(context, ['figure_player_berserker', 'figure_player_ranger', 'figure_player_slave'][index % 3], band.x - 8, band.y + 1, 25, .72);
     sprite(context, art, band.x + (count > 1 ? 7 : 0), band.y, 29, .72);
     sprite(context, `banner_10${clamp(Number(band.difficulty) || Math.ceil(count / 2), 1, 3)}`, band.x + 16, band.y - 20, 17, .82);
-    const label = `${band.enemies.some(e=>e.champion)?'★ ':''}${band.name || 'Wandering Brigands'} · ${count} ${band.kind==='deserters'?'deserters':`brigand${count===1?'':'s'}`}`;
+    const label = `${band.enemies.some(e=>e.champion)?'★ ':''}${band.name || 'Wandering Brigands'} · ${count} ${band.kind.startsWith('undead-')?'undead':band.kind==='deserters'?'deserters':`brigand${count===1?'':'s'}`}`;
     context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913cc'; context.strokeText(label, band.x, band.y + 24);
     context.fillStyle = band.behavior==='hunting-company'?'#ed6558':'#f29b46'; context.fillText(label, band.x, band.y + 24);
     const activity = bandActivity(band);
@@ -551,6 +551,8 @@ function draw() {
     context.strokeText(region.name.toUpperCase(),region.x,region.y);context.fillStyle=region.color;context.fillText(region.name.toUpperCase(),region.x,region.y);context.restore();
   }
   SETTLEMENTS.forEach((town, index) => {
+    const access=getSettlementAccess(state,town.id);
+    if(access.status!=='open'){context.font='bold 15px Georgia';context.textAlign='center';context.strokeStyle='#211b19';context.lineWidth=3;const label=access.servicesAvailable?(access.status==='threatened'?'! Undead approaching':'Rebuilding'):'☠ CLOSED';context.strokeText(label,town.x,town.y-48);context.fillStyle=access.servicesAvailable?'#f3c777':'#ff9d89';context.fillText(label,town.x,town.y-48);}
     if (selection === town.id || state.contract?.to === town.id) {
       context.strokeStyle = selection === town.id ? '#f4d78f' : '#dfcb73'; context.lineWidth = 2;
       context.beginPath(); context.ellipse(town.x, town.y + 3, 45, 17, 0, 0, Math.PI * 2); context.stroke();
