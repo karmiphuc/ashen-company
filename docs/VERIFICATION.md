@@ -1,6 +1,16 @@
-# Verification - version 0.46.3, 2026-10-03
+# Verification - version 0.46.4, 2026-10-03
 
 
+
+## v0.46.4 checks
+
+All 555 tests pass. Victory loot checkboxes now select copies to keep. The engine's read-only keep quote validates the selection and calculates donation indices as its exact complement, using the existing local-price XP/morale rules. Nothing is kept by default; the main action becomes available when at least one item is ticked. The preview reports kept/donated counts, donation value, XP pool and individual rewards. Separate item inspection preserves the keep selection and focus.
+
+“Keep selected & donate the rest” retains selected copies at their original durability and donates unticked items. “Donate all” explicitly ignores keep ticks and donates every loot item; the UI states this beneath the button. “Take all loot and continue” remains available. Crowns and supplies are collected by every action. Existing stash-capacity, casualty-recovery and non-victory behavior remain. Keep selections reset for new battles, completed claims and imported saves.
+
+Native Chromium kept the second Mail Shirt (29 durability) and a named Plate Harness while donating the first Mail Shirt and Arming Sword, worth 93 crowns. Each of three survivors received 2 XP and 2 morale. After a fresh result load, ticking a shirt then pressing Donate all left neither shirts, sword nor named harness in the stash and awarded each survivor 18 XP and up to 15 morale. No JavaScript exceptions occurred. Screenshot: `/workspace/ashen-keep-loot-v0464.png`.
+
+A fresh-profile offline reload cached all 557 resources under `ashen-company-0967ccae3e122423`, loaded v0.46.4 and imported the keep-quote API without exceptions. Generated-cache checks passed after the final application change.
 
 ## v0.46.3 checks
 
