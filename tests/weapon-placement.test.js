@@ -127,13 +127,13 @@ test('every mount stays low on the right, visibly supports the rider and remains
     const html=portraitHTML({name:'Rider',seed},{mount,armor:getItem('plate-harness'),helmet,weapon:getItem('arming-sword'),shield});
     profiles.add(html.match(/data-appearance="(\d+)"/)[1]);
     const head=mountGeometry(html,'head'),body=mountGeometry(html,'body'),s=pose(html,'shield'),f=frame(html);
-    assert.ok(head.left>=70,`${mount.id}: animal is on the right, not beside the left arm`);
-    assert.ok(head.top>=44,`${mount.id}: animal cannot obscure the face`);
-    assert.ok(head.bottom>=124&&head.bottom<=126,`${mount.id}: all muzzles meet the same plate`);
+    assert.ok(head.left>=64,`${mount.id}: animal is on the right, not beside the left arm`);
+    assert.ok(head.top>=54,`${mount.id}: animal cannot obscure the face`);
+    assert.ok(head.bottom>=153.5&&head.bottom<=156,`${mount.id}: all muzzles meet the same plate`);
     assert.ok(Math.abs(body.left-0)<1e-8&&Math.abs(body.right-129)<1e-8,`${mount.id}: rear body spans beneath the rider`);
-    assert.ok(Math.abs(body.top-56)<1e-8&&Math.abs(body.bottom-126)<1e-8);
-    const support=body.pixels.filter(([x,y])=>x>=45&&x<=80&&y>=110&&y<=122).length*Math.abs(body.sx*body.sy);
-    const grounded=body.pixels.filter(([x,y])=>x>=8&&x<=35&&y>=110&&y<=126&&((x-67.5)/67.5)**2+((y-119)/11)**2<=1).length*Math.abs(body.sx*body.sy);
+    assert.ok(Math.abs(body.top-(mount.visual==='warg'||mount.visual==='wolf'?78:58))<1e-8&&Math.abs(body.bottom-156)<1e-8);
+    const support=body.pixels.filter(([x,y])=>x>=45&&x<=80&&y>=112&&y<=146).length*Math.abs(body.sx*body.sy);
+    const grounded=body.pixels.filter(([x,y])=>x>=8&&x<=35&&y>=140&&y<=156&&((x-70)/70)**2+((y-149)/11)**2<=1).length*Math.abs(body.sx*body.sy);
     assert.ok(grounded>30,`${mount.id}: lower-left haunch touches the actual plate ellipse (${grounded})`);
     assert.ok(support>100,`${mount.id}: actual opaque pixels support the rider (${support})`);
     const scale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)?.[1]??1),right=s.x+pngSize(s.image)[0]*scale;
@@ -148,13 +148,14 @@ test('every mount stays low on the right, visibly supports the rider and remains
 });
 
 
-test('mount enlargement retains a 40 percent natural head scale and expands the grounded body by 30 to 40 percent',()=>{
-  const previousScale={'riding-horse':.70,'war-horse':.58,'armored-war-horse':.58,'warg-mount':.58,'dire-wolf-mount':.58};
-  for(const mount of mounts){
-    const html=portraitHTML(person,{mount}),head=mountGeometry(html,'head'),body=mountGeometry(html,'body');
-    assert.ok(Math.abs(head.sy/previousScale[mount.id]-1.4)<1e-8,'heads enlarge uniformly rather than stretching the art');
-    assert.ok(Math.abs(Math.abs(head.sx)-head.sy)<1e-8);
-    assert.ok((body.right-body.left)/99>=1.3&&(body.right-body.left)/99<=1.5,'body grows horizontally');
-    assert.ok(Math.abs((body.bottom-body.top)/50-1.4)<1e-8,'body grows vertically');
+test('framed mounts have an exposed body below the torso and a visibly larger natural head',()=>{
+  for(const mount of mounts)for(const helmet of [getItem('bb-fangshire'),getItem('bb-gunner-hat')])for(const shield of shields){
+    const html=portraitHTML(person,{mount,helmet,shield,armor:getItem('noble-mail'),weapon:getItem('arming-sword')}),head=mountGeometry(html,'head'),body=mountGeometry(html,'body'),f=frame(html),s=pose(html,'shield');
+    const shieldScale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)?.[1]??1),[sw,sh]=pngSize(s.image);
+    const exposed=body.pixels.filter(([x,y])=>y>=112&&(x<s.x||x>s.x+sw*shieldScale||y>s.y+sh*shieldScale)).length*Math.abs(body.sx*body.sy)*f.scale**2;
+    assert.ok((body.bottom-110)*f.scale>=24,`${mount.id}: visible depth below the torso survives token framing`);
+    assert.ok(exposed>350,`${mount.id}: lower animal body is visibly exposed below armor and shield (${exposed})`);
+    assert.ok(Math.abs(Math.abs(head.sx)-head.sy)<1e-8,'head art retains natural proportions');
+    assert.ok((head.bottom-head.top)*f.scale>=.75*110*f.scale,'displayed head is substantial relative to the rider, after framing');
   }
 });

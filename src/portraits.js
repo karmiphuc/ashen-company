@@ -185,11 +185,11 @@ export const VISUALS = {
     'kraken-mantle': { front: ['attachment-kraken-mantle.png', 5, 46] },
   },
   mount: {
-    horse: {body:'mount-horse-body.png',head:'mount-horse-head.png',headLeft:84.4,headTop:46.6,scale:.98,facing:1},
-    warhorse: {body:'mount-war-horse-body.png',head:'mount-war-horse-head.png',headLeft:90.6,headTop:44.8,scale:.812,facing:1},
-    armoredhorse: {body:'mount-armored-war-horse-body.png',head:'mount-armored-war-horse-head.png',headLeft:90.6,headTop:44.8,scale:.812,facing:1},
-    warg: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:132,headTop:55,scale:.812,facing:-1,filter:'sepia(.85) saturate(.7) brightness(.7)'},
-    wolf: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:132,headTop:55,scale:.812,facing:-1},
+    horse: {body:'mount-horse-body.png',head:'mount-horse-head.png',headLeft:78,headTop:54,scale:1.25,facing:1},
+    warhorse: {body:'mount-war-horse-body.png',head:'mount-war-horse-head.png',headLeft:90,headTop:52,scale:1.04,facing:1},
+    armoredhorse: {body:'mount-armored-war-horse-body.png',head:'mount-armored-war-horse-head.png',headLeft:90,headTop:52,scale:1.04,facing:1},
+    warg: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:139,headTop:70,scale:.98,facing:-1,filter:'sepia(.85) saturate(.7) brightness(.7)'},
+    wolf: {body:'mount-wolf-body.png',head:'mount-wolf-head.png',headLeft:139,headTop:70,scale:.98,facing:-1},
   },
 };
 const SHIELD_WIDTHS = {
@@ -255,8 +255,8 @@ const SHOULDER_DIMENSIONS = {
 
 // A mounted pawn is one silhouette, not a miniature rider beside an animal.
 // All species share this plate/envelope. Natural foreground heads sit on
-// connected rear bodies; compact shields keep the mounted silhouette readable.
-const MOUNT_PLATE = {left: 0, top: 108, width: 135, height: 22};
+// connected rear bodies; the exposed lower body reaches a plate below the rider.
+const MOUNT_PLATE = {left: 0, top: 138, width: 140, height: 22};
 const MOUNT_BODY_BOUNDS = {
   'mount-horse-body.png':[4,9,74,96],
   'mount-war-horse-body.png':[37,20,115,117],
@@ -512,10 +512,13 @@ function mountLayer(spec, part) {
   if(part==='body'){
     // Rear animal mass supports the rider instead of becoming a second bust
     // beside them. Normalize its opaque crop beneath the torso; the rider
-    // masks the upper portion and the species' foreground head stays natural.
+    // masks the upper portion. Leave a substantial lower body exposed beneath
+    // the armor instead of enlarging only the concealed crop.
     const [x1,y1,x2,y2]=MOUNT_BODY_BOUNDS[body];
-    const sx=129/(x2-x1),sy=70/(y2-y1);
-    left=facing===1?0-x1*sx:129+x1*sx;top=56-y1*sy;
+    const wolfBody = body === 'mount-wolf-body.png';
+    const bodyTop = wolfBody ? 78 : 58;
+    const sx=129/(x2-x1),sy=(156-bodyTop)/(y2-y1);
+    left=facing===1?0-x1*sx:129+x1*sx;top=bodyTop-y1*sy;
     transform=`scale(${facing*sx},${sy})`;
   }
   return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT+file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:${transform};transform-origin:top left;${filter?`filter:${filter};`:''}z-index:${part==='head'?5:0};max-width:none;pointer-events:none">`;
@@ -533,7 +536,7 @@ function portraitFrame(equipment, weapon = layerSpec('weapon', equipment.weapon)
   const shieldRight = shield ? shield[1] + SHIELD_WIDTHS[shield[0]] * shieldScale : 0;
   const mountRight = layerSpec('mount', equipment.mount) ? MOUNT_PLATE.left + MOUNT_PLATE.width : 0;
   const rightRoom = Math.max(0, mountRight - CANVAS.width, shieldRight - CANVAS.width, weaponBounds.right - CANVAS.width, dlcHelmet ? dlcHelmet.left + dlcHelmet.width - CANVAS.width : 0);
-  const footroom = Math.max(0, weaponBounds.bottom - CANVAS.height);
+  const footroom = Math.max(0, weaponBounds.bottom - CANVAS.height, mountRight ? MOUNT_PLATE.top + MOUNT_PLATE.height - CANVAS.height : 0);
   const framed = Boolean(dlcHelmet || leftRoom || rightRoom || weaponBounds.top < 0 || footroom);
   const compositionScale = framed ? Math.min(CANVAS.width / (CANVAS.width + leftRoom + rightRoom), CANVAS.height / (CANVAS.height + headroom + footroom)) : 1;
   const compositionLeft = framed ? (CANVAS.width - (CANVAS.width + leftRoom + rightRoom) * compositionScale) / 2 + leftRoom * compositionScale : 0;
