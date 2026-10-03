@@ -1,3 +1,4 @@
+import { rollNamedItem } from './named-rolls.js';
 // Pure game rules for the offline overworld. The UI owns rendering and real time.
 import { createBattleField, legacyBattleField, tileAt, hexDistance, hexNeighbors, movementCost, heightHitModifier, rangedCoverModifier } from './battle-terrain.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
@@ -165,12 +166,12 @@ const ROAMING_BANDS = Object.freeze([
 ].map(band=>Object.freeze({...band,start:compactPoint(band.start),end:compactPoint(band.end)})));
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
-const FAMED_ID = /^famed:([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
+const FAMED_ID = /^(famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
 const FAMED_NAMES = ['Ashen', 'Blackthorn', 'Dawnward', 'Grimwolf', 'Ironbound', 'Oathkeeper', 'Ravenmark', 'Stormborn', 'Thornheart', 'Wolfguard'];
 
-export function createFamedItemId(baseId, seed) {
-  if (!ITEM_BY_ID.has(baseId) || ['accessory', 'attachment', 'mount'].includes(ITEM_BY_ID.get(baseId).slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
-  return `famed:${baseId}:${seed}`;
+export function createFamedItemId(baseId, seed, rulesVersion = 2) {
+  if (![1, 2].includes(rulesVersion) || !ITEM_BY_ID.has(baseId) || ['accessory', 'attachment', 'mount'].includes(ITEM_BY_ID.get(baseId).slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
+  return `${rulesVersion === 1 ? 'famed' : 'famed2'}:${baseId}:${seed}`;
 }
 
 export function getItem(id) {
@@ -179,9 +180,10 @@ export function getItem(id) {
   if (typeof id !== 'string' || id.length > 80) return undefined;
   const match = FAMED_ID.exec(id);
   if (!match) return undefined;
-  const original = ITEM_BY_ID.get(match[1]);
-  const seed = Number(match[2]);
+  const original = ITEM_BY_ID.get(match[2]);
+  const seed = Number(match[3]);
   if (!original || ['accessory', 'attachment', 'mount'].includes(original.slot) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
+  if(match[1]==='famed2')return rollNamedItem(original,id,seed,{shieldDurability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original)});
   const roll = shift => (seed >>> shift) & 15;
   const bonuses = [];
   const item = { ...original, id, baseId: original.id, rarity: 'famed' };
@@ -365,7 +367,7 @@ export function shieldMaximum(itemId) {
 const THROWING_WEAPON_AMMO = 5;
 export function throwingCapacity(itemOrId) {
   const item = typeof itemOrId === 'string' ? getItem(itemOrId) : itemOrId;
-  return item?.throwing === true ? THROWING_WEAPON_AMMO : 0;
+  return item?.throwing === true ? item.ammoMax??THROWING_WEAPON_AMMO : 0;
 }
 function itemCondition(itemId) {
   const item = getItem(itemId);
@@ -499,6 +501,8 @@ export function getCompanyStats(person) {
   const maxAttachment2Armor=armorMaximum(person.equipment?.attachment2);
   const maxHeadArmor = armorMaximum(person.equipment?.helmet);
   const shieldDefense = (person.armorDurability?.shield ?? shieldMaximum(person.equipment?.shield)) > 0 ? equipped.shield?.defense ?? 0 : 0;
+  const rangedShieldDefense=(person.armorDurability?.shield??shieldMaximum(person.equipment?.shield))>0?equipped.shield?.rangedDefense??shieldDefense:0;
+  const effectiveRangedShieldDefense=(hasPerk(person,'shield-expert')?Math.ceil(rangedShieldDefense*1.25):rangedShieldDefense)+(rangedShieldDefense&&hasPerk(person,'shield-bearer')?5:0);
   const effectiveShieldDefense = (hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense)
     + (shieldDefense && hasPerk(person, 'shield-bearer') ? 5 : 0);
   const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) + mountInitiative
@@ -514,7 +518,7 @@ export function getCompanyStats(person) {
     meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0) + giftedSkill + mountHit,
     rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0) + giftedSkill + mountHit,
     meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + reachDefense + giftedDefense + famedStatBonus('meleeDefense') + (mount?.meleeDefenseBonus ?? 0),
-    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('rangedDefense') + (mount?.rangedDefenseBonus ?? 0),
+    rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveRangedShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('rangedDefense') + (mount?.rangedDefenseBonus ?? 0),
     maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue - (mount?.fatigue ?? 0) + famedStatBonus('maxFatigue')),
     initiative,
     resolve: (hasPerk(person, 'fortified-mind') ? Math.ceil(baseResolve * 1.25) : baseResolve) + famedStatBonus('resolve'),
@@ -774,7 +778,7 @@ function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
     if(rare.length){const item=rare[townEventHash(`${state.seed}:${town.id}:${cycle}:named-kind`)%rare.length];
       const premium=ITEMS.filter(i=>i.price>=450&&equipment[i.id]>0);if(premium.length)equipment[premium.at(-1).id]=0;
       const existing=ITEMS.filter(i=>i.slot===item.slot&&equipment[i.id]>0);if(existing.length>=budget[item.slot])equipment[existing.at(-1).id]=0;
-      equipment[item.id]=1;
+      equipment[createFamedItemId(item.id,townEventHash(`${state.seed}:${town.id}:${cycle}:named-rolls`))]=1;
     }
   }
   const mountOffer=cityMountOffer(state.seed,town,cycle);
@@ -858,7 +862,7 @@ export function getMarket(state, townId) {
   const stock = marketStock(state, town);
   const event = getTownEvent(state, town.id);
   const cycle = armoryCycle(state.day);
-  const famedIds = new Set([...(stock.buyback ?? []).map(entry => entry.itemId), ...state.inventory.filter(id => getItem(id)?.rarity === 'famed')].filter(id=>!ITEM_BY_ID.has(id)));
+  const famedIds = new Set([...Object.keys(stock.equipment),...(stock.buyback ?? []).map(entry => entry.itemId), ...state.inventory.filter(id => ['famed','named'].includes(getItem(id)?.rarity))].filter(id=>!ITEM_BY_ID.has(id)));
   return {
     town,
     event,
@@ -877,7 +881,7 @@ export function getMarket(state, townId) {
       }),
       ...[...famedIds].map(itemId => {
         const offers = (stock.buyback ?? []).filter(entry => entry.itemId === itemId);
-        return { itemId, ...equipmentPrices(state, town, getItem(itemId)), stock: offers.length, owned: state.inventory.filter(id => id === itemId).length, condition: offers[0]?.condition ?? null, famed: true, buyback: offers.length > 0 };
+        return { itemId, ...equipmentPrices(state, town, getItem(itemId)), stock: (stock.equipment[itemId]??0)+offers.length, owned: state.inventory.filter(id => id === itemId).length, condition: offers[0]?.condition ?? null, famed: true, buyback: offers.length > 0 };
       }),
     ],
     goods: GOODS.map(good => ({ goodId: good.id, name: good.name, description: good.description, ...goodPrices(state, town, good), stock: stock.goods[good.id], owned: state.cargo?.[good.id] ?? 0 })),
@@ -1075,7 +1079,7 @@ function roamingBand(state, band) {
     id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle, veteranRank: progression.rank,
     ...(tier ? { factionId: regionAt(band.start.x,band.start.y).id, factionLabel: WORLD_ENEMY_PROFILES[regionAt(band.start.x,band.start.y).id].label } : {}),
     x: position.x, y: position.y, behavior, targetId: behavior === 'raiding-caravan' ? position.targetId : null,
-    enemies: survivingWorldEnemies(state, band.id, spawnCycle, championRoster(state,{id:band.id,spawnCycle,difficulty:tier,enemies},getItem,createFamedItemId)),
+    enemies: survivingWorldEnemies(state, band.id, spawnCycle, championRoster(state,{id:band.id,spawnCycle,difficulty:tier,enemies:rollEncounterNamed(state,{id:band.id,spawnCycle},enemies)},getItem,createFamedItemId)),
     description: target ? `These raiders are closing on the armorer wagon bound for ${TOWN_BY_ID.get(target.destinationId).name}. Defeat them before they reach it.`
       : position.behavior === 'hunting-company' ? 'These raiders have spotted the Ashen Company and are giving chase.'
       : tier ? `${enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${enemies.length} lightly equipped brigand${enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
@@ -1204,8 +1208,8 @@ export function getEncounterSites(state) { return [...getCampSites(state), ...ge
 
 export function getQuestEncounter(state) {
   const contract = state.contract;
-  if(contract?.type==='bounty'){if(contract.defeated)return null;const site=deserterEncounter(state.seed,contract,getItem);return {...site,kind:'bounty',name:'Wanted Champion and Retainers',acceptedDay:contract.acceptedDay,enemies:championRoster(state,{...site,acceptedDay:contract.acceptedDay},getItem,createFamedItemId,{force:true}),description:'Eight elite faction fighters shelter a wanted champion. Defeat them and return for 1,000 crowns and the right to hire the Bounty Hunter retinue for 5,000 crowns. The defeated champion guarantees their named trophy.'};}
-  if(contract?.type==='deserters')return contract.defeated?null:deserterEncounter(state.seed,contract,getItem);
+  if(contract?.type==='bounty'){if(contract.defeated)return null;const site=deserterEncounter(state.seed,contract,getItem);return {...site,kind:'bounty',name:'Wanted Champion and Retainers',acceptedDay:contract.acceptedDay,enemies:championRoster(state,{...site,acceptedDay:contract.acceptedDay,enemies:rollEncounterNamed(state,{id:site.id,generation:contract.acceptedDay},site.enemies)},getItem,createFamedItemId,{force:true}),description:'Eight elite faction fighters shelter a wanted champion. Defeat them and return for 1,000 crowns and the right to hire the Bounty Hunter retinue for 5,000 crowns. The defeated champion guarantees their named trophy.'};}
+  if(contract?.type==='deserters'){if(contract.defeated)return null;const site=deserterEncounter(state.seed,contract,getItem);return {...site,enemies:rollEncounterNamed(state,{id:site.id,generation:contract.acceptedDay},site.enemies)};}
   if (contract?.type !== 'rescue' || contract.rescued) return null;
   const difficulty = contract.rescueDifficulty ?? 1;
   const pool = worldEnemyTemplates(contract.rescuePoint.x, contract.rescuePoint.y, difficulty);
@@ -1213,7 +1217,7 @@ export function getQuestEncounter(state) {
   const count = Math.min(6, 4 + scaling.reinforcements);
   const offset = hashSeed(`${state.seed}:${contract.rescueId}:roster`) % pool.length;
   return { id: contract.rescueId, kind: 'rescue', name: 'Besieged Caravan', ...contract.rescuePoint,
-    difficulty, enemies: Array.from({ length: count }, (_, index) => regionalOutfit(pool[(offset + index) % pool.length], `${state.seed}:${contract.rescueId}`, index, contract.rescuePoint.x, contract.rescuePoint.y, difficulty)),
+    difficulty, enemies: rollEncounterNamed(state,{id:contract.rescueId,generation:contract.acceptedDay},Array.from({ length: count }, (_, index) => regionalOutfit(pool[(offset + index) % pool.length], `${state.seed}:${contract.rescueId}`, index, contract.rescuePoint.x, contract.rescuePoint.y, difficulty))),
     reward: contract.reward, cleared: false, veteranRank: scaling.rank };
 }
 
@@ -2098,6 +2102,8 @@ function famedBasesForCamp(camp) {
   return newCamp ? [...legacy, ...DLC_ITEMS.filter(item => (item.sourceArmor ?? item.armor) > 0 && (item.sourceArmor ?? item.armor) <= [0,110,220,400][camp.difficulty]).map(item=>item.id)] : legacy;
 }
 
+function rollEncounterNamed(state,encounter,enemies){return enemies.map((enemy,index)=>({...enemy,...Object.fromEntries(['armor','helmet','weapon','shield'].map(slot=>{const id=enemy[slot],item=getItem(id);return [slot,item?.sourceArmor!==undefined&&item.rarity==='named'?createFamedItemId(id,hashSeed(`${state.seed}:${encounter.id}:${encounter.generation??encounter.spawnCycle??0}:${index}:${slot}:named-rolls`)):id];}))}));}
+
 function famedDropForCamp(seed, camp) {
   const chance = (FAMED_CHANCES[camp.difficulty] ?? 0) + (camp.discoveryBonuses?.famed??0)/100;
   if (hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-roll`) % 10000 >= chance * 10000) return null;
@@ -2147,7 +2153,7 @@ export function getCampSites(state) {
     const enemies = Array.from({ length: Math.min(12, camp.enemies.length + scaling.reinforcements) }, (_, enemyIndex) => { const enemy={...camp.enemies[enemyIndex % camp.enemies.length]}; return !fixed && enemyIndex>=camp.enemies.length ? regionalOutfit(enemy, `${state.seed}:${id}:${progress.generation}`, enemyIndex, camp.x, camp.y, camp.difficulty, {champions:false,theme:camp.factionId==='ancient'?'ancient':undefined}) : enemy; });
     if (scaling.cavalry && enemies.length && camp.factionId!=='ancient') enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation, camp.x, camp.y);
     const discovery=discoveryBonuses(state,{...camp,generation:progress.generation});
-    const champions=championRoster(state,{...camp,generation:progress.generation,enemies},getItem,createFamedItemId);
+    const champions=championRoster(state,{...camp,generation:progress.generation,enemies:rollEncounterNamed(state,{id:camp.id,generation:progress.generation},enemies)},getItem,createFamedItemId);
     return {...camp,discoveryBonuses:discovery,description:scaling.reinforcements?`${enemies.length} fighters hold this position. Veteran reinforcements have gathered as your company has grown.`:camp.description,kind:'camp',generation:progress.generation,veteranRank:scaling.rank,famedChance:(FAMED_CHANCES[camp.difficulty]??0)+discovery.famed/100,mountChance:camp.random&&camp.difficulty===3?(12+discovery.mount)/100:0,enemies:survivingWorldEnemies(state,id,progress.generation,champions),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
   });
 }
@@ -2348,7 +2354,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
       spearwallActive: false, riposteActive: false, stunnedTurns: 0, stunProtected: false, pendingBerserkAp: 0,
       meleeSkill: 30 + championSkill + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill, rangedSkill: 28 + championSkill + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill,
       meleeDefense: 2 + championDefense + camp.difficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),
-      rangedDefense: 2 + championDefense + camp.difficulty * 2 + rank * 2 + shieldDefense + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0),
+      rangedDefense: 2 + championDefense + camp.difficulty * 2 + rank * 2 + (getItem(gear.shield)?.rangedDefense ?? shieldDefense) + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0),
       maxFatigue: 85 + (enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + camp.difficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative, resolve: 32 + (enemy.champion?20:0) + camp.difficulty * 8 + rank * 4 + bonus('resolve'),
     };
   });
@@ -2375,7 +2381,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
       perks: [], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
       seed: hashSeed(`${state.seed}:${camp.id}:ally:${index}`), alive: true, morale: 70, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
       meleeSkill: 47 + allyRank * 3, rangedSkill: 25, meleeDefense: 7 + allyRank + getItem(gear.shield).defense,
-      rangedDefense: 7 + allyRank + getItem(gear.shield).defense, maxFatigue: 85, initiative: 75 + allyRank * 2, resolve: 45 + allyRank * 2 });
+      rangedDefense: 7 + allyRank + (getItem(gear.shield).rangedDefense??getItem(gear.shield).defense), maxFatigue: 85, initiative: 75 + allyRank * 2, resolve: 45 + allyRank * 2 });
   }
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
@@ -2538,14 +2544,14 @@ function battleGearFatigue(equipment) {
   return (getItem(equipment.weapon)?.fatigue ?? 0) + (getItem(equipment.shield)?.fatigue ?? 0);
 }
 
-function shieldDefenseFor(actor, shieldId, durability = actor.shieldDurability) {
-  const defense = durability > 0 ? getItem(shieldId)?.defense ?? 0 : 0;
+function shieldDefenseFor(actor, shieldId, durability = actor.shieldDurability, ranged=false) {
+  const item=getItem(shieldId),defense=durability>0?(ranged?item?.rangedDefense??item?.defense??0:item?.defense??0):0;
   return (hasPerk(actor, 'shield-expert') ? Math.ceil(defense * 1.25) : defense)
     + (defense && hasPerk(actor, 'shield-bearer') ? 5 : 0);
 }
 
 function changeBattleWeapon(actor, weaponId, shieldId, shieldDurability = actor.shieldDurability, battle=null) {
-  const oldDefense = shieldDefenseFor(actor, actor.equipment.shield);
+  const oldDefense = shieldDefenseFor(actor, actor.equipment.shield),oldRangedDefense=shieldDefenseFor(actor,actor.equipment.shield,actor.shieldDurability,true);
   const oldFatigue = battleGearFatigue(actor.equipment);
   actor.equipment.weapon = weaponId;
   actor.equipment.shield = shieldId;
@@ -2563,7 +2569,7 @@ function changeBattleWeapon(actor, weaponId, shieldId, shieldDurability = actor.
   const initiativeDelta = hasPerk(actor, 'relentless')
     ? Math.ceil((armorPenalty + oldFatigue) / 2) - Math.ceil((armorPenalty + newFatigue) / 2) : fatigueDelta;
   actor.meleeDefense += defenseDelta;
-  actor.rangedDefense += defenseDelta;
+  actor.rangedDefense += shieldDefenseFor(actor,shieldId,shieldDurability,true)-oldRangedDefense;
   actor.maxFatigue = Math.max(30, actor.maxFatigue + fatigueDelta);
   actor.initiative = Math.max(20, actor.initiative + initiativeDelta);
 }
@@ -2876,7 +2882,7 @@ function hasWeaponMastery(actor, weapon) {
 }
 
 function attackFatigueCost(actor, weapon) {
-  const base = weapon?.fatigueCost ?? (weapon?.ranged ? 9 : 11);
+  const base = Math.max(0,(weapon?.fatigueCost ?? (weapon?.ranged ? 9 : 11))+(weapon?.fatigueOnSkillUse??0));
   return hasWeaponMastery(actor, weapon) ? Math.ceil(base * .75) : base;
 }
 
@@ -2913,6 +2919,7 @@ function moraleDamage(unit, amount) {
 }
 
 export function shieldImpactDamage(weapon) {
+  if(weapon?.shieldDamage!==undefined)return weapon.shieldDamage;
   const visual = weaponTrainingVisual(weapon) ?? '';
   if (weapon?.throwing) return visual.includes('axe') ? (visual.includes('heavy') ? 24 : 18) : (visual.includes('heavy') ? 18 : 12);
   return !weapon?.ranged && AXE_VISUALS.has(visual) ? 12 : 0;
@@ -2927,7 +2934,7 @@ function wearShield(battle, unit, amount) {
     unit.shieldWallActive = false;
     const defense = shieldDefenseFor(unit, unit.equipment.shield, 1);
     unit.meleeDefense -= defense;
-    unit.rangedDefense -= defense;
+    unit.rangedDefense -= shieldDefenseFor(unit, unit.equipment.shield, 1, true);
     battleLog(battle, `${unit.name}'s ${getItem(unit.equipment.shield).name} breaks.`);
   }
   return previous - unit.shieldDurability;
@@ -2940,8 +2947,10 @@ function changeBattleMorale(battle, unit, amount) {
   if (previous !== current && unit.hp > 0) battleLog(battle, `${unit.name} is now ${current.toLowerCase()}.`);
 }
 
+function shieldSkillFatigue(actor){return Math.max(0,20+(getItem(actor.equipment.shield)?.fatigueOnSkillUse??0));}
+
 function aimedFatigueCost(actor) {
-  return hasPerk(actor, 'bow-mastery') ? Math.ceil(15 * .75) : 15;
+  const base=Math.max(0,15+(getItem(actor.equipment.weapon)?.fatigueOnSkillUse??0));return hasPerk(actor, 'bow-mastery') ? Math.ceil(base * .75) : base;
 }
 
 function attackHitChance(battle, actor, target, weapon, hitBonus = 0, option = null) {
@@ -2955,7 +2964,7 @@ function attackHitChance(battle, actor, target, weapon, hitBonus = 0, option = n
     ? Math.max(10, Math.floor(target.rangedDefense * .1 * hexDistance(actor, target))) : 0;
   const shieldBypass = ['flail-headshot', 'whip-crack'].includes(option?.id) ? shieldDefenseFor(target, target.equipment.shield) : 0;
   const defense = Math.round(((ranged ? target.rangedDefense : target.meleeDefense) - shieldBypass) * (1 + getMoraleEffects(target).modifier)) + dodgeDefense + anticipationDefense
-    + (!shieldBypass && target.shieldWallActive && target.shieldDurability > 0 ? shieldDefenseFor(target, target.equipment.shield) : 0)
+    + (!shieldBypass && target.shieldWallActive && target.shieldDurability > 0 ? shieldDefenseFor(target, target.equipment.shield,target.shieldDurability,ranged) : 0)
     + (!ranged ? reachDefense : 0)
     + (hasPerk(target, 'last-stand') && target.hp * 2 <= target.maxHp ? 8 : 0)
     + (target.side === 'company' && battle.tactic === 'defense' ? 5 : 0);
@@ -2975,9 +2984,8 @@ function attackHitChance(battle, actor, target, weapon, hitBonus = 0, option = n
 function attackSkillFatigue(actor, weapon, option) {
   if (!option?.fatigue) return attackFatigueCost(actor, weapon);
   if (option.id === 'aimed-shot') return aimedFatigueCost(actor);
-  const normal = attackFatigueCost(actor, weapon);
-  const base = weapon?.fatigueCost ?? (weapon?.ranged ? 9 : 11);
-  return normal < base ? Math.ceil(option.fatigue * .75) : option.fatigue;
+  const base=Math.max(0,option.fatigue+(weapon?.fatigueOnSkillUse??0));
+  return hasWeaponMastery(actor,weapon)?Math.ceil(base*.75):base;
 }
 
 function attackDamageRoll(battle, actor, target, weapon, base, head, option = null) {
@@ -3026,7 +3034,7 @@ function predictAttack(battle, actor, target, weapon, option = null) {
     typeof option === 'number' ? null : option) / 100;
   let health = 0, armor = 0, kill = 0;
   const rolls = Math.max(1, weapon.damageMax - weapon.damageMin + 1);
-  for (let base = weapon.damageMin; base <= weapon.damageMax; base++) for (const [head, weight] of (option?.id === 'puncture' ? [[false, 1]] : ['flail-headshot', 'whip-crack'].includes(option?.id) ? [[true, 1]] : [[true, .22], [false, .78]])) {
+  for (let base = weapon.damageMin; base <= weapon.damageMax; base++) for (const [head, weight] of (option?.id === 'puncture' ? [[false, 1]] : ['flail-headshot', 'whip-crack'].includes(option?.id) ? [[true, 1]] : [[true, weapon.headChance??.22], [false, 1-(weapon.headChance??.22)]])) {
     const { hp, armorDamage, before } = attackDamageRoll(battle, actor, target, weapon, base, head, option);
     const probability = weight / rolls;
     health += hp * probability;
@@ -3076,7 +3084,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
   actor.adaptation = 0;
   const shieldDamage = wearShield(battle, target, option?.id === 'split-shield' ? shieldImpactDamage(weapon) + 16 : shieldImpactDamage(weapon) || (ranged ? 0 : 1));
   const baseDamage = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
-  const head = option?.id === 'puncture' ? false : ['flail-headshot', 'whip-crack'].includes(option?.id) ? true : battleRoll(battle) < .22;
+  const head = option?.id === 'puncture' ? false : ['flail-headshot', 'whip-crack'].includes(option?.id) ? true : battleRoll(battle) < (weapon.headChance??.22);
   const { hp: hpDamage, armorDamage, before: armorBefore } = attackDamageRoll(battle, actor, target, weapon, baseDamage, head, option);
   if (head) target.headArmor = Math.max(0, target.headArmor - armorDamage);
   else {
@@ -3545,7 +3553,7 @@ function advanceBattleV2(state) {
   if (companyTactic === 'defense' && !nearbyTarget && (battle.round - battle.lastContactRound < 4)
     && !(battle.engaged && nearest <= 3)
     && !(skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies) && actor.ap >= attackApCost(weapon, battle, actor, COMBAT_SKILLS.spearwall)
-      && actor.fatigue + COMBAT_SKILLS.spearwall.fatigue <= actor.maxFatigue)) {
+      && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall) <= actor.maxFatigue)) {
     actor.ap = 0;
     actor.fatigue = Math.max(0, actor.fatigue - 12);
     const message = `${actor.name} holds the line.`;
@@ -3668,30 +3676,30 @@ function advanceBattleV2(state) {
       candidates.push({ id: 'aimed-shot', type: 'attack', targetId: target.id, target, apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS['aimed-shot']),
         fatigueCost: aimedFatigueCost(actor), ...aimed, bonus: 15 });
     }
-    if (distance === 1 && actor.equipment.shield && actor.shieldDurability > 0 && actor.fatigue + 20 <= actor.maxFatigue) {
+    if (distance === 1 && actor.equipment.shield && actor.shieldDurability > 0 && actor.fatigue + shieldSkillFatigue(actor) <= actor.maxFatigue) {
       const push = knockBackDestination(battle, actor, target);
-      if (push) candidates.push({ id: 'knock-back', type: 'knock-back', targetId: target.id, target, push, apCost: 4, fatigueCost: 20,
+      if (push) candidates.push({ id: 'knock-back', type: 'knock-back', targetId: target.id, target, push, apCost: 4, fatigueCost: shieldSkillFatigue(actor),
         preventedDamage: target.meleeSkill * .18, incomingDamage: 2, bonus: actor.skillPreference === 'control' ? 8 : -6 });
     }
   }
   const surrounded = enemies.filter(enemy => hexDistance(actor, enemy) <= 1).length >= 2;
-  if (actor.equipment.shield && actor.shieldDurability > 0 && !actor.shieldWallActive && actor.fatigue + 20 <= actor.maxFatigue
+  if (actor.equipment.shield && actor.shieldDurability > 0 && !actor.shieldWallActive && actor.fatigue + shieldSkillFatigue(actor) <= actor.maxFatigue
     && (companyTactic !== 'offense' || surrounded)) {
-    candidates.push({ id: 'shieldwall', type: 'shieldwall', apCost: 4, fatigueCost: 20,
+    candidates.push({ id: 'shieldwall', type: 'shieldwall', apCost: 4, fatigueCost: shieldSkillFatigue(actor),
       preventedDamage: nearest <= 2 ? shieldDefenseFor(actor, actor.equipment.shield) * .8 : 0,
       bonus: battle.tactic === 'shield-wall' && nearest <= 2 ? 5 : -8 });
   }
   if (skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies)
-    && actor.fatigue + COMBAT_SKILLS.spearwall.fatigue <= actor.maxFatigue)
-    candidates.push({ id: 'spearwall', type: 'stance', apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS.spearwall), fatigueCost: 30,
+    && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall) <= actor.maxFatigue)
+    candidates.push({ id: 'spearwall', type: 'stance', apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS.spearwall), fatigueCost: attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall),
       preventedDamage: 18, bonus: actor.skillPreference === 'control' ? 14 : 3 });
   if (skillFamily === 'sword' && !actor.riposteActive
     && enemies.some(enemy => hexDistance(actor, enemy) === 1 && enemy.stunnedTurns === 0
       && !getItem(enemy.equipment.weapon)?.ranged)
     && !(companyTactic === 'offense' && actor.equipment.shield && actor.shieldDurability > 0
       && enemies.filter(enemy => hexDistance(actor, enemy) === 1).length >= 2)
-    && actor.fatigue + COMBAT_SKILLS.riposte.fatigue <= actor.maxFatigue)
-    candidates.push({ id: 'riposte', type: 'stance', apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS.riposte), fatigueCost: 25,
+    && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.riposte) <= actor.maxFatigue)
+    candidates.push({ id: 'riposte', type: 'stance', apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS.riposte), fatigueCost: attackSkillFatigue(actor, weapon, COMBAT_SKILLS.riposte),
       preventedDamage: 12, bonus: actor.skillPreference === 'control' ? 10 : -2 });
   if (skillFamily === 'two-handed-sword') for (const ally of battle.units.filter(unit => unit.alive
     && unit.side === actor.side && unit.id !== actor.id && hexDistance(actor, unit) === 1)) {
@@ -3843,7 +3851,7 @@ function advanceBattleV2(state) {
     actor.aiTargetId = choice.target.id;
     const chance = attackHitChance(battle, actor, choice.target, { ...weapon, ranged: false });
     actor.ap -= 4;
-    actor.fatigue += 20;
+    actor.fatigue += choice.fatigueCost;
     const hit = battleRoll(battle) * 100 < chance;
     const from = { q: choice.target.q, r: choice.target.r };
     if (hit) { choice.target.q = choice.push.q; choice.target.r = choice.push.r; clearWeaponStances(choice.target); }
@@ -3853,7 +3861,7 @@ function advanceBattleV2(state) {
     battleLog(battle, message);
   } else if (choice.type === 'shieldwall') {
     actor.ap -= 4;
-    actor.fatigue += 20;
+    actor.fatigue += choice.fatigueCost;
     actor.shieldWallActive = true;
     const message = `${actor.name} raises a shieldwall.`;
     battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, equipped, null, { skillName: COMBAT_SKILLS.shieldwall.name });
@@ -4341,9 +4349,9 @@ function validateBattle(input, party, worldState) {
   const famedItem = getItem(famedDrop);
   const famedSeed = hashSeed(`${worldState.seed}:${encounter.id}:${campGeneration}:famed-item`);
   const famedRoll = hashSeed(`${worldState.seed}:${encounter.id}:${campGeneration}:famed-roll`) % 10000;
-  assert(famedDrop === null || encounterType === 'camp' && famedItem?.rarity === 'famed'
+  assert(famedDrop === null || encounterType === 'camp' && ['famed','named'].includes(famedItem?.rarity)
     && famedBasesForCamp({...encounter,difficulty})?.includes(famedItem.baseId)
-    && famedDrop === createFamedItemId(famedItem.baseId, famedSeed)
+    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
     && famedRoll < ((FAMED_CHANCES[difficulty] ?? 0)+discovery.famed/100) * 10000, 'battle famed drop');
   const previousRegionalCampName=encounterType==='camp'&&/^wild-camp-/.test(encounter.id)?worldCampText(encounter.x,encounter.y,encounter.enemies.length,Number(encounter.id.slice(10))-1).name:null;
   const legacyCampName = encounterType==='camp' && /^wild-camp-/.test(encounter.id) ? getRegionalCampText(authoredPoint(encounter).x,authoredPoint(encounter).y,difficulty,1,Number(encounter.id.slice(10))-1).name : null;
@@ -4461,7 +4469,7 @@ function validateBattle(input, party, worldState) {
     for (const [slot,key] of [['armor','maxBodyArmor'],['helmet','maxHeadArmor']]) {
       const item = getItem(unit.equipment[slot]);
       const original = item?.baseId ? getItem(item.baseId) : item;
-      if (original?.sourceArmor !== undefined) {
+      if (original?.sourceArmor !== undefined && item.rollVersion !== 2) {
         const seed = item.baseId ? Number(item.id.split(':')[2]) : null;
         const legacy = seed === null ? original.sourceArmor : Math.min(500,original.sourceArmor + Math.max(8,Math.round(original.sourceArmor * (.15 + (seed & 15) / 100))));
         if (unit[key] === legacy) unit[key] = item.armor;
@@ -4685,7 +4693,7 @@ export function validateSave(input) {
   for (const [townId, market] of Object.entries(markets)) {
     assert(recordObject(market) && Number.isSafeInteger(market.day) && market.day >= 1 && market.day <= input.day && validCount(market.food) && market.food <= 100, 'market stock');
     assert(recordObject(market.goods) && GOODS.every(good => validCount(market.goods[good.id]) && market.goods[good.id] <= 100) && Object.keys(market.goods).length === GOODS.length, 'goods stock');
-    assert(recordObject(market.equipment) && ITEMS.filter(item => !NEW_ITEM_IDS.has(item.id)).every(item => validCount(market.equipment[item.id]) && market.equipment[item.id] <= 1024) && Object.keys(market.equipment).every(id => ITEM_BY_ID.has(id) && validCount(market.equipment[id]) && market.equipment[id] <= 1024), 'equipment stock');
+    assert(recordObject(market.equipment) && ITEMS.filter(item => !NEW_ITEM_IDS.has(item.id)).every(item => validCount(market.equipment[item.id]) && market.equipment[item.id] <= 1024) && Object.keys(market.equipment).every(id => Boolean(getItem(id)) && validCount(market.equipment[id]) && market.equipment[id] <= 1024), 'equipment stock');
     if (market.buyback !== undefined) assert(Array.isArray(market.buyback) && market.buyback.length <= MAX_INVENTORY && market.buyback.every(entry => recordObject(entry) && ['famed','named'].includes(getItem(entry.itemId)?.rarity) && (itemCondition(entry.itemId) === null ? entry.condition === null : validCount(restoredCondition(entry.itemId, entry.condition)) && restoredCondition(entry.itemId, entry.condition) <= itemCondition(entry.itemId))), 'famed buyback');
     if (market.supplies !== undefined) assert(recordObject(market.supplies) && Object.keys(market.supplies).length === 3 && Object.keys(SUPPLY_INFO).every(kind => validCount(market.supplies[kind]) && market.supplies[kind] <= 100), 'supplies stock');
     if (market.armoryVersion !== undefined) assert(market.armoryVersion === ARMORY_STOCK_VERSION, 'armory version');
@@ -4975,7 +4983,7 @@ export function validateSave(input) {
         day: market.day,
         food: market.food,
         goods: { ...market.goods },
-        equipment: { ...defaultArmoryStock({ seed: input.seed, day: market.day }, town), ...market.equipment },
+        equipment: { ...Object.fromEntries(Object.entries(defaultArmoryStock({ seed: input.seed, day: market.day }, town)).filter(([itemId]) => ITEM_BY_ID.has(itemId))), ...market.equipment },
         supplies: market.supplies ? { ...market.supplies } : Object.fromEntries(Object.entries(SUPPLY_INFO).map(([kind, info]) => [kind, info.stock])),
         armoryCycle: market.armoryCycle ?? armoryCycle(market.day),
         ...(market.armoryVersion === undefined ? {} : {armoryVersion: market.armoryVersion}),

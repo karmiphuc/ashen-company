@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.46.8 brings Battle Brothers-style named rolls: weapons and shields get two distinct eligible modifiers; armor and helmets roll 110–125% protection with source-based weight relief. Combat and inspection honor the rolls, while existing saved items retain their stats. See [ranges, sources and compatibility](docs/NAMED-ROLLS.md).
+
 Version 0.44 reduces world area by **33%**, preserving nine regions, all 48 settlements and the road network. City stables now rotate horses and warhorses; armored horses are scarce, and wolves/wargs favor northern, forest and marsh cities. High-tier frontier camp clears have an independent **12% extra mount reward**, alongside named loot.
 
 **Eleven allied and neutral city patrols** tour across the world: two or three per political faction. They hunt roving brigands and fight rival armies in quarter-hour simulation. Both sides lose troops, casualties survive reloads, depleted columns return to friendly cities, and destroyed armies reform after 72 hours. Select their colored map markers or Soldier patrols destinations to inspect rosters, tours and outcomes. Existing saves migrate positions once, including active campaigns and battles.

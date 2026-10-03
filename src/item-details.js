@@ -49,7 +49,7 @@ export function getItemDetails(item, condition) {
       { label: 'Reach', value: `${item.range ?? 1} ${item.range === 1 || item.range === undefined ? 'hex' : 'hexes'}` },
       { label: 'Attack skill', value: ranged ? 'Ranged' : 'Melee' },
       { label: 'Attack AP', value: `${['dagger', 'qatal'].includes(weaponSkillFamily(item)) || item.reloadTurns ? 3 : !ranged && (item.twoHanded || (item.range ?? 1) > 1) ? 6 : 4} (new battles)` },
-      { label: 'Attack fatigue', value: String(item.fatigueCost ?? (ranged ? 9 : 11)) },
+      { label: 'Attack fatigue', value: String(Math.max(0,(item.fatigueCost ?? (ranged ? 9 : 11))+(item.fatigueOnSkillUse??0))) },
       { label: 'Hands', value: item.twoHanded ? 'Two; shield stowed' : 'One; shield allowed' },
     );
     if (ranged) {
@@ -58,7 +58,7 @@ export function getItemDetails(item, condition) {
       if (item.reloadTurns) stats.push({ label: 'Reload', value: '4 AP after each shot (new battles)' });
       notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
       notes.push('Bow and crossbow fighters keep their distance while ammunition remains. When ammunition runs out, they draw a pocket weapon or reserve melee set and fight according to the selected tactic. Drawing or switching costs 4 AP in new battles; Quick Hands makes the first swap each round free.');
-      if (item.throwing) notes.push('Throwing weapons are one-handed and carry five throws per bundle. Active and reserve bundles have separate counts, preserved when swapping or stowing. After battle, equipped bundles refill from company ammunition, one supply per restored throw; shortages leave partial bundles. Carry a spare bundle or melee weapon. Without a usable backup, the fighter punches.');
+      if (item.throwing) notes.push('Throwing weapons are one-handed; the bundle capacity shown above includes any named ammunition roll. Active and reserve bundles have separate counts, preserved when swapping or stowing. After battle, equipped bundles refill from company ammunition, one supply per restored throw; shortages leave partial bundles. Carry a spare bundle or melee weapon. Without a usable backup, the fighter punches.');
       if (item.ranged && !item.throwing && !item.twoHanded) notes.push('This ranged weapon leaves the other hand free for a shield.');
       if (!item.throwing) notes.push('A bow or crossbow shot from an adjacent hex has a 12-point hit penalty if the fighter cannot reposition or switch to melee.');
       notes.push('Throwers switch to a melee backup when enemies close or ammunition runs out. A fighter trapped without a usable weapon can only make the basic unarmed attack.');
@@ -74,7 +74,7 @@ export function getItemDetails(item, condition) {
     }
     notes.push('Hit modifier changes hit chance in percentage points before other bonuses and penalties.');
     notes.push('Remaining armor reduces direct health damage. Damage that breaks through armor can add more health damage.');
-    notes.push('Ordinary attacks: 22% of landed hits strike the head. A head hit adds 10% armor damage and 25% health damage. Body-only and head-targeting skills override this chance.');
+    notes.push(`Ordinary attacks: ${Math.round((item.headChance ?? .22) * 100)}% of landed hits strike the head. A head hit adds 10% armor damage and 25% health damage. Body-only and head-targeting skills override this chance.`);
     notes.push('Signature skills apply to newly started battles. Existing active battles finish with the rules they started under. The AI chooses affordable skills using the personal preference and company tactic.');
   } else if (item.slot === 'shield') {
     const maximum = shieldMaximum(item.id);
@@ -82,7 +82,7 @@ export function getItemDetails(item, condition) {
     stats.push(
       { label: 'Shield durability', value: `${current} / ${maximum}${current === 0 ? ' (broken)' : ''}` },
       { label: 'Melee defense', value: signed(current > 0 ? item.defense ?? 0 : 0) },
-      { label: 'Ranged defense', value: signed(current > 0 ? item.defense ?? 0 : 0) },
+      { label: 'Ranged defense', value: signed(current > 0 ? item.rangedDefense??item.defense??0 : 0) },
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
     );
     notes.push('A shield makes attacks less likely to hit. It does not provide body or head armor durability.');
@@ -109,7 +109,7 @@ export function getItemDetails(item, condition) {
     );
     notes.push(item.slot === 'armor'
       ? 'Body armor is damaged by body hits. Head hits use the helmet instead.'
-      : 'For every weapon, 22% of landed hits strike the head; this helmet absorbs those hits.');
+      : 'Ordinary weapons: 22% of landed hits strike the head. Named rolls can raise that chance; this helmet absorbs head hits.');
     notes.push('Armor can still let reduced health damage through while durability remains.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
   } else if (item.slot === 'mount') {
@@ -141,23 +141,26 @@ export function getItemDetails(item, condition) {
     }
     notes.push('Consumables occupy one of the two accessory slots and are removed after use. Free healing keeps the fighter ready for another action.');
   }
+  if(item.headChance!==undefined)stats.push({label:'Head hit chance',value:`${Math.round(item.headChance*100)}%`});
+  if(item.fatigueOnSkillUse)notes.push(`Named roll: weapon/shield skills cost ${-item.fatigueOnSkillUse} less fatigue before masteries.`);
+  if(item.rollVersion===2)notes.push('Battle Brothers-style rolls: weapons and shields receive exactly two distinct eligible modifiers. Body armor gains 10–25% protection and saves 3–9 fatigue; helmets gain 10–25% protection and save 1–4 fatigue, subject to their weight floors. Rolls stay fixed through saves, repairs and trading.');
   for (const skill of equipmentSkills(item)) {
-    stats.push({ label: skill.name, value: `${skill.ap} AP${skill.fatigue ? ` · ${skill.fatigue} fatigue before masteries` : ''}` });
+    stats.push({ label: skill.name, value: `${skill.ap} AP${skill.fatigue ? ` · ${Math.max(0,skill.fatigue+((skill.id==='shieldwall'||skill.id==='knock-back')?(item.slot==='shield'?item.fatigueOnSkillUse??0:0):item.slot==='weapon'?item.fatigueOnSkillUse??0:0))} fatigue before masteries` : ''}` });
     notes.push(`${skill.name}: ${skill.description}`);
   }
   if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
   if (item.collection) {
-    notes.push('Ordinary protection and fatigue follow the pinned Battle Brothers definition. Named and legendary designs gain permanent protection, fatigue, and signature bonuses; prices are adapted to the campaign economy.');
+    notes.push('Ordinary protection and fatigue follow the pinned Battle Brothers definition. New named designs roll protection and weight against that source baseline. Existing legacy designs keep their saved bonuses; prices are adapted to the campaign economy.');
     notes.push('Cosmetic variants use a fixed source design. Original helmet vision penalties and scripted magical effects are not simulated.');
   }
   const role = ['famed','named'].includes(item.rarity)
-    ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with the ordinary version.`
+    ? `A rare ${base.name.toLowerCase()} with ${bonuses.map(row => `${String(row.label).toLowerCase()} ${row.value}`).join(', ')} compared with ${item.rollVersion === 2 && item.sourceArmor !== undefined ? 'the unrolled source design' : 'the ordinary version'}.`
     : baseRole;
   return {
     description: item.description,
     role,
     rarity: item.rarity,
-    baseName: item.baseId ? base.name : item.rarity==='named' ? `${item.name} source baseline` : null,
+    baseName: item.baseId ? `${base.name}${item.rollVersion === 2 && item.sourceArmor !== undefined ? ' source baseline' : ''}` : item.rarity==='named' ? `${item.name} source baseline` : null,
     bonuses,
     stats,
     notes,
