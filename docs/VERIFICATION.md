@@ -1,4 +1,10 @@
-# Verification - version 0.45.1, 2026-10-02
+# Verification - version 0.45.2, 2026-10-03
+
+## v0.45.2 checks
+
+All 499 automated tests pass. All five mount heads enlarge uniformly by 40% while staying anchored on the right with their muzzles at the shared plate. Rear bodies grow from 99 to 129 pixels wide (+30%) and from 50 to 70 pixels tall (+40%), extending beneath the lower-left torso rather than leaving it suspended. The plate extends left to zero while retaining its right edge, so framing does not cancel the enlargement. Rider/helmet alignment and weapon anchors remain unchanged.
+
+Decoded-alpha regressions cover all five mounts, 24 seeds, six appearances, four helmet choices and every shield. Actual lower-left body pixels must overlap the plate ellipse, heads retain uniform proportions, and enlarged silhouettes stay within the token. Chromium captures a before/after Fangshire/Noble Mail/Riding Horse comparison plus all five mounts with ordinary shields, tower shields and two-handed swords (17 portraits total). All images decode without browser errors; all 526 offline resources are cached and offline relaunch retains the enlarged renderer. Physical iPad Safari remains untested.
 
 ## v0.45.1 checks
 

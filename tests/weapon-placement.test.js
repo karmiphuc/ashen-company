@@ -127,12 +127,14 @@ test('every mount stays low on the right, visibly supports the rider and remains
     const html=portraitHTML({name:'Rider',seed},{mount,armor:getItem('plate-harness'),helmet,weapon:getItem('arming-sword'),shield});
     profiles.add(html.match(/data-appearance="(\d+)"/)[1]);
     const head=mountGeometry(html,'head'),body=mountGeometry(html,'body'),s=pose(html,'shield'),f=frame(html);
-    assert.ok(head.left>=85,`${mount.id}: animal is on the right, not beside the left arm`);
-    assert.ok(head.top>=65,`${mount.id}: animal cannot obscure the face`);
-    assert.ok(head.bottom>=121&&head.bottom<=124,`${mount.id}: all muzzles meet the same plate`);
-    assert.ok(Math.abs(body.left-30)<1e-8&&Math.abs(body.right-129)<1e-8,`${mount.id}: rear body spans beneath the rider`);
-    assert.ok(Math.abs(body.top-76)<1e-8&&Math.abs(body.bottom-126)<1e-8);
+    assert.ok(head.left>=70,`${mount.id}: animal is on the right, not beside the left arm`);
+    assert.ok(head.top>=44,`${mount.id}: animal cannot obscure the face`);
+    assert.ok(head.bottom>=124&&head.bottom<=126,`${mount.id}: all muzzles meet the same plate`);
+    assert.ok(Math.abs(body.left-0)<1e-8&&Math.abs(body.right-129)<1e-8,`${mount.id}: rear body spans beneath the rider`);
+    assert.ok(Math.abs(body.top-56)<1e-8&&Math.abs(body.bottom-126)<1e-8);
     const support=body.pixels.filter(([x,y])=>x>=45&&x<=80&&y>=110&&y<=122).length*Math.abs(body.sx*body.sy);
+    const grounded=body.pixels.filter(([x,y])=>x>=8&&x<=35&&y>=110&&y<=126&&((x-67.5)/67.5)**2+((y-119)/11)**2<=1).length*Math.abs(body.sx*body.sy);
+    assert.ok(grounded>30,`${mount.id}: lower-left haunch touches the actual plate ellipse (${grounded})`);
     assert.ok(support>100,`${mount.id}: actual opaque pixels support the rider (${support})`);
     const scale=Number(s.image.match(/transform:scale\(([\d.]+)\)/)?.[1]??1),right=s.x+pngSize(s.image)[0]*scale;
     assert.ok(right-s.x<=48+1e-8,'mounted shields cannot hide the whole animal');
@@ -143,4 +145,16 @@ test('every mount stays low on the right, visibly supports the rider and remains
     if(tag(html,'head'))assert.match(tag(html,'head'),/top:0px/);
   }
   assert.equal(profiles.size,6,'covers every human appearance');
+});
+
+
+test('mount enlargement retains a 40 percent natural head scale and expands the grounded body by 30 to 40 percent',()=>{
+  const previousScale={'riding-horse':.70,'war-horse':.58,'armored-war-horse':.58,'warg-mount':.58,'dire-wolf-mount':.58};
+  for(const mount of mounts){
+    const html=portraitHTML(person,{mount}),head=mountGeometry(html,'head'),body=mountGeometry(html,'body');
+    assert.ok(Math.abs(head.sy/previousScale[mount.id]-1.4)<1e-8,'heads enlarge uniformly rather than stretching the art');
+    assert.ok(Math.abs(Math.abs(head.sx)-head.sy)<1e-8);
+    assert.ok((body.right-body.left)/99>=1.3&&(body.right-body.left)/99<=1.5,'body grows horizontally');
+    assert.ok(Math.abs((body.bottom-body.top)/50-1.4)<1e-8,'body grows vertically');
+  }
 });
