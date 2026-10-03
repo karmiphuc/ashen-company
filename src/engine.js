@@ -4165,9 +4165,10 @@ export function getLootShareQuote(state, indices = []) {
   const prices = battle.loot.items.map(id => equipmentPrices(state, marketTown, getItem(id)).sellPrice);
   const value = indices.reduce((sum, index) => sum + prices[index], 0);
   const count = survivors.length;
-  const xp = value && count ? Math.min(100, Math.ceil(value / (10 * count))) : 0;
+  const xpPool = Math.ceil(value / 20);
+  const xp = value && count ? Math.min(500, Math.ceil(xpPool / count)) : 0;
   const morale = value && count ? Math.min(15, Math.ceil(value / (25 * count))) : 0;
-  return { townId: marketTown.id, townName: marketTown.name, prices, value, count, xp, morale, selectedCount: indices.length };
+  return { townId: marketTown.id, townName: marketTown.name, prices, value, count, xpPool, xp, morale, selectedCount: indices.length };
 }
 
 export function finishBattle(state, { shareLootIndices = [] } = {}) {

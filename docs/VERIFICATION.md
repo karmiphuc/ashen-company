@@ -1,6 +1,14 @@
-# Verification - version 0.46.2, 2026-10-03
+# Verification - version 0.46.3, 2026-10-03
 
 
+
+## v0.46.3 checks
+
+All 553 tests pass. Shared-loot XP now uses a pool of ceil(actual local sale value × 5%), divided equally among surviving company brothers and rounded up, with a 500 XP cap per brother. The quote and loot-screen preview show both the pool and the per-brother reward. Morale retains its previous formula and cap.
+
+A 10,000-crown loot fixture produces a 500 XP pool and awards three surviving brothers 167 XP each (501 total after equal-share rounding). The test checks actual XP through normal level-ups, item consumption, UI text and save validation. The existing large-share regression verifies the new 500 XP individual cap. Actual Chromium selection and claiming of a 64-crown Mail Shirt previewed a 4 XP pool and awarded each of three survivors 2 XP, while retaining the other copy's durability and all other loot. No JavaScript exceptions occurred. Screenshot: `/workspace/ashen-loot-sharing-v0463.png`.
+
+A fresh-profile offline reload cached all 557 resources under `ashen-company-4408b36d7055e97a`, loaded v0.46.3 and confirmed the new XP formula from the cached engine without exceptions.
 
 ## v0.46.2 checks
 
