@@ -506,7 +506,20 @@ function visual(item) {
 
 function layerSpec(category, item) {
   const named=NAMED_WEAPON_ART[item?.baseId||item?.id];
-  if(category==='weapon'&&named){const [gx,gy]=named.grip,[tx,ty]=named.tip;const angle=Math.atan2(ty-gy,tx-gx)*180/Math.PI;const ranged=item.ranged??named.ranged,heavy=(item.twoHanded??named.twoHanded)&&!ranged,rangedPose=ranged&&!(item.throwing??named.throwing);const scale=heavy?Math.min(80/Math.hypot(tx-gx,ty-gy),96/Math.hypot(named.width,named.height)):1;return [named.portrait,(heavy?78:rangedPose?70:82)-gx,(heavy?100:rangedPose?105:111)-gy,`scale(${scale.toFixed(4)}) rotate(${(rangedPose?0:heavy?-130-angle:-60-angle).toFixed(4)}deg)`,`${gx}px ${gy}px`];}
+  if(category==='weapon'&&named){
+    const [gx,gy]=named.grip,[tx,ty]=named.tip;
+    const angle=Math.atan2(ty-gy,tx-gx)*180/Math.PI;
+    const ranged=item.ranged??named.ranged,heavy=(item.twoHanded??named.twoHanded)&&!ranged;
+    const rangedPose=ranged&&!(item.throwing??named.throwing);
+    const scale=Number((heavy?Math.min(80/Math.hypot(tx-gx,ty-gy),96/Math.hypot(named.width,named.height)):1).toFixed(4));
+    const rotation=Number((rangedPose?0:heavy?-145-angle:-60-angle).toFixed(4));
+    const radians=rotation*Math.PI/180;
+    // A source grip can sit well above the butt. Bound the entire rotated sprite,
+    // rather than letting its handle hang below the pawn's 116px ground anchor.
+    const bottom=Math.max(...[0,named.width].flatMap(x=>[0,named.height].map(y=>scale*((x-gx)*Math.sin(radians)+(y-gy)*Math.cos(radians)))));
+    const handY=heavy?Math.min(100,115-bottom):rangedPose?105:111;
+    return [named.portrait,(heavy?78:rangedPose?70:82)-gx,handY-gy,`scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`,`${gx}px ${gy}px`];
+  }
   const source = DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];

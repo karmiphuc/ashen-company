@@ -89,7 +89,7 @@ test('every two-handed melee family stays in proportion to the pawn and fits, in
   for(const weapon of weapons.filter(w=>w.twoHanded&&!w.ranged))for(const mount of [null,...mounts]){
     for(const item of [weapon,getItem(`famed:${weapon.id}:73`),{id:weapon.id,visual:weapon.visual}]){
       const html=portraitHTML(person,{weapon:item,mount,helmet:getItem('bb-flat-top-helmet')}),w=pose(html,'weapon'),f=frame(html);
-      assert.equal(w.x+w.gx,78,weapon.id);assert.equal(w.y+w.gy,100+(mount?36:0),weapon.id);
+      assert.equal(w.x+w.gx,78,weapon.id);if(NAMED_WEAPON_ART[weapon.id])assert.ok(w.y+w.gy<=100+(mount?36:0),weapon.id);else assert.equal(w.y+w.gy,100+(mount?36:0),weapon.id);
       const scale=Number(w.image.match(/transform:scale\(([\d.]+)\)/)[1]);
       const angle=Number(w.image.match(/rotate\(([\d.-]+)deg\)/)[1])*Math.PI/180;
       assert.ok(scale>0,`${weapon.id}: valid scale`);
@@ -221,4 +221,14 @@ test('war horse silhouettes are 18% taller with a broader body and an unchanged 
     assert.deepEqual(war.frame,riding.frame,'enlarging the animal must not shrink or lift its rider');
     assert.equal(war.body.bottom,riding.body.bottom);
   }
+});
+
+
+test('every named two-handed handle stays above the pawn ground anchor, including all mounts and rerolls',()=>{
+ for(const weapon of weapons.filter(w=>w.twoHanded&&!w.ranged&&NAMED_WEAPON_ART[w.id]))for(const mount of [null,...mounts])for(const item of [weapon,getItem(`famed2:${weapon.id}:7913`),{id:weapon.id,visual:weapon.visual}]){
+  const html=portraitHTML(person,{weapon:item,mount}),w=pose(html,'weapon'),ground=116+(mount?36:0);
+  for(const [x,y] of opaquePixels(w.image).pixels){const [,ty]=transformedPoint(w.image,x,y);assert.ok(w.y+ty<=ground,`${weapon.id}: visible handle reaches ${w.y+ty}, below base ${ground}`);}
+  const [width,height]=pngSize(w.image);
+  for(const x of [0,width])for(const y of [0,height]){const [,ty]=transformedPoint(w.image,x,y);assert.ok(w.y+ty<=ground,`${weapon.id}: entire sprite is bounded above the base`);}
+ }
 });
