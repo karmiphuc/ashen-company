@@ -15,10 +15,20 @@ export const RECRUIT_BACKGROUNDS = Object.freeze([
   freezeEntry({ id: 'half-orc-mercenary', name: 'Half-Orc Mercenary', role: 'frontline', cost: 500, appearanceId: 'half-orc', description: 'A half-orc mercenary who endures hard blows and longer marches.', bonuses: { maxHp: 18, maxFatigue: 10, meleeSkill: 2 } }),
   freezeEntry({ id: 'dwarf-guard', name: 'Dwarf Guard', role: 'frontline', cost: 540, appearanceId: 'dwarf', description: 'A dwarf veteran drilled to hold the line with a steady shield and stout resolve.', bonuses: { maxHp: 14, resolve: 10, meleeDefense: 6 } }),
   freezeEntry({ id: 'goblin-scout', name: 'Goblin Scout', role: 'ranged', cost: 300, appearanceId: 'goblin', description: 'A goblin scout whose nimble escapes and quick shots keep danger at a distance.', bonuses: { rangedSkill: 8, initiative: 12, rangedDefense: 6 } }),
-  freezeEntry({ id: 'samurai', name: 'Samurai', role: 'frontline', cost: 420, appearanceId: 'samurai', description: 'Formal blade and guard training makes this fighter accurate, guarded, and ready.', bonuses: { meleeSkill: 8, meleeDefense: 4, initiative: 3 } }),
+  freezeEntry({ id: 'samurai', name: 'Samurai', role: 'frontline', cost: 2000, appearanceId: 'samurai', description: 'An elite duelist trained to strike precisely, hold a firm guard and fight with discipline. At least two-star melee skill and defense.', bonuses: { meleeSkill: 18, meleeDefense: 10, resolve: 10, maxFatigue: 8, initiative: 3 } }),
   freezeEntry({ id: 'ronin', name: 'Ronin', role: 'frontline', cost: 350, description: 'Years of duels on the road taught quick, accurate strikes with a lighter guard.', bonuses: { meleeSkill: 6, initiative: 7, meleeDefense: 1 } }),
   freezeEntry({ id: 'ninja', name: 'Ninja', role: 'ranged', cost: 390, appearanceId: 'ninja', description: 'Stealth and skirmish training favor quick ranged strikes and evasive movement.', bonuses: { rangedSkill: 6, initiative: 7, rangedDefense: 3 } }),
   freezeEntry({ id: 'warrior-monk', name: 'Warrior Monk', role: 'support', cost: 300, description: 'Disciplined practice builds calm resolve, endurance, and a steady stance.', bonuses: { resolve: 7, maxFatigue: 6, meleeDefense: 1 } }),
+  freezeEntry({"id": "militia", "name": "Militia", "role": "frontline", "cost": 200, "description": "A village defender with practical spear drill and a steady guard.", "bonuses": {"meleeSkill": 5, "meleeDefense": 3, "resolve": 3}}),
+  freezeEntry({"id": "miner", "name": "Miner", "role": "frontline", "cost": 170, "description": "Hard labor underground builds health and stamina for heavy gear.", "bonuses": {"maxHp": 10, "maxFatigue": 7}}),
+  freezeEntry({"id": "fisherman", "name": "Fisherman", "role": "support", "cost": 140, "description": "Hauling nets builds stamina, while uncertain decks teach balance.", "bonuses": {"maxFatigue": 6, "meleeDefense": 2}}),
+  freezeEntry({"id": "poacher", "name": "Poacher", "role": "ranged", "cost": 160, "description": "A quiet woodsman who trades polished training for quick aim and movement.", "bonuses": {"rangedSkill": 6, "initiative": 5}}),
+  freezeEntry({"id": "squire", "name": "Squire", "role": "support", "cost": 210, "description": "A young shield bearer drilled in guard work and battlefield discipline.", "bonuses": {"meleeDefense": 4, "resolve": 5, "maxFatigue": 3}}),
+  freezeEntry({"id": "crossbowman", "name": "Crossbowman", "role": "ranged", "cost": 700, "description": "A professional marksman with a patient aim and a strong nerve.", "bonuses": {"rangedSkill": 12, "resolve": 8, "rangedDefense": 3}}),
+  freezeEntry({"id": "sellsword", "name": "Sellsword", "role": "frontline", "cost": 1100, "description": "A veteran of hired campaigns who balances accurate blows with a guarded stance.", "bonuses": {"meleeSkill": 12, "meleeDefense": 6, "resolve": 7, "maxFatigue": 5}}),
+  freezeEntry({"id": "hedge-knight", "name": "Hedge Knight", "role": "frontline", "cost": 1800, "description": "An armored veteran with the strength and endurance to keep fighting in heavy gear.", "bonuses": {"maxHp": 18, "maxFatigue": 14, "meleeSkill": 12, "meleeDefense": 7, "resolve": 5}}),
+  freezeEntry({"id": "swordmaster", "name": "Swordmaster", "role": "frontline", "cost": 2200, "description": "A master of precise swordplay and measured defense, with less emphasis on raw endurance.", "bonuses": {"meleeSkill": 22, "meleeDefense": 12, "resolve": 8}}),
+  freezeEntry({"id": "assassin", "name": "Assassin", "role": "support", "cost": 1400, "description": "A swift close fighter who relies on initiative, precision and evasive footwork.", "bonuses": {"initiative": 18, "meleeSkill": 10, "meleeDefense": 7}}),
 ]);
 
 export const RECRUIT_TRAITS = Object.freeze([
@@ -45,21 +55,21 @@ const NAMES = Object.freeze([
   'Petra Dain', 'Jonas Vey', 'Lina Marsh', 'Corin Ash', 'Freya Dunn', 'Emil Rook',
 ]);
 const TOWN_ROLE_BACKGROUNDS = Object.freeze({
-  frontline: Object.freeze(['farmhand', 'deserter', 'caravan-guard', 'brawler']),
-  ranged: Object.freeze(['tinker', 'hunter', 'outrider']),
-  support: Object.freeze(['wayfarer', 'sailor', 'pilgrim']),
+  frontline: Object.freeze(['farmhand', 'deserter', 'caravan-guard', 'brawler', 'militia', 'miner']),
+  ranged: Object.freeze(['tinker', 'hunter', 'outrider', 'poacher']),
+  support: Object.freeze(['wayfarer', 'sailor', 'pilgrim', 'fisherman', 'squire']),
 });
 const ROLE_BACKGROUNDS_BY_KIND = Object.freeze({
   town: TOWN_ROLE_BACKGROUNDS,
   village: Object.freeze({
-    frontline: Object.freeze(['farmhand', 'brawler']),
-    ranged: Object.freeze(['tinker', 'hunter']),
-    support: Object.freeze(['wayfarer', 'pilgrim']),
+    frontline: Object.freeze(['farmhand', 'brawler', 'militia', 'miner']),
+    ranged: Object.freeze(['tinker', 'hunter', 'poacher']),
+    support: Object.freeze(['wayfarer', 'pilgrim', 'fisherman']),
   }),
   castle: Object.freeze({
     frontline: Object.freeze(['deserter', 'caravan-guard']),
     ranged: Object.freeze(['hunter', 'outrider']),
-    support: Object.freeze(['caravan-guard', 'deserter']),
+    support: Object.freeze(['caravan-guard', 'deserter', 'squire']),
   }),
 });
 const ROLES = Object.freeze(['frontline', 'ranged', 'support']);
@@ -109,3 +119,24 @@ export function makeRecruitProfile(seed, townId, day, slot, kind = 'town') {
     personSeed: hashSeed(`${base}:${slot}:person`),
   });
 }
+
+export const TALENT_ATTRIBUTES = Object.freeze(['maxHp','meleeSkill','rangedSkill','meleeDefense','rangedDefense','maxFatigue','initiative','resolve']);
+
+// Exactly three distinct talents, fixed to the recruit rather than the current town/day.
+export function makeTalents(seed, backgroundId) {
+  const background=RECRUIT_BACKGROUND_BY_ID.get(backgroundId);
+  const keys=[...TALENT_ATTRIBUTES].sort((a,b)=>mixSeed(`${seed}:talent:${a}`)-mixSeed(`${seed}:talent:${b}`)).slice(0,3);
+  if(backgroundId==='samurai')keys.splice(0,3,'meleeSkill','meleeDefense','resolve');
+  else if(background?.cost>=700){
+    const primary=background.role==='ranged'?'rangedSkill':'meleeSkill';
+    if(!keys.includes(primary))keys[0]=primary;
+  }
+  return Object.fromEntries(keys.map(key=>{
+    const roll=mixSeed(`${seed}:talent-stars:${key}`)%100;
+    let stars=roll<50?1:roll<85?2:3;
+    if(backgroundId==='samurai'&&['meleeSkill','meleeDefense'].includes(key)||background?.cost>=700&&key===(background.role==='ranged'?'rangedSkill':'meleeSkill'))stars=Math.max(2,stars);
+    return [key,stars];
+  }));
+}
+
+export function talentGain(roll,stars=0) { return stars===3?5:Math.min(5,roll+stars); }
