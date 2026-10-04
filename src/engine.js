@@ -603,6 +603,29 @@ export function getDailyFood(state) {
   return state.party.reduce((total, person) => total + 1 + (person.hp > 0 ? getItem(person.equipment?.mount)?.foodUpkeep ?? 0 : 0), 0);
 }
 
+export function getStashCapacity(state) { return MAX_INVENTORY * (cartLevel(state) + 1); }
+export function getCargoCapacity(state) { return MAX_CARGO * (cartLevel(state) + 1); }
+function cartLevel(state) { return [1,2].includes(state.retinue?.cartLevel) ? state.retinue.cartLevel : 0; }
+export function getCompanyTravelMultiplier(state) {
+  return (1 + getCompanyTravelBonus(state)) * (cartLevel(state) === 1 ? .95 : 1);
+}
+export function getCompanyCart(state) {
+  const level=cartLevel(state);
+  return {level,cost:level===0?7500:level===1?15000:0,stashCapacity:getStashCapacity(state),cargoCapacity:getCargoCapacity(state),speedPenalty:level===1?5:0};
+}
+export function buyCompanyCart(state) {
+  const blocked=actionBlocked(state);if(blocked)return blocked;
+  const access=requireTown(state);if(access.error)return access.error;
+  const cart=getCompanyCart(state);
+  if(cart.level===2)return result(false,'The company cart is fully upgraded.');
+  if(state.gold<cart.cost)return result(false,`The cart requires ${cart.cost.toLocaleString('en-US')} crowns.`);
+  state.gold-=cart.cost;
+  state.retinue??={bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0};
+  state.retinue.cartLevel=cart.level+1;
+  const message=cart.level===0?'Company cart purchased: double stash and cargo capacity; travel speed reduced by 5%.':'Company cart upgraded: triple original stash and cargo capacity; travel speed penalty removed.';
+  record(state,message);return result(true,message);
+}
+
 export function getCompanyTravelBonus(state) {
   return state.party.reduce((total, person) => total + (person.hp > 0
     ? (getItem(person.equipment?.mount)?.travelBonus ?? 0) : 0), 0);
@@ -628,7 +651,7 @@ export function createGame(seed = Date.now()) {
     inventory: ['cloth-hood', 'buckler'],
     inventoryCondition: [itemCondition('cloth-hood'), itemCondition('buckler')],
     cargo: {},
-    marketStock: {}, deserterBoards: {}, retinue:{bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{}}, discoveryRolls:{},
+    marketStock: {}, deserterBoards: {}, retinue:{bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0}, discoveryRolls:{},
     shipments: {},
     shipmentLegacyThroughDay: 0,
     mountRewards: Object.fromEntries(getMountRewardDefinitions().map(reward => [reward.id, false])),
@@ -729,7 +752,7 @@ export function claimAshenReward(state) {
   const blocked = actionBlocked(state); if (blocked) return blocked;
   const crisis = state.ashenWinter, id = getAshenFinalItem(state);
   if (!id || crisis.finalItemClaimed) return result(false, 'No unclaimed Ashen Winter equipment reward.');
-  if (state.inventory.length >= MAX_INVENTORY) return result(false, 'Make room in the stash to claim your equipment reward.');
+  if (state.inventory.length >= getStashCapacity(state)) return result(false, 'Make room in the stash to claim your equipment reward.');
   state.inventory.push(id); state.inventoryCondition.push(itemCondition(id)); crisis.finalItemClaimed = true;
   record(state, `Claimed ${getItem(id).name}, the Ashen Winter reward.`);
   return result(true, 'Ashen Winter equipment reward claimed.');
@@ -787,7 +810,7 @@ export function claimMountReward(state, rewardId) {
   if (townAt(state)?.id !== reward.townId) return result(false, `Visit ${reward.townName} to claim this mount.`);
   const scheduled = scheduledMountReward(state, reward);
   if (!scheduled.available) return result(false, `The ${reward.name} is expected around day ${scheduled.availableDay}.`);
-  if (state.inventory.length >= MAX_INVENTORY) return result(false, 'The company pack is full. Make room and claim this mount later.');
+  if (state.inventory.length >= getStashCapacity(state)) return result(false, 'The company pack is full. Make room and claim this mount later.');
   if (!Array.isArray(state.inventoryCondition) || state.inventoryCondition.length !== state.inventory.length)
     state.inventoryCondition = state.inventory.map(itemCondition);
   state.inventory.push(reward.itemId);
@@ -1489,7 +1512,7 @@ function completeContract(state, town) {
   }
   state.gold += contract.reward;
   state.renown += contract.renown ?? 1;
-  if(contract.type==='bounty'){state.retinue??={bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{}};state.retinue.bountyHunterUnlocked=true;record(state,'The Bounty Hunter is available: hire the retinue for 5,000 crowns for a permanent +5 percentage points to champion encounter chance.');}
+  if(contract.type==='bounty'){state.retinue??={bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0};state.retinue.bountyHunterUnlocked=true;record(state,'The Bounty Hunter is available: hire the retinue for 5,000 crowns for a permanent +5 percentage points to champion encounter chance.');}
   const description = contract.type === 'bounty' ? 'Wanted champion defeated' : contract.type === 'deserters' ? 'Elite deserters defeated' : contract.type === 'hunt' ? 'Brigand hunt completed' : contract.type === 'assault' ? 'Joint assault completed'
     : contract.type === 'rescue' ? 'Caravan rescue completed' : contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
   record(state, `${description} at ${town.name}. Earned ${contract.reward} crowns and ${contract.renown ?? 1} renown.`);
@@ -1635,7 +1658,7 @@ export function tick(state, hours) {
     if (state.destination) {
       const distanceLeft = distance(state.position, state.destination);
       const onNewRoad = (state.position.x > 2120 || state.position.y > 1380) && distanceToRoad(state.position.x,state.position.y,WORLD_ROADS) <= 18;
-      const speed = (onNewRoad ? SPEED * 1.15 : terrainSpeed(terrainAt(state.position.x, state.position.y))) * (1 + getCompanyTravelBonus(state));
+      const speed = (onNewRoad ? SPEED * 1.15 : terrainSpeed(terrainAt(state.position.x, state.position.y))) * getCompanyTravelMultiplier(state);
       const movement = Math.min(distanceLeft, speed * step);
       if (distanceLeft > 0) {
         moveWorldToward(state.position,state.destination,movement);
@@ -1750,7 +1773,7 @@ export function acceptContract(state, townId, offerId) {
   const offers = getContractOffers(state, townId);
   const offer = offerId === undefined ? offers[0] : offers.find(entry => entry.id === offerId);
   if (!offer) return result(false, 'That contract is no longer available.');
-  if(offer.type==='bounty'){state.retinue??={bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{}};state.retinue.bountyBoards[townId]=Math.floor((state.day-1)/7);}
+  if(offer.type==='bounty'){state.retinue??={bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0};state.retinue.bountyBoards[townId]=Math.floor((state.day-1)/7);}
   if(offer.type==='deserters'){state.deserterBoards??={};state.deserterBoards[townId]=Math.floor((state.day-1)/7);}
   state.contractSerial += 1;
   const { id, ...terms } = offer;
@@ -1777,8 +1800,8 @@ export function getPurchaseQuote(state, kind, id) {
     : kind === 'food' ? market.food : kind === 'goods' ? market.goods.find(row => row.goodId === id)
     : kind === 'supplies' ? market.supplies.find(row => row.kind === id) : null;
   if (!offer) return { quantity: 0, cost: 0 };
-  const capacity = kind === 'equipment' ? MAX_INVENTORY - state.inventory.length
-    : kind === 'food' ? 1000000000 - state.food : kind === 'goods' ? MAX_CARGO - cargoCount(state)
+  const capacity = kind === 'equipment' ? getStashCapacity(state) - state.inventory.length
+    : kind === 'food' ? 1000000000 - state.food : kind === 'goods' ? getCargoCapacity(state) - cargoCount(state)
     : 10000 - state.supplies[id];
   const quantity = Math.max(0, Math.min(offer.stock, Math.floor(state.gold / offer.buyPrice), capacity));
   return { quantity, cost: quantity * offer.buyPrice };
@@ -1802,13 +1825,13 @@ export function buyItem(state, itemId, quantity = 1) {
   if (access.error) return access.error;
   const item = getItem(itemId);
   if (!item) return result(false, 'Unknown item.');
-  if (!validQuantity(quantity, MAX_INVENTORY)) return result(false, 'Choose a valid number of items.');
+  if (!validQuantity(quantity, getStashCapacity(state))) return result(false, 'Choose a valid number of items.');
   const offer = getMarket(state).equipment.find(entry => entry.itemId === itemId);
   if (!offer) return result(false, 'This item is not for sale here.');
   if (offer.stock < quantity) return result(false, 'The market does not have that many items today.');
   const cost = offer.buyPrice * quantity;
   if (state.gold < cost) return result(false, 'The company cannot afford this item.');
-  if (state.inventory.length + quantity > MAX_INVENTORY) return result(false, 'The company pack is full.');
+  if (state.inventory.length + quantity > getStashCapacity(state)) return result(false, 'The company pack is full.');
   state.gold -= cost;
   state.inventory.push(...Array(quantity).fill(item.id));
   if (['famed','named'].includes(item.rarity)) {
@@ -1877,12 +1900,12 @@ export function buyGood(state, goodId, quantity = 1) {
   if (access.error) return access.error;
   const good = GOOD_BY_ID.get(goodId);
   if (!good) return result(false, 'Unknown trade good.');
-  if (!validQuantity(quantity, MAX_CARGO)) return result(false, 'Choose 1 to 30 units of cargo.');
+  if (!validQuantity(quantity, getCargoCapacity(state))) return result(false, `Choose 1 to ${getCargoCapacity(state)} units of cargo.`);
   const offer = getMarket(state).goods.find(entry => entry.goodId === goodId);
   const cost = offer.buyPrice * quantity;
   if (offer.stock < quantity) return result(false, 'The market does not have that much today.');
   if (state.gold < cost) return result(false, 'The company cannot afford that cargo.');
-  if (cargoCount(state) + quantity > MAX_CARGO) return result(false, 'The cargo hold is full.');
+  if (cargoCount(state) + quantity > getCargoCapacity(state)) return result(false, 'The cargo hold is full.');
   state.gold -= cost;
   state.cargo[goodId] = (state.cargo[goodId] ?? 0) + quantity;
   writableMarketStock(state, access.town).goods[goodId] -= quantity;
@@ -1898,7 +1921,7 @@ export function sellGood(state, goodId, quantity = 1) {
   if (access.error) return access.error;
   const good = GOOD_BY_ID.get(goodId);
   if (!good) return result(false, 'Unknown trade good.');
-  if (!validQuantity(quantity, MAX_CARGO)) return result(false, 'Choose 1 to 30 units of cargo.');
+  if (!validQuantity(quantity, getCargoCapacity(state))) return result(false, `Choose 1 to ${getCargoCapacity(state)} units of cargo.`);
   if ((state.cargo[goodId] ?? 0) < quantity) return result(false, 'The company does not carry that much.');
   const offer = getMarket(state).goods.find(entry => entry.goodId === goodId);
   const earnings = offer.sellPrice * quantity;
@@ -2066,7 +2089,7 @@ export function equipItem(state, personId, itemId, destination = 'active') {
   const previous = accessory >= 0 ? person.accessories[accessory] : set[targetSlot];
   const displaced = accessory >= 0 ? null : item.twoHanded && set.shield ? set.shield
     : item.slot === 'shield' && getItem(set.weapon)?.twoHanded ? set.weapon : null;
-  if (state.inventory.length - 1 + Number(Boolean(previous)) + Number(Boolean(displaced)) > MAX_INVENTORY) return result(false, 'The company pack is full.');
+  if (state.inventory.length - 1 + Number(Boolean(previous)) + Number(Boolean(displaced)) > getStashCapacity(state)) return result(false, 'The company pack is full.');
   const condition = restoredCondition(itemId, state.inventoryCondition.splice(index, 1)[0]);
   state.inventory.splice(index, 1);
   if (previous) {
@@ -2101,7 +2124,7 @@ export function unequipItem(state, personId, slot, destination = 'active') {
   if (!itemId) return result(false, 'That slot is already empty.');
   const condition = accessory >= 0 ? null : equippedCondition(person, destination, slot);
   const attachedSlots=destination==='active'&&slot==='armor'?['attachment','attachment2'].filter(key=>person.equipment[key]):[];
-  if (state.inventory.length + 1 + attachedSlots.length > MAX_INVENTORY) return result(false, 'The company pack is full.');
+  if (state.inventory.length + 1 + attachedSlots.length > getStashCapacity(state)) return result(false, 'The company pack is full.');
   for(const key of attachedSlots){state.inventory.push(person.equipment[key]);state.inventoryCondition.push(person.armorDurability[key]);person.equipment[key]=null;person.armorDurability[key]=0;}
   if (accessory >= 0) person.accessories[accessory] = null;
   else set[slot] = null;
@@ -4843,7 +4866,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
           ...['weapon', 'shield'].map(slot => [person.reserveEquipment[slot], slot === 'shield' ? reserveShieldCondition : slot === 'weapon' && getItem(person.reserveEquipment.weapon)?.throwing ? throwingAmmo.reserve : null]),
           ...carriedAccessories.map(id => [id, null]),
         ]) {
-          if (itemId && state.inventory.length < MAX_INVENTORY) {
+          if (itemId && state.inventory.length < getStashCapacity(state)) {
             state.inventory.push(itemId);
             state.inventoryCondition.push(condition);
           }
@@ -4879,7 +4902,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     for (const kind of ['tools', 'medicine', 'ammo']) state.supplies[kind] += loot[kind];
     for (let index = 0; index < loot.items.length; index++) {
       if (shared.has(index)) continue;
-      if (state.inventory.length >= MAX_INVENTORY) break;
+      if (state.inventory.length >= getStashCapacity(state)) break;
       const itemId = loot.items[index];
       state.inventory.push(itemId);
       state.inventoryCondition.push(loot.itemConditions?.[index] ?? itemCondition(itemId));
@@ -5365,7 +5388,7 @@ export function validateSave(input) {
   assert(Array.isArray(hiredRecruitOffers) && hiredRecruitOffers.length <= 48 && hiredRecruitOffers.every(id => typeof id === 'string' && recruitOfferDay(id) !== null && recruitOfferDay(id) <= input.day) && new Set(hiredRecruitOffers).size === hiredRecruitOffers.length, 'hired recruit offers');
   assert(validPoint(input.position), 'position');
   assert(input.destination === null || validPoint(input.destination), 'destination');
-  assert(Array.isArray(input.inventory) && input.inventory.length <= MAX_INVENTORY && input.inventory.every(id => getItem(id)), 'inventory');
+  assert(Array.isArray(input.inventory) && input.inventory.length <= getStashCapacity(input) && input.inventory.every(id => getItem(id)), 'inventory');
   const inventoryCondition = (input.inventoryCondition === undefined ? input.inventory.map(itemCondition) : input.inventoryCondition)
     .map((condition, index) => restoredCondition(input.inventory[index], condition));
   assert(Array.isArray(inventoryCondition) && inventoryCondition.length === input.inventory.length, 'inventory condition');
@@ -5377,9 +5400,9 @@ export function validateSave(input) {
   assert(recordObject(supplies) && Object.keys(supplies).length === 3, 'supplies');
   for (const kind of Object.keys(SUPPLY_INFO)) assert(validCount(supplies[kind]) && supplies[kind] <= 10000, `supplies ${kind}`);
   const cargo = input.cargo === undefined ? {} : input.cargo;
-  assert(recordObject(cargo) && Object.keys(cargo).every(id => GOOD_BY_ID.has(id) && validCount(cargo[id]) && cargo[id] <= MAX_CARGO) && Object.values(cargo).reduce((total, count) => total + count, 0) <= MAX_CARGO, 'cargo');
-  const retinue=input.retinue??{bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{}};
-  assert(recordObject(retinue)&&typeof retinue.bountyHunterUnlocked==='boolean'&&typeof retinue.bountyHunter==='boolean'&&(!retinue.bountyHunter||retinue.bountyHunterUnlocked)&&recordObject(retinue.bountyBoards)&&Object.entries(retinue.bountyBoards).every(([id,week])=>TOWN_BY_ID.has(id)&&validCount(week)&&week<=Math.floor((input.day-1)/7)),'retinue');
+  assert(recordObject(cargo) && Object.keys(cargo).every(id => GOOD_BY_ID.has(id) && validCount(cargo[id]) && cargo[id] <= getCargoCapacity(input)) && Object.values(cargo).reduce((total, count) => total + count, 0) <= getCargoCapacity(input), 'cargo');
+  const retinue=input.retinue??{bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0};
+  assert(recordObject(retinue)&&[0,1,2].includes(retinue.cartLevel===undefined?0:retinue.cartLevel)&&typeof retinue.bountyHunterUnlocked==='boolean'&&typeof retinue.bountyHunter==='boolean'&&(!retinue.bountyHunter||retinue.bountyHunterUnlocked)&&recordObject(retinue.bountyBoards)&&Object.entries(retinue.bountyBoards).every(([id,week])=>TOWN_BY_ID.has(id)&&validCount(week)&&week<=Math.floor((input.day-1)/7)),'retinue');
   const discoveryRolls=input.discoveryRolls??{};
   assert(recordObject(discoveryRolls)&&Object.entries(discoveryRolls).every(([id,roll])=>(isCampId(id)||BAND_BY_ID.has(id))&&recordObject(roll)&&validCount(roll.cycle)&&roll.cycle<=1000000&&[0,5,8,13].includes(roll.champion)&&[0,15].includes(roll.famed)&&[0,12].includes(roll.mount)),'discovery encounter rolls');
   const deserterBoards=input.deserterBoards??{};
@@ -5688,7 +5711,7 @@ export function validateSave(input) {
   }));
   for (const person of party) {
     if (getItem(person.equipment.weapon)?.twoHanded && person.equipment.shield) {
-      assert(battle === null && inventory.length < MAX_INVENTORY, 'legacy bow and shield');
+      assert(battle === null && inventory.length < getStashCapacity(input), 'legacy bow and shield');
       inventory.push(person.equipment.shield);
       conditions.push(person.armorDurability.shield);
       person.equipment.shield = null;
@@ -5720,7 +5743,7 @@ export function validateSave(input) {
         buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: restoredCondition(entry.itemId, entry.condition) })),
       }];
     })),
-    deserterBoards:{...deserterBoards},retinue:{...retinue,bountyBoards:{...retinue.bountyBoards}},discoveryRolls:Object.fromEntries(Object.entries(discoveryRolls).map(([id,roll])=>[id,{...roll}])),
+    deserterBoards:{...deserterBoards},retinue:{...retinue,cartLevel:retinue.cartLevel??0,bountyBoards:{...retinue.bountyBoards}},discoveryRolls:Object.fromEntries(Object.entries(discoveryRolls).map(([id,roll])=>[id,{...roll}])),
     shipments: normalizedShipments,
     shipmentLegacyThroughDay,
     ...(input.mountRewards === undefined ? {} : { mountRewards: { ...mountRewards } }),
