@@ -16,7 +16,7 @@ import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, worldCampText, regionalOutfi
 import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad, WORLD_LAYOUT_VERSION, compactPoint, authoredPoint } from './geography.js';
 import { FRONTIER_ITEMS } from './frontier-items.js';
 import { MOUNTS } from './mounts.js';
-import { factionPatrols, soldierFactionAt, patrolDefinitions, initialPatrolProgress, advanceFactionSimulation, worldSkirmishFor, isJoinablePatrolSkirmish, cancelWorldSkirmish, skirmishDuration } from './faction-patrols.js';
+import { factionPatrols, soldierFactionAt, patrolDefinitions, initialPatrolProgress, advanceFactionSimulation, worldSkirmishFor, isJoinablePatrolSkirmish, patrolSkirmishSide, cancelWorldSkirmish, skirmishDuration } from './faction-patrols.js';
 import { cityMountOffer, campMountReward, regionalMountPool } from './mount-distribution.js';
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression, enemyRosterSize } from './enemy-progression.js';
@@ -784,7 +784,7 @@ function townBlocked(state, townId) {
   return access.servicesAvailable ? null : { ...result(false, access.reason), code: 'SETTLEMENT_BLOCKED', blockedTown: townId };
 }
 function ashenContext(state) {
-  return { settlements: SETTLEMENTS, report: message => record(state, message), hostiles: () => getRoamingBands(state) };
+  return { settlements: SETTLEMENTS, report: message => record(state, message), hostiles: () => getRoamingBands(state),combatTargets:()=>[...getRoamingBands(state),...getFactionPatrols(state).filter(p=>p.active)] };
 }
 export function getUndeadEncounters(state) {
   return ashenEncounterRecords(state, SETTLEMENTS).filter(e => e.force.troops.length).map(encounter => {
@@ -792,10 +792,11 @@ export function getUndeadEncounters(state) {
     const enemies = encounter.force.troops.map(troop => ({ ...pool[(troop + encounter.force.seed % pool.length) % pool.length],
       name: encounter.kind === 'undead-commander' && troop === 0 ? encounter.name : pool[(troop + encounter.force.seed % pool.length) % pool.length].name,
       troopIndex: troop, undeadTraitsVersion: 1, savedDamage: encounter.force.damage[troop] ?? null }));
-    return { ...encounter, enemies, difficulty: encounter.force.tier, veteranRank: encounter.force.rank,
+    const fight=worldSkirmishFor(state,encounter.id);
+    return { ...encounter,...(fight?{battleHoursRemaining:Math.max(0,fight.endHour-worldHours(state)),behavior:'fighting'}:{}), enemies, difficulty: encounter.force.tier, veteranRank: encounter.force.rank,
       generation: encounter.force.generation, cleared: false, factionLabel: 'Ashen Legion',
       reward: encounter.kind === 'undead-host' ? ASHEN_CONFIG.hostGold : encounter.kind === 'undead-liberation' ? ASHEN_CONFIG.liberationGold : ASHEN_CONFIG.commanderGold,
-      description: encounter.kind === 'undead-commander' ? 'Defeat this commander to stop its front from closing more settlements.'
+      description: fight?`Fighting ${fight.aId===encounter.id?fight.bName:patrolDefinitions(SETTLEMENTS).find(p=>p.id===fight.aId)?.name??'faction soldiers'}. About ${Math.ceil(fight.endHour-worldHours(state))} hours remain.`: encounter.kind === 'undead-commander' ? 'Defeat this commander to stop its front from closing more settlements.'
         : encounter.kind === 'undead-liberation' ? 'Defeat this force to reopen all settlement services.' : 'Intercept this host before it closes a settlement.' };
   });
 }
@@ -1324,16 +1325,20 @@ export function getFactionPatrols(state) { return factionPatrols(state,SETTLEMEN
 export function getJoinablePatrolBattle(state,id) {
  const patrol=getFactionPatrols(state).find(p=>p.id===id);
  const fight=patrol&&worldSkirmishFor(state,id);
- return isJoinablePatrolSkirmish(patrol,fight,worldHours(state))?{patrol,fight}:null;
+ return isJoinablePatrolSkirmish(patrol,fight,worldHours(state))?{patrol,fight:patrolSkirmishSide(id,fight)}:null;
 }
 function alliedBattleAgainst(state,id){
- const fight=worldSkirmishFor(state,id);return fight?.bId===id?getJoinablePatrolBattle(state,fight.aId):null;
+ const fight=worldSkirmishFor(state,id);
+ const patrolId=fight&&((fight.aKind??'patrol')==='patrol'?fight.aId:fight.bKind==='patrol'?fight.bId:null);
+ return patrolId?getJoinablePatrolBattle(state,patrolId):null;
 }
 export function joinPatrolBattle(state,id) {
  const blocked=actionBlocked(state);if(blocked)return blocked;
  const joint=getJoinablePatrolBattle(state,id);
  if(!joint)return result(false,'That allied battle has already ended or is unavailable.');
- if(distance(state.position,joint.patrol)>CAMP_RADIUS){
+ const opponent=[...getRoamingBands(state),...getUndeadEncounters(state)].find(e=>e.id===joint.fight.bId);
+ const contact=Math.min(distance(state.position,joint.patrol),opponent?distance(state.position,opponent):Infinity);
+ if(contact>CAMP_RADIUS){
   const travel=travelTo(state,joint.patrol.x,joint.patrol.y);
   if(travel.ok)state.destinationAction={type:'patrol',id};return travel;
  }
@@ -1343,20 +1348,22 @@ export function joinPatrolBattle(state,id) {
 function advanceSoldiers(state) {
   const currentHostile=id=>[...getRoamingBands(state),...getUndeadEncounters(state).filter(e=>e.kind==='undead-host')].find(b=>b.id===id);
   advanceFactionSimulation(state,{settlements:SETTLEMENTS,getItem,servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable,hostiles:()=>[...getRoamingBands(state),...getUndeadEncounters(state).filter(e=>e.kind==='undead-host')],currentHostile,
-    hostileResult(target,survivors,won,fight) {
+    hostileResult(target,survivors,won,fight,committedTroops=fight?.bTroops) {
       const current=currentHostile(target.id);if(!current)return;
       if (target.kind === 'undead-host') {
         if (survivors.length) {
-          const troops = survivors.map(index => fight?.bTroops[index]??current.enemies[index].troopIndex);
+          const troops = survivors.map(index => committedTroops?.[index]??current.enemies[index].troopIndex);
           const damage = Object.fromEntries(Object.entries(current.force.damage).filter(([i])=>troops.includes(Number(i))));
           recordAshenCasualties(state,target.id,troops,damage);
         } else npcAshenVictory(state,target.id);
         return;
       }
+      // No new casualty record is needed when every committed bandit survives.
+      if(survivors.length===(committedTroops?.length??current.enemies.length))return;
       state.worldLosses??={};
       if(survivors.length) {
         const previous=state.worldLosses[target.id];
-        state.worldLosses[target.id]={cycle:target.spawnCycle,size:Math.max(previous?.size??0,...(fight?.bTroops??current.enemies.map(e=>e.worldIndex)).map(i=>i+1)),survivors:survivors.map(index=>fight?.bTroops[index]??current.enemies[index].worldIndex)};
+        state.worldLosses[target.id]={cycle:target.spawnCycle,size:Math.max(previous?.size??0,...(committedTroops??current.enemies.map(e=>e.worldIndex)).map(i=>i+1)),survivors:survivors.map(index=>committedTroops?.[index]??current.enemies[index].worldIndex)};
       }else {
         delete state.worldLosses[target.id];
         state.bands[target.id]={...state.bands[target.id],defeatedUntil:worldHours(state)+48,spawnCycle:target.spawnCycle+1,behavior:'patrolling',targetId:null};
@@ -1699,7 +1706,7 @@ function advanceWorldStep(state) {
   const contact = advanceRoamingBands(state);
   if (displaced) return { ...result(true, displaced.message), blockedTown: displaced.townId, interrupted: true };
   if (contact) return startHostileContact(state, contact);
-  const undead = getUndeadEncounters(state).find(e => e.kind === 'undead-host' && distance(e, state.position) <= BAND_RADIUS);
+  const undead = getUndeadEncounters(state).find(e => e.kind === 'undead-host' && !worldSkirmishFor(state,e.id) && distance(e, state.position) <= BAND_RADIUS);
   if (undead && !companyInSanctuary(state) && worldHours(state) >= (state.encounterGraceUntil ?? 0)) return startHostileContact(state, undead.id);
   return null;
 }
@@ -2693,13 +2700,13 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
       &&(state.factionPatrols[p.id]?.cooldownUntil??0)<=worldHours(state)&&distance(p,camp)<=CAMP_RADIUS
       &&(!p.targetId||p.targetId===encounterId))
       .sort((a,b)=>distance(a,camp)-distance(b,camp)||a.id.localeCompare(b.id))[0]:null;
-  const assistance=npcFight?getJoinablePatrolBattle(state,patrolId??npcFight.aId):nearbyPatrol?{
+  const assistance=npcFight?(patrolId?getJoinablePatrolBattle(state,patrolId):alliedBattleAgainst(state,encounterId)):nearbyPatrol?{
     patrol:nearbyPatrol,fight:{aCycle:state.factionPatrols[nearbyPatrol.id].spawnCycle,
       aTroops:[...state.factionPatrols[nearbyPatrol.id].troops],bTroops:camp.enemies.map(e=>e.worldIndex??e.troopIndex)}
   }:null;
   if(npcFight&&!assistance||patrolId&&(!assistance||assistance.fight.bId!==encounterId))return result(false,'That patrol battle is no longer available. Let the ongoing fight resolve before intercepting.');
   const patrolAssist=assistance?{id:assistance.patrol.id,cycle:assistance.fight.aCycle,troops:[...assistance.fight.aTroops],enemyTroops:[...assistance.fight.bTroops]}:null;
-  if (state.destination || distance(state.position,patrolId?assistance.patrol:camp) > (patrolId?CAMP_RADIUS:encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
+  if (state.destination || (patrolId?Math.min(distance(state.position,assistance.patrol),distance(state.position,camp)):distance(state.position,camp)) > (patrolId?CAMP_RADIUS:encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
   if (!getBattleRoster(state).length) return result(false, 'Move a brother from reserve into the formation before fighting.');
   applyCompanyAutomation(state);
   if(['camp','band'].includes(encounterType)){state.discoveryRolls??={};state.discoveryRolls[camp.id]={cycle:camp.generation??camp.spawnCycle,...discoveryBonuses(state,camp)};}
@@ -5211,7 +5218,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   if (!crisisWasComplete && state.ashenWinter?.phase === 'completed') message += ' Ashen Winter ends: all settlements are free. Claim your equipment reward in the journal.';
   record(state, message);
   state.battle = null;
-  for(const fight of [...(state.worldSkirmishes??[])])if(fight.bKind==='undead-host'&&!state.ashenWinter?.hosts[fight.bId])cancelWorldSkirmish(state,fight.aId);
+  for(const fight of [...(state.worldSkirmishes??[])])if((fight.aKind==='undead-host'&&!state.ashenWinter?.hosts[fight.aId])||(fight.bKind==='undead-host'&&!state.ashenWinter?.hosts[fight.bId]))cancelWorldSkirmish(state,fight.aId);
   mergeOwnedNamedBonuses(state);
   applyCompanyAutomation(state);
   return result(true, message);
@@ -5898,17 +5905,19 @@ export function validateSave(input) {
     &&(knownPatrols.has(r.opponentId)||BAND_BY_ID.has(r.opponentId)||isCampId(r.opponentId)||/^ashen:[1-3]:host:[1-9]\d*$/.test(r.opponentId))&&typeof r.opponentName==='string'&&r.opponentName.length<=120
     &&['band','camp','patrol','undead-host'].includes(r.kind)&&['victory','defeat'].includes(r.outcome)&&validCount(r.losses)&&r.losses<=9&&Number.isFinite(r.hour)&&r.hour>=0&&r.hour<=now),'faction reports');
   const worldSkirmishes=input.worldSkirmishes??[],committed=new Set();
-  assert(Array.isArray(worldSkirmishes)&&worldSkirmishes.length<=definitions.length,'world skirmishes');
+  assert(Array.isArray(worldSkirmishes)&&worldSkirmishes.length<=definitions.length+ASHEN_CONFIG.maxHosts,'world skirmishes');
   for(const f of worldSkirmishes){
-    assert(recordObject(f)&&Object.keys(f).length===14&&typeof f.id==='string'&&f.id===`skirmish:${f.aId}:${f.bId}:${Math.round(f.startHour*4)}`&&knownPatrols.has(f.aId)&&f.aId!==f.bId
+    assert(recordObject(f)&&Object.keys(f).length===(f.aKind===undefined?14:15)&&(f.aKind===undefined||f.aKind==='undead-host')&&typeof f.id==='string'&&f.id===`skirmish:${f.aId}:${f.bId}:${Math.round(f.startHour*4)}`&&(f.aKind==='undead-host'?Boolean(ashenWinter.hosts[f.aId]):knownPatrols.has(f.aId))&&f.aId!==f.bId
+      &&(f.aKind!=='undead-host'||['band','patrol'].includes(f.bKind))
       &&['patrol','band','undead-host'].includes(f.bKind)&&typeof f.bName==='string'&&f.bName.length<=120&&inBounds(f.x,f.y)
       &&Number.isFinite(f.startHour)&&f.startHour>=0&&f.startHour<=now&&Number.isFinite(f.endHour)&&validCount(f.aCycle)&&validCount(f.bCycle),'world skirmish record');
     assert(!committed.has(f.aId)&&!committed.has(f.bId),'world skirmish participants');committed.add(f.aId);committed.add(f.bId);
-    const a=normalizedPatrols[f.aId],b=f.bKind==='patrol'?normalizedPatrols[f.bId]:f.bKind==='band'?normalizedBands[f.bId]:ashenWinter.hosts[f.bId];
-    assert(b&&a.spawnCycle===f.aCycle&&(f.bKind==='undead-host'?b.force.generation:b.spawnCycle)===f.bCycle,'world skirmish generation');
+    const a=f.aKind==='undead-host'?ashenWinter.hosts[f.aId]:normalizedPatrols[f.aId],b=f.bKind==='patrol'?normalizedPatrols[f.bId]:f.bKind==='band'?normalizedBands[f.bId]:ashenWinter.hosts[f.bId];
+    assert(a&&b&&(f.aKind==='undead-host'?a.force.generation:a.spawnCycle)===f.aCycle&&(f.bKind==='undead-host'?b.force.generation:b.spawnCycle)===f.bCycle,'world skirmish generation');
     const ids=(list,max)=>Array.isArray(list)&&list.length>0&&list.length<=max&&new Set(list).size===list.length&&list.every(i=>validCount(i)&&i<max);
-    assert(ids(f.aTroops,definitions.find(d=>d.id===f.aId).size)&&ids(f.bTroops,f.bKind==='patrol'?definitions.find(d=>d.id===f.bId).size:f.bKind==='band'?20:b.force.size),'world skirmish troops');
-    assert(JSON.stringify(a.troops)===JSON.stringify(f.aTroops)&&a.behavior==='engaging'&&a.targetId===f.bId,'world skirmish army');
+    assert(ids(f.aTroops,f.aKind==='undead-host'?a.force.size:definitions.find(d=>d.id===f.aId).size)&&ids(f.bTroops,f.bKind==='patrol'?definitions.find(d=>d.id===f.bId).size:f.bKind==='band'?20:b.force.size),'world skirmish troops');
+    if(f.aKind==='undead-host')assert(JSON.stringify(a.force.troops)===JSON.stringify(f.aTroops),'world skirmish undead army');
+    else assert(JSON.stringify(a.troops)===JSON.stringify(f.aTroops)&&a.behavior==='engaging'&&a.targetId===f.bId,'world skirmish army');
     if(f.bKind==='patrol')assert(JSON.stringify(b.troops)===JSON.stringify(f.bTroops)&&b.behavior==='engaging'&&b.targetId===f.aId,'world skirmish rival');
     if(f.bKind==='undead-host')assert(JSON.stringify(b.force.troops)===JSON.stringify(f.bTroops),'world skirmish host');
     assert(f.endHour===f.startHour+skirmishDuration(f.aTroops.length,f.bTroops.length),'world skirmish duration');
