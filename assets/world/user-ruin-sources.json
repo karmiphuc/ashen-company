@@ -1,0 +1,164 @@
+{
+  "assets": [
+    {
+      "file": "assets/world/user_ruin_manor.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini ruins sheet",
+      "source": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg attached in chat",
+      "license": "User-provided artwork authorized for this project",
+      "original": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg",
+      "preparedSheetSha256": "28e3168e584a937529d2494844686b78ddfd73a3712476c06f2d09f55af7e4aa",
+      "crop": [
+        315,
+        62,
+        580,
+        325
+      ],
+      "changes": "Gray background removed through image editing; cropped to individual building bounds, neighbouring corner fragments masked, downscaled to at most 224px. Recipe: tools/import-user-ruins.py.",
+      "width": 219,
+      "height": 213,
+      "bytes": 107668,
+      "sha256": "e4b1bfe68dff330b54fc9b06e9a391348c0ab04f8f35aabfa86909d0426867a2"
+    },
+    {
+      "file": "assets/world/user_ruin_clocktower.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini ruins sheet",
+      "source": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg attached in chat",
+      "license": "User-provided artwork authorized for this project",
+      "original": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg",
+      "preparedSheetSha256": "28e3168e584a937529d2494844686b78ddfd73a3712476c06f2d09f55af7e4aa",
+      "crop": [
+        640,
+        62,
+        840,
+        315
+      ],
+      "changes": "Gray background removed through image editing; cropped to individual building bounds, neighbouring corner fragments masked, downscaled to at most 224px. Recipe: tools/import-user-ruins.py.",
+      "width": 164,
+      "height": 216,
+      "bytes": 77044,
+      "sha256": "563e2e742cc90cb13ed2a78df165fa9779a871349e8c452f606e3dce252a83ff"
+    },
+    {
+      "file": "assets/world/user_ruin_cathedral.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini ruins sheet",
+      "source": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg attached in chat",
+      "license": "User-provided artwork authorized for this project",
+      "original": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg",
+      "preparedSheetSha256": "28e3168e584a937529d2494844686b78ddfd73a3712476c06f2d09f55af7e4aa",
+      "crop": [
+        851,
+        0,
+        1289,
+        500
+      ],
+      "changes": "Gray background removed through image editing; cropped to individual building bounds, neighbouring corner fragments masked, downscaled to at most 224px. Recipe: tools/import-user-ruins.py.",
+      "width": 181,
+      "height": 223,
+      "bytes": 78371,
+      "sha256": "bba96852416b0fbfec3aa64dee938cbe85e67f627e88e477a8f6f0e934d7b0b8"
+    },
+    {
+      "file": "assets/world/user_ruin_chapel.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini ruins sheet",
+      "source": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg attached in chat",
+      "license": "User-provided artwork authorized for this project",
+      "original": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg",
+      "preparedSheetSha256": "28e3168e584a937529d2494844686b78ddfd73a3712476c06f2d09f55af7e4aa",
+      "crop": [
+        294,
+        318,
+        570,
+        589
+      ],
+      "changes": "Gray background removed through image editing; cropped to individual building bounds, neighbouring corner fragments masked, downscaled to at most 224px. Recipe: tools/import-user-ruins.py.",
+      "width": 215,
+      "height": 216,
+      "bytes": 99276,
+      "sha256": "afeeae0fae77262d0899595ecf26574e6c506c7f9076e7a7da0259c4eb91a6ce"
+    },
+    {
+      "file": "assets/world/user_ruin_windmill.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini ruins sheet",
+      "source": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg attached in chat",
+      "license": "User-provided artwork authorized for this project",
+      "original": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg",
+      "preparedSheetSha256": "28e3168e584a937529d2494844686b78ddfd73a3712476c06f2d09f55af7e4aa",
+      "crop": [
+        573,
+        298,
+        792,
+        537
+      ],
+      "changes": "Gray background removed through image editing; cropped to individual building bounds, neighbouring corner fragments masked, downscaled to at most 224px. Recipe: tools/import-user-ruins.py.",
+      "width": 180,
+      "height": 218,
+      "bytes": 89676,
+      "sha256": "eaae660f15c1b8810b82cc94fee950b4fc78f1d18e0253ffd47611315d607cf9"
+    },
+    {
+      "file": "assets/world/user_ruin_house.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini ruins sheet",
+      "source": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg attached in chat",
+      "license": "User-provided artwork authorized for this project",
+      "original": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg",
+      "preparedSheetSha256": "28e3168e584a937529d2494844686b78ddfd73a3712476c06f2d09f55af7e4aa",
+      "crop": [
+        302,
+        607,
+        542,
+        842
+      ],
+      "changes": "Gray background removed through image editing; cropped to individual building bounds, neighbouring corner fragments masked, downscaled to at most 224px. Recipe: tools/import-user-ruins.py.",
+      "width": 209,
+      "height": 211,
+      "bytes": 99557,
+      "sha256": "35dcc1859fd7f7ef8063979899cd84fc927ba3ad3cc4a1cde1254a8d6c5645a3"
+    },
+    {
+      "file": "assets/world/user_ruin_fortress.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini ruins sheet",
+      "source": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg attached in chat",
+      "license": "User-provided artwork authorized for this project",
+      "original": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg",
+      "preparedSheetSha256": "28e3168e584a937529d2494844686b78ddfd73a3712476c06f2d09f55af7e4aa",
+      "crop": [
+        576,
+        449,
+        1094,
+        941
+      ],
+      "changes": "Gray background removed through image editing; cropped to individual building bounds, neighbouring corner fragments masked, downscaled to at most 224px. Recipe: tools/import-user-ruins.py.",
+      "width": 220,
+      "height": 210,
+      "bytes": 107119,
+      "sha256": "daf0e47983b428d374877432dabad54dec5b3b6c4c5553b05631e4d2b057cf1f"
+    },
+    {
+      "file": "assets/world/user_ruin_townhall.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini ruins sheet",
+      "source": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg attached in chat",
+      "license": "User-provided artwork authorized for this project",
+      "original": "Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg",
+      "preparedSheetSha256": "28e3168e584a937529d2494844686b78ddfd73a3712476c06f2d09f55af7e4aa",
+      "crop": [
+        1100,
+        523,
+        1371,
+        791
+      ],
+      "changes": "Gray background removed through image editing; cropped to individual building bounds, neighbouring corner fragments masked, downscaled to at most 224px. Recipe: tools/import-user-ruins.py.",
+      "width": 212,
+      "height": 210,
+      "bytes": 109094,
+      "sha256": "f78b4b41cdc5c912024203a5eafd521b67932d248153e134b23584a6e19d0eaf"
+    }
+  ]
+}
