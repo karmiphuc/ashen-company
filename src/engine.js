@@ -3303,6 +3303,10 @@ function rangedPositionStep(state, actor, enemies, weapon, tactic) {
   // With no shooters, shelter still faces the enemy approach and keeps the rear behind shields.
   const threats = shooters.length ? shooters : enemies;
   const shootRange = effectiveWeaponRange(actor,weapon) + (isBow(weapon) ? 1 : 0);
+  // Once pursuit begins, finish closing into firing range before returning to
+  // shelter. Otherwise cover and pursuit undo each other on alternate turns.
+  const pursuing=enemies.find(enemy=>enemy.id===actor.aiTargetId);
+  if(!spacing&&pursuing&&hexDistance(actor,pursuing)>shootRange)return null;
   const canShootHere = enemies.some(enemy=>hexDistance(actor,enemy)<=shootRange);
   const reserveAp = actor.reload > 0 ? 4 : attackApCost(weapon,battle,actor);
   const budget = Math.min(6, spacing && actor.ap<reserveAp+2 ? actor.ap : Math.max(0,actor.ap-reserveAp));
@@ -3402,7 +3406,9 @@ function returnSkirmisher(state, actor) {
     return result(true,message);
   }
   const moved=skirmishMove(state,actor,point,'falls back behind the skirmish line.');
-  if (path.length===1 && actor.q===point.q && actor.r===point.r) delete actor.skirmishReturn;
+  if (path.length===1 && actor.q===point.q && actor.r===point.r) {
+    delete actor.skirmishReturn;actor.formationMovedRound=battle.round;
+  }
   return moved;
 }
 
@@ -3482,7 +3488,9 @@ function skirmishPosition(state, actor, enemies, weapon, ammunitionSpent) {
   const stage=stages.filter(o=>o.distance<nearest && o.distance>=aimRange)
     .sort((a,b)=>a.distance-b.distance || a.cost-b.cost || a.q-b.q || a.r-b.r)[0];
   const choice=shot ?? stage;if (!choice) return null;
-  actor.skirmishReturn ??= {q:actor.q,r:actor.r,phase:'aim'};
+  // A staging move is an advance, not a sortie: there is no shot to return
+  // from yet. Only record shelter when the remaining route includes a shot.
+  if(shot)actor.skirmishReturn ??= {q:actor.q,r:actor.r,phase:'aim'};
   actor.formationMovedRound=battle.round;
   return skirmishMove(state,actor,choice.path[0],'steps up for a skirmish shot.');
 }
@@ -4434,9 +4442,18 @@ function advanceBattleV2(state) {
     || (!rangedAI || !ammunitionSpent) && companyTactic === 'shield-wall' && (actor.side==='enemy'
       ? !weapon.ranged && actor.formationMovedRound===battle.round
       : actor.formationMovedRound===battle.round || battle.round - battle.lastContactRound < 4);
-  for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank || !pursuit
-    || actor.fatigue+attackFatigueCost(actor,weapon)>actor.maxFatigue ? [] : [pursuit]) {
+  for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank || !pursuit ? [] : [pursuit]) {
     const point = entry.path[0];
+    // Pursuit must respect the same rear-line boundary as reformation. A
+    // reach fighter may leave shelter to acquire a target in reach, but not
+    // step forward merely to be ordered back on its next turn.
+    if(companyTactic==='shield-wall'&&!weapon.ranged&&actor.side==='company'&&!actor.ally&&!ammunitionSpent
+      &&!hasShieldSet(actor)){
+      const shields=battle.units.filter(u=>u.alive&&u.side==='company'&&!u.ally
+        &&hasShieldSet(u)&&!companyArcherWeapon(state,u));
+      if(shields.length&&point.q>=Math.max(...shields.map(u=>u.q))
+        &&!enemies.some(enemy=>hexDistance(point,enemy)<=range))continue;
+    }
     const apCost = battleMoveApCost(battle, actor, actor, point);
     const alliesOnTarget = battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id
       && hexDistance(unit, entry.target) <= 1).length;
