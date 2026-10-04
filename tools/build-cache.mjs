@@ -64,7 +64,7 @@ const CORE = [
   './assets/icon.svg',
 ];
 
-async function assetFiles(directory, extensions = /\.(png|jpg|mp3)$/i) {
+async function assetFiles(directory, extensions = /\.(png|jpg|svg|mp3)$/i) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async entry => {
     const path = join(directory, entry.name);

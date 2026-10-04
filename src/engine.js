@@ -16,7 +16,7 @@ import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, worldCampText, regionalOutfi
 import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad, WORLD_LAYOUT_VERSION, compactPoint, authoredPoint } from './geography.js';
 import { FRONTIER_ITEMS } from './frontier-items.js';
 import { MOUNTS } from './mounts.js';
-import { factionPatrols, soldierFactionAt, patrolDefinitions, initialPatrolProgress, advanceFactionSimulation, worldSkirmishFor, cancelWorldSkirmish, skirmishDuration } from './faction-patrols.js';
+import { factionPatrols, soldierFactionAt, patrolDefinitions, initialPatrolProgress, advanceFactionSimulation, worldSkirmishFor, isJoinablePatrolSkirmish, cancelWorldSkirmish, skirmishDuration } from './faction-patrols.js';
 import { cityMountOffer, campMountReward, regionalMountPool } from './mount-distribution.js';
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression, enemyRosterSize } from './enemy-progression.js';
@@ -1322,9 +1322,9 @@ function survivingWorldEnemies(state,id,cycle,enemies) {
 }
 export function getFactionPatrols(state) { return factionPatrols(state,SETTLEMENTS); }
 export function getJoinablePatrolBattle(state,id) {
- const patrol=getFactionPatrols(state).find(p=>p.id===id&&p.active&&p.playerRelation==='ally');
+ const patrol=getFactionPatrols(state).find(p=>p.id===id);
  const fight=patrol&&worldSkirmishFor(state,id);
- return fight&&fight.aId===id&&['band','undead-host'].includes(fight.bKind)&&fight.endHour>worldHours(state)?{patrol,fight}:null;
+ return isJoinablePatrolSkirmish(patrol,fight,worldHours(state))?{patrol,fight}:null;
 }
 function alliedBattleAgainst(state,id){
  const fight=worldSkirmishFor(state,id);return fight?.bId===id?getJoinablePatrolBattle(state,fight.aId):null;
@@ -2697,7 +2697,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     patrol:nearbyPatrol,fight:{aCycle:state.factionPatrols[nearbyPatrol.id].spawnCycle,
       aTroops:[...state.factionPatrols[nearbyPatrol.id].troops],bTroops:camp.enemies.map(e=>e.worldIndex??e.troopIndex)}
   }:null;
-  if(patrolId&&(!assistance||assistance.fight.bId!==encounterId))return result(false,'That allied battle is no longer available.');
+  if(npcFight&&!assistance||patrolId&&(!assistance||assistance.fight.bId!==encounterId))return result(false,'That patrol battle is no longer available. Let the ongoing fight resolve before intercepting.');
   const patrolAssist=assistance?{id:assistance.patrol.id,cycle:assistance.fight.aCycle,troops:[...assistance.fight.aTroops],enemyTroops:[...assistance.fight.bTroops]}:null;
   if (state.destination || distance(state.position,patrolId?assistance.patrol:camp) > (patrolId?CAMP_RADIUS:encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
   if (!getBattleRoster(state).length) return result(false, 'Move a brother from reserve into the formation before fighting.');
@@ -5249,9 +5249,10 @@ function validateBattle(input, party, worldState) {
   if (undead) assert(recordObject(input.crisisContext) && input.crisisContext.crisisId === worldState.ashenWinter.crisisId && input.crisisContext.frontId === undead.frontId && input.crisisContext.townId === undead.townId && input.crisisContext.forceSeed === undead.force.seed && input.crisisContext.generation === undead.force.generation, 'crisis battle context');
   else assert(input.crisisContext === undefined, 'unexpected crisis context');
   const patrolAssist=input.patrolAssist;
+  const assistingPatrol=patrolAssist&&getFactionPatrols(worldState).find(p=>p.id===patrolAssist.id);
   if(patrolAssist!==undefined){
     const d=patrolDefinitions(SETTLEMENTS).find(d=>d.id===patrolAssist?.id),p=d&&worldState.factionPatrols[d.id];
-    assert(recordObject(patrolAssist)&&Object.keys(patrolAssist).sort().join(',')==='cycle,enemyTroops,id,troops'&&d&&getFactionPatrols(worldState).find(a=>a.id===d.id)?.playerRelation==='ally'
+    assert(recordObject(patrolAssist)&&Object.keys(patrolAssist).sort().join(',')==='cycle,enemyTroops,id,troops'&&d&&['ally','neutral'].includes(assistingPatrol?.playerRelation)
       &&['band','undead-host'].includes(encounterType)&&p.spawnCycle===patrolAssist.cycle&&JSON.stringify(p.troops)===JSON.stringify(patrolAssist.troops)
       &&Array.isArray(patrolAssist.enemyTroops)&&patrolAssist.enemyTroops.length>0&&new Set(patrolAssist.enemyTroops).size===patrolAssist.enemyTroops.length
       &&patrolAssist.enemyTroops.every(i=>validCount(i)&&i<(encounterType==='band'?20:undead.force.size)),'battle patrol assistance');
@@ -5339,6 +5340,7 @@ function validateBattle(input, party, worldState) {
     assert(unit.ally ? (questAllies||patrolAssist) && unit.side === 'company' && new RegExp(`^ally-[1-${patrolAssist?patrolAssist.troops.length:3}]$`).test(unit.id)
       : unit.side === 'company' ? partyIds.has(unit.id) : validEnemyId(unit.id), 'battle unit ownership');
     assert(typeof unit.name === 'string' && unit.name.length > 0 && unit.name.length <= 80, 'battle unit name');
+    if(unit.ally&&patrolAssist)assert(unit.name===assistingPatrol?.enemies[Number(unit.id.slice(5))-1]?.name,'battle patrol soldier identity');
     assert(passableHex(unit, field), 'battle hex');
     assert(validCount(unit.maxHp) && unit.maxHp >= 1 && unit.maxHp <= 300 && validCount(unit.hp) && unit.hp <= unit.maxHp && unit.alive === (unit.hp > 0), 'battle health');
     assert(unit.champion===undefined||input.championRulesVersion===1&&unit.side==='enemy'&&unit.champion===true,'battle champion');
@@ -5356,7 +5358,7 @@ function validateBattle(input, party, worldState) {
     if (partyMember) assert((unit.equipment.mount ?? null) === (partyMember.equipment.mount ?? null), 'battle mount owner');
     const perks = unit.perks ?? partyMember?.perks ?? [];
     assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && (PERK_BY_ID.has(id) || REMOVED_PERK_MIN_LEVEL.has(id))) && new Set(perks).size === perks.length, 'battle perks');
-    assert(unit.side === 'enemy' ? perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||getFactionPatrols(worldState).find(a=>a.id===patrolAssist.id).difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
+    assert(unit.side === 'enemy' ? perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||assistingPatrol.difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
     const adaptation = unit.adaptation ?? 0;
     const berserkRound = unit.berserkRound ?? 0;
     const frenzyUntilRound = unit.frenzyUntilRound ?? 0;

@@ -68,7 +68,7 @@ function offlineAudioWorker(source, audioPath, bytes) {
 test('offline list contains every runtime media asset and required app file', async () => {
   const assets = await listOfflineAssets();
   assert.equal(new Set(assets).size, assets.length);
-  for (const path of ['./', './index.html', './src/app.js', './src/audio.js', './src/engine.js', './src/additional-items.js', './src/map.js', './src/portraits.js', './src/style.css', './manifest.webmanifest', './assets/icon.svg']) {
+  for (const path of ['./', './index.html', './src/app.js', './src/audio.js', './src/engine.js', './src/additional-items.js', './src/map.js', './src/portraits.js', './src/style.css', './manifest.webmanifest', './assets/icon.svg', './assets/world/figure_undead_host.svg']) {
     assert.ok(assets.includes(path), `${path} is missing`);
   }
   for(const path of await runtimeMediaFiles(join(ROOT,'src'), /\.(js|css)$/i)) assert.ok(assets.includes(path),path+' runtime source is missing from offline cache');

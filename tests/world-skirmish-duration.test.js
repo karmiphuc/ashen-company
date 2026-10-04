@@ -227,3 +227,36 @@ test('retreating with allied assistance and no enemy casualties keeps the save v
   assert.deepEqual(s.worldLosses,before);assert.deepEqual(validateSave(s),s);
  }
 });
+
+for(const index of [0,3,5,8])for(const entry of ['map','sidebar','direct'])test(`targeting bandits includes faction patrol ${index} through ${entry}`,()=>{
+ const {s,army,band}=fixture(index,[0,2,5]);s.position={x:band.x,y:band.y};
+ const roster=getFactionPatrols(s).find(p=>p.id===army.id).enemies;
+ const result=entry==='map'?activateMapTarget(s,'band',band.id):entry==='sidebar'?pursueBand(s,band.id):startBattle(s,band.id);
+ assert.equal(result.ok,true);assert.equal(s.battle.patrolAssist?.id,army.id);
+ const allies=s.battle.units.filter(u=>u.ally);assert.equal(allies.length,3);assert.deepEqual(allies.map(u=>u.equipment.weapon),roster.map(e=>e.weapon));
+ assert.ok(allies.every(u=>s.battle.turnOrder.includes(u.id)));assert.deepEqual(validateSave(s),s);
+});
+
+test('targeting a timed-out but unresolved patrol fight cannot silently split its opponents',()=>{
+ const {s,band}=fixture();s.position={x:band.x,y:band.y};setTime(s,s.worldSkirmishes[0].endHour);
+ const before=structuredClone(s);assert.equal(startBattle(s,band.id).ok,false);assert.deepEqual(s,before);
+});
+
+
+test('joining an Eastern March fight from afar survives travel and saving',()=>{
+ let {s,army,band}=fixture(5);s.position={x:army.x-75,y:army.y+10};
+ for(const other of getRoamingBands(s))if(other.id!==band.id)s.bands[other.id].defeatedUntil=56.25;
+ assert.ok(activateMapTarget(s,'band',band.id).ok);assert.deepEqual(s.destinationAction,{type:'patrol',id:army.id});
+ s=validateSave(JSON.parse(JSON.stringify(s)));
+ for(let i=0;i<40&&s.destination&&!s.battle;i++){tick(s,.25);s=validateSave(JSON.parse(JSON.stringify(s)));}
+ assert.equal(s.battle?.patrolAssist.id,army.id);assert.equal(s.battle.units.filter(u=>u.ally).length,8);
+});
+
+test('neutral patrol casualties and victory apply once after a shared fight',()=>{
+ const {s,army,band}=fixture(5,[0,2,5]);s.position={x:band.x,y:band.y};assert.ok(activateMapTarget(s,'band',band.id).ok);
+ const casualty=s.battle.units.find(u=>u.ally);casualty.hp=0;casualty.alive=false;
+ for(const enemy of s.battle.units.filter(u=>u.side==='enemy')){enemy.hp=1;enemy.bodyArmor=0;enemy.headArmor=0;}
+ assert.ok(resolveBattle(s).ok);assert.equal(s.battle.status,'victory');assert.deepEqual(validateSave(s),s);assert.ok(finishBattle(s).ok);
+ assert.deepEqual(s.factionPatrols[army.id].troops,[2,5]);assert.equal(s.factionPatrols[army.id].wins,1);assert.equal(s.factionReports.length,1);assert.equal(s.worldSkirmishes.length,0);
+ const after=structuredClone(s);assert.equal(finishBattle(s).ok,false);assert.deepEqual(s,after);assert.deepEqual(validateSave(s),s);
+});
