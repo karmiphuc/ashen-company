@@ -70,7 +70,7 @@ test('sorties respect fatigue, occupied or impassable tiles and do not walk into
 });
 
 test('stationary firing seeks nearby tree cover when enemy bows threaten an exposed archer',()=>{
- const f=fixture('hunting-bow',5);for(const u of f.foes)u.equipment.weapon='hunting-bow';tileAt(f.b.field,3,9).terrain='trees';
+ const f=fixture('hunting-bow',4);for(const u of f.foes)u.equipment.weapon='hunting-bow';tileAt(f.b.field,3,9).terrain='trees';
  assert.equal(step(f).type,'move');assert.match(f.b.lastEvent.message,/cover/);assert.equal(tileAt(f.b.field,f.actor.q,f.actor.r).terrain,'trees');assert.equal(f.actor.skirmishReturn,undefined);reload(f);
 });
 
