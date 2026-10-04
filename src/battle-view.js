@@ -20,14 +20,15 @@ const TACTICS = [
   ['defense', 'Defense', 'Hold the line and shoot. Advance if the enemy refuses to close.'],
   ['focus', 'Thin them out', 'Concentrate fire and attacks on one reachable enemy at a time.'],
   ['advance-formation', 'Advance in Formation', 'Advance together one hex at a time. Keep ranks and attack without chasing ahead.'],
+  ['skirmish', 'Skirmish', 'Hold a shield line about 5–6 hexes from the enemy. Ranged fighters step up to shoot and fall back to shelter, ideally in the same turn; safe Aimed Shots stay stationary. Close in when ranged ammunition runs out.'],
   ['shield-wall', 'Shield Wall', 'Shielded melee fighters and skirmishers form the front. Archers and unshielded two-handers stay behind.'],
 ];
 
 export function battleActionDuration(speed = 1) { return speed === 3 ? .275 : speed === 1 ? .55 : 1.1; }
 
-export function tacticsHTML(tactic = 'offense', disabled = false) {
+export function tacticsHTML(tactic = 'offense', disabled = false, skirmishSupported = true) {
   const current = TACTICS.find(entry => entry[0] === tactic) || TACTICS[0];
-  return `<div class="battle-tactics"><div role="group" aria-label="Company tactics">${TACTICS.map(([id, label]) => `<button data-tactic="${id}" aria-pressed="${current[0] === id}" ${disabled ? 'disabled' : ''}>${label}</button>`).join('')}</div><label class="battle-tactic-picker"><span>Tactic</span><select data-battle-tactic aria-label="Company tactic" ${disabled?'disabled':''}>${TACTICS.map(([id,label])=>`<option value="${id}" ${current[0]===id?'selected':''}>${label}</option>`).join('')}</select></label><p>${current[2]}</p></div>`;
+  return `<div class="battle-tactics"><div role="group" aria-label="Company tactics">${TACTICS.map(([id, label]) => `<button data-tactic="${id}" aria-pressed="${current[0] === id}" ${disabled || id==='skirmish'&&!skirmishSupported ? 'disabled' : ''}>${label}</button>`).join('')}</div><label class="battle-tactic-picker"><span>Tactic</span><select data-battle-tactic aria-label="Company tactic" ${disabled?'disabled':''}>${TACTICS.map(([id,label])=>`<option value="${id}" ${current[0]===id?'selected':''}${id==='skirmish'&&!skirmishSupported?' disabled':''}>${label}</option>`).join('')}</select></label><p>${current[2]}</p></div>`;
 }
 
 function esc(value) {
@@ -327,7 +328,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
       <button class="battle-retreat" data-action="retreat-battle" ${status === 'active' ? '' : 'disabled'}>Retreat</button>
       <button class="battle-resolve" data-action="resolve-battle" ${status === 'active' ? '' : 'disabled'}>Resolve battle</button>
     </div>
-    ${tacticsHTML(battle.tactic, status !== 'active')}
+    ${tacticsHTML(battle.tactic, status !== 'active', battle.rulesVersion===2)}
     ${battle.enemyTacticsVersion===1?`<p class="battle-enemy-intent">Enemy tactic: ${enemyBattleTactic(battle,getItem)==='defense'?'Defensive · ranged fighters hold the line':'Offensive · fewer than 3 ranged fighters'}</p>`:''}
 
     <div class="battle-layout">

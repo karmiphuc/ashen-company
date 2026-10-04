@@ -25,7 +25,7 @@ export function scoreTacticalAction(actor, action, context = {}) {
     - 18 * value('blocksAlly') - 3 * value('wastedAmmo');
   if (action.targetId && action.targetId === context.previousTargetId) score += 2;
   if (action.targetId && action.targetId === context.focusTargetId) score += 6;
-  if (['defense', 'advance-formation', 'shield-wall'].includes(context.tactic)) score -= 4 * value('formationDistance');
+  if (['defense', 'advance-formation', 'shield-wall', 'skirmish'].includes(context.tactic)) score -= 4 * value('formationDistance');
   if (role === 'ranged' || role === 'skirmisher') score += 3 * value('spacingGain');
   if (role === 'flanker') score += 4 * value('flankGain');
   if (context.targetPriorities !== false && action.target) score += tacticalTargetPriority(role, action.target, action.targetWeapon,

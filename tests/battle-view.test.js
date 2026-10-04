@@ -62,7 +62,7 @@ test('tactic choice is clear and results disable further changes', () => {
   assert.match(tacticsHTML('advance-formation'), /one hex at a time/);
   assert.match(tacticsHTML('shield-wall'), /data-tactic="shield-wall" aria-pressed="true"/);
   assert.match(tacticsHTML('shield-wall'), /unshielded two-handers stay behind/);
-  assert.equal((tacticsHTML('offense',true).match(/disabled/g)||[]).length,6);
+  assert.equal((tacticsHTML('offense',true).match(/disabled/g)||[]).length,7);
 });
 
 test('body bar includes attachment protection and sling stones render distinctly', () => {

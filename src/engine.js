@@ -332,7 +332,7 @@ const SUPPLY_INFO = {
   ammo: { name: 'Ammunition', buyPrice: 4, stock: 30 },
 };
 const ATTRIBUTES = ['maxHp', 'meleeSkill', 'rangedSkill', 'meleeDefense', 'rangedDefense', 'maxFatigue', 'initiative', 'resolve'];
-const TACTICS = ['offense', 'defense', 'focus', 'advance-formation', 'shield-wall'];
+const TACTICS = ['offense', 'defense', 'focus', 'advance-formation', 'shield-wall', 'skirmish'];
 const FORMATION_DIRECTIONS = { e: [1, 0], ne: [1, -1], se: [0, 1], w: [-1, 0], sw: [-1, 1], nw: [0, -1] };
 
 function hashSeed(seed) {
@@ -2392,9 +2392,11 @@ export function setBattleTactic(state, tactic) {
   if (state.gameOver) return result(false, 'The company has fallen.');
   if (state.battle && state.battle.status !== 'active') return result(false, 'Finish the battle before changing tactics.');
   if (state.tactic === tactic && (!state.battle || state.battle.tactic === tactic)) return result(true, `Company tactic remains ${tactic}.`);
+  if (tactic==='skirmish' && state.battle && state.battle.rulesVersion!==2) return result(false,'Skirmish requires 9-AP battle turns. Choose it before the next battle.');
   state.tactic = tactic;
   if (state.battle) {
     state.battle.tactic = tactic;
+    for (const unit of state.battle.units) delete unit.skirmishReturn;
     state.battle.focusTargetId = null;
     state.battle.lastContactRound = state.battle.round;
     state.battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(tactic) ? makeFormationAdvancePlan(state.battle) : null;
@@ -2465,7 +2467,7 @@ function isShieldWallFront(unit) {
 }
 
 function orderCompanyTurnsForFormation(battle) {
-  if (!['advance-formation', 'shield-wall'].includes(battle.tactic)) return;
+  if (!['advance-formation', 'shield-wall', 'skirmish'].includes(battle.tactic)) return;
   const [dq, dr] = FORMATION_DIRECTIONS[battle.formationAdvance?.direction] ?? FORMATION_DIRECTIONS.e;
   const companySlots = battle.turnOrder.map((id, index) => ({ id, index }))
     .filter(entry => { const unit = battle.units.find(unit => unit.id === entry.id); return unit?.side === 'company' && !unit.ally; });
@@ -2551,7 +2553,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
       maxFatigue: stats.maxFatigue, initiative: stats.initiative, resolve: stats.resolve,
     }];
   });
-  if ((state.tactic ?? 'offense') === 'shield-wall') shieldWallDeployment(company);
+  if (['shield-wall','skirmish'].includes(state.tactic)) shieldWallDeployment(company);
   const enemies = camp.enemies.map((enemy, index) => {
     const rank = camp.veteranRank ?? 0;
     const rareMount = getItem(enemy.mount);
@@ -2937,7 +2939,7 @@ function chooseBattleWeapon(state, actor, enemies) {
 
 function readyShieldWallSet(state, actor) {
   if (state.battle.rulesVersion === 2 && actor.ap < 4 && !(hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== state.battle.round)) return false;
-  if (state.battle.tactic !== 'shield-wall' || actor.side !== 'company' || actor.ally || actor.equipment.shield && actor.shieldDurability > 0
+  if (!['shield-wall','skirmish'].includes(state.battle.tactic) || actor.side !== 'company' || actor.ally || actor.equipment.shield && actor.shieldDurability > 0
     || companyArcherWeapon(state, actor) || actor.reserveShieldDurability <= 0 || getItem(actor.reserveEquipment.weapon)?.twoHanded
     || getItem(actor.reserveEquipment.weapon)?.throwing && (actor.throwingAmmo?.reserve ?? 0) <= 0) return false;
   return switchBattleSet(state, actor, `${actor.name} readies ${getItem(actor.reserveEquipment.shield).name} for the shield wall.`);
@@ -3153,12 +3155,142 @@ function moveToRangedPosition(state, actor, position, tactic) {
   const interception = spearwallReactionsOnMove(state,actor,from);
   if (!interception.blocked && tactic==='shield-wall') battle.formationAdvance=makeFormationAdvancePlan(battle);
   const message = interception.blocked ? `${actor.name} is stopped by Spearwall.`
-    : position.spacing ? `${actor.name} keeps distance from the enemy.` : `${actor.name} moves into cover.`;
+    : position.message ?? (position.spacing ? `${actor.name} keeps distance from the enemy.` : `${actor.name} moves into cover.`);
   battle.lastEvent=makeBattleEvent(actor,null,interception.blocked?'hold':'move',message,getItem(actor.equipment.weapon),from,
     interception.reactions.length?{reactions:interception.reactions}:{});
   battleLog(battle,message);
   if (!finishBattlePhase(battle) && (actor.ap<=0 || !actor.alive)) nextBattleTurn(battle);
   return result(true,message);
+}
+
+// Skirmish keeps the infantry line steady while ranged fighters make short firing sorties.
+function skirmishFireSupport(state) {
+  return state.battle.units.some(unit=>unit.alive && unit.side==='company' && !unit.ally
+    && [[getItem(unit.equipment.weapon),'active'],[getItem(unit.reserveEquipment.weapon),'reserve'],[getItem(unit.pocketStowedWeapon),'active']]
+      .some(([weapon,set])=>weapon?.ranged && !weapon.throwing && battleWeaponHasAmmo(state,unit,weapon,set)));
+}
+
+function skirmishLineDuty(state, actor) {
+  return !companyArcherWeapon(state,actor) && (actor.tacticalRole==='frontliner' || hasShieldSet(actor));
+}
+
+function skirmishMove(state, actor, point, message) {
+  return moveToRangedPosition(state,actor,{point,message:`${actor.name} ${message}`},'skirmish');
+}
+
+function skirmishReturnPath(battle, actor) {
+  const home=actor.skirmishReturn;
+  if (!home) return null;
+  const occupied=new Set(battle.units.filter(u=>u.alive && u.id!==actor.id).map(u=>`${u.q},${u.r}`));
+  const goals=[home,...hexNeighbors(battle.field,home)].filter(p=>passableHex(p,battle.field)
+    && !occupied.has(`${p.q},${p.r}`) && nearestEnemyDistance(battle,actor,p)>=Math.max(2,nearestEnemyDistance(battle,actor,home)));
+  return goals.map(point=>({point,path:pathToTarget(battle,actor,{...actor,...point},0,true)}))
+    .filter(entry=>entry.path!==null).sort((a,b)=>hexDistance(a.point,home)-hexDistance(b.point,home)
+      || pathCost(battle,actor,actor,a.path)-pathCost(battle,actor,actor,b.path)
+      || a.point.q-b.point.q || a.point.r-b.point.r)[0]?.path ?? null;
+}
+
+function returnSkirmisher(state, actor) {
+  const battle=state.battle,plan=actor.skirmishReturn;
+  if (battle.tactic!=='skirmish' || actor.side!=='company' || actor.ally || !plan) return null;
+  const weapon=getItem(actor.equipment.weapon);
+  if (plan.phase==='aim' && (!battleWeaponHasAmmo(state,actor,weapon) || actor.reload>0
+    || actor.fatigue+attackFatigueCost(actor,weapon)>actor.maxFatigue)) plan.phase='return';
+  if (plan.phase!=='return') return null;
+  const path=skirmishReturnPath(battle,actor);
+  if (!path?.length) {delete actor.skirmishReturn;return null;}
+  const point=path[0],cost=battleMoveApCost(battle,actor,actor,point);
+  const fatigue=movementFatigue(actor,battleMovementCost(battle,actor,actor,point));
+  if (actor.ap<cost || actor.fatigue+fatigue>actor.maxFatigue) {
+    actor.ap=0;actor.fatigue=Math.max(0,actor.fatigue-12);
+    const message=`${actor.name} waits to fall back to shelter.`;
+    battle.lastEvent=makeBattleEvent(actor,null,'hold',message,weapon);battleLog(battle,message);nextBattleTurn(battle);
+    return result(true,message);
+  }
+  const moved=skirmishMove(state,actor,point,'falls back behind the skirmish line.');
+  if (path.length===1 && actor.q===point.q && actor.r===point.r) delete actor.skirmishReturn;
+  return moved;
+}
+
+function skirmishPosition(state, actor, enemies, weapon, ammunitionSpent) {
+  const battle=state.battle;
+  if (actor.side!=='company' || actor.ally || battle.tactic!=='skirmish' || ammunitionSpent || !skirmishFireSupport(state)) return null;
+  const nearest=nearestEnemyDistance(battle,actor,actor);
+  const occupied=new Set(battle.units.filter(u=>u.alive && u.id!==actor.id).map(u=>`${u.q},${u.r}`));
+  if (skirmishLineDuty(state,actor)) {
+    if (actor.formationMovedRound===battle.round || nearest<=2 || companyInMeleeContact(battle)) return null;
+    const shooters=enemies.filter(u=>getItem(u.equipment.weapon)?.ranged);
+    const safe=point=>shooters.every(u=>hexDistance(point,u)>effectiveWeaponRange(u,getItem(u.equipment.weapon))+(isBow(getItem(u.equipment.weapon))?1:0));
+    const direction=nearest>6?1:nearest<5 || !safe(actor)?-1:0;
+    const options=openNeighbors(battle,actor,occupied).map(point=>({point,distance:nearestEnemyDistance(battle,actor,point),
+      cost:battleMoveApCost(battle,actor,actor,point),fatigue:movementFatigue(actor,battleMovementCost(battle,actor,actor,point))}))
+      .filter(o=>o.cost<=actor.ap && o.fatigue<=actor.maxFatigue-actor.fatigue && o.distance>=Math.min(5,nearest+1)
+        && (direction>0?o.distance<nearest && safe(o.point):direction<0?o.distance>nearest:false))
+      .sort((a,b)=>Math.abs(a.distance-6)-Math.abs(b.distance-6) || a.cost-b.cost || a.point.q-b.point.q || a.point.r-b.point.r);
+    if (!options.length && direction>0) {
+      // Step around a friendly blocker without pushing past the holding distance.
+      for (const target of [...enemies].sort((a,b)=>hexDistance(actor,a)-hexDistance(actor,b))) {
+        const path=pathToTarget(battle,actor,target,6,true);
+        if (!path?.length || !path.every(p=>safe(p) && nearestEnemyDistance(battle,actor,p)>=5)) continue;
+        const point=path[0],cost=battleMoveApCost(battle,actor,actor,point);
+        const fatigue=movementFatigue(actor,battleMovementCost(battle,actor,actor,point));
+        if (cost<=actor.ap && fatigue<=actor.maxFatigue-actor.fatigue) {options.push({point});break;}
+      }
+    }
+    if (!options.length) return null;
+    actor.formationMovedRound=battle.round;
+    return skirmishMove(state,actor,options[0].point,'steadies the skirmish line.');
+  }
+  if (!weapon.ranged || actor.reload>0 || nearest<=1) return null;
+  const range=effectiveWeaponRange(actor,weapon),aimRange=range+(isBow(weapon)?1:0);
+  // Fire from shelter, including a stationary Aimed Shot, before stepping into the open.
+  if (enemies.some(target=>hexDistance(actor,target)<=aimRange)) {
+    const shooters=enemies.filter(u=>getItem(u.equipment.weapon)?.ranged);
+    if (!actor.skirmishReturn && shooters.some(u=>hexDistance(actor,u)<=effectiveWeaponRange(u,getItem(u.equipment.weapon))+(isBow(getItem(u.equipment.weapon))?1:0))
+      && rangedProtectionAt(battle,actor,actor,shooters)===0) {
+      const cover=rangedPositionStep(state,actor,enemies,weapon,'shield-wall');
+      if (cover) return moveToRangedPosition(state,actor,cover,'skirmish');
+    }
+    return null;
+  }
+  if (!actor.skirmishReturn && actor.formationMovedRound===battle.round) return null;
+  const queue=[{q:actor.q,r:actor.r,path:[],cost:0,fatigue:0}],best=new Map([[`${actor.q},${actor.r}`,0]]),shots=[],stages=[];
+  while (queue.length) {
+    queue.sort((a,b)=>a.cost-b.cost || a.q-b.q || a.r-b.r);
+    const point=queue.shift();if (point.cost>best.get(`${point.q},${point.r}`)) continue;
+    if (point.path.length) {
+      const returning=[...point.path.slice(0,-1).reverse(),{q:actor.q,r:actor.r}];
+      let returnCost=0,returnFatigue=0,previous=point;
+      for (const next of returning) {returnCost+=battleMoveApCost(battle,{...actor,movementCredit:0},previous,next);
+        returnFatigue+=movementFatigue(actor,battleMovementCost(battle,actor,previous,next));previous=next;}
+      for (const target of enemies) {
+        const distance=hexDistance(point,target),aimed=distance>range && isBow(weapon) && distance<=range+1;
+        const option=aimed?COMBAT_SKILLS['aimed-shot']:null,ap=attackApCost(weapon,battle,actor,option),fatigue=aimed?aimedFatigueCost(actor):attackFatigueCost(actor,weapon);
+        if (distance<=aimRange && point.cost+ap<=actor.ap && point.fatigue+fatigue<=actor.maxFatigue-actor.fatigue) {
+          const roundTrip=point.cost+ap+returnCost<=actor.ap && point.fatigue+fatigue+returnFatigue<=actor.maxFatigue-actor.fatigue;
+          const predicted=predictAttack(battle,{...actor,...point},target,weapon,option);
+          shots.push({...point,quality:(roundTrip?100:0)+predicted.expectedHealthDamage+predicted.killProbability*35-point.cost*2});
+        }
+      }
+      stages.push({...point,distance:Math.min(...enemies.map(u=>hexDistance(point,u)))});
+    }
+    if (point.path.length>=3) continue;
+    for (const next of openNeighbors(battle,point,occupied)) {
+      if (nearestEnemyDistance(battle,actor,next)<2) continue;
+      const mover=point.path.length?{...actor,movementCredit:0}:actor,cost=point.cost+battleMoveApCost(battle,mover,point,next);
+      const fatigue=point.fatigue+movementFatigue(actor,battleMovementCost(battle,actor,point,next)),key=`${next.q},${next.r}`;
+      if (cost<=actor.ap && fatigue<=actor.maxFatigue-actor.fatigue && cost<(best.get(key)??Infinity)) {
+        best.set(key,cost);queue.push({...next,path:[...point.path,next],cost,fatigue});
+      }
+    }
+  }
+  const shot=shots.sort((a,b)=>b.quality-a.quality || a.cost-b.cost || a.q-b.q || a.r-b.r)[0];
+  const stage=stages.filter(o=>o.distance<nearest && o.distance>=aimRange)
+    .sort((a,b)=>a.distance-b.distance || a.cost-b.cost || a.q-b.q || a.r-b.r)[0];
+  const choice=shot ?? stage;if (!choice) return null;
+  actor.skirmishReturn ??= {q:actor.q,r:actor.r,phase:'aim'};
+  actor.formationMovedRound=battle.round;
+  return skirmishMove(state,actor,choice.path[0],'steps up for a skirmish shot.');
 }
 
 function isBow(weapon) {
@@ -3850,6 +3982,7 @@ function advanceBattleV2(state) {
     }
     if (actor.fleeRound === battle.round) return fleeBattleEnemy(state, actor, enemies);
   }
+  const fallingBack=returnSkirmisher(state,actor);if (fallingBack) return fallingBack;
   if (useBattleAccessory(state, actor, enemies)) return result(true, battle.lastEvent.message);
   if (readyShieldWallSet(state, actor) || chooseBattleWeapon(state, actor, enemies)) return result(true, battle.lastEvent.message);
   const equipped = getItem(actor.equipment.weapon);
@@ -3879,7 +4012,9 @@ function advanceBattleV2(state) {
   const candidates = [];
   const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
   const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
-  if (rangedAI && spacingWeapon) {
+  const skirmishMoveResult=skirmishPosition(state,actor,enemies,weapon,ammunitionSpent);
+  if (skirmishMoveResult) return skirmishMoveResult;
+  if (rangedAI && spacingWeapon && (companyTactic!=='skirmish' || nearest<=1)) {
     const position = rangedPositionStep(state,actor,enemies,spacingWeapon,companyTactic);
     const canRetreatAndShoot = position?.spacing && weapon.ranged && actor.reload===0
       && actor.ap>=battleMoveApCost(battle,actor,actor,position.point)+attackCost
@@ -4042,7 +4177,7 @@ function advanceBattleV2(state) {
     && (companyTactic !== 'offense' || surrounded)) {
     candidates.push({ id: 'shieldwall', type: 'shieldwall', apCost: 4, fatigueCost: shieldSkillFatigue(actor),
       preventedDamage: nearest <= 2 ? shieldDefenseFor(actor, actor.equipment.shield) * .8 : 0,
-      bonus: battle.tactic === 'shield-wall' && nearest <= 2 ? 5 : -8 });
+      bonus: companyTactic==='skirmish' && nearest<=7 ? 20 : battle.tactic === 'shield-wall' && nearest <= 2 ? 5 : -8 });
   }
   if (skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies)
     && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall) <= actor.maxFatigue)
@@ -4075,7 +4210,8 @@ function advanceBattleV2(state) {
     || specialFlank || (role==='skirmisher' ? targetPaths[0] : targetPaths.find(entry=>entry.target.id===actor.aiTargetId)) || targetPaths[0];
   const formationLocked = companyTactic === 'advance-formation' && (actor.formationMovedRound === battle.round
     || companyInMeleeContact(battle) || battle.formationAdvance?.completedRound >= battle.round);
-  const wallLocked = (!rangedAI || !ammunitionSpent) && companyTactic === 'shield-wall' && (actor.formationMovedRound === battle.round
+  const wallLocked = companyTactic==='skirmish' && !ammunitionSpent && skirmishFireSupport(state)
+    || (!rangedAI || !ammunitionSpent) && companyTactic === 'shield-wall' && (actor.formationMovedRound === battle.round
     || battle.round - battle.lastContactRound < 4);
   for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank || !pursuit ? [] : [pursuit]) {
     const point = entry.path[0];
@@ -4098,6 +4234,7 @@ function advanceBattleV2(state) {
       fatigueCost: movementFatigue(actor, retreat.cost), preventedDamage: 8, spacingGain: retreat.safety - nearest, bonus: 28 });
   }
   if (actor.ap >= 9) candidates.push({ id: 'recover', type: 'recover', apCost: 9, fatigueCost: 0, bonus: actor.fatigue >= actor.maxFatigue * .55 ? 18 : -20 });
+  if (companyTactic==='skirmish' && skirmishFireSupport(state)) candidates.push({id:'skirmish-hold',type:'hold',apCost:0,fatigueCost:0,bonus:0});
   const offensive = action => ['attack', 'area', 'charge'].includes(action.type);
   const hitsAdjacentEnemy = action => offensive(action) && (action.targets ?? [action.target])
     .some(target => target.side !== actor.side && hexDistance(actor, target) === 1);
@@ -4116,6 +4253,16 @@ function advanceBattleV2(state) {
   for (const action of candidates) if (action.targetId) {
     action.target ??= enemies.find(enemy=>enemy.id===action.targetId);
     if (action.target) {action.targetWeapon=getItem(action.target.equipment.weapon);action.targetDistance=hexDistance(actor,action.target);}
+  }
+  if (actor.skirmishReturn?.phase==='aim') {
+    const path=skirmishReturnPath(battle,actor);
+    let cost=0,fatigue=0,point=actor;
+    for (const next of path??[]) {cost+=battleMoveApCost(battle,{...actor,movementCredit:0},point,next);
+      fatigue+=movementFatigue(actor,battleMovementCost(battle,actor,point,next));point=next;}
+    const canReturn=action=>offensive(action) && action.apCost+cost<=actor.ap
+      && action.fatigueCost+fatigue<=actor.maxFatigue-actor.fatigue;
+    if (path && candidates.some(canReturn)) for (let i=candidates.length-1;i>=0;i--)
+      if (offensive(candidates[i]) && !canReturn(candidates[i])) candidates.splice(i,1);
   }
   const ranked = rankTacticalActions(actor, candidates, { role, targetPriorities:rangedAI, nearestDistance:nearest, tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
     previousTargetId: enemies.some(enemy => enemy.id === actor.aiTargetId) ? actor.aiTargetId : null });
@@ -4137,7 +4284,12 @@ function advanceBattleV2(state) {
     const interception=spearwallReactionsOnMove(state,actor,from);
     if(interception.blocked||!actor.alive){actor.ap=Math.max(0,actor.ap-choice.apCost);actor.fatigue=Math.min(actor.maxFatigue,actor.fatigue+choice.fatigueCost);const message=`${actor.name}'s lunge is stopped by Spearwall.`;battle.lastEvent=makeBattleEvent(actor,choice.target,'hold',message,weapon,null,{skillName:'Lunge',moveFrom:from,reactions:interception.reactions});battleLog(battle,message);}
     else {attackTarget(state,actor,choice.target,weapon,choice.plan.option);battle.lastEvent.moveFrom=from;if(interception.reactions.length)battle.lastEvent.reactions=interception.reactions;wolfFollowup(state,actor,choice.target);wargHowl(state,actor);}
+  } else if (choice.type === 'hold') {
+    actor.ap=0;actor.fatigue=Math.max(0,actor.fatigue-12);
+    const message=`${actor.name} holds the skirmish line.`;
+    battle.lastEvent=makeBattleEvent(actor,null,'hold',message,equipped);battleLog(battle,message);
   } else if (choice.type === 'attack') {
+    if (actor.skirmishReturn) actor.skirmishReturn.phase='return';
     actor.aiTargetId = choice.target.id;
     const option = choice.option ?? (choice.id === 'aimed-shot' ? COMBAT_SKILLS['aimed-shot']
       : isBow(weapon) ? COMBAT_SKILLS['quick-shot'] : null);
@@ -4756,7 +4908,7 @@ function validateBattle(input, party, worldState) {
   assert((mountSkillsVersion === 0 || mountSkillsVersion === 1) && (mountSkillsVersion === 0 || weaponSkillsVersion === 1), 'battle mount skills version');
   assert(Number.isSafeInteger(input.round) && input.round >= 1 && input.round <= 1000, 'battle round');
   const tactic = input.tactic ?? 'offense';
-  assert(TACTICS.includes(tactic), 'battle tactic');
+  assert(TACTICS.includes(tactic) && (tactic!=='skirmish'||rulesVersion===2), 'battle tactic');
   const lastContactRound = input.lastContactRound ?? 1;
   assert(Number.isSafeInteger(lastContactRound) && lastContactRound >= 1 && lastContactRound <= input.round, 'battle contact round');
   const engaged = input.engaged ?? false;
@@ -4890,6 +5042,10 @@ function validateBattle(input, party, worldState) {
     if (weaponSkillsVersion === 1) assert((unit.stunnedTurns ?? 0) === 0 || unit.stunProtected === true, 'battle stun protection');
     if (unit.spearwallActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'spear', 'battle spearwall weapon');
     if (unit.riposteActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'sword', 'battle riposte weapon');
+    if (unit.skirmishReturn!==undefined) assert(tactic==='skirmish' && rulesVersion===2 && unit.side==='company' && !unit.ally
+      && getItem(unit.equipment.weapon)?.ranged && recordObject(unit.skirmishReturn)
+      && Object.keys(unit.skirmishReturn).sort().join(',')==='phase,q,r' && passableHex(unit.skirmishReturn,field)
+      && ['aim','return'].includes(unit.skirmishReturn.phase),'battle skirmish return');
     assert(unit.tacticalRole === undefined || COMBAT_ROLES.includes(unit.tacticalRole) && unit.tacticalRole !== 'auto', 'battle tactical role');
     assert(unit.skillPreference === undefined || SKILL_PREFERENCES.includes(unit.skillPreference), 'battle skill preference');
     assert(unit.reload === undefined || validCount(unit.reload) && unit.reload <= 2, 'battle reload');
@@ -4915,6 +5071,7 @@ function validateBattle(input, party, worldState) {
       ...(weaponSkillsVersion === 1 ? { spearwallActive: unit.spearwallActive ?? false, riposteActive: unit.riposteActive ?? false,
         stunnedTurns: unit.stunnedTurns ?? 0, stunProtected: unit.stunProtected ?? false,
         pendingBerserkAp: unit.pendingBerserkAp ?? 0 } : {}),
+      ...(unit.skirmishReturn===undefined?{}:{skirmishReturn:{q:unit.skirmishReturn.q,r:unit.skirmishReturn.r,phase:unit.skirmishReturn.phase}}),
       ...(unit.tacticalRole === undefined ? {} : { tacticalRole: unit.tacticalRole }),
       ...(unit.skillPreference === undefined ? {} : { skillPreference: unit.skillPreference }),
       ...(rulesVersion === 2 ? { aiTargetId, formationMovedRound, movementCredit } : {}),
