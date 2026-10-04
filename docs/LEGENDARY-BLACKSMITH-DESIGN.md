@@ -28,6 +28,18 @@ For new campaigns or old saves without this feature, initialize all quests locke
 
 On the first qualifying check, latch `triggeredDay`, offer quest 1, add the side-quest journal entry and announce once: “Word of your collection has reached Odran, the Last Ember. Seek his forge in Ironford.” Triggering does not accept the quest, consume items, require the player to be in Ironford or interfere with a contract. Ironford's temporary service blockade does not prevent discovery; it still prevents interaction until services reopen.
 
+#### Required discovery dialog
+
+On discovery, queue a persistent, one-time **Odran’s summons · The Rekindled Forge** dialog. The existing short chronicle announcement alone is insufficient. Pause world advancement when the dialog opens and tell the player explicitly:
+
+> Word of your collection has reached Odran, the Last Ember. Visit his forge in **Ironford** and choose **Legendary blacksmith** to speak with him and accept **Cold Hearth**. Restore his workshop with **8 Iron, 6 Timber and 10 Tools**. Bring the materials back and choose **Deliver materials**; accepting the quest does not consume them. His four quests eventually unlock **Reforge legacy**.
+
+Include **Show Ironford on map** (close the dialog, open the world map and focus/select Ironford without starting travel), **View side quest** (open its journal entry), and **Later**. At a blocked Ironford, explain that the forge is unavailable until the settlement is liberated; discovery still persists. When the player is already at Ironford, provide **Speak to Odran** as the primary action if services are open.
+
+Persist a pending announcement and acknowledgement separately from quest acceptance. If another modal, combat or a battle-results screen is active, defer the summons until the first safe campaign view; never replace that screen. Save/reload preserves an unacknowledged summons, while closing it or using one of its actions acknowledges it exactly once. No rendering, journal visit or town interaction can manufacture another daily eligibility scan or duplicate summons. The journal keeps the destination, materials and next action available after dismissal. Stage-advance conversations similarly name the next site, objective, reward and return-to-Ironford requirement.
+
+Discovery-dialog validation must cover one qualifying daily check, below-threshold checks, same-day reloads, active-contract coexistence, deferred combat/modal delivery, already-at-Ironford actions, blocked town guidance, dismissal, map focus without travel, and re-opening objective guidance from the journal.
+
 After discovery, stop scanning item ownership for this chain. Selling, losing or sacrificing items below five never hides the offer, resets progress or locks the completed service. The threshold is a one-time discovery condition, not an ongoing requirement for quests or reforging.
 
 ## 2. The four quests

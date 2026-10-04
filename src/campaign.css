@@ -125,3 +125,13 @@
 .company-page .utility-slots .slot-wrap{min-width:0}
 .company-page .utility-slots .slot strong{overflow-wrap:anywhere}
 .company-page .equipment-panel>.mount-summary{margin:8px 0 0}
+
+/* Keep company navigation within reach while scrolling any campaign screen. */
+.topbar{position:sticky;top:0;z-index:10}
+.header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.header-actions>button{min-height:44px}
+#find-company-button{display:flex;align-items:center;justify-content:center;gap:6px}
+#find-company-button svg{flex-shrink:0}
+@media(max-width:1050px){#find-company-button span{display:none}#find-company-button{width:44px;padding:6px}}
+@media(max-width:850px){.header-actions{margin-left:auto}#settings-button{margin-left:0}}
+@media(max-width:420px){.topbar .brand{font-size:15px;gap:6px}.topbar{gap:5px 8px}}
