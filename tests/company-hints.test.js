@@ -18,7 +18,7 @@ test('compact preparation keeps checkboxes separate from tappable help and prese
  const compact=companyAutomationHTML(state,true),menu=companyAutomationHTML(state);
  assert.ok(compact.includes('data-company-automation="buyAmmo" checked'));assert.equal((compact.match(/data-company-hint/g)||[]).length,2);
  assert.ok(!/<label>[\s\S]*?<button/.test(compact.split('</label>')[0]));
- assert.ok(menu.includes('Buy all available ammunition at settlements'));assert.ok(menu.includes('Best tiers from the stash first'));assert.ok(!menu.includes('data-company-hint'));
+ for(const html of [compact,menu]){assert.ok(html.includes('Buy ammunition at settlements until stores reach 999'));assert.ok(html.includes('limited by available stock and crowns'));assert.ok(!html.includes('Buy all available ammunition'));}assert.ok(menu.includes('Best tiers from the stash first'));assert.ok(!menu.includes('data-company-hint'));
 });
 test('hint labels and details escape markup and carry accessible names and closed state',()=>{
  const html=companyHintHTML('test','Armor <info>','Damage <script>alert(1)</script> & protection');

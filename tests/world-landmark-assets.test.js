@@ -9,10 +9,23 @@ test('every landmark sprite has intact licensed provenance, PNG dimensions, and 
  const {assets}=JSON.parse(await readFile(new URL('../assets/world/landmark-sources.json',import.meta.url),'utf8'));
  const offline=new Set(await listOfflineAssets());
  assert.equal(new Set(assets.map(a=>a.file)).size,assets.length);
+ assert.ok(assets.every(a=>a.author!=='Cethiel'));
+ for(const name of ['temple','temple_sand','ruin_arch','ruin_arch_sand','ruin_wall','ruin_wall_sand','rubble']){
+  assert.ok(!offline.has('./assets/world/landmark_'+name+'.png'));
+  assert.ok(!WORLD_LANDMARK_ASSETS.includes('landmark_'+name));
+ }
+ assert.equal(assets.filter(a=>a.sourceType==='user-provided').length,5);
+
  assert.deepEqual(new Set(assets.map(a=>a.file.split('/').at(-1).replace('.png',''))),new Set(WORLD_LANDMARK_ASSETS));
  for(const a of assets){
-  assert.ok(a.author&&a.original&&a.changes);assert.match(a.source,/^https:\/\/(opengameart.org|github.com)\//);
+  assert.ok(a.author&&a.original&&a.changes);
+  if(a.sourceType==='user-provided'){
+   assert.match(a.source,/Pasted battlefield sheet/);assert.equal(a.license,'User-provided artwork authorized for this project');
+   assert.equal(a.preparedSheetSha256.length,64);assert.equal(a.crop.length,4);assert.ok(a.width<=128&&a.height<=128);
+  }else{
+   assert.match(a.source,/^https:\/\/(opengameart.org|github.com)\//);
   assert.match(a.license,/^https:\/\/creativecommons.org\/(licenses\/by(?:-sa)?\/3.0|publicdomain\/zero\/1.0)\/$/);
+  }
   const png=await readFile(new URL('../'+a.file,import.meta.url));
   assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
   assert.equal(png.readUInt32BE(16),a.width);assert.equal(png.readUInt32BE(20),a.height);assert.equal(png[25],6,'transparent RGBA sprite');
@@ -33,4 +46,20 @@ test('all landmark kinds and ridge palettes draw imported art with no geometric 
  assert.ok(drawn.every(n=>WORLD_LANDMARK_ASSETS.includes(n)||['arms_cart','world_detail_forest_green_04','world_detail_forest_green_02'].includes(n)));
  for(const name of ['pyramid','sphinx','tower','cave_forest','cave_mountain','cave_desert'])assert.ok(drawn.includes('landmark_'+name));
  for(const kind of ['green','snow','desert'])assert.ok(drawn.some(n=>n.startsWith('landmark_mountain_'+kind+'_')));
+});
+
+
+test('human and skeleton remains stay at half their original scene scale in every layout',()=>{
+ const ctx={fillRect(){},createRadialGradient(){return{addColorStop(){}};}};
+ const humans=new Set();
+ for(let seed=0;seed<24;seed++){
+  const calls=[];drawWorldLandmark(ctx,{id:'scale-check',kind:'battlefield',x:100,y:100,width:100},seed,(c,name,x,y,width)=>calls.push({name,width}));
+  for(const p of calls){
+   if(['battlefield_corpse_blue','battlefield_corpse_red','battlefield_bones'].includes(p.name)){
+    humans.add(p.name);assert.ok(p.width>=16.5&&p.width<=18,'remains are half the former 33–36% scale');
+   }else if(p.name==='battlefield_firepit')assert.equal(p.width,25);
+   else if(p.name==='battlefield_wagon_wreck')assert.ok(p.width===50||p.width===55.00000000000001);
+  }
+ }
+ assert.deepEqual(humans,new Set(['battlefield_corpse_blue','battlefield_corpse_red','battlefield_bones']));
 });
