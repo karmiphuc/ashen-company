@@ -33,4 +33,6 @@ Three named ranges are authored in gaps between the 71 existing road links: snow
 | `frostspine-cave` | Frostspine Grotto, central walkable cleft | 2140, 314 |
 | `sunlands-cave` | Sunken Passage, beside the necropolis | 3750, 2100 |
 
-No legendary encounters or rewards activate yet. Decoration clicks produce no target or travel order. All illustrations, mountain facets and static smoke are baked into the existing raster capped at 4096px; no animation loop or decorative NPC simulation is added.
+No legendary encounters or rewards activate yet. Decoration clicks produce no target or travel order. All textured sprites and static smoke are baked into the existing raster capped at 4096px; no animation loop or decorative NPC simulation is added.
+
+Landmark artwork comes from freely licensed Cethiel, Clint Bellanger, Nirdia and Wildfire Games assets. Source/derivative licenses and reproducible crop/render recipes are documented in [ASSET-CREDITS.md](ASSET-CREDITS.md) and `assets/world/landmark-sources.json`. Landmark and ridge rendering has no flat polygon fallback.

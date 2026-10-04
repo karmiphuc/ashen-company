@@ -1,4 +1,4 @@
-import { worldLandmarks, landmarkAt, drawWorldLandmark, drawMountainRanges } from './world-landmarks.js';
+import { WORLD_LANDMARK_ASSETS, worldLandmarks, landmarkAt, drawWorldLandmark, drawMountainRanges } from './world-landmarks.js';
 import { worldRoute } from './world-navigation.js';
 import { visualRandom, REGION_STYLE, terrainStamp, roadCurve, settlementProfile, settlementGround, overviewBorderAlpha, showActorLabel, movementPose } from './map-illustration.js';
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
@@ -7,6 +7,7 @@ import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, ge
 
 const names = [
   ...SETTLEMENT_SCENERY_ASSETS,
+  ...WORLD_LANDMARK_ASSETS,
   'world_desert_01', 'world_desert_02', 'world_desert_03',
   'world_grass_01', 'world_grass_02', 'world_grass_03', 'world_grass_04',
   'world_plains_01', 'world_plains_02', 'world_plains_03',
