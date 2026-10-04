@@ -110,7 +110,7 @@ export function advanceFactionSimulation(state,context){
   for(const fight of [...state.worldSkirmishes]){
     const a=state.factionPatrols[fight.aId],b=fight.bKind==='patrol'?state.factionPatrols[fight.bId]:context.currentHostile(fight.bId);
     const bCycle=fight.bKind==='patrol'?b?.spawnCycle:b?.spawnCycle??b?.force?.generation;
-    if(!a||a.spawnCycle!==fight.aCycle||!b||bCycle!==fight.bCycle||reserved.has(fight.bId)){cancelWorldSkirmish(state,fight.aId);continue;}
+    if(!a||a.spawnCycle!==fight.aCycle||!b||bCycle!==fight.bCycle){cancelWorldSkirmish(state,fight.aId);continue;}
     if(now>=fight.endHour){finishWorldSkirmish(state,fight,context,byId,now);state.worldSkirmishes=state.worldSkirmishes.filter(f=>f!==fight);}
   }
   const armies=factionPatrols(state,context.settlements).filter(p=>p.active),hostiles=context.hostiles().filter(target=>target.kind==='band'||target.kind==='undead-host');
