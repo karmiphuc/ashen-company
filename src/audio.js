@@ -15,7 +15,7 @@ const PROFILES = {
   bow: ['bow-release', 'arrow-pierce'], crossbow: ['crossbow-release', 'bolt-pierce'], sling: ['sling-release', 'blunt-hit'],
 };
 
-export function combatSoundCue(event, duration = .55) {
+export function combatSoundCue(event, duration = .55, {cinematic=false} = {}) {
   if (!event) return [];
   duration = Number.isFinite(duration) ? Math.max(.15, Math.min(2, duration)) : .55;
   const cue = (name, delay = 0, volume = .4, rate = 1) => ({ name, delay, volume, rate });
@@ -30,11 +30,12 @@ export function combatSoundCue(event, duration = .55) {
       : family === 'throwing' ? entry.projectile === 'axe' || /axe/.test(weapon?.trainingVisual ?? weapon?.visual ?? '')
         ? ['heavy-swish', 'axe-chop'] : ['thrust', 'throwing-pierce']
       : PROFILES[family] ?? ['swing', 'impact'];
-    const cues = [cue(profile[0], offset, family === 'bow' ? .55 : .35, heavy ? .88 : 1)];
+    const releaseAt=offset+(cinematic?duration*(entry.ranged||weapon?.ranged? .4:.5):0);
+    const cues = [cue(profile[0], releaseAt, family === 'bow' ? .55 : .35, heavy ? .88 : 1)];
     if (charging) cues.push(cue('cavalry-hooves', offset, .42, 1));
-    if (family === 'crossbow') cues.push(cue('bow-release', offset + .025, .35, 1.2));
-    if (family === 'flail') cues.push(cue('heavy-swish', offset + .02, .22));
-    if (family === 'sling') cues.push(cue('thrust', offset + .04, .2, 1.15));
+    if (family === 'crossbow') cues.push(cue('bow-release', releaseAt + .025, .35, 1.2));
+    if (family === 'flail') cues.push(cue('heavy-swish', releaseAt + .02, .22));
+    if (family === 'sling') cues.push(cue('thrust', releaseAt + .04, .2, 1.15));
     // Release is separate from contact. Select contact foley from the actual
     // damaged material and damage type, never a second release/weapon-strike clip.
     const style = /^(Wolf Bite|Stab|Thrust|Impale|Puncture|Lunge)$/.test(entry.skillName ?? '') ? 'pierce'
@@ -175,14 +176,15 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
     scene = { ...next };
     applyScene();
   }
-  function playEvent(event, duration) {
+  function playEvent(event, duration, options) {
     if (!audible() || !context || context.state === 'closed') return;
-    const cues = combatSoundCue(event, duration), now = clock();
+    const cues = combatSoundCue(event, duration, options), now = clock();
     if (!cues.length || now - lastEffectAt < 110) return;
     lastEffectAt = now;
     if (context.state === 'running' && cues.every(c => buffers.has(c.name))) schedule(cues);
     else {
-      pending.push({cues, at:now, expires:now+750, battleId:scene.battleId});
+      const ttl=options?.cinematic?Math.max(750,(Number.isFinite(duration)?duration:.55)*1000+150):750;
+      pending.push({cues, at:now, expires:now+ttl, battleId:scene.battleId});
       pending = pending.slice(-3);
       if (context.state !== 'running') resumeEffects();
       void loadEffects();
