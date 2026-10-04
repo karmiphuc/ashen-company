@@ -10,13 +10,25 @@ The chain runs alongside ordinary contracts. Its progress, encounters, rewards a
 
 Proposed defaults, centralized for balancing:
 
-- Available on the first visit to Ironford, without a day, renown or current-contract prerequisite. Accepting is optional. The later fights make this a mid-to-late campaign pursuit rather than an immediate power increase.
+- Trigger only when a once-per-campaign-day check finds **at least five owned named/famed item copies**. The check permanently reveals quest 1 and Odran's Ironford interaction; accepting remains optional. No additional day, renown or current-contract prerequisite applies.
 - No quest deadlines, automatic failure or permanent failure from retreat. All four stages require an explicit conversation with Odran to turn in and advance.
 - Transfer **all rolled bonuses** from one sacrificed item, as confirmed by the user. Include its existing legacy named craftsmanship in the same single enhancement package; there is no individual-bonus selection step.
 - Both items must be in the stash. Ordinary and named recipients are allowed. A transfer **replaces** the recipient's previous named enhancements, giving it one donor package; repeated reforging never stacks packages.
 - Body armor -> body armor; helmet -> helmet; weapon -> any weapon, regardless of class, range, handedness or culture. Shields, attachments, accessories and mounts are outside this initial service.
 - First transfer is free. Subsequent transfers cost **1,000 crowns**, with no extra crafting currency, material grind, cooldown or random failure. Quest 4 grants the free-use entitlement; merely opening or quoting the service cannot consume it.
 - Use existing human and ancient-armory enemy definitions. Add no races, enemy equipment collections or new regional factions.
+
+### Daily discovery trigger
+
+Count physical item copies with resolved rarity `named` or `famed` across the stash and all living company members' equipped gear, reserve weapon sets and other owned equipment slots. Five copies qualify even if their definition IDs are identical. Count each physical copy once, rather than counting its appearances in multiple UI views. Named shields also count toward discovery even though shield reforging is outside the initial service. Market stock/buybacks, catalog previews, enemy/allied equipment, unclaimed loot and pending reward entitlements do not count as owned items.
+
+While the chain is dormant, run one eligibility scan at the daily campaign boundary, once daily processing has established the current owned inventory. Store `lastEligibilityCheckDay` so waiting, hourly world updates, travel, visiting Ironford, inventory changes, opening menus and reloading on the same day do not repeat the scan. Buying or claiming the fifth item after that day's scan makes the player eligible at the **next daily check**, rather than immediately. The check is a campaign/world update action, never a rendering side effect.
+
+For new campaigns or old saves without this feature, initialize all quests locked and the check marker unset. Run the first check at the first safe world update for the current campaign day, then use the daily boundary. If an active battle prevents that check, defer it until the first safe world update after the battle. Ordinary save reloads preserve the marker and cannot manufacture another same-day check. Multi-day travel/waiting processes each crossed daily boundary through the same daily hook; do not rescan once per simulated hour.
+
+On the first qualifying check, latch `triggeredDay`, offer quest 1, add the side-quest journal entry and announce once: “Word of your collection has reached Odran, the Last Ember. Seek his forge in Ironford.” Triggering does not accept the quest, consume items, require the player to be in Ironford or interfere with a contract. Ironford's temporary service blockade does not prevent discovery; it still prevents interaction until services reopen.
+
+After discovery, stop scanning item ownership for this chain. Selling, losing or sacrificing items below five never hides the offer, resets progress or locks the completed service. The threshold is a one-time discovery condition, not an ongoing requirement for quests or reforging.
 
 ## 2. The four quests
 
@@ -44,13 +56,14 @@ Short dialogue establishes each objective and repeats the mechanical reward. Fin
 
 Add a **Side quests** journal entry separate from the ordinary contract card, showing quest number out of four, story summary, remaining objective, reward and travel/return action. Keep both the normal contract and this entry visible when both are active. The map uses a consistent forge emblem and “Blacksmith quest · 2/4” style labels, without treating the quest site as a contract caravan or bounty.
 
-Before completion, Ironford always offers **Legendary blacksmith**, regardless of equipment damage. Its button opens a conversation panel with the stage's objective and explicit **Accept quest**, **Deliver materials**, **Continue the chain** or **Claim reward** action. Standard repair **Smithy** stays a separate service.
+Before the discovery trigger, hide the chain's journal entry, quest markers and **Legendary blacksmith** interaction. After discovery and before completion, Ironford offers that interaction regardless of equipment damage or the player's later named-item count. Its button opens a conversation panel with the stage's objective and explicit **Accept quest**, **Deliver materials**, **Continue the chain** or **Claim reward** action. Standard repair **Smithy** stays a separate service.
 
 After quest 4, interacting opens Odran's custom **Reforge legacy** panel. The journal retains a completed four-step record; the service shows any unclaimed sword reward without requiring the chain to remain active.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Offered
+    [*] --> Dormant
+    Dormant --> Offered: Daily check finds at least five owned named items
     Offered --> Active: Accept current quest
     Active --> Ready: Objective satisfied
     Ready --> Active: Quest 1 materials no longer sufficient
@@ -133,8 +146,8 @@ Current integration facts: `getQuestEncounter` and contract targets are single-c
 
 ### Persistent records
 
-- Add a versioned `state.legendaryBlacksmith` record: four fixed quest statuses (`locked`, `offered`, `active`, `ready`, `turnedIn`), accepted-stage encounter snapshots/survivors, fixed recovered-object flags, one-time reward entitlements/claims, service-unlocked flag and free-transfer entitlement. Store only the bounded four-stage history. Validate legal ordering; service unlocked requires quest 4 turned in, rather than trusting an independent boolean.
-- Missing data in old saves migrates to quest 1 offered, with the other stages locked and service/free use unavailable. Importing an old active battle must not change its encounter, gear or behavior.
+- Add a versioned `state.legendaryBlacksmith` record: `lastEligibilityCheckDay` and `triggeredDay` (each unset or a valid campaign day no later than `state.day`), four fixed quest statuses (`locked`, `offered`, `active`, `ready`, `turnedIn`), accepted-stage encounter snapshots/survivors, fixed recovered-object flags, one-time reward entitlements/claims, service-unlocked flag and free-transfer entitlement. Store only the bounded four-stage history. Validate legal ordering: no trigger means every quest is locked and no rewards/service are available; a trigger requires the first quest to be offered or further progressed. Service unlocked requires quest 4 turned in, rather than trusting an independent boolean. Do not require five currently owned items when validating an already-triggered save.
+- Missing data in old saves migrates to a dormant chain with all quests locked, both discovery markers unset and service/free use unavailable. The first safe world update performs that day's single eligibility check, including for old campaigns already owning five named items. Importing an old active battle must not change its encounter, gear or behavior.
 - Use an immutable, versioned **reforged item definition ID** encoding the recipient's unenhanced base ID and donor profile's canonical source identity. Flatten donor ancestry when a reforged donor moves its profile again; never nest unbounded IDs or use a new random seed to reconstruct the result. The selected recipient's copy is replaced with this definition ID, leaving other copies unchanged.
 - A definition ID identifies stats, not ownership. Same-definition stash copies remain separate via action-time inventory revision/index and expected ID/condition; canonical duplicate results are allowed. Validate every new ID segment, allowed base/profile combination, source version, seed and total bounded length. Update the 80-character ID guard deliberately for the new format.
 - Derive the profile from the pinned canonical source, not user-supplied arbitrary stat blobs. Resolve old/catalog sources consistently before forming the canonical identity. A custom item retains this identity through equip/stow, battles, loot, sale, buyback, inventory inspection and export/import.
@@ -145,7 +158,8 @@ Current integration facts: `getQuestEncounter` and contract targets are single-c
 Suggested API boundaries:
 
 - `getLegendaryBlacksmith(state)` / `getBlacksmithQuestEncounters(state)` provide conversation, journal and map views without changing state.
-- `acceptBlacksmithQuest(state, stage)` and `turnInBlacksmithQuest(state, stage)` validate prerequisites, location/access, no battle and exact objective/reward state, then apply one atomic change. Stage acceptance must work with an active ordinary contract.
+- `checkBlacksmithDiscovery(state)` runs only at the specified initial/deferred or daily campaign update hook, skips an already-checked day or discovered chain, counts owned named items once and latches discovery/notification atomically. Opening a view or attempting to accept a hidden quest cannot bypass the daily schedule.
+- `acceptBlacksmithQuest(state, stage)` and `turnInBlacksmithQuest(state, stage)` validate latched discovery, prerequisites, location/access, no battle and exact objective/reward state, then apply one atomic change. Stage acceptance must work with an active ordinary contract and never recheck the five-item threshold.
 - `getReforgeQuote(state, donorCopy, recipientCopy)` is pure and returns eligibility, precise profile/stat preview, result ID/condition, fee, warnings and expected stash revision. A quote cannot consume a free use or initialize market data by mutation.
 - `reforgeItem(state, confirmedQuote)` rechecks town/service access, unlock, no battle/game over/travel, both copies and revision, current price and affordability; builds the complete result before mutating inventory, then commits destruction/replacement/payment/free-use consumption together. Remove donor and replace recipient using original-copy indices safely, regardless of ordering. Success removes exactly one stash entry overall.
 
@@ -167,12 +181,15 @@ Before shipping the implementation, retrieve that page and its actual source dow
 
 Deliver each implementation slice through a PR; no merge is implied by this design PR.
 
-1. **Side-quest persistence and chain:** migrate/validate the four stages, materials turn-in, saved dedicated encounters, map/journal controls, independent result/reward handling and service unlock. Include the verified artwork and credits once source access is available.
+1. **Side-quest persistence and chain:** migrate/validate daily discovery and the four stages, materials turn-in, saved dedicated encounters, map/journal controls, independent result/reward handling and service unlock. Include the verified artwork and credits once source access is available.
 2. **Named enhancement profiles and reforged identity:** expose typed enhancements without changing existing named rolls, resolve canonical results, preserve recipient behavior, implement replacement/condition/pricing rules and round trips across the existing item lifecycle.
 3. **Reforge service and custom UI:** pure quotes, atomic transactions, copy-safe selection, final confirmation, responsive preview/warnings, first-use entitlement and offline usability.
 
 Required meaningful regression scenarios:
 
+- Discovery stays hidden with zero through four owned named items; five and six qualify. Mixed stash/equipped/reserve copies and duplicate definition IDs count correctly, including named shields; previews, enemy gear, buybacks and unclaimed rewards do not count.
+- One actual inventory eligibility scan per campaign day while dormant: repeated hourly ticks, menus, visits, purchases and same-day reloads do not rescan. Acquiring the fifth item after a scan waits until the next daily check. Multi-day travel/waits check each boundary, old eligible saves check once at their first safe world update, and active-battle migration defers safely.
+- The first qualifying check reveals the chain and announces once, including while away from Ironford or while Ironford is blocked; dropping below five afterward, same-day reloads and later days preserve the offer/progress/unlock without further eligibility scans. Malformed discovery markers or impossible pre-trigger progress are rejected.
 - Run the whole four-stage chain while accepting, progressing and completing ordinary contracts between stages; both journals remain correct and neither reward/progress leaks into the other.
 - Atomic material turn-in, insufficient materials, contract-goods warning, repeated turn-in/acceptance, explicit advancement, no expiry, retry after retreat and collector escape, reload in each active battle, pending sword at a full stash, and once-only reward claims.
 - Ancient-armory roster reuse with no new races; exact quest encounter binding; crisis-blocked Ironford, liberation and persistent unlock/rewards.
