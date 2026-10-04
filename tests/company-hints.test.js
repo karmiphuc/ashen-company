@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,getCompanyStats} from '../src/engine.js';
+import {createGame,getCompanyStats,ITEMS} from '../src/engine.js';
 import {companySheetHTML,companyAutomationHTML,companyHintHTML} from '../src/campaign-ui.js';
 
 test('company sheet keeps stats, injuries and gear actions while explanations start hidden',()=>{
@@ -23,4 +23,21 @@ test('compact preparation keeps checkboxes separate from tappable help and prese
 test('hint labels and details escape markup and carry accessible names and closed state',()=>{
  const html=companyHintHTML('test','Armor <info>','Damage <script>alert(1)</script> & protection');
  assert.ok(html.includes('aria-label="About Armor &lt;info&gt;"'));assert.ok(html.includes('aria-expanded="false"'));assert.ok(html.includes('role="tooltip" hidden'));assert.ok(!html.includes('<script>'));
+});
+
+
+test('company armor summary combines both attachment layers into body protection and hides reserve shield',()=>{
+ const state=createGame(7391),person=state.party[0];
+ const attachment=Object.values(ITEMS).find(i=>i.slot==='attachment'&&i.armor>0);
+ assert.ok(attachment);
+ person.equipment.attachment=attachment.id;person.equipment.attachment2=attachment.id;
+ person.perks.push('layered-armor');person.reserveEquipment.shield='buckler';
+ person.armorDurability.body=12;person.armorDurability.attachment=7;person.armorDurability.attachment2=3;person.armorDurability.reserveShield=5;
+ const before=JSON.stringify(state),stats=getCompanyStats(person),html=companySheetHTML(state,person,'all','');
+ const bars=html.match(/<div class="condition-list">([\s\S]*?)<div class="experience-bar">/)[1];
+ assert.match(bars,new RegExp(`<span>Body</span>[\\s\\S]*?<strong>22 / ${stats.maxBodyArmor+stats.maxAttachmentArmor+stats.maxAttachment2Armor}</strong>`));
+ assert.match(bars,new RegExp(`<span>Head</span>[\\s\\S]*?<strong>${stats.headArmor} / ${stats.maxHeadArmor}</strong>`));
+ assert.doesNotMatch(bars,/<span>(?:Attachment(?: 2)?|Reserve shield)<\/span>/);
+ assert.match(bars,/<span>Shield<\/span>/);assert.match(bars,/<span>Hitpoints<\/span>/);
+ assert.equal(JSON.stringify(state),before);
 });
