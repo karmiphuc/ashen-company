@@ -13,14 +13,13 @@
 .map-scenery-key{position:absolute;top:70px;left:12px;right:65px;display:flex;flex-wrap:wrap;gap:4px 12px;max-width:max-content;padding:7px 10px;background:#211e16e8;border:1px solid #8b795044;color:#d8c69d;font:11px/1.25 Georgia,serif;pointer-events:none;z-index:2}
 @media(max-width:600px){.map-scenery-key{top:65px;left:8px;gap:3px 8px;font-size:10px;padding:5px 7px}}
 
-/* Screen-wide dusk tint; dialog tint also covers the browser top layer. */
+/* Dusk and night affect only the map and battlefield surfaces. */
 body{--time-tint:transparent}
 body[data-time-of-day=evening]{--time-tint:#587bad24}
 body[data-time-of-day=night]{--time-tint:linear-gradient(160deg,#7ca9dc24,#07132966 60%,#02091a80)}
 body[data-time-of-day=dawn]{--time-tint:#699fce20}
-body::after,body dialog[open]::after{content:"";pointer-events:none;background:var(--time-tint)}
-body::after{position:fixed;inset:0;z-index:2147483000}
-body dialog[open]::after{position:absolute;inset:0;z-index:1000}
+.map-wrap,.battlefield{isolation:isolate}
+.map-wrap::after,.battlefield::after{content:"";position:absolute;inset:0;z-index:1000;pointer-events:none;background:var(--time-tint)}
 #time-of-day-indicator{position:relative;padding:5px 12px;border-bottom:1px solid #8cabc2;background:#15212bea;color:#d4e9f5;font:11px/1.4 Arial,sans-serif;pointer-events:none}
 body[data-time-of-day=day] #time-of-day-indicator{display:none}
 .battle-night-warning{margin:0;padding:8px 12px;background:#192936;color:#c8e4ff;font:12px/1.4 Arial,sans-serif}
