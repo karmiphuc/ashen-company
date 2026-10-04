@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,SETTLEMENTS,getItem,getRoamingBands,getFactionPatrols,tick,validateSave,startBattle,joinPatrolBattle,getJoinablePatrolBattle,activateMapTarget,advanceBattle,resolveBattle,retreatBattle,finishBattle,getUndeadEncounters} from '../src/engine.js';
+import {createGame,SETTLEMENTS,getItem,getRoamingBands,getFactionPatrols,tick,validateSave,startBattle,joinPatrolBattle,getJoinablePatrolBattle,activateMapTarget,advanceBattle,resolveBattle,retreatBattle,finishBattle,getUndeadEncounters,pursueBand} from '../src/engine.js';
 import {campSidebarHTML} from '../src/campaign-ui.js';
 import {advanceFactionSimulation,skirmishDuration,worldSkirmishFor} from '../src/faction-patrols.js';
 function setTime(s,h){s.day=Math.floor(h/24)+1;s.hour=h%24;}
@@ -134,7 +134,43 @@ test('allied interception of an undead host can be joined and saved without unde
  for(const p of Object.values(s.factionPatrols))p.cooldownUntil=now+6;
  Object.assign(s.factionPatrols[army.id],{x:host.x,y:host.y,cooldownUntil:0});s.hour+=.25;
  advanceFactionSimulation(s,{settlements:SETTLEMENTS,getItem,hostiles:()=>[host],currentHostile:id=>id===host.id?host:null,hostileResult(){}});
- s.position={x:host.x,y:host.y};assert.equal(joinPatrolBattle(s,army.id).ok,true);
+ s.position={x:host.x,y:host.y};assert.equal(activateMapTarget(s,'undead-host',host.id).ok,true);
  assert.ok(s.battle.units.filter(u=>u.ally).every(u=>u.undeadTraitsVersion===undefined&&u.troopIndex===undefined));
  assert.deepEqual(validateSave(s),s);retreatBattle(s);finishBattle(s);assert.deepEqual(validateSave(s),s);
+});
+
+
+test('double-clicking the fighting enemy enters the existing allied battle when nearby',()=>{
+ const {s,army,band}=fixture();s.position={x:band.x,y:band.y};
+ assert.equal(activateMapTarget(s,'band',band.id).ok,true);
+ assert.equal(s.battle.patrolAssist.id,army.id);assert.equal(s.battle.units.filter(u=>u.ally).length,8);
+ assert.equal(s.worldSkirmishes.length,0);assert.equal(s.factionReports.length,0);assert.deepEqual(validateSave(s),s);
+});
+
+test('double-clicking the fighting enemy from afar keeps both forces committed until the company joins',()=>{
+ let {s,army,band}=fixture();s.position={x:army.x+75,y:army.y+10};
+ for(const other of getRoamingBands(s))if(other.id!==band.id)s.bands[other.id].defeatedUntil=56.25;
+ const fight=structuredClone(s.worldSkirmishes[0]);assert.equal(activateMapTarget(s,'band',band.id).ok,true);
+ assert.equal(s.pursuit,null);assert.deepEqual(s.destinationAction,{type:'patrol',id:army.id});
+ tick(s,.25);assert.deepEqual(s.worldSkirmishes[0],fight);assert.equal(s.factionPatrols[army.id].behavior,'engaging');
+ s=validateSave(JSON.parse(JSON.stringify(s)));
+ for(let i=0;i<40&&s.destination&&!s.battle;i++)tick(s,.25);
+ assert.equal(s.battle?.patrolAssist.id,army.id);assert.deepEqual(validateSave(s),s);
+});
+
+test('enemy-sidebar pursuit and a saved legacy pursuit use the same allied handoff',()=>{
+ for(const legacy of [false,true]){
+  const {s,army,band}=fixture();s.position={x:army.x+75,y:army.y+10};
+  for(const other of getRoamingBands(s))if(other.id!==band.id)s.bands[other.id].defeatedUntil=56.25;
+  if(legacy){s.pursuit=band.id;s.destination={x:band.x,y:band.y};assert.deepEqual(validateSave(s),s);}
+  else assert.equal(pursueBand(s,band.id).ok,true);
+  tick(s,.25);assert.equal(s.worldSkirmishes.length,1);assert.equal(s.pursuit,null);assert.equal(s.destinationAction.id,army.id);
+  assert.deepEqual(validateSave(s),s);
+ }
+});
+
+test('reserving an enemy already in combat does not release its NPC opponents',()=>{
+ const {s,army,band,context}=fixture();s.pursuit=band.id;s.destination={x:band.x+75,y:band.y};
+ const fight=structuredClone(s.worldSkirmishes[0]);s.hour+=.25;advanceFactionSimulation(s,context);
+ assert.deepEqual(s.worldSkirmishes,[fight]);assert.equal(s.factionPatrols[army.id].targetId,band.id);
 });

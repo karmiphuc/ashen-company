@@ -1214,14 +1214,18 @@ export function getJoinablePatrolBattle(state,id) {
  const fight=patrol&&worldSkirmishFor(state,id);
  return fight&&fight.aId===id&&['band','undead-host'].includes(fight.bKind)&&fight.endHour>worldHours(state)?{patrol,fight}:null;
 }
+function alliedBattleAgainst(state,id){
+ const fight=worldSkirmishFor(state,id);return fight?.bId===id?getJoinablePatrolBattle(state,fight.aId):null;
+}
 export function joinPatrolBattle(state,id) {
  const blocked=actionBlocked(state);if(blocked)return blocked;
  const joint=getJoinablePatrolBattle(state,id);
  if(!joint)return result(false,'That allied battle has already ended or is unavailable.');
- if(distance(state.position,joint.patrol)>CAMP_RADIUS||state.destination){
+ if(distance(state.position,joint.patrol)>CAMP_RADIUS){
   const travel=travelTo(state,joint.patrol.x,joint.patrol.y);
   if(travel.ok)state.destinationAction={type:'patrol',id};return travel;
  }
+ state.destination=null;state.destinationAction=null;state.pursuit=null;
  return startBattle(state,joint.fight.bId,{patrolId:id});
 }
 function advanceSoldiers(state) {
@@ -1372,6 +1376,8 @@ export function pursueBand(state, id) {
   if (blocked) return blocked;
   const band = getRoamingBands(state).find(entry => entry.id === id);
   if (!band) return result(false, 'That band is no longer on the road.');
+  const joint=alliedBattleAgainst(state,id);
+  if(joint)return joinPatrolBattle(state,joint.patrol.id);
   state.destinationAction = null;
   if (distance(state.position, band) <= BAND_RADIUS) {
     state.destination = null;
@@ -1405,6 +1411,8 @@ export function activateMapTarget(state, type, id) {
   if (blocked) return blocked;
   if (type === 'band') return pursueBand(state, id);
   if (UNDEAD_TYPES.includes(type)) {
+    const joint=alliedBattleAgainst(state,id);
+    if(joint)return joinPatrolBattle(state,joint.patrol.id);
     const encounter = getUndeadEncounters(state).find(e => e.id === id);
     if (!encounter) return result(false, 'That undead force is no longer available.');
     if (distance(state.position, encounter) <= CAMP_RADIUS) return startBattle(state, id);
@@ -1587,6 +1595,10 @@ export function tick(state, hours) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   if (!Number.isFinite(hours) || hours <= 0 || hours > 72) return result(false, 'Time must advance by more than zero and at most 72 hours.');
+  // Resume old enemy pursuits as assistance, before NPC reservations can split the fight.
+  const pendingEnemy=state.pursuit??(UNDEAD_TYPES.includes(state.destinationAction?.type)?state.destinationAction.id:null);
+  const joint=pendingEnemy&&alliedBattleAgainst(state,pendingEnemy);
+  if(joint){const joined=joinPatrolBattle(state,joint.patrol.id);if(!joined.ok||state.battle)return joined;}
   let remaining = hours;
   let engagement = null;
   while (remaining > 1e-9) {
