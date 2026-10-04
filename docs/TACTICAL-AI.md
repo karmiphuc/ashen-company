@@ -104,3 +104,11 @@ Astra reviewed every defined role against movement, weapon selection, target com
 Movement, reforming, firing sorties, return paths, charges and fatigue-consuming reactions now share the reduced fatigue capacity imposed by Daze. NPCs may use their existing backup equipment; the change does not manufacture new loadouts. Allies keep their independent offensive orders, while enemies keep their saved adaptive command.
 
 New battles carry `roleConsistencyVersion: 1`; an already-active battle without it retains its previous decision policy. The marker and resolved roles survive validated saves. Regressions exercise the reproduced loops, every explicit role's movement budget, focused skills, NPC backup swaps, allied role resolution, cover/shot budgets and legacy behavior. Existing formation, cover, breaker, skirmish, weapon-skill and step/reload-versus-instant tests also remain in use.
+
+## Ranged attacks while engaged
+
+New battles use `rangedEngagementVersion: 1`. Every ranged weapon (bows, crossbows, slings, throwing bundles and named variants) requires Point Blank to target an adjacent enemy. The perk also removes the existing close-shot accuracy penalty. Without it, the AI must create space, use a melee backup or choose another legal action; it cannot spend ammunition on an adjacent shot.
+
+A ranged attack or skill against a non-adjacent target provokes one opportunity strike from each of up to two eligible adjacent opponents, regardless of Point Blank. Eligibility follows reaction readiness: alive, not stunned/disarmed and able to spend five fatigue. Highest initiative reacts first, with stable ID tie-breaking; no extra random selection is consumed. Each opponent makes a single basic melee strike (unarmed if holding a ranged weapon), spending reaction fatigue but no AP or ammunition. Reactions cannot chain. They happen before the shot; death or incapacitation interrupts firing without spending its ammunition. A surviving shooter pays the normal AP/fatigue/ammunition cost.
+
+The AI considers this exposure when choosing shots. Reaction damage and callouts remain in the action event and survive reload. Adjacent shots permitted by Point Blank do not trigger this distant-shot rule. Saved battles without the new marker retain their previous rules, including historical two-AP combat.

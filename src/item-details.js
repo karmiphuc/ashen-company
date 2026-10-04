@@ -60,11 +60,12 @@ export function getItemDetails(item, condition) {
       stats.push({ label: 'Ammunition', value: item.throwing ? '1 bundle charge per throw' : '1 per shot' });
       if (item.throwing) stats.push({ label: 'Bundle throws', value: `${Number.isFinite(condition) ? Math.max(0, Math.min(throwingCapacity(item), condition)) : throwingCapacity(item)} / ${throwingCapacity(item)}` });
       if (item.reloadTurns) stats.push({ label: 'Reload', value: '4 AP after each shot (new battles)' });
+      notes.push('Adjacent ranged attacks require Point Blank. Firing at a non-adjacent target while threatened by nearby enemies provokes up to two opportunity attacks, even with Point Blank.');
       notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
       notes.push('Bow and crossbow fighters keep their distance while ammunition remains. When ammunition runs out, they draw a pocket weapon or reserve melee set and fight according to the selected tactic. Drawing or switching costs 4 AP in new battles; Quick Hands makes the first swap each round free.');
       if (item.throwing) notes.push('Throwing weapons are one-handed; the bundle capacity shown above includes any named ammunition roll. Active and reserve bundles have separate counts, preserved when swapping or stowing. After battle, equipped bundles refill from company ammunition, one supply per restored throw; shortages leave partial bundles. Carry a spare bundle or melee weapon. Without a usable backup, the fighter punches.');
       if (item.ranged && !item.throwing && !item.twoHanded) notes.push('This ranged weapon leaves the other hand free for a shield.');
-      if (!item.throwing) notes.push('A bow or crossbow shot from an adjacent hex has a 12-point hit penalty if the fighter cannot reposition or switch to melee.');
+      if (!item.throwing) notes.push('Point Blank enables adjacent shots and removes their 12-point hit penalty. Without it, adjacent targets cannot be attacked with ranged weapons in new battles.');
       notes.push('Throwers switch to a melee backup when enemies close or ammunition runs out. A fighter trapped without a usable weapon can only make the basic unarmed attack.');
     } else if ((item.range ?? 1) > 1) {
       notes.push('Extra reach still uses melee skill and melee defense; it does not spend ammunition.');

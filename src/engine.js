@@ -2818,7 +2818,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, rangedEngagementVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -3719,7 +3719,43 @@ function predictAttack(battle, actor, target, weapon, option = null) {
     killProbability: hits>1?0:kill * hitChance };
 }
 
+function rangedEngagementRules(battle){return battle.rangedEngagementVersion===1&&battle.rulesVersion===2&&battle.weaponSkillsVersion===1;}
+function rangedTargetLegal(battle,actor,target,weapon,point=actor) {
+  return !rangedEngagementRules(battle)||!weapon.ranged||hexDistance(point,target)>1||hasPerk(actor,'point-blank');
+}
+function rangedOpportunityAttackers(battle,actor,target,weapon) {
+  if(!rangedEngagementRules(battle)||!weapon.ranged||hexDistance(actor,target)<=1)return [];
+  return battle.units.filter(unit=>unit.alive&&unit.side!==actor.side&&hexDistance(actor,unit)===1
+    && !unit.stunnedTurns&&!unit.disarmedTurns&&unit.fatigue+5<=tacticalFatigueLimit(battle,unit))
+    .sort((a,b)=>b.initiative-a.initiative||a.id.localeCompare(b.id)).slice(0,2);
+}
 function attackTarget(state, actor, target, weapon, option = null) {
+  const battle=state.battle;
+  if(!rangedTargetLegal(battle,actor,target,weapon)){
+    actor.ap=0;
+    const message=`${actor.name} needs Point Blank to shoot an adjacent enemy.`;
+    battle.lastEvent=makeBattleEvent(actor,null,'hold',message,weapon);battleLog(battle,message);
+    return {hit:false,hpDamage:0,armorDamage:0,shieldDamage:0,head:false,fallen:false};
+  }
+  const reactions=[];
+  if(!option?.reaction&&!option?.areaFollowup&&!option?.strikeFollowup)for(const enemy of rangedOpportunityAttackers(battle,actor,target,weapon)){
+    const equipped=getItem(enemy.equipment.weapon);
+    const counterWeapon=equipped&&!equipped.ranged?equipped:{damageMin:8,damageMax:12,hitBonus:-12,armorDamage:.4,range:1};
+    const impact=attackTarget(state,enemy,actor,counterWeapon,{id:'opportunity-strike',reaction:true,name:'Opportunity Strike'});
+    const event=battle.lastEvent;
+    reactions.push({actorId:enemy.id,targetId:actor.id,type:event.type,from:{q:enemy.q,r:enemy.r},to:{q:actor.q,r:actor.r},...impact,weaponId:counterWeapon.id??null,effects:event.effects??[],skillName:'Opportunity Strike'});
+    if(!actor.alive||actor.stunnedTurns||actor.disarmedTurns){
+      actor.ap=0;
+      const message=actor.alive?`${actor.name}'s ranged action is interrupted.`:`${actor.name} is cut down before firing.`;
+      battle.lastEvent=makeBattleEvent(actor,null,'hold',message,weapon,null,{reactions});battleLog(battle,message);
+      return {hit:false,hpDamage:0,armorDamage:0,shieldDamage:0,head:false,fallen:false};
+    }
+  }
+  const impact=resolveAttackTarget(state,actor,target,weapon,option);
+  if(reactions.length)battle.lastEvent={...battle.lastEvent,reactions:[...reactions,...(battle.lastEvent.reactions??[])]};
+  return impact;
+}
+function resolveAttackTarget(state, actor, target, weapon, option = null) {
   const battle = state.battle;
   if(battle.weaponCompletionVersion===1&&battle.weaponSkillsVersion===1&&!option?.id)option={...equipmentSkills(weapon)[0],...option};
   if(!option?.strikeFollowup&&(option?.hits>1||option?.oppositeHit))return attackMultiple(state,actor,target,weapon,option);
@@ -4185,7 +4221,7 @@ function canFireAfterMove(state,actor,weapon,point,moveAp=0,moveFatigue=0){
  const basic=battle.weaponCompletionVersion===1?equipmentSkills(weapon)[0]:null;
  const options=[basic,...(isBow(weapon)?[COMBAT_SKILLS['aimed-shot']]:[])];
  return battle.units.some(target=>target.alive&&target.side!==actor.side&&options.some(option=>
-   hexDistance(point,target)<=effectiveWeaponRange(actor,weapon)+(option?.rangeBonus??0)
+   rangedTargetLegal(battle,actor,target,weapon,point)&&hexDistance(point,target)<=effectiveWeaponRange(actor,weapon)+(option?.rangeBonus??0)
    &&canAfford(battle,actor,moveAp+attackApCost(weapon,battle,actor,option),moveFatigue+attackSkillFatigue(actor,weapon,option))));
 }
 
@@ -4462,13 +4498,13 @@ function advanceBattleV2(state) {
     }
     const lunge=!actor.disarmedTurns&&lungePlan(battle,actor,target,weapon);
     if(lunge)candidates.push({id:'lunge',type:'lunge',targetId:target.id,target,plan:lunge,apCost:attackApCost(weapon,battle,actor,lunge.option),fatigueCost:attackSkillFatigue(actor,weapon,lunge.option),...predictAttack(battle,{...actor,...lunge.point},target,weapon,lunge.option),bonus:22});
-    if (distance <= range && canAttack) {
+    if (distance <= range && canAttack && rangedTargetLegal(battle,actor,target,weapon)) {
       candidates.push({ id: 'attack', type: 'attack', targetId: target.id, target, apCost: attackCost,
         option:basicOption,fatigueCost: basicFatigue, ...normal,
         wastedAmmo: weapon.ranged && target.hp < normal.expectedHealthDamage * .4 ? 1 : 0,
         bonus: 18 + (isBow(weapon) && actor.ap >= attackCost * 2 && (!weapon.reloadTurns) && (!actor.ally && actor.side === 'company' ? state.supplies.ammo >= 2 : true) ? normal.expectedHealthDamage * .75 : 0) });
     }
-    if (skillFamily && !actor.disarmedTurns && distance <= range && actor.reload === 0) for(const option of (battle.weaponCompletionVersion===1?completedSkillOptions(actor,target,weapon,battle):[skillOptionForTarget(skillFamily, actor, target, weapon, battle)])) {
+    if (skillFamily && !actor.disarmedTurns && distance <= range && actor.reload === 0 && rangedTargetLegal(battle,actor,target,weapon)) for(const option of (battle.weaponCompletionVersion===1?completedSkillOptions(actor,target,weapon,battle):[skillOptionForTarget(skillFamily, actor, target, weapon, battle)])) {
       const fatigueCost = option && attackSkillFatigue(actor, weapon, option);
       if (option && actor.ap >= attackApCost(weapon, battle, actor, option) && actor.fatigue + fatigueCost <= availableFatigue(actor)) {
         const predicted = predictAttack(battle, actor, target, weapon, option);
@@ -4487,7 +4523,7 @@ function advanceBattleV2(state) {
         if (candidate) candidates.push(candidate);
       }
     }
-    if (!actor.disarmedTurns && aimed && distance <= range + 1 && actor.reload === 0 && actor.fatigue + aimedFatigueCost(actor) <= availableFatigue(actor)) {
+    if (!actor.disarmedTurns && aimed && distance <= range + 1 && rangedTargetLegal(battle,actor,target,weapon) && actor.reload === 0 && actor.fatigue + aimedFatigueCost(actor) <= availableFatigue(actor)) {
       candidates.push({ id: 'aimed-shot', type: 'attack', targetId: target.id, target, apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS['aimed-shot']),
         fatigueCost: aimedFatigueCost(actor), ...aimed, bonus: 15 });
     }
@@ -4620,6 +4656,12 @@ function advanceBattleV2(state) {
       && action.fatigueCost+fatigue<=tacticalFatigueLimit(battle,actor)-actor.fatigue;
     if (path && candidates.some(canReturn)) for (let i=candidates.length-1;i>=0;i--)
       if (offensive(candidates[i]) && !canReturn(candidates[i])) candidates.splice(i,1);
+  }
+  for(const candidate of candidates)if(candidate.type==='attack'&&candidate.target&&weapon.ranged){
+    candidate.incomingDamage=(candidate.incomingDamage??0)+rangedOpportunityAttackers(battle,actor,candidate.target,weapon).reduce((sum,unit)=>{
+      const counter=getItem(unit.equipment.weapon);
+      return sum+(counter&&!counter.ranged?(counter.damageMin+counter.damageMax)/2:10)*.5;
+    },0);
   }
   const ranked = rankTacticalActions(battle.weaponCompletionVersion===1?{...actor,maxFatigue:availableFatigue(actor)}:actor, candidates, { role, targetPriorities:rangedAI, nearestDistance:nearest, tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
     previousTargetId: enemies.some(enemy => enemy.id === actor.aiTargetId) ? actor.aiTargetId : null });
@@ -5270,6 +5312,7 @@ function validateBattle(input, party, worldState) {
   assert(input.enemyTacticsVersion===undefined||input.enemyTacticsVersion===1,'battle enemy tactic rules');
   assert(input.lighting===undefined||['day','evening','night','dawn'].includes(input.lighting),'battle lighting');
   assert(input.roleConsistencyVersion===undefined||input.roleConsistencyVersion===1,'battle role consistency rules');
+  assert(input.rangedEngagementVersion===undefined||input.rangedEngagementVersion===1,'battle ranged engagement rules');
   assert(input.weaponCompletionVersion===undefined||input.weaponCompletionVersion===1,'battle completed weapon rules');
   assert(input.weaponAuditVersion===undefined||input.weaponAuditVersion===1,'battle weapon audit rules');
   assert(input.attachmentRulesVersion===undefined||input.attachmentRulesVersion===1,'battle attachment rules');
@@ -5602,6 +5645,7 @@ function validateBattle(input, party, worldState) {
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
     ...(input.weaponCompletionVersion===undefined?{}:{weaponCompletionVersion:1}),
     ...(input.roleConsistencyVersion===undefined?{}:{roleConsistencyVersion:1}),
+    ...(input.rangedEngagementVersion===undefined?{}:{rangedEngagementVersion:1}),
     ...(input.attachmentRulesVersion===undefined?{}:{attachmentRulesVersion:1}),
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),
     ...(input.escapeRulesVersion===undefined?{}:{escapeRulesVersion:1}),

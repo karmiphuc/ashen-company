@@ -300,7 +300,7 @@ test('reload drill restores fatigue on the automatic reload turn', () => {
   assert.equal(plain.battle.units.find(unit => unit.id === 'captain').fatigue - drilled.actor.fatigue, 12);
 });
 
-test('accuracy perks and last stand change hit outcomes at the same roll', () => {
+test('accuracy perks, Point Blank permission and last stand change actions at the same roll', () => {
   const conditions = [
     { perk: 'sword-training', weapon: 'arming-sword', distance: 1 },
     { perk: 'sword-training', weapon: 'falchion', distance: 1 },
@@ -331,7 +331,10 @@ test('accuracy perks and last stand change hit outcomes at the same roll', () =>
       else plain.battle.units.find(unit => unit.id === 'captain').perks = [];
       advanceBattle(skilled);
       advanceBattle(plain);
-      changed = condition.targetPerk
+      changed = condition.perk === 'point-blank'
+        ? ['attack', 'miss'].includes(skilled.battle.lastEvent.type) && skilled.battle.lastEvent.ranged
+          && !(['attack', 'miss'].includes(plain.battle.lastEvent.type) && plain.battle.lastEvent.ranged)
+        : condition.targetPerk
         ? skilled.battle.lastEvent.type === 'miss' && plain.battle.lastEvent.type === 'attack'
         : skilled.battle.lastEvent.type === 'attack' && plain.battle.lastEvent.type === 'miss';
     }
