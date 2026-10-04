@@ -317,6 +317,7 @@ const MAX_INVENTORY = 512;
 const MAX_CARGO = 30;
 export const MAX_COMPANY_SIZE = 18;
 export const MAX_BATTLE_SIZE = 15;
+export const AUTO_AMMO_CAP = 999;
 export const MAX_SAVE_FILE_BYTES = 4 * 1024 * 1024;
 const CAMP_RADIUS = 35;
 const BAND_RADIUS = 28;
@@ -1908,9 +1909,9 @@ export function applyCompanyAutomation(state) {
   const settlement = townAt(state);
   if(state.automation?.buyAmmo&&settlement&&getSettlementAccess(state,settlement.id).servicesAvailable&&!state.destination){
     refillThrowingAmmo(state);
-    while(state.supplies.ammo<10000){
+    while(state.supplies.ammo<AUTO_AMMO_CAP){
       const offer=getMarket(state).supplies.find(s=>s.kind==='ammo');
-      const amount=Math.min(100,10000-state.supplies.ammo,offer.stock,Math.floor(state.gold/offer.buyPrice));
+      const amount=Math.min(100,AUTO_AMMO_CAP-state.supplies.ammo,offer.stock,Math.floor(state.gold/offer.buyPrice));
       if(amount<=0||!buySupplies(state,'ammo',amount).ok)break;
     }
   }
