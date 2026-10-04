@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,SETTLEMENTS,getItem,getRoamingBands,getFactionPatrols,tick,validateSave,startBattle} from '../src/engine.js';
+import {createGame,SETTLEMENTS,getItem,getRoamingBands,getFactionPatrols,tick,validateSave,startBattle,joinPatrolBattle,getJoinablePatrolBattle,activateMapTarget,advanceBattle,resolveBattle,retreatBattle,finishBattle,getUndeadEncounters} from '../src/engine.js';
+import {campSidebarHTML} from '../src/campaign-ui.js';
 import {advanceFactionSimulation,skirmishDuration,worldSkirmishFor} from '../src/faction-patrols.js';
 function setTime(s,h){s.day=Math.floor(h/24)+1;s.hour=h%24;}
-function fixture(){
- const s=createGame(99),army=getFactionPatrols(s)[0];
+function fixture(index=0,troops=null){
+ const s=createGame(99),army=getFactionPatrols(s)[index];
+ if(troops)s.factionPatrols[army.id].troops=[...troops];
  for(const p of Object.values(s.factionPatrols))p.cooldownUntil=14;
  s.factionPatrols[army.id].cooldownUntil=0;
  const band={...getRoamingBands(s).find(b=>b.difficulty>0),x:army.x,y:army.y};Object.assign(s.bands[band.id],{x:band.x,y:band.y});
@@ -41,4 +43,98 @@ test('large and split ticks with save imports preserve timed fights and outcomes
 test('starting a company battle releases an ongoing NPC fight without prematurely assigning casualties',()=>{
  const {s,army,band}=fixture();s.position={x:band.x,y:band.y};const troops=[...s.factionPatrols[army.id].troops];
  assert.equal(startBattle(s,band.id).ok,true);assert.equal(worldSkirmishFor(s,band.id),null);assert.deepEqual(s.factionPatrols[army.id].troops,troops);assert.equal(s.factionReports.length,0);assert.deepEqual(validateSave(s),s);
+});
+
+
+test('joining an allied fight deploys the actual patrol and preserves its roster across saves and turns',()=>{
+ let {s,army,band}=fixture();s.position={x:army.x,y:army.y};
+ const patrol=getFactionPatrols(s).find(p=>p.id===army.id),before=[...s.factionPatrols[army.id].troops];
+ assert.match(campSidebarHTML(s,patrol),/data-join-patrol=.*Join allied battle/);
+ assert.equal(patrol.joinableBattle,true);assert.ok(getJoinablePatrolBattle(s,army.id));
+ assert.equal(activateMapTarget(s,'patrol',army.id).ok,true);
+ assert.equal(worldSkirmishFor(s,band.id),null);
+ const allies=s.battle.units.filter(u=>u.ally);assert.equal(allies.length,before.length);
+ assert.deepEqual(allies.map(u=>u.equipment.weapon),patrol.enemies.map(e=>e.weapon));
+ assert.deepEqual(allies.map(u=>u.equipment.armor),patrol.enemies.map(e=>e.armor));
+ assert.ok(allies.every(u=>u.q>=6));
+ assert.deepEqual(validateSave(s),s);
+ for(let i=0;i<60&&s.battle.status==='active';i++){advanceBattle(s);s=validateSave(JSON.parse(JSON.stringify(s)));}
+ assert.deepEqual(s.factionPatrols[army.id].troops,before,'casualties apply only at settlement of the battle');
+});
+
+test('travel to an allied battle survives imports and joins upon arrival',()=>{
+ let {s,army,band}=fixture();s.position={x:army.x+75,y:army.y+10};
+ for(const other of getRoamingBands(s))if(other.id!==band.id)s.bands[other.id].defeatedUntil=56.25;
+ assert.equal(joinPatrolBattle(s,army.id).ok,true);assert.equal(s.destinationAction.type,'patrol');
+ s=validateSave(JSON.parse(JSON.stringify(s)));
+ for(let i=0;i<80&&!s.battle&&s.destination;i++){tick(s,.25);s=validateSave(JSON.parse(JSON.stringify(s)));}
+ assert.ok(s.battle?.patrolAssist);assert.equal(s.destination,null);
+});
+
+test('a battle that finishes before arrival stops travel without reopening the fight',()=>{
+ let {s,army}=fixture();const fight=worldSkirmishFor(s,army.id);setTime(s,fight.endHour-.25);
+ s.position={x:army.x+500,y:army.y+50};assert.equal(joinPatrolBattle(s,army.id).ok,true);
+ tick(s,.25);assert.equal(s.battle,null);assert.equal(s.destination,null);assert.equal(s.destinationAction,null);
+ assert.equal(getJoinablePatrolBattle(s,army.id),null);assert.deepEqual(validateSave(s),s);
+});
+
+test('retreat preserves actual patrol and hostile casualties and cannot apply them twice',()=>{
+ const {s,army,band}=fixture();s.position={x:army.x,y:army.y};joinPatrolBattle(s,army.id);
+ const ally=s.battle.units.find(u=>u.id==='ally-2'),enemy=s.battle.units.find(u=>u.side==='enemy');
+ ally.hp=0;ally.alive=false;enemy.hp=0;enemy.alive=false;
+ retreatBattle(s);assert.deepEqual(validateSave(s),s);assert.equal(finishBattle(s).ok,true);
+ assert.ok(!s.factionPatrols[army.id].troops.includes(1));assert.equal(s.factionPatrols[army.id].losses,1);
+ assert.equal(s.factionReports.at(-1).losses,1);assert.ok(!s.worldLosses[band.id].survivors.includes(0));
+ assert.deepEqual(validateSave(s),s);const saved=structuredClone(s);assert.equal(finishBattle(s).ok,false);assert.deepEqual(s,saved);
+});
+
+test('victory clears the band and records patrol casualties without applying the scheduled NPC outcome',()=>{
+ const {s,army,band}=fixture();s.position={x:army.x,y:army.y};joinPatrolBattle(s,army.id);
+ const ally=s.battle.units.find(u=>u.ally);ally.hp=0;ally.alive=false;
+ for(const enemy of s.battle.units.filter(u=>u.side==='enemy')){enemy.hp=1;enemy.bodyArmor=0;enemy.headArmor=0;}
+ assert.equal(resolveBattle(s).ok,true);assert.equal(s.battle.status,'victory');
+ assert.deepEqual(validateSave(s),s);finishBattle(s);assert.equal(s.factionPatrols[army.id].wins,1);
+ assert.ok(!s.factionPatrols[army.id].troops.includes(0));assert.equal(s.worldSkirmishes.length,0);
+ assert.equal(s.factionReports.length,1);assert.deepEqual(validateSave(s),s);
+});
+
+test('unavailable patrols and forged assistance snapshots are rejected without mutation',()=>{
+ const {s,army}=fixture();const neutral=getFactionPatrols(s).find(p=>p.playerRelation==='neutral');
+ const snapshot=structuredClone(s);assert.equal(joinPatrolBattle(s,neutral.id).ok,false);assert.deepEqual(s,snapshot);
+ s.position={x:army.x,y:army.y};joinPatrolBattle(s,army.id);
+ for(const edit of [b=>b.patrolAssist.cycle++,b=>b.patrolAssist.troops=[0],b=>b.patrolAssist.enemyTroops=[19],b=>b.patrolAssist.id=neutral.id,b=>delete b.patrolAssist]){
+  const bad=structuredClone(s);edit(bad.battle);const original=structuredClone(bad);assert.throws(()=>validateSave(bad),/battle/);assert.deepEqual(bad,original);
+ }
+});
+
+
+test('a depleted veteran patrol brings only its surviving identities, equipment and combat bonuses',()=>{
+ const {s,army}=fixture(2,[0,2,5]);s.position={x:army.x,y:army.y};
+ const roster=getFactionPatrols(s).find(p=>p.id===army.id).enemies;
+ assert.equal(joinPatrolBattle(s,army.id).ok,true);const allies=s.battle.units.filter(u=>u.ally);
+ assert.equal(allies.length,3);assert.deepEqual(s.battle.patrolAssist.troops,[0,2,5]);
+ assert.deepEqual(allies.map(u=>u.equipment.weapon),roster.map(e=>e.weapon));
+ assert.deepEqual(validateSave(s),s);retreatBattle(s);finishBattle(s);assert.deepEqual(s.factionPatrols[army.id].troops,[0,2,5]);
+});
+
+test('joining at the edge of the patrol radius works even when the band is across the patrol',()=>{
+ const {s,army,band}=fixture();s.bands[band.id].x=army.x+30;s.position={x:army.x-34,y:army.y};
+ assert.equal(joinPatrolBattle(s,army.id).ok,true);assert.ok(s.battle?.patrolAssist);assert.deepEqual(validateSave(s),s);
+});
+
+test('allied interception of an undead host can be joined and saved without undead traits on soldiers',async()=>{
+ const {advanceAshenWinter}=await import('../src/undead-crisis.js');
+ const s=createGame(719),original=structuredClone(s.party[0]);
+ while(s.party.length<6)s.party.push({...structuredClone(original),id:`fighter-${s.party.length}`,name:`Fighter ${s.party.length}`});
+ s.party.forEach(p=>p.level=7);s.formation=Array.from({length:36},(_,i)=>s.party[i]?.id??null);
+ s.day=60;s.shipments={};s.shipmentLegacyThroughDay=60;
+ const context={settlements:SETTLEMENTS,report(){}};advanceAshenWinter(s,context);
+ setTime(s,s.ashenWinter.warningHour);advanceAshenWinter(s,context);setTime(s,s.ashenWinter.activationHour);advanceAshenWinter(s,context);s.shipmentLegacyThroughDay=s.day;
+ const host=getUndeadEncounters(s).find(e=>e.kind==='undead-host'),army=getFactionPatrols(s)[0],now=(s.day-1)*24+s.hour;
+ for(const p of Object.values(s.factionPatrols))p.cooldownUntil=now+6;
+ Object.assign(s.factionPatrols[army.id],{x:host.x,y:host.y,cooldownUntil:0});s.hour+=.25;
+ advanceFactionSimulation(s,{settlements:SETTLEMENTS,getItem,hostiles:()=>[host],currentHostile:id=>id===host.id?host:null,hostileResult(){}});
+ s.position={x:host.x,y:host.y};assert.equal(joinPatrolBattle(s,army.id).ok,true);
+ assert.ok(s.battle.units.filter(u=>u.ally).every(u=>u.undeadTraitsVersion===undefined&&u.troopIndex===undefined));
+ assert.deepEqual(validateSave(s),s);retreatBattle(s);finishBattle(s);assert.deepEqual(validateSave(s),s);
 });
