@@ -3097,12 +3097,12 @@ function chooseBattleWeapon(state, actor, enemies) {
   const reserveHasAmmo = battleWeaponHasAmmo(state, actor, reserve, 'reserve');
   const outOfAmmo = active?.throwing ? (actor.throwingAmmo?.active ?? 0) === 0 : state.supplies.ammo === 0;
   if (state.battle.tactic === 'shield-wall' && actor.equipment.shield && actor.shieldDurability > 0
-    && !(active?.ranged && outOfAmmo)) return false;
+    && !(active?.ranged && (outOfAmmo || nearest<=1 && reserve && !reserve.ranged))) return false;
   if (active?.ranged && outOfAmmo && reserve?.ranged && battleWeaponHasAmmo(state, actor, reserve, 'reserve')) {
     return switchBattleSet(state, actor, actor.name + ' readies ' + reserve.name + '.');
   }
   if (active?.ranged && (nearest <= 1 || outOfAmmo)) {
-    if (active.throwing && reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
+    if ((active.throwing || actor.tacticalRole==='skirmisher' && hasPerk(actor,'quick-hands')) && reserve && !reserve.ranged) return switchBattleSet(state, actor, `${actor.name} switches to ${reserve.name} for close fighting.`);
     if (!outOfAmmo && archerRetreatOption(state.battle, actor, effectiveWeaponRange(actor, active))) return false;
     const pocketIndex = actor.accessories.findIndex(id => getItem(id)?.pocketWeapon);
     if (pocketIndex >= 0) {
@@ -3127,10 +3127,14 @@ function chooseBattleWeapon(state, actor, enemies) {
   return false;
 }
 
+function enemiesAdjacent(battle,actor) {
+  return battle.units.some(unit=>unit.alive&&unit.side!==actor.side&&hexDistance(actor,unit)===1);
+}
+
 function readyShieldWallSet(state, actor) {
   if (state.battle.rulesVersion === 2 && actor.ap < 4 && !(hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== state.battle.round)) return false;
   if (!['shield-wall','skirmish'].includes(state.battle.tactic) || actor.side !== 'company' || actor.ally || actor.equipment.shield && actor.shieldDurability > 0
-    || companyArcherWeapon(state, actor) || actor.reserveShieldDurability <= 0 || getItem(actor.reserveEquipment.weapon)?.twoHanded
+    || companyArcherWeapon(state, actor) || getItem(actor.reserveEquipment.weapon)?.ranged && enemiesAdjacent(state.battle,actor) || actor.reserveShieldDurability <= 0 || getItem(actor.reserveEquipment.weapon)?.twoHanded
     || getItem(actor.reserveEquipment.weapon)?.throwing && (actor.throwingAmmo?.reserve ?? 0) <= 0) return false;
   return switchBattleSet(state, actor, `${actor.name} readies ${getItem(actor.reserveEquipment.shield).name} for the shield wall.`);
 }
@@ -3293,7 +3297,7 @@ function rangedPositionStep(state, actor, enemies, weapon, tactic) {
   const nearest = nearestEnemyDistance(battle,actor,actor);
   const spacing = nearest <= 1;
   const defensive = ['defense','shield-wall'].includes(tactic);
-  if (!spacing && !defensive) return null;
+  if (!spacing && (!defensive || actor.fatigue+attackFatigueCost(actor,weapon)>actor.maxFatigue)) return null;
   const shooters = enemies.filter(enemy=>getItem(enemy.equipment.weapon)?.ranged
     && battleWeaponHasAmmo(state,enemy,getItem(enemy.equipment.weapon)));
   // With no shooters, shelter still faces the enemy approach and keeps the rear behind shields.
@@ -3328,7 +3332,7 @@ function rangedPositionStep(state, actor, enemies, weapon, tactic) {
       const cost = point.cost+step;
       const fatigue = point.fatigue+movementFatigue(actor,battleMovementCost(battle,actor,point,next));
       const key = `${next.q},${next.r}`;
-      if (cost<=budget && fatigue<=actor.maxFatigue-actor.fatigue && cost<(best.get(key)??Infinity)) {
+      if (cost<=budget && fatigue+(spacing?0:attackFatigueCost(actor,weapon))<=actor.maxFatigue-actor.fatigue && cost<(best.get(key)??Infinity)) {
         best.set(key,cost);queue.push({...next,path:[...point.path,next],cost,fatigue});
       }
     }
@@ -4215,8 +4219,9 @@ function advanceBattleV2(state) {
     .filter(([item])=>item?.ranged);
   const ammunitionSpent = noAmmo || ['ranged','skirmisher'].includes(role) && rangedSets.length>0
     && rangedSets.every(([item,set])=>!battleWeaponHasAmmo(state,actor,item,set));
-  const spacingWeapon = weapon.ranged ? weapon : ['ranged','skirmisher'].includes(role)
-    ? rangedSets.find(([item,set])=>battleWeaponHasAmmo(state,actor,item,set))?.[0] : null;
+  // Spacing belongs to the weapon in hand. A loaded reserve must not pull a
+  // melee backup away from the adjacent opponent it was drawn to fight.
+  const spacingWeapon = weapon.ranged ? weapon : null;
   const range = effectiveWeaponRange(actor, weapon);
   const attackCost = attackApCost(weapon, battle, actor);
   const skillFamily = battle.weaponSkillsVersion === 1 && !noAmmo ? weaponSkillFamily(weapon) : null;
@@ -4429,7 +4434,8 @@ function advanceBattleV2(state) {
     || (!rangedAI || !ammunitionSpent) && companyTactic === 'shield-wall' && (actor.side==='enemy'
       ? !weapon.ranged && actor.formationMovedRound===battle.round
       : actor.formationMovedRound===battle.round || battle.round - battle.lastContactRound < 4);
-  for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank || !pursuit ? [] : [pursuit]) {
+  for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank || !pursuit
+    || actor.fatigue+attackFatigueCost(actor,weapon)>actor.maxFatigue ? [] : [pursuit]) {
     const point = entry.path[0];
     const apCost = battleMoveApCost(battle, actor, actor, point);
     const alliesOnTarget = battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id
