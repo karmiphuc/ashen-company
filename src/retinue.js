@@ -1,0 +1,14 @@
+// Permanent company support; hiring never consumes a formation slot or wage.
+export const RETINUE_MEMBERS = Object.freeze([
+  {id:'quartermaster',name:'Quartermaster',cost:5000,icon:'figure_player_trader',benefits:['Food −20%'],detail:'Reduces daily food consumption by 20%, including equipped mounts. Fractional savings carry between days and saves, so small companies benefit too.'},
+  {id:'surgeon',name:'Surgeon',cost:6000,icon:'figure_player_seer',benefits:['Rest healing +25%','Doctor fees −25%'],detail:'Six-hour rests restore 25% more hitpoints, with or without medicine. Doctor fees are reduced by 25%, rounded up. This never resurrects fallen brothers.'},
+  {id:'armorer',name:'Armorer',cost:5000,icon:'workshop_01',benefits:['Repair output +25%','Tools −20%'],detail:'Rest repairs restore 25% more durability per work unit and consume 20% fewer tools. Includes body armor, both attachments, helmets and active/reserve shields. Fractional savings carry across rests and saves. Tools are still required.'},
+  {id:'drillmaster',name:'Drillmaster',cost:7500,icon:'figure_player_legion',benefits:['Battle XP +15%','Reserve training'],detail:'Surviving fielded brothers gain 15% extra earned battle XP, rounded to the nearest point. On victory, reserves receive 15% of surviving fighters’ average battle XP. Donation XP is not multiplied. Fallen brothers receive no XP.'},
+  {id:'broker',name:'Broker',cost:6000,icon:'figure_player_noble',benefits:['Cargo sales +50%','Gear sales +10%'],detail:'Cargo carried from another settlement sells for 50% more. Goods bought and resold locally use normal prices, so profitable trading requires a journey. Equipment sells for 10% more, capped below the local purchase price. Buying prices are unchanged.'},
+  {id:'scout',name:'Scout',cost:5000,icon:'figure_player_ranger',benefits:['Movement +10%'],detail:'Multiplies world movement speed by 1.10, stacking with mounts, carts and night. One upgrade for 10,000 crowns reduces roaming enemy bands’ detection and pursuit ranges by 33%; their movement speed and close contact range are unchanged.'},
+  {id:'scavenger',name:'Scavenger',cost:4000,icon:'figure_player_beggar',benefits:['Battle gold +25%'],detail:'Victories award 25% more battle-loot gold, rounded down. Does not add items or supplies or change named-item rolls. Contracts, trading and donated loot are unchanged.'},
+]);
+export function hasRetinue(state,id) { return state.retinue?.members?.includes(id) === true; }
+export function getScoutLevel(state) { return hasRetinue(state,'scout') ? state.retinue.scoutLevel ?? 1 : 0; }
+export function getBandAwarenessMultiplier(state) { return getScoutLevel(state)===2 ? .67 : 1; }
+export function defaultRetinue() { return {bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0,members:[],scoutLevel:0,foodRemainder:0,toolRemainder:0,repairRemainder:0}; }

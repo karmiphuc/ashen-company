@@ -135,3 +135,33 @@
 @media(max-width:1050px){#find-company-button span{display:none}#find-company-button{width:44px;padding:6px}}
 @media(max-width:850px){.header-actions{margin-left:auto}#settings-button{margin-left:0}}
 @media(max-width:420px){.topbar .brand{font-size:15px;gap:6px}.topbar{gap:5px 8px}}
+
+/* Permanent company support: benefits first, details on demand. */
+.retinue-dashboard{display:grid;gap:20px}
+.retinue-overview{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #b7a576;background:#eee3c8}
+.retinue-overview>div{flex:1}.retinue-overview small{display:block;margin-top:4px;color:#625a48}
+.retinue-group-title{margin:0 0 10px;font-size:15px;color:#5c523e}
+.retinue-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.retinue-choice{display:flex;flex-direction:column;gap:12px;padding:14px;border:1px solid #b3a27f;background:#f1e6cc;border-radius:5px;min-width:0}
+.retinue-choice.is-hired{border-color:#768363;background:#e7e3c9}
+.retinue-choice-heading{display:flex;gap:8px;align-items:center}
+.retinue-choice-heading>img{width:46px;height:58px;object-fit:contain;flex-shrink:0}
+.retinue-choice h3{display:flex;align-items:center;gap:4px;font-size:16px;margin:0;line-height:1.15}
+.retinue-status{display:block;font-size:12px;color:#655b48;margin-top:4px}
+.retinue-choice.is-hired .retinue-status{color:#435839}
+.retinue-benefits{display:flex;flex-wrap:wrap;gap:5px;min-height:47px;align-content:start}
+.retinue-benefits>span{padding:4px 6px;background:#ddd5b7;border-radius:3px;font-size:12px;font-weight:600}
+.retinue-choice>button{margin-top:auto;min-height:44px;width:100%;font-size:13px;padding:9px 5px}
+.retinue-guidance{font-size:11px;color:#665c49;min-height:14px}
+.retinue-complete{margin-top:auto;font-size:12px;color:#435839;padding:10px 0}
+.retinue-rare-guide{display:flex;align-items:center;gap:10px;border-top:1px solid #b3a27f;padding-top:10px}
+.retinue-feedback{padding:10px;border-left:3px solid #65764e;background:#e7e3c9}
+.retinue-dashboard .company-hint-button{min-width:36px;min-height:36px}
+.broker-local{display:flex;align-items:center;font-size:12px;color:#675e48;gap:4px}
+@media(max-width:760px){.retinue-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.retinue-choice h3{font-size:15px}.retinue-choice-heading>img{width:34px;height:48px}}
+@media(max-width:480px){.retinue-grid{grid-template-columns:1fr}.retinue-choice{gap:8px}.retinue-benefits{min-height:0}.retinue-overview{flex-wrap:wrap}.retinue-choice-heading>img{width:42px;height:52px}.retinue-dashboard .company-hint-button{min-width:44px;min-height:44px}}
+.retinue-overview,.retinue-choice{color:#30291c;text-shadow:none}
+.retinue-choice h3,.retinue-overview strong{color:#30291c;text-shadow:none}
+.retinue-benefits>span{color:#3e3525;text-shadow:none;background:#ded3b2}
+.retinue-group-title,.retinue-rare-guide{color:#e6d7b5;text-shadow:0 1px 2px #000}
+.retinue-feedback{color:#30291c;text-shadow:none}
