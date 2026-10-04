@@ -12,6 +12,7 @@ import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
 import { DLC_ITEMS } from './dlc-items.js';
+import { DLC_SHIELDS } from './dlc-shields.js';
 import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, worldCampText, regionalOutfit, enemyRoleBonuses, ancientCampAt, ancientEnemies } from './regional-enemies.js';
 import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad, WORLD_LAYOUT_VERSION, compactPoint, authoredPoint } from './geography.js';
 import { FRONTIER_ITEMS } from './frontier-items.js';
@@ -70,6 +71,7 @@ export const ITEMS = Object.freeze([
   ...MOUNTS,
   ...FRONTIER_ITEMS,
   ...DLC_ITEMS,
+  ...DLC_SHIELDS,
   ...NAMED_WEAPONS,
 ]);
 
@@ -195,7 +197,7 @@ export function getItem(id) {
   const original = ITEM_BY_ID.get(match[2]);
   const seed = Number(match[3]);
   if (!original || ['accessory', 'attachment', 'mount'].includes(original.slot) || match[1]==='famed4'&&!(original.ranged??original.sourceStats?.ranged) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
-  if(match[1]==='famed2'||match[1]==='famed3'||match[1]==='famed4')return rollNamedItem(original,id,seed,{merged:match[1]==='famed3'||match[1]==='famed4',rangeRoll:match[1]==='famed4',rulesVersion:Number(match[1].slice(5)),shieldDurability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
+  if(match[1]==='famed2'||match[1]==='famed3'||match[1]==='famed4')return rollNamedItem(original,id,seed,{merged:match[1]==='famed3'||match[1]==='famed4',rangeRoll:match[1]==='famed4',rulesVersion:Number(match[1].slice(5)),shieldDurability:original.sourceNamedShield?original.sourceStats.durability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
   const roll = shift => (seed >>> shift) & 15;
   const bonuses = [];
   const item = { ...original, id, baseId: original.id, rarity: 'famed' };
@@ -266,7 +268,7 @@ export function mergeOwnedNamedBonuses(state) {
   return changed;
 }
 
-const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...NAMED_WEAPONS.map(item => item.id)]);
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...DLC_SHIELDS.map(item => item.id), ...NAMED_WEAPONS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
@@ -987,7 +989,7 @@ function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
   for(const item of selected)equipment[item.id]=1;
   // Named offers require a specialist or a wealthy/garrison settlement; at most one.
   if ((facilities.length||town.kind==='castle'||town.major) && townEventHash(`${state.seed}:${town.id}:${cycle}:named-offer`)%100<8) {
-    const rare=[...DLC_ITEMS,...NAMED_WEAPONS].filter(item=>item.rarity==='named'&&item.sourceKind!=='legendary'&&townDesign(item,town));
+    const rare=[...DLC_ITEMS,...DLC_SHIELDS,...NAMED_WEAPONS].filter(item=>item.rarity==='named'&&item.sourceKind!=='legendary'&&townDesign(item,town));
     if(rare.length){const item=rare[townEventHash(`${state.seed}:${town.id}:${cycle}:named-kind`)%rare.length];
       const premium=ITEMS.filter(i=>i.price>=450&&equipment[i.id]>0);if(premium.length)equipment[premium.at(-1).id]=0;
       const existing=ITEMS.filter(i=>i.slot===item.slot&&equipment[i.id]>0);if(existing.length>=budget[item.slot])equipment[existing.at(-1).id]=0;
@@ -1033,7 +1035,7 @@ function projectedMarketStock(state, town) {
     : dailyMarketStock(state, town);
   const replenished = defaultArmoryStock(state, town, cycle);
   const equipment = existing && existingCycle === cycle && existing.armoryVersion === ARMORY_STOCK_VERSION
-    ? { ...Object.fromEntries([...MOUNTS, ...FRONTIER_ITEMS, ...DLC_ITEMS, ...NAMED_WEAPONS].map(item => [item.id, replenished[item.id]])), ...existing.equipment }
+    ? { ...Object.fromEntries([...MOUNTS, ...FRONTIER_ITEMS, ...DLC_ITEMS, ...DLC_SHIELDS, ...NAMED_WEAPONS].map(item => [item.id, replenished[item.id]])), ...existing.equipment }
     : replenished;
   let appliedEventId = existing?.armoryVersion === ARMORY_STOCK_VERSION ? existing?.appliedEventId ?? null : null;
   const event = getTownEvent(state, town.id);
@@ -2475,7 +2477,15 @@ const FAMED_BASES = {
 
 function famedBasesForCamp(camp) {
   const newCamp = /^wild-camp-(?:1[3-9]|[2-3][0-9])$/.test(camp.id), legacy = FAMED_BASES[camp.difficulty] ?? [];
-  return newCamp ? [...legacy, ...DLC_ITEMS.filter(item => (item.sourceArmor ?? item.armor) > 0 && (item.sourceArmor ?? item.armor) <= [0,110,220,400][camp.difficulty]).map(item=>item.id),...NAMED_WEAPONS.filter(item=>camp.difficulty>=2&&namedWeaponFitsTheme(item,camp.factionId==='ancient'?'ancient':armoryTheme(regionAt(camp.x,camp.y).id))).map(item=>item.id)] : legacy;
+  if(!newCamp)return legacy;
+  const theme=camp.factionId==='ancient'?'ancient':armoryTheme(regionAt(camp.x,camp.y).id);
+  const shields=DLC_SHIELDS.filter(item=>item.sourceKind==='legendary'?camp.difficulty===3
+    :camp.difficulty>=2&&(theme==='ancient'?item.sourceCulture==='ancient'
+      :item.sourceCulture!=='ancient'&&(!item.region||item.region===theme)));
+  return [...legacy,
+    ...DLC_ITEMS.filter(item => (item.sourceArmor ?? item.armor) > 0 && (item.sourceArmor ?? item.armor) <= [0,110,220,400][camp.difficulty]).map(item=>item.id),
+    ...shields.map(item=>item.id),
+    ...NAMED_WEAPONS.filter(item=>camp.difficulty>=2&&namedWeaponFitsTheme(item,theme)).map(item=>item.id)];
 }
 
 function namedWeaponFitsTheme(item,theme) {
@@ -2494,7 +2504,7 @@ function championWeaponFactory(theme) {
     return createFamedItemId(pool.length?pool[seed%pool.length].id:baseId,seed);
   };
 }
-function rollEncounterNamed(state,encounter,enemies){return enemies.map((enemy,index)=>({...enemy,...Object.fromEntries(['armor','helmet','weapon','shield'].map(slot=>{const id=enemy[slot],item=getItem(id);return [slot,(item?.sourceArmor!==undefined||item?.sourceNamedWeapon)&&item.rarity==='named'?createFamedItemId(id,hashSeed(`${state.seed}:${encounter.id}:${encounter.generation??encounter.spawnCycle??0}:${index}:${slot}:named-rolls`)):id];}))}));}
+function rollEncounterNamed(state,encounter,enemies){return enemies.map((enemy,index)=>({...enemy,...Object.fromEntries(['armor','helmet','weapon','shield'].map(slot=>{const id=enemy[slot],item=getItem(id);return [slot,(item?.sourceArmor!==undefined||item?.sourceNamedWeapon||item?.sourceNamedShield)&&item.rarity==='named'?createFamedItemId(id,hashSeed(`${state.seed}:${encounter.id}:${encounter.generation??encounter.spawnCycle??0}:${index}:${slot}:named-rolls`)):id];}))}));}
 
 function famedDropForCamp(seed, camp) {
   const chance = (FAMED_CHANCES[camp.difficulty] ?? 0) + (camp.discoveryBonuses?.famed??0)/100;

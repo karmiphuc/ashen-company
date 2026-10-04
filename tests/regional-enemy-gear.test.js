@@ -89,11 +89,13 @@ test('named market offers remain scarce, within budgets, and purchase/sale paths
     const state=createGame(seed);state.position={x:SETTLEMENTS.find(t=>t.id==='frostgate').x,y:140};state.gold=100000;
     const rare=getMarket(state).equipment.filter(row=>row.stock>0&&getItem(row.itemId).rarity==='named');
     assert.ok(rare.length<=1);
-    if(rare.length)found={state,id:rare[0].itemId};
+    const repairable=rare.find(row=>['armor','helmet','shield'].includes(getItem(row.itemId).slot));
+    if(repairable)found={state,id:repairable.itemId};
   }
   assert.ok(found);const {state,id}=found;
   assert.equal(buyItem(state,id).ok,true);assert.equal(getMarket(state).equipment.find(r=>r.itemId===id).stock,0);
-  state.inventoryCondition[state.inventory.indexOf(id)]=20;assert.deepEqual(validateSave(state),state);assert.equal(sellItem(state,id).ok,true);assert.equal(buyItem(state,id).ok,true);assert.equal(state.inventoryCondition[state.inventory.indexOf(id)],20,'rare buybacks preserve damage');assert.deepEqual(validateSave(state),state);
+  const damaged=Math.max(0,state.inventoryCondition[state.inventory.indexOf(id)]-5);
+  state.inventoryCondition[state.inventory.indexOf(id)]=damaged;assert.deepEqual(validateSave(state),state);assert.equal(sellItem(state,id).ok,true);assert.equal(buyItem(state,id).ok,true);assert.equal(state.inventoryCondition[state.inventory.indexOf(id)],damaged,'rare buybacks preserve damage');assert.deepEqual(validateSave(state),state);
 });
 
 test('real v0.42 active-battle fixtures retain damage and stats while adopting new maxima and DLC drop validation', () => {

@@ -3,6 +3,7 @@
 import { DLC_ITEMS } from './dlc-items.js';
 import { NAMED_WEAPON_ART } from './named-weapon-art.js';
 import { DLC_ART } from './dlc-art.js';
+import { DLC_SHIELD_ART } from './dlc-shield-art.js';
 import { FANTASY_ARMOR_VISUALS, FANTASY_HELMET_VISUALS, FANTASY_ITEM_IMAGES, FANTASY_APPEARANCES, FANTASY_CLOSED_HELMETS, FANTASY_HIDDEN_HEADS } from './fantasy-art.js';
 
 const PORTRAIT_ROOT = 'assets/portraits/';
@@ -140,6 +141,7 @@ export const VISUALS = {
     'northern-sling': ['weapon-northern-sling.png', 73, 57, 'rotate(-25deg)', '5px 60px'],
   },
   shield: {
+    ...Object.fromEntries(Object.entries(DLC_SHIELD_ART).map(([id,art])=>[id,[art.portrait,art.left,art.top,'scale(1)','0px 0px']])),
     round: ['shield-round.png', 62, 68],
     kite: ['shield-kite.png', 62, 54],
     heater: ['shield-heater.png', 62, 54],
@@ -195,6 +197,7 @@ export const VISUALS = {
   },
 };
 const SHIELD_WIDTHS = {
+  ...Object.fromEntries(Object.values(DLC_SHIELD_ART).map(art=>[art.portrait,art.width])),
   'shield-round.png': 44,
   'shield-kite.png': 48,
   'shield-heater.png': 46,
@@ -205,7 +208,7 @@ const SHIELD_WIDTHS = {
   'shield-northern-heartwood-shield.png': 66,
   'shield-northern-iron-round-shield.png': 56,
 };
-const SHIELD_HEIGHTS = {'shield-round.png':56,'shield-kite.png':90,'shield-heater.png':74,'shield-adarga.png':56,'shield-painted-round-shield.png':56,'shield-painted-heater-shield.png':74,'shield-painted-tower-shield.png':176,'shield-northern-heartwood-shield.png':88,'shield-northern-iron-round-shield.png':70};
+const SHIELD_HEIGHTS = {...Object.fromEntries(Object.values(DLC_SHIELD_ART).map(art=>[art.portrait,art.height])),'shield-round.png':56,'shield-kite.png':90,'shield-heater.png':74,'shield-adarga.png':56,'shield-painted-round-shield.png':56,'shield-painted-heater-shield.png':74,'shield-painted-tower-shield.png':176,'shield-northern-heartwood-shield.png':88,'shield-northern-iron-round-shield.png':70};
 // Rest poses are expressed around the grip, independent of the sprite's crop.
 // Native BB long-weapon artwork already slopes from the opposite shoulder to
 // the weapon hand: rotating it another 30–35 degrees made it stand upright.
@@ -537,6 +540,8 @@ function layerSpec(category, item) {
     const handY=heavy?Math.min(100,115-bottom):rangedPose?105:111;
     return [named.portrait,(heavy?78:rangedPose?70:82)-gx,handY-gy,`scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`,`${gx}px ${gy}px`];
   }
+  const shieldSource = category === 'shield' && DLC_SHIELD_ART[item?.baseId || item?.id || visual(item)];
+  if(shieldSource)return [shieldSource.portrait,shieldSource.left,shieldSource.top,'scale(1)','0px 0px'];
   const source = DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];
@@ -676,6 +681,7 @@ export const portraitSVG = portraitHTML;
 export function itemImage(item) {
   const id = item?.baseId || item?.id;
   if(NAMED_WEAPON_ART[id])return NAMED_WEAPON_ART[id].icon;
+  if (DLC_SHIELD_ART[id]) return DLC_SHIELD_ART[id].icon;
   if (DLC_ART[id]) return DLC_ART[id].icon;
   return ITEM_IMAGES[id] ? `${ITEM_ROOT}${ITEM_IMAGES[id]}` : null;
 }

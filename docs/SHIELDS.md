@@ -1,0 +1,13 @@
+# Expanded shield roster
+
+The pinned equipment import originally covered only body armor and helmets. `DLC_SHIELDS` adds 26 missing human designs: three ancient, three heraldic, three weathered, Sipar, three crafted designs, twelve named designs and Gilder's Embrace. The importer accounts for all 39 shield source classes, preserving five existing campaign shields and excluding two abstract parents and six creature-only shields. No races or enemy types are added.
+
+Shields retain separate source melee defense, ranged defense, durability and fatigue. Existing campaign shields retain their IDs and stats. Named designs use the existing deterministic two-modifier system, and saved named identities retain their rolls and source baselines. Broken shields grant no defense and remain repairable; condition survives stowing, swapping, selling, buying back and save reloads.
+
+Ordinary and crafted designs enter weekly regional stock within existing slot budgets. Named offers retain the existing scarce one-item limit. Ancient equipment stays out of living settlements. Existing regional shield bearers can carry imported ordinary or named shields, so they can drop through normal combat loot. Advanced frontier camps can award named shield rolls; Gilder's Embrace is restricted to tier-three frontier reward pools and is not sold. Previously saved active battles and Ashen force damage keep their existing equipment rules; the crisis's stable legacy troop templates are preserved.
+
+Crafted source shields are available as equipment without adding a crafting system. Source regeneration, retaliation and other magical scripts are not simulated; inspection descriptions say so. Gilder's Embrace retains its source durability baseline rather than its original scripted effects.
+
+All designs appear in the collection browser with shield-specific stats. Inventory images come from the pinned source. That repository does not contain the native worn shield brushes, so offhand layers adapt alpha-trimmed inventory art within a 46×72 box, preserving aspect ratio. Only shield art is fitted; brother portraits keep their native dimensions. The manifest records this adaptation, source paths and SHA-256 hashes.
+
+Rebuild with `python3 tools/content/import-bb-shields.py --cache /tmp/bb-shield-source` (Python, Pillow, Node), then `npm run prepare-offline`. Downloads remain outside the checkout, while generated runtime modules and provenance are committed. Both shield modules are cached for offline use.

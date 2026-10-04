@@ -1,0 +1,1387 @@
+{
+  "repository": "kovasap/battle-bros-decompiled",
+  "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+  "scope": "All concrete human shield designs missing from the existing campaign. Existing shield IDs retain their stats; creature-specific shields and abstract parents are excluded. Fixed representative heraldry/cosmetics.",
+  "coverage": 26,
+  "records": [
+    {
+      "item": {
+        "id": "bb-auxiliary-shield",
+        "name": "Ancient Auxiliary Shield",
+        "slot": "shield",
+        "visual": "bb-auxiliary-shield",
+        "price": 40,
+        "armor": 15,
+        "defense": 15,
+        "rangedDefense": 15,
+        "durability": 16,
+        "fatigue": 10,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "ancient",
+        "description": "A wooden light shield in oval shape. The wood seems brittle and old, making it less durable.",
+        "role": "+15 melee defense, +15 ranged defense; 16 durability at a 10 fatigue cost."
+      },
+      "source": "scripts/items/shields/ancient/auxiliary_shield.nut",
+      "sourceSha256": "0e1309c44dcb5bb8bc4661fc22d3acffd426a8c3128e0fae35b400432033cfc8",
+      "sourceValue": 80,
+      "sprite": "shield_auxiliary_01",
+      "icon": "gfx/ui/items/shields/inventory_shield_auxiliary_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-coffin-shield",
+        "name": "Ancient Coffin Shield",
+        "slot": "shield",
+        "visual": "bb-coffin-shield",
+        "price": 40,
+        "armor": 15,
+        "defense": 15,
+        "rangedDefense": 20,
+        "durability": 20,
+        "fatigue": 12,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "ancient",
+        "description": "An octagonal shield made of wood and reinforced with bronze. Time has taken its toll and the wood has become brittle.",
+        "role": "+15 melee defense, +20 ranged defense; 20 durability at a 12 fatigue cost."
+      },
+      "source": "scripts/items/shields/ancient/coffin_shield.nut",
+      "sourceSha256": "80ef929d197a3b54ae57272e9e4e00e298cdf851eb30e3aee220c35e370c086c",
+      "sourceValue": 100,
+      "sprite": "shield_coffin_01",
+      "icon": "gfx/ui/items/shields/inventory_shield_coffin_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-tower-shield",
+        "name": "Ancient Tower Shield",
+        "slot": "shield",
+        "visual": "bb-tower-shield",
+        "price": 70,
+        "armor": 20,
+        "defense": 20,
+        "rangedDefense": 20,
+        "durability": 24,
+        "fatigue": 20,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "ancient",
+        "description": "A tall and heavy tower shield that offers good protection, but is very bulky to handle. It appears to be old and worn down.",
+        "role": "+20 melee defense, +20 ranged defense; 24 durability at a 20 fatigue cost."
+      },
+      "source": "scripts/items/shields/ancient/tower_shield.nut",
+      "sourceSha256": "9203b392ce9b3cba186380bfd959503cf653fc01d294754b3951bbf3fe43e3a0",
+      "sourceValue": 200,
+      "sprite": "shield_tower_01",
+      "icon": "gfx/ui/items/shields/inventory_shield_tower_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-faction-heater-shield",
+        "name": "Heraldic Heater Shield",
+        "slot": "shield",
+        "visual": "bb-faction-heater-shield",
+        "price": 88,
+        "armor": 20,
+        "defense": 20,
+        "rangedDefense": 15,
+        "durability": 32,
+        "fatigue": 14,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "mercenary",
+        "description": "A triangular wooden shield covered with leather and canvas.",
+        "role": "+20 melee defense, +15 ranged defense; 32 durability at a 14 fatigue cost."
+      },
+      "source": "scripts/items/shields/faction_heater_shield.nut",
+      "sourceSha256": "1b89ce80fc1fae0610937436233153c964243a851b84e3c622ef27de18a0054a",
+      "sourceValue": 250,
+      "sprite": "faction_shield_heater_01_01",
+      "icon": "gfx/ui/items/shields/inventory_faction_shield_heater_01_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-faction-kite-shield",
+        "name": "Heraldic Kite Shield",
+        "slot": "shield",
+        "visual": "bb-faction-kite-shield",
+        "price": 70,
+        "armor": 15,
+        "defense": 15,
+        "rangedDefense": 25,
+        "durability": 48,
+        "fatigue": 16,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "mercenary",
+        "description": "An elongated wooden shield covered in leather that offers good protection also to the lower body. Somewhat bulky to handle in close combat engagements.",
+        "role": "+15 melee defense, +25 ranged defense; 48 durability at a 16 fatigue cost."
+      },
+      "source": "scripts/items/shields/faction_kite_shield.nut",
+      "sourceSha256": "134b4bd60c973be8f1da6249e677b18e49605678c8c1deff4596cdf6a623de3c",
+      "sourceValue": 200,
+      "sprite": "faction_shield_kite_01_01",
+      "icon": "gfx/ui/items/shields/inventory_faction_shield_kite_01_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-faction-wooden-shield",
+        "name": "Heraldic Wooden Shield",
+        "slot": "shield",
+        "visual": "bb-faction-wooden-shield",
+        "price": 40,
+        "armor": 15,
+        "defense": 15,
+        "rangedDefense": 15,
+        "durability": 24,
+        "fatigue": 10,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "mercenary",
+        "description": "A round wooden shield.",
+        "role": "+15 melee defense, +15 ranged defense; 24 durability at a 10 fatigue cost."
+      },
+      "source": "scripts/items/shields/faction_wooden_shield.nut",
+      "sourceSha256": "20ab04f4fda6cc9be8945a1a23ccedf8657f0dbeba5a49159f934b8969169125",
+      "sourceValue": 90,
+      "sprite": "faction_shield_round_01_01",
+      "icon": "gfx/ui/items/shields/inventory_faction_shield_round_01_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-gilders-embrace-shield",
+        "name": "Gilder's Embrace",
+        "slot": "shield",
+        "visual": "bb-gilders-embrace-shield",
+        "price": 14000,
+        "armor": 25,
+        "defense": 32,
+        "rangedDefense": 25,
+        "durability": 1226,
+        "fatigue": 16,
+        "collection": "beasts-and-exploration",
+        "sourceKind": "legendary",
+        "sourceCulture": "mercenary",
+        "description": "A rare gilder's embrace with independently rolled Battle Brothers-style modifiers. An ornate metal shield with a bright gilded shine that reflects even the tiniest ray of light with the power of the sun itself. Adapted as equipment; source regeneration and magical effects are not simulated.",
+        "role": "+32 melee defense, +25 ranged defense; 1226 durability at a 16 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 25,
+          "defense": 25,
+          "rangedDefense": 25,
+          "durability": 786,
+          "fatigue": 16
+        },
+        "baseId": "bb-gilders-embrace-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "melee-defense",
+          "durability"
+        ],
+        "bonuses": [
+          {
+            "label": "Melee defense",
+            "value": "+7"
+          },
+          {
+            "label": "Shield durability",
+            "value": "+440"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/legendary/gilders_embrace_shield.nut",
+      "sourceSha256": "108f4944ef614e7e52d6b273c972dd5178a130540e4e82014ec3b53e4865f7ba",
+      "sourceValue": 20000,
+      "sprite": "shield_legendary_01",
+      "icon": "gfx/ui/items/shields/inventory_legendary_shield_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-bandit-heater-shield",
+        "name": "Bandit Heater Shield",
+        "slot": "shield",
+        "visual": "bb-named-bandit-heater-shield",
+        "price": 500,
+        "armor": 20,
+        "defense": 20,
+        "rangedDefense": 20,
+        "durability": 49,
+        "fatigue": 14,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare bandit heater shield with independently rolled Battle Brothers-style modifiers. A sturdy triangular shield well suited for close combat. This one is an exceptionally well-crafted and balanced exemplar.",
+        "role": "+20 melee defense, +20 ranged defense; 49 durability at a 14 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 20,
+          "defense": 20,
+          "rangedDefense": 15,
+          "durability": 32,
+          "fatigue": 14
+        },
+        "baseId": "bb-named-bandit-heater-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "durability",
+          "ranged-defense"
+        ],
+        "bonuses": [
+          {
+            "label": "Shield durability",
+            "value": "+17"
+          },
+          {
+            "label": "Ranged defense",
+            "value": "+5"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_bandit_heater_shield.nut",
+      "sourceSha256": "345a3068639951e812f8a59d6f7b5b277694d43dfd559b1132d1d9c864daa287",
+      "sourceValue": 600,
+      "sprite": "shield_bandit_01_named_01",
+      "icon": "gfx/ui/items/shields/inventory_bandits_shield_01_named_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-bandit-kite-shield",
+        "name": "Bandit Kite Shield",
+        "slot": "shield",
+        "visual": "bb-named-bandit-kite-shield",
+        "price": 500,
+        "armor": 15,
+        "defense": 20,
+        "rangedDefense": 32,
+        "durability": 48,
+        "fatigue": 16,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare bandit kite shield with independently rolled Battle Brothers-style modifiers. A long, wooden shield covering the whole body for good protection against ranged attacks. This particular shield shows some unique craftsmanship and is a rare find.",
+        "role": "+20 melee defense, +32 ranged defense; 48 durability at a 16 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 15,
+          "defense": 15,
+          "rangedDefense": 25,
+          "durability": 48,
+          "fatigue": 16
+        },
+        "baseId": "bb-named-bandit-kite-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "melee-defense",
+          "ranged-defense"
+        ],
+        "bonuses": [
+          {
+            "label": "Melee defense",
+            "value": "+5"
+          },
+          {
+            "label": "Ranged defense",
+            "value": "+7"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_bandit_kite_shield.nut",
+      "sourceSha256": "35f4faf7146d64ba2d4b3256008819f0c367b68cebbf546c14336633166ca231",
+      "sourceValue": 700,
+      "sprite": "shield_bandit_02_named_01",
+      "icon": "gfx/ui/items/shields/inventory_bandits_shield_02_named_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-dragon-shield",
+        "name": "Dragon Shield",
+        "slot": "shield",
+        "visual": "bb-named-dragon-shield",
+        "price": 560,
+        "armor": 15,
+        "defense": 20,
+        "rangedDefense": 31,
+        "durability": 48,
+        "fatigue": 16,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare dragon shield with independently rolled Battle Brothers-style modifiers. A large kite shield covered in drawings. Extraordinary craftsmanship went into making this piece.",
+        "role": "+20 melee defense, +31 ranged defense; 48 durability at a 16 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 15,
+          "defense": 15,
+          "rangedDefense": 25,
+          "durability": 48,
+          "fatigue": 16
+        },
+        "baseId": "bb-named-dragon-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "ranged-defense",
+          "melee-defense"
+        ],
+        "bonuses": [
+          {
+            "label": "Ranged defense",
+            "value": "+6"
+          },
+          {
+            "label": "Melee defense",
+            "value": "+5"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_dragon_shield.nut",
+      "sourceSha256": "48c01774a4a1556a97cf4e32f618e103a16902e2cf0faa7d343aebfca5be9a56",
+      "sourceValue": 800,
+      "sprite": "shield_named_01",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-full-metal-heater-shield",
+        "name": "Full Metal Heater Shield",
+        "slot": "shield",
+        "visual": "bb-named-full-metal-heater-shield",
+        "price": 1050,
+        "armor": 20,
+        "defense": 26,
+        "rangedDefense": 15,
+        "durability": 94,
+        "fatigue": 16,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare full metal heater shield with independently rolled Battle Brothers-style modifiers. A finely crafted heater shield made almost entirely out of metal. Heavy and durable, yet lighter than it looks. The craftsmen who made this must have truly been a master of his trade.",
+        "role": "+26 melee defense, +15 ranged defense; 94 durability at a 16 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 20,
+          "defense": 20,
+          "rangedDefense": 15,
+          "durability": 60,
+          "fatigue": 16
+        },
+        "baseId": "bb-named-full-metal-heater-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "melee-defense",
+          "durability"
+        ],
+        "bonuses": [
+          {
+            "label": "Melee defense",
+            "value": "+6"
+          },
+          {
+            "label": "Shield durability",
+            "value": "+34"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_full_metal_heater_shield.nut",
+      "sourceSha256": "9f015659f97545c8f7d7d63a8490059fd9075e8bbf5f7a217ca460712d8210ea",
+      "sourceValue": 1500,
+      "sprite": "shield_named_05",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_05.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-golden-round-shield",
+        "name": "Golden Round Shield",
+        "slot": "shield",
+        "visual": "bb-named-golden-round-shield",
+        "price": 1050,
+        "armor": 19,
+        "defense": 19,
+        "rangedDefense": 22,
+        "durability": 60,
+        "fatigue": 15,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare golden round shield with independently rolled Battle Brothers-style modifiers. A full metal round shield of extraordinary quality. This must have been the pride of any warrior boasting it.",
+        "role": "+19 melee defense, +22 ranged defense; 60 durability at a 15 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 19,
+          "defense": 19,
+          "rangedDefense": 17,
+          "durability": 60,
+          "fatigue": 18
+        },
+        "baseId": "bb-named-golden-round-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "weight",
+          "ranged-defense"
+        ],
+        "bonuses": [
+          {
+            "label": "Fatigue cost",
+            "value": "-3"
+          },
+          {
+            "label": "Ranged defense",
+            "value": "+5"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_golden_round_shield.nut",
+      "sourceSha256": "c91a8a9030281a0aa38b7c1d0c0ad249d0953f820b356320fd6801a01523b38c",
+      "sourceValue": 1500,
+      "sprite": "shield_named_04",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_04.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-lindwurm-shield",
+        "name": "Lindwurm Shield",
+        "slot": "shield",
+        "visual": "bb-named-lindwurm-shield",
+        "price": 910,
+        "armor": 15,
+        "defense": 18,
+        "rangedDefense": 33,
+        "durability": 48,
+        "fatigue": 16,
+        "collection": "lindwurm",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare lindwurm shield with independently rolled Battle Brothers-style modifiers. A sturdy wooden frame lays the base for a shimmering heap of rare Lindwurm scales to form a shield impenetrable.",
+        "role": "+18 melee defense, +33 ranged defense; 48 durability at a 16 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 15,
+          "defense": 15,
+          "rangedDefense": 25,
+          "durability": 48,
+          "fatigue": 16
+        },
+        "baseId": "bb-named-lindwurm-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "melee-defense",
+          "ranged-defense"
+        ],
+        "bonuses": [
+          {
+            "label": "Melee defense",
+            "value": "+3"
+          },
+          {
+            "label": "Ranged defense",
+            "value": "+8"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_lindwurm_shield.nut",
+      "sourceSha256": "f9969a2448e136b88f5d0ad7ebd75c2029c5a7580ac5cc608d84fedcff4e9335",
+      "sourceValue": 1300,
+      "sprite": "shield_named_07",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_07.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-red-white-shield",
+        "name": "Red White Shield",
+        "slot": "shield",
+        "visual": "bb-named-red-white-shield",
+        "price": 560,
+        "armor": 15,
+        "defense": 20,
+        "rangedDefense": 25,
+        "durability": 48,
+        "fatigue": 12,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare red white shield with independently rolled Battle Brothers-style modifiers. A large and thick wooden shield of foreign style. It offers great protection despite its peculiar form.",
+        "role": "+20 melee defense, +25 ranged defense; 48 durability at a 12 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 15,
+          "defense": 15,
+          "rangedDefense": 25,
+          "durability": 48,
+          "fatigue": 16
+        },
+        "baseId": "bb-named-red-white-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "melee-defense",
+          "weight"
+        ],
+        "bonuses": [
+          {
+            "label": "Melee defense",
+            "value": "+5"
+          },
+          {
+            "label": "Fatigue cost",
+            "value": "-4"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_red_white_shield.nut",
+      "sourceSha256": "859421d07afb775f2b40921630b11132c82cd277ec8f90e83e2952e170eb64fa",
+      "sourceValue": 800,
+      "sprite": "shield_named_06",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_06.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-rider-on-horse-shield",
+        "name": "Rider On Horse Shield",
+        "slot": "shield",
+        "visual": "bb-named-rider-on-horse-shield",
+        "price": 700,
+        "armor": 20,
+        "defense": 20,
+        "rangedDefense": 15,
+        "durability": 32,
+        "fatigue": 12,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare rider on horse shield with independently rolled Battle Brothers-style modifiers. A relic heater shield covered in iconographic images. It seem to be old, yet is durable and well to handle.",
+        "role": "+20 melee defense, +15 ranged defense; 32 durability at a 12 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 20,
+          "defense": 20,
+          "rangedDefense": 15,
+          "durability": 32,
+          "fatigue": 14
+        },
+        "baseId": "bb-named-rider-on-horse-shield",
+        "rollVersion": 2,
+        "fatigueOnSkillUse": -3,
+        "rollModifiers": [
+          "skill-fatigue",
+          "weight"
+        ],
+        "bonuses": [
+          {
+            "label": "Skill fatigue",
+            "value": "-3"
+          },
+          {
+            "label": "Fatigue cost",
+            "value": "-2"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_rider_on_horse_shield.nut",
+      "sourceSha256": "105ea06acdbea99b25a69fdf776969e9a4f03490fe9212e6e7c996809cc10852",
+      "sourceValue": 1000,
+      "sprite": "shield_named_02",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_02.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-sipar-shield",
+        "name": "Sipar Shield",
+        "slot": "shield",
+        "visual": "bb-named-sipar-shield",
+        "price": 1050,
+        "armor": 18,
+        "defense": 23,
+        "rangedDefense": 18,
+        "durability": 60,
+        "fatigue": 15,
+        "collection": "blazing-deserts",
+        "sourceKind": "named",
+        "sourceCulture": "south",
+        "description": "A rare sipar shield with independently rolled Battle Brothers-style modifiers. A full metal round shield of southern design with elaborate ornaments. Quite heavy, but also durable.",
+        "role": "+23 melee defense, +18 ranged defense; 60 durability at a 15 fatigue cost, with two permanent rolled bonuses.",
+        "region": "south",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 18,
+          "defense": 18,
+          "rangedDefense": 18,
+          "durability": 60,
+          "fatigue": 18
+        },
+        "baseId": "bb-named-sipar-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "melee-defense",
+          "weight"
+        ],
+        "bonuses": [
+          {
+            "label": "Melee defense",
+            "value": "+5"
+          },
+          {
+            "label": "Fatigue cost",
+            "value": "-3"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_sipar_shield.nut",
+      "sourceSha256": "d083a05d234f08fb034674df8bc0b203a1ef7905306b73c287cc31e69e11d274",
+      "sourceValue": 1500,
+      "sprite": "shield_metal_round_03_named_01",
+      "icon": "gfx/ui/items/shields/inventory_metal_round_shield_03_named_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-undead-heater-shield",
+        "name": "Undead Heater Shield",
+        "slot": "shield",
+        "visual": "bb-named-undead-heater-shield",
+        "price": 500,
+        "armor": 20,
+        "defense": 28,
+        "rangedDefense": 15,
+        "durability": 32,
+        "fatigue": 10,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "ancient",
+        "description": "A rare undead heater shield with independently rolled Battle Brothers-style modifiers. A triangular wooden shield covered with leather and canvas, old but very well balanced.",
+        "role": "+28 melee defense, +15 ranged defense; 32 durability at a 10 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 20,
+          "defense": 20,
+          "rangedDefense": 15,
+          "durability": 32,
+          "fatigue": 14
+        },
+        "baseId": "bb-named-undead-heater-shield",
+        "rollVersion": 2,
+        "rollModifiers": [
+          "weight",
+          "melee-defense"
+        ],
+        "bonuses": [
+          {
+            "label": "Fatigue cost",
+            "value": "-4"
+          },
+          {
+            "label": "Melee defense",
+            "value": "+8"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_undead_heater_shield.nut",
+      "sourceSha256": "ce26052733a663e504ee9120b663efbbc0999b65f5143c25c5f1a90660007a24",
+      "sourceValue": 600,
+      "sprite": "shield_undead_01_named_01",
+      "icon": "gfx/ui/items/shields/inventory_undead_shield_01_named_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-undead-kite-shield",
+        "name": "Undead Kite Shield",
+        "slot": "shield",
+        "visual": "bb-named-undead-kite-shield",
+        "price": 500,
+        "armor": 15,
+        "defense": 20,
+        "rangedDefense": 25,
+        "durability": 48,
+        "fatigue": 16,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "ancient",
+        "description": "A rare undead kite shield with independently rolled Battle Brothers-style modifiers. An elongated wooden shield that offers good protection also to the lower body, despite its apparent age. Somewhat bulky to handle in close combat engagements.",
+        "role": "+20 melee defense, +25 ranged defense; 48 durability at a 16 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 15,
+          "defense": 15,
+          "rangedDefense": 25,
+          "durability": 48,
+          "fatigue": 16
+        },
+        "baseId": "bb-named-undead-kite-shield",
+        "rollVersion": 2,
+        "fatigueOnSkillUse": -2,
+        "rollModifiers": [
+          "melee-defense",
+          "skill-fatigue"
+        ],
+        "bonuses": [
+          {
+            "label": "Melee defense",
+            "value": "+5"
+          },
+          {
+            "label": "Skill fatigue",
+            "value": "-2"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_undead_kite_shield.nut",
+      "sourceSha256": "9cc8583d6f35c0f800d3c1ba0b740ee6587cbdb836a2e18e46702c72fcc4a956",
+      "sourceValue": 700,
+      "sprite": "shield_undead_02_named_01",
+      "icon": "gfx/ui/items/shields/inventory_undead_shield_02_named_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-named-wing-shield",
+        "name": "Wing Shield",
+        "slot": "shield",
+        "visual": "bb-named-wing-shield",
+        "price": 700,
+        "armor": 20,
+        "defense": 26,
+        "rangedDefense": 15,
+        "durability": 32,
+        "fatigue": 14,
+        "collection": "base",
+        "sourceKind": "named",
+        "sourceCulture": "mercenary",
+        "description": "A rare wing shield with independently rolled Battle Brothers-style modifiers. A reinforced wooden heater shield made from the finest materials and quite obviously crafted by a master shield maker.",
+        "role": "+26 melee defense, +15 ranged defense; 32 durability at a 14 fatigue cost, with two permanent rolled bonuses.",
+        "rarity": "named",
+        "sourceNamedShield": true,
+        "sourceStats": {
+          "armor": 20,
+          "defense": 20,
+          "rangedDefense": 15,
+          "durability": 32,
+          "fatigue": 14
+        },
+        "baseId": "bb-named-wing-shield",
+        "rollVersion": 2,
+        "fatigueOnSkillUse": -3,
+        "rollModifiers": [
+          "melee-defense",
+          "skill-fatigue"
+        ],
+        "bonuses": [
+          {
+            "label": "Melee defense",
+            "value": "+6"
+          },
+          {
+            "label": "Skill fatigue",
+            "value": "-3"
+          }
+        ]
+      },
+      "source": "scripts/items/shields/named/named_wing_shield.nut",
+      "sourceSha256": "767e1e42968ea30b219929ab8c93e7c7d3def913e6a6ef0f37bf12074be04193",
+      "sourceValue": 1000,
+      "sprite": "shield_named_03",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_03.png"
+    },
+    {
+      "item": {
+        "id": "bb-metal-round-shield",
+        "name": "Sipar Shield",
+        "slot": "shield",
+        "visual": "bb-metal-round-shield",
+        "price": 88,
+        "armor": 18,
+        "defense": 18,
+        "rangedDefense": 18,
+        "durability": 60,
+        "fatigue": 18,
+        "collection": "blazing-deserts",
+        "sourceKind": "ordinary",
+        "sourceCulture": "south",
+        "description": "A full metal round shield of southern design. Quite heavy, but also durable.",
+        "role": "+18 melee defense, +18 ranged defense; 60 durability at a 18 fatigue cost.",
+        "region": "south"
+      },
+      "source": "scripts/items/shields/oriental/metal_round_shield.nut",
+      "sourceSha256": "9a884c06a0b2ac2a43decab3d3d4619f6f68c10f50220a83a41e2ac6bfc5ef9a",
+      "sourceValue": 250,
+      "sprite": "shield_metal_round_01",
+      "icon": "gfx/ui/items/shields/inventory_metal_round_shield_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-craftable-kraken-shield",
+        "name": "Kraken Shield",
+        "slot": "shield",
+        "visual": "bb-craftable-kraken-shield",
+        "price": 420,
+        "armor": 24,
+        "defense": 24,
+        "rangedDefense": 24,
+        "durability": 50,
+        "fatigue": 15,
+        "collection": "beasts-and-exploration",
+        "sourceKind": "crafted",
+        "sourceCulture": "mercenary",
+        "description": "This shield, carved out of a horn plate taken from a giant kraken, is stronger than any common shield. Adapted as equipment; source regeneration and magical effects are not simulated.",
+        "role": "+24 melee defense, +24 ranged defense; 50 durability at a 15 fatigue cost."
+      },
+      "source": "scripts/items/shields/special/craftable_kraken_shield.nut",
+      "sourceSha256": "982160fbdfdb47a8f364fef3e9541189d509c096b2893431957eea9022f5286e",
+      "sourceValue": 1200,
+      "sprite": "shield_named_09",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_09.png"
+    },
+    {
+      "item": {
+        "id": "bb-craftable-lindwurm-shield",
+        "name": "Lindwurm Shield",
+        "slot": "shield",
+        "visual": "bb-craftable-lindwurm-shield",
+        "price": 280,
+        "armor": 17,
+        "defense": 17,
+        "rangedDefense": 25,
+        "durability": 64,
+        "fatigue": 14,
+        "collection": "lindwurm",
+        "sourceKind": "crafted",
+        "sourceCulture": "mercenary",
+        "description": "This sturdy shield fashioned from the shimmering scales of a Lindwurm makes for protection nigh indestructible. Adapted as equipment; source regeneration and magical effects are not simulated.",
+        "role": "+17 melee defense, +25 ranged defense; 64 durability at a 14 fatigue cost."
+      },
+      "source": "scripts/items/shields/special/craftable_lindwurm_shield.nut",
+      "sourceSha256": "26f3e2794071b863a8b677f245da59e436eb39dacccabc96a9acde1d1a44f8ef",
+      "sourceValue": 800,
+      "sprite": "shield_named_07",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_07.png"
+    },
+    {
+      "item": {
+        "id": "bb-craftable-schrat-shield",
+        "name": "Living Tree Shield",
+        "slot": "shield",
+        "visual": "bb-craftable-schrat-shield",
+        "price": 350,
+        "armor": 20,
+        "defense": 20,
+        "rangedDefense": 17,
+        "durability": 40,
+        "fatigue": 12,
+        "collection": "beasts-and-exploration",
+        "sourceKind": "crafted",
+        "sourceCulture": "mercenary",
+        "description": "This shield carved out of the remains of a living tree slowly regrows if it sustains any damage. At a glance, it almost looks as if its grotesque face is still moving. Adapted as equipment; source regeneration and magical effects are not simulated.",
+        "role": "+20 melee defense, +17 ranged defense; 40 durability at a 12 fatigue cost."
+      },
+      "source": "scripts/items/shields/special/craftable_schrat_shield.nut",
+      "sourceSha256": "df32609a649bdfb298ee52ebbed3dd58dcd5066c295ebd953b952ba0e4d7dcfd",
+      "sourceValue": 1000,
+      "sprite": "shield_named_08",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_08.png"
+    },
+    {
+      "item": {
+        "id": "bb-wooden-shield-old",
+        "name": "Old Wooden Shield",
+        "slot": "shield",
+        "visual": "bb-wooden-shield-old",
+        "price": 40,
+        "armor": 15,
+        "defense": 15,
+        "rangedDefense": 15,
+        "durability": 16,
+        "fatigue": 10,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "mercenary",
+        "description": "An old round wooden shield.",
+        "role": "+15 melee defense, +15 ranged defense; 16 durability at a 10 fatigue cost."
+      },
+      "source": "scripts/items/shields/wooden_shield_old.nut",
+      "sourceSha256": "336cf9571a66803f0248f6b5379f41742709373753d61f30986d57714d3e9579",
+      "sourceValue": 60,
+      "sprite": "shield_round_enemy_01",
+      "icon": "gfx/ui/items/shields/inventory_shield_round_enemy_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-worn-heater-shield",
+        "name": "Decayed Heater Shield",
+        "slot": "shield",
+        "visual": "bb-worn-heater-shield",
+        "price": 52,
+        "armor": 20,
+        "defense": 20,
+        "rangedDefense": 15,
+        "durability": 24,
+        "fatigue": 14,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "ancient",
+        "description": "A rotten triangular wooden shield covered with leather, canvas and moss.",
+        "role": "+20 melee defense, +15 ranged defense; 24 durability at a 14 fatigue cost."
+      },
+      "source": "scripts/items/shields/worn_heater_shield.nut",
+      "sourceSha256": "1063c7f0f715e3a09c428d1563bb05be00a79e83b0f073ab6945dd28524ef1f1",
+      "sourceValue": 150,
+      "sprite": "shield_zombie_01",
+      "icon": "gfx/ui/items/shields/inventory_zombie_heater_shield_01.png"
+    },
+    {
+      "item": {
+        "id": "bb-worn-kite-shield",
+        "name": "Worn Kite Shield",
+        "slot": "shield",
+        "visual": "bb-worn-kite-shield",
+        "price": 52,
+        "armor": 15,
+        "defense": 15,
+        "rangedDefense": 20,
+        "durability": 40,
+        "fatigue": 16,
+        "collection": "base",
+        "sourceKind": "ordinary",
+        "sourceCulture": "ancient",
+        "description": "An elongated wooden shield that offers good protection also to the lower body. Somewhat bulky to handle in close combat engagements.",
+        "role": "+15 melee defense, +20 ranged defense; 40 durability at a 16 fatigue cost."
+      },
+      "source": "scripts/items/shields/worn_kite_shield.nut",
+      "sourceSha256": "633601c36b290c3256f9c2bf72fd20121d4404a286f70b773d8235ce1bdf1795",
+      "sourceValue": 150,
+      "sprite": "shield_kite_enemy_01",
+      "icon": "gfx/ui/items/shields/inventory_kite_shield_enemy_01.png"
+    }
+  ],
+  "excluded": [
+    {
+      "path": "scripts/items/shields/beasts/schrat_shield.nut",
+      "reason": "Abstract parent or creature-specific equipment"
+    },
+    {
+      "path": "scripts/items/shields/buckler_shield.nut",
+      "reason": "Existing campaign shield preserved",
+      "existingId": "buckler"
+    },
+    {
+      "path": "scripts/items/shields/greenskins/goblin_heavy_shield.nut",
+      "reason": "Abstract parent or creature-specific equipment"
+    },
+    {
+      "path": "scripts/items/shields/greenskins/goblin_light_shield.nut",
+      "reason": "Abstract parent or creature-specific equipment"
+    },
+    {
+      "path": "scripts/items/shields/greenskins/orc_heavy_shield.nut",
+      "reason": "Abstract parent or creature-specific equipment"
+    },
+    {
+      "path": "scripts/items/shields/greenskins/orc_light_shield.nut",
+      "reason": "Abstract parent or creature-specific equipment"
+    },
+    {
+      "path": "scripts/items/shields/heater_shield.nut",
+      "reason": "Existing campaign shield preserved",
+      "existingId": "heater-shield"
+    },
+    {
+      "path": "scripts/items/shields/kite_shield.nut",
+      "reason": "Existing campaign shield preserved",
+      "existingId": "kite-shield"
+    },
+    {
+      "path": "scripts/items/shields/named/named_orc_heavy_shield.nut",
+      "reason": "Abstract parent or creature-specific equipment"
+    },
+    {
+      "path": "scripts/items/shields/named/named_shield.nut",
+      "reason": "Abstract parent or creature-specific equipment"
+    },
+    {
+      "path": "scripts/items/shields/oriental/southern_light_shield.nut",
+      "reason": "Existing campaign shield preserved",
+      "existingId": "adarga"
+    },
+    {
+      "path": "scripts/items/shields/shield.nut",
+      "reason": "Abstract parent or creature-specific equipment"
+    },
+    {
+      "path": "scripts/items/shields/wooden_shield.nut",
+      "reason": "Existing campaign shield preserved",
+      "existingId": "round-shield"
+    }
+  ],
+  "assets": [
+    {
+      "id": "bb-auxiliary-shield",
+      "icon": "gfx/ui/items/shields/inventory_shield_auxiliary_01.png",
+      "iconSha256": "ed6ceebb4e9e43c1149d57e7fe0f79ee6ab215499e59861cd115ed34c9ecd60f",
+      "sourceSprite": "shield_auxiliary_01",
+      "crop": [
+        7,
+        18,
+        64,
+        129
+      ],
+      "portraitSha256": "a572b3f3b833a989f996fb5e3c3fc2fb3a9dc2e34320dff343e6e66abef9c510",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-coffin-shield",
+      "icon": "gfx/ui/items/shields/inventory_shield_coffin_01.png",
+      "iconSha256": "4e6ac2298105090919185d257f4e45512d7e1f0bc3ffa44b4fca6974a90e6eca",
+      "sourceSprite": "shield_coffin_01",
+      "crop": [
+        7,
+        14,
+        67,
+        129
+      ],
+      "portraitSha256": "07f1a56a5aaee6f3f64bae9fc5a0eb0c13d8e3b188c2c9d7dc7c78f4f5db441f",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-tower-shield",
+      "icon": "gfx/ui/items/shields/inventory_shield_tower_01.png",
+      "iconSha256": "9e1edde6a900c7e7f24c593f78bc238b6d09490c236b448a555913ab75361e6d",
+      "sourceSprite": "shield_tower_01",
+      "crop": [
+        8,
+        15,
+        66,
+        129
+      ],
+      "portraitSha256": "4c85db2fcee3e4c90064fa56de7d38a36eb05852dc679959256621790273af69",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-faction-heater-shield",
+      "icon": "gfx/ui/items/shields/inventory_faction_shield_heater_01_01.png",
+      "iconSha256": "4eb897dfdfddfdae60b2868a8eab5a83148d505ac504d35f945b2371d23508d3",
+      "sourceSprite": "faction_shield_heater_01_01",
+      "crop": [
+        5,
+        17,
+        68,
+        122
+      ],
+      "portraitSha256": "e77eea411593ba6fea90f16c44691a99f4f28c27c8f3c7e2f4d8d90d168ea18d",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-faction-kite-shield",
+      "icon": "gfx/ui/items/shields/inventory_faction_shield_kite_01_01.png",
+      "iconSha256": "707f769478a954e64502b2bb944e15b4cd9ccb36a45a8652e15745c41e651841",
+      "sourceSprite": "faction_shield_kite_01_01",
+      "crop": [
+        0,
+        3,
+        70,
+        134
+      ],
+      "portraitSha256": "4d3e462e0a861e4b6e4c6e71f48c7d46c79c52a24fc5d7e176791c160b99a377",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-faction-wooden-shield",
+      "icon": "gfx/ui/items/shields/inventory_faction_shield_round_01_01.png",
+      "iconSha256": "6870cd564027bcadf3ef2a9a70dfc3015d7251755bd4d46792f1e384aa4c712d",
+      "sourceSprite": "faction_shield_round_01_01",
+      "crop": [
+        2,
+        33,
+        70,
+        116
+      ],
+      "portraitSha256": "bc49a790009c440bf7e4f643e28c828e882bc80408acd219d0ab63d4694f569b",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-gilders-embrace-shield",
+      "icon": "gfx/ui/items/shields/inventory_legendary_shield_01.png",
+      "iconSha256": "598f3ccd78abb355482fff287aec5bf659cf8ef1572090e03bc2580d8d47e397",
+      "sourceSprite": "shield_legendary_01",
+      "crop": [
+        0,
+        12,
+        70,
+        134
+      ],
+      "portraitSha256": "7632b31e831f9c1151313ee0464c5e41e557c76a6e9f7c73cbbd30e0a1dafe89",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-bandit-heater-shield",
+      "icon": "gfx/ui/items/shields/inventory_bandits_shield_01_named_01.png",
+      "iconSha256": "405016ec464c146300495795ef2a64b4e92f2f79edc3b56fe67d3c5f37f294e8",
+      "sourceSprite": "shield_bandit_01_named_01",
+      "crop": [
+        0,
+        3,
+        70,
+        140
+      ],
+      "portraitSha256": "5af46dd1112e6ec760dfa58c0b68048b803936862c892588db0e970ec65f9c98",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-bandit-kite-shield",
+      "icon": "gfx/ui/items/shields/inventory_bandits_shield_02_named_01.png",
+      "iconSha256": "47f94221ab4dcb2295da9a39d04a793dfbe0439cf7fd32caf0c77b9fd81e123f",
+      "sourceSprite": "shield_bandit_02_named_01",
+      "crop": [
+        0,
+        0,
+        70,
+        140
+      ],
+      "portraitSha256": "5edd9af79212e15fd638fd66a9955caab64edb20635994b9e49c92ec36019409",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-dragon-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_01.png",
+      "iconSha256": "4473a3125f74b34f56e852712c3bdf5e023cc7fb6408e644ecad053666b847b2",
+      "sourceSprite": "shield_named_01",
+      "crop": [
+        0,
+        0,
+        70,
+        140
+      ],
+      "portraitSha256": "3fd8c595a3c1bd44f6c02009164d8aa69218fb88130e44fbbab539f1a60c6130",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-full-metal-heater-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_05.png",
+      "iconSha256": "324aa6ff5685da157cb19a3a4214135e34f6af4ec321c36064a77cc5c3b063e5",
+      "sourceSprite": "shield_named_05",
+      "crop": [
+        0,
+        2,
+        70,
+        140
+      ],
+      "portraitSha256": "cd5ac70522b1e6a33d55ea96d225356d4a6f96018b0f43ba80d03036055ef8ec",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-golden-round-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_04.png",
+      "iconSha256": "0d852dc581770f5d32031b52af6812ac152bad971d4448bff498f3f5b0f2190d",
+      "sourceSprite": "shield_named_04",
+      "crop": [
+        0,
+        9,
+        70,
+        130
+      ],
+      "portraitSha256": "47cfc323044583d17bef6edeb887327f5edb2aeb7af0b1c121fd80d0d43731c0",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-lindwurm-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_07.png",
+      "iconSha256": "85669bf6342d03b576de37f3183f8305f1c964f1bf36a39d152e1a19e3a77f8b",
+      "sourceSprite": "shield_named_07",
+      "crop": [
+        0,
+        18,
+        70,
+        130
+      ],
+      "portraitSha256": "18b2ddf0f7a8596d7e981faf564cd0e075398abfb4b10431bc4fd2b55df96460",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-red-white-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_06.png",
+      "iconSha256": "dec019ed95836a9baf973d83d487182c0abf78c52a23e873ef0cf2c43fa6f07e",
+      "sourceSprite": "shield_named_06",
+      "crop": [
+        0,
+        0,
+        70,
+        140
+      ],
+      "portraitSha256": "e77f4d9c3c7eb98df2d1fc46a95c11b5e7a4fcac254151a2ce97a1825e3202f6",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-rider-on-horse-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_02.png",
+      "iconSha256": "02ae67025d29e70fd0db756e5dd87cf605517e26aa25bdeca1e5c791332f38bf",
+      "sourceSprite": "shield_named_02",
+      "crop": [
+        0,
+        0,
+        70,
+        140
+      ],
+      "portraitSha256": "b947853cebd6e0a0708b4de15f5228751bf245fb40c5c3e5206d3d52b1387c08",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-sipar-shield",
+      "icon": "gfx/ui/items/shields/inventory_metal_round_shield_03_named_01.png",
+      "iconSha256": "4f518c4a23d4614c75506f185e7e7c14e2f5fb1b340d594ae3143d54e744e65d",
+      "sourceSprite": "shield_metal_round_03_named_01",
+      "crop": [
+        0,
+        6,
+        70,
+        131
+      ],
+      "portraitSha256": "90c727a8e834b6be417e9bf3989814a599c5344814020d99cef9a5dd80d4a276",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-undead-heater-shield",
+      "icon": "gfx/ui/items/shields/inventory_undead_shield_01_named_01.png",
+      "iconSha256": "05e135cdd5bdee1964b82015a1ed6bba7145ff016d39dea5a40981a29361b29f",
+      "sourceSprite": "shield_undead_01_named_01",
+      "crop": [
+        0,
+        3,
+        70,
+        139
+      ],
+      "portraitSha256": "1408da2666f98e2c73d9f55a7855875b3b2cb89355e5e535a8cea263e58ba839",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-undead-kite-shield",
+      "icon": "gfx/ui/items/shields/inventory_undead_shield_02_named_01.png",
+      "iconSha256": "43d422d954763be15479226537f7a147c225f4525bd17542c3c929c9cb7ee4b1",
+      "sourceSprite": "shield_undead_02_named_01",
+      "crop": [
+        0,
+        0,
+        70,
+        140
+      ],
+      "portraitSha256": "4b66d51d24798598f19559f94d8177d7a7068a34eb2a996733842c9abf7d9f82",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-named-wing-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_03.png",
+      "iconSha256": "c8b6d6808df85e81bf851b86f79ec434ef6bba1c63dd39881d0f8d72208bdf55",
+      "sourceSprite": "shield_named_03",
+      "crop": [
+        0,
+        0,
+        70,
+        140
+      ],
+      "portraitSha256": "bbff82f2b26470a960118a918e44d6de87c8b23e5a6c89dec63b2faf064f00c9",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-metal-round-shield",
+      "icon": "gfx/ui/items/shields/inventory_metal_round_shield_01.png",
+      "iconSha256": "d72d140d13f13bf1fa10c32376c6e9df79b485a415671cf01f7919ba6f165059",
+      "sourceSprite": "shield_metal_round_01",
+      "crop": [
+        1,
+        29,
+        70,
+        119
+      ],
+      "portraitSha256": "a5b052859bef64e0811c6752bfe3a2de63ecc93c3b15e54972e1edb7f681cf6b",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-craftable-kraken-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_09.png",
+      "iconSha256": "56c5c25d2b4465e13a88960dde970e697ec3397e8989dbb2ddbdf91b6666679d",
+      "sourceSprite": "shield_named_09",
+      "crop": [
+        0,
+        17,
+        70,
+        126
+      ],
+      "portraitSha256": "9891a80b7cc2314210077ba4615f525db42634df80edee26da7028d5d5527549",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-craftable-lindwurm-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_07.png",
+      "iconSha256": "85669bf6342d03b576de37f3183f8305f1c964f1bf36a39d152e1a19e3a77f8b",
+      "sourceSprite": "shield_named_07",
+      "crop": [
+        0,
+        18,
+        70,
+        130
+      ],
+      "portraitSha256": "18b2ddf0f7a8596d7e981faf564cd0e075398abfb4b10431bc4fd2b55df96460",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-craftable-schrat-shield",
+      "icon": "gfx/ui/items/shields/inventory_named_shield_08.png",
+      "iconSha256": "be379f74f0c8ff69f92c70ef4b11d2c7be731981b47c64b537dd4638ce24212a",
+      "sourceSprite": "shield_named_08",
+      "crop": [
+        0,
+        8,
+        70,
+        138
+      ],
+      "portraitSha256": "a49c1611ead133fd95afc2d23832369ae8b6a9b70ec68d2a3bf1d6afcfc33046",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-wooden-shield-old",
+      "icon": "gfx/ui/items/shields/inventory_shield_round_enemy_01.png",
+      "iconSha256": "b8e6658d21a982f9bc8087c688cda6ba16a89fa89b4ce08842c4647d37455885",
+      "sourceSprite": "shield_round_enemy_01",
+      "crop": [
+        1,
+        33,
+        69,
+        116
+      ],
+      "portraitSha256": "aec303365c9c3cbeec07d5422aa782473ba6c94803133befde91526cec297cd5",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-worn-heater-shield",
+      "icon": "gfx/ui/items/shields/inventory_zombie_heater_shield_01.png",
+      "iconSha256": "36cc3f8282741a533ffd194eeefca5e9db1494d5969bf93a7a43869d9b2c2789",
+      "sourceSprite": "shield_zombie_01",
+      "crop": [
+        4,
+        17,
+        67,
+        122
+      ],
+      "portraitSha256": "67db08c1265674d170726723fb0a9c11e084a14929229df379269f136ed34de3",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    },
+    {
+      "id": "bb-worn-kite-shield",
+      "icon": "gfx/ui/items/shields/inventory_kite_shield_enemy_01.png",
+      "iconSha256": "e0c1532b7389c8cab5646b5d4065b7026fdbd57422e0626b6d01ba1d91c90183",
+      "sourceSprite": "shield_kite_enemy_01",
+      "crop": [
+        1,
+        8,
+        63,
+        137
+      ],
+      "portraitSha256": "5f3ef647739dd1bb2e962cc18f521d2da1c539b375e6f2696832bbc182ec478d",
+      "transform": "Alpha-trim inventory art, preserve aspect ratio within 46x72 offhand layer; worn brushes unavailable in pinned source"
+    }
+  ]
+}

@@ -36,6 +36,8 @@ const CORE = [
   './src/frontier-items.js',
   './src/dlc-items.js',
   './src/dlc-art.js',
+  './src/dlc-shields.js',
+  './src/dlc-shield-art.js',
   './src/equipment-catalog.js',
   './src/geography.js',
   './src/mount-events.js',
