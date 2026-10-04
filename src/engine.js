@@ -1183,8 +1183,9 @@ function roamingBand(state, band) {
   const pool = tier ? worldEnemyTemplates(band.start.x, band.start.y, tier) : band.enemies;
   const offset = Math.floor(random() * pool.length);
   const committed=worldSkirmishFor(state,band.id);
-  const committedSize=committed?Math.max(...committed.bTroops)+1:0;
-  const enemies = Array.from({ length: committed?committedSize:enemyRosterSize(state,tier,count) }, (_, index) => { const enemy = { ...pool[(index + offset) % pool.length] }; return regionalOutfit(enemy, `${state.seed}:${band.id}:${spawnCycle}`, index, band.start.x, band.start.y, tier); });
+  const committedTroops=committed?.bTroops??(state.battle?.campId===band.id?state.battle.patrolAssist?.enemyTroops:null);
+  const committedSize=committedTroops?Math.max(...committedTroops)+1:0;
+  const enemies = Array.from({ length: committedTroops?committedSize:enemyRosterSize(state,tier,count) }, (_, index) => { const enemy = { ...pool[(index + offset) % pool.length] }; return regionalOutfit(enemy, `${state.seed}:${band.id}:${spawnCycle}`, index, band.start.x, band.start.y, tier); });
   if (progression.cavalry && enemies.length) enemies[0].mount = rareEnemyMount(state.seed, band.id, spawnCycle, band.start.x, band.start.y);
   const position = activeBandProgress(state, band);
   const target = position.behavior === 'raiding-caravan' ? getCaravans(state).find(caravan => caravan.id === position.targetId
@@ -1208,6 +1209,21 @@ function survivingWorldEnemies(state,id,cycle,enemies) {
   return enemies.map((enemy,index)=>Object.defineProperty({...enemy},'worldIndex',{value:index})).filter(enemy=>!losses||losses.cycle!==cycle||enemy.worldIndex>=losses.size||losses.survivors.includes(enemy.worldIndex));
 }
 export function getFactionPatrols(state) { return factionPatrols(state,SETTLEMENTS); }
+export function getJoinablePatrolBattle(state,id) {
+ const patrol=getFactionPatrols(state).find(p=>p.id===id&&p.active&&p.playerRelation==='ally');
+ const fight=patrol&&worldSkirmishFor(state,id);
+ return fight&&fight.aId===id&&['band','undead-host'].includes(fight.bKind)&&fight.endHour>worldHours(state)?{patrol,fight}:null;
+}
+export function joinPatrolBattle(state,id) {
+ const blocked=actionBlocked(state);if(blocked)return blocked;
+ const joint=getJoinablePatrolBattle(state,id);
+ if(!joint)return result(false,'That allied battle has already ended or is unavailable.');
+ if(distance(state.position,joint.patrol)>CAMP_RADIUS||state.destination){
+  const travel=travelTo(state,joint.patrol.x,joint.patrol.y);
+  if(travel.ok)state.destinationAction={type:'patrol',id};return travel;
+ }
+ return startBattle(state,joint.fight.bId,{patrolId:id});
+}
 function advanceSoldiers(state) {
   const currentHostile=id=>[...getRoamingBands(state),...getUndeadEncounters(state).filter(e=>e.kind==='undead-host')].find(b=>b.id===id);
   advanceFactionSimulation(state,{settlements:SETTLEMENTS,getItem,servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable,hostiles:()=>[...getRoamingBands(state),...getUndeadEncounters(state).filter(e=>e.kind==='undead-host')],currentHostile,
@@ -1396,7 +1412,7 @@ export function activateMapTarget(state, type, id) {
     if (travel.ok) state.destinationAction = { type: encounter.kind, id };
     return travel;
   }
-  if(type==='patrol'){const patrol=getFactionPatrols(state).find(p=>p.id===id);return result(Boolean(patrol),patrol?`${patrol.name} are ${patrol.playerRelation} soldiers.`:'Patrol unavailable.');}
+  if(type==='patrol'){if(getJoinablePatrolBattle(state,id))return joinPatrolBattle(state,id);const patrol=getFactionPatrols(state).find(p=>p.id===id);return result(Boolean(patrol),patrol?`${patrol.name} are ${patrol.playerRelation} soldiers.`:'Patrol unavailable.');}
   if (type === 'caravan' && getQuestEncounter(state)?.id === id) type = 'rescue';
   if (type === 'caravan') {
     const caravan = getCaravans(state).find(entry => entry.id === id && (entry.status === 'en-route' || entry.status === 'under-attack'));
@@ -1537,6 +1553,11 @@ function advanceClock(state, hours) {
       state.hour = 0;
       atMidnight(state);
     }
+    if (state.destinationAction?.type === 'patrol') {
+      const joint=getJoinablePatrolBattle(state,state.destinationAction.id);
+      if(joint)state.destination={x:joint.patrol.x,y:joint.patrol.y};
+      else {state.destination=null;state.destinationAction=null;record(state,'The allied battle has ended before the company could join.');}
+    }
     if (state.destinationAction?.type === 'caravan') {
       const caravan = getCaravans(state).find(entry => entry.id === state.destinationAction.id && (entry.status === 'en-route' || entry.status === 'under-attack'));
       if (caravan) state.destination = { x: caravan.x, y: caravan.y };
@@ -1638,6 +1659,7 @@ export function tick(state, hours) {
       engagement = camp && !camp.cleared && camp.generation === arrivedAction.generation
         ? startBattle(state, arrivedAction.id) : result(false, 'That camp is no longer available to attack.');
     }
+    else if (!engagement && arrivedAction?.type==='patrol') engagement=joinPatrolBattle(state,arrivedAction.id);
     else if (!engagement && ['rescue','deserters','bounty'].includes(arrivedAction?.type)) engagement = getQuestEncounter(state)?.id === arrivedAction.id
       ? startBattle(state, arrivedAction.id) : result(false, 'The caravan is no longer awaiting rescue.');
     if (!engagement && state.pursuit) {
@@ -1650,6 +1672,9 @@ export function tick(state, hours) {
       } else state.destination = { x: target.x, y: target.y };
     }
     remaining -= step;
+    if(state.destinationAction?.type==='patrol'&&!getJoinablePatrolBattle(state,state.destinationAction.id)){
+      state.destination=null;state.destinationAction=null;record(state,'The allied battle has ended before the company could join.');
+    }
     if (engagement) break;
   }
   applyCompanyAutomation(state);
@@ -2519,7 +2544,7 @@ function shieldWallDeployment(company) {
   for (const unit of rear) place(unit, cells(rearColumns));
 }
 
-export function startBattle(state, encounterId, {enemyOpening=false}={}) {
+export function startBattle(state, encounterId, {enemyOpening=false,patrolId=null}={}) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   const undead = getUndeadEncounters(state).find(e => e.id === encounterId);
@@ -2527,9 +2552,12 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
   const camp = undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
   if (!camp) return result(false, 'That hostile group is no longer here.');
   if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${camp.respawnHours} hours.`);
-  if (state.destination || distance(state.position, camp) > (encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
+  const npcFight=worldSkirmishFor(state,encounterId);
+  const assistance=npcFight&&getJoinablePatrolBattle(state,patrolId??npcFight.aId);
+  if(patrolId&&(!assistance||assistance.fight.bId!==encounterId))return result(false,'That allied battle is no longer available.');
+  const patrolAssist=assistance?{id:assistance.patrol.id,cycle:assistance.fight.aCycle,troops:[...assistance.fight.aTroops],enemyTroops:[...assistance.fight.bTroops]}:null;
+  if (state.destination || distance(state.position,patrolId?assistance.patrol:camp) > (patrolId?CAMP_RADIUS:encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
   if (!getBattleRoster(state).length) return result(false, 'Move a brother from reserve into the formation before fighting.');
-  cancelWorldSkirmish(state,encounterId);
   applyCompanyAutomation(state);
   if(['camp','band'].includes(encounterType)){state.discoveryRolls??={};state.discoveryRolls[camp.id]={cycle:camp.generation??camp.spawnCycle,...discoveryBonuses(state,camp)};}
   refillThrowingAmmo(state);
@@ -2562,18 +2590,18 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     }];
   });
   if (['shield-wall','skirmish'].includes(state.tactic)) shieldWallDeployment(company);
-  const enemies = camp.enemies.map((enemy, index) => {
-    const rank = camp.veteranRank ?? 0;
+  const makeEnemyUnit = (enemy, index, unitDifficulty=camp.difficulty, unitRank=camp.veteranRank??0, undeadUnit=Boolean(undead)) => {
+    const rank = unitRank;
     const rareMount = getItem(enemy.mount);
     const gear = { armor: enemy.armor, attachment: enemy.attachment ?? null, attachment2:null, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield, mount: rareMount?.id ?? null };
     const shieldDefense = getItem(gear.shield)?.defense ?? 0;
-    const role = enemyRoleBonuses(enemy, CAMP_BY_ID.has(camp.id) ? 0 : camp.difficulty);
+    const role = enemyRoleBonuses(enemy, CAMP_BY_ID.has(camp.id) ? 0 : unitDifficulty);
     const bonus = key => (getItem(gear.armor)?.statBonuses?.[key] ?? 0) + (getItem(gear.helmet)?.statBonuses?.[key] ?? 0);
-    const baseHp = 25 + camp.difficulty * 12 + rank * 8 + ((enemy.troopIndex ?? index) === 0 && camp.difficulty === 3 ? 12 : 0);
+    const baseHp = 25 + unitDifficulty * 12 + rank * 8 + ((enemy.troopIndex ?? index) === 0 && unitDifficulty === 3 ? 12 : 0);
     const hp=enemy.champion?Math.ceil(baseHp*1.4):baseHp,championSkill=enemy.champion?12:0,championDefense=enemy.champion?8:0;
     return {
       ...(enemy.champion?{champion:true,championItemId:enemy.championItemId}:{}),
-      id: `enemy-${(enemy.troopIndex ?? index) + 1}`, ...(undead ? { undeadTraitsVersion: 1, troopIndex: enemy.troopIndex } : {}), name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + DEPLOYMENT_ROW_OFFSET + FRONT_FORMATION[index % 12],
+      id: `enemy-${(enemy.troopIndex ?? index) + 1}`, ...(undeadUnit ? { undeadTraitsVersion: 1, troopIndex: enemy.troopIndex } : {}), name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + DEPLOYMENT_ROW_OFFSET + FRONT_FORMATION[index % 12],
       hp: enemy.savedDamage?.hp ?? hp, maxHp: hp, bodyArmor: enemy.savedDamage?.bodyArmor ?? armorMaximum(gear.armor), attachmentArmor: armorMaximum(gear.attachment), attachment2Armor:0, maxAttachment2Armor:0, headArmor: enemy.savedDamage?.headArmor ?? armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: armorMaximum(gear.attachment), maxHeadArmor: armorMaximum(gear.helmet),
       shieldDurability: enemy.savedDamage?.shieldDurability ?? shieldMaximum(gear.shield), maxShieldDurability: shieldMaximum(gear.shield),
@@ -2583,14 +2611,15 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: role.perks, adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
       seed: hashSeed(`${state.seed}:${camp.id}:${enemy.troopIndex ?? index}`), alive: true,
-      morale: undead ? 60 : 55 + camp.difficulty * 8, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
+      morale: undeadUnit ? 60 : 55 + unitDifficulty * 8, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
       spearwallActive: false, riposteActive: false, stunnedTurns: 0, stunProtected: false, pendingBerserkAp: 0,
-      meleeSkill: 30 + championSkill + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill, rangedSkill: 28 + championSkill + camp.difficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill,
-      meleeDefense: 2 + championDefense + camp.difficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),
-      rangedDefense: 2 + championDefense + camp.difficulty * 2 + rank * 2 + (getItem(gear.shield)?.rangedDefense ?? shieldDefense) + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0) + attachmentBonus(gear,'rangedDefenseBonus'),
-      maxFatigue: 85 + (enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + camp.difficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (enemy.champion?20:0) + camp.difficulty * 8 + rank * 4 + bonus('resolve'),
+      meleeSkill: 30 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill, rangedSkill: 28 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill,
+      meleeDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),
+      rangedDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + (getItem(gear.shield)?.rangedDefense ?? shieldDefense) + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0) + attachmentBonus(gear,'rangedDefenseBonus'),
+      maxFatigue: 85 + (enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + unitDifficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (enemy.champion?20:0) + unitDifficulty * 8 + rank * 4 + bonus('resolve'),
     };
-  });
+  };
+  const enemies=camp.enemies.map((e,i)=>makeEnemyUnit(e,i));
   const jointBattle = encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && state.contract?.type === 'assault'
     && state.contract.campId === camp.id && state.contract.campGeneration === camp.generation && !huntComplete(state);
   // Additional ranged ranks cannot occupy q=13, the camp's rear palisade.
@@ -2608,15 +2637,21 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     enemyOccupied.add(`${unit.q},${unit.r}`);
   }
   const allies = [];
-  if (jointBattle) for (let index = 0; index < 3; index++) {
+  if (jointBattle||patrolAssist) for (let index = 0; index < (patrolAssist?patrolAssist.troops.length:3); index++) {
     const allyRank = camp.veteranRank ?? 0;
     const gear = { armor: 'patched-coat', attachment: null, attachment2:null, helmet: 'cloth-hood',
       weapon: ['arming-sword', 'spear', 'bludgeon'][index], shield: index === 1 ? 'round-shield' : 'buckler', mount: null };
     const occupied = new Set([...company, ...enemies, ...allies].map(unit => `${unit.q},${unit.r}`));
     const edgeRows=hashSeed(`${state.seed}:${camp.id}:ally-edge`)%2?[19,20]:[4,3];
-    const point = edgeRows.flatMap(r => [9,10,8,7,6].map(q => ({q,r})))
+    const point = [...edgeRows,...(edgeRows[0]>10?[18,21,17,22]:[5,2,6,1])].flatMap(r => [9,10,8,7,6].map(q => ({q,r})))
       .find(hex => passableHex(hex, field) && !occupied.has(`${hex.q},${hex.r}`));
     if(!point)return result(false,'No room to deploy allied reinforcements.');
+    if(patrolAssist){
+      const soldier=makeEnemyUnit(assistance.patrol.enemies[index],index,assistance.patrol.difficulty,0,false);
+      delete soldier.undeadTraitsVersion;delete soldier.troopIndex;
+      Object.assign(soldier,{id:`ally-${index+1}`,side:'company',ally:true,q:point.q,r:point.r,morale:70});
+      allies.push(soldier);continue;
+    }
     const shield = shieldMaximum(gear.shield);
     allies.push({ id: `ally-${index + 1}`, name: encounterType === 'rescue' ? ['Caravan Guard', 'Wagon Spearman', 'Caravan Veteran'][index]
       : ['Militia Captain', 'Militia Spearman', 'Militia Fighter'][index], side: 'company', ally: true,
@@ -2634,6 +2669,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
     ...(undead ? { crisisContext: { crisisId: state.ashenWinter.crisisId, frontId: undead.frontId, townId: undead.townId, forceSeed: undead.force.seed, generation: undead.force.generation } } : {}),
+    ...(patrolAssist?{patrolAssist}:{}),
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
@@ -2654,6 +2690,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
   if(battle.enemyOpening)battle.turnOrder.sort((a,b)=>Number(battle.units.find(u=>u.id===b).side==='enemy')-Number(battle.units.find(u=>u.id===a).side==='enemy'));
   battle.activeId = battle.turnOrder[0];
   battleLog(battle, battle.enemyOpening?`${camp.name} catch the company. Enemies act first in the opening round.`:`The company engages ${camp.name}.`);
+  cancelWorldSkirmish(state,encounterId);
   state.battle = battle;
   state.destination = null;
   state.destinationAction = null;
@@ -4868,6 +4905,19 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     const remaining = battle.units.filter(u => u.side === 'enemy' && u.alive);
     recordAshenCasualties(state, battle.campId, remaining.map(u => u.troopIndex), Object.fromEntries(remaining.map(u => [u.troopIndex, { hp: u.hp, bodyArmor: u.bodyArmor, headArmor: u.headArmor, shieldDurability: u.shieldDurability }])));
   }
+  if(battle.patrolAssist){
+    const a=battle.patrolAssist,p=state.factionPatrols[a.id],definition=patrolDefinitions(SETTLEMENTS).find(d=>d.id===a.id);
+    p.troops=a.troops.filter((_,i)=>battle.units.find(u=>u.id===`ally-${i+1}`)?.alive);
+    p.cooldownUntil=worldHours(state)+6;p.targetId=null;p.behavior=p.troops.length?'touring':'reforming';
+    if(!p.troops.length){p.defeatedUntil=worldHours(state)+72;p.x=definition.home.x;p.y=definition.home.y;}
+    p[victory?'wins':'losses']++;
+    state.factionReports.push({patrolId:a.id,factionId:definition.factionId,opponentId:battle.campId,opponentName:battle.encounterName,kind:battle.encounterType==='band'?'band':'undead-host',outcome:victory?'victory':'defeat',losses:a.troops.length-p.troops.length,hour:worldHours(state)});
+    state.factionReports=state.factionReports.slice(-24);
+    if(!victory&&battle.encounterType==='band'){
+      const enemyUnits=battle.units.filter(u=>u.side==='enemy');
+      state.worldLosses[battle.campId]={cycle:state.bands[battle.campId].spawnCycle,size:Math.max(...a.enemyTroops)+1,survivors:a.enemyTroops.filter((_,i)=>enemyUnits[i].alive||enemyUnits[i].escaped)};
+    }
+  }
   refillThrowingAmmo(state);
   state.gameOver = state.party.length === 0;
   state.encounterGraceUntil = Math.max(state.encounterGraceUntil ?? 0, worldHours(state) + ENCOUNTER_GRACE_HOURS);
@@ -4917,6 +4967,19 @@ function validateBattle(input, party, worldState) {
     : getCampSites(worldState).find(camp=>camp.id===input.campId));
   if (undead) assert(recordObject(input.crisisContext) && input.crisisContext.crisisId === worldState.ashenWinter.crisisId && input.crisisContext.frontId === undead.frontId && input.crisisContext.townId === undead.townId && input.crisisContext.forceSeed === undead.force.seed && input.crisisContext.generation === undead.force.generation, 'crisis battle context');
   else assert(input.crisisContext === undefined, 'unexpected crisis context');
+  const patrolAssist=input.patrolAssist;
+  if(patrolAssist!==undefined){
+    const d=patrolDefinitions(SETTLEMENTS).find(d=>d.id===patrolAssist?.id),p=d&&worldState.factionPatrols[d.id];
+    assert(recordObject(patrolAssist)&&Object.keys(patrolAssist).sort().join(',')==='cycle,enemyTroops,id,troops'&&d&&getFactionPatrols(worldState).find(a=>a.id===d.id)?.playerRelation==='ally'
+      &&['band','undead-host'].includes(encounterType)&&p.spawnCycle===patrolAssist.cycle&&JSON.stringify(p.troops)===JSON.stringify(patrolAssist.troops)
+      &&Array.isArray(patrolAssist.enemyTroops)&&patrolAssist.enemyTroops.length>0&&new Set(patrolAssist.enemyTroops).size===patrolAssist.enemyTroops.length
+      &&patrolAssist.enemyTroops.every(i=>validCount(i)&&i<(encounterType==='band'?20:undead.force.size)),'battle patrol assistance');
+  }
+  if(patrolAssist){
+    const current=encounterType==='band'?getRoamingBands(worldState).find(b=>b.id===input.campId)?.enemies:undead.enemies;
+    assert(JSON.stringify(patrolAssist.enemyTroops)===JSON.stringify(current?.map(e=>e.worldIndex??e.troopIndex))
+      &&input.units?.filter(u=>u.side==='enemy').length===patrolAssist.enemyTroops.length,'battle patrol enemy roster');
+  }
   const encounterName = input.encounterName ?? encounter.name;
   if(input.enemyOpening!==undefined)assert(typeof input.enemyOpening==='boolean'&&(!input.enemyOpening||encounterType==='band'),'enemy opening');
   const difficulty = input.difficulty ?? encounter.difficulty ?? 0;
@@ -4974,7 +5037,7 @@ function validateBattle(input, party, worldState) {
   assert(input.enemyScalingVersion===undefined||input.enemyScalingVersion===1,'battle enemy scaling rules');
   const enemyLimit=input.enemyScalingVersion===1?20:12;
   const validEnemyId=id=>new RegExp(`^enemy-([1-9]|1[0-9]${enemyLimit===20?'|20':''})$`).test(id)&&Number(id.slice(6))<=enemyLimit;
-  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + 3 + enemyLimit, 'battle units');
+  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + (patrolAssist?9:3) + enemyLimit, 'battle units');
   assert(input.units.filter(u=>u.side==='enemy').length<=enemyLimit,'battle enemy count');
   const ids = new Set();
   const partyIds = new Set(party.map(person => person.id));
@@ -4989,7 +5052,7 @@ function validateBattle(input, party, worldState) {
     if (undead && unit.side === 'enemy') assert(unit.undeadTraitsVersion === 1 && undead.force.troops.includes(unit.troopIndex) && unit.id === `enemy-${unit.troopIndex + 1}` && unit.morale === 60, 'undead troop');
     else assert(unit.undeadTraitsVersion === undefined && unit.troopIndex === undefined, 'unexpected undead traits');
     assert(unit.ally === undefined || unit.ally === true, 'battle ally marker');
-    assert(unit.ally ? questAllies && unit.side === 'company' && /^ally-[1-3]$/.test(unit.id)
+    assert(unit.ally ? (questAllies||patrolAssist) && unit.side === 'company' && new RegExp(`^ally-[1-${patrolAssist?patrolAssist.troops.length:3}]$`).test(unit.id)
       : unit.side === 'company' ? partyIds.has(unit.id) : validEnemyId(unit.id), 'battle unit ownership');
     assert(typeof unit.name === 'string' && unit.name.length > 0 && unit.name.length <= 80, 'battle unit name');
     assert(passableHex(unit, field), 'battle hex');
@@ -5009,7 +5072,7 @@ function validateBattle(input, party, worldState) {
     if (partyMember) assert((unit.equipment.mount ?? null) === (partyMember.equipment.mount ?? null), 'battle mount owner');
     const perks = unit.perks ?? partyMember?.perks ?? [];
     assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && (PERK_BY_ID.has(id) || REMOVED_PERK_MIN_LEVEL.has(id))) && new Set(perks).size === perks.length, 'battle perks');
-    assert(unit.side === 'enemy' ? perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? perks.length === 0 : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
+    assert(unit.side === 'enemy' ? perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||getFactionPatrols(worldState).find(a=>a.id===patrolAssist.id).difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
     const adaptation = unit.adaptation ?? 0;
     const berserkRound = unit.berserkRound ?? 0;
     const frenzyUntilRound = unit.frenzyUntilRound ?? 0;
@@ -5026,7 +5089,7 @@ function validateBattle(input, party, worldState) {
     assert(validCount(turnStartedRound) && turnStartedRound <= input.round, 'battle turn started round');
     assert(validCount(freeSwapRound) && freeSwapRound <= input.round && validCount(freeHealRound) && freeHealRound <= input.round, 'battle free actions');
     assert(validCount(formationMovedRound) && formationMovedRound <= input.round && (aiTargetId === null || partyIds.has(aiTargetId)
-      || /^ally-[1-3]$/.test(aiTargetId) || validEnemyId(aiTargetId)), 'battle AI state');
+      || new RegExp(`^ally-[1-${patrolAssist?patrolAssist.troops.length:3}]$`).test(aiTargetId) || validEnemyId(aiTargetId)), 'battle AI state');
     assert(validCount(movementCredit) && movementCredit <= Math.max(0, movementBudget(unit, { mountBalanceVersion,attachmentRulesVersion:input.attachmentRulesVersion }) - 2) * 2, 'battle movement credit');
     assert(recordObject(reserveEquipment) && (reserveEquipment.weapon === null || getItem(reserveEquipment.weapon)?.slot === 'weapon') && (reserveEquipment.shield === null || getItem(reserveEquipment.shield)?.slot === 'shield') && (!getItem(reserveEquipment.weapon)?.twoHanded || reserveEquipment.shield === null), 'battle reserve equipment');
     assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'battle accessories');
@@ -5141,7 +5204,7 @@ function validateBattle(input, party, worldState) {
   assert(focusTargetId === null || units.some(unit => unit.side === 'enemy' && unit.id === focusTargetId), 'battle focus target');
   const fieldedIds=new Set(getBattleRoster(worldState).map(p=>p.id));
   assert(units.filter(unit => unit.side === 'company' && !unit.ally).length === fieldedIds.size && units.filter(unit=>unit.side==='company'&&!unit.ally).every(unit=>fieldedIds.has(unit.id)), 'battle company roster');
-  assert(units.filter(unit => unit.ally).length === (questAllies ? 3 : 0), 'battle allied roster');
+  assert(units.filter(unit => unit.ally).length === (patrolAssist?patrolAssist.troops.length:questAllies ? 3 : 0), 'battle allied roster');
   assert(units.filter(unit => unit.side === 'company' && !unit.ally).every(unit => party.some(person => person.id === unit.id)), 'battle company roster');
   const formationAdvanceInput = input.formationAdvance ?? null;
   assert(['advance-formation', 'shield-wall'].includes(tactic) ? recordObject(formationAdvanceInput) : formationAdvanceInput === null, 'battle formation advance');
@@ -5240,6 +5303,7 @@ function validateBattle(input, party, worldState) {
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
   return {
     ...(undead ? { crisisContext: { ...input.crisisContext } } : {}),
+    ...(patrolAssist?{patrolAssist:structuredClone(patrolAssist)}:{}),
     id: input.id, campId: input.campId, ...(input.enemyOpening===undefined?{}:{enemyOpening:input.enemyOpening}), encounterType, encounterName, difficulty, campGeneration, famedDrop, ...(input.mountReward===undefined?{}:{mountReward}), tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
     ...(input.enemyTacticsVersion===undefined?{}:{enemyTacticsVersion:1}),
     ...(input.enemyAdaptiveRulesVersion===undefined?{}:{enemyAdaptiveRulesVersion:1,enemyTacticalState:{...enemyTacticalState}}),
@@ -5557,13 +5621,14 @@ export function validateSave(input) {
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const destinationAction = input.destinationAction ?? null;
   if (destinationAction !== null) {
-    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan', 'rescue', 'deserters', 'bounty', ...UNDEAD_TYPES].includes(destinationAction.type), 'destination action');
+    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan', 'patrol', 'rescue', 'deserters', 'bounty', ...UNDEAD_TYPES].includes(destinationAction.type), 'destination action');
     const target = UNDEAD_TYPES.includes(destinationAction.type) ? getUndeadEncounters(input).find(e => e.id === destinationAction.id) : destinationAction.type === 'town' ? (TOWN_BY_ID.has(destinationAction.id) && townBlocked(input, destinationAction.id) && input.destination?.x !== TOWN_BY_ID.get(destinationAction.id).x ? exteriorPoint(TOWN_BY_ID.get(destinationAction.id), SETTLEMENTS) : TOWN_BY_ID.get(destinationAction.id))
+      : destinationAction.type === 'patrol' ? getJoinablePatrolBattle(input,destinationAction.id)?.patrol
       : destinationAction.type === 'camp' ? getCampSites(input).find(site => site.id === destinationAction.id)
       : ['rescue','deserters','bounty'].includes(destinationAction.type) ? getQuestEncounter(input)?.id === destinationAction.id ? getQuestEncounter(input) : null
       : getCaravans(input).find(caravan => caravan.id === destinationAction.id && (caravan.status === 'en-route' || caravan.status === 'under-attack'));
     assert(target && input.destination && pursuit === null && !input.battle
-      && (destinationAction.type === 'caravan' || UNDEAD_TYPES.includes(destinationAction.type) || input.destination.x === target.x && input.destination.y === target.y), 'destination action target');
+      && (['caravan','patrol'].includes(destinationAction.type) || UNDEAD_TYPES.includes(destinationAction.type) || input.destination.x === target.x && input.destination.y === target.y), 'destination action target');
     if (destinationAction.type === 'camp') assert(!target.cleared && destinationAction.generation === target.generation, 'destination camp generation');
   }
   const battle = validateBattle(input.battle, input.party, input);
