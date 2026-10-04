@@ -1,5 +1,5 @@
 import { BATTLE_PROJECTION, tilePosition, elevationFaces } from './battle-geometry.js';
-import { enemyBattleTactic } from './tactical-ai.js';
+import { enemyBattleTactic, ENEMY_TACTIC_COOLDOWN } from './tactical-ai.js';
 import { weaponSkillFamily } from './combat-skills.js';
 import { getEquipment, getItem, getMoraleEffects, isMoraleImmune, shieldMaximum, throwingCapacity } from './engine.js';
 import { portraitHTML, portraitWeaponAnchor, portraitGroundAnchor, itemImage } from './portraits.js';
@@ -29,6 +29,15 @@ export function battleActionDuration(speed = 1) { return speed === 3 ? .275 : sp
 export function tacticsHTML(tactic = 'offense', disabled = false, skirmishSupported = true) {
   const current = TACTICS.find(entry => entry[0] === tactic) || TACTICS[0];
   return `<div class="battle-tactics"><div role="group" aria-label="Company tactics">${TACTICS.map(([id, label]) => `<button data-tactic="${id}" aria-pressed="${current[0] === id}" ${disabled || id==='skirmish'&&!skirmishSupported ? 'disabled' : ''}>${label}</button>`).join('')}</div><label class="battle-tactic-picker"><span>Tactic</span><select data-battle-tactic aria-label="Company tactic" ${disabled?'disabled':''}>${TACTICS.map(([id,label])=>`<option value="${id}" ${current[0]===id?'selected':''}${id==='skirmish'&&!skirmishSupported?' disabled':''}>${label}</option>`).join('')}</select></label><p>${current[2]}</p></div>`;
+}
+
+function enemyIntentHTML(battle) {
+  if (battle.enemyTacticsVersion!==1) return '';
+  const tactic=enemyBattleTactic(battle,getItem);
+  const descriptions={offense:'Offensive · close with the company',defense:'Defensive · ranged fighters hold the line',
+    'shield-wall':'Shield-wall advance · infantry advance under raised shields',skirmish:'Skirmish · ranged fighters step up and fall back'};
+  const remaining=battle.enemyAdaptiveRulesVersion===1 ? Math.max(0,ENEMY_TACTIC_COOLDOWN-(battle.round-battle.enemyTacticalState.lastChangedRound)) : 0;
+  return `<p class="battle-enemy-intent">Enemy tactic: ${descriptions[tactic]}${remaining?` · Change cooldown: ${remaining} ${remaining===1?'round':'rounds'}`:''}</p>`;
 }
 
 function esc(value) {
@@ -329,7 +338,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
       <button class="battle-resolve" data-action="resolve-battle" ${status === 'active' ? '' : 'disabled'}>Resolve battle</button>
     </div>
     ${tacticsHTML(battle.tactic, status !== 'active', battle.rulesVersion===2)}
-    ${battle.enemyTacticsVersion===1?`<p class="battle-enemy-intent">Enemy tactic: ${enemyBattleTactic(battle,getItem)==='defense'?'Defensive · ranged fighters hold the line':'Offensive · fewer than 3 ranged fighters'}</p>`:''}
+    ${enemyIntentHTML(battle)}
 
     <div class="battle-layout">
       <div class="battle-scroll" tabindex="0" aria-label="Battlefield scroll area">

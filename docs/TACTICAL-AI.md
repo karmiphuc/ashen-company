@@ -14,6 +14,16 @@ Company tactics still govern the overall advance, formation and focus target. Ea
 
 The AI compares affordable actions using expected damage, kill probability, incoming danger, protection, positioning and resource costs. It keeps useful targets rather than changing them for small gains. Ranged fighters prefer spacing; flankers favor opportunities to surround; company formations constrain movement. These are automatic preferences, not guarantees of victory.
 
+## Adaptive enemy commands
+
+New battles carry `enemyAdaptiveRulesVersion: 1` and a saved enemy command. The opening command retains the existing ranged-contingent choice. At each new round, the enemy checks current opposing fire, the last incoming ranged attack (including misses), live shooters and their ammunition/range, surviving shields and melee contact. Deep archers count as available troops but cannot justify holding a frontline they cannot support. Enemies favor Shield-wall advance when shielded infantry are being outranged, Skirmish when their ranged troops need to step up, Defense when at least three shooters can counterfire, and Offense when support is spent or infantry are engaged.
+
+Every committed command holds for at least **five full battle rounds**, including the opening command; the earliest first change is round 6. This uses complete rounds, not individual AP actions or unit activations. Evaluation runs at most once per round through battle advancement. Rendering and attack scoring only read the committed command and never change tactics or consume random rolls. The displayed enemy intent names the actual command and its remaining change cooldown; each change is logged once. State and cooldown persist through saves and instant resolution.
+
+Shield-wall infantry pay the normal 4 AP and shield fatigue to raise working shields, then advance at most one hex per round while protected. They can still fight opponents in reach. When the next terrain step and shield stance cannot both fit their AP/fatigue budget, they prioritize progress rather than repeatedly raising shields without moving. Deep ranged fighters seek firing positions instead of holding behind unreachable targets. Skirmishing uses the same legal firing sorties, return-to-shelter behavior and cover checks as the company, oriented to the enemy's side. Enemy movements and pending returns do not alter company formation plans, and changing company orders does not cancel enemy returns.
+
+Already-active battles without the adaptive marker keep their previous live ranged-count policy or legacy offense. New save fields, command values and round bounds are validated; enemy pending returns require an adaptive Skirmish command. No change to enemy equipment, races, ammunition budgets or terrain passability is introduced.
+
 ## New battle rules
 
 Version 0.36 keeps a reachable pursuit target across movement steps and save reloads. Without a valid target, fighters choose the nearest reachable route; dead or blocked targets release the commitment. Melee fighters deal with adjacent enemies before farther targets, including with reach weapons. Shield Wall reformation does not pull a melee fighter away from an enemy already in reach. Under Offense, the Shieldwall skill is available only with at least two adjacent enemies; it remains an automatic choice rather than a mandatory action.

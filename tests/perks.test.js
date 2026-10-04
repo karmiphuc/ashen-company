@@ -377,6 +377,8 @@ test('new battle saves accept the Berserk AP ceiling and reject larger forged va
 test('Berserk keeps the 2 AP effect in legacy active battles', () => {
   const fight = battleWithCaptain(['berserk']);
   fight.battle.rulesVersion = 1;
+  delete fight.battle.enemyAdaptiveRulesVersion;
+  delete fight.battle.enemyTacticalState;
   delete fight.battle.weaponSkillsVersion;
   delete fight.battle.mountSkillsVersion; delete fight.battle.mountBalanceVersion;
   for (const unit of fight.battle.units) {
