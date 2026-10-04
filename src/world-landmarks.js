@@ -18,6 +18,17 @@ const sites=[
  ['frontier-battle','battlefield',2880,920,110,'eastern-frontier'],
  ['steppe-watch','tower',4610,1340,84,'far-steppe'],
  ['steppe-battle','battlefield',3990,570,104,'far-steppe'],
+ // Encampments follow the region's history: sheltered forest hunters, an old
+ // northern muster, coastal supply losses, and a southern caravan bivouac.
+ ['march-muster','warcamp',900,450,128,'western-marches'],
+ ['frost-muster','warcamp',1875,330,102,'northern-highlands'],
+ ['woodland-hideout','warcamp',1850,850,126,'greenwood'],
+ ['fen-bivouac','warcamp',1750,1300,120,'blackwater-basin'],
+ ['abandoned-siege','warcamp',680,1120,142,'southern-marches'],
+ ['coastal-supply-camp','warcamp',1300,2400,134,'saffron-coast'],
+ ['frontier-encampment','warcamp',2900,1100,138,'eastern-frontier'],
+ ['steppe-bivouac','warcamp',4400,750,124,'far-steppe'],
+ ['desert-caravan-camp','warcamp',4150,2250,136,'sunlands'],
  ['lesser-pyramid','pyramid',2680,1690,148,'sunlands'],
  ['necropolis-pyramid','pyramid',3560,1980,224,'sunlands'],
  ['necropolis-sphinx','sphinx',3780,2000,146,'sunlands'],
@@ -42,31 +53,50 @@ export function worldLandmarks(seed,{settlements=[],camps=[],roads=[]}={}){
 export function landmarkAt(landmarks,p){return landmarks.find(o=>Math.hypot((o.x-p.x)/(o.width*.48),(o.y-p.y)/(o.width*.32))<1);}
 // Freely licensed textured sprites; provenance and adaptation recipes are recorded
 // in assets/world/landmark-sources.json. No flat geometric landmark fallback.
+// Layouts use a shared scene scale, with authored offsets and depth ordering.
+// Repetition is limited to useful shared props; each place has its own silhouette.
+// Human remains stay half their earlier size, even in a large encampment.
+const piece=(art,x,y,scale)=>Object.freeze({art:'battlefield_'+art,x,y,scale});
+const layout=(...parts)=>Object.freeze(parts.map(p=>piece(...p)).sort((a,b)=>a.y-b.y));
+export const SCENERY_LAYOUTS=Object.freeze({
+ 'old-crossing':layout(['broken_barricade',-.24,-.06,.44],['wheel',.28,-.09,.15],['corpse_blue',.17,.10,.17],['corpse_mail',-.21,.16,.18],['discarded_weapons',.02,.21,.23],['firepit',.03,-.02,.25]),
+ 'burnt-convoy':layout(['supply_wagon',-.20,-.08,.48],['crates',.28,.06,.24],['burnt_logs',-.03,.19,.29],['corpse_green',-.25,.24,.17],['crate',.33,.23,.13]),
+ 'frontier-battle':layout(['barricade',-.23,-.08,.42],['fallen_armored_horse',.22,.03,.30],['helmets',-.02,.19,.15],['corpse_red',-.27,.20,.18],['banner_red',.28,-.13,.19],['firepit',.04,-.05,.25]),
+ 'steppe-battle':layout(['wagon_wreck',-.23,-.04,.45],['fallen_horse',.24,.06,.29],['corpse_green',-.12,.20,.17],['skeleton',.25,.25,.165],['timbers',-.02,-.18,.28]),
+ 'march-muster':layout(['tent_side',-.24,-.12,.41],['tent_front',.24,-.06,.32],['banner_blue',-.32,-.24,.19],['crates',.31,.17,.24],['firepit',-.01,.10,.25],['barricade',-.20,.28,.36],['discarded_weapons',.26,.30,.21]),
+ 'frost-muster':layout(['tent_round',-.24,-.10,.36],['tent_front',.22,-.09,.33],['banner_red',.28,-.23,.18],['supply_wagon',-.22,.20,.39],['burnt_logs',.19,.17,.27],['helmets',.01,.29,.14]),
+ 'woodland-hideout':layout(['tent_side',-.20,-.10,.39],['tent_round',.24,.02,.28],['timbers',-.26,.21,.26],['firepit',.03,.11,.25],['crate',.29,.22,.15],['discarded_weapons',-.01,.29,.20]),
+ 'fen-bivouac':layout(['tent_front',-.20,-.10,.34],['broken_barricade',.23,.05,.37],['wagon_wreck',-.24,.22,.31],['skeleton',.22,.25,.165],['stone_pile',.03,-.19,.22]),
+ 'abandoned-siege':layout(['tent_side',-.24,-.15,.36],['tent_round',.24,-.13,.29],['barricade',-.23,.16,.40],['broken_barricade',.22,.21,.38],['supply_wagon',.01,-.28,.33],['burnt_logs',.04,.03,.25],['corpse_mail',-.12,.31,.17],['banner_red',.32,-.02,.17]),
+ 'coastal-supply-camp':layout(['tent_front',-.25,-.12,.33],['supply_wagon',.23,-.02,.43],['crates',-.27,.17,.28],['crate',.27,.23,.15],['wheel',.09,.23,.14],['firepit',-.01,.12,.25]),
+ 'frontier-encampment':layout(['tent_side',-.27,-.09,.39],['tent_front',.24,-.13,.32],['tent_round',.01,-.28,.27],['barricade',-.21,.22,.35],['banner_blue',.34,.08,.18],['crates',.29,.28,.22],['firepit',.02,.07,.25]),
+ 'steppe-bivouac':layout(['tent_round',-.23,-.07,.38],['tent_round',.24,-.13,.30],['fallen_horse',.27,.20,.28],['firepit',-.01,.12,.25],['wheel',-.28,.23,.15],['corpse_green',.04,.29,.17]),
+ 'desert-caravan-camp':layout(['tent_round',-.26,-.12,.35],['tent_side',.23,-.09,.36],['supply_wagon',-.26,.22,.40],['crates',.26,.21,.23],['stone_pile',.03,-.24,.21],['firepit',.01,.11,.25]),
+ 'march-watch':layout(['barricade',-.34,.21,.32],['crate',.30,.23,.16]),
+ 'drowned-watch':layout(['broken_barricade',-.28,.24,.34],['bones',.27,.21,.165],['stone_pile',.32,-.10,.23]),
+ 'south-border':layout(['timbers',-.30,.22,.32],['burnt_logs',.31,.19,.26]),
+ 'frost-watch':layout(['tent_front',.34,.16,.28],['crates',-.28,.23,.21]),
+ 'steppe-watch':layout(['wheel',-.26,.20,.17],['wagon_wreck',.30,.19,.33]),
+});
 export const WORLD_LANDMARK_ASSETS=Object.freeze([
  'landmark_tower',
- 'battlefield_wagon_wreck','battlefield_bones','battlefield_corpse_blue','battlefield_corpse_red','battlefield_firepit',
+ ...new Set(Object.values(SCENERY_LAYOUTS).flatMap(parts=>parts.map(p=>p.art))),
  'landmark_pyramid','landmark_sphinx','landmark_cave_forest','landmark_cave_mountain','landmark_cave_desert',
  ...['green','snow','desert'].flatMap(kind=>[1,2,3,4].map(n=>`landmark_mountain_${kind}_${n}`)),
 ]);
 export function drawWorldLandmark(c,o,seed,sprite){
- if(o.kind==='battlefield'){
-  // User-provided battlefield tiles compose a small, abandoned scene. They are
-  // scenery only: no entities, loot, active fires or click targets are created.
-  const variant=Math.floor(visualRandom(seed,o.id+':scene')*3);
-  if(variant===0){
-   sprite(c,'battlefield_wagon_wreck',o.x-18,o.y+2,o.width*.55,.88);
-   sprite(c,'battlefield_corpse_blue',o.x+27,o.y+8,o.width*.17,.8);
-  }else if(variant===1){
-   sprite(c,'battlefield_corpse_red',o.x-24,o.y+7,o.width*.18,.8);
-   sprite(c,'battlefield_corpse_blue',o.x+25,o.y-5,o.width*.18,.8);
-  }else{
-   sprite(c,'battlefield_bones',o.x-25,o.y+5,o.width*.165,.82);
-   sprite(c,'battlefield_wagon_wreck',o.x+20,o.y+3,o.width*.5,.85);
-  }
-  sprite(c,'battlefield_firepit',o.x+6,o.y+14,o.width*.25,.84);
-  for(let i=0;i<5;i++){
-   const x=o.x+6+i*2,y=o.y-2-i*7,r=4+i*1.6,g=c.createRadialGradient(x,y,1,x,y,r);
-   g.addColorStop(0,'#343a3638');g.addColorStop(1,'#343a3600');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);
+ const parts=SCENERY_LAYOUTS[o.id]??SCENERY_LAYOUTS['old-crossing'];
+ if(o.kind==='battlefield'||o.kind==='warcamp'){
+  // These are abandoned scenery, never active camps or selectable entities.
+  if(o.region==='greenwood')sprite(c,'world_detail_forest_green_04',o.x-o.width*.36,o.y-o.width*.15,o.width*.5,.85);
+  for(const p of parts)sprite(c,p.art,o.x+p.x*o.width,o.y+p.y*o.width,o.width*p.scale,.88);
+  const hearth=parts.find(p=>['battlefield_burnt_logs','battlefield_firepit'].includes(p.art));
+  // Only fresh scorched sites smoke: bone fields and empty bivouacs stay quiet.
+  if(hearth&&['burnt-convoy','frontier-battle','abandoned-siege'].includes(o.id)){
+   for(let i=0;i<5;i++){
+    const x=o.x+hearth.x*o.width+i*2,y=o.y+hearth.y*o.width-10-i*7,r=4+i*1.6,g=c.createRadialGradient(x,y,1,x,y,r);
+    g.addColorStop(0,'#343a3638');g.addColorStop(1,'#343a3600');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);
+   }
   }
   return;
  }
@@ -81,6 +111,7 @@ export function drawWorldLandmark(c,o,seed,sprite){
  else if(o.kind==='tower')art='landmark_tower';
  else art='landmark_'+o.kind;
  sprite(c,art,o.x,o.y,o.width,.9);
+ if(o.kind==='tower')for(const p of SCENERY_LAYOUTS[o.id]??[])sprite(c,p.art,o.x+p.x*o.width,o.y+p.y*o.width,o.width*p.scale,.88);
  if(o.setting==='forest'){
   sprite(c,'world_detail_forest_green_04',o.x-35,o.y+13,38,.85);
   sprite(c,'world_detail_forest_green_02',o.x+35,o.y+15,36,.85);
