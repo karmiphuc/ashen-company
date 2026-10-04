@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {equipmentSkills} from '../src/combat-skills.js';
 import {createGame,getCampSites,startBattle,advanceBattle,getItem,validateSave} from '../src/engine.js';
 
 function fight(weapon,perks,distance=1) {
@@ -24,7 +25,7 @@ test('masteries discount matching basic attacks once, including overlapping reac
     ['javelins',['throwing-training'],3,3],
   ]) {
     const {state,battle,actor}=fight(weapon,perks,distance);
-    actor.ap=cost; actor.fatigue=actor.maxFatigue-Math.ceil((getItem(weapon).fatigueCost??(getItem(weapon).ranged?9:11))*.75);
+    actor.ap=cost; actor.fatigue=actor.maxFatigue-Math.ceil((equipmentSkills(getItem(weapon))[0].fatigue??getItem(weapon).fatigueCost??(getItem(weapon).ranged?9:11))*.75);
     advanceBattle(state);
     assert.equal(battle.lastEvent.type,'attack',weapon);
     assert.equal(actor.ap,0,weapon);

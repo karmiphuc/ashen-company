@@ -1,0 +1,339 @@
+{
+  "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+  "repository": "kovasap/battle-bros-decompiled",
+  "weapons": [
+    {
+      "id": "bb-named-axe",
+      "sourceSkills": [
+        "chop",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-bardiche",
+      "sourceSkills": [
+        "split_man",
+        "split_axe",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-battle-whip",
+      "sourceSkills": [
+        "whip_skill",
+        "disarm_skill"
+      ]
+    },
+    {
+      "id": "bb-named-billhook",
+      "sourceSkills": [
+        "strike_skill",
+        "hook"
+      ]
+    },
+    {
+      "id": "bb-named-bladed-pike",
+      "sourceSkills": [
+        "impale",
+        "repel"
+      ]
+    },
+    {
+      "id": "bb-named-cleaver",
+      "sourceSkills": [
+        "cleave",
+        "decapitate"
+      ]
+    },
+    {
+      "id": "bb-named-crossbow",
+      "sourceSkills": [
+        "shoot_bolt",
+        "reload_bolt"
+      ]
+    },
+    {
+      "id": "bb-named-crypt-cleaver",
+      "sourceSkills": [
+        "cleave",
+        "decapitate",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-dagger",
+      "sourceSkills": [
+        "stab",
+        "puncture"
+      ]
+    },
+    {
+      "id": "bb-named-fencing-sword",
+      "sourceSkills": [
+        "slash",
+        "lunge_skill"
+      ]
+    },
+    {
+      "id": "bb-named-flail",
+      "sourceSkills": [
+        "flail_skill",
+        "lash_skill"
+      ]
+    },
+    {
+      "id": "bb-named-goblin-falchion",
+      "sourceSkills": [
+        "slash",
+        "riposte"
+      ]
+    },
+    {
+      "id": "bb-named-goblin-heavy-bow",
+      "sourceSkills": [
+        "quick_shot",
+        "aimed_shot"
+      ]
+    },
+    {
+      "id": "bb-named-goblin-pike",
+      "sourceSkills": [
+        "rupture",
+        "repel"
+      ]
+    },
+    {
+      "id": "bb-named-goblin-spear",
+      "sourceSkills": [
+        "thrust",
+        "spearwall"
+      ]
+    },
+    {
+      "id": "bb-named-greataxe",
+      "sourceSkills": [
+        "split_man",
+        "round_swing",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-greatsword",
+      "sourceSkills": [
+        "overhead_strike",
+        "split",
+        "swing",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-heavy-rusty-axe",
+      "sourceSkills": [
+        "split_man",
+        "round_swing",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-javelin",
+      "sourceSkills": [
+        "throw_javelin"
+      ]
+    },
+    {
+      "id": "bb-named-khopesh",
+      "sourceSkills": [
+        "cleave",
+        "decapitate"
+      ]
+    },
+    {
+      "id": "bb-named-longaxe",
+      "sourceSkills": [
+        "strike_skill",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-mace",
+      "sourceSkills": [
+        "bash",
+        "knock_out"
+      ]
+    },
+    {
+      "id": "bb-named-orc-axe",
+      "sourceSkills": [
+        "chop",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-orc-cleaver",
+      "sourceSkills": [
+        "cleave",
+        "decapitate"
+      ]
+    },
+    {
+      "id": "bb-named-pike",
+      "sourceSkills": [
+        "impale",
+        "repel"
+      ]
+    },
+    {
+      "id": "bb-named-polehammer",
+      "sourceSkills": [
+        "batter_skill",
+        "demolish_armor_skill"
+      ]
+    },
+    {
+      "id": "bb-named-polemace",
+      "sourceSkills": [
+        "crumble_skill",
+        "knock_over_skill"
+      ]
+    },
+    {
+      "id": "bb-named-qatal-dagger",
+      "sourceSkills": [
+        "stab",
+        "deathblow_skill"
+      ]
+    },
+    {
+      "id": "bb-named-rusty-warblade",
+      "sourceSkills": [
+        "cleave",
+        "decapitate",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-shamshir",
+      "sourceSkills": [
+        "slash",
+        "gash_skill"
+      ]
+    },
+    {
+      "id": "bb-named-skullhammer",
+      "sourceSkills": [
+        "smite_skill",
+        "shatter_skill",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-spear",
+      "sourceSkills": [
+        "thrust",
+        "spearwall"
+      ]
+    },
+    {
+      "id": "bb-named-spetum",
+      "sourceSkills": [
+        "prong_skill",
+        "spearwall"
+      ]
+    },
+    {
+      "id": "bb-named-sword",
+      "sourceSkills": [
+        "slash",
+        "riposte"
+      ]
+    },
+    {
+      "id": "bb-named-swordlance",
+      "sourceSkills": [
+        "strike_skill",
+        "reap_skill"
+      ]
+    },
+    {
+      "id": "bb-named-three-headed-flail",
+      "sourceSkills": [
+        "cascade_skill",
+        "hail_skill"
+      ]
+    },
+    {
+      "id": "bb-named-throwing-axe",
+      "sourceSkills": [
+        "throw_axe"
+      ]
+    },
+    {
+      "id": "bb-named-two-handed-flail",
+      "sourceSkills": [
+        "pound",
+        "thresh"
+      ]
+    },
+    {
+      "id": "bb-named-two-handed-hammer",
+      "sourceSkills": [
+        "smite_skill",
+        "shatter_skill",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-two-handed-mace",
+      "sourceSkills": [
+        "cudgel_skill",
+        "strike_down_skill",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-two-handed-scimitar",
+      "sourceSkills": [
+        "cleave",
+        "decapitate",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-two-handed-spiked-mace",
+      "sourceSkills": [
+        "cudgel_skill",
+        "strike_down_skill",
+        "split_shield"
+      ]
+    },
+    {
+      "id": "bb-named-warbow",
+      "sourceSkills": [
+        "quick_shot",
+        "aimed_shot"
+      ]
+    },
+    {
+      "id": "bb-named-warbrand",
+      "sourceSkills": [
+        "slash",
+        "split",
+        "swing"
+      ]
+    },
+    {
+      "id": "bb-named-warhammer",
+      "sourceSkills": [
+        "hammer",
+        "crush_armor"
+      ]
+    },
+    {
+      "id": "bb-named-warscythe",
+      "sourceSkills": [
+        "strike_skill",
+        "reap_skill"
+      ]
+    }
+  ]
+}

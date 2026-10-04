@@ -4,7 +4,7 @@ import {
   ITEMS, PERKS, createGame, getCompanyStats,
   getCampSites, startBattle, advanceBattle, validateSave,
 } from '../src/engine.js';
-import { COMBAT_SKILLS } from '../src/combat-skills.js';
+import { COMBAT_SKILLS, equipmentSkills } from '../src/combat-skills.js';
 import { hexDistance } from '../src/battle-terrain.js';
 
 const added = [
@@ -377,7 +377,7 @@ test('each weapon mastery reduces attack fatigue once, including northern weapon
     advanceBattle(plain);
     assert.equal(mastered.battle.lastEvent.type, 'attack', weapon);
     const item = ITEMS.find(entry => entry.id === weapon);
-    const fatigueFor = event => Object.values(COMBAT_SKILLS).find(skill => skill.name === event.skillName)?.fatigue
+    const fatigueFor = event => equipmentSkills(item).find(skill => skill.name === event.skillName)?.fatigue
       ?? item.fatigueCost ?? (item.ranged ? 9 : 11);
     assert.equal(mastered.actor.fatigue, Math.ceil(fatigueFor(mastered.battle.lastEvent) * .75), weapon);
     assert.equal(plain.battle.units.find(unit => unit.id === 'captain').fatigue, fatigueFor(plain.battle.lastEvent), weapon);
@@ -385,7 +385,7 @@ test('each weapon mastery reduces attack fatigue once, including northern weapon
 
   const overlapping = battleWith('longaxe', ['axe-training', 'polearm-training'], 2);
   advanceBattle(overlapping.state);
-  assert.equal(overlapping.actor.fatigue, Math.ceil((ITEMS.find(item => item.id === 'longaxe').fatigueCost ?? 11) * .75));
+  assert.equal(overlapping.actor.fatigue, Math.ceil(equipmentSkills(ITEMS.find(item => item.id === 'longaxe'))[0].fatigue * .75));
 });
 
 test('AI uses reduced attack cost when deciding whether to recover', () => {

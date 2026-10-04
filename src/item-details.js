@@ -52,8 +52,8 @@ export function getItemDetails(item, condition) {
       { label: 'Damage through armor', value: `${Math.round((item.armorPiercing ?? .30) * 100)}% of base hit` },
       { label: 'Reach', value: `${item.range ?? 1} ${item.range === 1 || item.range === undefined ? 'hex' : 'hexes'}` },
       { label: 'Attack skill', value: ranged ? 'Ranged' : 'Melee' },
-      { label: 'Attack AP', value: `${['dagger', 'qatal'].includes(weaponSkillFamily(item)) || item.reloadTurns ? 3 : !ranged && (item.twoHanded || (item.range ?? 1) > 1) ? 6 : 4} (new battles)` },
-      { label: 'Attack fatigue', value: String(Math.max(0,(item.fatigueCost ?? (ranged ? 9 : 11))+(item.fatigueOnSkillUse??0))) },
+      { label: 'Attack AP', value: `${equipmentSkills(item)[0]?.ap??4} (new battles)` },
+      { label: 'Attack fatigue', value: String(Math.max(0,(equipmentSkills(item)[0]?.fatigue ?? item.fatigueCost ?? (ranged ? 9 : 11))+(item.fatigueOnSkillUse??0))) },
       { label: 'Hands', value: item.twoHanded ? 'Two; shield stowed' : 'One; shield allowed' },
     );
     if (ranged) {

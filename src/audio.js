@@ -20,6 +20,8 @@ export function combatSoundCue(event, duration = .55, {cinematic=false} = {}) {
   duration = Number.isFinite(duration) ? Math.max(.15, Math.min(2, duration)) : .55;
   const cue = (name, delay = 0, volume = .4, rate = 1) => ({ name, delay, volume, rate });
   function action(entry, offset = 0) {
+    if(entry.skillName==='Bleeding')return entry.hpDamage>0?[cue('flesh-hit',offset,.25)]:[];
+    if(entry.strikes)return entry.strikes.flatMap((impact,index)=>action({...entry,...impact,type:impact.hit?'attack':'miss',strikes:undefined,skipRelease:index>0},offset+.06*index));
     if (entry.type === 'use') return [cue('cloth', offset)];
     if (entry.skillName === 'Reload') return [cue('reload', offset), cue('crossbow-release', offset + duration * .5, .25)];
     const charging = entry.skillName === 'Charge' && !!entry.moveFrom;
@@ -31,10 +33,10 @@ export function combatSoundCue(event, duration = .55, {cinematic=false} = {}) {
         ? ['heavy-swish', 'axe-chop'] : ['thrust', 'throwing-pierce']
       : PROFILES[family] ?? ['swing', 'impact'];
     const releaseAt=offset+(cinematic?duration*(entry.ranged||weapon?.ranged? .4:.5):0);
-    const cues = [cue(profile[0], releaseAt, family === 'bow' ? .55 : .35, heavy ? .88 : 1)];
+    const cues = entry.skipRelease?[]:[cue(profile[0], releaseAt, family === 'bow' ? .55 : .35, heavy ? .88 : 1)];
     if (charging) cues.push(cue('cavalry-hooves', offset, .42, 1));
     if (family === 'crossbow') cues.push(cue('bow-release', releaseAt + .025, .35, 1.2));
-    if (family === 'flail') cues.push(cue('heavy-swish', releaseAt + .02, .22));
+    if (family === 'flail'&&!entry.skipRelease) cues.push(cue('heavy-swish', releaseAt + .02, .22));
     if (family === 'sling') cues.push(cue('thrust', releaseAt + .04, .2, 1.15));
     // Release is separate from contact. Select contact foley from the actual
     // damaged material and damage type, never a second release/weapon-strike clip.
