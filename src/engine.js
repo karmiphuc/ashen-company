@@ -31,7 +31,7 @@ import { CARAVAN_ATTACK_WARNING_HOURS, CARAVAN_SHORTAGE_HOURS, CARAVAN_TRAVEL_HO
 import { ASHEN_CONFIG, initialAshenWinter, crisisHash } from './crisis-director.js';
 import { settlementAccess } from './settlement-access.js';
 import { UNDEAD_TYPES, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
-import { COMBAT_SKILLS, weaponSkillFamily } from './combat-skills.js';
+import { COMBAT_SKILLS, WEAPON_ACTIONS, equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
 import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, rankTacticalActions, enemyBattleTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
 
@@ -2614,7 +2614,7 @@ function makeBattleEvent(actor, target, type, message, weapon = null, from = nul
 
 function sortTurnOrder(battle) {
   return battle.units.filter(unit => unit.alive).sort((a, b) =>
-    b.initiative - b.fatigue * .2 - (a.initiative - a.fatigue * .2) || a.id.localeCompare(b.id)).map(unit => unit.id);
+    b.initiative * (b.staggeredTurns>0?.5:1) * (b.dazedTurns>0?.75:1) - b.fatigue * .2 - (a.initiative * (a.staggeredTurns>0?.5:1) * (a.dazedTurns>0?.75:1) - a.fatigue * .2) || a.id.localeCompare(b.id)).map(unit => unit.id);
 }
 
 function hasShieldSet(unit) {
@@ -2816,7 +2816,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -2846,6 +2846,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
 function nextBattleTurn(battle) {
   const previous = battle.units.find(unit => unit.id === battle.activeId);
   if (previous?.howlTurns > 0) previous.howlTurns -= 1;
+  if(battle.weaponCompletionVersion===1)for(const key of ['dazedTurns','staggeredTurns','disarmedTurns'])if(previous?.[key]>0)previous[key]--;
   let next = battle.turnIndex + 1;
   while (true) {
     if (next >= battle.turnOrder.length) {
@@ -3297,7 +3298,7 @@ function rangedPositionStep(state, actor, enemies, weapon, tactic) {
   const nearest = nearestEnemyDistance(battle,actor,actor);
   const spacing = nearest <= 1;
   const defensive = ['defense','shield-wall'].includes(tactic);
-  if (!spacing && (!defensive || actor.fatigue+attackFatigueCost(actor,weapon)>actor.maxFatigue)) return null;
+  if (!spacing && (!defensive || actor.fatigue+attackFatigueCost(actor,weapon,battle)>actor.maxFatigue)) return null;
   const shooters = enemies.filter(enemy=>getItem(enemy.equipment.weapon)?.ranged
     && battleWeaponHasAmmo(state,enemy,getItem(enemy.equipment.weapon)));
   // With no shooters, shelter still faces the enemy approach and keeps the rear behind shields.
@@ -3336,7 +3337,7 @@ function rangedPositionStep(state, actor, enemies, weapon, tactic) {
       const cost = point.cost+step;
       const fatigue = point.fatigue+movementFatigue(actor,battleMovementCost(battle,actor,point,next));
       const key = `${next.q},${next.r}`;
-      if (cost<=budget && fatigue+(spacing?0:attackFatigueCost(actor,weapon))<=actor.maxFatigue-actor.fatigue && cost<(best.get(key)??Infinity)) {
+      if (cost<=budget && fatigue+(spacing?0:attackFatigueCost(actor,weapon,battle))<=actor.maxFatigue-actor.fatigue && cost<(best.get(key)??Infinity)) {
         best.set(key,cost);queue.push({...next,path:[...point.path,next],cost,fatigue});
       }
     }
@@ -3393,7 +3394,7 @@ function returnSkirmisher(state, actor) {
   if ((actor.side==='enemy' ? enemyBattleTactic(battle,getItem) : battle.tactic)!=='skirmish' || actor.ally || !plan) return null;
   const weapon=getItem(actor.equipment.weapon);
   if (plan.phase==='aim' && (!battleWeaponHasAmmo(state,actor,weapon) || actor.reload>0
-    || actor.fatigue+attackFatigueCost(actor,weapon)>actor.maxFatigue)) plan.phase='return';
+    || actor.fatigue+attackFatigueCost(actor,weapon,battle)>actor.maxFatigue)) plan.phase='return';
   if (plan.phase!=='return') return null;
   const path=skirmishReturnPath(battle,actor);
   if (!path?.length) {delete actor.skirmishReturn;return null;}
@@ -3465,7 +3466,7 @@ function skirmishPosition(state, actor, enemies, weapon, ammunitionSpent) {
         returnFatigue+=movementFatigue(actor,battleMovementCost(battle,actor,previous,next));previous=next;}
       for (const target of enemies) {
         const distance=hexDistance(point,target),aimed=distance>range && isBow(weapon) && distance<=range+1;
-        const option=aimed?COMBAT_SKILLS['aimed-shot']:null,ap=attackApCost(weapon,battle,actor,option),fatigue=aimed?aimedFatigueCost(actor):attackFatigueCost(actor,weapon);
+        const option=aimed?COMBAT_SKILLS['aimed-shot']:null,ap=attackApCost(weapon,battle,actor,option),fatigue=aimed?aimedFatigueCost(actor):attackFatigueCost(actor,weapon,battle);
         if (distance<=aimRange && point.cost+ap<=actor.ap && point.fatigue+fatigue<=actor.maxFatigue-actor.fatigue) {
           const roundTrip=point.cost+ap+returnCost<=actor.ap && point.fatigue+fatigue+returnFatigue<=actor.maxFatigue-actor.fatigue;
           const predicted=predictAttack(battle,{...actor,...point},target,weapon,option);
@@ -3529,14 +3530,14 @@ function hasWeaponMastery(actor, weapon) {
     || WEAPON_MASTERY_IDS.some(id => hasPerk(actor, id) && weaponMasteryMatches(id, weapon));
 }
 
-function attackFatigueCost(actor, weapon) {
-  const base = Math.max(0,(weapon?.fatigueCost ?? (weapon?.ranged ? 9 : 11))+(weapon?.fatigueOnSkillUse??0));
+function attackFatigueCost(actor, weapon, battle=null) {
+  const base = Math.max(0,((battle?.weaponCompletionVersion===1?equipmentSkills(weapon)[0]?.fatigue:undefined) ?? weapon?.fatigueCost ?? (weapon?.ranged ? 9 : 11))+(weapon?.fatigueOnSkillUse??0));
   return hasWeaponMastery(actor, weapon) ? Math.ceil(base * .75) : base;
 }
 
 function attackApCost(weapon, battle = null, actor = null, option = null) {
   if (option?.id === 'charge') return option.ap;
-  const base = option?.ap ?? (isCrossbow(weapon) ? 3 : weapon?.ranged ? 4
+  const base = option?.ap ?? (battle?.weaponCompletionVersion===1&&battle.weaponSkillsVersion===1?equipmentSkills(weapon)[0]?.ap:undefined) ?? (isCrossbow(weapon) ? 3 : weapon?.ranged ? 4
     : battle?.weaponSkillsVersion === 1 && ['dagger', 'qatal'].includes(weaponSkillFamily(weapon)) ? 3
     : weapon?.twoHanded || (weapon?.range ?? 1) > 1 && !weapon?.ranged ? 6 : 4);
   return battle?.weaponSkillsVersion === 1 && actor && hasWeaponMastery(actor, weapon) ? Math.max(1, base - 1) : base;
@@ -3610,12 +3611,12 @@ export function attackHitChance(battle, actor, target, weapon, hitBonus = 0, opt
   const ranged = weapon.ranged === true;
   const skill = ranged ? actor.rangedSkill : actor.meleeSkill;
   const dodgeDefense = hasPerk(target, 'dodge')
-    ? Math.floor(Math.max(0, target.initiative - target.fatigue * (hasPerk(target, 'relentless') ? .1 : .2)) * .15) : 0;
+    ? Math.floor(Math.max(0, combatInitiative(target) - target.fatigue * (hasPerk(target, 'relentless') ? .1 : .2)) * .15) : 0;
   const reachDefense = hasPerk(target, 'reach-advantage') && getItem(target.equipment.weapon)?.twoHanded
     && !getItem(target.equipment.weapon)?.ranged ? 5 : 0;
   const anticipationDefense = ranged && hasPerk(target, 'anticipation')
     ? Math.max(10, Math.floor(target.rangedDefense * .1 * hexDistance(actor, target))) : 0;
-  const shieldBypass = ['flail-headshot', 'whip-crack'].includes(option?.id) ? shieldDefenseFor(target, target.equipment.shield) : 0;
+  const shieldBypass = (option?.shieldBypass || ['flail-headshot', 'whip-crack'].includes(option?.id)) ? shieldDefenseFor(target, target.equipment.shield) : 0;
   const defense = Math.round(((ranged ? target.rangedDefense : target.meleeDefense) - shieldBypass) * (1 + getMoraleEffects(target).modifier)) + dodgeDefense + anticipationDefense
     + (!shieldBypass && target.shieldWallActive && target.shieldDurability > 0 ? shieldDefenseFor(target, target.equipment.shield,target.shieldDurability,ranged) : 0)
     + (!ranged ? reachDefense : 0)
@@ -3631,7 +3632,7 @@ export function attackHitChance(battle, actor, target, weapon, hitBonus = 0, opt
   const adjacentShotPenalty = ranged && distance === 1 && !hasPerk(actor, 'point-blank') ? 12 : 0;
   const baseChance = clamped(Math.round(skill * (1 + getMoraleEffects(actor).modifier)) + (weapon.hitBonus ?? 0) + (weapon.skillHitBonus ?? 0) - defense + 15 + terrainHit
     + adjacentAllies * 5 + (hasPerk(actor, 'fast-adaptation') ? actor.adaptation * 10 : 0) + perkHit + hitBonus
-    - Math.floor(actor.fatigue / 7) - adjacentShotPenalty, 12, 90);
+    - Math.floor(actor.fatigue / 7) - adjacentShotPenalty - (battle.weaponCompletionVersion===1&&!ranged&&weapon.range>=2&&distance===1&&!hasPerk(actor,'polearm-training')?15:0), 12, 90);
   return clamped(baseChance - getNightHitPenalty(battle,ranged), 12, 90);
 }
 
@@ -3646,7 +3647,9 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   const ranged = weapon.ranged === true;
   const distance = hexDistance(actor, target);
   if(battle.weaponAuditVersion===1&&option?.id==='split-shield')return {hp:0,armorDamage:0,before:0};
-  const bonus = option?.id === 'deathblow' && target.stunnedTurns > 0 ? 1.5
+  if(option?.noDamage)return {hp:0,armorDamage:0,before:0};
+  if(option?.dot)return {hp:option.fixedHealth,armorDamage:0,before:0};
+  const bonus = option?.id === 'deathblow' && (target.stunnedTurns > 0 || battle.weaponCompletionVersion===1&&target.dazedTurns>0) ? 1.5
     : option?.id === 'decapitate' && target.hp < target.maxHp ? 1.4
       : option?.id === 'power-throw' ? 1.25 : ['knock-out', 'stunning-stone'].includes(option?.id) ? .5 : option?.damageMultiplier ?? 1;
   const damageMultiplier = (hasPerk(actor, 'executioner') && target.hp < target.maxHp ? 1.2 : 1)
@@ -3662,11 +3665,11 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   const mountDamage = mount ? battle.mountBalanceVersion === 1 ? mount.damageBonus : mount.visual === 'armoredhorse' ? .2 : .15 : 0;
   const chargeBonus = battle.mountBalanceVersion === 1 && option?.id === 'charge' ? mount?.chargeDamageBonus ?? 0 : 0;
   const raw = Math.round(base * damageMultiplier * (1 + mountDamage) * (1 + chargeBonus)
-    * (actor.howlTurns > 0 ? .8 : 1)
+    * (actor.howlTurns > 0 ? .8 : 1) * (actor.dazedTurns>0?.75:1)
     * (1 + Math.max(0, heightHitModifier(battle.field, actor, target) / 10) * .1));
   const before = head ? target.headArmor : target.attachmentArmor + (target.attachment2Armor??0) + target.bodyArmor;
-  let armorDamage = option?.id === 'puncture' ? 0 : Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1)
-    * (head ? 1.1 : 1) * (option?.id === 'crush-armor' ? 1.5 : 1)
+  let armorDamage = option?.noArmor || option?.id === 'puncture' ? 0 : Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1)
+    * (head ? 1.1 : 1) * (option?.armorMultiplier??(option?.id === 'crush-armor' ? 1.5 : 1))
     * (hasPerk(actor, 'axe-training') && weaponMasteryMatches('axe-training', weapon) ? 1.15 : 1)
     * (hasPerk(target, 'battle-forged') && before > 0 ? .85 : 1)));
   const piercing = Math.min(1, (weapon.armorPiercing ?? .30)
@@ -3682,6 +3685,8 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   if(ranged){const multiplier=1-attachmentEffect(target.equipment,'rangedDamageReduction');hp=Math.max(1,Math.round(hp*multiplier));armorDamage=armorDamage?Math.max(1,Math.round(armorDamage*multiplier)):0;}
   // Trample health damage bypasses armor, head multipliers and damage-reduction perks.
   hp += battle.mountBalanceVersion === 1 && option?.id === 'charge' ? mount?.chargeDirectDamage ?? 0 : 0;
+  if(option?.minimumHealth)hp=Math.max(hp,option.minimumHealth);
+  if(option?.fixedHealth!==undefined)hp=option.fixedHealth;
   return { hp, armorDamage, before };
 }
 
@@ -3691,20 +3696,23 @@ function predictAttack(battle, actor, target, weapon, option = null) {
     typeof option === 'number' ? null : option) / 100;
   let health = 0, armor = 0, kill = 0;
   const rolls = Math.max(1, weapon.damageMax - weapon.damageMin + 1);
-  for (let base = weapon.damageMin; base <= weapon.damageMax; base++) for (const [head, weight] of (option?.id === 'puncture' ? [[false, 1]] : ['flail-headshot', 'whip-crack'].includes(option?.id) ? [[true, 1]] : [[true, weapon.headChance??.22], [false, 1-(weapon.headChance??.22)]])) {
+  for (let base = weapon.damageMin; base <= weapon.damageMax; base++) for (const [head, weight] of (option?.id === 'puncture' ? [[false, 1]] : option?.head===true || ['flail-headshot', 'whip-crack'].includes(option?.id) ? [[true, 1]] : [[true, weapon.headChance??.22], [false, 1-(weapon.headChance??.22)]])) {
     const { hp, armorDamage, before } = attackDamageRoll(battle, actor, target, weapon, base, head, option);
     const probability = weight / rolls;
     health += hp * probability;
     armor += Math.min(before, armorDamage) * probability;
     if (hp >= target.hp) kill += probability;
   }
-  return { expectedHealthDamage: health * hitChance, expectedArmorDamage: armor * hitChance,
+  const hits=option?.hits??1;
+  return { expectedHealthDamage: health * hitChance * hits, expectedArmorDamage: armor * hitChance * hits,
     expectedShieldDamage: target.shieldDurability > 0 ? (option?.id === 'split-shield' ? shieldImpactDamage(weapon) + 16 : shieldImpactDamage(weapon) || (ranged ? 1 - hitChance : 2 - hitChance)) : 0,
-    killProbability: kill * hitChance };
+    killProbability: hits>1?0:kill * hitChance };
 }
 
 function attackTarget(state, actor, target, weapon, option = null) {
   const battle = state.battle;
+  if(battle.weaponCompletionVersion===1&&battle.weaponSkillsVersion===1&&!option?.id)option={...equipmentSkills(weapon)[0],...option};
+  if(!option?.strikeFollowup&&(option?.hits>1||option?.oppositeHit))return attackMultiple(state,actor,target,weapon,option);
   const ranged = weapon.ranged === true;
   if (battle.enemyAdaptiveRulesVersion===1 && ranged && actor.side==='company' && target.side==='enemy')
     battle.enemyTacticalState.lastRangedAttackRound=battle.round;
@@ -3715,19 +3723,19 @@ function attackTarget(state, actor, target, weapon, option = null) {
   const chance = battle.weaponAuditVersion===1&&option?.id==='split-shield'?100:option?.chanceOverride ?? attackHitChance(battle, actor, target, weapon, option?.hitBonus ?? 0, option);
   if (!option?.areaFollowup) {
     actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + (option?.freeFollowup ? 0 : option?.reaction ? 5 : attackSkillFatigue(actor, weapon, option)));
-    if (weapon.reloadTurns) actor.reload = weapon.reloadTurns;
+    if (weapon.reloadTurns&&!option?.dot) actor.reload = weapon.reloadTurns;
     if (!option?.reaction) actor.ap = battle.rulesVersion === 2 ? Math.max(0, actor.ap - attackApCost(weapon, battle, actor, option)) : 0;
   }
   if (actor.side === 'company' || !ranged && hexDistance(actor, target) <= 1) battle.lastContactRound = battle.round;
   if (!ranged && hexDistance(actor, target) <= 1) battle.engaged = true;
   if (battleRoll(battle) * 100 >= chance) {
-    const shieldDamage = wearShield(battle, target, option?.id === 'split-shield' ? shieldImpactDamage(weapon) + 16 : shieldImpactDamage(weapon) || (ranged ? 1 : 2));
+    const shieldDamage = option?.noDamage||option?.dot?0:wearShield(battle, target, option?.id === 'split-shield' ? shieldImpactDamage(weapon) + 16 : shieldImpactDamage(weapon) || (ranged ? 1 : 2));
     if (hasPerk(actor, 'fast-adaptation')) actor.adaptation += 1;
     const message = `${actor.name}${option?.freeFollowup ? "'s mount misses with Wolf Bite against" : ' misses'} ${target.name}.${shieldDamage ? ` ${target.name}'s shield takes ${shieldDamage} damage.` : ''}`;
     battle.lastEvent = makeBattleEvent(actor, target, 'miss', message, weapon, null, { shieldDamage, ...(option?.name ? { skillName: option.name } : {}) });
     battleLog(battle, message);
     if (battle.weaponSkillsVersion === 1 && !option?.reaction && !option?.areaAction && !ranged
-      && target.alive && target.riposteActive && target.stunnedTurns === 0
+      && target.alive && target.riposteActive && !target.disarmedTurns && target.stunnedTurns === 0
       && target.fatigue + 5 <= target.maxFatigue && hexDistance(actor, target) === 1) {
       const attackEvent = battle.lastEvent;
       const counterWeapon = getItem(target.equipment.weapon);
@@ -3741,14 +3749,14 @@ function attackTarget(state, actor, target, weapon, option = null) {
     return { hit: false, hpDamage: 0, armorDamage: 0, shieldDamage, head: false, fallen: false };
   }
   actor.adaptation = 0;
-  const shieldDamage = wearShield(battle, target, option?.id === 'split-shield' ? shieldImpactDamage(weapon) + 16 : shieldImpactDamage(weapon) || (ranged ? 0 : 1));
+  const shieldDamage = option?.noDamage||option?.dot?0:wearShield(battle, target, option?.id === 'split-shield' ? shieldImpactDamage(weapon) + 16 : shieldImpactDamage(weapon) || (ranged ? 0 : 1));
   if(battle.weaponAuditVersion===1&&option?.id==='split-shield'){
     const message=`${actor.name} strikes ${target.name}'s shield for ${shieldDamage} durability.`;
     battle.lastEvent=makeBattleEvent(actor,target,'attack',message,weapon,null,{head:false,hpDamage:0,armorDamage:0,shieldDamage,fallen:false,skillName:option.name});battleLog(battle,message);
     return {hit:true,hpDamage:0,armorDamage:0,shieldDamage,head:false,fallen:false};
   }
   const baseDamage = weapon.damageMin + Math.floor(battleRoll(battle) * (weapon.damageMax - weapon.damageMin + 1));
-  const head = option?.id === 'puncture' ? false : ['flail-headshot', 'whip-crack'].includes(option?.id) ? true : battleRoll(battle) < (weapon.headChance??.22);
+  const head = option?.head!==undefined?option.head:option?.id === 'puncture' ? false : ['flail-headshot', 'whip-crack'].includes(option?.id) ? true : battleRoll(battle) < (weapon.headChance??.22);
   const { hp: hpDamage, armorDamage, before: armorBefore } = attackDamageRoll(battle, actor, target, weapon, baseDamage, head, option);
   if (head) target.headArmor = Math.max(0, target.headArmor - armorDamage);
   else {
@@ -3759,11 +3767,21 @@ function attackTarget(state, actor, target, weapon, option = null) {
     target.bodyArmor = Math.max(0, target.bodyArmor - (armorDamage - attachmentDamage - outerDamage));
   }
   target.hp = Math.max(0, target.hp - hpDamage);
-  if (['knock-out', 'stunning-stone'].includes(option?.id) && target.hp > 0 && !target.stunProtected) {
+  if ((['knock-out', 'stunning-stone'].includes(option?.id) || option?.stunChance && battleRoll(battle)<option.stunChance) && target.hp > 0 && !target.stunProtected) {
     target.stunnedTurns = 1;
     target.stunProtected = true;
+    if(battle.weaponCompletionVersion===1)clearWeaponStances(target);
   }
-  changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0) + (!ranged ? attachmentEffect(actor.equipment,'meleeMoraleDamage') : 0)));
+  if(battle.weaponCompletionVersion===1&&target.hp>0){
+    if(option?.daze&&(!option.woundThreshold||hpDamage>=Math.ceil(target.maxHp*option.woundThreshold))&&target.undeadTraitsVersion!==1)target.dazedTurns=option.daze;
+    if(option?.stagger)target.staggeredTurns=option.stagger;
+    if(option?.disarm){target.disarmedTurns=option.disarm;target.spearwallActive=false;target.riposteActive=false;}
+    if(option?.daze||option?.stagger){const remaining=new Set(battle.turnOrder.slice(battle.turnIndex+1));battle.turnOrder.splice(battle.turnIndex+1,remaining.size,...sortTurnOrder(battle).filter(id=>remaining.has(id)));}
+    if(option?.bleed&&hpDamage>=3&&target.undeadTraitsVersion!==1){
+      target.bleeding={damage:Math.min(18,(target.bleeding?.damage??0)+option.bleed),turns:2,sourceId:actor.id};
+    }
+  }
+  if(!option?.noDamage)changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0) + (!ranged ? attachmentEffect(actor.equipment,'meleeMoraleDamage') : 0)));
   const fallen = target.hp === 0;
   const perkProcs = [], effects = [];
   if (fallen) {
@@ -3794,7 +3812,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
         : `Berserk: +${battle.rulesVersion === 2 ? 4 : 2} AP.`);
     }
   }
-  const message = `${actor.name}${option?.freeFollowup ? "'s mount uses Wolf Bite against" : ' hits'} ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}`;
+  const message = option?.dot?`${target.name} loses ${hpDamage} health to bleeding${fallen?'; they fall':''}.`: `${actor.name}${option?.freeFollowup ? "'s mount uses Wolf Bite against" : ' hits'} ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}`;
   battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, fallen, ...(effects.length ? { effects } : {}),
     ...(option?.name ? { skillName: option.name } : {}) });
   battleLog(battle, message);
@@ -3814,7 +3832,7 @@ function horseChargePlan(battle, actor, target, weapon) {
   if (!direction) return null;
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   const path = [];
-  let from = actor, fatigueCost = attackFatigueCost(actor, weapon);
+  let from = actor, fatigueCost = attackFatigueCost(actor, weapon,battle);
   for (let step = 1; step < distance; step++) {
     const point = { q: actor.q + direction[0] * step, r: actor.r + direction[1] * step };
     const cost = battleMovementCost(battle, actor, from, point);
@@ -3912,15 +3930,22 @@ function wargHowl(state, actor) {
 }
 
 function areaTargets(battle, actor, primary, skillId) {
-  const dq = primary.q - actor.q, dr = primary.r - actor.r;
-  if (hexDistance(actor, primary) !== 1) return [];
-  const offsets = skillId === 'split' ? [[dq, dr], [dq * 2, dr * 2]] : (() => {
-    const index = SWING_DIRECTIONS.findIndex(([q, r]) => q === dq && r === dr);
-    return index < 0 ? [] : [-1, 0, 1].map(shift => SWING_DIRECTIONS[(index + shift + 6) % 6]);
-  })();
-  const targets = offsets.map(([q, r]) => battle.units.find(unit => unit.alive && unit.q === actor.q + q && unit.r === actor.r + r))
-    .filter(Boolean);
-  return [primary, ...targets.filter(target => target !== primary)];
+  const dq=primary.q-actor.q,dr=primary.r-actor.r;
+  const action=equipmentSkills(getItem(actor.equipment.weapon)).find(skill=>skill.id===skillId);
+  const shape=battle.weaponCompletionVersion===1?action?.area:skillId==='split'?'line':'arc';
+  const distance=hexDistance(actor,primary);
+  if(shape==='reach-arc'?distance!==2:distance!==1)return [];
+  let offsets;
+  if(shape==='line')offsets=[[dq,dr],[dq*2,dr*2]];
+  else if(shape==='ring')offsets=SWING_DIRECTIONS;
+  else if(shape==='reach-arc'){
+    // A contiguous arc on the radius-two hex ring, including off-axis anchors.
+    const ring=[[2,0],[2,-1],[2,-2],[1,-2],[0,-2],[-1,-1],[-2,0],[-2,1],[-2,2],[-1,2],[0,2],[1,1]];
+    const i=ring.findIndex(([q,r])=>q===dq&&r===dr);
+    offsets=[-1,0,1].map(n=>ring[(i+n+12)%12]);
+  }else{const i=SWING_DIRECTIONS.findIndex(([q,r])=>q===dq&&r===dr);offsets=[-1,0,1].map(n=>SWING_DIRECTIONS[(i+n+6)%6]);}
+  const targets=offsets.map(([q,r])=>battle.units.find(unit=>unit.alive&&unit.q===actor.q+q&&unit.r===actor.r+r)).filter(Boolean).filter(unit=>battle.weaponCompletionVersion!==1||Math.abs(tileAt(battle.field,unit.q,unit.r).height-tileAt(battle.field,actor.q,actor.r).height)<=1);
+  return primary.id&&targets.includes(primary)?[primary,...targets.filter(target=>target!==primary)]:targets;
 }
 
 function maximumHealthDamage(battle, actor, target, weapon, option) {
@@ -3938,7 +3963,7 @@ function safeKillProbability(battle, actor, target, weapon) {
   if (alternate) return 1;
   // Treat any extra attack budget as a possible safe sequence, even if movement might block it.
   if (actor.ap >= attackCost * 2) return 1;
-  if (actor.fatigue + attackFatigueCost(actor, weapon) > actor.maxFatigue) return 0;
+  if (actor.fatigue + attackFatigueCost(actor, weapon,battle) > actor.maxFatigue) return 0;
   if (hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round
     && battle.units.some(unit => unit.alive && unit.side !== actor.side && unit.id !== target.id
       && hexDistance(actor, unit) <= range && predictAttack(battle, actor, unit, weapon).killProbability > 0)) return 1;
@@ -3957,14 +3982,14 @@ function safeKillProbability(battle, actor, target, weapon) {
       if (seen.has(key)) continue;
       seen.add(key);
       if (from.spentAp > 0 && hexDistance(from, target) <= range
-        && from.fatigue + attackFatigueCost(from, weapon) <= from.maxFatigue)
+        && from.fatigue + attackFatigueCost(from, weapon,battle) <= from.maxFatigue)
         probability = Math.max(probability, predictAttack(battle, from, target, weapon).killProbability);
       for (const point of hexNeighbors(battle.field, from)) {
         if (occupied.has(`${point.q},${point.r}`)) continue;
         const step = battleMoveApCost(battle, from, from, point);
         if (!Number.isFinite(step) || from.spentAp + step + attackCost > actor.ap) continue;
         const fatigue = from.fatigue + movementFatigue(from, battleMovementCost(battle, from, from, point));
-        if (fatigue + attackFatigueCost(from, weapon) > from.maxFatigue) continue;
+        if (fatigue + attackFatigueCost(from, weapon,battle) > from.maxFatigue) continue;
         const moved = { ...from, q: point.q, r: point.r, fatigue, spentAp: from.spentAp + step };
         consumeMovementCredit(battle, moved, from, point);
         queue.push(moved);
@@ -3972,11 +3997,12 @@ function safeKillProbability(battle, actor, target, weapon) {
     }
   }
   if (actor.ap >= attackCost) for (const primary of battle.units.filter(unit => unit.alive && unit.side !== actor.side
-    && hexDistance(actor, unit) === 1)) for (const id of ['split', 'swing']) {
+    && hexDistance(actor, unit) === 1)) for (const id of (battle.weaponCompletionVersion===1?equipmentSkills(weapon).filter(x=>x.area).map(x=>x.id):['split','swing'])) {
+    const option=battle.weaponCompletionVersion===1?equipmentSkills(weapon).find(x=>x.id===id):COMBAT_SKILLS[id];
     const affected = areaTargets(battle, actor, primary, id);
     if (affected.includes(target) && affected.every(unit => unit.side !== actor.side)
-      && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS[id]) <= actor.maxFatigue)
-      probability = Math.max(probability, predictAttack(battle, actor, target, weapon, COMBAT_SKILLS[id]).killProbability);
+      && actor.fatigue + attackSkillFatigue(actor, weapon, option) <= availableFatigue(actor))
+      probability = Math.max(probability, predictAttack(battle, actor, target, weapon, option).killProbability);
   }
   return probability;
 }
@@ -3996,7 +4022,7 @@ function areaAttackCandidate(state, actor, primary, weapon, option) {
   const safety = evaluateAreaSafety(impacts, { safeKillProbabilityById });
   if (!safety.allowed || primary.side === actor.side && !safety.exception) return null;
   const enemies = impacts.filter(impact => !impact.ally);
-  const priorityTarget = primary.side === actor.side ? targets.find(target => target.side !== actor.side) : primary;
+  const priorityTarget = !primary.id || primary.side === actor.side ? targets.find(target => target.side !== actor.side) : primary;
   return { id: option.id, type: 'area', targetId: priorityTarget.id, target: priorityTarget, areaAnchor: primary, targets, safety,
     apCost: attackApCost(weapon, battle, actor, option), fatigueCost: attackSkillFatigue(actor, weapon, option),
     expectedHealthDamage: enemies.reduce((sum, impact) => sum + impact.expectedHealthDamage, 0),
@@ -4040,7 +4066,7 @@ function spearwallReactionsOnMove(state, mover, from) {
   if (battle.weaponSkillsVersion !== 1 || !mover.alive) return { blocked: false, reactions: [] };
   const destination = { q: mover.q, r: mover.r };
   const defenders = battle.units.filter(unit => unit.alive && unit.side !== mover.side && unit.spearwallActive
-    && unit.stunnedTurns === 0 && unit.fatigue + 5 <= unit.maxFatigue
+    && unit.stunnedTurns === 0 && !unit.disarmedTurns && unit.fatigue + 5 <= unit.maxFatigue
     && weaponSkillFamily(getItem(unit.equipment.weapon)) === 'spear'
     && hexDistance(unit, from) > (getItem(unit.equipment.weapon)?.spearwall?effectiveWeaponRange(unit,getItem(unit.equipment.weapon)):1)
     && hexDistance(unit, destination) === (getItem(unit.equipment.weapon)?.spearwall?effectiveWeaponRange(unit,getItem(unit.equipment.weapon)):1))
@@ -4077,7 +4103,7 @@ function lungePlan(battle,actor,target,weapon) {
     &&!battle.units.some(unit=>unit.alive&&unit.q===point.q&&unit.r===point.r))
     .sort((a,b)=>a.q-b.q||a.r-b.r)[0];
   if(!point)return null;
-  return {point,option:{...COMBAT_SKILLS.lunge,damageMultiplier:Math.min(2,2*Math.max(0,actor.initiative-actor.fatigue)/175)}};
+  return {point,option:{...COMBAT_SKILLS.lunge,damageMultiplier:Math.min(2,2*Math.max(0,combatInitiative(actor)-actor.fatigue)/175)}};
 }
 function skillOptionForTarget(family, actor, target, weapon, battle) {
   const id = ({ mace: 'knock-out', dagger: 'puncture', qatal: 'deathblow', axe: 'split-shield',
@@ -4095,6 +4121,47 @@ function skillOptionForTarget(family, actor, target, weapon, battle) {
     || id === 'hook' && !hookDestination(battle, actor, target)) return null;
   return { ...COMBAT_SKILLS[id], ap: weapon.twoHanded && !weapon.ranged ? 6 : COMBAT_SKILLS[id].ap };
 }
+
+function completedSkillOptions(actor,target,weapon,battle) {
+ return equipmentSkills(weapon).map(skill=>skill.id==='disarm'&&hasWeaponMastery(actor,weapon)?{...skill,hitBonus:-10}:skill).filter(skill=>!skill.basic&&!skill.area&&!['spearwall','riposte','lunge','aimed-shot'].includes(skill.id)).filter(skill=>{
+  if(skill.id==='split-shield')return target.shieldDurability>0;
+  if(skill.id==='puncture')return target.bodyArmor+target.attachmentArmor+(target.attachment2Armor??0)>0;
+  if(skill.id==='deathblow')return target.stunnedTurns>0||target.dazedTurns>0;
+  if(skill.id==='decapitate')return target.hp<target.maxHp;
+  if(['crush-armor','demolish-armor','piercing-bolt'].includes(skill.id))return target.headArmor+target.bodyArmor+target.attachmentArmor+(target.attachment2Armor??0)>0;
+  if(skill.id==='hook')return !!hookDestination(battle,actor,target);
+  if(skill.push&&!knockBackDestination(battle,actor,target))return false;
+  if(skill.disarm)return !target.disarmedTurns&&!!getItem(target.equipment.weapon);
+  if(skill.daze)return !target.dazedTurns&&target.undeadTraitsVersion!==1;
+  if(skill.stunChance||['knock-out','stunning-stone'].includes(skill.id))return !target.stunnedTurns&&!target.stunProtected;
+  return true;
+ });
+}
+function attackMultiple(state,actor,target,weapon,option){
+ const impacts=[],events=[];let opposite;
+ const count=option.hits??2,chance=attackHitChance(state.battle,actor,target,weapon,option.hitBonus??0,option);
+ for(let i=0;i<count&&target.alive&&actor.alive;i++){
+  const strike={...option,chanceOverride:chance,strikeFollowup:true,areaFollowup:i>0};
+  if(option.oppositeHit&&i>0){strike.head=opposite;strike.damageMultiplier=.5;strike.chanceOverride=100;}
+  const impact=attackTarget(state,actor,target,weapon,strike);impacts.push(impact);events.push(state.battle.lastEvent);
+  if(i===0&&option.oppositeHit){if(!impact.hit)break;opposite=!impact.head;}
+ }
+ const effects=[...new Map(events.flatMap(x=>x.effects??[]).map(x=>[x.id,x])).values()],reactions=events.flatMap(x=>x.reactions??[]);
+ const total={hit:impacts.some(x=>x.hit),hpDamage:impacts.reduce((n,x)=>n+x.hpDamage,0),armorDamage:impacts.reduce((n,x)=>n+x.armorDamage,0),shieldDamage:impacts.reduce((n,x)=>n+x.shieldDamage,0),head:impacts[0].head,fallen:!target.alive};
+ state.battle.lastEvent={...events[0],type:total.hit?'attack':'miss',hpDamage:total.hpDamage,armorDamage:total.armorDamage,shieldDamage:total.shieldDamage,head:total.head,fallen:total.fallen,skillName:option.name,strikes:impacts.map(x=>({...x})),...(effects.length?{effects}:{}),...(reactions.length?{reactions}:{}),message:`${actor.name} uses ${option.name} on ${target.name}: ${total.hpDamage} health, ${total.armorDamage} armor (${impacts.filter(x=>x.hit).length}/${impacts.length} strikes hit).`};
+ return total;
+}
+function tickBleeding(state,unit){
+ const bleed=unit.bleeding;if(!bleed)return false;
+ const source=state.battle.units.find(x=>x.id===bleed.sourceId);
+ bleed.turns--;if(!bleed.turns)delete unit.bleeding;
+ // Reuse death/morale/XP handling, without contact, attack resources or mount followups.
+ attackTarget(state,source,unit,{id:null,slot:'weapon',damageMin:0,damageMax:0,armorDamage:0,armorPiercing:0},
+  {id:'bleeding',name:'Bleeding',dot:true,fixedHealth:bleed.damage,head:false,chanceOverride:100,reaction:true,areaFollowup:true});
+ return true;
+}
+function combatInitiative(unit){return unit.initiative*(unit.staggeredTurns>0?.5:1)*(unit.dazedTurns>0?.75:1);}
+function availableFatigue(unit){return unit.maxFatigue*(unit.dazedTurns>0?.75:1);}
 
 function battleMoveApCost(battle, actor, from, to) {
   const cost = battleMovementCost(battle, actor, from, to);
@@ -4145,7 +4212,7 @@ function fleeBattleEnemy(state, actor, enemies) {
   const exiting = atEdge && (battle.escapeRulesVersion!==1 || battle.round>actor.firstFleeRound);
   const reactions = [];
   if (point || exiting) for (const enemy of enemies.filter(unit => hexDistance(actor, unit) === 1
-    && !unit.stunnedTurns && unit.fatigue + 5 <= unit.maxFatigue)) {
+    && !unit.stunnedTurns && !unit.disarmedTurns && unit.fatigue + 5 <= unit.maxFatigue)) {
     const equipped = getItem(enemy.equipment.weapon);
     const weapon = equipped && !equipped.ranged ? equipped : { damageMin: 8, damageMax: 12, hitBonus: -12, armorDamage: .4, range: 1 };
     const impact = attackTarget(state, enemy, actor, weapon, { reaction: true, name: 'Opportunity Strike' });
@@ -4181,6 +4248,7 @@ function advanceBattleV2(state) {
   const battle = state.battle;
   const actor = battle.units.find(unit => unit.id === battle.activeId);
   if (!actor?.alive) { nextBattleTurn(battle); return result(true, 'The next fighter takes their turn.'); }
+  if(battle.weaponCompletionVersion===1&&actor.bleedTickRound!==battle.round&&actor.bleeding){actor.bleedTickRound=battle.round;tickBleeding(state,actor);if(!finishBattlePhase(battle)&&!actor.alive)nextBattleTurn(battle);return result(true,battle.lastEvent.message);}
   if (battle.weaponSkillsVersion === 1 && actor.stunnedTurns > 0) {
     actor.stunnedTurns = 0;
     actor.ap = 0;
@@ -4215,7 +4283,7 @@ function advanceBattleV2(state) {
     && isCrossbow(reserve) && actor.reserveReload === 0 && battleWeaponHasAmmo(state, actor, reserve, 'reserve')
     && enemies.some(enemy => hexDistance(actor, enemy) >= 2 && hexDistance(actor, enemy) <= effectiveWeaponRange(actor, reserve))
     && actor.ap >= swapCost + attackApCost(reserve, battle, actor)
-    && actor.fatigue + attackFatigueCost(actor, reserve) <= actor.maxFatigue) {
+    && actor.fatigue + attackFatigueCost(actor, reserve,battle) <= availableFatigue(actor)) {
     switchBattleSet(state, actor, `${actor.name} draws a loaded ${reserve.name} instead of reloading.`);
     return result(true, battle.lastEvent.message);
   }
@@ -4264,8 +4332,8 @@ function advanceBattleV2(state) {
   }
   if (companyTactic === 'defense' && (!rangedAI || !ammunitionSpent) && !nearbyTarget && (battle.round - battle.lastContactRound < 4)
     && !(battle.engaged && nearest <= 3)
-    && !(skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies) && actor.ap >= attackApCost(weapon, battle, actor, COMBAT_SKILLS.spearwall)
-      && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall) <= actor.maxFatigue)) {
+    && !(skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies) && actor.ap >= attackApCost(weapon, battle, actor, battle.weaponCompletionVersion===1?equipmentSkills(weapon).find(x=>x.id==='spearwall'):COMBAT_SKILLS.spearwall)
+      && actor.fatigue + attackSkillFatigue(actor, weapon, battle.weaponCompletionVersion===1?equipmentSkills(weapon).find(x=>x.id==='spearwall'):COMBAT_SKILLS.spearwall) <= availableFatigue(actor))) {
     actor.ap = 0;
     actor.fatigue = Math.max(0, actor.fatigue - 12);
     const message = `${actor.name} holds the line.`;
@@ -4346,12 +4414,14 @@ function advanceBattleV2(state) {
       if (actor.side==='company' && !actor.ally && companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
     }
   }
-  const canAttack = actor.fatigue + attackFatigueCost(actor, weapon) <= actor.maxFatigue && actor.reload === 0;
+  const basicOption=battle.weaponCompletionVersion===1?equipmentSkills(weapon)[0]:null;
+  const basicFatigue=basicOption?attackSkillFatigue(actor,weapon,basicOption):attackFatigueCost(actor,weapon,battle);
+  const canAttack = !actor.disarmedTurns && actor.fatigue + basicFatigue <= availableFatigue(actor) && actor.reload === 0;
   for (const target of enemies) {
     const distance = hexDistance(actor, target);
-    const normal = predictAttack(battle, actor, target, weapon);
+    const normal = predictAttack(battle, actor, target, weapon,basicOption);
     const aimed = isBow(weapon) ? predictAttack(battle, actor, target, weapon, 15) : null;
-    const charge = ['offense', 'focus'].includes(companyTactic) && horseChargePlan(battle, actor, target, weapon);
+    const charge = !actor.disarmedTurns && ['offense', 'focus'].includes(companyTactic) && horseChargePlan(battle, actor, target, weapon);
     if (charge) {
       const predicted = predictAttack(battle, { ...actor, ...charge.path.at(-1) }, target, weapon, COMBAT_SKILLS.charge);
       candidates.push({ id: 'charge', type: 'charge', targetId: target.id, target, plan: charge, apCost: 6,
@@ -4359,47 +4429,54 @@ function advanceBattleV2(state) {
         incomingDamage: role==='breaker'?enemies.filter(e=>e.id!==target.id && hexDistance(charge.path.at(-1),e)<=1).length*12:0,
         bonus: 24+(role==='breaker'?breakerOpeningBonus(battle,actor,target,charge):0) });
     }
-    const lunge=lungePlan(battle,actor,target,weapon);
+    const lunge=!actor.disarmedTurns&&lungePlan(battle,actor,target,weapon);
     if(lunge)candidates.push({id:'lunge',type:'lunge',targetId:target.id,target,plan:lunge,apCost:attackApCost(weapon,battle,actor,lunge.option),fatigueCost:attackSkillFatigue(actor,weapon,lunge.option),...predictAttack(battle,{...actor,...lunge.point},target,weapon,lunge.option),bonus:22});
     if (distance <= range && canAttack) {
       candidates.push({ id: 'attack', type: 'attack', targetId: target.id, target, apCost: attackCost,
-        fatigueCost: attackFatigueCost(actor, weapon), ...normal,
+        option:basicOption,fatigueCost: basicFatigue, ...normal,
         wastedAmmo: weapon.ranged && target.hp < normal.expectedHealthDamage * .4 ? 1 : 0,
         bonus: 18 + (isBow(weapon) && actor.ap >= attackCost * 2 && (!weapon.reloadTurns) && (!actor.ally && actor.side === 'company' ? state.supplies.ammo >= 2 : true) ? normal.expectedHealthDamage * .75 : 0) });
     }
-    if (skillFamily && distance <= range && actor.reload === 0) {
-      const option = skillOptionForTarget(skillFamily, actor, target, weapon, battle);
+    if (skillFamily && !actor.disarmedTurns && distance <= range && actor.reload === 0) for(const option of (battle.weaponCompletionVersion===1?completedSkillOptions(actor,target,weapon,battle):[skillOptionForTarget(skillFamily, actor, target, weapon, battle)])) {
       const fatigueCost = option && attackSkillFatigue(actor, weapon, option);
-      if (option && actor.ap >= attackApCost(weapon, battle, actor, option) && actor.fatigue + fatigueCost <= actor.maxFatigue) {
+      if (option && actor.ap >= attackApCost(weapon, battle, actor, option) && actor.fatigue + fatigueCost <= availableFatigue(actor)) {
         const predicted = predictAttack(battle, actor, target, weapon, option);
         candidates.push({ id: option.id, type: 'attack', targetId: target.id, target, option,
           apCost: attackApCost(weapon, battle, actor, option), fatigueCost, ...predicted,
-          preventedDamage: ['knock-out', 'stunning-stone'].includes(option.id) ? target.meleeSkill * .25 : 0,
+          preventedDamage: option.disarm||option.daze||option.stagger||option.stunChance||['knock-out','stunning-stone'].includes(option.id)?target.meleeSkill*.25:0,
           bonus: 18 + (['knock-out', 'stunning-stone'].includes(option.id) ? (actor.skillPreference === 'control' ? 22 : 3)
-            : option.id === 'hook' ? 10 : option.id === 'split-shield' ? 8 : option.id === 'puncture' ? 8 : 0) });
+            : option.id === 'demolish-armor' ? 12 : option.id === 'hook' ? 10 : option.id === 'split-shield' ? 8 : option.id === 'puncture' ? 8 : 0) });
       }
     }
-    if (skillFamily === 'two-handed-sword' && distance === 1) {
-      for (const id of ['split', 'swing']) {
-        const option = COMBAT_SKILLS[id];
+    if(!actor.disarmedTurns && (battle.weaponCompletionVersion===1?equipmentSkills(weapon).some(x=>x.area):skillFamily==='two-handed-sword')) {
+      for (const option of (battle.weaponCompletionVersion===1?equipmentSkills(weapon).filter(x=>x.area):['split','swing'].map(id=>COMBAT_SKILLS[id]))) {
         const fatigueCost = attackSkillFatigue(actor, weapon, option);
         if (actor.ap < attackApCost(weapon, battle, actor, option) || actor.fatigue + fatigueCost > actor.maxFatigue) continue;
         const candidate = areaAttackCandidate(state, actor, target, weapon, option);
         if (candidate) candidates.push(candidate);
       }
     }
-    if (aimed && distance <= range + 1 && actor.reload === 0 && actor.fatigue + aimedFatigueCost(actor) <= actor.maxFatigue) {
+    if (!actor.disarmedTurns && aimed && distance <= range + 1 && actor.reload === 0 && actor.fatigue + aimedFatigueCost(actor) <= availableFatigue(actor)) {
       candidates.push({ id: 'aimed-shot', type: 'attack', targetId: target.id, target, apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS['aimed-shot']),
         fatigueCost: aimedFatigueCost(actor), ...aimed, bonus: 15 });
     }
-    if (distance === 1 && actor.equipment.shield && actor.shieldDurability > 0 && actor.fatigue + shieldSkillFatigue(actor) <= actor.maxFatigue) {
+    if (distance === 1 && actor.equipment.shield && actor.shieldDurability > 0 && actor.fatigue + shieldSkillFatigue(actor) <= availableFatigue(actor)) {
       const push = knockBackDestination(battle, actor, target);
       if (push) candidates.push({ id: 'knock-back', type: 'knock-back', targetId: target.id, target, push, apCost: 4, fatigueCost: shieldSkillFatigue(actor),
         preventedDamage: target.meleeSkill * .18, incomingDamage: 2, bonus: actor.skillPreference === 'control' ? 8 : -6 });
     }
   }
+  if(battle.weaponCompletionVersion===1&&!actor.disarmedTurns){
+    const occupied=new Set(battle.units.filter(x=>x.alive).map(x=>`${x.q},${x.r}`));
+    for(const option of equipmentSkills(weapon).filter(x=>x.area==='arc'||x.area==='reach-arc')){
+      if(actor.ap<attackApCost(weapon,battle,actor,option)||actor.fatigue+attackSkillFatigue(actor,weapon,option)>availableFatigue(actor))continue;
+      const radius=option.area==='reach-arc'?2:1;
+      const anchors=radius===1?hexNeighbors(battle.field,actor):[...new Map(hexNeighbors(battle.field,actor).flatMap(x=>hexNeighbors(battle.field,x)).filter(x=>hexDistance(actor,x)===2).map(x=>[`${x.q},${x.r}`,x])).values()];
+      for(const anchor of anchors.filter(x=>!occupied.has(`${x.q},${x.r}`))){const candidate=areaAttackCandidate(state,actor,anchor,weapon,option);if(candidate)candidates.push(candidate);}
+    }
+  }
   const surrounded = enemies.filter(enemy => hexDistance(actor, enemy) <= 1).length >= 2;
-  if (actor.equipment.shield && actor.shieldDurability > 0 && !actor.shieldWallActive && actor.fatigue + shieldSkillFatigue(actor) <= actor.maxFatigue
+  if (actor.equipment.shield && actor.shieldDurability > 0 && !actor.shieldWallActive && actor.fatigue + shieldSkillFatigue(actor) <= availableFatigue(actor)
     && (companyTactic !== 'offense' || surrounded)) {
     candidates.push({ id: 'shieldwall', type: 'shieldwall', apCost: 4, fatigueCost: shieldSkillFatigue(actor),
       preventedDamage: nearest <= 2 ? shieldDefenseFor(actor, actor.equipment.shield) * .8 : 0,
@@ -4407,21 +4484,21 @@ function advanceBattleV2(state) {
         : companyTactic==='skirmish' && nearest<=7 ? 20
         : (battle.enemyAdaptiveRulesVersion===1 ? companyTactic : battle.tactic)==='shield-wall' && nearest<=2 ? 5 : -8 });
   }
-  if (skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies)
-    && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall) <= actor.maxFatigue)
-    candidates.push({ id: 'spearwall', type: 'stance', apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS.spearwall), fatigueCost: attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall),
+  if (!actor.disarmedTurns && skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies)
+    && actor.fatigue + attackSkillFatigue(actor, weapon, battle.weaponCompletionVersion===1?equipmentSkills(weapon).find(x=>x.id==='spearwall'):COMBAT_SKILLS.spearwall) <= availableFatigue(actor))
+    candidates.push({ id: 'spearwall', type: 'stance', apCost: attackApCost(weapon, battle, actor, battle.weaponCompletionVersion===1?equipmentSkills(weapon).find(x=>x.id==='spearwall'):COMBAT_SKILLS.spearwall), fatigueCost: attackSkillFatigue(actor, weapon, battle.weaponCompletionVersion===1?equipmentSkills(weapon).find(x=>x.id==='spearwall'):COMBAT_SKILLS.spearwall),
       preventedDamage: 18, bonus: actor.skillPreference === 'control' ? 14 : 3 });
-  if (skillFamily === 'sword' && !actor.riposteActive
+  if (!actor.disarmedTurns && skillFamily === 'sword' && (battle.weaponCompletionVersion!==1||equipmentSkills(weapon).some(x=>x.id==='riposte')) && !actor.riposteActive
     && enemies.some(enemy => hexDistance(actor, enemy) === 1 && enemy.stunnedTurns === 0
       && !getItem(enemy.equipment.weapon)?.ranged)
     && !(companyTactic === 'offense' && actor.equipment.shield && actor.shieldDurability > 0
       && enemies.filter(enemy => hexDistance(actor, enemy) === 1).length >= 2)
-    && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.riposte) <= actor.maxFatigue)
+    && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.riposte) <= availableFatigue(actor))
     candidates.push({ id: 'riposte', type: 'stance', apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS.riposte), fatigueCost: attackSkillFatigue(actor, weapon, COMBAT_SKILLS.riposte),
       preventedDamage: 12, bonus: actor.skillPreference === 'control' ? 10 : -2 });
-  if (skillFamily === 'two-handed-sword') for (const ally of battle.units.filter(unit => unit.alive
+  if (!actor.disarmedTurns && skillFamily === 'two-handed-sword' && (battle.weaponCompletionVersion!==1||equipmentSkills(weapon).some(x=>x.id==='split'))) for (const ally of battle.units.filter(unit => unit.alive
     && unit.side === actor.side && unit.id !== actor.id && hexDistance(actor, unit) === 1)) {
-    const option = COMBAT_SKILLS.split;
+    const option = battle.weaponCompletionVersion===1?equipmentSkills(weapon).find(x=>x.id==='split'):COMBAT_SKILLS.split;
     if (actor.ap < attackApCost(weapon, battle, actor, option) || actor.fatigue + attackSkillFatigue(actor, weapon, option) > actor.maxFatigue) continue;
     const candidate = areaAttackCandidate(state, actor, ally, weapon, option);
     if (candidate) candidates.push(candidate);
@@ -4510,7 +4587,7 @@ function advanceBattleV2(state) {
     if (path && candidates.some(canReturn)) for (let i=candidates.length-1;i>=0;i--)
       if (offensive(candidates[i]) && !canReturn(candidates[i])) candidates.splice(i,1);
   }
-  const ranked = rankTacticalActions(actor, candidates, { role, targetPriorities:rangedAI, nearestDistance:nearest, tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
+  const ranked = rankTacticalActions(battle.weaponCompletionVersion===1?{...actor,maxFatigue:availableFatigue(actor)}:actor, candidates, { role, targetPriorities:rangedAI, nearestDistance:nearest, tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
     previousTargetId: enemies.some(enemy => enemy.id === actor.aiTargetId) ? actor.aiTargetId : null });
   const permittedExceptions = ranked.filter(entry => entry.type === 'area' && entry.safety.exception)
     .sort((a, b) => compareAreaSafety(a.safety, b.safety));
@@ -4550,12 +4627,12 @@ function advanceBattleV2(state) {
         battle.lastEvent.to = { q: destination.q, r: destination.r };
       }
     }
+    if(option?.push&&impact.hit&&choice.target.alive){const destination=knockBackDestination(battle,actor,choice.target);if(destination){const from={q:choice.target.q,r:choice.target.r};Object.assign(choice.target,destination);clearWeaponStances(choice.target);choice.target.shieldWallActive=false;battle.lastEvent.pushedFrom=from;battle.lastEvent.to={...destination};}}
     if (retreatFrom) battle.lastEvent.moveFrom = retreatFrom;
-    wolfFollowup(state, actor, choice.target);
-    wargHowl(state, actor);
+    if(!option?.noDamage){wolfFollowup(state, actor, choice.target);wargHowl(state, actor);}
   } else if (choice.type === 'area') {
     actor.aiTargetId = choice.target.id;
-    const option = COMBAT_SKILLS[choice.id];
+    const option = battle.weaponCompletionVersion===1?equipmentSkills(weapon).find(x=>x.id===choice.id):COMBAT_SKILLS[choice.id];
     const deferredKills = { kills: 0 };
     const chances = new Map(choice.targets.map(target => [target.id,
       attackHitChance(battle, actor, target, weapon, option.hitBonus ?? 0, option)]));
@@ -5158,6 +5235,7 @@ function validateBattle(input, party, worldState) {
   assert(encounterType === 'camp' ? validCount(campGeneration) && campGeneration <= 1000000 && campGeneration === encounter.generation : campGeneration === null, 'battle camp generation');
   assert(input.enemyTacticsVersion===undefined||input.enemyTacticsVersion===1,'battle enemy tactic rules');
   assert(input.lighting===undefined||['day','evening','night','dawn'].includes(input.lighting),'battle lighting');
+  assert(input.weaponCompletionVersion===undefined||input.weaponCompletionVersion===1,'battle completed weapon rules');
   assert(input.weaponAuditVersion===undefined||input.weaponAuditVersion===1,'battle weapon audit rules');
   assert(input.attachmentRulesVersion===undefined||input.attachmentRulesVersion===1,'battle attachment rules');
   assert(input.championRulesVersion===undefined||input.championRulesVersion===1,'battle champion rules');
@@ -5318,6 +5396,9 @@ function validateBattle(input, party, worldState) {
     assert(unit.shieldWallActive === undefined || rulesVersion === 2 && typeof unit.shieldWallActive === 'boolean', 'battle shieldwall');
     for (const key of ['spearwallActive', 'riposteActive', 'stunProtected'])
       assert(unit[key] === undefined || weaponSkillsVersion === 1 && typeof unit[key] === 'boolean', `battle ${key}`);
+    for(const key of ['dazedTurns','staggeredTurns','disarmedTurns'])assert(unit[key]===undefined||input.weaponCompletionVersion===1&&validCount(unit[key])&&unit[key]<=(key==='dazedTurns'?2:1),`battle ${key}`);
+    assert(unit.bleedTickRound===undefined||input.weaponCompletionVersion===1&&validCount(unit.bleedTickRound)&&unit.bleedTickRound<=input.round,'battle bleed tick');
+    if(unit.bleeding!==undefined)assert(input.weaponCompletionVersion===1&&recordObject(unit.bleeding)&&Object.keys(unit.bleeding).sort().join(',')==='damage,sourceId,turns'&&validCount(unit.bleeding.damage)&&unit.bleeding.damage>=1&&unit.bleeding.damage<=18&&[1,2].includes(unit.bleeding.turns)&&input.units.some(x=>x.id===unit.bleeding.sourceId),'battle bleeding');
     assert(unit.stunnedTurns === undefined || weaponSkillsVersion === 1 && validCount(unit.stunnedTurns) && unit.stunnedTurns <= 1, 'battle stun');
     assert(unit.pendingBerserkAp === undefined || weaponSkillsVersion === 1 && [0, 4].includes(unit.pendingBerserkAp), 'battle pending Berserk');
     for (const key of ['fleeRollRound', 'fleeRound']) assert(unit[key] === undefined
@@ -5328,7 +5409,7 @@ function validateBattle(input, party, worldState) {
     assert(unit.escaped === undefined || weaponSkillsVersion === 1 && unit.side === 'enemy' && unit.escaped === true && !unit.alive && unit.hp === 0, 'battle escaped');
     if (weaponSkillsVersion === 1) assert((unit.stunnedTurns ?? 0) === 0 || unit.stunProtected === true, 'battle stun protection');
     if (unit.spearwallActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'spear', 'battle spearwall weapon');
-    if (unit.riposteActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'sword', 'battle riposte weapon');
+    if (unit.riposteActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'sword'&&(input.weaponCompletionVersion!==1||equipmentSkills(getItem(unit.equipment.weapon)).some(x=>x.id==='riposte')), 'battle riposte weapon');
     if (unit.skirmishReturn!==undefined) assert((unit.side==='enemy' ? input.enemyAdaptiveRulesVersion===1 && enemyTacticalState.tactic==='skirmish' : tactic==='skirmish' && !unit.ally) && rulesVersion===2
       && getItem(unit.equipment.weapon)?.ranged && recordObject(unit.skirmishReturn)
       && Object.keys(unit.skirmishReturn).sort().join(',')==='phase,q,r' && passableHex(unit.skirmishReturn,field)
@@ -5349,6 +5430,8 @@ function validateBattle(input, party, worldState) {
       throwingAmmo: { active: throwingAmmo.active, reserve: throwingAmmo.reserve },
       perks: perks.filter(id => PERK_BY_ID.has(id)), adaptation, berserkRound, frenzyUntilRound, turnStartedRound, freeSwapRound, freeHealRound,
       ...(unit.champion?{champion:true,championItemId:unit.championItemId}:{}),
+      ...Object.fromEntries(['dazedTurns','staggeredTurns','disarmedTurns','bleedTickRound'].filter(key=>unit[key]!==undefined).map(key=>[key,unit[key]])),
+      ...(unit.bleeding===undefined?{}:{bleeding:{...unit.bleeding}}),
       ...(unit.howlTurns === undefined ? {} : { howlTurns: unit.howlTurns }),
       ...(unit.fleeRollRound === undefined ? {} : { fleeRollRound: unit.fleeRollRound }),
       ...(unit.firstFleeRound===undefined?{}:{firstFleeRound:unit.firstFleeRound}),
@@ -5406,7 +5489,7 @@ function validateBattle(input, party, worldState) {
   if (event?.fallen !== undefined) assert(typeof event.fallen === 'boolean', 'battle event fallen');
   if (event?.weaponId !== undefined) assert(event.weaponId === null || getItem(event.weaponId)?.slot === 'weapon', 'battle event weapon');
   if (event?.itemId !== undefined) assert(getItem(event.itemId)?.slot === 'accessory', 'battle event item');
-  if (event?.skillName !== undefined) assert(['Reload', 'Stunned', 'Flee', ...Object.values(COMBAT_SKILLS).map(skill => skill.name)].includes(event.skillName), 'battle event skill');
+  if (event?.skillName !== undefined) assert(['Reload', 'Stunned', 'Flee', ...(input.weaponCompletionVersion===1?['Bleeding',...Object.values(WEAPON_ACTIONS).map(skill=>skill.name)]:[]), ...Object.values(COMBAT_SKILLS).map(skill => skill.name)].includes(event.skillName), 'battle event skill');
   if (event?.ranged !== undefined) assert(typeof event.ranged === 'boolean', 'battle event ranged');
   if (event?.projectile !== undefined) assert([null, 'arrow', 'bolt', 'javelin', 'axe', 'stone'].includes(event.projectile), 'battle event projectile');
   for (const key of ['from', 'to', 'moveFrom']) if (event?.[key] !== undefined) assert(event[key] === null || validHex(event[key], field), `battle event ${key}`);
@@ -5415,11 +5498,12 @@ function validateBattle(input, party, worldState) {
   if (event?.friendlyFire !== undefined) assert(weaponSkillsVersion === 1 && typeof event.friendlyFire === 'boolean', 'battle event friendly fire');
   if (event?.affectedTargets !== undefined) {
     assert(weaponSkillsVersion === 1 && Array.isArray(event.affectedTargets) && event.affectedTargets.length >= 1
-      && event.affectedTargets.length <= 3 && new Set(event.affectedTargets.map(impact => impact.id)).size === event.affectedTargets.length
+      && event.affectedTargets.length <= (input.weaponCompletionVersion===1?6:3) && new Set(event.affectedTargets.map(impact => impact.id)).size === event.affectedTargets.length
       && event.affectedTargets.every(impact => recordObject(impact) && ids.has(impact.id)
         && ['hpDamage', 'armorDamage', 'shieldDamage'].every(key => validCount(impact[key]) && impact[key] <= 1000)
         && typeof impact.hit === 'boolean' && typeof impact.head === 'boolean' && typeof impact.fallen === 'boolean'), 'battle event area impacts');
   }
+  if(event?.strikes!==undefined)assert(input.weaponCompletionVersion===1&&Array.isArray(event.strikes)&&event.strikes.length>=1&&event.strikes.length<=3&&event.strikes.every(x=>recordObject(x)&&['hpDamage','armorDamage','shieldDamage'].every(k=>validCount(x[k])&&x[k]<=1000)&&['hit','head','fallen'].every(k=>typeof x[k]==='boolean')),'battle multi-strike impacts');
   if (event?.reactions !== undefined) {
     assert(weaponSkillsVersion === 1 && Array.isArray(event.reactions) && event.reactions.length >= 1 && event.reactions.length <= 12
       && event.reactions.every(reaction => recordObject(reaction) && ids.has(reaction.actorId) && ids.has(reaction.targetId)
@@ -5457,6 +5541,7 @@ function validateBattle(input, party, worldState) {
     ...(event.shieldDamage !== undefined ? { shieldDamage: event.shieldDamage } : {}),
     ...(event.fallen !== undefined || event.type === 'fall' ? { fallen: event.fallen ?? true } : {}),
     ...(event.friendlyFire === undefined ? {} : { friendlyFire: event.friendlyFire }),
+    ...(event.strikes===undefined?{}:{strikes:event.strikes.map(x=>({...x}))}),
     ...(event.affectedTargets === undefined ? {} : { affectedTargets: event.affectedTargets.map(impact => ({ ...impact })) }),
     ...(event.reactions === undefined ? {} : { reactions: event.reactions.map(reaction => ({ ...reaction,
       from: { ...reaction.from }, to: { ...reaction.to },
@@ -5480,6 +5565,7 @@ function validateBattle(input, party, worldState) {
     ...(input.enemyAdaptiveRulesVersion===undefined?{}:{enemyAdaptiveRulesVersion:1,enemyTacticalState:{...enemyTacticalState}}),
     ...(input.lighting===undefined?{}:{lighting:input.lighting}),
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
+    ...(input.weaponCompletionVersion===undefined?{}:{weaponCompletionVersion:1}),
     ...(input.attachmentRulesVersion===undefined?{}:{attachmentRulesVersion:1}),
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),
     ...(input.escapeRulesVersion===undefined?{}:{escapeRulesVersion:1}),

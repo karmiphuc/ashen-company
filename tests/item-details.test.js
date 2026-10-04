@@ -98,7 +98,7 @@ test('billhook, dagger, and axe show their real tradeoffs', () => {
   assert.equal(value(dagger, 'Hit modifier'), '+12');
   assert.equal(value(dagger, 'Armor damage'), '45% of base hit');
   assert.equal(value(dagger, 'Damage through armor'), '75% of base hit');
-  assert.equal(value(dagger, 'Attack fatigue'), '11');
+  assert.equal(value(dagger, 'Attack fatigue'), '8');
   assert.equal(value(getItemDetails(item('wood-axe')), 'Hit modifier'), '-5');
 });
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ITEMS, createFamedItemId, createGame, getCampSites, getItem, startBattle, advanceBattle, resolveBattle, setBattleTactic, validateSave } from '../src/engine.js';
-import { COMBAT_SKILLS, equipmentSkills, weaponSkillFamily } from '../src/combat-skills.js';
+import { COMBAT_SKILLS, WEAPON_ACTIONS, equipmentSkills, weaponSkillFamily } from '../src/combat-skills.js';
 import { hexNeighbors } from '../src/battle-terrain.js';
 
 function battleWith(weapon, seed = 911) {
@@ -33,8 +33,8 @@ test('every catalog weapon and famed copy has an explicit skill family and match
     assert.ok(weaponSkillFamily(item), item.id);
     assert.ok(equipmentSkills(item).length, item.id);
     for (const skill of equipmentSkills(item)) {
-      assert.equal(COMBAT_SKILLS[skill.id].name, skill.name, item.id);
-      if (item.twoHanded && !item.ranged) assert.ok(skill.ap >= 6, item.id);
+      assert.equal((WEAPON_ACTIONS[skill.id]??COMBAT_SKILLS[skill.id]).name, skill.name, item.id);
+      if (item.twoHanded && !item.ranged && !['cleave','decapitate','slash'].includes(skill.id)) assert.ok(skill.ap >= 6, item.id);
     }
     const famed = getItem(createFamedItemId(item.id, 17));
     assert.equal(weaponSkillFamily(famed), weaponSkillFamily(item), item.id);
@@ -374,7 +374,7 @@ test('each weapon family chooses its situational signature over an ordinary atta
     ['billhook', 'Hook', target => { target.bodyArmor = 0; }],
     ['javelins', 'Power Throw', target => { target.bodyArmor = 0; }],
     ['light-crossbow', 'Piercing Bolt', target => { target.bodyArmor = 100; }],
-    ['whip', 'Whip Crack', target => { target.headArmor = 0; target.bodyArmor = 100; target.equipment.shield = 'round-shield'; target.shieldDurability = 24; }],
+    ['whip', 'Whip', target => { target.headArmor = 0; target.bodyArmor = 100; target.equipment.shield = 'round-shield'; target.shieldDurability = 24; }],
     ['northern-sling', 'Stunning Stone', target => { target.meleeSkill = 200; }],
   ];
   for (const [weapon, expected, configure] of scenarios) await t.test(weapon, () => {
@@ -410,6 +410,7 @@ test('dagger Stab costs 3 AP only in weapon-skill battles', () => {
     const { state, battle, actor, at } = battleWith('fighting-knife');
     if (!newRules) {
       delete battle.weaponSkillsVersion;
+      delete battle.weaponCompletionVersion;
       for (const unit of battle.units) for (const key of ['spearwallActive', 'riposteActive', 'stunnedTurns', 'stunProtected', 'pendingBerserkAp']) delete unit[key];
     }
     const target = at('enemy-1', 3, 2);

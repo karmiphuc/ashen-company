@@ -157,6 +157,10 @@ function perkEffectsHTML(effects) {
 
 function statusIconsHTML(unit, battle) {
   const statuses = [
+    unit.disarmedTurns>0?['disarmed','Disarmed: weapon attacks and reactions disabled for one turn','<path d="m2 2 12 12M3 12l9-9"/>']:null,
+    unit.dazedTurns>0?['dazed','Dazed: −25% damage, fatigue capacity and initiative for '+unit.dazedTurns+' turns','<circle cx="8" cy="8" r="5"/>']:null,
+    unit.staggeredTurns>0?['staggered','Staggered: −50% initiative for one turn','<path d="m3 3 10 10M13 3 3 13"/>']:null,
+    unit.bleeding?['bleeding','Bleeding: '+unit.bleeding.damage+' health per turn · '+unit.bleeding.turns+' turns','<path d="M8 1 3 9a5 5 0 0 0 10 0Z"/>']:null,
     unit.alive !== false && unit.hp > 0 && unit.frenzyUntilRound > 0 && unit.frenzyUntilRound >= battle.round ? ['frenzy', 'Killing Frenzy: +25% damage', '<path d="m8 1 2 5 3-2-1 7-4 4-4-4-1-7 3 2z"/>'] : null,
     unit.alive && unit.howlTurns > 0 ? ['howled', `Howled: −20% damage for ${unit.howlTurns} more turn${unit.howlTurns === 1 ? '' : 's'}`, '<path d="M1 7h2v2H1zm4-3h2v8H5zm4-2h2v12H9zm4 3h2v6h-2z"/>'] : null,
     unit.alive && !isMoraleImmune(unit) && unit.fleeRound === battle.round ? ['fleeing', 'Fleeing', '<path d="M1 7h10L8 4l1-1 5 5-5 5-1-1 3-3H1z"/>'] : null,
@@ -177,7 +181,7 @@ function impactsFor(event, unitId) {
   const affected = Array.isArray(event?.affectedTargets) ? event.affectedTargets : [];
   const impacts = affected.filter(entry => (entry?.id ?? entry?.targetId) === unitId);
   if (event?.targetId === unitId && ['attack', 'hit', 'fall', 'miss'].includes(event.type)
-    && !affected.some(entry => (entry?.id ?? entry?.targetId) === unitId)) impacts.push(event);
+    && !affected.some(entry => (entry?.id ?? entry?.targetId) === unitId)) impacts.push(...(event.strikes?event.strikes.map(x=>({...x,type:x.hit?'attack':'miss'})):[event]));
   for (const reaction of reactionsFor(event)) if (reaction?.targetId === unitId) impacts.push(reaction);
   return impacts;
 }
@@ -192,7 +196,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const reactionTarget = reactions.some(entry => entry?.targetId === unit.id);
   const effects = [...(primaryActor ? event.effects ?? [] : []), ...reactions.filter(entry => entry.actorId === unit.id).flatMap(entry => entry.effects ?? [])];
   const frenzy = alive && unit.frenzyUntilRound > 0 && unit.frenzyUntilRound >= battle.round;
-  const callouts = [...new Set([...(primaryActor ? [actionCallout(event, getItem(event.weaponId) ?? equipmentFor(unit).weapon)] : []),
+  const callouts = [...new Set([...(primaryActor&&event.skillName!=='Bleeding' || event.targetId===unit.id&&event.skillName==='Bleeding' ? [actionCallout(event, getItem(event.weaponId) ?? equipmentFor(unit).weapon)] : []),
     ...reactions.filter(entry => entry.actorId === unit.id).map(entry => actionCallout(entry, getItem(entry.weaponId) ?? equipmentFor(unit).weapon))].filter(Boolean))];
   const primaryTarget = event.targetId === unit.id;
   const impacts = impactsFor(event, unit.id);
@@ -201,7 +205,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const hasHit = impacts.some(impact => impact.hit !== false && impact.type !== 'miss');
   const hasMiss = primaryMiss || impacts.some(impact => impact.hit === false || impact.type === 'miss');
   const shieldDamage = impacts.reduce((total, impact) => total + number(impact.shieldDamage), 0);
-  const attacking = ['attack', 'hit', 'fall', 'miss'].includes(event.type);
+  const attacking = event.skillName!=='Bleeding'&&['attack', 'hit', 'fall', 'miss'].includes(event.type);
   const origin = coordinates(event.from || unit, field, grid, unit);
   const moveOrigin = coordinates(primaryTarget && event.pushedFrom ? event.pushedFrom : primaryActor && event.moveFrom ? event.moveFrom : event.from || unit, field, grid, unit);
   const destination = coordinates(event.to || unit, field, grid, unit);

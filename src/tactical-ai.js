@@ -15,7 +15,7 @@ export function resolveCombatRole(member, weapon, reserveWeapon, equipment = {})
 }
 
 export function scoreTacticalAction(actor, action, context = {}) {
-  if (action.legal === false || action.apCost > actor.ap || action.fatigueCost > actor.maxFatigue - actor.fatigue) return -Infinity;
+  if (action.legal === false || action.apCost > actor.ap || action.fatigueCost > Math.max(0,actor.maxFatigue - actor.fatigue)) return -Infinity;
   const role = actor.tacticalRole ?? context.role ?? 'frontliner';
   const preference = actor.skillPreference ?? 'balanced';
   const damageWeight = preference === 'damage' ? 1.25 : preference === 'control' ? .85 : 1;
