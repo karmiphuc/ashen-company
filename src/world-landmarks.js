@@ -56,7 +56,13 @@ export function landmarkAt(landmarks,p){return landmarks.find(o=>Math.hypot((o.x
 // Layouts use a shared scene scale, with authored offsets and depth ordering.
 // Repetition is limited to useful shared props; each place has its own silhouette.
 // Human remains stay half their earlier size, even in a large encampment.
-const piece=(art,x,y,scale)=>Object.freeze({art:'battlefield_'+art,x,y,scale});
+// Tents define the scene scale. Supplies and loose equipment are subordinate
+// details, not buildings; use the same proportions in every regional layout.
+const PROP_SCALE=Object.freeze({crate:.5,crates:.5,supply_wagon:.65,wagon_wreck:.65,
+ wheel:.6,discarded_weapons:.6,helmets:.55,stone_pile:.6,firepit:.6,burnt_logs:.6,
+ timbers:.65,barricade:.75,broken_barricade:.75,banner_red:.75,banner_blue:.75,
+ fallen_horse:.85,fallen_armored_horse:.85});
+const piece=(art,x,y,scale)=>Object.freeze({art:'battlefield_'+art,x,y,scale:scale*(PROP_SCALE[art]??1)});
 const layout=(...parts)=>Object.freeze(parts.map(p=>piece(...p)).sort((a,b)=>a.y-b.y));
 export const SCENERY_LAYOUTS=Object.freeze({
  'old-crossing':layout(['broken_barricade',-.24,-.06,.44],['wheel',.28,-.09,.15],['corpse_blue',.17,.10,.17],['corpse_mail',-.21,.16,.18],['discarded_weapons',.02,.21,.23],['firepit',.03,-.02,.25]),
