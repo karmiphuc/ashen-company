@@ -83,6 +83,6 @@ Weapon references: the developer's [combat mechanics](https://battlebrothersgame
 
 ### Night conditions
 
-The world clock shows evening from 18:00, night from 20:00 until 06:00, and dawn until 08:00. Evening and dawn apply a light blue tint; night adds a darker blue gradient across the game and dialogs. A banner names the phase and night penalties.
+The world clock shows evening from 18:00, night from 20:00 until 06:00, and dawn until 08:00. Evening and dawn apply a light blue tint; night adds a darker blue gradient over the world map and battlefield only. A banner names the phase and night penalties.
 
 Night multiplies company travel speed by 0.8 after terrain, road, mount and cart modifiers. A new battle captures its starting lighting and preserves it through saves. At night, ordinary ranged attack hit chances lose 40 percentage points and melee attack chances lose 10, equally for company, allies and enemies. These reductions apply after the normal chance calculation, keeping the existing 12–90% bounds; AI attack predictions use the same chance calculation. Older saved battles without lighting retain their existing accuracy rules.
