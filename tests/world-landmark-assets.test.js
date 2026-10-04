@@ -56,6 +56,10 @@ test('authored scenes use the whole supplied prop selection and retain small hum
   for(const p of parts){
    used.add(p.art);
    if(/corpse_|bones$|skeleton$/.test(p.art))assert.ok(p.scale>=.165&&p.scale<=.18,'remains stay half their former scale in every scene');
+   if(/battlefield_crates?$/.test(p.art))assert.ok(p.scale<=.14,'supply crates remain small props');
+   if(/battlefield_(supply_wagon|wagon_wreck)$/.test(p.art))assert.ok(p.scale<=.32,'carts remain smaller than a main tent');
+   if(/battlefield_(wheel|discarded_weapons|helmets|stone_pile)$/.test(p.art))assert.ok(p.scale<=.14,'loose equipment stays subordinate');
+   if(p.art==='battlefield_firepit')assert.equal(p.scale,.15,'hearth fits the smaller clutter scale');
    assert.ok(Math.abs(p.x)+p.scale*.5<=.58,'props stay within the authored site footprint');
   }
  }
