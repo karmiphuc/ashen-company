@@ -23,3 +23,12 @@ body[data-time-of-day=dawn]{--time-tint:#699fce20}
 #time-of-day-indicator{position:relative;padding:5px 12px;border-bottom:1px solid #8cabc2;background:#15212bea;color:#d4e9f5;font:11px/1.4 Arial,sans-serif;pointer-events:none}
 body[data-time-of-day=day] #time-of-day-indicator{display:none}
 .battle-night-warning{margin:0;padding:8px 12px;background:#192936;color:#c8e4ff;font:12px/1.4 Arial,sans-serif}
+
+/* Keep the roster at the viewport edge without covering the end of a page. */
+:root{--company-strip-height:132px;--company-strip-space:calc(var(--company-strip-height) + env(safe-area-inset-bottom,0px))}
+body{padding-bottom:var(--company-strip-space)}
+.company-strip{position:fixed;inset:auto 0 0;z-index:15;height:var(--company-strip-space);padding-bottom:calc(9px + env(safe-area-inset-bottom,0px));padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.strip-roster{min-width:0;overscroll-behavior-x:contain}
+.company-strip .mini-person:disabled{opacity:1}
+#toast{bottom:calc(var(--company-strip-space) + 12px)}
+@media(max-width:620px){:root{--company-strip-height:123px}.company-strip{padding-inline:max(8px,env(safe-area-inset-left,0px)) max(8px,env(safe-area-inset-right,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
