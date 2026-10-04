@@ -238,7 +238,7 @@
         313,
         82
       ],
-      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer scales human/skeleton remains to 16.5\u201318%, firepits to 25%, and wagon wrecks to 50\u201355% of a 100\u2013118 map-unit scene.",
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
       "width": 128,
       "height": 68,
       "bytes": 14964,
@@ -258,7 +258,7 @@
         474,
         84
       ],
-      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer scales human/skeleton remains to 16.5\u201318%, firepits to 25%, and wagon wrecks to 50\u201355% of a 100\u2013118 map-unit scene.",
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
       "width": 128,
       "height": 68,
       "bytes": 15453,
@@ -278,7 +278,7 @@
         314,
         309
       ],
-      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer scales human/skeleton remains to 16.5\u201318%, firepits to 25%, and wagon wrecks to 50\u201355% of a 100\u2013118 map-unit scene.",
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
       "width": 128,
       "height": 114,
       "bytes": 30129,
@@ -298,7 +298,7 @@
         945,
         472
       ],
-      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer scales human/skeleton remains to 16.5\u201318%, firepits to 25%, and wagon wrecks to 50\u201355% of a 100\u2013118 map-unit scene.",
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
       "width": 128,
       "height": 128,
       "bytes": 39212,
@@ -318,11 +318,431 @@
         1100,
         152
       ],
-      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer scales human/skeleton remains to 16.5\u201318%, firepits to 25%, and wagon wrecks to 50\u201355% of a 100\u2013118 map-unit scene.",
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
       "width": 128,
       "height": 102,
       "bytes": 26084,
       "sha256": "d2ca88e1405eefd32f3c1feac9aec84d4c8dacd025bd32aeb231ece1a85c077f"
+    },
+    {
+      "file": "assets/world/battlefield_barricade.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        0,
+        0,
+        154,
+        149
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 118,
+      "bytes": 27041,
+      "sha256": "615833d0f0df5529e9070852b97c9c49bb77d45f5da041d77beb58bec030a1fe"
+    },
+    {
+      "file": "assets/world/battlefield_tent_side.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        1099,
+        232,
+        1254,
+        392
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 124,
+      "height": 128,
+      "bytes": 28704,
+      "sha256": "30ba311680018c928ceb7bccdee66be56fadc9c1b74e548e1f431ab603d8a95e"
+    },
+    {
+      "file": "assets/world/battlefield_tent_front.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        1101,
+        474,
+        1254,
+        631
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 125,
+      "height": 128,
+      "bytes": 28160,
+      "sha256": "f820fa01f2864f46b81f9105787813160d98a85a4e93c7ba5fbd06339009a29c"
+    },
+    {
+      "file": "assets/world/battlefield_tent_round.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        231,
+        1108,
+        393,
+        1254
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 115,
+      "bytes": 29659,
+      "sha256": "b44fcd33cd265cc4fb1f07a498bb94098d458a79947ea796b3ebf1141c25bfeb"
+    },
+    {
+      "file": "assets/world/battlefield_supply_wagon.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        0,
+        1105,
+        229,
+        1254
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 83,
+      "bytes": 23895,
+      "sha256": "3d0469f925e65133406fcc854558f69e1be351e51f5e4c5dc0913e75cf49e387"
+    },
+    {
+      "file": "assets/world/battlefield_wheel.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        475,
+        0,
+        566,
+        77
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 91,
+      "height": 77,
+      "bytes": 14512,
+      "sha256": "56df8fe45a28592c012ce8f8b08f73de124fc4339eda5cc589d49ef9b8d25d29"
+    },
+    {
+      "file": "assets/world/battlefield_crates.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        0,
+        865,
+        151,
+        1014
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 126,
+      "bytes": 33474,
+      "sha256": "9ca3a9dad2b8340d356ea754f170994d6441b9c047f7e0d663347dcc3dc1f1c7"
+    },
+    {
+      "file": "assets/world/battlefield_crate.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        1101,
+        786,
+        1174,
+        861
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 73,
+      "height": 75,
+      "bytes": 10369,
+      "sha256": "e83a9a2b45d94ef6e9ae3e7ffd359778ba57d11e6711e8334b2a52d792172832"
+    },
+    {
+      "file": "assets/world/battlefield_timbers.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        944,
+        631,
+        1104,
+        787
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 125,
+      "bytes": 30500,
+      "sha256": "26a6ec6c1379e28a3a66cb3eb535fd8ad275550d4c367420099d9e0a83bef9a8"
+    },
+    {
+      "file": "assets/world/battlefield_broken_barricade.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        628,
+        630,
+        788,
+        785
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 124,
+      "bytes": 32973,
+      "sha256": "97c564d84c72c78f254d5f5fbe189d1928aeb4187ac635938bc48040947abfd2"
+    },
+    {
+      "file": "assets/world/battlefield_discarded_weapons.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        154,
+        865,
+        315,
+        952
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 69,
+      "bytes": 18396,
+      "sha256": "22704fafb7d41d4c9d18f128ec224eb0c03122bf155bccb4a5300cb2803d7807"
+    },
+    {
+      "file": "assets/world/battlefield_helmets.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        1099,
+        627,
+        1172,
+        704
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 73,
+      "height": 77,
+      "bytes": 10181,
+      "sha256": "4a7b46988d75574fbb7ab8cb7e261ee4bdf99443db7f758c205acbbb6c518179"
+    },
+    {
+      "file": "assets/world/battlefield_banner_red.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        0,
+        1017,
+        77,
+        1087
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 77,
+      "height": 70,
+      "bytes": 9591,
+      "sha256": "e63f3724a768fa69b8f14426b9d9f1e3809fd656257b148dd6f917c3d4af67f9"
+    },
+    {
+      "file": "assets/world/battlefield_banner_blue.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        1031,
+        1023,
+        1176,
+        1103
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 127,
+      "height": 80,
+      "bytes": 14228,
+      "sha256": "e2ec364eacf03dc409cacba8096128d50a79d7194dc19f763af31765497e1ee0"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_green.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        315,
+        87,
+        474,
+        158
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 57,
+      "bytes": 14644,
+      "sha256": "0d19feb558ebb5673d5bdf0b5e077eb19c9e8cb524ca77ba0110781df76574b4"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_mail.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        628,
+        156,
+        786,
+        234
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 63,
+      "bytes": 15437,
+      "sha256": "c6e1e84ecf12ac4bffc7f901bc243816172060870c138400b16a4a79560f65f5"
+    },
+    {
+      "file": "assets/world/battlefield_skeleton.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        739,
+        1018,
+        851,
+        1090
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 112,
+      "height": 70,
+      "bytes": 14857,
+      "sha256": "b6b031447338adb45006cbf8bba5d9ed507089017317796a088af96ffcf68465"
+    },
+    {
+      "file": "assets/world/battlefield_burnt_logs.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        315,
+        634,
+        474,
+        785
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 122,
+      "bytes": 30504,
+      "sha256": "f78328c99ff5c514729475fda7f3dcd77876c6a1289f6571b63b4d92bb91cf32"
+    },
+    {
+      "file": "assets/world/battlefield_stone_pile.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        944,
+        475,
+        1094,
+        556
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 70,
+      "bytes": 18307,
+      "sha256": "af39c858878f25796ae45caa7b24c648d4dd4695b24ad2770d563a646d005113"
+    },
+    {
+      "file": "assets/world/battlefield_fallen_horse.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        396,
+        1091,
+        621,
+        1254
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 93,
+      "bytes": 22952,
+      "sha256": "6dabfa2ceb292ddb8e8b19b4c0023db03cee6da4cff4b98a12738c24f32cf754"
+    },
+    {
+      "file": "assets/world/battlefield_fallen_armored_horse.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        1021,
+        1115,
+        1254,
+        1254
+      ],
+      "changes": "Cream background removed using image editing; cropped to sprite bounds and downscaled to at most 128px. World renderer keeps human/skeleton remains at 16.5\u201318% of scene width; larger props form authored camp and battlefield compositions.",
+      "width": 128,
+      "height": 76,
+      "bytes": 23978,
+      "sha256": "908440d87c18fdaf99b9847b31c5670923f0621f6682aebcbb4c5a93a6cb478d"
     }
   ],
   "note": "Imported CC BY-SA derivatives retain CC BY-SA 3.0. User-provided battlefield art has separate provenance and is not represented as CC-licensed. Asset licenses do not change the game code license."
