@@ -1,3 +1,4 @@
+import { getNightHitPenalty } from './engine.js';
 import { BATTLE_PROJECTION, tilePosition, elevationFaces } from './battle-geometry.js';
 import { enemyBattleTactic, ENEMY_TACTIC_COOLDOWN } from './tactical-ai.js';
 import { weaponSkillFamily } from './combat-skills.js';
@@ -312,6 +313,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
       <div class="battle-turn"><span>TURN</span><strong>${esc(active?.name || 'Resolving')} ${active ? animateEvent ? 'acting' : 'to act' : ''}</strong></div>
       <strong class="battle-status">${statusText(status)}</strong>
     </header>
+    ${getNightHitPenalty(battle,true)?'<p class="battle-night-warning">☾ Night battle · Ranged hit chance −40 points · Melee −10 points · Both sides</p>':''}
     <div class="battle-controls">
       <div class="battle-speed" aria-label="Battle speed">
         <button class="${selectedSpeed === 0 ? 'is-selected' : ''}" data-battle-speed="0" aria-pressed="${selectedSpeed === 0}">Pause</button>
