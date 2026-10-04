@@ -27,7 +27,8 @@ const TACTICS = [
 
 export function parseBattleSpeed(value,fallback=1){
   if(value==='cinematic')return value;
-  return [0,1,3,'0','1','3'].includes(value)?Number(value):fallback;
+  if(value===3||value==='3')return 4;
+  return [0,1,4,'0','1','4'].includes(value)?Number(value):fallback;
 }
 export function cinematicActionKind(event){
   if(!event)return null;
@@ -36,8 +37,8 @@ export function cinematicActionKind(event){
   return null;
 }
 export function battleActionDuration(speed = 1,event=null) {
-  if(speed==='cinematic'){const kind=cinematicActionKind(event);return kind==='attack'?1.15:kind==='skill'?.8:.275;}
-  return speed === 3 ? .275 : speed === 1 ? .55 : 1.1;
+  if(speed==='cinematic'){const kind=cinematicActionKind(event);return kind==='attack'?1.15:kind==='skill'?.8:.1375;}
+  return speed === 3 || speed === 4 ? .1375 : speed === 1 ? .55 : 1.1;
 }
 
 export function tacticsHTML(tactic = 'offense', disabled = false, skirmishSupported = true) {
@@ -321,7 +322,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
   const skillName = animateEvent && battle.lastEvent?.actorId === active?.id ? battle.lastEvent?.skillName : null;
 
   const brothers=units.filter(u=>u.side==='company'&&!u.ally&&u.alive&&!u.escaped).length,enemies=units.filter(u=>u.side==='enemy'&&u.alive&&!u.escaped).length,allies=units.filter(u=>u.ally&&u.alive&&!u.escaped).length;
-  return `<section class="battle-view battle-status-${esc(status)}${cinematicKind?` cinematic-action cinematic-${cinematicKind}`:''}" style="--action-time:${battleActionDuration(speed,battle.lastEvent)}s;--move-time:${speed==='cinematic'?.275:battleActionDuration(speed,battle.lastEvent)}s" aria-label="Tactical battle">
+  return `<section class="battle-view battle-status-${esc(status)}${cinematicKind?` cinematic-action cinematic-${cinematicKind}`:''}" style="--action-time:${battleActionDuration(speed,battle.lastEvent)}s;--move-time:${speed==='cinematic'?.1375:battleActionDuration(speed,battle.lastEvent)}s" aria-label="Tactical battle">
     <header class="battle-topbar">
       <div><span class="battle-kicker">TACTICAL ENGAGEMENT</span><strong>Round ${Math.max(1, Math.round(number(battle.round, 1)))}</strong><small class="battle-counts">${brothers} ${brothers===1?'brother':'brothers'} · ${enemies} ${enemies===1?'enemy':'enemies'}${allies?` · ${allies} ${allies===1?'ally':'allies'}`:''}</small></div>
       <div class="battle-turn"><span>TURN</span><strong>${esc(active?.name || 'Resolving')} ${active ? animateEvent ? 'acting' : 'to act' : ''}</strong></div>
@@ -332,8 +333,8 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
       <div class="battle-speed" aria-label="Battle speed">
         <button class="${selectedSpeed === 0 ? 'is-selected' : ''}" data-battle-speed="0" aria-pressed="${selectedSpeed === 0}">Pause</button>
         <button class="${selectedSpeed === 1 ? 'is-selected' : ''}" data-battle-speed="1" aria-pressed="${selectedSpeed === 1}">1x</button>
-        <button class="${selectedSpeed === 3 ? 'is-selected' : ''}" data-battle-speed="3" aria-pressed="${selectedSpeed === 3}">3x</button>
-        <button class="${selectedSpeed === 'cinematic' ? 'is-selected' : ''}" data-battle-speed="cinematic" aria-pressed="${selectedSpeed === 'cinematic'}" title="3× movement with slow-motion attacks, skills and impacts">Cinematic</button>
+        <button class="${selectedSpeed === 4 ? 'is-selected' : ''}" data-battle-speed="4" aria-pressed="${selectedSpeed === 4}">4x</button>
+        <button class="${selectedSpeed === 'cinematic' ? 'is-selected' : ''}" data-battle-speed="cinematic" aria-pressed="${selectedSpeed === 'cinematic'}" title="4× movement with slow-motion attacks, skills and impacts">Cinematic</button>
       </div>
       <div class="battle-camera" role="group" aria-label="Battlefield camera"><button data-battle-camera="company" aria-label="Center battlefield on your company">Company</button><button data-battle-camera="enemy" aria-label="Center battlefield on enemies" ${units.some(u=>u.side==='enemy'&&u.alive&&!u.escaped)?'':'disabled'}>Enemies</button><button data-battle-camera="active" aria-label="Center battlefield on the acting fighter" ${active?.alive&&!active.escaped?'':'disabled'}>Acting</button></div>
       <button class="battle-retreat" data-action="retreat-battle" ${status === 'active' ? '' : 'disabled'}>Retreat</button>

@@ -284,7 +284,7 @@ test('a riposte reaction animates beside the initiating miss and damages its own
   assert.match(html,/>Miss<\/span>/);
   assert.match(html,/>16 \/ 4<\/span>/);
   assert.match(html,/>Riposte<\/span>/);
-  assert.match(html,/--action-time:0\.275s/);
+  assert.match(html,/--action-time:0\.1375s/);
 });
 
 

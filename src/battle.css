@@ -113,7 +113,7 @@
 .battle-unit strong{bottom:auto;top:calc(var(--pawn-foot,80px) + 1px)}
 .battle-unit small{bottom:auto;top:calc(var(--pawn-foot,80px) + 12px)}
 
-/* Cinematic retains 3x travel while attack wind-up and contact hold longer. */
+/* Cinematic keeps 4x movement while attack wind-up and contact hold longer. */
 .cinematic-action .action-swing .bb-layer-weapon{animation-name:cinematic-swing;animation-timing-function:linear}
 .cinematic-action .action-thrust .bb-layer-weapon{animation-name:cinematic-thrust;animation-timing-function:linear}
 .cinematic-action .action-shoot .bb-layer-weapon{animation-name:cinematic-aim;animation-timing-function:linear}
