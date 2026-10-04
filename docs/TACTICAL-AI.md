@@ -86,3 +86,21 @@ Weapon references: the developer's [combat mechanics](https://battlebrothersgame
 The world clock shows evening from 18:00, night from 20:00 until 06:00, and dawn until 08:00. Evening and dawn apply a light blue tint; night adds a darker blue gradient over the world map and battlefield only. A banner names the phase and night penalties.
 
 Night multiplies company travel speed by 0.8 after terrain, road, mount and cart modifiers. A new battle captures its starting lighting and preserves it through saves. At night, ordinary ranged attack hit chances lose 40 percentage points and melee attack chances lose 10, equally for company, allies and enemies. These reductions apply after the normal chance calculation, keeping the existing 12–90% bounds; AI attack predictions use the same chance calculation. Older saved battles without lighting retain their existing accuracy rules.
+
+
+## Role consistency review — v0.50.19
+
+Astra reviewed every defined role against movement, weapon selection, target commitment, commands, skill legality and fatigue budgets. The review reproduced two alternating-action loops: loaded skirmishers repeatedly traded throwing weapons for shield sets, while reach-weapon flankers/breakers discarded an already-reached target and alternated pursuit. Both paths now keep a useful commitment. Lunge follows formation and focus orders, and unaffordable actions cannot suppress legal alternatives during target-priority filtering.
+
+| Role | Consistent duty |
+| --- | --- |
+| Auto | Resolve once from the full weapon, reserve, armor and mount loadout; temporary swaps preserve the resolved role. Applies to company, allies and enemies. |
+| Frontliner | Engage the practical front and obey the commanded formation/shield line. |
+| Skirmisher | Prefer nearby frontline targets with loaded throwing weapons; draw an existing melee backup when adjacent or depleted without alternating shield readiness and throwing readiness. |
+| Ranged | Prefer easy or finishing targets, keep distance, and seek directional tree/palisade/shield cover. When a shot is already available, optional cover must leave an affordable legal shot, including the extra AP for Aimed Shot. Distant-threat shelter and emergency melee escape remain possible. |
+| Flanker | Prefer ranged/reach targets and safe approaches; keep an equally useful arrived target. Lunge cannot dive beside an additional enemy or ignore a formation/focus command. |
+| Breaker | Use an affordable safe cavalry charge under offensive orders, then pursue exposed targets with the same stable commitment. |
+
+Movement, reforming, firing sorties, return paths, charges and fatigue-consuming reactions now share the reduced fatigue capacity imposed by Daze. NPCs may use their existing backup equipment; the change does not manufacture new loadouts. Allies keep their independent offensive orders, while enemies keep their saved adaptive command.
+
+New battles carry `roleConsistencyVersion: 1`; an already-active battle without it retains its previous decision policy. The marker and resolved roles survive validated saves. Regressions exercise the reproduced loops, every explicit role's movement budget, focused skills, NPC backup swaps, allied role resolution, cover/shot budgets and legacy behavior. Existing formation, cover, breaker, skirmish, weapon-skill and step/reload-versus-instant tests also remain in use.

@@ -14,8 +14,15 @@ export function resolveCombatRole(member, weapon, reserveWeapon, equipment = {})
   return 'frontliner';
 }
 
+// Shared by candidate selection and scoring: preferences never make an
+// unaffordable action a valid reason to discard affordable alternatives.
+export function isAffordableAction(actor, action) {
+  return action.legal !== false && (action.apCost ?? 0) <= actor.ap
+    && (action.fatigueCost ?? 0) <= Math.max(0, actor.maxFatigue - actor.fatigue);
+}
+
 export function scoreTacticalAction(actor, action, context = {}) {
-  if (action.legal === false || action.apCost > actor.ap || action.fatigueCost > Math.max(0,actor.maxFatigue - actor.fatigue)) return -Infinity;
+  if (!isAffordableAction(actor, action)) return -Infinity;
   const role = actor.tacticalRole ?? context.role ?? 'frontliner';
   const preference = actor.skillPreference ?? 'balanced';
   const damageWeight = preference === 'damage' ? 1.25 : preference === 'control' ? .85 : 1;
