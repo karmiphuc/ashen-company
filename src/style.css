@@ -7,10 +7,7 @@
 @media(max-width:380px){.brand small{display:none}.resources{gap:8px}.topbar{padding-inline:7px}.inventory-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.map-caption small{display:none}.nav-tabs button{padding:5px 7px}.hero-portrait{height:190px}.slot strong{font-size:10px}.slot{min-height:118px}.equipment-panel{padding:10px 7px}}
 .bb-portrait{flex-shrink:0;background:transparent!important}.mini-person .bb-portrait{vertical-align:top!important}.hero-portrait .bb-portrait{transform-origin:center bottom}.hero-portrait{background:radial-gradient(ellipse at 50% 65%,#87724b66,transparent 70%)}
 @media(pointer:coarse){button.small,.stow-button,.filter-tabs button,.map-controls button,.map-zoom button,.sidebar-actions>button,.close-button{min-height:44px}.map-controls button,.map-zoom button{min-width:44px}}
-@media(max-width:1050px){.hero-portrait .bb-portrait{transform:scale(.88)}}
-@media(max-width:820px){.hero-portrait .bb-portrait{transform:scale(.80)}}
-@media(max-width:620px){.hero-portrait .bb-portrait{transform:scale(.82)}.company-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.character-card,.equipment-panel{min-width:0}}
-@media(max-width:380px){.hero-portrait .bb-portrait{transform:scale(.74)}}
+@media(max-width:620px){.company-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.character-card,.equipment-panel{min-width:0}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 .map-scenery-key{position:absolute;top:70px;left:12px;right:65px;display:flex;flex-wrap:wrap;gap:4px 12px;max-width:max-content;padding:7px 10px;background:#211e16e8;border:1px solid #8b795044;color:#d8c69d;font:11px/1.25 Georgia,serif;pointer-events:none;z-index:2}

@@ -593,26 +593,11 @@ function mountLayer(spec, part) {
   return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT+file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:${transform};transform-origin:top left;${filter?`filter:${filter};`:''}z-index:${part==='head'?5:0};max-width:none;pointer-events:none">`;
 }
 
-function portraitFrame(equipment, weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount, equipment.weapon), shield = mountedShield(layerSpec('shield', equipment.shield), equipment.mount)) {
-  const dlcHelmet = DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
-  const helmetVisual = visual(equipment.helmet);
-  const weaponBounds = weaponFrame(weapon, equipment.weapon);
-  // Preserve the helmet/head relationship while fitting tall crowns and wide horns.
-  // Move and scale the whole composition; never push only the helmet down onto the brow.
-  const headroom = Math.max(0, -weaponBounds.top, dlcHelmet ? -dlcHelmet.top - (equipment.mount ? 36 : 0) : helmetVisual === 'bascinet' ? 13 : 0);
-  const leftRoom = Math.max(0, -weaponBounds.left, -(shield?.[1] ?? 0), -(dlcHelmet?.left ?? 0));
-  const shieldScale = uniformScale(shield?.[3]);
-  const shieldRight = shield ? shield[1] + SHIELD_WIDTHS[shield[0]] * shieldScale : 0;
-  const mountSpec = layerSpec('mount', equipment.mount);
-  const mountRight = mountSpec ? Math.max(MOUNT_PLATE.left + MOUNT_PLATE.width, /war-horse/.test(mountSpec.body) ? 140 : 0) : 0;
-  const rightRoom = Math.max(0, mountRight - CANVAS.width, shieldRight - CANVAS.width, weaponBounds.right - CANVAS.width, dlcHelmet ? dlcHelmet.left + dlcHelmet.width - CANVAS.width : 0);
-  const footroom = Math.max(0, shield ? shield[2]+SHIELD_HEIGHTS[shield[0]]*shieldScale-CANVAS.height : 0, weaponBounds.bottom - CANVAS.height, mountRight ? MOUNT_PLATE.top + MOUNT_PLATE.height - CANVAS.height : 0);
-  const framed = Boolean(dlcHelmet || leftRoom || rightRoom || weaponBounds.top < 0 || footroom);
-  const compositionScale = framed ? Math.min(CANVAS.width / (CANVAS.width + leftRoom + rightRoom), CANVAS.height / (CANVAS.height + headroom + footroom)) : 1;
-  const compositionLeft = framed ? (CANVAS.width - (CANVAS.width + leftRoom + rightRoom) * compositionScale) / 2 + leftRoom * compositionScale : 0;
-  const compositionTop = framed ? headroom * compositionScale : helmetVisual === 'bascinet' ? 13 : 0;
-  const compositionTransform = framed ? `transform:scale(${compositionScale});transform-origin:top left;` : '';
-  return {left: compositionLeft, top: compositionTop, scale: compositionScale, transform: compositionTransform};
+function portraitFrame(equipment) {
+  // Equipment must not change the rider's size. Tall weapons, horns and mounts
+  // extend beyond the nominal canvas instead of shrinking the whole character.
+  const top = visual(equipment.helmet) === 'bascinet' ? 13 : 0;
+  return {left: 0, top, scale: 1, transform: ''};
 }
 
 /** Ground contact in the same framed coordinate space as the rendered pawn. */
@@ -670,7 +655,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
         ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none;z-index:4">`}
         ${layer('helmet', helmet, equipment.helmet)}`;
 
-  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:hidden;vertical-align:middle;background:transparent">
+  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:visible;vertical-align:middle;background:transparent">
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
       <span class="bb-portrait-composition" style="display:block;position:absolute;left:${compositionLeft}px;top:${compositionTop}px;width:104px;height:142px;${compositionTransform}">
         ${mount ? `<span data-layer="base-plate" class="bb-portrait-base" style="position:absolute;left:${MOUNT_PLATE.left}px;top:${MOUNT_PLATE.top}px;width:${MOUNT_PLATE.width}px;height:${MOUNT_PLATE.height}px;border-radius:50%;background:linear-gradient(#c4c5bc,#81847c 45%,#535850);border:2px solid #363b34;box-shadow:inset 0 -3px 0 #3d433a;box-sizing:border-box;z-index:0"></span>` : ''}

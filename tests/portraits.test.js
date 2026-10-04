@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { ITEMS } from '../src/engine.js';
-import { itemImage, portraitHTML, portraitSVG } from '../src/portraits.js';
+import { itemImage, portraitHTML, portraitSVG, portraitGroundAnchor, portraitWeaponAnchor } from '../src/portraits.js';
 
 const PERSON = { seed: 8, name: 'Mara Ash' };
 const LAYERS = ['body', 'armor', 'head', 'hair', 'beard', 'helmet', 'shield', 'weapon'];
@@ -187,4 +187,23 @@ test('engine item IDs resolve to packaged inventory icons and unknown items are 
   }
   assert.equal(itemImage({ id: 'not-an-item' }), null);
   assert.equal(itemImage(null), null);
+});
+
+
+test('oversized equipment does not shrink the character or move its ground contact', () => {
+  const bare = portraitGroundAnchor();
+  for (const equipment of [
+    {weapon: {id: 'pike', visual: 'pike', twoHanded: true}},
+    {weapon: {id: 'greatsword', visual: 'greatsword', twoHanded: true}, shield: {id: 'painted-tower-shield', visual: 'painted-tower-shield'}},
+    {helmet: ITEMS['bb-wizard-hat']},
+    {mount: {id: 'war-horse', visual: 'warhorse'}},
+  ]) {
+    const html = portraitHTML(PERSON, equipment, 104);
+    assert.match(html, /bb-portrait-composition"[^>]*left:0px;top:0px;width:104px;height:142px;"/);
+    assert.match(html, /height:142px;overflow:visible/);
+    assert.equal(portraitGroundAnchor(equipment).x, equipment.mount ? 70 : bare.x);
+    assert.equal(portraitGroundAnchor(equipment).y, equipment.mount ? 160 : bare.y);
+    const grip = portraitWeaponAnchor(equipment);
+    assert.ok(Number.isFinite(grip.x) && Number.isFinite(grip.y));
+  }
 });
