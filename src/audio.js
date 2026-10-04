@@ -4,7 +4,7 @@ const MUSIC_URL = new URL('../assets/audio/heartfelt-battle.mp3', import.meta.ur
 export const EFFECT_NAMES = Object.freeze(['swing', 'metal', 'impact', 'cloth', 'sword-swish', 'heavy-swish', 'thrust',
   'bow-release', 'dagger-swish', 'axe-chop', 'chain', 'crossbow-release', 'sling-release', 'whip-release', 'reload',
   'shield-wood', 'armor-clang', 'armor-dent', 'blunt-hit', 'pierce-hit', 'cut-hit', 'hammer-hit', 'flesh-hit', 'arrow-pierce', 'throwing-pierce', 'bolt-pierce',
-  'slash-hit', 'cavalry-hooves', 'charge-hit']);
+  'slash-hit', 'cavalry-hooves', 'charge-hit', 'shield-blunt', 'shield-slash', 'shield-pierce', 'armor-blunt', 'armor-slash', 'armor-pierce', 'flesh-pierce']);
 const EFFECT_URLS = Object.freeze(Object.fromEntries(EFFECT_NAMES.map(name => [name, new URL(`../assets/audio/${name}.mp3`, import.meta.url).href])));
 const SETTINGS_KEY = 'ashen-company-audio-v1';
 const PROFILES = {
@@ -35,22 +35,27 @@ export function combatSoundCue(event, duration = .55) {
     if (family === 'crossbow') cues.push(cue('bow-release', offset + .025, .35, 1.2));
     if (family === 'flail') cues.push(cue('heavy-swish', offset + .02, .22));
     if (family === 'sling') cues.push(cue('thrust', offset + .04, .2, 1.15));
-    // Layer material and health contact separately: armor penetration still sounds like flesh.
-    // Area attacks use one representative contact per layer to keep volleys bounded.
+    // Release is separate from contact. Select contact foley from the actual
+    // damaged material and damage type, never a second release/weapon-strike clip.
+    const style = /^(Wolf Bite|Stab|Thrust|Impale|Puncture|Lunge)$/.test(entry.skillName ?? '') ? 'pierce'
+      : ['mace','hammer','flail','sling'].includes(family) ? 'blunt'
+      : ['dagger','qatal','spear','bow','crossbow'].includes(family) || family==='throwing' && profile[1]==='throwing-pierce' ? 'pierce' : 'slash';
     const impacts = entry.affectedTargets ?? [entry];
     const at = offset + duration * .65;
     const shield = impacts.some(impact => impact.shieldDamage > 0);
     const armor = impacts.some(impact => impact.armorDamage > 0);
     const flesh = impacts.some(impact => impact.hpDamage > 0);
     const hit = impacts.some(impact => impact.hit === true || impact.hit !== false && impact.type === 'attack');
-    if (shield || armor) cues.push(cue(shield ? 'shield-wood'
-      : ['mace', 'hammer', 'axe', 'flail', 'sling'].includes(family) || heavy ? 'armor-dent' : 'armor-clang',
-      at, heavy ? .5 : .38));
-    if (flesh || hit) {
-      cues.push(cue(profile[1], at, heavy ? .55 : .45));
-      // Blunt and edged attacks get a low body thump; piercing samples already include it.
-      if (flesh && ['blunt-hit', 'hammer-hit', 'slash-hit', 'axe-chop'].includes(profile[1]))
-        cues.push(cue('flesh-hit', at + .012, .24, heavy ? .9 : 1));
+    const legacyContact = hit && impacts.every(impact => ['hpDamage','armorDamage','shieldDamage'].every(key=>impact[key]===undefined));
+    const contactRate = heavy ? .88 : 1;
+    const contactVolume = (heavy ? .65 : .6) / Math.sqrt(Math.max(1,Number(shield)+Number(armor)+Number(flesh || legacyContact)));
+    if (shield) cues.push(cue('shield-'+style, at, contactVolume, contactRate));
+    if (armor) cues.push(cue('armor-'+style, at + (shield ? .012 : 0), contactVolume, contactRate));
+    if (flesh || legacyContact) {
+      const body = legacyContact || !weapon ? 'impact' : family==='bow' ? 'arrow-pierce' : family==='crossbow' ? 'bolt-pierce'
+        : family==='throwing' && style==='pierce' ? 'throwing-pierce'
+        : style==='blunt' ? 'flesh-hit' : style==='pierce' ? 'flesh-pierce' : 'slash-hit';
+      cues.push(cue(body, at + (armor || shield ? .024 : 0), contactVolume, contactRate));
     }
     if (charging && (flesh || armor || hit)) cues.push(cue('charge-hit', at, .55));
     return cues;
@@ -70,7 +75,7 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
   const buffers = new Map(), voices = new Map();
   let pending = [], lastLoadAt = -Infinity;
   const audible = () => preferences.effects && scene.active && scene.playing && !scene.hidden;
-  const contact = name => /^(?:impact|metal|shield-wood|axe-chop|armor-.+|.+-hit|.+-pierce)$/.test(name);
+  const contact = name => /^(?:impact|metal|shield-.+|axe-chop|armor-.+|.+-hit|.+-pierce)$/.test(name);
   function stopVoice(source) {
     const voice = voices.get(source); if (!voice) return;
     voices.delete(source);

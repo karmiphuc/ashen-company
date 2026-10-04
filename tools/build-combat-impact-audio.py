@@ -12,6 +12,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = Path(sys.argv[1]) / 'Audio'
 # Recorded foley layers: source, playback pitch, gain, delay in ms.
 RECIPES = {
+    'shield-blunt': [('impactWood_heavy_001', .83, .85, 0), ('impactSoft_heavy_003', .7, .25, 3)],
+    'shield-slash': [('impactWood_medium_004', .96, .9, 0), ('impactMetal_light_000', .9, .12, 4)],
+    'shield-pierce': [('impactWood_light_002', 1.12, .95, 0), ('impactWood_medium_003', 1.13, .15, 3)],
+    'armor-blunt': [('impactMetal_heavy_003', .8, .8, 0), ('impactMetal_medium_002', .7, .35, 3)],
+    'armor-slash': [('impactMetal_medium_004', 1.1, .75, 0), ('impactMetal_light_004', 1.12, .4, 4)],
+    'armor-pierce': [('impactMetal_light_002', 1.18, .75, 0), ('impactMetal_medium_000', 1.2, .45, 3)],
+    'flesh-pierce': [('impactSoft_medium_002', 1.05, .95, 0), ('impactPunch_medium_002', 1.1, .55, 3)],
     'flesh-hit': [('impactSoft_heavy_001', .86, .8, 0), ('impactPunch_medium_003', .92, .45, 8)],
     'arrow-pierce': [('impactSoft_medium_000', 1.18, .9, 0), ('impactWood_light_003', 1.2, .35, 0)],
     'throwing-pierce': [('impactSoft_heavy_002', .88, .9, 0), ('impactPunch_medium_002', .9, .45, 5)],
