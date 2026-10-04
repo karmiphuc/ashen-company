@@ -18,3 +18,19 @@ Visual plans never modify campaign saves, terrain rules, settlement coordinates 
 - `npm run prepare-offline` includes the new helper; offline browser reload verifies all 574 cached files and module availability.
 - Desktop (1440×1000), tablet (768×1024) and phone (390×844) screenshots check nine regions, overview and day/night rendering.
 - Browser interaction checks exercise actual touch pan/pinch and mouse settlement selection; cache instrumentation verifies reuse, the raster limit and a single rebuild for a new seed.
+
+## Regional landmarks and travel barriers (0.50.0)
+
+The continuation of #38 / #39 uses deliberate sites rather than uniform random scattering. Ruined watches mark old borders, battle remains mark former crossings and caravan routes, abandoned monumental halls mark woodland/swamp/steppe antiquities, and the Sunlands hold grouped pyramids, a sphinx and buried temple. Small ruin positions vary deterministically by seed; large monuments and future quest anchors have stable identities. Placement preserves town footprints, road readability and active camp markers.
+
+Three named ranges are authored in gaps between the 71 existing road links: snowy Frostspine, rocky Stormteeth in the steppe, and desert Sunwall. Their convex footprints block travel; Frostspine has two ridge masses with an open central cleft. `world-navigation.js` derives a visibility graph around ridge corners. Player routes, chasing bands, roving patrols and crisis hosts share the same barriers; caravan road semantics and timings remain unchanged. Derived paths are not saved. Imported actors inside a new ridge walk out using ordinary movement; obsolete destinations inside a ridge stop safely. Seeded camp markers move to accessible ridge feet or outside monument/cave footprints, retaining IDs, generations and their seeded roster/loot rolls.
+
+`LEGENDARY_CAVES` reserves exactly three dormant, untargetable entrances for future quest implementation:
+
+| Stable ID | Setting | Authored coordinates before map compaction |
+| --- | --- | --- |
+| `greenwood-cave` | Veiled Hollow, remote deep forest | 2020, 970 |
+| `frostspine-cave` | Frostspine Grotto, central walkable cleft | 2140, 314 |
+| `sunlands-cave` | Sunken Passage, beside the necropolis | 3750, 2100 |
+
+No legendary encounters or rewards activate yet. Decoration clicks produce no target or travel order. All illustrations, mountain facets and static smoke are baked into the existing raster capped at 4096px; no animation loop or decorative NPC simulation is added.
