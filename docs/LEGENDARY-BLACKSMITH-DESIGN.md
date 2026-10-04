@@ -37,7 +37,7 @@ After discovery, stop scanning item ownership for this chain. Selling, losing or
 | 1 | **Cold Hearth.** Odran's bellows are torn and his furnace stands cold. He will work again if someone restores the workshop. | Deliver **8 Iron**, **6 Timber** and **10 Tools** to Odran. Goods come from existing cargo/markets; tools come from company supplies. Preview the full requirement and consume everything together only on explicit turn-in. | 400 crowns; restored forge artwork/state; offer quest 2. |
 | 2 | **Anvil in Chains.** Raiders stole the master's anvil and now use it to break captured arms. | Defeat a dedicated nearby human brigand encounter, **Anvil Thieves**, then return with the anvil. Default roster: 8 existing regional brigands at difficulty 2. The anvil is a quest flag, recovered only when the victory result is claimed. | 700 crowns; offer quest 3. |
 | 3 | **The First Temper.** A surviving tempering plate lies in an ancient furnace. Its buried custodians still guard it. | Defeat **The Buried Furnace**, default 10 existing ancient-armory enemies at difficulty 3; recover the tempering plate and bring it to Odran. Reuse ancient equipment and existing undead behavior. | 1,000 crowns; offer quest 4. |
-| 4 | **A Master's Oath.** An armed collector holds Odran's stolen pattern-book. The book teaches how a weapon's exceptional workmanship can survive its destruction. | Defeat **The Collector's Guard**, default one existing human champion plus 9 existing elite human guards at difficulty 3. The champion must be killed or captured, rather than escape. Claim the result, recover the pattern-book, and return to Odran. | Permanently unlock **Reforge legacy**, one free transfer, and one guaranteed named Arming Sword for trying the service. No extra fifth quest or compulsory sacrifice. |
+| 4 | **A Master's Oath.** An armed collector holds Odran's stolen pattern-book. The book teaches how a weapon's exceptional workmanship can survive its destruction. | Defeat **The Collector's Guard**, default one existing human champion plus 9 existing elite human guards at difficulty 3. The champion must be killed, rather than escape; this design adds no capture mechanic. Claim the result, recover the pattern-book, and return to Odran. | Permanently unlock **Reforge legacy**, one free transfer, and one guaranteed named Arming Sword for trying the service. No extra fifth quest or compulsory sacrifice. |
 
 Short dialogue establishes each objective and repeats the mechanical reward. Final dialogue: “Steel can break. Good work need not die with it. Bring me a named piece and the item that should inherit its craft.”
 
@@ -173,9 +173,20 @@ Integration should cover `engine.js`, a dedicated blacksmith quest/service rules
 
 Use the exact requested asset page: [Medieval Blacksmith — Isometric 2.5D](https://opengameart.org/content/medieval-blacksmith-isometric-25d).
 
-The page could not be inspected from this environment: the network proxy returned HTTP 403 on 2026-10-04. Author, license, downloadable filenames and image contents are therefore **unverified**. Do not claim a license, select a substitute, fabricate a thumbnail or import an unidentified image in this design PR.
+Source verified during PR review on 2026-10-04: the exact page credits **feudalwars** and offers **CC0 1.0**. Its rendered blacksmith depicts a workshop, forge, chimney and smith. The original PNG was downloaded and inspected; the source remains outside the game until an implementation slice imports it.
 
-Before shipping the implementation, retrieve that page and its actual source download, verify the offered license/attribution and inspect the original. Save the source URL, author, chosen license, original/derived filenames, dimensions, SHA-256 hashes and any crop/resize recipe in the existing asset-credit/manifest convention. Store the derived image locally (proposed `assets/world/legendary-blacksmith.png`), add it to offline caching, and use the same artwork in the Ironford service entry and forge panel. Preserve transparency and aspect ratio; provide enough framing that the blacksmith remains legible on tablet/mobile. If multiple sprites are provided, explicitly record which one depicts the workshop or smith. Asset verification is a remaining implementation dependency, not a reason to delay the mechanical design.
+| Source field | Verified value |
+| --- | --- |
+| Download | `https://opengameart.org/sites/default/files/blacksmith_0.png` |
+| Author | feudalwars / Feudal Wars (`feudalwars.net`) |
+| License | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Format and dimensions | RGBA PNG, 305 × 259 pixels |
+| Bytes | 135,040 |
+| SHA-256 | `bfb845d5c31c3f90b0fe13478a988b582797e12b0c2f9d1fae38a18704dfad2b` |
+
+Preserve the downloaded original unchanged for provenance, and recheck its hash before preparing a derived sprite. This review replaces the initial environment's HTTP 403 blocker; no asset has been imported by this documentation PR.
+
+Before shipping the implementation, retrieve that page and its actual source download, verify the offered license/attribution and inspect the original. Save the source URL, author, chosen license, original/derived filenames, dimensions, SHA-256 hashes and any crop/resize recipe in the existing asset-credit/manifest convention. Store the derived image locally (proposed `assets/world/legendary-blacksmith.png`), add it to offline caching, and use the same artwork in the Ironford service entry and forge panel. Preserve transparency and aspect ratio; provide enough framing that the blacksmith remains legible on tablet/mobile. If multiple sprites are provided, explicitly record which one depicts the workshop or smith. Asset import, any transparency cleanup and size checks remain implementation work; source author/license verification is complete.
 
 ## 8. Acceptance checks and implementation slices
 
