@@ -786,10 +786,23 @@ function townBlocked(state, townId) {
 function ashenContext(state) {
   return { settlements: SETTLEMENTS, report: message => record(state, message), hostiles: () => getRoamingBands(state),combatTargets:()=>[...getRoamingBands(state),...getFactionPatrols(state).filter(p=>p.active)] };
 }
+// Fixed designs and seeded rolls keep a marshal's trophy kit stable across saves
+// and retreats. One-handed weapons always leave room for their named shield.
+const ASHEN_MARSHAL_KITS = [
+  {weapon:'military-cleaver',shield:'northern-iron-round-shield',armor:'bb-named-bronze-armor',helmet:'bb-named-metal-bull-helmet'},
+  {weapon:'warhammer',shield:'kite-shield',armor:'bb-green-coat-of-plates-armor',helmet:'bb-named-nordic-helmet-with-closed-mail'},
+  {weapon:'arming-sword',shield:'kite-shield',armor:'bb-brown-coat-of-plates-armor',helmet:'bb-heraldic-mail-helmet'},
+];
+function ashenMarshalGear(encounter) {
+  const kit=ASHEN_MARSHAL_KITS[Number(encounter.frontId.split(':')[1])-1];
+  const gear=Object.fromEntries(Object.entries(kit).map(([slot,id])=>[slot,createFamedItemId(id,crisisHash(`${encounter.force.seed}:marshal:${slot}`))]));
+  return {...gear,marshal:true,champion:true,championItemId:gear.weapon};
+}
 export function getUndeadEncounters(state) {
   return ashenEncounterRecords(state, SETTLEMENTS).filter(e => e.force.troops.length).map(encounter => {
     const pool = ancientEnemies(encounter.force.tier);
     const enemies = encounter.force.troops.map(troop => ({ ...pool[(troop + encounter.force.seed % pool.length) % pool.length],
+      ...(encounter.kind === 'undead-commander' && troop === 0 ? ashenMarshalGear(encounter) : {}),
       name: encounter.kind === 'undead-commander' && troop === 0 ? encounter.name : pool[(troop + encounter.force.seed % pool.length) % pool.length].name,
       troopIndex: troop, undeadTraitsVersion: 1, savedDamage: encounter.force.damage[troop] ?? null }));
     const fight=worldSkirmishFor(state,encounter.id);
@@ -2748,7 +2761,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     const role = enemyRoleBonuses(enemy, CAMP_BY_ID.has(camp.id) ? 0 : unitDifficulty);
     const bonus = key => (getItem(gear.armor)?.statBonuses?.[key] ?? 0) + (getItem(gear.helmet)?.statBonuses?.[key] ?? 0);
     const baseHp = 25 + unitDifficulty * 12 + rank * 8 + ((enemy.troopIndex ?? index) === 0 && unitDifficulty === 3 ? 12 : 0);
-    const hp=enemy.champion?Math.ceil(baseHp*1.4):baseHp,championSkill=enemy.champion?12:0,championDefense=enemy.champion?8:0;
+    const hp=enemy.marshal?baseHp*2:enemy.champion?Math.ceil(baseHp*1.4):baseHp,championSkill=enemy.marshal?26:enemy.champion?12:0,championDefense=enemy.marshal?14:enemy.champion?8:0;
     return {
       ...(enemy.champion?{champion:true,championItemId:enemy.championItemId}:{}),
       id: `enemy-${(enemy.troopIndex ?? index) + 1}`, ...(undeadUnit ? { undeadTraitsVersion: 1, troopIndex: enemy.troopIndex } : {}), name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + DEPLOYMENT_ROW_OFFSET + FRONT_FORMATION[index % 12],
@@ -2766,7 +2779,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
       meleeSkill: 30 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill, rangedSkill: 28 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill,
       meleeDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),
       rangedDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + (getItem(gear.shield)?.rangedDefense ?? shieldDefense) + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0) + attachmentBonus(gear,'rangedDefenseBonus'),
-      maxFatigue: 85 + (enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + unitDifficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (enemy.champion?20:0) + unitDifficulty * 8 + rank * 4 + bonus('resolve'),
+      maxFatigue: 85 + (enemy.marshal?40:enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + unitDifficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (enemy.champion?20:0) + unitDifficulty * 8 + rank * 4 + bonus('resolve'),
     };
   };
   const enemies=camp.enemies.map((e,i)=>makeEnemyUnit(e,i));
@@ -5327,8 +5340,8 @@ function validateBattle(input, party, worldState) {
   const field = validateBattleField(input.field);
   assert(input.escapeRulesVersion===undefined||input.escapeRulesVersion===1,'battle escape rules');
   assert(input.enemyScalingVersion===undefined||input.enemyScalingVersion===1,'battle enemy scaling rules');
-  const enemyLimit=input.enemyScalingVersion===1?20:12;
-  const validEnemyId=id=>new RegExp(`^enemy-([1-9]|1[0-9]${enemyLimit===20?'|20':''})$`).test(id)&&Number(id.slice(6))<=enemyLimit;
+  const enemyLimit=undead?ASHEN_CONFIG.commanderSize:input.enemyScalingVersion===1?20:12;
+  const validEnemyId=id=>/^enemy-[1-9]\d?$/.test(id)&&Number(id.slice(6))<=enemyLimit;
   assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + (patrolAssist?9:3) + enemyLimit, 'battle units');
   assert(input.units.filter(u=>u.side==='enemy').length<=enemyLimit,'battle enemy count');
   const ids = new Set();
@@ -5592,7 +5605,7 @@ function validateBattle(input, party, worldState) {
       ...(reaction.effects === undefined ? {} : { effects: reaction.effects.map(effect => ({ id: effect.id, amount: effect.amount, ...(effect.nextTurn === undefined ? {} : { nextTurn: effect.nextTurn }) })) }) })) }),
   } : null;
   const loot = input.loot;
-  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= (input.enemyScalingVersion===1?80:24) && loot.items.every(id => getItem(id)), 'battle loot');
+  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= (undead?ASHEN_CONFIG.commanderSize*4:input.enemyScalingVersion===1?80:24) && loot.items.every(id => getItem(id)), 'battle loot');
   const itemConditions = (loot.itemConditions ?? loot.items.map(itemCondition)).map((condition, index) => restoredCondition(loot.items[index], condition));
   assert(Array.isArray(itemConditions) && itemConditions.length === loot.items.length && itemConditions.every((condition, index) => {
     const maximum = itemCondition(loot.items[index]);

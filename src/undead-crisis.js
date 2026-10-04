@@ -132,6 +132,12 @@ export function advanceAshenWinter(state, context) {
     crisis.phase = 'active'; context.report('Ashen Winter begins. Liberate closed settlements and destroy all three commanders.');
   }
   if (!['active', 'cleanup'].includes(crisis.phase)) return null;
+  // Existing campaigns receive the new reinforcement cadence without rewriting
+  // troop identities, wounds, or forces committed to a player/NPC battle.
+  if (crisis.version === 1) {
+    crisis.version = 2;
+    for (const front of crisis.fronts) front.nextSpawnHour = Math.min(front.nextSpawnHour, now);
+  }
   if (crisis.phase === 'active') for (const front of crisis.fronts) {
     if (!front.defeated && now >= front.nextSpawnHour) spawnHost(state, front, context);
   }
@@ -263,12 +269,12 @@ export function validateAshenWinter(input, seed, settlements) {
   const checkForce = f => {
     check(keys(f,['id','seed','size','tier','rank','troops','damage','generation']) && typeof f.id === 'string' && /^ashen:[1-3]:(commander|host:[1-9]\d*(?::occupation)?)$/.test(f.id)
       && Number.isSafeInteger(f.seed) && f.seed === crisisHash(`${input.seed}:${f.id}:force`)
-      && [6, 8, 10, 12].includes(f.size) && [2, 3].includes(f.tier) && [0, 1, 2].includes(f.rank) && f.generation === 0, 'force');
+      && [6, 8, 10, 12, C.openingSize, C.hostSize, C.garrisonSize, C.commanderSize].includes(f.size) && [2, 3].includes(f.tier) && [0, 1, 2].includes(f.rank) && f.generation === 0, 'force');
     check(Array.isArray(f.troops) && f.troops.length <= f.size && new Set(f.troops).size === f.troops.length && f.troops.every(i => count(i) && i < f.size), 'troop identities');
     check(object(f.damage) && Object.keys(f.damage).every(i => f.troops.includes(Number(i))), 'casualty damage');
-    for (const [troop, d] of Object.entries(f.damage)) check(keys(d,['hp','bodyArmor','headArmor','shieldDurability']) && ['hp', 'bodyArmor', 'headArmor', 'shieldDurability'].every(k => count(d[k]) && d[k] <= (k === 'hp' ? 300 : 500)) && d.hp > 0 && d.hp <= 25 + f.tier * 12 + f.rank * 8 + (Number(troop) === 0 && f.tier === 3 ? 12 : 0), 'damage');
+    for (const [troop, d] of Object.entries(f.damage)) check(keys(d,['hp','bodyArmor','headArmor','shieldDurability']) && ['hp', 'bodyArmor', 'headArmor', 'shieldDurability'].every(k => count(d[k]) && d[k] <= (k === 'hp' ? 300 : 500)) && d.hp > 0 && d.hp <= (25 + f.tier * 12 + f.rank * 8 + (Number(troop) === 0 && f.tier === 3 ? 12 : 0)) * (Number(troop) === 0 && f.tier === 3 ? 2 : 1), 'damage');
   };
-  check(keys(input,['version','crisisId','seed','phase','eligibilityHour','warningHour','activationHour','completedHour','fronts','hosts','towns','resolved','liberationCount','hostVictories','finalRewardGranted','finalItemClaimed','aftermath']) && input.version === 1 && input.crisisId === 'ashen-winter' && input.seed === crisisHash(`${seed}:ashen-winter`), 'identity');
+  check(keys(input,['version','crisisId','seed','phase','eligibilityHour','warningHour','activationHour','completedHour','fronts','hosts','towns','resolved','liberationCount','hostVictories','finalRewardGranted','finalItemClaimed','aftermath']) && [1, 2].includes(input.version) && input.crisisId === 'ashen-winter' && input.seed === crisisHash(`${seed}:ashen-winter`), 'identity');
   check(['dormant', 'scheduled', 'warning', 'active', 'cleanup', 'completed'].includes(input.phase), 'phase');
   check(['eligibilityHour', 'warningHour', 'activationHour', 'completedHour'].every(k => nullableHour(input[k])), 'deadlines');
   check(input.phase === 'dormant' ? input.eligibilityHour === null && input.warningHour === null && input.activationHour === null
@@ -277,21 +283,21 @@ export function validateAshenWinter(input, seed, settlements) {
   input.fronts.forEach((f, i) => {
     check(keys(f,['id','regionId','homeId','site','name','defeated','nextSpawnHour','spawnIndex','force']) && f.id === `ashen:${i + 1}` && f.regionId === frontRegions[i] && townIds.has(f.homeId) && regionAt(...['x', 'y'].map(k => settlements.find(t => t.id === f.homeId)[k])).id === f.regionId
       && validPoint(f.site) && f.name === commanders[i] && typeof f.defeated === 'boolean' && hour(f.nextSpawnHour) && count(f.spawnIndex), 'front');
-    checkForce(f.force); check(f.force.id === `${f.id}:commander` && f.force.size === 12 && f.force.tier === 3 && f.force.rank <= 2, 'commander');
+    checkForce(f.force); check(f.force.id === `${f.id}:commander` && [12, C.commanderSize].includes(f.force.size) && f.force.tier === 3 && f.force.rank <= 2, 'commander');
   });
   check(object(input.hosts) && Object.keys(input.hosts).length <= C.maxHosts && object(input.towns) && Object.keys(input.towns).length <= settlements.length, 'entity caps');
   const fronts = new Set(input.fronts.map(f => f.id));
   for (const [id, h] of Object.entries(input.hosts)) {
     check(keys(h,['id','frontId','x','y','route','waypoint','targetTownId','warningUntil','force','occupationForce']) && h.id === id && fronts.has(h.frontId) && validPoint(h) && (h.targetTownId === null || townIds.has(h.targetTownId)) && hour(h.warningUntil), 'host');
     check(Array.isArray(h.route) && h.route.length >= 2 && h.route.length <= settlements.length + 2 && h.route.every(validPoint) && count(h.waypoint) && h.waypoint >= 1 && h.waypoint <= h.route.length, 'host route');
-    checkForce(h.force); checkForce(h.occupationForce); check(h.force.id === id && h.force.troops.length > 0 && h.occupationForce.id === `${id}:occupation` && h.occupationForce.size === C.garrisonSize && h.force.tier === 2 && h.force.rank <= 1 && h.occupationForce.tier === 2 && h.occupationForce.rank <= 1 && h.force.size === (id.endsWith(':1') ? C.openingSize : C.hostSize) && Number(id.split(':')[3]) <= input.fronts.find(f=>f.id===h.frontId).spawnIndex, 'host force');
+    checkForce(h.force); checkForce(h.occupationForce); check(h.force.id === id && h.force.troops.length > 0 && h.occupationForce.id === `${id}:occupation` && [10, C.garrisonSize].includes(h.occupationForce.size) && h.force.tier === 2 && h.force.rank <= 1 && h.occupationForce.tier === 2 && h.occupationForce.rank <= 1 && (id.endsWith(':1') ? [6, C.openingSize] : [8, C.hostSize]).includes(h.force.size) && Number(id.split(':')[3]) <= input.fronts.find(f=>f.id===h.frontId).spawnIndex, 'host force');
   }
   for (const [id, t] of Object.entries(input.towns)) {
     check(townIds.has(id) && keys(t,['status','frontId','hostId','warningUntil','siegeUntil','protectionUntil','recoveryUntil','force','occupationForce']) && fronts.has(t.frontId) && ['open', 'threatened', 'besieged', 'occupied', 'recovering'].includes(t.status), 'town');
     check(hour(t.warningUntil) && nullableHour(t.siegeUntil) && hour(t.protectionUntil) && hour(t.recoveryUntil), 'town deadlines');
     if (t.status === 'threatened') check(input.hosts[t.hostId]?.targetTownId === id && input.hosts[t.hostId].frontId === t.frontId && input.hosts[t.hostId].warningUntil === t.warningUntil && !input.fronts.find(f=>f.id===t.frontId).defeated && t.force === null, 'approach reservation');
     if (blocked(t)) {
-      checkForce(t.force); checkForce(t.occupationForce); check(hour(t.siegeUntil) && !input.hosts[t.hostId] && t.force.id.startsWith(`${t.frontId}:host:`) && t.force.tier === 2 && t.force.rank <= 1 && t.force.troops.length > 0 && t.occupationForce.id === `${t.hostId}:occupation` && t.occupationForce.size === C.garrisonSize && [t.hostId,t.occupationForce.id].includes(t.force.id), 'blockade');
+      checkForce(t.force); checkForce(t.occupationForce); check(hour(t.siegeUntil) && !input.hosts[t.hostId] && t.force.id.startsWith(`${t.frontId}:host:`) && t.force.tier === 2 && t.force.rank <= 1 && t.force.troops.length > 0 && t.occupationForce.id === `${t.hostId}:occupation` && [10, C.garrisonSize].includes(t.occupationForce.size) && [t.hostId,t.occupationForce.id].includes(t.force.id), 'blockade');
     } else check(t.force === null && t.occupationForce === null, 'open force');
   }
   for (const h of Object.values(input.hosts)) if (h.targetTownId) check(input.towns[h.targetTownId]?.hostId === h.id && input.towns[h.targetTownId].status === 'threatened', 'host reservation');

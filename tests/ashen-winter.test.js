@@ -52,7 +52,7 @@ function strong(s) {
   s.formation=Array.from({length:36},(_,i)=>s.party[i]?.id??null);
   s.gold = 50000; s.food = 1000; s.supplies = { tools: 1000, medicine: 1000, ammo: 1000 };
   for (const p of s.party) {
-    p.attributes = { ...p.attributes, maxHp: 80, meleeSkill: 70, rangedSkill: 70, meleeDefense: 35, rangedDefense: 35, maxFatigue: 50 };
+    p.attributes = { ...p.attributes, maxHp: 150, meleeSkill: 150, rangedSkill: 150, meleeDefense: 100, rangedDefense: 100, maxFatigue: 100 };
     p.equipment = { ...p.equipment, armor: 'plate-harness', helmet: 'greathelm', weapon: 'greatsword', shield: null };
     const stats = getCompanyStats(p); p.hp = stats.maxHp;
     p.armorDurability.body = stats.maxBodyArmor; p.armorDurability.head = stats.maxHeadArmor; p.armorDurability.shield = 0;
@@ -226,7 +226,7 @@ test('NPC interception stops one approaching host without loot or liberation', (
 
 test('invalid crisis states are rejected without mutating imported data', () => {
   const s=active();
-  for(const change of [s=>s.ashenWinter.version=2,s=>s.ashenWinter.seed++,s=>s.ashenWinter.phase='completed',
+  for(const change of [s=>s.ashenWinter.version=3,s=>s.ashenWinter.seed++,s=>s.ashenWinter.phase='completed',
     s=>s.ashenWinter.fronts[0].force.troops.push(99),s=>s.ashenWinter.finalRewardGranted=true,
     s=>Object.values(s.ashenWinter.hosts)[0].targetTownId='fake',s=>s.ashenWinter.resolved=['fake']]){
     const invalid=structuredClone(s);change(invalid);const before=structuredClone(invalid);assert.throws(()=>validateSave(invalid));assert.deepEqual(invalid,before);
@@ -266,7 +266,7 @@ test('one hundred seeded invasions plateau within caps without auto-ending or er
     validateAshenWinter(s.ashenWinter,s.seed,SETTLEMENTS);
     assert.equal(s.ashenWinter.phase,'active');
     const records=Object.values(s.ashenWinter.towns), blocked=records.filter(t=>['besieged','occupied'].includes(t.status));
-    assert.ok(blocked.length>0&&blocked.length<=12);assert.ok(Object.keys(s.ashenWinter.hosts).length<=6);
+    assert.ok(blocked.length>0&&blocked.length<=12);assert.ok(Object.keys(s.ashenWinter.hosts).length<=ASHEN_CONFIG.maxHosts);
     assert.ok(SETTLEMENTS.filter(t=>getSettlementAccess(s,t.id).servicesAvailable).length>=2);
     assert.equal(s.ashenWinter.finalRewardGranted,false);
     assert.ok(Buffer.byteLength(JSON.stringify(s))<4*1024*1024);
