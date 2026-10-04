@@ -4,7 +4,7 @@ const MUSIC_URL = new URL('../assets/audio/heartfelt-battle.mp3', import.meta.ur
 export const EFFECT_NAMES = Object.freeze(['swing', 'metal', 'impact', 'cloth', 'sword-swish', 'heavy-swish', 'thrust',
   'bow-release', 'dagger-swish', 'axe-chop', 'chain', 'crossbow-release', 'sling-release', 'whip-release', 'reload',
   'shield-wood', 'armor-clang', 'armor-dent', 'blunt-hit', 'pierce-hit', 'cut-hit', 'hammer-hit', 'flesh-hit', 'arrow-pierce', 'throwing-pierce', 'bolt-pierce',
-  'slash-hit', 'cavalry-hooves', 'charge-hit']);
+  'slash-hit', 'cavalry-hooves', 'charge-hit', 'shield-blunt', 'shield-slash', 'shield-pierce', 'armor-blunt', 'armor-slash', 'armor-pierce', 'flesh-pierce']);
 const EFFECT_URLS = Object.freeze(Object.fromEntries(EFFECT_NAMES.map(name => [name, new URL(`../assets/audio/${name}.mp3`, import.meta.url).href])));
 const SETTINGS_KEY = 'ashen-company-audio-v1';
 const PROFILES = {
@@ -35,22 +35,27 @@ export function combatSoundCue(event, duration = .55) {
     if (family === 'crossbow') cues.push(cue('bow-release', offset + .025, .35, 1.2));
     if (family === 'flail') cues.push(cue('heavy-swish', offset + .02, .22));
     if (family === 'sling') cues.push(cue('thrust', offset + .04, .2, 1.15));
-    // Layer material and health contact separately: armor penetration still sounds like flesh.
-    // Area attacks use one representative contact per layer to keep volleys bounded.
+    // Release is separate from contact. Select contact foley from the actual
+    // damaged material and damage type, never a second release/weapon-strike clip.
+    const style = /^(Wolf Bite|Stab|Thrust|Impale|Puncture|Lunge)$/.test(entry.skillName ?? '') ? 'pierce'
+      : ['mace','hammer','flail','sling'].includes(family) ? 'blunt'
+      : ['dagger','qatal','spear','bow','crossbow'].includes(family) || family==='throwing' && profile[1]==='throwing-pierce' ? 'pierce' : 'slash';
     const impacts = entry.affectedTargets ?? [entry];
     const at = offset + duration * .65;
     const shield = impacts.some(impact => impact.shieldDamage > 0);
     const armor = impacts.some(impact => impact.armorDamage > 0);
     const flesh = impacts.some(impact => impact.hpDamage > 0);
     const hit = impacts.some(impact => impact.hit === true || impact.hit !== false && impact.type === 'attack');
-    if (shield || armor) cues.push(cue(shield ? 'shield-wood'
-      : ['mace', 'hammer', 'axe', 'flail', 'sling'].includes(family) || heavy ? 'armor-dent' : 'armor-clang',
-      at, heavy ? .5 : .38));
-    if (flesh || hit && !shield && !armor) {
-      cues.push(cue(profile[1], at, heavy ? .55 : .45));
-      // Blunt and edged attacks get a low body thump; piercing samples already include it.
-      if (flesh && ['blunt-hit', 'hammer-hit', 'slash-hit', 'axe-chop'].includes(profile[1]))
-        cues.push(cue('flesh-hit', at + .012, .24, heavy ? .9 : 1));
+    const legacyContact = hit && impacts.every(impact => ['hpDamage','armorDamage','shieldDamage'].every(key=>impact[key]===undefined));
+    const contactRate = heavy ? .88 : 1;
+    const contactVolume = (heavy ? .65 : .6) / Math.sqrt(Math.max(1,Number(shield)+Number(armor)+Number(flesh || legacyContact)));
+    if (shield) cues.push(cue('shield-'+style, at, contactVolume, contactRate));
+    if (armor) cues.push(cue('armor-'+style, at + (shield ? .012 : 0), contactVolume, contactRate));
+    if (flesh || legacyContact) {
+      const body = legacyContact || !weapon ? 'impact' : family==='bow' ? 'arrow-pierce' : family==='crossbow' ? 'bolt-pierce'
+        : family==='throwing' && style==='pierce' ? 'throwing-pierce'
+        : style==='blunt' ? 'flesh-hit' : style==='pierce' ? 'flesh-pierce' : 'slash-hit';
+      cues.push(cue(body, at + (armor || shield ? .024 : 0), contactVolume, contactRate));
     }
     if (charging && (flesh || armor || hit)) cues.push(cue('charge-hit', at, .55));
     return cues;
@@ -65,13 +70,22 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
   try { storage ??= globalThis.localStorage; const saved = JSON.parse(storage?.getItem(SETTINGS_KEY) || 'null');
     for (const key of ['music', 'effects']) if (typeof saved?.[key] === 'boolean') preferences[key] = saved[key];
   } catch {}
-  let music = null, context = null, musicUnlocked = false, priming = false, loading = false;
+  let music = null, context = null, musicUnlocked = false, priming = false, loading = null, resuming = null;
   let scene = { active: false, playing: false, hidden: false, battleId: null }, lastEffectAt = -Infinity;
-  const buffers = new Map(), voices = new Set();
+  const buffers = new Map(), voices = new Map();
+  let pending = [], lastLoadAt = -Infinity;
+  const audible = () => preferences.effects && scene.active && scene.playing && !scene.hidden;
+  const contact = name => /^(?:impact|metal|shield-.+|axe-chop|armor-.+|.+-hit|.+-pierce)$/.test(name);
+  function stopVoice(source) {
+    const voice = voices.get(source); if (!voice) return;
+    voices.delete(source);
+    try { source.stop(); } catch {}
+    source.disconnect(); voice.gain.disconnect();
+  }
 
   function stopEffects() {
-    for (const voice of voices) { try { voice.stop(); } catch {} }
-    voices.clear();
+    pending = [];
+    for (const source of voices.keys()) stopVoice(source);
   }
   function applyScene() {
     const audible = scene.active && scene.playing && !scene.hidden;
@@ -84,24 +98,61 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
     }
     if (context) {
       if ((!audible || !preferences.effects) && context.state === 'running') Promise.resolve(context.suspend()).catch(() => {});
-      else if (audible && preferences.effects && context.state === 'suspended') Promise.resolve(context.resume()).catch(() => {});
+      else if (audible && preferences.effects && context.state !== 'running' && context.state !== 'closed') resumeEffects();
     }
   }
-  async function loadEffects() {
-    if (!context || loading) return;
-    loading = true;
-    await Promise.allSettled(Object.entries(EFFECT_URLS).map(async ([name, url]) => {
+  function resumeEffects() {
+    if (!context || resuming || context.state === 'closed') return resuming;
+    resuming = Promise.resolve(context.resume()).then(() => flushPending(!loading)).catch(() => {}).finally(() => { resuming = null; });
+    return resuming;
+  }
+  function loadEffects(force = false) {
+    if (!context || loading || !force && clock() - lastLoadAt < 1000) return loading;
+    const missing = Object.entries(EFFECT_URLS).filter(([name]) => !buffers.has(name));
+    if (!missing.length) return null;
+    lastLoadAt = clock();
+    loading = Promise.allSettled(missing.map(async ([name, url]) => {
       const response = await fetcher(url);
       if (!response.ok) throw new Error('Sound unavailable');
       buffers.set(name, await context.decodeAudioData(await response.arrayBuffer()));
-    }));
+      flushPending(false);
+    })).finally(() => { loading = null; flushPending(true); });
+    return loading;
+  }
+  function schedule(cues, elapsed = 0) {
+    // Reserve contact layers first. Busy volleys may lose a whoosh, never their
+    // impact to an older whoosh occupying the last voice slot.
+    const selected = cues.filter(c => buffers.has(c.name))
+      .map((cue, index) => ({...cue, index}))
+      .sort((a,b) => Number(contact(b.name)) - Number(contact(a.name)) || a.index-b.index).slice(0,8);
+    while (voices.size + selected.length > 8) {
+      const victim = [...voices].find(([,voice]) => !voice.contact) ?? voices.entries().next().value;
+      stopVoice(victim[0]);
+    }
+    for (const cue of selected.sort((a,b) => a.index-b.index)) {
+      const source = context.createBufferSource(), gain = context.createGain();
+      source.buffer = buffers.get(cue.name); source.playbackRate.value = cue.rate; gain.gain.value = cue.volume;
+      source.connect(gain); gain.connect(context.destination); voices.set(source,{gain,contact:contact(cue.name)});
+      source.onended = () => { if (!voices.delete(source)) return; source.disconnect(); gain.disconnect(); };
+      source.start(context.currentTime + Math.max(0, cue.delay - elapsed));
+    }
+  }
+  function flushPending(allowPartial) {
+    if (!audible() || context?.state !== 'running') return;
+    const now = clock(), waiting = [];
+    for (const event of pending) {
+      if (event.battleId !== scene.battleId || now > event.expires) continue;
+      if (!allowPartial && !event.cues.every(c => buffers.has(c.name))) { waiting.push(event); continue; }
+      schedule(event.cues, (now-event.at)/1000);
+    }
+    pending = waiting;
   }
   function unlock() {
     if (scene.hidden) return;
     if (preferences.effects) {
       try {
         context ??= createContext();
-        if (context) { Promise.resolve(context.resume()).catch(() => {}); void loadEffects(); }
+        if (context) { resumeEffects(); void loadEffects(true); }
       } catch {}
     }
     if (preferences.music && !musicUnlocked && !priming) {
@@ -119,23 +170,23 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
   }
   function sync(next) {
     if (next.hidden) musicUnlocked = false;
+    if (next.battleId !== scene.battleId) { stopEffects(); lastEffectAt = -Infinity; }
     if (next.battleId !== scene.battleId && music) { try { music.currentTime = 0; } catch {} }
     scene = { ...next };
     applyScene();
   }
   function playEvent(event, duration) {
-    if (!preferences.effects || !scene.active || !scene.playing || scene.hidden || context?.state !== 'running') return;
+    if (!audible() || !context || context.state === 'closed') return;
     const cues = combatSoundCue(event, duration), now = clock();
     if (!cues.length || now - lastEffectAt < 110) return;
     lastEffectAt = now;
-    for (const cue of cues) {
-      const buffer = buffers.get(cue.name);
-      if (!buffer || voices.size >= 8) continue;
-      const source = context.createBufferSource(), gain = context.createGain();
-      source.buffer = buffer; source.playbackRate.value = cue.rate; gain.gain.value = cue.volume;
-      source.connect(gain); gain.connect(context.destination); voices.add(source);
-      source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); };
-      source.start(context.currentTime + cue.delay);
+    if (context.state === 'running' && cues.every(c => buffers.has(c.name))) schedule(cues);
+    else {
+      pending.push({cues, at:now, expires:now+750, battleId:scene.battleId});
+      pending = pending.slice(-3);
+      if (context.state !== 'running') resumeEffects();
+      void loadEffects();
+      flushPending(!loading);
     }
   }
   function toggle(kind) {

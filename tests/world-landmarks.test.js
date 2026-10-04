@@ -35,6 +35,7 @@ test('regional landmarks are deterministic, spaced from commerce, and major dese
  for(const seed of [1,73,7192]){const s=createGame(seed),before=JSON.stringify(s),args={settlements:SETTLEMENTS,camps:getCampSites(s),roads:WORLD_ROADS},a=worldLandmarks(seed,args);assert.deepEqual(a,worldLandmarks(seed,args));assert.equal(JSON.stringify(s),before);assert.ok(a.length>=12);assert.ok(a.every(o=>!['temple','ruins'].includes(o.kind)));
   for(const o of a){assert.ok(worldPointInBounds(o));assert.ok(!worldBlocked(o));assert.equal(landmarkAt(a,o)?.id,o.id);if(o.region){assert.equal(regionAt(o.x,o.y).id,o.region);assert.ok(distanceToRoad(o.x,o.y,WORLD_ROADS)>=o.width*.24+22);assert.ok(SETTLEMENTS.every(t=>Math.hypot(t.x-o.x,t.y-o.y)>=o.width*.4+85));}}
   assert.ok(a.some(o=>o.id==='necropolis-pyramid'));assert.ok(a.some(o=>o.kind==='sphinx'));assert.ok(a.some(o=>o.kind==='battlefield'));
+  const encampments=a.filter(o=>o.kind==='warcamp');assert.equal(new Set(encampments.map(o=>o.region)).size,9,'each biome has a distinct abandoned camp');
  }
  assert.notDeepEqual(worldLandmarks(1),worldLandmarks(2));
 });

@@ -233,6 +233,97 @@
       "sha256": "412f590047831fbe28e5b688a675964bbf29510d99d0419d7ff59ab3c221968d"
     },
     {
+      "path": "assets/audio/shield-blunt.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactWood_heavy_001.ogg",
+        "Audio/impactSoft_heavy_003.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "640368dd9acedbf36b667baa2b654af35bc8a54d82df4ca782e318d47d882127"
+    },
+    {
+      "path": "assets/audio/shield-slash.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactWood_medium_004.ogg",
+        "Audio/impactMetal_light_000.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "05c938975b4b7f99c3d288258969b2e7c249fb306e6152ac73245fe3c5e99e5f"
+    },
+    {
+      "path": "assets/audio/shield-pierce.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactWood_light_002.ogg",
+        "Audio/impactWood_medium_003.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "756cdb9b1e8321d9c5e8f99821cc30a3a9400450341e355d810eb52a8ec2acec"
+    },
+    {
+      "path": "assets/audio/armor-blunt.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactMetal_heavy_003.ogg",
+        "Audio/impactMetal_medium_002.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "297885148a49d773f786d6ee4c5051095c7f37c3addb99606760d2e360397006"
+    },
+    {
+      "path": "assets/audio/armor-slash.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactMetal_medium_004.ogg",
+        "Audio/impactMetal_light_004.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "18952202974bbdf85692bb9f9fc94ff3efbf01a04e69ded989f24a82b83cd77d"
+    },
+    {
+      "path": "assets/audio/armor-pierce.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactMetal_light_002.ogg",
+        "Audio/impactMetal_medium_000.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "8b46dec0b23f14f53f6847552157244aec874b3f42e4577403897a187616c75e"
+    },
+    {
+      "path": "assets/audio/flesh-pierce.mp3",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "original": [
+        "Audio/impactSoft_medium_002.ogg",
+        "Audio/impactPunch_medium_002.ogg"
+      ],
+      "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
+      "bytes": 5267,
+      "sha256": "bc6a7bf62322095f41a11d93e730ebf745f222c0a043613dd004ed8f423a8de6"
+    },
+    {
       "path": "assets/audio/flesh-hit.mp3",
       "author": "Kenney",
       "license": "CC0-1.0",

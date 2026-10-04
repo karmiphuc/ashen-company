@@ -92,11 +92,11 @@ test('music stays silent before a gesture, then plays only during an active visi
 
 test('weapon families use distinct release and contact recordings, including named gear', () => {
   const cases = [['arming-sword','sword-swish','slash-hit'],['greatsword','heavy-swish','slash-hit'],
-    ['rondel-dagger','dagger-swish','pierce-hit'],['spear','thrust','pierce-hit'],['wood-axe','heavy-swish','axe-chop'],
-    ['winged-mace','heavy-swish','blunt-hit'],['warhammer','heavy-swish','hammer-hit'],
-    ['whip','whip-release','slash-hit'],['northern-sling','sling-release','blunt-hit'],['javelins','thrust','throwing-pierce'],['throwing-axes','heavy-swish','axe-chop'],['military-cleaver','heavy-swish','axe-chop'],['billhook','thrust','slash-hit'],['flail','chain','blunt-hit'],['hunting-bow','bow-release','arrow-pierce'],['light-crossbow','crossbow-release','bolt-pierce']];
+    ['rondel-dagger','dagger-swish','flesh-pierce'],['spear','thrust','flesh-pierce'],['wood-axe','heavy-swish','slash-hit'],
+    ['winged-mace','heavy-swish','flesh-hit'],['warhammer','heavy-swish','flesh-hit'],
+    ['whip','whip-release','slash-hit'],['northern-sling','sling-release','flesh-hit'],['javelins','thrust','throwing-pierce'],['throwing-axes','heavy-swish','slash-hit'],['military-cleaver','heavy-swish','slash-hit'],['billhook','thrust','slash-hit'],['flail','chain','flesh-hit'],['hunting-bow','bow-release','arrow-pierce'],['light-crossbow','crossbow-release','bolt-pierce']];
   for (const [weaponId, release, contact] of cases) {
-    const cues = combatSoundCue({type:'attack',weaponId});
+    const cues = combatSoundCue({type:'attack',weaponId,hpDamage:12});
     assert.equal(cues[0].name,release,weaponId);
     assert.equal(cues.at(-1).name,contact,weaponId);
     assert.ok(cues.every(cue=>EFFECT_NAMES.includes(cue.name)));
@@ -108,11 +108,11 @@ test('weapon families use distinct release and contact recordings, including nam
 
 test('misses, shield deflection, armor, area targets and reaction audio follow actual contacts', () => {
   assert.equal(combatSoundCue({type:'miss',weaponId:'hunting-bow'}).length,1);
-  assert.equal(combatSoundCue({type:'miss',weaponId:'arming-sword',shieldDamage:18}).at(-1).name,'shield-wood');
-  assert.equal(combatSoundCue({type:'attack',weaponId:'arming-sword',armorDamage:3}).at(-1).name,'armor-clang');
-  assert.equal(combatSoundCue({type:'attack',weaponId:'winged-mace',armorDamage:3}).at(-1).name,'armor-dent');
-  assert.deepEqual(combatSoundCue({type:'miss',weaponId:'greatsword',affectedTargets:[{hit:false},{hit:true,hpDamage:20}]}).map(c=>c.name),['heavy-swish','slash-hit','flesh-hit']);
-  const counter = combatSoundCue({type:'move',reactions:[{type:'attack',skillName:'Riposte',weaponId:'arming-sword'}]},.275);
+  assert.equal(combatSoundCue({type:'miss',weaponId:'arming-sword',shieldDamage:18}).at(-1).name,'shield-slash');
+  assert.deepEqual(combatSoundCue({type:'attack',weaponId:'arming-sword',armorDamage:3,hpDamage:0}).map(c=>c.name),['sword-swish','armor-slash']);
+  assert.deepEqual(combatSoundCue({type:'attack',weaponId:'winged-mace',armorDamage:3,hpDamage:0}).map(c=>c.name),['heavy-swish','armor-blunt']);
+  assert.deepEqual(combatSoundCue({type:'miss',weaponId:'greatsword',affectedTargets:[{hit:false},{hit:true,hpDamage:20}]}).map(c=>c.name),['heavy-swish','slash-hit']);
+  const counter = combatSoundCue({type:'move',reactions:[{type:'attack',skillName:'Riposte',weaponId:'arming-sword',hpDamage:6}]},.275);
   assert.deepEqual(counter.map(cue=>cue.name),['sword-swish','slash-hit']);
   assert.equal(counter[1].delay,.04+.275*.65);
   assert.deepEqual(combatSoundCue({type:'use'}).map(cue=>cue.name),['cloth']);
@@ -130,7 +130,7 @@ test('effects require explicit events and stay within the voice and timing limit
   audio.sync(battle);
   audio.sync(battle);
   assert.equal(context.sources.length, 0, 'sync and repaint do not play event audio');
-  audio.playEvent({ type: 'attack', ranged: true, armorDamage: 0 });
+  audio.playEvent({ type: 'attack', ranged: true });
   assert.deepEqual(context.sources.map(source => [source.buffer.name, source.at]), [['swing', 4], ['impact', 4 + .55 * .65]]);
   now = 50;
   audio.playEvent({ type: 'attack', armorDamage: 4 });
@@ -143,8 +143,8 @@ test('effects require explicit events and stay within the voice and timing limit
   assert.equal(context.sources.length, 6);
   now = 350;
   audio.playEvent({type:'attack',reactions:[{type:'attack'}]});
-  assert.equal(context.sources.length,8,'at most eight voices, including scheduled reactions');
-  context.sources[0].onended();
+  assert.equal(context.sources.filter(s=>!s.stopped).length,8,'at most eight active voices, including scheduled reactions');
+  context.sources.find(s=>!s.stopped).onended();
   now = 470;
   audio.playEvent({ type: 'use' });
   assert.equal(context.sources.at(-1).buffer.name, 'cloth');
@@ -185,15 +185,15 @@ test('piercing projectiles retain distinct contact sounds through armor and name
   const cases = [['hunting-bow', 'arrow-pierce'], ['light-crossbow', 'bolt-pierce'], ['javelins', 'throwing-pierce']];
   for (const [base, impact] of cases) for (const weaponId of [base, createFamedItemId(base, 73)]) {
     const names = combatSoundCue({type:'attack',weaponId,hpDamage:12,armorDamage:30}).map(c=>c.name);
-    assert.ok(names.includes('armor-clang'), weaponId);
+    assert.ok(names.includes('armor-pierce'), weaponId);
     assert.ok(names.includes(impact), weaponId);
     assert.ok(!names.includes('flesh-hit'), 'pierce samples include body contact');
     assert.ok(!combatSoundCue({type:'miss',weaponId,hit:false}).some(c=>c.name===impact));
   }
   assert.deepEqual(combatSoundCue({type:'attack',weaponId:'arming-sword',hpDamage:12,armorDamage:20}).map(c=>c.name),
-    ['sword-swish','armor-clang','slash-hit','flesh-hit']);
+    ['sword-swish','armor-slash','slash-hit']);
   assert.deepEqual(combatSoundCue({type:'attack',weaponId:'winged-mace',hpDamage:12}).map(c=>c.name),
-    ['heavy-swish','blunt-hit','flesh-hit']);
+    ['heavy-swish','flesh-hit']);
   assert.deepEqual(combatSoundCue({type:'attack',weaponId:'arming-sword',hit:false}).map(c=>c.name),['sword-swish']);
 });
 
@@ -201,14 +201,14 @@ test('cavalry charges have timed hoofbeats and collision only on contact, includ
   const charge = {type:'attack',weaponId:'spear',skillName:'Charge',moveFrom:{q:1,r:1},hpDamage:20,armorDamage:10};
   for (const duration of [.55,.275]) {
     const cues = combatSoundCue(charge,duration);
-    assert.deepEqual(cues.map(c=>c.name),['thrust','cavalry-hooves','armor-clang','pierce-hit','charge-hit']);
+    assert.deepEqual(cues.map(c=>c.name),['thrust','cavalry-hooves','armor-pierce','flesh-pierce','charge-hit']);
     assert.equal(cues.find(c=>c.name==='charge-hit').delay,duration*.65);
     assert.equal(cues.find(c=>c.name==='cavalry-hooves').delay,0);
   }
   const miss = {...charge,type:'miss',hit:false,hpDamage:0,armorDamage:0};
   assert.deepEqual(combatSoundCue(miss).map(c=>c.name),['thrust','cavalry-hooves']);
   const stopped = {...miss,type:'hold',reactions:[{type:'attack',weaponId:'spear',skillName:'Spearwall',hpDamage:20}]};
-  assert.deepEqual(combatSoundCue(stopped).map(c=>c.name),['cavalry-hooves','thrust','pierce-hit']);
+  assert.deepEqual(combatSoundCue(stopped).map(c=>c.name),['cavalry-hooves','thrust','flesh-pierce']);
   assert.ok(!combatSoundCue({...charge,skillName:'Thrust'}).some(c=>c.name.startsWith('cavalry')||c.name==='charge-hit'));
 });
 
@@ -217,7 +217,7 @@ test('area and reaction damage layers stay bounded and cancel when muted or hidd
     reactions:[{type:'attack',weaponId:'spear',skillName:'Spearwall',hpDamage:8}]};
   const cues = combatSoundCue(event);
   assert.equal(cues.filter(c=>c.name==='slash-hit').length,1);
-  assert.equal(cues.filter(c=>c.name==='armor-dent').length,1);
+  assert.equal(cues.filter(c=>c.name==='armor-slash').length,1);
   const context=fakeContext();
   const audio=createGameAudio({createMusic:()=>null,createContext:()=>context,fetcher,storage:emptyStorage,clock:()=>500});
   audio.sync(battle);audio.unlock();await flush();audio.playEvent(event,.275);
@@ -226,4 +226,87 @@ test('area and reaction damage layers stay bounded and cancel when muted or hidd
   audio.toggle('effects');assert.ok(context.sources.every(s=>s.stopped));
   const count=context.sources.length;audio.playEvent(event);assert.equal(context.sources.length,count);
   audio.toggle('effects');audio.sync({...battle,hidden:true});audio.playEvent(event);assert.equal(context.sources.length,count);
+});
+
+
+test('the first attack waits for its decoded sounds instead of disappearing during load', async()=>{
+ const context=fakeContext();let release;const gate=new Promise(resolve=>release=resolve);
+ const audio=createGameAudio({createMusic:()=>null,createContext:()=>context,storage:emptyStorage,
+  fetcher:async url=>{await gate;return fetcher(url);},clock:()=>0});
+ audio.sync(battle);audio.unlock();audio.playEvent({type:'attack',weaponId:'hunting-bow',hpDamage:8},.275);
+ assert.equal(context.sources.length,0);release();await flush();
+ assert.deepEqual(context.sources.map(s=>s.buffer.name),['bow-release','arrow-pierce']);
+ await flush();assert.equal(context.sources.length,2,'queued attack plays only once');
+});
+
+test('paused, hidden, expired and replaced battles discard loading audio instead of replaying it later',async()=>{
+ for(const change of [{...battle,playing:false},{...battle,hidden:true},{...battle,battleId:'battle-2'},null]){
+  const context=fakeContext();let release,now=0;const gate=new Promise(resolve=>release=resolve);
+  const audio=createGameAudio({createMusic:()=>null,createContext:()=>context,storage:emptyStorage,
+   fetcher:async url=>{await gate;return fetcher(url);},clock:()=>now});
+  audio.sync(battle);audio.unlock();audio.playEvent({type:'attack',weaponId:'spear',hpDamage:8});
+  if(change)audio.sync(change);else now=1000;
+  release();await flush();audio.sync(battle);await flush();assert.equal(context.sources.length,0);
+ }
+});
+
+test('failed effects retry on the next gesture without reloading successful recordings',async()=>{
+ const context=fakeContext(),counts=new Map();let now=0;
+ const audio=createGameAudio({createMusic:()=>null,createContext:()=>context,storage:emptyStorage,clock:()=>now,
+  fetcher:async url=>{const name=url.split('/').at(-1),count=(counts.get(name)??0)+1;counts.set(name,count);
+   if(name==='arrow-pierce.mp3'&&count===1)throw Error('temporary network failure');return fetcher(url);}});
+ audio.sync(battle);audio.unlock();await flush();
+ now=1200;audio.unlock();await flush();audio.playEvent({type:'attack',weaponId:'hunting-bow',hpDamage:8});
+ assert.deepEqual(context.sources.map(s=>s.buffer.name),['bow-release','arrow-pierce']);
+ assert.equal(counts.get('arrow-pierce.mp3'),2);assert.equal(counts.get('bow-release.mp3'),1);
+});
+
+test('interrupted and asynchronously resuming contexts retain the current attack',async()=>{
+ const context=fakeContext();let now=0;
+ const audio=createGameAudio({createMusic:()=>null,createContext:()=>context,storage:emptyStorage,fetcher,clock:()=>now});
+ audio.sync(battle);audio.unlock();await flush();
+ let release;context.state='interrupted';context.resume=()=>new Promise(resolve=>{release=()=>{context.state='running';resolve();};});
+ audio.sync(battle);audio.playEvent({type:'attack',weaponId:'light-crossbow',hpDamage:10},.275);
+ assert.equal(context.sources.length,0);now=50;release();await flush();
+ assert.ok(context.sources.some(s=>s.buffer.name==='bolt-pierce'));
+ assert.ok(context.sources.every(s=>s.at>=context.currentTime));
+});
+
+test('busy combat keeps the new attack and impact chain inside eight active voices',async()=>{
+ const context=fakeContext();let now=0;
+ const audio=createGameAudio({createMusic:()=>null,createContext:()=>context,storage:emptyStorage,fetcher,clock:()=>now});
+ audio.sync(battle);audio.unlock();await flush();
+ const attack={type:'attack',weaponId:'arming-sword',hpDamage:8,armorDamage:20};
+ for(let i=0;i<6;i++){now+=275;const before=context.sources.length;audio.playEvent(attack,.275);
+  assert.deepEqual(context.sources.slice(before).map(s=>s.buffer.name),['sword-swish','armor-slash','slash-hit']);
+  assert.ok(context.sources.filter(s=>!s.stopped).length<=8);
+ }
+ audio.sync({...battle,playing:false});assert.ok(context.sources.every(s=>s.stopped));
+});
+
+test('contacts select shield, armor or flesh foley for blunt, edged and piercing damage',()=>{
+ const cases=[['winged-mace','blunt','flesh-hit'],['warhammer','blunt','flesh-hit'],['arming-sword','slash','slash-hit'],
+  ['wood-axe','slash','slash-hit'],['spear','pierce','flesh-pierce'],['hunting-bow','pierce','arrow-pierce'],
+  ['light-crossbow','pierce','bolt-pierce'],['javelins','pierce','throwing-pierce']];
+ for(const [base,style,body]of cases)for(const weaponId of [base,createFamedItemId(base,73)]){
+  const event={type:'attack',weaponId,hpDamage:0,armorDamage:0,shieldDamage:0};
+  for(const [field,name]of [['shieldDamage','shield-'+style],['armorDamage','armor-'+style],['hpDamage',body]]){
+   const cues=combatSoundCue({...event,[field]:15},.275);
+   const impacts=cues.filter(c=>c.delay>=.275*.65);
+   assert.deepEqual(impacts.map(c=>c.name),[name],weaponId+' '+field);
+   assert.equal(impacts[0].delay,.275*.65);
+  }
+  assert.ok(!combatSoundCue({...event,type:'miss',hit:false}).some(c=>c.delay>=.275*.65),'clean misses have no contact');
+ }
+});
+
+test('shield deflections exclude body contact; penetration plays each damaged material once',()=>{
+ const miss={type:'miss',hit:false,weaponId:'hunting-bow',hpDamage:0,armorDamage:0,shieldDamage:3};
+ assert.deepEqual(combatSoundCue(miss).map(c=>c.name),['bow-release','shield-pierce']);
+ const hit={type:'attack',weaponId:'arming-sword',hpDamage:8,armorDamage:20,shieldDamage:1};
+ assert.deepEqual(combatSoundCue(hit).map(c=>c.name),['sword-swish','shield-slash','armor-slash','slash-hit']);
+ const armorOnly={...hit,shieldDamage:0,hpDamage:0};
+ assert.deepEqual(combatSoundCue(armorOnly).map(c=>c.name),['sword-swish','armor-slash']);
+ const area={...hit,affectedTargets:Array.from({length:3},()=>({...hit,hit:true}))};
+ assert.deepEqual(combatSoundCue(area).map(c=>c.name),['sword-swish','shield-slash','armor-slash','slash-hit']);
 });

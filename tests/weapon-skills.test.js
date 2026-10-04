@@ -43,6 +43,8 @@ test('new fights use 9 AP and two bow Quick Shots, while old saved fights keep 2
 
   const legacy = battleWithCaptain().state;
   delete legacy.battle.rulesVersion;
+  delete legacy.battle.enemyAdaptiveRulesVersion;
+  delete legacy.battle.enemyTacticalState;
   delete legacy.battle.weaponSkillsVersion;
   delete legacy.battle.mountSkillsVersion; delete legacy.battle.mountBalanceVersion;
   for (const unit of legacy.battle.units) {

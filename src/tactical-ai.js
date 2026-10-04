@@ -2,6 +2,8 @@ import { hexDistance, hexLine } from './battle-terrain.js';
 
 export const COMBAT_ROLES = Object.freeze(['auto', 'frontliner', 'skirmisher', 'ranged', 'flanker', 'breaker']);
 export const SKILL_PREFERENCES = Object.freeze(['balanced', 'damage', 'control']);
+export const ENEMY_TACTIC_COOLDOWN = 5;
+export const ENEMY_TACTICS = Object.freeze(['offense', 'defense', 'shield-wall', 'skirmish']);
 
 export function resolveCombatRole(member, weapon, reserveWeapon, equipment = {}) {
   if (COMBAT_ROLES.includes(member.combatRole) && member.combatRole !== 'auto') return member.combatRole;
@@ -41,13 +43,62 @@ export function rankTacticalActions(actor, candidates, context = {}) {
       || String(a.targetId ?? '').localeCompare(String(b.targetId ?? '')) || a.candidateIndex - b.candidateIndex);
 }
 
-/** New battles use the live ranged contingent; legacy fights retain offense. */
+/** Read a committed adaptive command, or the original policy for an older fight. */
 export function enemyBattleTactic(battle, getItem) {
   if (battle.enemyTacticsVersion !== 1) return 'offense';
+  if (battle.enemyAdaptiveRulesVersion === 1 && battle.enemyTacticalState) return battle.enemyTacticalState.tactic;
   const ranged = battle.units.filter(unit => unit.side === 'enemy' && unit.alive && !unit.escaped
     && getItem(unit.equipment?.weapon)?.ranged
     && (!getItem(unit.equipment.weapon).throwing || unit.throwingAmmo?.active > 0));
   return ranged.length >= 3 ? 'defense' : 'offense';
+}
+
+// Commands are committed once per round, never while scoring a candidate or rendering.
+export function updateEnemyTactic(battle, getItem, companyAmmo) {
+  if (battle.enemyAdaptiveRulesVersion !== 1 || battle.status !== 'active') return false;
+  const plan = battle.enemyTacticalState;
+  if (plan.lastEvaluatedRound === battle.round) return false;
+  plan.lastEvaluatedRound = battle.round;
+  if (battle.round - plan.lastChangedRound < ENEMY_TACTIC_COOLDOWN) return false;
+  const desired = recommendEnemyTactic(battle, getItem, companyAmmo);
+  if (desired === plan.tactic) return false;
+  plan.tactic = desired;
+  plan.lastChangedRound = battle.round;
+  for (const unit of battle.units) if (unit.side === 'enemy') delete unit.skirmishReturn;
+  return true;
+}
+
+export function recommendEnemyTactic(battle, getItem, companyAmmo) {
+  const living = unit => unit.alive && !unit.escaped;
+  const enemies = battle.units.filter(unit => unit.side === 'enemy' && living(unit));
+  const company = battle.units.filter(unit => unit.side === 'company' && living(unit));
+  if (!enemies.length || !company.length) return 'offense';
+  const ranged = units => units.filter(unit => {
+    const weapon = getItem(unit.equipment?.weapon);
+    return weapon?.ranged && (weapon.throwing ? unit.throwingAmmo?.active > 0
+      : unit.side === 'enemy' || unit.ally || companyAmmo > 0);
+  });
+  const range = unit => {
+    const weapon = getItem(unit.equipment.weapon);
+    const bow = !weapon.throwing && weapon.visual?.includes('bow') && !weapon.visual.includes('crossbow');
+    return (weapon.range ?? 1) + (bow ? 1 + Number(Boolean(unit.perks?.includes('bow-mastery'))) : 0);
+  };
+  const shooters = ranged(enemies);
+  const threats = ranged(company).filter(unit => enemies.some(enemy => hexDistance(unit, enemy) <= range(unit)));
+  const ready = shooters.filter(unit => company.some(target => hexDistance(unit, target) <= range(unit)));
+  const infantry = enemies.filter(unit => !getItem(unit.equipment?.weapon)?.ranged);
+  const engaged = infantry.filter(unit => company.some(target => hexDistance(unit, target) <= 1));
+  if (engaged.length && engaged.length * 2 >= infantry.length) return 'offense';
+  const lastAttackRound=battle.enemyTacticalState?.lastRangedAttackRound ?? 0;
+  const underFire = threats.length > 0 || lastAttackRound > 0 && battle.round-lastAttackRound <= 2;
+  if (underFire && (ready.length < threats.length || ready.length * 2 < shooters.length || !ready.length)) {
+    const shields = infantry.filter(unit => unit.equipment.shield && unit.shieldDurability > 0
+      && !getItem(unit.equipment.weapon)?.twoHanded);
+    if (shields.length && shields.length * 2 >= infantry.length) return 'shield-wall';
+    if (shooters.length) return 'skirmish';
+    return 'offense';
+  }
+  return shooters.length >= 3 && ready.length >= 3 ? 'defense' : 'offense';
 }
 
 
