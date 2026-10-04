@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,validateSave,getMarket,setCompanyAutomation,applyCompanyAutomation,buyItem,getItem,getCompanyStats,getRecruitOffers,recruit,MAX_COMPANY_SIZE,MAX_BATTLE_SIZE,getBattleRoster,getReserveSlots,getFormation,moveFormation,startBattle,advanceBattle,resolveBattle,finishBattle,tick,travelTo,SETTLEMENTS,getDailyFood} from '../src/engine.js';
+import {createGame,validateSave,getMarket,setCompanyAutomation,applyCompanyAutomation,buyItem,buySupplies,getItem,getCompanyStats,getRecruitOffers,recruit,MAX_COMPANY_SIZE,MAX_BATTLE_SIZE,getBattleRoster,getReserveSlots,getFormation,moveFormation,startBattle,advanceBattle,resolveBattle,finishBattle,tick,travelTo,SETTLEMENTS,getDailyFood} from '../src/engine.js';
 import {formationHTML,hiringHTML,companyAutomationHTML} from '../src/campaign-ui.js';
 
 function fullCompany(){const s=createGame(73),base=s.party[0];s.party=Array.from({length:18},(_,i)=>({...structuredClone(base),id:`bro-${i}`,name:`Brother ${i}`,seed:base.seed+i}));s.formation=Array(36).fill(null);s.party.slice(0,15).forEach((p,i)=>s.formation[i]=p.id);s.reserveIds=s.party.slice(15).map(p=>p.id);return s;}
@@ -66,9 +66,30 @@ test('preparation and reserve UI exposes saved checkboxes, all reserve slots and
  const s=fullCompany(),html=formationHTML(s,36);assert.match(html,/15 \/ 15 fielded/);assert.match(html,/3 \/ 3 reserves/);assert.match(html,/data-formation-slot="38"/);assert.match(html,/Reserve position 1: Brother 15/);assert.match(hiringHTML(s,[]),/18 \/ 18 companions/);assert.match(companyAutomationHTML(s),/type="checkbox" data-company-automation="buyAmmo"/);
 });
 
-test('ammo automation keeps buying replenished daily stock and respects the existing supply capacity',()=>{
+test('ammo automation buys replenished daily stock and stops at 999 with an exact partial purchase',()=>{
  const s=createGame(91);s.gold=10000;s.food=500;s.supplies.ammo=500;setCompanyAutomation(s,'buyAmmo',true);const before=s.supplies.ammo;assert.equal(tick(s,24).ok,true);assert.ok(s.supplies.ammo>before);assert.equal(getMarket(s).supplies.find(e=>e.kind==='ammo').stock,0);
- const capped=createGame(91);capped.supplies.ammo=9999;const stock=getMarket(capped).supplies.find(e=>e.kind==='ammo').stock;setCompanyAutomation(capped,'buyAmmo',true);assert.equal(capped.supplies.ammo,10000);assert.equal(getMarket(capped).supplies.find(e=>e.kind==='ammo').stock,stock-1);const snapshot=structuredClone(capped);applyCompanyAutomation(capped);assert.deepEqual(capped,snapshot);
+ const capped=createGame(91);capped.supplies.ammo=998;const offer=getMarket(capped).supplies.find(e=>e.kind==='ammo'),gold=capped.gold;setCompanyAutomation(capped,'buyAmmo',true);assert.equal(capped.supplies.ammo,999);assert.equal(capped.gold,gold-offer.buyPrice);assert.equal(getMarket(capped).supplies.find(e=>e.kind==='ammo').stock,offer.stock-1);const snapshot=structuredClone(capped);applyCompanyAutomation(capped);assert.deepEqual(capped,snapshot);
+ capped.food=500;assert.equal(tick(capped,24).ok,true);assert.equal(capped.supplies.ammo,999);const refreshed=getMarket(capped).supplies.find(e=>e.kind==='ammo');assert.ok(refreshed.stock>0);const refreshedGold=capped.gold;applyCompanyAutomation(capped);assert.equal(capped.gold,refreshedGold);assert.equal(getMarket(capped).supplies.find(e=>e.kind==='ammo').stock,refreshed.stock);
+ capped.supplies.ammo-=2;applyCompanyAutomation(capped);assert.equal(capped.supplies.ammo,999);assert.equal(capped.gold,refreshedGold-2*refreshed.buyPrice);assert.equal(getMarket(capped).supplies.find(e=>e.kind==='ammo').stock,refreshed.stock-2);
+ for(const compact of [false,true])assert.match(companyAutomationHTML(capped,compact),/until stores reach 999/);
+});
+
+test('enabling ammo automation preserves stores at or above 999 and their saved state',()=>{
+ for(const ammo of [999,1000,10000]){
+  const s=createGame(91);s.supplies.ammo=ammo;const before=structuredClone(s);before.automation.buyAmmo=true;assert.equal(setCompanyAutomation(s,'buyAmmo',true).ok,true);assert.deepEqual(s,before);assert.deepEqual(validateSave(s),s);
+  const restored=validateSave(structuredClone(s));applyCompanyAutomation(restored);assert.deepEqual(restored,s);
+ }
+});
+
+test('throwing bundles refill before automatic purchases top stores back up to 999',()=>{
+ const s=createGame(31);s.supplies.ammo=999;s.party[0].equipment.weapon='javelins';s.party[0].throwingAmmo.active=0;const capacity=getItem('javelins').ammo??5,offer=getMarket(s).supplies.find(e=>e.kind==='ammo'),gold=s.gold;
+ assert.equal(setCompanyAutomation(s,'buyAmmo',true).ok,true);assert.equal(s.party[0].throwingAmmo.active,capacity);assert.equal(s.supplies.ammo,999);assert.equal(s.gold,gold-capacity*offer.buyPrice);assert.equal(getMarket(s).supplies.find(e=>e.kind==='ammo').stock,offer.stock-capacity);assert.deepEqual(validateSave(s),s);
+ const snapshot=structuredClone(s);applyCompanyAutomation(s);assert.deepEqual(s,snapshot);
+});
+
+test('manual ammunition purchases can exceed the automatic target while automation stays enabled',()=>{
+ const s=createGame(91);s.supplies.ammo=999;setCompanyAutomation(s,'buyAmmo',true);const offer=getMarket(s).supplies.find(e=>e.kind==='ammo'),gold=s.gold;
+ assert.equal(buySupplies(s,'ammo',2).ok,true);assert.equal(s.supplies.ammo,1001);assert.equal(s.gold,gold-2*offer.buyPrice);assert.equal(getMarket(s).supplies.find(e=>e.kind==='ammo').stock,offer.stock-2);const snapshot=structuredClone(s);applyCompanyAutomation(s);assert.deepEqual(s,snapshot);assert.deepEqual(validateSave(s),s);
 });
 
 test('consumed medical supplies are replaced from the stash after claiming a completed battle',()=>{
