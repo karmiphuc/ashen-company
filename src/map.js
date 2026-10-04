@@ -1,3 +1,4 @@
+import { sceneFootprintContains } from './regional-scenes.js';
 import { WORLD_LANDMARK_ASSETS, worldLandmarks, landmarkAt, drawWorldLandmark, drawMountainRanges } from './world-landmarks.js';
 import { worldRoute } from './world-navigation.js';
 import { visualRandom, REGION_STYLE, terrainStamp, roadCurve, settlementProfile, settlementGround, overviewBorderAlpha, showActorLabel, movementPose } from './map-illustration.js';
@@ -171,12 +172,13 @@ function buildBackground() {
     target.strokeStyle='#6a5c4144';target.lineWidth=1;target.stroke();
   }
 
+  landmarks=worldLandmarks(state.seed,{settlements:SETTLEMENTS,camps:getCampSites(state),roads:WORLD_ROADS});
   const objects = [];
   const objectCount = Math.min(1600, Math.round(BACKGROUND_BOUNDS.width * BACKGROUND_BOUNDS.height / 5200));
   for (let index = 0; index < objectCount; index++) {
     const x = WORLD_BOUNDS.minX + random() * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
     const y = WORLD_BOUNDS.minY + random() * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
-    if (SETTLEMENTS.some(town => Math.hypot(x - town.x, y - town.y) < 66)) continue;
+    if (SETTLEMENTS.some(town => Math.hypot(x - town.x, y - town.y) < 66) || landmarks.some(o=>o.kind==='scene' && sceneFootprintContains(o,{x,y},25))) continue;
     const terrain = terrainAt(x, y);
     const style=REGION_STYLE[regionAt(x,y).id];
     if(random()>style.density*(.35+.9*visualRandom(state.seed,`cluster:${Math.floor(x/240)}:${Math.floor(y/180)}`)))continue;
@@ -187,7 +189,6 @@ function buildBackground() {
   }
   objects.sort((a,b)=>a.y-b.y).forEach(o=>o.name?sprite(target,o.name,o.x,o.y,o.width):drawMicroDetail(target,o));
   drawMountainRanges(target,state.seed,sprite);
-  landmarks=worldLandmarks(state.seed,{settlements:SETTLEMENTS,camps:getCampSites(state),roads:WORLD_ROADS});
   landmarks.sort((a,b)=>a.y-b.y).forEach(o=>drawWorldLandmark(target,o,state.seed,sprite));
   for(const town of SETTLEMENTS)drawSettlementGround(target,town);
   const borders=[];

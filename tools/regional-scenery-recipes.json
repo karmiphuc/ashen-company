@@ -1,0 +1,110 @@
+[
+  {
+    "name": "scene_ruin_house",
+    "actor": "structures/carthaginians/fndn_house.xml",
+    "mesh": "structural/kart_house_a_foundation.dae",
+    "texture": "structural/kart_struct.dds",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "26842eb2d14a890bfaec0651bad57415f66ab3a1437974c298b8493a23cc32a0",
+    "textureSha256": "8c8eada206a62372a0fbe872afadf8d8e82577a424916173755893e2ddaae683"
+  },
+  {
+    "name": "scene_ruin_farm",
+    "actor": "structures/carthaginians/fndn_farmstead.xml",
+    "mesh": "structural/kart_farmstead_foundation.dae",
+    "texture": "structural/kart_struct.dds",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "7b7964b02f04ba65f5f2987020c6a35857d7bd17c7d1efe0d1d1636116d90344",
+    "textureSha256": "8c8eada206a62372a0fbe872afadf8d8e82577a424916173755893e2ddaae683"
+  },
+  {
+    "name": "scene_ruin_tower",
+    "actor": "structures/carthaginians/fndn_defense_tower.xml",
+    "mesh": "structural/kart_defense_tower_foundation.dae",
+    "texture": "structural/kart_struct.dds",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "a1903688b5451b64434d9117ae472bdc02390c4ba3b288ae9084ef544e72437b",
+    "textureSha256": "8c8eada206a62372a0fbe872afadf8d8e82577a424916173755893e2ddaae683"
+  },
+  {
+    "name": "scene_charred_frame",
+    "actor": "structures/destruct_wood_3x3.xml",
+    "mesh": "props/rubble_wood_3x3.dae",
+    "texture": "props/wood_burned.png",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "5943555623768f087ed8816a344c6cf2ddee27587ef4414f3e33ca880a3fdffb",
+    "textureSha256": "62b0a00d8f4e31e9362b206c819f1e3bf8a6ab5c5bef4fcf28fa869374b14860"
+  },
+  {
+    "name": "scene_ruin_wall",
+    "actor": "structures/destruct_stone_wall_long.xml",
+    "mesh": "props/rubble_stone_wall_long.dae",
+    "texture": "props/rubble_stone.png",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "8bb95d17d97d76c79f529c125828546152d2df67b264c287b6f5d7864c8c93e3",
+    "textureSha256": "ce6d72f5994174a7127557ea5f806886d26b4e73a90e3cd304f7f2a7a0f51ae6"
+  },
+  {
+    "name": "scene_sanctuary",
+    "actor": "props/special/eyecandy/greek_temple_unfinished.xml",
+    "mesh": "props/temple_unfinished.dae",
+    "texture": "props/hele_tile_c.dds",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "478c4a8dcf99f175be87f4f727a0ea1b86e4a96e6f0d9fe6da59d20f2daa2d34",
+    "textureSha256": "29ca35c15a8718c1493e09805aa00eeb71f7363cedf9d69e636dfbcf5b1afad1"
+  },
+  {
+    "name": "scene_columns",
+    "actor": "props/special/eyecandy/greek_temple_unfinished_columns.xml",
+    "mesh": "props/temple_unfinished_columns.dae",
+    "texture": "props/hele_props_a.dds",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "602e8ed6b656c7a2b4506c958c89c34028f7dd010c5cc663b366394d0e2fad7f",
+    "textureSha256": "88a111a8bab3c9b137fc0bc74b16e8c9d3cb84a033306ed2369e8caab77a5fb1"
+  },
+  {
+    "name": "scene_gravestone",
+    "actor": "structures/gravestone.xml",
+    "mesh": "structural/gravestone.dae",
+    "texture": "structural/gravestone.dds",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "9967021cefa42f22e005d8133007be52b73ce7f2c01613e2480f270538bcdd40",
+    "textureSha256": "68fd2d1260de4cee24e5af2a538f348a2c5abd922c0235727319dab06bedbb1c"
+  },
+  {
+    "name": "scene_dead_palm",
+    "actor": "flora/trees/palm_date.xml",
+    "mesh": "gaia/tree_palm_date_c.dae",
+    "texture": "gaia/tree_palmdate_b.dds",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "b6d21aa277e066326ac9d23ffde18e87cbad22d9fc1a7a074d23ba3bff2a876f",
+    "textureSha256": "e5d0b7bfde142848fa186154766cd3bf3ee2a2665a08c998fff6d78ea98c1e84"
+  },
+  {
+    "name": "scene_statue",
+    "actor": "props/special/eyecandy/statues_roman.xml",
+    "mesh": "props/rome_statue_5.dae",
+    "texture": "props/rome_cc_statues.png",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "75fd68c2e7ea99aefad5f60e51379c880ab8239bb652d2d3cd511e26807d12ca",
+    "textureSha256": "c86a6b823bb3d5598e183f5efc7584eb70b6b557bafd1b156c1d7c441a8b8620"
+  },
+  {
+    "name": "scene_well",
+    "actor": "props/special/eyecandy/well_1_a.xml",
+    "mesh": "props/wrld_well_a.dae",
+    "texture": "props/wrld_well_a_1.dds",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "2a269f4f585126a93d99ac08561e60b36af9e2582da290d9222a8ad1823f16aa",
+    "textureSha256": "6f93fb7cee0ee532998c94e1a8822f77573e00cae0476bef4293c68b1a7d1f27"
+  },
+  {
+    "name": "scene_angel",
+    "actor": "props/special/eyecandy/statues_roman.xml",
+    "mesh": "props/rome_statue_3.dae",
+    "texture": "props/rome_cc_statues.png",
+    "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+    "meshSha256": "945cfe87bce5dfbe3eee31d6987a24c46421fc93145298171dae4523622bbf49",
+    "textureSha256": "c86a6b823bb3d5598e183f5efc7584eb70b6b557bafd1b156c1d7c441a8b8620"
+  }
+]

@@ -8,12 +8,12 @@ import { listOfflineAssets, renderServiceWorker } from '../tools/build-cache.mjs
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-async function runtimeMediaFiles(directory) {
+async function runtimeMediaFiles(directory, extensions = /\.(png|jpg|mp3)$/i) {
   const entries = await readdir(directory, { withFileTypes: true });
   const paths = await Promise.all(entries.map(async entry => {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) return runtimeMediaFiles(path);
-    if (entry.isFile() && /\.(png|jpg|mp3)$/i.test(entry.name) && !/^contact[-_]sheet/i.test(entry.name)) {
+    if (entry.isDirectory()) return runtimeMediaFiles(path, extensions);
+    if (entry.isFile() && extensions.test(entry.name) && !/^contact[-_]sheet/i.test(entry.name)) {
       return ['./' + relative(ROOT, path).split(sep).join('/')];
     }
     return [];
@@ -71,6 +71,7 @@ test('offline list contains every runtime media asset and required app file', as
   for (const path of ['./', './index.html', './src/app.js', './src/audio.js', './src/engine.js', './src/additional-items.js', './src/map.js', './src/portraits.js', './src/style.css', './manifest.webmanifest', './assets/icon.svg']) {
     assert.ok(assets.includes(path), `${path} is missing`);
   }
+  for(const path of await runtimeMediaFiles(join(ROOT,'src'), /\.(js|css)$/i)) assert.ok(assets.includes(path),path+' runtime source is missing from offline cache');
   assert.ok(assets.some(path => path.startsWith('./assets/audio/') && path.endsWith('.mp3')), 'offline audio files are missing');
   for (const path of ['./src/combat-skills.js', './src/tactical-ai.js', './src/area-safety.js']) assert.ok(assets.includes(path), `${path} is missing`);
   assert.deepEqual(assets.filter(path => /\.(png|jpg|mp3)$/i.test(path)).sort(), await runtimeMediaFiles(join(ROOT, 'assets')));

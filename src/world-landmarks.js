@@ -1,6 +1,7 @@
+import { REGIONAL_SCENE_ASSETS, regionalStoryScenes, drawRegionalScene } from './regional-scenes.js';
 import { compactPoint, regionAt, distanceToRoad } from './geography.js';
 import { visualRandom } from './map-illustration.js';
-import { WORLD_MOUNTAIN_RANGES, worldBlocked } from './world-navigation.js';
+import { WORLD_MOUNTAIN_RANGES, worldBlocked, worldPointInBounds } from './world-navigation.js';
 
 export const LEGENDARY_CAVES=Object.freeze([
  {id:'greenwood-cave',kind:'cave',name:'Veiled Hollow',x:2020,y:970,width:66,setting:'forest'},
@@ -36,19 +37,20 @@ const sites=[
 ];
 export function worldLandmarks(seed,{settlements=[],camps=[],roads=[]}={}){
  const landmarks=[];
+ const stories=regionalStoryScenes(seed,{settlements,camps:camps.filter(c=>!c.random),roads,reserved:LEGENDARY_CAVES});
  for(const [id,kind,x,y,width,region]of sites){
   const p=compactPoint({x,y});
   // Major monuments keep their authored grouping; minor sites vary a little by campaign.
   const jitter=['pyramid','sphinx'].includes(kind)?0:14;
   p.x+=(visualRandom(seed,id+':x')*2-1)*jitter;p.y+=(visualRandom(seed,id+':y')*2-1)*jitter;
   const radius=width*.4;
-  if(regionAt(p.x,p.y).id!==region || worldBlocked(p)
+  if(stories.some(t=>Math.hypot(t.x-p.x,t.y-p.y)<t.width*.45+radius+12) || regionAt(p.x,p.y).id!==region || worldBlocked(p)
     || settlements.some(t=>Math.hypot(t.x-p.x,t.y-p.y)<radius+85)
     || !['pyramid','sphinx'].includes(kind) && camps.some(t=>Math.hypot(t.x-p.x,t.y-p.y)<radius+45)
     || distanceToRoad(p.x,p.y,roads)<radius*.6+22)continue;
   landmarks.push({id,kind,...p,width,region});
  }
- return [...landmarks,...LEGENDARY_CAVES];
+ return [...stories,...landmarks,...LEGENDARY_CAVES];
 }
 export function landmarkAt(landmarks,p){return landmarks.find(o=>Math.hypot((o.x-p.x)/(o.width*.48),(o.y-p.y)/(o.width*.32))<1);}
 // Freely licensed textured sprites; provenance and adaptation recipes are recorded
@@ -85,12 +87,14 @@ export const SCENERY_LAYOUTS=Object.freeze({
  'steppe-watch':layout(['wheel',-.26,.20,.17],['wagon_wreck',.30,.19,.33]),
 });
 export const WORLD_LANDMARK_ASSETS=Object.freeze([
+ ...REGIONAL_SCENE_ASSETS,
  'landmark_tower',
  ...new Set(Object.values(SCENERY_LAYOUTS).flatMap(parts=>parts.map(p=>p.art))),
  'landmark_pyramid','landmark_sphinx','landmark_cave_forest','landmark_cave_mountain','landmark_cave_desert',
  ...['green','snow','desert'].flatMap(kind=>[1,2,3,4].map(n=>`landmark_mountain_${kind}_${n}`)),
 ]);
 export function drawWorldLandmark(c,o,seed,sprite){
+ if(o.kind==='scene'){drawRegionalScene(c,o,sprite);return;}
  const parts=SCENERY_LAYOUTS[o.id]??SCENERY_LAYOUTS['old-crossing'];
  if(o.kind==='battlefield'||o.kind==='warcamp'){
   // These are abandoned scenery, never active camps or selectable entities.
@@ -142,9 +146,22 @@ export function drawMountainRanges(c,seed,sprite){
  stamps.sort((a,b)=>a.y-b.y).forEach(p=>sprite(c,p.art,p.x,p.y,p.width,.91));
 }
 
-export function landmarkCampPoint(point){
+const storyCache=new WeakMap();
+function protectedStoryScenes(seed,{settlements,camps,roads}){
+ let seeds=storyCache.get(settlements);if(!seeds){seeds=new Map();storyCache.set(settlements,seeds);}
+ if(!seeds.has(seed)){if(seeds.size>=32)seeds.delete(seeds.keys().next().value);seeds.set(seed,regionalStoryScenes(seed,{settlements,camps,roads,reserved:LEGENDARY_CAVES}));}
+ return seeds.get(seed);
+}
+export function landmarkCampPoint(point,seed,context){
  let p={...point};
- const protectedSites=[...sites.filter(s=>['pyramid','sphinx'].includes(s[1])).map(([id,kind,x,y,width])=>({...compactPoint({x,y}),width})),...LEGENDARY_CAVES];
+ const protectedSites=[...sites.filter(s=>['pyramid','sphinx'].includes(s[1])).map(([id,kind,x,y,width])=>({...compactPoint({x,y}),width})),...LEGENDARY_CAVES,...(context?protectedStoryScenes(seed,context):[])];
+ const within=(p,s)=>Math.hypot(p.x-s.x,p.y-s.y)<s.width*.45+48;
+ if(context&&protectedSites.some(s=>within(p,s))){
+  const candidates=[];
+  for(const radius of [35,70,105,140,180,225,275])for(let i=0;i<32;i++){const a=i*Math.PI/16,q={x:p.x+Math.cos(a)*radius,y:p.y+Math.sin(a)*radius};
+   if(worldPointInBounds(q)&&!worldBlocked(q)&&regionAt(q.x,q.y).id===regionAt(p.x,p.y).id&&!protectedSites.some(s=>within(q,s))&&!context.settlements.some(t=>Math.hypot(t.x-q.x,t.y-q.y)<90))candidates.push(q);}
+  if(candidates.length)return candidates[0];
+ }
  for(const site of protectedSites){const d=Math.hypot(p.x-site.x,p.y-site.y),radius=site.width*.4+48;if(d<radius){const dx=d?(p.x-site.x)/d:1,dy=d?(p.y-site.y)/d:0;p={x:site.x+dx*(radius+5),y:site.y+dy*(radius+5)};}}
  return p;
 }
