@@ -1,6 +1,6 @@
 import { landmarkCampPoint } from './world-landmarks.js';
 import { worldBlocked, worldSegmentClear, worldRoute, moveWorldToward, nearestWorldPoint } from './world-navigation.js';
-import { armoryTheme } from './armory-themes.js';
+import { armoryTheme, isAncientHelmet } from './armory-themes.js';
 import { NAMED_WEAPONS } from './named-weapons.js';
 import { rollNamedItem } from './named-rolls.js';
 // Pure game rules for the offline overworld. The UI owns rendering and real time.
@@ -1514,12 +1514,12 @@ function atMidnight(state) {
   if (foodShort) {
     for (const person of state.party) {
       person.hp = Math.max(1, person.hp - 5);
-      person.morale = Math.max(0, person.morale - 12);
+      if (!isMoraleImmune(person)) person.morale = Math.max(0, person.morale - 12);
     }
     record(state, 'Food ran short overnight. The company is hungry.');
   }
   if (wagesShort) {
-    for (const person of state.party) person.morale = Math.max(0, person.morale - 10);
+    for (const person of state.party) if (!isMoraleImmune(person)) person.morale = Math.max(0, person.morale - 10);
     record(state, 'The company could not collect full wages.');
   }
   if (!foodShort && !wagesShort) record(state, `Paid ${wages} crowns and ate ${foodNeeded} provisions.`);
@@ -2261,7 +2261,7 @@ export function camp(state) {
   if (medicated) state.supplies.medicine -= 1;
   for (const person of state.party) {
     person.hp = clamped(person.hp + (medicated ? 24 : 8), 1, getCompanyStats(person).maxHp);
-    person.morale = clamped(person.morale + 9, 0, 100);
+    if (!isMoraleImmune(person)) person.morale = clamped(person.morale + 9, 0, 100);
   }
   let repairs = 0;
   for (const person of state.party) {
@@ -3358,8 +3358,12 @@ function effectiveWeaponRange(actor, weapon) {
   return (weapon?.range ?? 1) + (isBow(weapon) && hasPerk(actor, 'bow-mastery') ? 1 : 0);
 }
 
+export function isMoraleImmune(unit) {
+  return unit.undeadTraitsVersion === 1 || isAncientHelmet(getItem(unit.equipment?.helmet));
+}
+
 export function getMoraleEffects(unit) {
-  const morale = unit.undeadTraitsVersion === 1 ? 60 : unit.morale ?? 50;
+  const morale = isMoraleImmune(unit) ? 60 : unit.morale ?? 50;
   if (morale >= 80) return { name: 'Confident', modifier: .1 };
   if (morale >= 50) return { name: 'Steady', modifier: 0 };
   if (morale >= 25) return { name: 'Wavering', modifier: -.1 };
@@ -3394,7 +3398,7 @@ function wearShield(battle, unit, amount) {
 }
 
 function changeBattleMorale(battle, unit, amount) {
-  if (unit.undeadTraitsVersion === 1) return;
+  if (isMoraleImmune(unit)) return;
   const previous = getMoraleEffects(unit).name;
   unit.morale = clamped(unit.morale + amount, 0, 100);
   const current = getMoraleEffects(unit).name;
@@ -3996,7 +4000,7 @@ function advanceBattleV2(state) {
     actor.turnStartedRound = battle.round;
     if (battle.weaponSkillsVersion === 1) actor.stunProtected = false;
   }
-  if (battle.weaponSkillsVersion === 1 && actor.side === 'enemy' && actor.undeadTraitsVersion !== 1 && actor.morale < 25) {
+  if (battle.weaponSkillsVersion === 1 && actor.side === 'enemy' && !isMoraleImmune(actor) && actor.morale < 25) {
     if (actor.fleeRollRound !== battle.round) {
       actor.fleeRollRound = battle.round;
       if (battleRoll(battle) < .5) actor.fleeRound = battle.round;
@@ -4706,7 +4710,7 @@ export function retreatBattle(state) {
   state.food = Math.max(0, state.food - 2);
   for (const unit of battle.units.filter(entry => entry.side === 'company' && !entry.ally && entry.alive)) {
     unit.hp = Math.max(1, unit.hp - 5);
-    unit.morale = Math.max(0, unit.morale - moraleDamage(unit, 12));
+    if (!isMoraleImmune(unit)) unit.morale = Math.max(0, unit.morale - moraleDamage(unit, 12));
   }
   battle.lastEvent = makeBattleEvent(null, null, 'retreat', 'The company retreats, losing two provisions and taking wounds.');
   battleLog(battle, battle.lastEvent.message);
@@ -4781,7 +4785,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
       continue;
     }
     person.hp = unit.hp;
-    person.morale = Math.min(100, unit.morale + (sharing?.morale ?? 0));
+    person.morale = Math.min(100, unit.morale + (isMoraleImmune(unit) ? 0 : sharing?.morale ?? 0));
     person.accessories = carriedAccessories;
     person.throwingAmmo = throwingAmmo;
     person.armorDurability = { body: unit.bodyArmor, attachment: unit.attachmentArmor, attachment2:unit.attachment2Armor??person.armorDurability.attachment2, head: unit.headArmor,

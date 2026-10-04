@@ -1,7 +1,7 @@
 import { BATTLE_PROJECTION, tilePosition, elevationFaces } from './battle-geometry.js';
 import { enemyBattleTactic } from './tactical-ai.js';
 import { weaponSkillFamily } from './combat-skills.js';
-import { getEquipment, getItem, getMoraleEffects, shieldMaximum, throwingCapacity } from './engine.js';
+import { getEquipment, getItem, getMoraleEffects, isMoraleImmune, shieldMaximum, throwingCapacity } from './engine.js';
 import { portraitHTML, portraitWeaponAnchor, portraitGroundAnchor, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
@@ -134,7 +134,7 @@ function statusIconsHTML(unit, battle) {
   const statuses = [
     unit.alive !== false && unit.hp > 0 && unit.frenzyUntilRound > 0 && unit.frenzyUntilRound >= battle.round ? ['frenzy', 'Killing Frenzy: +25% damage', '<path d="m8 1 2 5 3-2-1 7-4 4-4-4-1-7 3 2z"/>'] : null,
     unit.alive && unit.howlTurns > 0 ? ['howled', `Howled: −20% damage for ${unit.howlTurns} more turn${unit.howlTurns === 1 ? '' : 's'}`, '<path d="M1 7h2v2H1zm4-3h2v8H5zm4-2h2v12H9zm4 3h2v6h-2z"/>'] : null,
-    unit.alive && unit.fleeRound === battle.round ? ['fleeing', 'Fleeing', '<path d="M1 7h10L8 4l1-1 5 5-5 5-1-1 3-3H1z"/>'] : null,
+    unit.alive && !isMoraleImmune(unit) && unit.fleeRound === battle.round ? ['fleeing', 'Fleeing', '<path d="M1 7h10L8 4l1-1 5 5-5 5-1-1 3-3H1z"/>'] : null,
     unit.shieldWallActive ? ['shieldwall', 'Shield wall active', '<path d="M8 1 14 3v4.5c0 3.2-2.1 5.9-6 7.5-3.9-1.6-6-4.3-6-7.5V3z"/>'] : null,
     unit.spearwallActive ? ['spearwall', 'Spearwall active', '<path d="M2 14 11.3 4.7l.9.9L2.9 15zM11 2l3 3-1 1-3-3z"/>'] : null,
     unit.riposteActive ? ['riposte', 'Riposte active', '<path d="M2 3 3 2l11 11-1 1zm11-1 1 1L3 14l-1-1zM2 2l3 1-2 2zm9 9 3 0-1 3zm3-9-3 1 2 2zm-9 9-3 0 1 3z"/>'] : null,
@@ -247,7 +247,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
   const beforeHead = hasImpact ? percent(number(unit.headArmor) + headDamage, unit.maxHeadArmor || 1) : head;
   const display = { seed: unit.seed ?? unit.id ?? 0, name: unit.name ?? 'Unknown' };
   const morale = getMoraleEffects(unit);
-  const moraleLabel = `${morale.name} morale: ${Math.round(number(unit.morale, 50))}/100; resolve ${Math.round(number(unit.resolve, 50))}`;
+  const moraleLabel = isMoraleImmune(unit) ? 'Morale immune: no bonuses, penalties, or automatic fleeing.' : `${morale.name} morale: ${Math.round(number(unit.morale, 50))}/100; resolve ${Math.round(number(unit.resolve, 50))}`;
 
   return `<article class="${classes}" data-unit-id="${esc(unit.id)}" style="left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--pawn-foot:${foot}px;--callout-space:${Math.max(34, callouts.length * 26 + 8)}px;--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${unit.ally?'Allied fighter, ':''}${esc(unit.name)}: ${Math.round(number(unit.hp))} health${friendlyFire?', friendly fire impact':''}">
     <div class="battle-unit-bars" aria-hidden="true">
@@ -340,7 +340,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         </div>
       </div>
       <aside class="battle-log" aria-label="Battle event log">
-        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<p class="battle-vitals">HP ${Math.round(number(active.hp))}/${Math.round(number(active.maxHp))} · AP ${Math.round(number(active.ap))}/${battle.rulesVersion===2?9:2}<br>Fatigue ${Math.round(number(active.fatigue))}/${Math.round(number(active.maxFatigue))}</p><details class="battle-morale-help"><summary>Morale effects</summary><small>Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale.</small></details></section>` : ''}
+        ${active ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<p class="battle-vitals">HP ${Math.round(number(active.hp))}/${Math.round(number(active.maxHp))} · AP ${Math.round(number(active.ap))}/${battle.rulesVersion===2?9:2}<br>Fatigue ${Math.round(number(active.fatigue))}/${Math.round(number(active.maxFatigue))}</p><details class="battle-morale-help"><summary>Morale effects</summary><small>${isMoraleImmune(active)?'Morale immune: no positive or negative morale changes, no attack or defense modifiers, and no automatic fleeing.':"Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale."}</small></details></section>` : ''}
         <details class="battle-log-details" open><summary>Combat log</summary>
         <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol></details>
       </aside>

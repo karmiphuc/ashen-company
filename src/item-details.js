@@ -1,5 +1,6 @@
 import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
 import { equipmentSkills, weaponSkillFamily } from './combat-skills.js';
+import { isAncientHelmet } from './armory-themes.js';
 
 const ROLES = {
   'patched-coat': 'Very light body cover for a new recruit; its 20 armor wears out quickly.',
@@ -39,6 +40,7 @@ export function getItemDetails(item, condition) {
   if (!baseRole) return null;
   const stats = [];
   const notes = [];
+  if (isAncientHelmet(item)) notes.push('Morale immunity while equipped: no positive or negative morale changes, no morale bonuses or penalties to attack and defense, and no automatic fleeing.');
   if(item.signatureDescription)notes.push(item.signatureDescription);
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {

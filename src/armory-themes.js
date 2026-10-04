@@ -19,3 +19,7 @@ export function matchesArmoryTheme(item, theme) {
     && (item.slot === 'armor' ? item.armor <= 150 && item.fatigue <= 15 : item.armor <= 110 && item.fatigue <= 9);
   return true;
 }
+
+export function isAncientHelmet(item) {
+  return item?.slot === 'helmet' && matchesArmoryTheme(item, 'ancient');
+}
