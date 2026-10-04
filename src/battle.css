@@ -112,3 +112,31 @@
 
 .battle-unit strong{bottom:auto;top:calc(var(--pawn-foot,80px) + 1px)}
 .battle-unit small{bottom:auto;top:calc(var(--pawn-foot,80px) + 12px)}
+
+/* Cinematic retains 3x travel while attack wind-up and contact hold longer. */
+.cinematic-action .action-swing .bb-layer-weapon{animation-name:cinematic-swing;animation-timing-function:linear}
+.cinematic-action .action-thrust .bb-layer-weapon{animation-name:cinematic-thrust;animation-timing-function:linear}
+.cinematic-action .action-shoot .bb-layer-weapon{animation-name:cinematic-aim;animation-timing-function:linear}
+.cinematic-action .action-swing .battle-pawn,.cinematic-action .action-thrust .battle-pawn{animation-name:cinematic-lunge;animation-timing-function:linear}
+.cinematic-action .action-move{animation-duration:var(--move-time)}
+.cinematic-action .action-hit .battle-pawn{animation-name:cinematic-hit}
+.cinematic-action .action-fall{animation-name:cinematic-fall}
+.cinematic-action .battle-projectile{animation-name:cinematic-flight}
+.cinematic-action .battle-projectile.is-axe>img{animation-name:cinematic-thrown-spin}
+.cinematic-action .battle-impact{animation-name:cinematic-impact}
+.cinematic-action .action-hit .battle-unit-bar i{animation-name:cinematic-impact-bar}
+.cinematic-action .action-bite [data-layer="mount-head"]{animation-name:cinematic-bite;animation-timing-function:linear}
+.cinematic-skill .is-acting .battle-pawn{animation:cinematic-skill var(--action-time) ease-in-out}
+@keyframes cinematic-swing{0%,100%{transform:var(--layer-rest)}45%{transform:var(--layer-rest) rotate(-35deg)}52%{transform:var(--layer-rest) rotate(-38deg)}65%,82%{transform:var(--layer-rest) rotate(40deg)}}
+@keyframes cinematic-thrust{0%,100%{transform:var(--layer-rest)}45%,52%{transform:translate(-6px,4px) var(--layer-rest) rotate(-12deg)}65%,82%{transform:translate(17px,-10px) var(--layer-rest) rotate(12deg)}}
+@keyframes cinematic-aim{0%,100%{transform:var(--layer-rest)}25%,40%{transform:translate(3px,-6px) var(--layer-rest) rotate(22deg)}43%{transform:translate(-2px,-4px) var(--layer-rest) rotate(18deg)}65%,82%{transform:translate(1px,-3px) var(--layer-rest) rotate(18deg)}}
+@keyframes cinematic-lunge{0%,48%,100%{transform:translate(0,0)}65%,82%{transform:translate(var(--strike-x),var(--strike-y))}}
+@keyframes cinematic-flight{0%,40%{opacity:0;transform:translate(0,0)}41%{opacity:1;transform:translate(0,0)}58%{opacity:1;transform:translate(calc(var(--flight-x)*.7),calc(var(--flight-y)*.7))}65%,76%{opacity:1;transform:translate(var(--flight-x),var(--flight-y))}82%,100%{opacity:0;transform:translate(var(--flight-x),var(--flight-y))}}
+@keyframes cinematic-hit{0%,64%,100%{filter:none;transform:translateX(0)}65%,82%{filter:brightness(1.7) sepia(.4);transform:translateX(4px)}90%{transform:translateX(-2px)}}
+@keyframes cinematic-fall{0%,64%{opacity:1;filter:none;transform:translateX(-50%)}65%,82%{opacity:.8;filter:grayscale(.4);transform:translateX(-50%) translateY(4px) rotate(4deg)}100%{opacity:.3;filter:grayscale(1);transform:translateX(-50%) translateY(13px) rotate(12deg)}}
+@keyframes cinematic-impact{0%,64%{opacity:0;transform:translate(-50%,8px)}68%,87%{opacity:1;transform:translate(-50%,-4px)}100%{opacity:0;transform:translate(-50%,-22px)}}
+@keyframes cinematic-impact-bar{0%,64%{width:var(--before-width)}65%,100%{width:var(--after-width)}}
+@keyframes cinematic-thrown-spin{0%,40%{transform:translate(-50%,-50%) rotate(calc(var(--flight-angle) + 20deg))}65%,100%{transform:translate(-50%,-50%) rotate(calc(var(--flight-angle) + 380deg))}}
+@keyframes cinematic-bite{0%,48%,100%{translate:0 0}65%,82%{translate:var(--strike-x) var(--strike-y)}}
+@keyframes cinematic-skill{0%,100%{filter:none}40%,65%{filter:brightness(1.22) drop-shadow(0 0 4px #dfbd75)}}
+@media(prefers-reduced-motion:reduce){.cinematic-action .battle-pawn,.cinematic-action .bb-layer-weapon,.cinematic-action [data-layer="mount-head"]{animation:none!important}}
