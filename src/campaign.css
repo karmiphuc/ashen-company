@@ -86,3 +86,34 @@
 /* Reserve real space for the unshrunk character and equipment silhouette. */
 .company-page .detailed-company .hero-portrait{height:auto;min-height:310px;padding:70px 24px 35px;overflow:visible}
 .company-page .hero-portrait .bb-portrait{transform:none}
+
+/* Trading puts actionable stock ahead of optional market background. */
+.market-workspace .market-summary{gap:12px;margin-bottom:10px;font-size:12px}
+.market-workspace .market-tabs{position:sticky;top:0;z-index:3;background:#29231b;padding:5px 0;margin:0 0 12px}
+.market-workspace .market-tabs button{min-height:44px}
+.market-filters{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.market-filters label{display:grid;gap:4px;color:#d8c69e;font:12px Arial,sans-serif}
+.market-filters select{min-height:44px;min-width:110px;padding:6px;background:#262117;color:#ead8ad;border:1px solid #8f7750}
+.market-filters .market-check{display:flex;align-items:center;min-height:44px;gap:6px}
+.market-check input{width:18px;height:18px;accent-color:#c5a466}
+.market-item{position:relative;display:flex;flex-direction:column;min-width:0;background:#201c15;border:1px solid #8f7750}
+.market-item-rare{border-color:#d5b86d;box-shadow:inset 0 0 12px #b68d3322}
+.market-item-inspect{position:relative;display:flex;flex:1;flex-direction:column;align-items:center;gap:5px;min-width:0;padding:10px 6px;border:0;box-shadow:none;background:transparent}
+.market-item-inspect .equipment-icon{width:56px;height:56px;object-fit:contain}
+.market-item-inspect strong{font-size:12px;line-height:1.2}
+.market-item-inspect small{color:#c9b992;font-size:11px;line-height:1.3}
+.market-item-inspect .stock-count{position:absolute;top:4px;right:5px;font-size:10px}
+.market-item-trade{min-height:44px;border:0;border-top:1px solid #776346;border-radius:0;font-size:12px}
+.market-background{margin-top:16px;border-top:1px solid #776346;padding-top:8px;color:#c9b992;font-size:12px}
+.market-background summary,.trade-description summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px}
+.market-background summary::before,.trade-description summary::before{content:'▸'}
+.market-background[open]>summary::before,.trade-description[open]>summary::before{content:'▾'}
+.market-background summary:focus-visible,.trade-description summary:focus-visible{outline:2px solid #e0c06e;outline-offset:2px}
+.market-workspace .town-event.compact{margin:0 0 12px}
+@media(max-width:620px){.market-workspace .market-ledger{display:flex;flex-direction:column}.market-trader-stock{order:0}.market-company-stock{order:1}.market-workspace .market-summary{align-items:center}.market-workspace .market-summary strong{white-space:nowrap}.market-workspace .market-tabs{gap:4px}.market-workspace .market-tabs button{padding:6px 4px;font-size:11px}.market-workspace .trader-grid,.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr))}.market-filters{gap:6px 12px}.market-item-inspect strong{font-size:13px}}
+
+.market-readiness{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 8px;color:#cfbd98;font:12px Arial,sans-serif}
+.market-workspace .provision-card{padding:12px;margin-bottom:10px}
+.market-workspace .provision-card h3{font-size:18px}
+.market-workspace .provision-card p{margin:7px 0;font-size:12px}
+.market-workspace .trade-actions button{min-height:44px}
