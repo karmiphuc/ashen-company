@@ -6,7 +6,7 @@ import {
   buyFood, buySupplies, buyGood, sellGood, sellItem, recruit, acceptContract, useTownService,
   claimMountReward, activateMapTarget, tick, camp, forage, startBattle, advanceBattle,
   resolveBattle, retreatBattle, finishBattle, getCompanyStats, getAshenFinalItem, claimAshenReward, getCaravans,
-  applyCompanyAutomation, getBattleRoster,
+  applyCompanyAutomation, getBattleRoster, hireRetinueMember, upgradeScout, buyCompanyCart, hireBountyHunter,
 } from '../src/engine.js';
 import { ASHEN_CONFIG, campaignHour, initialAshenWinter } from '../src/crisis-director.js';
 import { advanceAshenWinter, validateAshenWinter, resolveAshenObjective, exteriorPoint, npcAshenVictory } from '../src/undead-crisis.js';
@@ -93,7 +93,7 @@ test('warning and three fronts persist; queries never mutate state', () => {
 
 test('every settlement command is blocked without transactions or reward mutation', () => {
   const { s, townId, town } = besieged(); s.position = { x: town.x, y: town.y };
-  const commands = [() => buyItem(s, 'spear'), () => buyAll(s, 'food'), () => buyFood(s), () => buySupplies(s, 'tools'),
+  const commands = [() => hireRetinueMember(s, 'broker'), () => upgradeScout(s), () => buyCompanyCart(s), () => hireBountyHunter(s), () => buyItem(s, 'spear'), () => buyAll(s, 'food'), () => buyFood(s), () => buySupplies(s, 'tools'),
     () => buyGood(s, 'grain'), () => sellGood(s, 'grain'), () => sellItem(s, 'cloth-hood'), () => recruit(s),
     () => acceptContract(s, townId), () => useTownService(s, 'doctor'), () => useTownService(s, 'smithy')];
   for (const command of commands) {

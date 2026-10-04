@@ -1,3 +1,5 @@
+import {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier,defaultRetinue} from './retinue.js';
+export {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier} from './retinue.js';
 import { landmarkCampPoint } from './world-landmarks.js';
 import { worldBlocked, worldSegmentClear, worldRoute, moveWorldToward, nearestWorldPoint } from './world-navigation.js';
 import { armoryTheme, isAncientHelmet } from './armory-themes.js';
@@ -599,8 +601,56 @@ export function getCompanyStats(person) {
   };
 }
 
-export function getDailyFood(state) {
+function baseDailyFood(state) {
   return state.party.reduce((total, person) => total + 1 + (person.hp > 0 ? getItem(person.equipment?.mount)?.foodUpkeep ?? 0 : 0), 0);
+}
+
+export function getDailyFood(state) { return hasRetinue(state,'quartermaster') ? baseDailyFood(state)*4/5 : baseDailyFood(state); }
+function dailyFoodConsumption(state) {
+  if(!hasRetinue(state,'quartermaster'))return baseDailyFood(state);
+  const numerator=baseDailyFood(state)*4+(state.retinue.foodRemainder??0);
+  state.retinue.foodRemainder=numerator%5;
+  return Math.floor(numerator/5);
+}
+export function hireRetinueMember(state,id) {
+  const blocked=actionBlocked(state);if(blocked)return blocked;
+  const access=requireTown(state);if(access.error)return access.error;
+  const definition=RETINUE_MEMBERS.find(member=>member.id===id);
+  if(!definition)return result(false,'Unknown retinue member.');
+  if(hasRetinue(state,id))return result(false,`${definition.name} already serves your company.`);
+  if(state.gold<definition.cost)return result(false,`Hiring ${definition.name} requires ${definition.cost.toLocaleString('en-US')} crowns.`);
+  state.retinue??=defaultRetinue();state.retinue.members??=[];
+  state.gold-=definition.cost;state.retinue.members.push(id);
+  if(id==='scout')state.retinue.scoutLevel=1;
+  const message=`${definition.name} hired. Permanent company support, with no wage or formation slot.`;
+  record(state,message);return result(true,message);
+}
+export function upgradeScout(state) {
+  const blocked=actionBlocked(state);if(blocked)return blocked;
+  const access=requireTown(state);if(access.error)return access.error;
+  if(getScoutLevel(state)!==1)return result(false,getScoutLevel(state)===2?'Scout is fully upgraded.':'Hire a Scout first.');
+  if(state.gold<10000)return result(false,'The Scout upgrade requires 10,000 crowns.');
+  state.gold-=10000;state.retinue.scoutLevel=2;
+  const message='Scout upgraded: enemy bands detect and pursue your company at 33% shorter ranges.';
+  record(state,message);return result(true,message);
+}
+export function getBattleLootGold(state) {
+  const base=state.battle?.loot?.gold??0;
+  return Math.floor(base*(hasRetinue(state,'scavenger')&&state.battle?.status==='victory'?1.25:1));
+}
+export function getBattleExperience(state,id) {
+  const battle=state.battle;if(!battle)return 0;
+  const unit=battle.units.find(u=>u.id===id);
+  if(unit)return unit.alive?Math.round((battle.xp[id]??0)*(hasRetinue(state,'drillmaster')?1.15:1)):0;
+  if(!hasRetinue(state,'drillmaster')||battle.status!=='victory'||!getReserveSlots(state).includes(id))return 0;
+  const survivors=battle.units.filter(u=>u.side==='company'&&!u.ally&&u.alive);
+  return survivors.length?Math.round(survivors.reduce((sum,u)=>sum+(battle.xp[u.id]??0),0)/survivors.length*.15):0;
+}
+function awardExperience(person,amount) {
+  person.xp+=amount;
+  while(person.xp>=person.level*50&&person.level<30){person.xp-=person.level*50;person.level++;person.pendingLevelUps.push({level:person.level,rolls:levelRolls(person.seed,person.level,person.talents)});}
+  if(person.level===30)person.xp=Math.min(person.xp,person.level*50-1);
+  person.trainingPoints=person.pendingLevelUps.length;
 }
 
 export const NIGHT_TRAVEL_MULTIPLIER = .8;
@@ -614,7 +664,7 @@ export function getStashCapacity(state) { return MAX_INVENTORY * (cartLevel(stat
 export function getCargoCapacity(state) { return MAX_CARGO * (cartLevel(state) + 1); }
 function cartLevel(state) { return [1,2].includes(state.retinue?.cartLevel) ? state.retinue.cartLevel : 0; }
 export function getCompanyTravelMultiplier(state) {
-  return (1 + getCompanyTravelBonus(state)) * (cartLevel(state) === 1 ? .95 : 1) * getTimeOfDay(state.hour).travelMultiplier;
+  return (1 + getCompanyTravelBonus(state)) * (cartLevel(state) === 1 ? .95 : 1) * getTimeOfDay(state.hour).travelMultiplier * (hasRetinue(state,'scout')?1.1:1);
 }
 export function getCompanyCart(state) {
   const level=cartLevel(state);
@@ -627,7 +677,7 @@ export function buyCompanyCart(state) {
   if(cart.level===2)return result(false,'The company cart is fully upgraded.');
   if(state.gold<cart.cost)return result(false,`The cart requires ${cart.cost.toLocaleString('en-US')} crowns.`);
   state.gold-=cart.cost;
-  state.retinue??={bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0};
+  state.retinue??=defaultRetinue();
   state.retinue.cartLevel=cart.level+1;
   const message=cart.level===0?'Company cart purchased: double stash and cargo capacity; travel speed reduced by 5%.':'Company cart upgraded: triple original stash and cargo capacity; travel speed penalty removed.';
   record(state,message);return result(true,message);
@@ -658,7 +708,7 @@ export function createGame(seed = Date.now()) {
     inventory: ['cloth-hood', 'buckler'],
     inventoryCondition: [itemCondition('cloth-hood'), itemCondition('buckler')],
     cargo: {},
-    marketStock: {}, deserterBoards: {}, retinue:{bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0}, discoveryRolls:{},
+    marketStock: {}, deserterBoards: {}, retinue:defaultRetinue(), discoveryRolls:{},
     shipments: {},
     shipmentLegacyThroughDay: 0,
     mountRewards: Object.fromEntries(getMountRewardDefinitions().map(reward => [reward.id, false])),
@@ -848,6 +898,31 @@ function goodPrices(state, town, good) {
   return { buyPrice, sellPrice };
 }
 
+function cargoFromHere(state,goodId,townId) {
+  return (state.cargoOrigins?.[goodId]??[]).filter(lot=>lot.townId===townId).reduce((sum,lot)=>sum+lot.count,0);
+}
+function recordCargoOrigin(state,goodId,townId,quantity) {
+  state.cargoOrigins??={};const lots=state.cargoOrigins[goodId]??=[];
+  const lot=lots.find(entry=>entry.townId===townId);
+  if(lot)lot.count+=quantity;else lots.push({townId,count:quantity});
+}
+function consumeCargoOrigins(state,goodId,quantity,townId) {
+  if(!state.cargoOrigins?.[goodId])return;
+  const lots=state.cargoOrigins[goodId];
+  // Sell eligible cargo before local purchases, matching the displayed one-unit quote.
+  let remaining=Math.max(0,quantity-Math.max(0,(state.cargo[goodId]??0)-lots.reduce((sum,lot)=>sum+lot.count,0)));
+  for(const lot of [...lots].sort((a,b)=>Number(a.townId===townId)-Number(b.townId===townId))){const used=Math.min(remaining,lot.count);lot.count-=used;remaining-=used;}
+  state.cargoOrigins[goodId]=lots.filter(lot=>lot.count>0);
+  if(!state.cargoOrigins[goodId].length)delete state.cargoOrigins[goodId];
+}
+function cargoSaleValue(state,town,good,quantity) {
+  const base=goodPrices(state,town,good).sellPrice;
+  if(!hasRetinue(state,'broker'))return base*quantity;
+  const eligible=Math.max(0,(state.cargo[good.id]??0)-cargoFromHere(state,good.id,town.id));
+  const rewarded=Math.min(quantity,eligible);
+  return Math.floor(base*1.5)*rewarded+base*(quantity-rewarded);
+}
+
 function recoveryFactor(state, townId, ordinary = 1) {
   return getSettlementAccess(state, townId).status === 'recovering' ? Math.min(1.5, ordinary * 1.1) : ordinary;
 }
@@ -857,11 +932,12 @@ function equipmentPrices(state, town, item) {
   const ordinaryGear = !['famed','named'].includes(item.rarity) && item.slot !== 'accessory';
   const baseBuyPrice = Math.max(1, Math.round(item.price * GEAR_FACTORS[town.id]));
   const buyPrice = Math.max(1, Math.round(baseBuyPrice * (ordinaryGear ? modifiers.equipmentBuy ?? 1 : 1)));
-  const sellPrice = ordinaryGear && modifiers.equipmentSell
+  let sellPrice = ordinaryGear && modifiers.equipmentSell
     ? Math.max(1, Math.min(buyPrice - 1, Math.max(
       Math.floor(baseBuyPrice * modifiers.equipmentSell),
       Math.ceil(Math.min(...SETTLEMENTS.filter(place => place.id !== town.id).map(place => Math.round(item.price * GEAR_FACTORS[place.id]))) * 1.05),
     ))) : Math.max(1, Math.floor(buyPrice * (['famed','named'].includes(item.rarity) || ordinaryGear && modifiers.equipmentBuy ? .5 : .2)));
+  if(hasRetinue(state,'broker'))sellPrice=Math.max(1,Math.min(Math.max(1,buyPrice-1),Math.floor(sellPrice*1.1)));
   return { buyPrice, sellPrice };
 }
 
@@ -1020,7 +1096,13 @@ export function getMarket(state, townId) {
         return { itemId, ...equipmentPrices(state, town, getItem(itemId)), stock: (stock.equipment[itemId]??0)+offers.length, owned: state.inventory.filter(id => id === itemId).length, condition: offers[0]?.condition ?? null, famed: true, buyback: offers.length > 0 };
       }),
     ],
-    goods: GOODS.map(good => ({ goodId: good.id, name: good.name, description: good.description, ...goodPrices(state, town, good), stock: stock.goods[good.id], owned: state.cargo?.[good.id] ?? 0 })),
+    goods: GOODS.map(good => {
+      const prices=goodPrices(state,town,good),owned=state.cargo?.[good.id]??0,broker=hasRetinue(state,'broker');
+      return {goodId:good.id,name:good.name,description:good.description,...prices,
+        sellPrice:broker?(owned?cargoSaleValue(state,town,good,1):Math.floor(prices.sellPrice*1.5)):prices.sellPrice,
+        brokerLocal:broker&&owned>0&&cargoFromHere(state,good.id,town.id)===owned,
+        stock:stock.goods[good.id],owned};
+    }),
     supplies: Object.entries(SUPPLY_INFO).map(([kind, info]) => ({ kind, name: info.name, buyPrice: Math.round(info.buyPrice * recoveryFactor(state, town.id)), stock: stock.supplies?.[kind] ?? info.stock, owned: state.supplies?.[kind] ?? 0 })),
   };
 }
@@ -1353,7 +1435,7 @@ function advanceRoamingBands(state) {
     }
     const separation = distance(progress, state.position);
     const canHunt = !sanctuary && now >= (state.encounterGraceUntil ?? 0)
-      && (separation <= BAND_AGGRO_RADIUS || progress.behavior === 'hunting-company' && separation <= BAND_CHASE_LEASH);
+      && (separation <= BAND_AGGRO_RADIUS * getBandAwarenessMultiplier(state) || progress.behavior === 'hunting-company' && separation <= BAND_CHASE_LEASH * getBandAwarenessMultiplier(state));
     if (canHunt) {
       progress.behavior = 'hunting-company';
       progress.targetId = null;
@@ -1514,12 +1596,13 @@ function completeContract(state, town) {
   if (['hunt', 'assault', 'rescue', 'deserters','bounty'].includes(contract.type) && !contractObjectiveComplete(state, contract)) return false;
   if (contract.type === 'supply') {
     if ((state.cargo[contract.goodId] ?? 0) < contract.quantity) return false;
+    consumeCargoOrigins(state,contract.goodId,contract.quantity,contract.to);
     state.cargo[contract.goodId] -= contract.quantity;
     if (!state.cargo[contract.goodId]) delete state.cargo[contract.goodId];
   }
   state.gold += contract.reward;
   state.renown += contract.renown ?? 1;
-  if(contract.type==='bounty'){state.retinue??={bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0};state.retinue.bountyHunterUnlocked=true;record(state,'The Bounty Hunter is available: hire the retinue for 5,000 crowns for a permanent +5 percentage points to champion encounter chance.');}
+  if(contract.type==='bounty'){state.retinue??=defaultRetinue();state.retinue.bountyHunterUnlocked=true;record(state,'The Bounty Hunter is available: hire the retinue for 5,000 crowns for a permanent +5 percentage points to champion encounter chance.');}
   const description = contract.type === 'bounty' ? 'Wanted champion defeated' : contract.type === 'deserters' ? 'Elite deserters defeated' : contract.type === 'hunt' ? 'Brigand hunt completed' : contract.type === 'assault' ? 'Joint assault completed'
     : contract.type === 'rescue' ? 'Caravan rescue completed' : contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
   record(state, `${description} at ${town.name}. Earned ${contract.reward} crowns and ${contract.renown ?? 1} renown.`);
@@ -1560,7 +1643,7 @@ function atMidnight(state) {
   state.day += 1;
   const currentDiscovery=discoveryEvent(state);
   if(currentDiscovery?.id!==previousDiscovery?.id||currentDiscovery?.startDay!==previousDiscovery?.startDay){if(previousDiscovery)record(state,`${previousDiscovery.name} has ended.`);if(currentDiscovery)record(state,`${currentDiscovery.name}: ${currentDiscovery.description} Ends after day ${currentDiscovery.endDay}.`);}
-  const foodNeeded = getDailyFood(state);
+  const foodNeeded = dailyFoodConsumption(state);
   const wages = state.party.reduce((total, person) => total + getCompanyStats(person).dailyWage, 0);
   const foodShort = Math.max(0, foodNeeded - state.food);
   const wagesShort = Math.max(0, wages - state.gold);
@@ -1780,7 +1863,7 @@ export function acceptContract(state, townId, offerId) {
   const offers = getContractOffers(state, townId);
   const offer = offerId === undefined ? offers[0] : offers.find(entry => entry.id === offerId);
   if (!offer) return result(false, 'That contract is no longer available.');
-  if(offer.type==='bounty'){state.retinue??={bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0};state.retinue.bountyBoards[townId]=Math.floor((state.day-1)/7);}
+  if(offer.type==='bounty'){state.retinue??=defaultRetinue();state.retinue.bountyBoards[townId]=Math.floor((state.day-1)/7);}
   if(offer.type==='deserters'){state.deserterBoards??={};state.deserterBoards[townId]=Math.floor((state.day-1)/7);}
   state.contractSerial += 1;
   const { id, ...terms } = offer;
@@ -1914,6 +1997,7 @@ export function buyGood(state, goodId, quantity = 1) {
   if (state.gold < cost) return result(false, 'The company cannot afford that cargo.');
   if (cargoCount(state) + quantity > getCargoCapacity(state)) return result(false, 'The cargo hold is full.');
   state.gold -= cost;
+  recordCargoOrigin(state,goodId,access.town.id,quantity);
   state.cargo[goodId] = (state.cargo[goodId] ?? 0) + quantity;
   writableMarketStock(state, access.town).goods[goodId] -= quantity;
   const message = `Bought ${quantity} ${good.name.toLowerCase()} for ${cost} crowns.`;
@@ -1930,9 +2014,9 @@ export function sellGood(state, goodId, quantity = 1) {
   if (!good) return result(false, 'Unknown trade good.');
   if (!validQuantity(quantity, getCargoCapacity(state))) return result(false, `Choose 1 to ${getCargoCapacity(state)} units of cargo.`);
   if ((state.cargo[goodId] ?? 0) < quantity) return result(false, 'The company does not carry that much.');
-  const offer = getMarket(state).goods.find(entry => entry.goodId === goodId);
-  const earnings = offer.sellPrice * quantity;
+  const earnings = cargoSaleValue(state,access.town,good,quantity);
   if (state.gold + earnings > 1000000000) return result(false, 'The purse cannot hold more crowns.');
+  consumeCargoOrigins(state,goodId,quantity,access.town.id);
   state.cargo[goodId] -= quantity;
   if (!state.cargo[goodId]) delete state.cargo[goodId];
   state.gold += earnings;
@@ -2010,7 +2094,7 @@ export function getTownServiceQuote(state, service, memberId = null) {
       const maxHp = getCompanyStats(person).maxHp;
       const hpMissing = Math.max(0, maxHp - person.hp);
       return { memberId: person.id, name: person.name, currentHp: person.hp, maxHp,
-        hpMissing, amount: hpMissing, cost: hpMissing };
+        hpMissing, amount: hpMissing, cost: Math.ceil(hpMissing*(hasRetinue(state,'surgeon')?.75:1)) };
     }
     const repairs = [['armor', 'body', 'active'], ['attachment', 'attachment', 'active'], ['attachment2','attachment2','active'], ['helmet', 'head', 'active'], ['shield', 'shield', 'active'], ['shield', 'reserveShield', 'reserve']].flatMap(([slot, part, set]) => {
       const itemId = set === 'reserve' ? person.reserveEquipment.shield : person.equipment[slot];
@@ -2328,7 +2412,7 @@ export function camp(state) {
   const medicated = wounded && state.supplies.medicine > 0;
   if (medicated) state.supplies.medicine -= 1;
   for (const person of state.party) {
-    person.hp = clamped(person.hp + (medicated ? 24 : 8), 1, getCompanyStats(person).maxHp);
+    person.hp = clamped(person.hp + (medicated ? 24 : 8) * (hasRetinue(state,'surgeon')?1.25:1), 1, getCompanyStats(person).maxHp);
     if (!isMoraleImmune(person)) person.morale = clamped(person.morale + 9, 0, 100);
   }
   let repairs = 0;
@@ -2337,9 +2421,15 @@ export function camp(state) {
       const itemId = set === 'reserve' ? person.reserveEquipment.shield : person.equipment[slot];
       const maximum = slot === 'shield' ? shieldMaximum(itemId) : armorMaximum(itemId);
       while (person.armorDurability[part] < maximum && state.supplies.tools > 0) {
-        person.armorDurability[part] = Math.min(maximum, person.armorDurability[part] + 25);
-        state.supplies.tools -= 1;
-        repairs += 1;
+        let output=25,cost=1;
+        if(hasRetinue(state,'armorer')){
+          const repairUnits=125+(state.retinue.repairRemainder??0),toolUnits=4+(state.retinue.toolRemainder??0);
+          output=Math.floor(repairUnits/4);state.retinue.repairRemainder=repairUnits%4;
+          cost=Math.floor(toolUnits/5);state.retinue.toolRemainder=toolUnits%5;
+        }
+        person.armorDurability[part] = Math.min(maximum, person.armorDurability[part] + output);
+        state.supplies.tools -= cost;
+        repairs += cost;
       }
     }
   }
@@ -4866,7 +4956,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   const survivors = [];
   for (const person of state.party) {
     const unit = battle.units.find(entry => entry.id === person.id);
-    if (!unit) {survivors.push(person);continue;}
+    if (!unit) {awardExperience(person,getBattleExperience(state,person.id));survivors.push(person);continue;}
     const battleAmmo = unit.throwingAmmo ?? {
       active: throwingCapacity(unit.equipment.weapon),
       reserve: throwingCapacity(unit.reserveEquipment?.weapon),
@@ -4899,15 +4989,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     person.throwingAmmo = throwingAmmo;
     person.armorDurability = { body: unit.bodyArmor, attachment: unit.attachmentArmor, attachment2:unit.attachment2Armor??person.armorDurability.attachment2, head: unit.headArmor,
       shield: activeShieldCondition, reserveShield: reserveShieldCondition };
-    const earnedXp = (battle.xp[person.id] ?? 0) + (sharing?.xp ?? 0);
-    person.xp += earnedXp;
-    while (person.xp >= person.level * 50 && person.level < 30) {
-      person.xp -= person.level * 50;
-      person.level += 1;
-      person.pendingLevelUps.push({ level: person.level, rolls: levelRolls(person.seed, person.level,person.talents) });
-    }
-    if (person.level === 30) person.xp = Math.min(person.xp, person.level * 50 - 1);
-    person.trainingPoints = person.pendingLevelUps.length;
+    awardExperience(person,getBattleExperience(state,person.id)+(sharing?.xp??0));
     survivors.push(person);
   }
   state.party = survivors;
@@ -4916,7 +4998,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   state.reserveIds=getReserveSlots(state).map(id=>survivingIds.has(id)?id:null);
   if (victory) {
     const loot = battle.loot;
-    state.gold += loot.gold;
+    state.gold = Math.min(1000000000,state.gold+getBattleLootGold(state));
     state.food += loot.food;
     for (const kind of ['tools', 'medicine', 'ammo']) state.supplies[kind] += loot[kind];
     for (let index = 0; index < loot.items.length; index++) {
@@ -5433,8 +5515,16 @@ export function validateSave(input) {
   for (const kind of Object.keys(SUPPLY_INFO)) assert(validCount(supplies[kind]) && supplies[kind] <= 10000, `supplies ${kind}`);
   const cargo = input.cargo === undefined ? {} : input.cargo;
   assert(recordObject(cargo) && Object.keys(cargo).every(id => GOOD_BY_ID.has(id) && validCount(cargo[id]) && cargo[id] <= getCargoCapacity(input)) && Object.values(cargo).reduce((total, count) => total + count, 0) <= getCargoCapacity(input), 'cargo');
-  const retinue=input.retinue??{bountyHunterUnlocked:false,bountyHunter:false,bountyBoards:{},cartLevel:0};
+  if(input.cargoOrigins!==undefined){
+    assert(recordObject(input.cargoOrigins)&&Object.entries(input.cargoOrigins).every(([id,lots])=>GOOD_BY_ID.has(id)&&Array.isArray(lots)&&lots.length<=SETTLEMENTS.length&&lots.every(lot=>recordObject(lot)&&TOWN_BY_ID.has(lot.townId)&&validQuantity(lot.count,getCargoCapacity(input)))&&new Set(lots.map(lot=>lot.townId)).size===lots.length&&lots.reduce((sum,lot)=>sum+lot.count,0)<=(cargo[id]??0)),'cargo origins');
+  }
+  const retinue=input.retinue??defaultRetinue();
   assert(recordObject(retinue)&&[0,1,2].includes(retinue.cartLevel===undefined?0:retinue.cartLevel)&&typeof retinue.bountyHunterUnlocked==='boolean'&&typeof retinue.bountyHunter==='boolean'&&(!retinue.bountyHunter||retinue.bountyHunterUnlocked)&&recordObject(retinue.bountyBoards)&&Object.entries(retinue.bountyBoards).every(([id,week])=>TOWN_BY_ID.has(id)&&validCount(week)&&week<=Math.floor((input.day-1)/7)),'retinue');
+  const members=retinue.members===undefined?[]:retinue.members;
+  assert(Array.isArray(members)&&members.every(id=>RETINUE_MEMBERS.some(member=>member.id===id))&&new Set(members).size===members.length,'retinue members');
+  const scoutLevel=retinue.scoutLevel===undefined?(members.includes('scout')?1:0):retinue.scoutLevel;
+  assert([0,1,2].includes(scoutLevel)&&(members.includes('scout')?scoutLevel>0:scoutLevel===0),'retinue scout');
+  for(const [key,limit] of [['foodRemainder',4],['toolRemainder',4],['repairRemainder',3]])assert(retinue[key]===undefined||validCount(retinue[key])&&retinue[key]<=limit,'retinue savings');
   const discoveryRolls=input.discoveryRolls??{};
   assert(recordObject(discoveryRolls)&&Object.entries(discoveryRolls).every(([id,roll])=>(isCampId(id)||BAND_BY_ID.has(id))&&recordObject(roll)&&validCount(roll.cycle)&&roll.cycle<=1000000&&[0,5,8,13].includes(roll.champion)&&[0,15].includes(roll.famed)&&[0,12].includes(roll.mount)),'discovery encounter rolls');
   const deserterBoards=input.deserterBoards??{};
@@ -5756,7 +5846,7 @@ export function validateSave(input) {
     ashenWinter,
     gold: input.gold, food: input.food, renown: input.renown,
     party, formation: expandedFormation(formation), reserveIds:[...reserveIds],automation:{buyAmmo:automation.buyAmmo,equipBandages:automation.equipBandages},
-    inventory, inventoryCondition: conditions, cargo: { ...cargo }, supplies: { ...supplies },
+    inventory, inventoryCondition: conditions, cargo: { ...cargo },...(input.cargoOrigins===undefined?{}:{cargoOrigins:Object.fromEntries(Object.entries(input.cargoOrigins).map(([id,lots])=>[id,lots.map(lot=>({...lot}))]))}), supplies: { ...supplies },
     marketStock: Object.fromEntries(Object.entries(markets).map(([id, market]) => {
       const town = TOWN_BY_ID.get(id);
       const marketEvent = scheduledTownEvent({ seed: input.seed, day: market.day }, town);
@@ -5775,7 +5865,7 @@ export function validateSave(input) {
         buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: restoredCondition(entry.itemId, entry.condition) })),
       }];
     })),
-    deserterBoards:{...deserterBoards},retinue:{...retinue,cartLevel:retinue.cartLevel??0,bountyBoards:{...retinue.bountyBoards}},discoveryRolls:Object.fromEntries(Object.entries(discoveryRolls).map(([id,roll])=>[id,{...roll}])),
+    deserterBoards:{...deserterBoards},retinue:{...defaultRetinue(),...retinue,members:[...members],scoutLevel,cartLevel:retinue.cartLevel??0,bountyBoards:{...retinue.bountyBoards}},discoveryRolls:Object.fromEntries(Object.entries(discoveryRolls).map(([id,roll])=>[id,{...roll}])),
     shipments: normalizedShipments,
     shipmentLegacyThroughDay,
     ...(input.mountRewards === undefined ? {} : { mountRewards: { ...mountRewards } }),
@@ -5800,7 +5890,7 @@ export function getRetinue(state) {
 }
 export function hireBountyHunter(state) {
   const blocked=actionBlocked(state);if(blocked)return blocked;
-  if(!townAt(state))return result(false,'Reach a settlement to hire your retinue.');
+  const access=requireTown(state);if(access.error)return access.error;
   if(!state.retinue?.bountyHunterUnlocked)return result(false,'Complete a wanted champion contract first.');
   if(state.retinue.bountyHunter)return result(false,'The Bounty Hunter already serves your company.');
   if(state.gold<BOUNTY_HUNTER_COST)return result(false,'The Bounty Hunter requires 5,000 crowns.');
