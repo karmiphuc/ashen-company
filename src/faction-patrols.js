@@ -58,7 +58,7 @@ export function factionPatrols(state,settlements){
   return patrolDefinitions(settlements).map(definition=>{
     const progress=state.factionPatrols?.[definition.id]??initialPatrolProgress(state,definition),faction=SOLDIER_FACTIONS.find(f=>f.id===definition.factionId);
     const fight=worldSkirmishFor(state,definition.id),remaining=fight?Math.max(0,fight.endHour-now):0;
-    return {...(fight?{battleHoursRemaining:remaining,joinableBattle:faction.relation==='ally'&&fight.aId===definition.id&&['band','undead-host'].includes(fight.bKind)&&remaining>0}:{}),...definition,x:progress.x,y:progress.y,kind:'patrol',playerRelation:faction.relation,color:faction.color,factionLabel:faction.name,rivalLabel:SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name,enemies:roster(state,definition,progress),active:progress.troops.length>0&&progress.defeatedUntil<=now,behavior:progress.behavior,targetId:progress.targetId,wins:progress.wins,losses:progress.losses,respawnHours:Math.max(0,Math.ceil(progress.defeatedUntil-now)),description: fight?`Fighting ${fight.aId===definition.id?fight.bName:patrolDefinitions(settlements).find(d=>d.id===fight.aId)?.name}. About ${Math.ceil(remaining)} hours remain; troops are committed until the battle ends.`:`${faction.relation==='ally'?'Allied':'Neutral'} city soldiers tour the roads, hunt roaming brigands and fight ${SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name} patrols. Casualties persist until they recover at a city.`};
+    return {...(fight?{battleHoursRemaining:remaining,joinableBattle:isJoinablePatrolSkirmish({...definition,active:progress.troops.length>0&&progress.defeatedUntil<=now,playerRelation:faction.relation},fight,now)}:{}),...definition,x:progress.x,y:progress.y,kind:'patrol',playerRelation:faction.relation,color:faction.color,factionLabel:faction.name,rivalLabel:SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name,enemies:roster(state,definition,progress),active:progress.troops.length>0&&progress.defeatedUntil<=now,behavior:progress.behavior,targetId:progress.targetId,wins:progress.wins,losses:progress.losses,respawnHours:Math.max(0,Math.ceil(progress.defeatedUntil-now)),description: fight?`Fighting ${fight.aId===definition.id?fight.bName:patrolDefinitions(settlements).find(d=>d.id===fight.aId)?.name}. About ${Math.ceil(remaining)} hours remain; troops are committed until the battle ends.`:`${faction.relation==='ally'?'Allied':'Neutral'} city soldiers tour the roads, hunt roaming brigands and fight ${SOLDIER_FACTIONS.find(f=>f.id===faction.rival).name} patrols. Casualties persist until they recover at a city.`};
   });
 }
 function strength(enemies,getItem){return enemies.reduce((sum,e)=>sum+18+(getItem(e.armor)?.armor??0)*.07+(getItem(e.helmet)?.armor??0)*.04+((getItem(e.weapon)?.damageMin??20)+(getItem(e.weapon)?.damageMax??30))*.16+(getItem(e.shield)?.defense??0)*.4+(e.mount?7:0),0);}
@@ -75,6 +75,12 @@ function addReport(state,patrol,target,outcome,losses,now){
   state.factionReports??=[];state.factionReports.push({patrolId:patrol.id,factionId:patrol.factionId,opponentId:target.id,opponentName:target.name,kind:target.kind,outcome,losses,hour:now});if(state.factionReports.length>24)state.factionReports.splice(0,state.factionReports.length-24);
 }
 export function skirmishDuration(aCount,bCount){return Math.min(72,Math.max(3,Math.ceil(2+(aCount+bCount)**2/18)));}
+// Neutral soldiers can cooperate against brigands or undead without changing
+// faction relations. Battles between faction patrols remain independent.
+export function isJoinablePatrolSkirmish(patrol,fight,now){
+ return Boolean(patrol?.active&&['ally','neutral'].includes(patrol.playerRelation)&&fight?.aId===patrol.id
+   &&['band','undead-host'].includes(fight.bKind)&&fight.endHour>now);
+}
 export function worldSkirmishFor(state,id){return state.worldSkirmishes?.find(f=>f.aId===id||f.bId===id)??null;}
 export function cancelWorldSkirmish(state,id){
  const cancelled=(state.worldSkirmishes??[]).filter(f=>f.aId===id||f.bId===id);
