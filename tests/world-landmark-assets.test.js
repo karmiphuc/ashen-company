@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { WORLD_LANDMARK_ASSETS, drawWorldLandmark, drawMountainRanges, worldLandmarks } from '../src/world-landmarks.js';
+import { WORLD_LANDMARK_ASSETS, drawWorldLandmark, drawMountainRanges, worldLandmarks, SCENERY_LAYOUTS } from '../src/world-landmarks.js';
 import { listOfflineAssets } from '../tools/build-cache.mjs';
 
 test('every landmark sprite has intact licensed provenance, PNG dimensions, and offline coverage', async()=>{
@@ -14,7 +14,7 @@ test('every landmark sprite has intact licensed provenance, PNG dimensions, and 
   assert.ok(!offline.has('./assets/world/landmark_'+name+'.png'));
   assert.ok(!WORLD_LANDMARK_ASSETS.includes('landmark_'+name));
  }
- assert.equal(assets.filter(a=>a.sourceType==='user-provided').length,5);
+ assert.equal(assets.filter(a=>a.sourceType==='user-provided').length,26);
 
  assert.deepEqual(new Set(assets.map(a=>a.file.split('/').at(-1).replace('.png',''))),new Set(WORLD_LANDMARK_ASSETS));
  for(const a of assets){
@@ -49,17 +49,17 @@ test('all landmark kinds and ridge palettes draw imported art with no geometric 
 });
 
 
-test('human and skeleton remains stay at half their original scene scale in every layout',()=>{
- const ctx={fillRect(){},createRadialGradient(){return{addColorStop(){}};}};
- const humans=new Set();
- for(let seed=0;seed<24;seed++){
-  const calls=[];drawWorldLandmark(ctx,{id:'scale-check',kind:'battlefield',x:100,y:100,width:100},seed,(c,name,x,y,width)=>calls.push({name,width}));
-  for(const p of calls){
-   if(['battlefield_corpse_blue','battlefield_corpse_red','battlefield_bones'].includes(p.name)){
-    humans.add(p.name);assert.ok(p.width>=16.5&&p.width<=18,'remains are half the former 33–36% scale');
-   }else if(p.name==='battlefield_firepit')assert.equal(p.width,25);
-   else if(p.name==='battlefield_wagon_wreck')assert.ok(p.width===50||p.width===55.00000000000001);
+test('authored scenes use the whole supplied prop selection and retain small human remains',()=>{
+ const used=new Set(),signatures=new Set();
+ for(const [id,parts]of Object.entries(SCENERY_LAYOUTS)){
+  signatures.add(JSON.stringify(parts));
+  for(const p of parts){
+   used.add(p.art);
+   if(/corpse_|bones$|skeleton$/.test(p.art))assert.ok(p.scale>=.165&&p.scale<=.18,'remains stay half their former scale in every scene');
+   assert.ok(Math.abs(p.x)+p.scale*.5<=.58,'props stay within the authored site footprint');
   }
  }
- assert.deepEqual(humans,new Set(['battlefield_corpse_blue','battlefield_corpse_red','battlefield_bones']));
+ assert.equal(signatures.size,Object.keys(SCENERY_LAYOUTS).length,'each site has its own arrangement');
+ assert.equal(used.size,26,'all imported user tiles are used');
+ for(const prefix of ['tent_','banner_','corpse_','fallen_'])assert.ok([...used].filter(n=>n.startsWith('battlefield_'+prefix)).length>=2);
 });

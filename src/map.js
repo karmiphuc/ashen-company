@@ -298,7 +298,7 @@ function drawSettlementScenery() {
     context.restore();
   }
   const chosen = towns.get(selection), details = settlementStructures.filter(structure => structure.townId === selection).map(structure => structure.label);
-  canvas.setAttribute('aria-label', `World map with nine regions, roads, settlement outskirts, regional monuments, three dormant caves and impassable mountain ridges with open passes. Drag to pan; pinch to zoom.${chosen ? ` ${chosen.name}: ${details.join(', ') || 'general traders'}.` : ''} Outlying structures are scenery; select the settlement to visit.`);
+  canvas.setAttribute('aria-label', `World map with nine regions, roads, settlement outskirts, abandoned encampments, battlefields, regional monuments, three dormant caves and impassable mountain ridges with open passes. Drag to pan; pinch to zoom.${chosen ? ` ${chosen.name}: ${details.join(', ') || 'general traders'}.` : ''} Outlying structures are scenery; select the settlement to visit.`);
 }
 
 function minimumZoom() {
@@ -336,7 +336,7 @@ function campLabel(camp) {
 }
 
 export function mapHTML() {
-  return `<canvas id="world-map" role="img" aria-label="World map with nine named regions, roads, settlements, regional ruins and monuments, three dormant cave entrances and impassable mountain ranges with accessible passes. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-scenery-key" aria-label="Settlement scenery legend"><span>⚒ Blacksmith</span><span>⬟ Armory</span><span>Wagons · trade</span><span>Fields · harvest</span></div><div class="map-loading">Preparing the Marches…</div>`;
+  return `<canvas id="world-map" role="img" aria-label="World map with nine named regions, roads, settlements, abandoned encampments, battlefields and regional monuments, three dormant cave entrances and impassable mountain ranges with accessible passes. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-scenery-key" aria-label="Settlement scenery legend"><span>⚒ Blacksmith</span><span>⬟ Armory</span><span>Wagons · trade</span><span>Fields · harvest</span></div><div class="map-loading">Preparing the Marches…</div>`;
 }
 
 export const mapSVG = mapHTML;
