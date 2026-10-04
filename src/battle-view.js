@@ -31,7 +31,8 @@ export function parseBattleSpeed(value,fallback=1){
   return [0,1,4,'0','1','4'].includes(value)?Number(value):fallback;
 }
 export function cinematicActionKind(event){
-  if(!event)return null;
+  // Fleeing stays at movement speed, including strikes triggered while escaping.
+  if(!event||event.skillName==='Flee')return null;
   if(['attack','miss','hit','fall'].includes(event.type)||event.reactions?.some(r=>['attack','miss','hit','fall'].includes(r.type)))return 'attack';
   if(event.type==='use'||event.skillName&&!['Hold','Stunned','Wait','Recover'].includes(event.skillName))return 'skill';
   return null;
