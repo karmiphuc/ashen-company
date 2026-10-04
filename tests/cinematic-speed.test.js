@@ -46,3 +46,15 @@ test('Cinematic selection remains visible while paused/restored views do not rep
  assert.match(battleHTML(battle,4,true),/data-battle-speed="4" aria-pressed="true">4x/);
  assert.doesNotMatch(battleHTML(battle,4,true),/cinematic-attack/);
 });
+
+test('Cinematic never slows fleeing, including escape reactions and casualties',()=>{
+  for(const type of ['move','hold'])for(const reactions of [[],[{type:'attack',skillName:'Opportunity Strike'}],[{type:'miss',skillName:'Spearwall'}],[{type:'fall'}]]){
+   const event={type,skillName:'Flee',reactions};
+   assert.equal(cinematicActionKind(event),null);
+   assert.equal(battleActionDuration('cinematic',event),battleActionDuration(4,event));
+   const battle={status:'active',round:1,units:[],lastEvent:event};
+   const html=battleHTML(battle,'cinematic',true);
+   assert.doesNotMatch(html,/cinematic-action|cinematic-skill|cinematic-attack/);
+   assert.match(html,/--action-time:0.1375s/);
+  }
+});
