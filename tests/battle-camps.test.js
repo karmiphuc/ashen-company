@@ -8,7 +8,7 @@ import {portraitGroundAnchor,portraitHTML} from '../src/portraits.js';
 import {battleHTML} from '../src/battle-view.js';
 import * as m from '../src/engine.js';
 function fight(seed=51){const state=m.createGame(seed),site=m.getCampSites(state)[3];state.position={x:site.x,y:site.y};assert.equal(m.startBattle(state,site.id).ok,true);return state;}
-function roster(state,count){const battle=state.battle,base=battle.units.find(u=>u.side==='enemy');battle.units=battle.units.filter(u=>u.side==='company');for(let i=0;i<4;i++){const unit=structuredClone(base);Object.assign(unit,{id:`enemy-${i+1}`,q:i<count?12:11,r:6+i,equipment:{...unit.equipment,weapon:i<count?'hunting-bow':'arming-sword'},alive:true,throwingAmmo:{active:0,reserve:0}});battle.units.push(unit);}battle.turnOrder=battle.units.map(u=>u.id);battle.activeId='enemy-4';battle.turnIndex=battle.turnOrder.indexOf(battle.activeId);return battle;}
+function roster(state,count){delete state.battle.enemyAdaptiveRulesVersion;delete state.battle.enemyTacticalState;const battle=state.battle,base=battle.units.find(u=>u.side==='enemy');battle.units=battle.units.filter(u=>u.side==='company');for(let i=0;i<4;i++){const unit=structuredClone(base);Object.assign(unit,{id:`enemy-${i+1}`,q:i<count?12:11,r:6+i,equipment:{...unit.equipment,weapon:i<count?'hunting-bow':'arming-sword'},alive:true,throwingAmmo:{active:0,reserve:0}});battle.units.push(unit);}battle.turnOrder=battle.units.map(u=>u.id);battle.activeId='enemy-4';battle.turnIndex=battle.turnOrder.indexOf(battle.activeId);return battle;}
 
 test('BB-shaped hex projection keeps equal-height shared edges aligned and raises only the surface',()=>{
  const g=BATTLE_PROJECTION;assert.ok(g.width/g.height>1.7);assert.equal(g.stepY,g.height*.75);

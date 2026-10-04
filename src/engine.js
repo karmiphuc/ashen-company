@@ -31,7 +31,7 @@ import { settlementAccess } from './settlement-access.js';
 import { UNDEAD_TYPES, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
 import { COMBAT_SKILLS, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
-import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, rankTacticalActions, enemyBattleTactic, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
+import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, rankTacticalActions, enemyBattleTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
 
 export { PERKS } from './perks.js';
 
@@ -2404,7 +2404,7 @@ export function setBattleTactic(state, tactic) {
   state.tactic = tactic;
   if (state.battle) {
     state.battle.tactic = tactic;
-    for (const unit of state.battle.units) delete unit.skirmishReturn;
+    for (const unit of state.battle.units) if (unit.side === 'company') delete unit.skirmishReturn;
     state.battle.focusTargetId = null;
     state.battle.lastContactRound = state.battle.round;
     state.battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(tactic) ? makeFormationAdvancePlan(state.battle) : null;
@@ -2645,6 +2645,8 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
     loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [], itemConditions: [] },
     casualties: [], xp: {},
   };
+  battle.enemyTacticalState = {tactic:enemyBattleTactic(battle,getItem),lastChangedRound:1,lastEvaluatedRound:0,lastRangedAttackRound:0};
+  battle.enemyAdaptiveRulesVersion = 1;
   for (const unit of battle.units) unit.movementCredit = Math.max(0, movementBudget(unit, battle) - 2) * 2;
   battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(battle.tactic) ? makeFormationAdvancePlan(battle) : null;
   battle.turnOrder = sortTurnOrder(battle);
@@ -2953,10 +2955,10 @@ function readyShieldWallSet(state, actor) {
   return switchBattleSet(state, actor, `${actor.name} readies ${getItem(actor.reserveEquipment.shield).name} for the shield wall.`);
 }
 
-function companyInMeleeContact(battle) {
-  const company = battle.units.filter(unit => unit.alive && unit.side === 'company' && !unit.ally);
-  const enemies = battle.units.filter(unit => unit.alive && unit.side === 'enemy');
-  return company.some(unit => enemies.some(enemy => hexDistance(unit, enemy) <= 1));
+function sideInMeleeContact(battle, side='company') {
+  const allies = battle.units.filter(unit => unit.alive && unit.side === side && !unit.ally);
+  const opponents = battle.units.filter(unit => unit.alive && unit.side !== side);
+  return allies.some(unit => opponents.some(enemy => hexDistance(unit, enemy) <= 1));
 }
 
 function formationStep(battle, actor, direction) {
@@ -2980,7 +2982,7 @@ function advanceFormationStep(battle, actor) {
   };
   if (living.every(reached)) {
     if (plan.completedRound === 0) plan.completedRound = battle.round;
-    if (companyInMeleeContact(battle) || plan.completedRound >= battle.round) return null;
+    if (sideInMeleeContact(battle) || plan.completedRound >= battle.round) return null;
     plan.origins = Object.fromEntries(battle.units.filter(unit => unit.side === 'company' && !unit.ally).map(unit => [unit.id, { q: unit.q, r: unit.r }]));
     plan.step = 1;
     plan.direction = chooseFormationDirection(battle, living);
@@ -3161,7 +3163,7 @@ function moveToRangedPosition(state, actor, position, tactic) {
   actor.fatigue += movementFatigue(actor,battleMovementCost(battle,actor,from,point));
   Object.assign(actor,point);clearWeaponStances(actor);consumeMovementCredit(battle,actor,from,point);
   const interception = spearwallReactionsOnMove(state,actor,from);
-  if (!interception.blocked && tactic==='shield-wall') battle.formationAdvance=makeFormationAdvancePlan(battle);
+  if (!interception.blocked && actor.side==='company' && !actor.ally && tactic==='shield-wall') battle.formationAdvance=makeFormationAdvancePlan(battle);
   const message = interception.blocked ? `${actor.name} is stopped by Spearwall.`
     : position.message ?? (position.spacing ? `${actor.name} keeps distance from the enemy.` : `${actor.name} moves into cover.`);
   battle.lastEvent=makeBattleEvent(actor,null,interception.blocked?'hold':'move',message,getItem(actor.equipment.weapon),from,
@@ -3172,14 +3174,14 @@ function moveToRangedPosition(state, actor, position, tactic) {
 }
 
 // Skirmish keeps the infantry line steady while ranged fighters make short firing sorties.
-function skirmishFireSupport(state) {
-  return state.battle.units.some(unit=>unit.alive && unit.side==='company' && !unit.ally
+function skirmishFireSupport(state, side='company') {
+  return state.battle.units.some(unit=>unit.alive && !unit.escaped && unit.side===side && !unit.ally
     && [[getItem(unit.equipment.weapon),'active'],[getItem(unit.reserveEquipment.weapon),'reserve'],[getItem(unit.pocketStowedWeapon),'active']]
       .some(([weapon,set])=>weapon?.ranged && !weapon.throwing && battleWeaponHasAmmo(state,unit,weapon,set)));
 }
 
 function skirmishLineDuty(state, actor) {
-  return !companyArcherWeapon(state,actor) && (actor.tacticalRole==='frontliner' || hasShieldSet(actor));
+  return !(actor.side==='enemy' ? isPureRangedUnit(actor) : companyArcherWeapon(state,actor)) && (actor.tacticalRole==='frontliner' || hasShieldSet(actor));
 }
 
 function skirmishMove(state, actor, point, message) {
@@ -3200,7 +3202,7 @@ function skirmishReturnPath(battle, actor) {
 
 function returnSkirmisher(state, actor) {
   const battle=state.battle,plan=actor.skirmishReturn;
-  if (battle.tactic!=='skirmish' || actor.side!=='company' || actor.ally || !plan) return null;
+  if ((actor.side==='enemy' ? enemyBattleTactic(battle,getItem) : battle.tactic)!=='skirmish' || actor.ally || !plan) return null;
   const weapon=getItem(actor.equipment.weapon);
   if (plan.phase==='aim' && (!battleWeaponHasAmmo(state,actor,weapon) || actor.reload>0
     || actor.fatigue+attackFatigueCost(actor,weapon)>actor.maxFatigue)) plan.phase='return';
@@ -3222,11 +3224,11 @@ function returnSkirmisher(state, actor) {
 
 function skirmishPosition(state, actor, enemies, weapon, ammunitionSpent) {
   const battle=state.battle;
-  if (actor.side!=='company' || actor.ally || battle.tactic!=='skirmish' || ammunitionSpent || !skirmishFireSupport(state)) return null;
+  if (actor.ally || (actor.side==='enemy' ? enemyBattleTactic(battle,getItem) : battle.tactic)!=='skirmish' || ammunitionSpent || !skirmishFireSupport(state,actor.side)) return null;
   const nearest=nearestEnemyDistance(battle,actor,actor);
   const occupied=new Set(battle.units.filter(u=>u.alive && u.id!==actor.id).map(u=>`${u.q},${u.r}`));
   if (skirmishLineDuty(state,actor)) {
-    if (actor.formationMovedRound===battle.round || nearest<=2 || companyInMeleeContact(battle)) return null;
+    if (actor.formationMovedRound===battle.round || nearest<=2 || sideInMeleeContact(battle,actor.side)) return null;
     const shooters=enemies.filter(u=>getItem(u.equipment.weapon)?.ranged);
     const safe=point=>shooters.every(u=>hexDistance(point,u)>effectiveWeaponRange(u,getItem(u.equipment.weapon))+(isBow(getItem(u.equipment.weapon))?1:0));
     const direction=nearest>6?1:nearest<5 || !safe(actor)?-1:0;
@@ -3511,6 +3513,8 @@ function predictAttack(battle, actor, target, weapon, option = null) {
 function attackTarget(state, actor, target, weapon, option = null) {
   const battle = state.battle;
   const ranged = weapon.ranged === true;
+  if (battle.enemyAdaptiveRulesVersion===1 && ranged && actor.side==='company' && target.side==='enemy')
+    battle.enemyTacticalState.lastRangedAttackRound=battle.round;
   if (!option?.reaction && !option?.areaFollowup) {
     if (weapon.throwing) actor.throwingAmmo.active = Math.max(0, actor.throwingAmmo.active - 1);
     else if (ranged && actor.side === 'company' && !actor.ally) state.supplies.ammo = Math.max(0, state.supplies.ammo - 1);
@@ -4076,7 +4080,7 @@ function advanceBattleV2(state) {
     nextBattleTurn(battle);
     return result(true, message);
   }
-  if (companyTactic === 'advance-formation' && !companyInMeleeContact(battle) && actor.formationMovedRound !== battle.round) {
+  if (companyTactic === 'advance-formation' && !sideInMeleeContact(battle) && actor.formationMovedRound !== battle.round) {
     const from = { q: actor.q, r: actor.r };
     const previousFatigue = actor.fatigue;
     const previousPlan = structuredClone(battle.formationAdvance);
@@ -4100,7 +4104,7 @@ function advanceBattleV2(state) {
       return result(true, message);
     }
   }
-  if ((!rangedAI || !spacingWeapon && !ammunitionSpent) && companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round && (weapon.ranged || !nearbyTarget)) {
+  if (actor.side==='company' && !actor.ally && (!rangedAI || !spacingWeapon && !ammunitionSpent) && companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round && (weapon.ranged || !nearbyTarget)) {
     const reform = shieldWallReformStep(state, actor);
     if (reform) {
       const cost = battleMoveApCost(battle, actor, actor, reform);
@@ -4145,7 +4149,7 @@ function advanceBattleV2(state) {
         if (!finishBattlePhase(battle) && (actor.ap <= 0 || !actor.alive)) nextBattleTurn(battle);
         return result(true, message);
       }
-      if (companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
+      if (actor.side==='company' && !actor.ally && companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
     }
   }
   const canAttack = actor.fatigue + attackFatigueCost(actor, weapon) <= actor.maxFatigue && actor.reload === 0;
@@ -4205,7 +4209,9 @@ function advanceBattleV2(state) {
     && (companyTactic !== 'offense' || surrounded)) {
     candidates.push({ id: 'shieldwall', type: 'shieldwall', apCost: 4, fatigueCost: shieldSkillFatigue(actor),
       preventedDamage: nearest <= 2 ? shieldDefenseFor(actor, actor.equipment.shield) * .8 : 0,
-      bonus: companyTactic==='skirmish' && nearest<=7 ? 20 : battle.tactic === 'shield-wall' && nearest <= 2 ? 5 : -8 });
+      bonus: actor.side==='enemy' && companyTactic==='shield-wall' && nearest>1 ? 60
+        : companyTactic==='skirmish' && nearest<=7 ? 20
+        : (battle.enemyAdaptiveRulesVersion===1 ? companyTactic : battle.tactic)==='shield-wall' && nearest<=2 ? 5 : -8 });
   }
   if (skillFamily === 'spear' && !actor.spearwallActive && spearwallUseful(battle, actor, enemies)
     && actor.fatigue + attackSkillFatigue(actor, weapon, COMBAT_SKILLS.spearwall) <= actor.maxFatigue)
@@ -4237,10 +4243,11 @@ function advanceBattleV2(state) {
   const pursuit = (companyTactic === 'focus' && targetPaths.find(entry=>entry.target.id===battle.focusTargetId))
     || specialFlank || (role==='skirmisher' ? targetPaths[0] : targetPaths.find(entry=>entry.target.id===actor.aiTargetId)) || targetPaths[0];
   const formationLocked = companyTactic === 'advance-formation' && (actor.formationMovedRound === battle.round
-    || companyInMeleeContact(battle) || battle.formationAdvance?.completedRound >= battle.round);
-  const wallLocked = companyTactic==='skirmish' && !ammunitionSpent && skirmishFireSupport(state)
-    || (!rangedAI || !ammunitionSpent) && companyTactic === 'shield-wall' && (actor.formationMovedRound === battle.round
-    || battle.round - battle.lastContactRound < 4);
+    || sideInMeleeContact(battle) || battle.formationAdvance?.completedRound >= battle.round);
+  const wallLocked = companyTactic==='skirmish' && !ammunitionSpent && skirmishFireSupport(state,actor.side)
+    || (!rangedAI || !ammunitionSpent) && companyTactic === 'shield-wall' && (actor.side==='enemy'
+      ? !weapon.ranged && actor.formationMovedRound===battle.round
+      : actor.formationMovedRound===battle.round || battle.round - battle.lastContactRound < 4);
   for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank || !pursuit ? [] : [pursuit]) {
     const point = entry.path[0];
     const apCost = battleMoveApCost(battle, actor, actor, point);
@@ -4261,8 +4268,15 @@ function advanceBattleV2(state) {
     if (retreat) candidates.push({ id: 'retreat', type: 'move', point: retreat, apCost: battleMoveApCost(battle, actor, actor, retreat),
       fatigueCost: movementFatigue(actor, retreat.cost), preventedDamage: 8, spacingGain: retreat.safety - nearest, bonus: 28 });
   }
+  if (actor.side==='enemy' && companyTactic==='shield-wall' && !weapon.ranged && nearest>1) {
+    const wall=candidates.find(action=>action.type==='shieldwall');
+    const advance=candidates.find(action=>action.type==='move' && action.targetId);
+    // Do not spend every turn raising a shield when rough terrain leaves no AP to advance.
+    if (wall && (!advance || wall.apCost+advance.apCost>actor.ap
+      || wall.fatigueCost+advance.fatigueCost>actor.maxFatigue-actor.fatigue)) wall.bonus=-8;
+  }
   if (actor.ap >= 9) candidates.push({ id: 'recover', type: 'recover', apCost: 9, fatigueCost: 0, bonus: actor.fatigue >= actor.maxFatigue * .55 ? 18 : -20 });
-  if (companyTactic==='skirmish' && skirmishFireSupport(state)) candidates.push({id:'skirmish-hold',type:'hold',apCost:0,fatigueCost:0,bonus:0});
+  if (companyTactic==='skirmish' && skirmishFireSupport(state,actor.side)) candidates.push({id:'skirmish-hold',type:'hold',apCost:0,fatigueCost:0,bonus:0});
   const offensive = action => ['attack', 'area', 'charge'].includes(action.type);
   const hitsAdjacentEnemy = action => offensive(action) && (action.targets ?? [action.target])
     .some(target => target.side !== actor.side && hexDistance(actor, target) === 1);
@@ -4424,7 +4438,7 @@ function advanceBattleV2(state) {
     const interception = spearwallReactionsOnMove(state, actor, from);
     if (!interception.blocked && choice.targetId) actor.aiTargetId = choice.targetId;
     if (!interception.blocked && (companyTactic === 'advance-formation' || companyTactic === 'shield-wall')) actor.formationMovedRound = battle.round;
-    if (!interception.blocked && companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
+    if (!interception.blocked && actor.side==='company' && !actor.ally && companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
     const message = interception.blocked ? `${actor.name} is stopped by Spearwall.` : `${actor.name} moves across the field.`;
     battle.lastEvent = makeBattleEvent(actor, null, interception.blocked ? 'hold' : 'move', message, equipped, from,
       interception.reactions.length ? { reactions: interception.reactions } : {});
@@ -4444,7 +4458,10 @@ function advanceBattleV2(state) {
 export function advanceBattle(state) {
   const battle = state.battle;
   if (!battle || battle.status !== 'active') return result(false, 'There is no active battle.');
-  if (battle.rulesVersion === 2) return advanceBattleV2(state);
+  if (battle.rulesVersion === 2) {
+    if (updateEnemyTactic(battle,getItem,state.supplies.ammo)) battleLog(battle,`Enemy tactic changes to ${enemyBattleTactic(battle,getItem)}.`);
+    return advanceBattleV2(state);
+  }
   const actor = battle.units.find(unit => unit.id === battle.activeId);
   if (!actor?.alive) {
     nextBattleTurn(battle);
@@ -4680,7 +4697,7 @@ export function advanceBattle(state) {
     actor.q = destination.q;
     actor.r = destination.r;
     actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, used));
-    if (companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
+    if (actor.side==='company' && !actor.ally && companyTactic === 'shield-wall') battle.formationAdvance = makeFormationAdvancePlan(battle);
   }
   if (hexDistance(actor, target) <= range) {
     attackTarget(state, actor, target, weapon);
@@ -4937,6 +4954,14 @@ function validateBattle(input, party, worldState) {
   assert(Number.isSafeInteger(input.round) && input.round >= 1 && input.round <= 1000, 'battle round');
   const tactic = input.tactic ?? 'offense';
   assert(TACTICS.includes(tactic) && (tactic!=='skirmish'||rulesVersion===2), 'battle tactic');
+  assert(input.enemyAdaptiveRulesVersion===undefined || input.enemyAdaptiveRulesVersion===1 && input.enemyTacticsVersion===1 && rulesVersion===2 && weaponSkillsVersion===1,'battle adaptive enemy rules');
+  const enemyTacticalState=input.enemyTacticalState;
+  if (input.enemyAdaptiveRulesVersion===1) {
+    assert(recordObject(enemyTacticalState) && Object.keys(enemyTacticalState).sort().join(',')==='lastChangedRound,lastEvaluatedRound,lastRangedAttackRound,tactic'
+      && ENEMY_TACTICS.includes(enemyTacticalState.tactic),'battle enemy tactical state');
+    for (const key of ['lastChangedRound','lastEvaluatedRound','lastRangedAttackRound']) assert(validCount(enemyTacticalState[key]) && enemyTacticalState[key]<=input.round,'battle enemy tactic round');
+    assert(enemyTacticalState.lastChangedRound>=1 && (enemyTacticalState.lastEvaluatedRound===0 || enemyTacticalState.lastChangedRound<=enemyTacticalState.lastEvaluatedRound),'battle enemy tactic change round');
+  } else assert(enemyTacticalState===undefined,'unexpected enemy tactical state');
   const lastContactRound = input.lastContactRound ?? 1;
   assert(Number.isSafeInteger(lastContactRound) && lastContactRound >= 1 && lastContactRound <= input.round, 'battle contact round');
   const engaged = input.engaged ?? false;
@@ -5070,7 +5095,7 @@ function validateBattle(input, party, worldState) {
     if (weaponSkillsVersion === 1) assert((unit.stunnedTurns ?? 0) === 0 || unit.stunProtected === true, 'battle stun protection');
     if (unit.spearwallActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'spear', 'battle spearwall weapon');
     if (unit.riposteActive) assert(weaponSkillFamily(getItem(unit.equipment.weapon)) === 'sword', 'battle riposte weapon');
-    if (unit.skirmishReturn!==undefined) assert(tactic==='skirmish' && rulesVersion===2 && unit.side==='company' && !unit.ally
+    if (unit.skirmishReturn!==undefined) assert((unit.side==='enemy' ? input.enemyAdaptiveRulesVersion===1 && enemyTacticalState.tactic==='skirmish' : tactic==='skirmish' && !unit.ally) && rulesVersion===2
       && getItem(unit.equipment.weapon)?.ranged && recordObject(unit.skirmishReturn)
       && Object.keys(unit.skirmishReturn).sort().join(',')==='phase,q,r' && passableHex(unit.skirmishReturn,field)
       && ['aim','return'].includes(unit.skirmishReturn.phase),'battle skirmish return');
@@ -5217,6 +5242,7 @@ function validateBattle(input, party, worldState) {
     ...(undead ? { crisisContext: { ...input.crisisContext } } : {}),
     id: input.id, campId: input.campId, ...(input.enemyOpening===undefined?{}:{enemyOpening:input.enemyOpening}), encounterType, encounterName, difficulty, campGeneration, famedDrop, ...(input.mountReward===undefined?{}:{mountReward}), tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
     ...(input.enemyTacticsVersion===undefined?{}:{enemyTacticsVersion:1}),
+    ...(input.enemyAdaptiveRulesVersion===undefined?{}:{enemyAdaptiveRulesVersion:1,enemyTacticalState:{...enemyTacticalState}}),
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
     ...(input.attachmentRulesVersion===undefined?{}:{attachmentRulesVersion:1}),
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),
