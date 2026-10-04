@@ -1,3 +1,5 @@
+import { landmarkCampPoint } from './world-landmarks.js';
+import { worldBlocked, worldSegmentClear, worldRoute, moveWorldToward, nearestWorldPoint } from './world-navigation.js';
 import { armoryTheme } from './armory-themes.js';
 import { NAMED_WEAPONS } from './named-weapons.js';
 import { rollNamedItem } from './named-rolls.js';
@@ -660,6 +662,7 @@ export function createGame(seed = Date.now()) {
 
 export function terrainAt(x, y) {
   if (!inBounds(x, y)) return 'sea';
+  if (worldBlocked({x,y})) return 'mountain';
   ({x,y}=authoredPoint({x,y}));
   if (Math.hypot(x - 615, y - 145) < 100 || Math.hypot(x - 1080, y - 455) < 85) return 'mountain';
   if (Math.hypot(x - 475, y - 445) < 95 || Math.hypot(x - 840, y - 235) < 120) return 'forest';
@@ -1233,17 +1236,15 @@ function advanceSoldiers(state) {
 export function getRoamingBands(state) { return ROAMING_BANDS.map(band => roamingBand(state, band)).filter(Boolean); }
 
 function moveTowardPoint(progress, target, maximum) {
-  const remaining = distance(progress, target);
-  if (remaining <= maximum || remaining <= 1e-9) {
-    progress.x = target.x;
-    progress.y = target.y;
-    return;
-  }
-  progress.x += (target.x - progress.x) * maximum / remaining;
-  progress.y += (target.y - progress.y) * maximum / remaining;
+  moveWorldToward(progress,nearestWorldPoint(target)??target,maximum);
 }
 
 function moveAlongPatrol(progress, band, maximum) {
+  if (!worldSegmentClear(band.start,band.end)) {
+    const target=nearestWorldPoint(progress.direction===-1?band.start:band.end);
+    if(target && moveWorldToward(progress,target,maximum)) progress.direction=progress.direction===-1?1:-1;
+    return;
+  }
   const dx = band.end.x - band.start.x;
   const dy = band.end.y - band.start.y;
   const length = Math.hypot(dx, dy);
@@ -1371,6 +1372,7 @@ export function travelTo(state, x, y) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   if (!inBounds(x, y)) return result(false, 'Choose a reachable point on the mainland.');
+  if (worldBlocked({x,y}) || !worldRoute(state.position,{x,y})) return result(false,'These sheer mountain peaks are impassable. Choose a valley or pass.');
   if (distance(state.position, { x, y }) <= ARRIVAL_RADIUS) return result(false, 'The company is already here.');
   state.pursuit = null;
   state.destinationAction = null;
@@ -1591,15 +1593,20 @@ export function tick(state, hours) {
       else { state.pursuit = null; state.destination = null; }
     }
     if (state.destination) {
+      if (worldBlocked(state.destination)) {
+        state.destination=null;state.destinationAction=null;state.pursuit=null;
+        record(state,'The old route ends at sheer mountain peaks. Choose a pass around the range.');
+      }
+    }
+    if (state.destination) {
       const distanceLeft = distance(state.position, state.destination);
       const onNewRoad = (state.position.x > 2120 || state.position.y > 1380) && distanceToRoad(state.position.x,state.position.y,WORLD_ROADS) <= 18;
       const speed = (onNewRoad ? SPEED * 1.15 : terrainSpeed(terrainAt(state.position.x, state.position.y))) * (1 + getCompanyTravelBonus(state));
       const movement = Math.min(distanceLeft, speed * step);
       if (distanceLeft > 0) {
-        state.position.x += (state.destination.x - state.position.x) * movement / distanceLeft;
-        state.position.y += (state.destination.y - state.position.y) * movement / distanceLeft;
+        moveWorldToward(state.position,state.destination,movement);
       }
-      if (!state.pursuit && state.destinationAction?.type !== 'caravan' && distance(state.position, state.destination) <= ARRIVAL_RADIUS) {
+      if (!state.pursuit && state.destinationAction?.type !== 'caravan' && distance(state.position, state.destination) <= ARRIVAL_RADIUS && worldSegmentClear(state.position,state.destination)) {
         state.position = { ...state.destination };
         state.destination = null;
         arrived = true;
@@ -2362,7 +2369,7 @@ function randomCamp(state, id, index, generation) {
   const offset = Math.floor(random() * pool.length);
   const enemies = Array.from({ length: count }, (_, enemyIndex) => { const enemy={ ...pool[(offset + enemyIndex) % pool.length] }; return regionalOutfit(enemy, `${state.seed}:${id}:${generation}`, enemyIndex, x, y, difficulty, {theme:ancient?'ancient':undefined}); });
   const text = ancient ? {factionId:'ancient',factionLabel:'Ancient Legion',name:`Ancient Sepulcher ${index+1}`,description:`${enemies.length} ancient guardians defend a buried legion's tomb in ${regionAt(x,y).name}.`} : worldCampText(x, y, enemies.length, index);
-  return {id,...text,x,y,difficulty,enemies,reward:100+difficulty*95,random:true};
+  return {id,...text,...nearestWorldPoint(landmarkCampPoint(nearestWorldPoint({x,y}))),difficulty,enemies,reward:100+difficulty*95,random:true};
 }
 
 export function getCampSites(state) {
@@ -2541,7 +2548,7 @@ export function startBattle(state, encounterId, {enemyOpening=false}={}) {
       accessories: [...person.accessories],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: [...person.perks], adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
-      tacticalRole: resolveCombatRole(person, getItem(person.equipment.weapon), getItem(person.reserveEquipment.weapon)), skillPreference: person.skillPreference,
+      tacticalRole: resolveCombatRole(person, getItem(person.equipment.weapon), getItem(person.reserveEquipment.weapon), {armor:getItem(person.equipment.armor),mount:getItem(person.equipment.mount)}), skillPreference: person.skillPreference,
       aiTargetId: null, formationMovedRound: 0,
       seed: person.seed, ...(person.appearanceId ? { appearanceId: person.appearanceId } : {}), alive: person.hp > 0,
       morale: person.morale, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false,
@@ -3597,7 +3604,7 @@ const SWING_DIRECTIONS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
 function horseChargePlan(battle, actor, target, weapon) {
   const mount = getItem(actor.equipment.mount);
   if (battle.mountSkillsVersion !== 1 || !/horse/.test(mount?.visual ?? '') || weapon.ranged
-    || actor.tacticalRole === 'ranged' || actor.ap < 6
+    || ['ranged','flanker'].includes(actor.tacticalRole) || actor.ap < 6
     || battle.units.some(unit => unit.alive && unit.side !== actor.side && hexDistance(actor, unit) === 1)) return null;
   const distance = hexDistance(actor, target);
   if (distance < 3 || distance > 4) return null;
@@ -3615,7 +3622,21 @@ function horseChargePlan(battle, actor, target, weapon) {
     path.push(point); from = point;
   }
   if (actor.fatigue + fatigueCost > actor.maxFatigue) return null;
+  if (actor.tacticalRole==='breaker') {
+    const threats=battle.units.filter(u=>u.alive && u.side!==actor.side && u.id!==target.id);
+    if (threats.filter(u=>hexDistance(path.at(-1),u)<=1).length>2
+      || path.some(p=>battle.units.some(u=>u.alive && u.side!==actor.side && u.spearwallActive && hexDistance(p,u)<=1))) return null;
+  }
   return { path, direction, fatigueCost };
+}
+
+function breakerOpeningBonus(battle,actor,target,plan) {
+  const point={q:target.q+plan.direction[0],r:target.r+plan.direction[1]},tile=tileAt(battle.field,point.q,point.r);
+  const opens=tile && Number.isFinite(movementCost(battle.field,target,point))
+    && Math.abs(tile.height-tileAt(battle.field,target.q,target.r).height)<=1
+    && !battle.units.some(u=>u.alive && u.q===point.q && u.r===point.r);
+  const relieved=battle.units.filter(u=>u.alive && u.side===actor.side && u.id!==actor.id && hexDistance(u,target)===1).length;
+  return (opens?24:4)+Math.min(18,relieved*6);
 }
 
 function performHorseCharge(state, actor, target, weapon, plan) {
@@ -4131,7 +4152,9 @@ function advanceBattleV2(state) {
     if (charge) {
       const predicted = predictAttack(battle, { ...actor, ...charge.path.at(-1) }, target, weapon, COMBAT_SKILLS.charge);
       candidates.push({ id: 'charge', type: 'charge', targetId: target.id, target, plan: charge, apCost: 6,
-        fatigueCost: charge.fatigueCost, ...predicted, preventedDamage: target.meleeSkill * .25, bonus: 24 });
+        fatigueCost: charge.fatigueCost, ...predicted, preventedDamage: target.meleeSkill * .25,
+        incomingDamage: role==='breaker'?enemies.filter(e=>e.id!==target.id && hexDistance(charge.path.at(-1),e)<=1).length*12:0,
+        bonus: 24+(role==='breaker'?breakerOpeningBonus(battle,actor,target,charge):0) });
     }
     const lunge=lungePlan(battle,actor,target,weapon);
     if(lunge)candidates.push({id:'lunge',type:'lunge',targetId:target.id,target,plan:lunge,apCost:attackApCost(weapon,battle,actor,lunge.option),fatigueCost:attackSkillFatigue(actor,weapon,lunge.option),...predictAttack(battle,{...actor,...lunge.point},target,weapon,lunge.option),bonus:22});
@@ -4200,12 +4223,12 @@ function advanceBattleV2(state) {
   }
   const targetPaths = enemies.map(target => {
     const priority = rangedAI ? tacticalTargetPriority(role,target,getItem(target.equipment.weapon),hexDistance(actor,target),nearest) : 0;
-    const flanking = role==='flanker' && priority>0 && nearest>1;
+    const flanking = ['flanker','breaker'].includes(role) && priority>0 && nearest>1;
     return {target,priority,path:pathToTarget(battle,actor,target,range,weapon.ranged===true,flanking)};
-  }).filter(entry=>entry.path?.length).sort((a,b)=>(['flanker','skirmisher'].includes(role) ? b.priority-a.priority : 0)
+  }).filter(entry=>entry.path?.length).sort((a,b)=>(['flanker','breaker','skirmisher'].includes(role) ? b.priority-a.priority : 0)
     || pathCost(battle,actor,actor,a.path)-pathCost(battle,actor,actor,b.path)
     || b.priority-a.priority || a.target.id.localeCompare(b.target.id));
-  const specialFlank = role==='flanker' && nearest>1 && targetPaths[0]?.priority>0 ? targetPaths[0] : null;
+  const specialFlank = ['flanker','breaker'].includes(role) && nearest>1 && targetPaths[0]?.priority>0 ? targetPaths[0] : null;
   const pursuit = (companyTactic === 'focus' && targetPaths.find(entry=>entry.target.id===battle.focusTargetId))
     || specialFlank || (role==='skirmisher' ? targetPaths[0] : targetPaths.find(entry=>entry.target.id===actor.aiTargetId)) || targetPaths[0];
   const formationLocked = companyTactic === 'advance-formation' && (actor.formationMovedRound === battle.round

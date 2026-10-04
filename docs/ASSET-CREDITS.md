@@ -1,5 +1,16 @@
 # Asset credits
 
+## Free regional landmark sprites (v0.50.0)
+
+These 25 landmark sprites use freely licensed assets researched on OpenGameArt and in 0 A.D.; they replace the initial geometric drawings. Exact files, authors, dimensions, adaptations and SHA-256 hashes are in [landmark-sources.json](../assets/world/landmark-sources.json).
+
+- **Cethiel**, [Dark Ruins Tilesets (isometric)](https://opengameart.org/content/dark-ruins-tilesets-isometric): ruined halls, arches, collapsed walls and debris, [CC0](https://creativecommons.org/publicdomain/zero/1.0/). Transparent padding is trimmed and southern variants use a sandstone palette.
+- **Clint Bellanger**, [Broken Tower](https://opengameart.org/content/broken-tower): the transparent background-layer sprite, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), cropped to its opaque bounds.
+- **David Garay Salazar / [Nirdia Entertainment](http://www.nirdia.com/)**, [grass mountains](https://opengameart.org/content/isometric-mountains-render-2d) and [desert mountains](https://opengameart.org/content/iso-mountains-monta%C3%B1as-isom%C3%A9tricas): individual textured peaks and natural rock openings extracted from the sheets. Northern variants are desaturated and brightness-adjusted. These derived PNGs retain [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- **[Wildfire Games](https://www.wildfiregames.com/)**, [0 A.D. art](https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art), pinned to `61a3b9507d974084e6badb88a0826bd89a6d5b8b`: the great pyramid mesh/texture and Ptolemaic sphinx mesh/texture rendered into transparent isometric sprites. The sphinx palette is adapted to weathered sandstone. These derived PNGs retain [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); the upstream [license](https://github.com/0ad/0ad/blob/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/LICENSE.txt) explicitly permits commercial/noncommercial use, modification and redistribution.
+
+`tools/import-free-landmarks.py` records cropping/palette recipes; `tools/render-free-monuments.py` reproduces the textured mesh renders in Blender. Static smoke is drawn over the existing credited arms-cart sprite and imported debris. Asset licenses apply to these sprites and their derivatives; they do not change the game code license or other artwork terms.
+
 ## Settlement outskirts (v0.45.8)
 
 Eleven unchanged PNGs from the pinned **Battle-Brothers-Legends/Legends-public** revision `b014cdf8520e69b2383116d1654977e9dbb10d96` provide dedicated workshop, ore-furnace, militia-yard, crop, lumber, wool, salt, iron, fishing and wagon scenery. The [settlement source manifest](../assets/world/settlement-sources.json) records original paths, URLs, sizes and SHA-256 hashes. The two wagon images are scaled from the repository's tool-item art. Armor racks, anvil emblems, dirt spurs, bare furrows, smoke and status flags are drawn by the map renderer. Existing farm and beggar artwork is reused for poor-harvest hints. These assets follow the Battle Brothers/Legends provenance and personal noncommercial prototype restrictions described below.

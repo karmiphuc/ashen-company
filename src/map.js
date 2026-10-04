@@ -1,3 +1,5 @@
+import { WORLD_LANDMARK_ASSETS, worldLandmarks, landmarkAt, drawWorldLandmark, drawMountainRanges } from './world-landmarks.js';
+import { worldRoute } from './world-navigation.js';
 import { visualRandom, REGION_STYLE, terrainStamp, roadCurve, settlementProfile, settlementGround, overviewBorderAlpha, showActorLabel, movementPose } from './map-illustration.js';
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
 import { regionAt, regionalTownArt } from './geography.js';
@@ -5,6 +7,7 @@ import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, ge
 
 const names = [
   ...SETTLEMENT_SCENERY_ASSETS,
+  ...WORLD_LANDMARK_ASSETS,
   'world_desert_01', 'world_desert_02', 'world_desert_03',
   'world_grass_01', 'world_grass_02', 'world_grass_03', 'world_grass_04',
   'world_plains_01', 'world_plains_02', 'world_plains_03',
@@ -48,7 +51,7 @@ const camera = {
 let canvas, context, state, selection = null, townCallback, campCallback, activationCallback, background = null, resizeObserver;
 let width = 0, height = 0, pointers = new Map(), dragOrigin = null, pinchStart = null, dragged = false;
 let activationTracker = createMapActivationTracker();
-let settlementStructures = [];
+let settlementStructures = [], landmarks = [];
 let actorPoses = new Map(), previousPositions = new Map();
 
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -183,6 +186,9 @@ function buildBackground() {
 
   }
   objects.sort((a,b)=>a.y-b.y).forEach(o=>o.name?sprite(target,o.name,o.x,o.y,o.width):drawMicroDetail(target,o));
+  drawMountainRanges(target,state.seed,sprite);
+  landmarks=worldLandmarks(state.seed,{settlements:SETTLEMENTS,camps:getCampSites(state),roads:WORLD_ROADS});
+  landmarks.sort((a,b)=>a.y-b.y).forEach(o=>drawWorldLandmark(target,o,state.seed,sprite));
   for(const town of SETTLEMENTS)drawSettlementGround(target,town);
   const borders=[];
   for(let x=WORLD_BOUNDS.minX;x<WORLD_BOUNDS.maxX;x+=80)for(let y=WORLD_BOUNDS.minY;y<WORLD_BOUNDS.maxY;y+=80){
@@ -292,7 +298,7 @@ function drawSettlementScenery() {
     context.restore();
   }
   const chosen = towns.get(selection), details = settlementStructures.filter(structure => structure.townId === selection).map(structure => structure.label);
-  canvas.setAttribute('aria-label', `World map with nine regions, roads, and settlement outskirts. Drag to pan; pinch to zoom.${chosen ? ` ${chosen.name}: ${details.join(', ') || 'general traders'}.` : ''} Outlying structures are scenery; select the settlement to visit.`);
+  canvas.setAttribute('aria-label', `World map with nine regions, roads, settlement outskirts, regional monuments, three dormant caves and impassable mountain ridges with open passes. Drag to pan; pinch to zoom.${chosen ? ` ${chosen.name}: ${details.join(', ') || 'general traders'}.` : ''} Outlying structures are scenery; select the settlement to visit.`);
 }
 
 function minimumZoom() {
@@ -330,7 +336,7 @@ function campLabel(camp) {
 }
 
 export function mapHTML() {
-  return `<canvas id="world-map" role="img" aria-label="World map with nine named regions, roads, settlements and their outlying smiths, industries and town conditions. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-scenery-key" aria-label="Settlement scenery legend"><span>⚒ Blacksmith</span><span>⬟ Armory</span><span>Wagons · trade</span><span>Fields · harvest</span></div><div class="map-loading">Preparing the Marches…</div>`;
+  return `<canvas id="world-map" role="img" aria-label="World map with nine named regions, roads, settlements, regional ruins and monuments, three dormant cave entrances and impassable mountain ranges with accessible passes. Drag to pan, pinch or use plus and minus to zoom. Select a settlement using the destination list."></canvas><div class="map-scenery-key" aria-label="Settlement scenery legend"><span>⚒ Blacksmith</span><span>⬟ Armory</span><span>Wagons · trade</span><span>Fields · harvest</span></div><div class="map-loading">Preparing the Marches…</div>`;
 }
 
 export const mapSVG = mapHTML;
@@ -424,7 +430,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       if ((target?.type?.startsWith('undead-') || target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
-      else if (!target && !sceneryAt(settlementStructures, world)) onTravel(world.x, world.y);
+      else if (!target && !sceneryAt(settlementStructures, world) && !landmarkAt(landmarks,world)) onTravel(world.x, world.y);
       const activation = activationTracker.tap(target, current, Number(event.timeStamp));
       if (activation && activationCallback) activationCallback(activation);
     } else activationTracker.cancel();
@@ -581,7 +587,7 @@ function draw() {
 
   if (state.destination) {
     context.strokeStyle = '#f0d783'; context.lineWidth = 2 / camera.zoom; context.setLineDash([5 / camera.zoom, 7 / camera.zoom]);
-    context.beginPath(); context.moveTo(state.position.x, state.position.y); context.lineTo(state.destination.x, state.destination.y); context.stroke(); context.setLineDash([]);
+    context.beginPath(); context.moveTo(state.position.x, state.position.y); for(const p of worldRoute(state.position,state.destination)??[])context.lineTo(p.x,p.y); context.stroke(); context.setLineDash([]);
     context.beginPath(); context.arc(state.destination.x, state.destination.y, 12, 0, Math.PI * 2); context.stroke();
   }
   for (const region of WORLD_REGIONS) {

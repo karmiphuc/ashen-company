@@ -1,3 +1,4 @@
+import { moveWorldToward, nearestWorldPoint } from './world-navigation.js';
 import { regionAt, roadRoute, REGIONS } from './geography.js';
 import { worldEnemyTemplates, regionalOutfit, enemyCombatRole } from './regional-enemies.js';
 import { regionalMountPool } from './mount-distribution.js';
@@ -69,7 +70,7 @@ export function simulateSkirmish(a,b,getItem,seed){
   };
   return {aWins,aSurvivors:survive(a,aWins,pa,pb,'a'),bSurvivors:survive(b,!aWins,pb,pa,'b')};
 }
-function move(progress,target,distance){const length=Math.hypot(target.x-progress.x,target.y-progress.y);if(length<=distance){progress.x=target.x;progress.y=target.y;return true;}progress.x+=(target.x-progress.x)*distance/length;progress.y+=(target.y-progress.y)*distance/length;return false;}
+function move(progress,target,distance){return moveWorldToward(progress,nearestWorldPoint(target)??target,distance);}
 function addReport(state,patrol,target,outcome,losses,now){
   state.factionReports??=[];state.factionReports.push({patrolId:patrol.id,factionId:patrol.factionId,opponentId:target.id,opponentName:target.name,kind:target.kind,outcome,losses,hour:now});if(state.factionReports.length>24)state.factionReports.splice(0,state.factionReports.length-24);
 }

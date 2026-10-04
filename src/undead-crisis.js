@@ -1,3 +1,4 @@
+import { worldRoute, moveWorldToward } from './world-navigation.js';
 import { ASHEN_CONFIG as C, crisisHash, campaignHour, initialAshenWinter, eligibleForAshen } from './crisis-director.js';
 import { regionAt, roadRoute, roadNetwork, WORLD_LIMITS } from './geography.js';
 import { enemyProgression } from './enemy-progression.js';
@@ -104,9 +105,11 @@ function redirectRoadHost(state, host, context) {
 function moveHost(host) {
   let remaining = C.hostSpeed * .25;
   while (host.waypoint < host.route.length && remaining > 0) {
-    const target = host.route[host.waypoint], length = distance(host, target);
+    const target = host.route[host.waypoint], path = worldRoute(host,target);
+    if(!path)break;
+    const length=path.reduce((n,p,i)=>n+distance(i?path[i-1]:host,p),0);
     if (length <= remaining) { host.x = target.x; host.y = target.y; host.waypoint++; remaining -= length; }
-    else { host.x += (target.x - host.x) * remaining / length; host.y += (target.y - host.y) * remaining / length; remaining = 0; }
+    else { moveWorldToward(host,target,remaining); remaining = 0; }
   }
   if (!host.targetTownId && host.waypoint === host.route.length) {
     host.route.reverse(); host.waypoint = 1;
