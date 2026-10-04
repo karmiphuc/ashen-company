@@ -174,3 +174,56 @@ test('reserving an enemy already in combat does not release its NPC opponents',(
  const fight=structuredClone(s.worldSkirmishes[0]);s.hour+=.25;advanceFactionSimulation(s,context);
  assert.deepEqual(s.worldSkirmishes,[fight]);assert.equal(s.factionPatrols[army.id].targetId,band.id);
 });
+
+
+test('intercepting before the simulation commits a fight brings the nearby allied patrol',()=>{
+ const {s,army,band}=fixture(2,[0,2,5]);
+ // The player arrives between simulation steps, while the patrol is closing in.
+ s.worldSkirmishes=[];s.position={x:band.x,y:band.y};
+ const p=s.factionPatrols[army.id];p.behavior='engaging';p.targetId=band.id;
+ const roster=getFactionPatrols(s).find(p=>p.id===army.id).enemies;
+ assert.equal(activateMapTarget(s,'band',band.id).ok,true);
+ assert.equal(s.battle.patrolAssist.id,army.id);
+ assert.deepEqual(s.battle.patrolAssist.troops,[0,2,5]);
+ const allies=s.battle.units.filter(u=>u.ally);
+ assert.deepEqual(allies.map(u=>u.equipment.weapon),roster.map(e=>e.weapon));
+ assert.ok(allies.every(u=>s.battle.turnOrder.includes(u.id)));
+ assert.deepEqual(validateSave(s),s);
+ let allyActed=false;
+ for(let i=0;i<300&&s.battle.status==='active';i++){
+  advanceBattle(s);if(s.battle.lastEvent?.actorId?.startsWith('ally-'))allyActed=true;
+ }
+ assert.ok(allyActed,'the deployed patrol must actually take turns');
+ retreatBattle(s);finishBattle(s);assert.equal(s.factionReports.at(-1).patrolId,army.id);
+ assert.deepEqual(validateSave(s),s);
+});
+
+test('nearby assistance excludes distant, recovering, neutral and differently engaged patrols',()=>{
+ for(const reason of ['distant','recovering','returning','other-target','neutral']){
+  const {s,army,band}=fixture(reason==='neutral'?3:0);s.worldSkirmishes=[];
+  s.position={x:band.x,y:band.y};const p=s.factionPatrols[army.id];
+  if(reason==='distant')p.x+=100;
+  if(reason==='recovering')p.cooldownUntil=s.hour+6;
+  if(reason==='returning')p.behavior='returning';
+  if(reason==='other-target')p.targetId=getRoamingBands(s).find(b=>b.id!==band.id).id;
+  assert.equal(startBattle(s,band.id).ok,true);
+  assert.equal(s.battle.patrolAssist,undefined,reason);
+  assert.equal(s.battle.units.filter(u=>u.ally).length,0,reason);
+  assert.deepEqual(validateSave(s),s);
+ }
+});
+
+
+test('retreating with allied assistance and no enemy casualties keeps the save valid',()=>{
+ for(const depleted of [false,true]){
+  const {s,army,band}=fixture();s.position={x:army.x,y:army.y};
+  if(depleted){
+   const fight=s.worldSkirmishes[0],size=Math.max(...fight.bTroops)+1;
+   fight.bTroops=[0];fight.result.bSurvivors=[];
+   s.worldLosses[band.id]={cycle:band.spawnCycle,size,survivors:[0]};
+  }
+  const before=structuredClone(s.worldLosses);
+  assert.equal(joinPatrolBattle(s,army.id).ok,true);retreatBattle(s);finishBattle(s);
+  assert.deepEqual(s.worldLosses,before);assert.deepEqual(validateSave(s),s);
+ }
+});

@@ -2595,7 +2595,18 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   if (!camp) return result(false, 'That hostile group is no longer here.');
   if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${camp.respawnHours} hours.`);
   const npcFight=worldSkirmishFor(state,encounterId);
-  const assistance=npcFight&&getJoinablePatrolBattle(state,patrolId??npcFight.aId);
+  // A player interception can happen before the next world-simulation step.
+  // Bring the nearby patrol along instead of leaving it behind when no NPC
+  // skirmish has been committed yet. Never borrow troops from another fight.
+  const nearbyPatrol=!npcFight&&!patrolId&&['band','undead-host'].includes(encounterType)
+    ?getFactionPatrols(state).filter(p=>p.active&&p.playerRelation==='ally'&&p.behavior!=='returning'&&!worldSkirmishFor(state,p.id)
+      &&(state.factionPatrols[p.id]?.cooldownUntil??0)<=worldHours(state)&&distance(p,camp)<=CAMP_RADIUS
+      &&(!p.targetId||p.targetId===encounterId))
+      .sort((a,b)=>distance(a,camp)-distance(b,camp)||a.id.localeCompare(b.id))[0]:null;
+  const assistance=npcFight?getJoinablePatrolBattle(state,patrolId??npcFight.aId):nearbyPatrol?{
+    patrol:nearbyPatrol,fight:{aCycle:state.factionPatrols[nearbyPatrol.id].spawnCycle,
+      aTroops:[...state.factionPatrols[nearbyPatrol.id].troops],bTroops:camp.enemies.map(e=>e.worldIndex??e.troopIndex)}
+  }:null;
   if(patrolId&&(!assistance||assistance.fight.bId!==encounterId))return result(false,'That allied battle is no longer available.');
   const patrolAssist=assistance?{id:assistance.patrol.id,cycle:assistance.fight.aCycle,troops:[...assistance.fight.aTroops],enemyTroops:[...assistance.fight.bTroops]}:null;
   if (state.destination || distance(state.position,patrolId?assistance.patrol:camp) > (patrolId?CAMP_RADIUS:encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
@@ -4958,7 +4969,18 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     state.factionReports=state.factionReports.slice(-24);
     if(!victory&&battle.encounterType==='band'){
       const enemyUnits=battle.units.filter(u=>u.side==='enemy');
-      state.worldLosses[battle.campId]={cycle:state.bands[battle.campId].spawnCycle,size:Math.max(...a.enemyTroops)+1,survivors:a.enemyTroops.filter((_,i)=>enemyUnits[i].alive||enemyUnits[i].escaped)};
+      const survivors=a.enemyTroops.filter((_,i)=>enemyUnits[i].alive||enemyUnits[i].escaped);
+      // No casualties means no casualty record. Preserve any earlier losses;
+      // a full roster recorded as survivors is deliberately invalid on import.
+      if(survivors.length&&survivors.length<a.enemyTroops.length){
+        const previous=state.worldLosses[battle.campId];
+        state.worldLosses[battle.campId]={cycle:state.bands[battle.campId].spawnCycle,
+          size:Math.max(previous?.size??0,...a.enemyTroops.map(i=>i+1)),survivors};
+      }else if(!survivors.length){
+        delete state.worldLosses[battle.campId];
+        const band=state.bands[battle.campId];
+        Object.assign(band,{defeatedUntil:worldHours(state)+48,spawnCycle:band.spawnCycle+1,behavior:'patrolling',targetId:null});
+      }
     }
   }
   refillThrowingAmmo(state);
