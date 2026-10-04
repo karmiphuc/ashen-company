@@ -71,8 +71,7 @@ test('throwing attacks spend charges, keep campaign ammo separate, and switch to
   assert.equal(actor.throwingAmmo.active, 0);
   assert.equal(state.supplies.ammo, 0);
   const combatView = battleHTML(battle, 0);
-  assert.match(combatView, /Ammo 0\/5 · R2\/5/);
-  assert.match(combatView, /throwing ammunition Javelins 0\/5; reserve Heavy Throwing Axes 2\/5/);
+  assert.doesNotMatch(combatView, /battle-kit|<i>(?:Ammo|Bag|Reserve)\b/);
   const restored = validateSave(JSON.parse(JSON.stringify(state)));
   assert.equal(restored.battle.units.find(unit => unit.id === 'captain').throwingAmmo.active, 0);
 

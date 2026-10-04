@@ -1,7 +1,7 @@
 import { BATTLE_PROJECTION, tilePosition, elevationFaces } from './battle-geometry.js';
 import { enemyBattleTactic } from './tactical-ai.js';
 import { weaponSkillFamily } from './combat-skills.js';
-import { getEquipment, getItem, getMoraleEffects, isMoraleImmune, shieldMaximum, throwingCapacity } from './engine.js';
+import { getEquipment, getItem, getMoraleEffects, isMoraleImmune, shieldMaximum } from './engine.js';
 import { portraitHTML, portraitWeaponAnchor, portraitGroundAnchor, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
@@ -157,21 +157,6 @@ function impactsFor(event, unitId) {
   return impacts;
 }
 
-function battleKitHTML(unit) {
-  const reserve = [unit?.reserveEquipment?.weapon,unit?.reserveEquipment?.shield].filter(Boolean).length;
-  const accessories = Array.isArray(unit?.accessories) ? unit.accessories.filter(Boolean).length : 0;
-  const stowed = unit?.pocketDrawnFrom !== null && unit?.pocketDrawnFrom !== undefined;
-  const activeWeapon = getItem(stowed ? unit?.pocketStowedWeapon : unit?.equipment?.weapon);
-  const reserveWeapon = getItem(unit?.reserveEquipment?.weapon);
-  const activeCharges = activeWeapon?.throwing ? unit?.throwingAmmo?.active ?? throwingCapacity(activeWeapon) : null;
-  const reserveCharges = reserveWeapon?.throwing ? unit?.throwingAmmo?.reserve ?? throwingCapacity(reserveWeapon) : null;
-  const ammo = [activeCharges === null ? '' : activeCharges + '/' + throwingCapacity(activeWeapon), reserveCharges === null ? '' : 'R' + reserveCharges + '/' + throwingCapacity(reserveWeapon)].filter(Boolean).join(' · ');
-  const ammoDetails = [activeCharges === null ? '' : activeWeapon.name + ' ' + activeCharges + '/' + throwingCapacity(activeWeapon), reserveCharges === null ? '' : 'reserve ' + reserveWeapon.name + ' ' + reserveCharges + '/' + throwingCapacity(reserveWeapon)].filter(Boolean).join('; ');
-  if (!reserve && !accessories && !ammo && !unit.ally) return '';
-  const labels = [unit.ally ? 'Allied fighter' : '', reserve ? `reserve set ${reserve === 2 ? 'ready' : 'partial'}` : '', accessories ? `${accessories} carried ${accessories === 1 ? 'accessory' : 'accessories'}` : '', ammoDetails ? 'throwing ammunition ' + ammoDetails : ''].filter(Boolean);
-  return '<span class="battle-kit" aria-label="' + esc(labels.join('; ')) + '">' + (unit.ally ? '<i>Ally</i>' : '') + (reserve ? '<i>Reserve</i>' : '') + (accessories ? '<i>Bag ' + accessories + '</i>' : '') + (ammo ? '<i>Ammo ' + esc(ammo) + '</i>' : '') + '</span>';
-}
-
 function unitHTML(unit, battle, animateEvent, field, grid) {
   const { x, y, foot } = coordinates(unit, field, grid);
   const alive = unit.alive !== false && number(unit.hp, 1) > 0;
@@ -259,7 +244,7 @@ function unitHTML(unit, battle, animateEvent, field, grid) {
     <span class="battle-pawn">${frenzy ? '<span class="battle-frenzy-aura" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${effects.some(effect => effect.id === 'howling') ? '<span class="battle-howl-waves" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${portraitHTML(display, equipmentFor(unit), 64)}</span>
     <span class="battle-morale-flag morale-${morale.name.toLowerCase()}" title="${esc(moraleLabel)}" aria-label="${esc(moraleLabel)}">${morale.name[0]}</span>
     ${statusIconsHTML(unit, battle)}
-    ${battleKitHTML(unit)}
+    ${unit.ally ? '<span class="battle-ally-label" aria-label="Allied fighter"><i>Ally</i></span>' : ''}
     <strong>${unit.champion?'<span class="champion-star" title="Champion · guaranteed named trophy">★</span> ':''}${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))}/${maxAp} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
     ${hasImpact || primaryMiss ? `<span class="battle-impact" aria-hidden="true">${hasHit ? `${friendlyFire ? 'Friendly fire · ' : ''}${hpDamage}${bodyDamage + headDamage ? ` / ${bodyDamage + headDamage}` : ''}${shieldDamage ? ` · Shield -${shieldDamage}` : ''}${hasMiss ? ' · Miss' : ''}` : shieldDamage ? `Deflected · Shield -${shieldDamage}` : 'Miss'}</span>` : ''}
