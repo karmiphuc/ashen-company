@@ -262,7 +262,9 @@ export function validateAshenWinter(input, seed, settlements) {
   const object = x => x && typeof x === 'object' && !Array.isArray(x);
   const keys = (x, names) => object(x) && Object.keys(x).length === names.length && names.every(k => Object.hasOwn(x,k));
   const count = x => Number.isSafeInteger(x) && x >= 0 && x <= 1000000;
-  const hour = x => Number.isFinite(x) && x >= 0 && x <= 24000024 && Number.isInteger(x * 4);
+  // Real-time travel ticks and battle outcomes use fractional campaign hours.
+  // Preserve those exact timestamps; only finite, bounded times are valid.
+  const hour = x => Number.isFinite(x) && x >= 0 && x <= 24000024;
   const nullableHour = x => x === null || hour(x);
   const validPoint = p => object(p) && Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= WORLD_LIMITS.minX && p.x <= WORLD_LIMITS.maxX && p.y >= WORLD_LIMITS.minY && p.y <= WORLD_LIMITS.maxY;
   const townIds = new Set(settlements.map(t => t.id));
