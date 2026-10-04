@@ -117,3 +117,11 @@
 .market-workspace .provision-card h3{font-size:18px}
 .market-workspace .provision-card p{margin:7px 0;font-size:12px}
 .market-workspace .trade-actions button{min-height:44px}
+
+/* Size equipment and stash panels to their content rather than the tallest column. */
+.company-page .equipment-panel,.company-page .inventory-panel{align-self:start}
+.company-page .detailed-company .inventory-grid{min-height:0}
+.company-page .utility-slots{grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}
+.company-page .utility-slots .slot-wrap{min-width:0}
+.company-page .utility-slots .slot strong{overflow-wrap:anywhere}
+.company-page .equipment-panel>.mount-summary{margin:8px 0 0}
