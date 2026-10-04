@@ -19,7 +19,10 @@
   <header class="topbar">
     <a class="brand" href="./" aria-label="Ashen Company home"><img src="./assets/world/banner_101.png" alt=""><span>Ashen Company<small>THE GREY MARCHES</small></span></a>
     <div id="resources" class="resources" aria-label="Company resources"></div>
-    <button id="settings-button" class="small" aria-label="Save and offline settings">Save / Menu</button>
+    <div class="header-actions">
+      <button id="find-company-button" class="small" data-action="find-company" aria-label="Center world map on your company" title="Find your company on the world map"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg><span>Find company</span></button>
+      <button id="settings-button" class="small" aria-label="Save and offline settings">Save / Menu</button>
+    </div>
   </header>
   <nav class="main-nav" aria-label="Main navigation">
     <div class="nav-tabs"><button data-tab="world" class="active">World map</button><button data-tab="company">Company & equipment</button><button data-tab="journal">Chronicle</button></div>
