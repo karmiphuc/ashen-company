@@ -603,11 +603,18 @@ export function getDailyFood(state) {
   return state.party.reduce((total, person) => total + 1 + (person.hp > 0 ? getItem(person.equipment?.mount)?.foodUpkeep ?? 0 : 0), 0);
 }
 
+export const NIGHT_TRAVEL_MULTIPLIER = .8;
+export function getTimeOfDay(hour) {
+  const phase=hour>=20||hour<6?'night':hour>=18?'evening':hour<8?'dawn':'day';
+  return {phase,label:{day:'Daylight',evening:'Evening',night:'Night',dawn:'Dawn'}[phase],travelMultiplier:phase==='night'?NIGHT_TRAVEL_MULTIPLIER:1};
+}
+export function getNightHitPenalty(battle, ranged) { return battle.lighting==='night' ? ranged ? 40 : 10 : 0; }
+
 export function getStashCapacity(state) { return MAX_INVENTORY * (cartLevel(state) + 1); }
 export function getCargoCapacity(state) { return MAX_CARGO * (cartLevel(state) + 1); }
 function cartLevel(state) { return [1,2].includes(state.retinue?.cartLevel) ? state.retinue.cartLevel : 0; }
 export function getCompanyTravelMultiplier(state) {
-  return (1 + getCompanyTravelBonus(state)) * (cartLevel(state) === 1 ? .95 : 1);
+  return (1 + getCompanyTravelBonus(state)) * (cartLevel(state) === 1 ? .95 : 1) * getTimeOfDay(state.hour).travelMultiplier;
 }
 export function getCompanyCart(state) {
   const level=cartLevel(state);
@@ -2708,7 +2715,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
-    status: 'active', escapeRulesVersion:1, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -3486,7 +3493,7 @@ function aimedFatigueCost(actor) {
   const base=Math.max(0,15+(getItem(actor.equipment.weapon)?.fatigueOnSkillUse??0));return hasPerk(actor, 'bow-mastery') ? Math.ceil(base * .75) : base;
 }
 
-function attackHitChance(battle, actor, target, weapon, hitBonus = 0, option = null) {
+export function attackHitChance(battle, actor, target, weapon, hitBonus = 0, option = null) {
   const ranged = weapon.ranged === true;
   const skill = ranged ? actor.rangedSkill : actor.meleeSkill;
   const dodgeDefense = hasPerk(target, 'dodge')
@@ -3509,9 +3516,10 @@ function attackHitChance(battle, actor, target, weapon, hitBonus = 0, option = n
   const perkHit = weaponTrainingHit(actor, weapon) + (hasPerk(actor, 'high-ground') && higher ? 8 : 0)
     + (ranged && distance >= 3 && hasPerk(actor, 'marksman') ? 8 : 0);
   const adjacentShotPenalty = ranged && distance === 1 && !hasPerk(actor, 'point-blank') ? 12 : 0;
-  return clamped(Math.round(skill * (1 + getMoraleEffects(actor).modifier)) + (weapon.hitBonus ?? 0) + (weapon.skillHitBonus ?? 0) - defense + 15 + terrainHit
+  const baseChance = clamped(Math.round(skill * (1 + getMoraleEffects(actor).modifier)) + (weapon.hitBonus ?? 0) + (weapon.skillHitBonus ?? 0) - defense + 15 + terrainHit
     + adjacentAllies * 5 + (hasPerk(actor, 'fast-adaptation') ? actor.adaptation * 10 : 0) + perkHit + hitBonus
     - Math.floor(actor.fatigue / 7) - adjacentShotPenalty, 12, 90);
+  return clamped(baseChance - getNightHitPenalty(battle,ranged), 12, 90);
 }
 
 function attackSkillFatigue(actor, weapon, option) {
@@ -5022,6 +5030,7 @@ function validateBattle(input, party, worldState) {
   const campGeneration = input.campGeneration ?? (encounterType === 'camp' ? encounter.generation : null);
   assert(encounterType === 'camp' ? validCount(campGeneration) && campGeneration <= 1000000 && campGeneration === encounter.generation : campGeneration === null, 'battle camp generation');
   assert(input.enemyTacticsVersion===undefined||input.enemyTacticsVersion===1,'battle enemy tactic rules');
+  assert(input.lighting===undefined||['day','evening','night','dawn'].includes(input.lighting),'battle lighting');
   assert(input.weaponAuditVersion===undefined||input.weaponAuditVersion===1,'battle weapon audit rules');
   assert(input.attachmentRulesVersion===undefined||input.attachmentRulesVersion===1,'battle attachment rules');
   assert(input.championRulesVersion===undefined||input.championRulesVersion===1,'battle champion rules');
@@ -5342,6 +5351,7 @@ function validateBattle(input, party, worldState) {
     id: input.id, campId: input.campId, ...(input.enemyOpening===undefined?{}:{enemyOpening:input.enemyOpening}), encounterType, encounterName, difficulty, campGeneration, famedDrop, ...(input.mountReward===undefined?{}:{mountReward}), tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
     ...(input.enemyTacticsVersion===undefined?{}:{enemyTacticsVersion:1}),
     ...(input.enemyAdaptiveRulesVersion===undefined?{}:{enemyAdaptiveRulesVersion:1,enemyTacticalState:{...enemyTacticalState}}),
+    ...(input.lighting===undefined?{}:{lighting:input.lighting}),
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
     ...(input.attachmentRulesVersion===undefined?{}:{attachmentRulesVersion:1}),
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),

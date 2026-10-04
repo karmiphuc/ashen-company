@@ -80,3 +80,9 @@ Use fixed battles to check ranged spacing, ranged-to-melee fallback, shield prot
 Design reference: [Battle Brothers developer explanation of utility AI](https://battlebrothersgame.com/dev-blog-27-ai-battle-brothers-part-1/). The scoring, roles and automatic company rules here are Ashen Company adaptations.
 
 Weapon references: the developer's [combat mechanics](https://battlebrothersgame.com/tactical-combat-mechanics/), [longaxe and hammer discussion](https://battlebrothersgame.com/new-weapons/) and [new weapon variants](https://battlebrothersgame.com/dev-blog-101-new-weapons/). The simplified automatic skills and numerical bonuses above are this game's adaptations.
+
+### Night conditions
+
+The world clock shows evening from 18:00, night from 20:00 until 06:00, and dawn until 08:00. Evening and dawn apply a light blue tint; night adds a darker blue gradient across the game and dialogs. A banner names the phase and night penalties.
+
+Night multiplies company travel speed by 0.8 after terrain, road, mount and cart modifiers. A new battle captures its starting lighting and preserves it through saves. At night, ordinary ranged attack hit chances lose 40 percentage points and melee attack chances lose 10, equally for company, allies and enemies. These reductions apply after the normal chance calculation, keeping the existing 12–90% bounds; AI attack predictions use the same chance calculation. Older saved battles without lighting retain their existing accuracy rules.

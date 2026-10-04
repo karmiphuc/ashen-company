@@ -13,8 +13,13 @@ function approach(state, place) {
   const until = (state.day - 1) * 24 + state.hour + 48;
   for (const progress of Object.values(state.bands)) progress.defeatedUntil = until;
   assert.equal(travelTo(state, place.x, place.y).ok, true);
-  for (let index = 0; index < 8 && state.destination; index++) tick(state, 12);
+  for (let index = 0; index < 8 && state.destination; index++) {
+    // Keep this recruit fixture free of roaming battles during slower night travel.
+    for (const progress of Object.values(state.bands)) progress.defeatedUntil = (state.day - 1) * 24 + state.hour + 48;
+    tick(state, 12);
+  }
   assert.equal(state.destination, null);
+  assert.equal(state.battle, null);
 }
 
 test('daily recruit offers are deterministic, varied, visible, and pure', () => {

@@ -13,6 +13,7 @@ function approach(state) {
   assert.equal(travelTo(state, site.x, site.y).ok, true);
   for (let step = 0; step < 12 && state.destination; step++) tick(state, 12);
   assert.equal(startBattle(state, site.id).ok, true);
+  state.battle.lighting = 'day'; // Terrain fixtures compare daylight shots independently of arrival time.
 }
 
 function flatField() {

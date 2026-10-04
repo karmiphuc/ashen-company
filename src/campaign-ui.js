@@ -1,4 +1,4 @@
-import { SETTLEMENTS, getCompanyCart, getStashCapacity, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum, getMountRewardEvents, getLootKeepQuote, getDiscoveryEvent, getRetinue, getTownServiceQuote, MAX_COMPANY_SIZE, MAX_BATTLE_SIZE, AUTO_AMMO_CAP, getReserveSlots, getBattleRoster, getSettlementAccess } from './engine.js';
+import { SETTLEMENTS, getTimeOfDay, getCompanyCart, getStashCapacity, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum, getMountRewardEvents, getLootKeepQuote, getDiscoveryEvent, getRetinue, getTownServiceQuote, MAX_COMPANY_SIZE, MAX_BATTLE_SIZE, AUTO_AMMO_CAP, getReserveSlots, getBattleRoster, getSettlementAccess } from './engine.js';
 import { townFacilities } from './town-facilities.js';
 import { portraitHTML, itemImage } from './portraits.js';
 import { SETTLEMENT_TYPES, townAt } from './engine.js';
@@ -126,6 +126,7 @@ export function hiringHTML(state, offers) {
 }
 
 export function resourceHTML(state, speed) {
+  const light=getTimeOfDay(state.hour);
   const values = [
     ['money',state.gold.toLocaleString(),'Crowns'],
     ['food',state.food,`Provisions · ${Math.floor(state.food / Math.max(1,getDailyFood(state)))} days`],
@@ -133,7 +134,7 @@ export function resourceHTML(state, speed) {
     ['medicine',state.supplies?.medicine ?? 0,'Medicine'],
     ['ammo',state.supplies?.ammo ?? 0,'Ammunition'],
   ];
-  return values.map(([kind,value,label])=>`<div class="resource resource-${kind}" title="${label}"><span class="supply-symbol supply-${kind}" aria-hidden="true"></span><span><strong>${value}</strong><small>${label}</small></span></div>`).join('') + `<div class="resource clock"><span><strong>Day ${state.day}</strong><small>${String(Math.floor(state.hour)).padStart(2,'0')}:00 · ${speed?(state.pursuit?'Pursuing':state.destination?'On the march':'Waiting'):'Paused'}</small></span></div>`;
+  return values.map(([kind,value,label])=>`<div class="resource resource-${kind}" title="${label}"><span class="supply-symbol supply-${kind}" aria-hidden="true"></span><span><strong>${value}</strong><small>${label}</small></span></div>`).join('') + `<div class="resource clock"><span><strong>Day ${state.day} · ${light.label}</strong><small>${String(Math.floor(state.hour)).padStart(2,'0')}:00 · ${speed?(state.pursuit?'Pursuing':state.destination?'On the march':'Waiting'):'Paused'}</small></span></div>`;
 }
 
 export function formationHTML(state, selectedIndex=null) {
