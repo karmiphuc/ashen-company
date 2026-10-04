@@ -1,3 +1,4 @@
+import { WILDERNESS_RUIN_ASSETS, wildernessRuins, drawWildernessRuin } from './wilderness-ruins.js';
 import { REGIONAL_SCENE_ASSETS, regionalStoryScenes, drawRegionalScene } from './regional-scenes.js';
 import { compactPoint, regionAt, distanceToRoad } from './geography.js';
 import { visualRandom } from './map-illustration.js';
@@ -50,7 +51,8 @@ export function worldLandmarks(seed,{settlements=[],camps=[],roads=[]}={}){
     || distanceToRoad(p.x,p.y,roads)<radius*.6+22)continue;
   landmarks.push({id,kind,...p,width,region});
  }
- return [...stories,...landmarks,...LEGENDARY_CAVES];
+ const scattered=wildernessRuins(seed,{settlements,camps,roads,reserved:[...stories,...landmarks,...LEGENDARY_CAVES]});
+ return [...stories,...landmarks,...scattered,...LEGENDARY_CAVES];
 }
 export function landmarkAt(landmarks,p){return landmarks.find(o=>Math.hypot((o.x-p.x)/(o.width*.48),(o.y-p.y)/(o.width*.32))<1);}
 // Freely licensed textured sprites; provenance and adaptation recipes are recorded
@@ -87,6 +89,7 @@ export const SCENERY_LAYOUTS=Object.freeze({
  'steppe-watch':layout(['wheel',-.26,.20,.17],['wagon_wreck',.30,.19,.33]),
 });
 export const WORLD_LANDMARK_ASSETS=Object.freeze([
+ ...WILDERNESS_RUIN_ASSETS,
  ...REGIONAL_SCENE_ASSETS,
  'landmark_tower',
  ...new Set(Object.values(SCENERY_LAYOUTS).flatMap(parts=>parts.map(p=>p.art))),
@@ -94,6 +97,7 @@ export const WORLD_LANDMARK_ASSETS=Object.freeze([
  ...['green','snow','desert'].flatMap(kind=>[1,2,3,4].map(n=>`landmark_mountain_${kind}_${n}`)),
 ]);
 export function drawWorldLandmark(c,o,seed,sprite){
+ if(o.kind==='wilderness-ruin'){drawWildernessRuin(c,o,sprite);return;}
  if(o.kind==='scene'){drawRegionalScene(c,o,sprite);return;}
  const parts=SCENERY_LAYOUTS[o.id]??SCENERY_LAYOUTS['old-crossing'];
  if(o.kind==='battlefield'||o.kind==='warcamp'){

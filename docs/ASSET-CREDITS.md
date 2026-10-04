@@ -88,3 +88,7 @@ Eight non-interactive scenery compositions combine 15 additional variations from
 The referenced A/B Windows sheets were unavailable. The imported stone foundations, unfinished sanctuary, well, weathered statues and withered palm are credited to their actual sources; they are not described as a supplied Gothic cathedral, fountain or cottages. The removed Cethiel art remains excluded.
 
 Reproduce the architecture by running `tools/fetch-regional-scenery.py SOURCE_DIR`, then Blender with `tools/render-regional-scenery.py -- SOURCE_DIR RENDER_DIR`, then `tools/import-regional-scenery.py SOURCE_DIR RENDER_DIR USER_SHEET`. Mesh and texture hashes are pinned in `tools/regional-scenery-recipes.json`; the original prepared user sheet is required to reproduce its crop assets.
+
+### User-supplied wilderness ruins (v0.50.9)
+
+Eight building sprites are cropped from `Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg`, attached by the user: ruined manor, clocktower, cathedral, chapel, windmill, house, fortress and town hall. The uniform gray background was removed through image editing; neighbouring atlas fragments were excluded, and sprites were resized for the world map. This is user-provided project artwork, not attributed to the unrelated free-asset packs. Preparation hash, crop bounds, final dimensions and file hashes are recorded in `assets/world/user-ruin-sources.json`; the crop recipe is `tools/import-user-ruins.py`.

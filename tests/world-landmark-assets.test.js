@@ -6,7 +6,7 @@ import { WORLD_LANDMARK_ASSETS, drawWorldLandmark, drawMountainRanges, worldLand
 import { listOfflineAssets } from '../tools/build-cache.mjs';
 
 test('every landmark sprite has intact licensed provenance, PNG dimensions, and offline coverage', async()=>{
- const assets=(await Promise.all(['landmark-sources.json','regional-scene-sources.json'].map(async name=>JSON.parse(await readFile(new URL('../assets/world/'+name,import.meta.url),'utf8')).assets))).flat();
+ const assets=(await Promise.all(['landmark-sources.json','regional-scene-sources.json','user-ruin-sources.json'].map(async name=>JSON.parse(await readFile(new URL('../assets/world/'+name,import.meta.url),'utf8')).assets))).flat();
  const offline=new Set(await listOfflineAssets());
  assert.equal(new Set(assets.map(a=>a.file)).size,assets.length);
  assert.ok(assets.every(a=>a.author!=='Cethiel'));
@@ -14,14 +14,14 @@ test('every landmark sprite has intact licensed provenance, PNG dimensions, and 
   assert.ok(!offline.has('./assets/world/landmark_'+name+'.png'));
   assert.ok(!WORLD_LANDMARK_ASSETS.includes('landmark_'+name));
  }
- assert.equal(assets.filter(a=>a.sourceType==='user-provided').length,41);
+ assert.equal(assets.filter(a=>a.sourceType==='user-provided').length,49);
 
  assert.deepEqual(new Set(assets.map(a=>a.file.split('/').at(-1).replace('.png',''))),new Set(WORLD_LANDMARK_ASSETS));
  for(const a of assets){
   assert.ok(a.author&&a.original&&a.changes);
   if(a.sourceType==='user-provided'){
-   assert.match(a.source,/Pasted battlefield sheet/);assert.equal(a.license,'User-provided artwork authorized for this project');
-   assert.equal(a.preparedSheetSha256.length,64);assert.equal(a.crop.length,4);assert.ok(a.width<=128&&a.height<=128);
+   assert.match(a.source,/Pasted battlefield sheet|Gemini_Generated_Image_3wfjv23wfjv23wfj/);assert.equal(a.license,'User-provided artwork authorized for this project');
+   assert.equal(a.preparedSheetSha256.length,64);assert.equal(a.crop.length,4);assert.ok(a.width<=(a.original.endsWith('.jpg')?224:128)&&a.height<=(a.original.endsWith('.jpg')?224:128));
   }else{
    assert.match(a.source,/^https:\/\/(opengameart.org|github.com)\//);
   assert.match(a.license,/^https:\/\/creativecommons.org\/(licenses\/by(?:-sa)?\/3.0|publicdomain\/zero\/1.0)\/$/);
