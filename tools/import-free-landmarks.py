@@ -6,7 +6,7 @@ from PIL import Image, ImageEnhance, ImageOps
 from pathlib import Path
 import hashlib, json, sys, urllib.request
 root=Path(__file__).resolve().parents[1]; source=Path(sys.argv[1]); output=root/'assets/world'
-manifest=[]
+manifest=[a for a in json.loads((output/'landmark-sources.json').read_text()).get('assets',[]) if a.get('sourceType')=='user-provided'] if (output/'landmark-sources.json').exists() else []
 CC0='https://creativecommons.org/publicdomain/zero/1.0/'
 SA='https://creativecommons.org/licenses/by-sa/3.0/'
 BY='https://creativecommons.org/licenses/by/3.0/'
@@ -20,11 +20,6 @@ def tone(im,mode):
     else:
         rgb=ImageOps.colorize(ImageOps.grayscale(rgb),'#473b2b','#d2bd8d')
     rgb.putalpha(a);return rgb
-ruinurl='https://opengameart.org/content/dark-ruins-tilesets-isometric'
-for name,n in [('landmark_temple',1),('landmark_ruin_arch',6),('landmark_ruin_wall',18),('landmark_rubble',11)]:
-    im=Image.open(source/'dark-ruins'/f'{n:02}.png')
-    save(name,im,'Cethiel',ruinurl,CC0,f'Isometric - Dark Ruins.zip/{n:02}.png','Trimmed transparent padding; downscaled.')
-    if n in [1,6,18]:save(name+'_sand',tone(im,'sand'),'Cethiel',ruinurl,CC0,f'Isometric - Dark Ruins.zip/{n:02}.png','Trimmed, downscaled; sandstone palette adaptation.')
 url='https://opengameart.org/sites/default/files/broken_tower_background.png'
 p=source/'broken-tower_background.png'
 if not p.exists():urllib.request.urlretrieve(url,p)
