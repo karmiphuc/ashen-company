@@ -57,6 +57,12 @@ let actorPoses = new Map(), previousPositions = new Map();
 
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
+// Overlapping encounters must select the closest marker, not the first roster.
+export function nearestMapBand(entries,point){
+ return entries.filter(item=>Math.hypot(item.x-point.x,item.y-point.y)<34)
+   .sort((a,b)=>Math.hypot(a.x-point.x,a.y-point.y)-Math.hypot(b.x-point.x,b.y-point.y)||a.id.localeCompare(b.id))[0]??null;
+}
+
 export function isMapTapGesture(start, end) {
   return Boolean(start && end && Math.hypot(end.x - start.x, end.y - start.y) <= TAP_MOVEMENT_LIMIT);
 }
@@ -417,7 +423,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const town = SETTLEMENTS.find(item => Math.hypot(item.x - world.x, item.y - world.y) < 48);
       const camp = getCampSites(state).find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
       const patrol = getFactionPatrols(state).filter(p=>p.active).find(item=>Math.hypot(item.x+24-world.x,item.y-24-world.y)<24);
-      const band = bands().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
+      const band = nearestMapBand(bands(),world);
       const caravan = caravans().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 24);
       const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
       const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind.startsWith('undead-')?band.kind:['deserters','bounty'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }

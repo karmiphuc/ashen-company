@@ -46,3 +46,12 @@ test('tap movement keeps small pointer jitter but rejects a drag-sized move', ()
   assert.equal(isMapTapGesture(point(10, 10), point(18, 10)), false);
   assert.equal(isMapTapGesture(null, point()), false);
 });
+
+
+test('an undead marker wins over a nearby human band even when humans appear first in the roster',async()=>{
+ const {nearestMapBand}=await import('../src/map.js');
+ const human={id:'brigands',x:115,y:110},undead={id:'ashen-host',x:100,y:100};
+ assert.equal(nearestMapBand([human,undead],{x:100,y:100}),undead);
+ assert.equal(nearestMapBand([undead,human],{x:115,y:110}),human);
+ assert.equal(nearestMapBand([human,undead],{x:200,y:200}),null);
+});

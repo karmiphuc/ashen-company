@@ -1,3 +1,4 @@
+import { undeadCombatTarget } from './faction-patrols.js';
 import { worldRoute, moveWorldToward } from './world-navigation.js';
 import { ASHEN_CONFIG as C, crisisHash, campaignHour, initialAshenWinter, eligibleForAshen } from './crisis-director.js';
 import { regionAt, roadRoute, roadNetwork, WORLD_LIMITS } from './geography.js';
@@ -137,9 +138,12 @@ export function advanceAshenWinter(state, context) {
   const reserved = new Set([state.pursuit, state.destinationAction?.id, state.battle?.campId]);
   let displacement = null;
   for (const host of Object.values(crisis.hosts)) {
-    if(state.worldSkirmishes?.some(f=>f.bId===host.id))continue;
+    if(state.worldSkirmishes?.some(f=>f.aId===host.id||f.bId===host.id))continue;
     redirectRoadHost(state,host,context);
     if (reserved.has(host.id) && distance(state.position, host) <= 40) continue;
+    const atSiege=host.targetTownId&&now>=host.warningUntil&&distance(host,host.route.at(-1))<=C.hostSpeed*.25;
+    const combatTarget=!atSiege&&context.combatTargets&&undeadCombatTarget(state,host,context.combatTargets());
+    if(combatTarget){moveWorldToward(host,combatTarget,C.hostSpeed*.25);continue;}
     moveHost(host);
     if (!host.targetTownId || host.waypoint !== host.route.length || now < host.warningUntil) continue;
     const town = context.settlements.find(t => t.id === host.targetTownId), record = crisis.towns[town.id];
