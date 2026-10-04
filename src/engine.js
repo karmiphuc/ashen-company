@@ -2370,7 +2370,7 @@ function randomCamp(state, id, index, generation) {
   const offset = Math.floor(random() * pool.length);
   const enemies = Array.from({ length: count }, (_, enemyIndex) => { const enemy={ ...pool[(offset + enemyIndex) % pool.length] }; return regionalOutfit(enemy, `${state.seed}:${id}:${generation}`, enemyIndex, x, y, difficulty, {theme:ancient?'ancient':undefined}); });
   const text = ancient ? {factionId:'ancient',factionLabel:'Ancient Legion',name:`Ancient Sepulcher ${index+1}`,description:`${enemies.length} ancient guardians defend a buried legion's tomb in ${regionAt(x,y).name}.`} : worldCampText(x, y, enemies.length, index);
-  return {id,...text,...nearestWorldPoint(landmarkCampPoint(nearestWorldPoint({x,y}))),difficulty,enemies,reward:100+difficulty*95,random:true};
+  return {id,...text,...nearestWorldPoint(landmarkCampPoint(nearestWorldPoint({x,y}),state.seed,{settlements:SETTLEMENTS,roads:WORLD_ROADS,camps:CAMP_SITES})),difficulty,enemies,reward:100+difficulty*95,random:true};
 }
 
 export function getCampSites(state) {

@@ -6,7 +6,7 @@ import { WORLD_LANDMARK_ASSETS, drawWorldLandmark, drawMountainRanges, worldLand
 import { listOfflineAssets } from '../tools/build-cache.mjs';
 
 test('every landmark sprite has intact licensed provenance, PNG dimensions, and offline coverage', async()=>{
- const {assets}=JSON.parse(await readFile(new URL('../assets/world/landmark-sources.json',import.meta.url),'utf8'));
+ const assets=(await Promise.all(['landmark-sources.json','regional-scene-sources.json'].map(async name=>JSON.parse(await readFile(new URL('../assets/world/'+name,import.meta.url),'utf8')).assets))).flat();
  const offline=new Set(await listOfflineAssets());
  assert.equal(new Set(assets.map(a=>a.file)).size,assets.length);
  assert.ok(assets.every(a=>a.author!=='Cethiel'));
@@ -14,7 +14,7 @@ test('every landmark sprite has intact licensed provenance, PNG dimensions, and 
   assert.ok(!offline.has('./assets/world/landmark_'+name+'.png'));
   assert.ok(!WORLD_LANDMARK_ASSETS.includes('landmark_'+name));
  }
- assert.equal(assets.filter(a=>a.sourceType==='user-provided').length,26);
+ assert.equal(assets.filter(a=>a.sourceType==='user-provided').length,41);
 
  assert.deepEqual(new Set(assets.map(a=>a.file.split('/').at(-1).replace('.png',''))),new Set(WORLD_LANDMARK_ASSETS));
  for(const a of assets){
@@ -43,7 +43,7 @@ test('all landmark kinds and ridge palettes draw imported art with no geometric 
  for(const o of worldLandmarks(7192))drawWorldLandmark(ctx,o,7192,sprite);
  drawMountainRanges(ctx,7192,sprite);
  assert.ok(drawn.length>30);
- assert.ok(drawn.every(n=>WORLD_LANDMARK_ASSETS.includes(n)||['arms_cart','world_detail_forest_green_04','world_detail_forest_green_02'].includes(n)));
+ assert.ok(drawn.every(n=>WORLD_LANDMARK_ASSETS.includes(n)||['arms_cart',...['01','02','03','04'].map(i=>'world_detail_forest_green_'+i)].includes(n)));
  for(const name of ['pyramid','sphinx','tower','cave_forest','cave_mountain','cave_desert'])assert.ok(drawn.includes('landmark_'+name));
  for(const kind of ['green','snow','desert'])assert.ok(drawn.some(n=>n.startsWith('landmark_mountain_'+kind+'_')));
 });

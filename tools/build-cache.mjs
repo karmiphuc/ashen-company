@@ -64,12 +64,12 @@ const CORE = [
   './assets/icon.svg',
 ];
 
-async function assetFiles(directory) {
+async function assetFiles(directory, extensions = /\.(png|jpg|mp3)$/i) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async entry => {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) return assetFiles(path);
-    if (entry.isFile() && /\.(png|jpg|mp3)$/i.test(entry.name) && !/^contact[-_]sheet/i.test(entry.name)) return [path];
+    if (entry.isDirectory()) return assetFiles(path, extensions);
+    if (entry.isFile() && extensions.test(entry.name) && !/^contact[-_]sheet/i.test(entry.name)) return [path];
     return [];
   }));
   return nested.flat();
@@ -79,7 +79,9 @@ export async function listOfflineAssets() {
   const assets = (await assetFiles(join(ROOT, 'assets')))
     .map(path => './' + relative(ROOT, path).split(sep).join('/'))
     .sort();
-  return [...CORE, ...assets];
+  const runtime = (await assetFiles(join(ROOT, 'src'), /\.(js|css)$/i))
+    .map(path => './' + relative(ROOT, path).split(sep).join('/')).sort();
+  return [...new Set([...CORE, ...runtime, ...assets])];
 }
 
 export async function renderServiceWorker() {

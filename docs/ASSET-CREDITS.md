@@ -80,3 +80,11 @@ Version 0.46.9 imports 46 named weapon designs and an explicit Impaler crossbow 
 Battle terrain/camp update (v0.47.0): `assets/battle/camp-wall-01.png` through `camp-wall-07.png` and `socket-earth.png` are exact vertically flipped atlas crops from the same pinned BB source (`brushes/object_1.brush`, `brushes/terrain.brush`, `gfx/object_1.png`, `gfx/terrain.png`). `assets/battle/camp-source.json` records source bounds, crop rectangles and output SHA-256; `tools/content/import-bb-camp-art.py` reproduces them. Original art remains the property of Overhype Studios.
 
 Version 0.48.7 uses unchanged Double Mail and wolf/unhold/hyena cloak PNGs from the pinned Legends commit b014cdf8520e69b2383116d1654977e9dbb10d96. [Fur/mail provenance](../assets/fur-mail-attachments-source.json) records paths and hashes. Hyena rear cloak uses an 80% CSS scale to fit the human pawn. Heraldic Plates and Shoulders exchange their existing inventory and worn art mappings; their source PNGs remain unchanged.
+
+### Authored regional story scenes (v0.50.8)
+
+Eight non-interactive scenery compositions combine 15 additional variations from the user's supplied transparent battlefield sheet with 18 textured architecture, statue, palm and terrain sprites derived from **Wildfire Games' 0 A.D.** art at revision `61a3b9507d974084e6badb88a0826bd89a6d5b8b`, under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Derivative sprites retain that license. User-supplied artwork has separate authorization and is not represented as CC-licensed. Full source components, crop bounds, modifications and final hashes are in `assets/world/regional-scene-sources.json`.
+
+The referenced A/B Windows sheets were unavailable. The imported stone foundations, unfinished sanctuary, well, weathered statues and withered palm are credited to their actual sources; they are not described as a supplied Gothic cathedral, fountain or cottages. The removed Cethiel art remains excluded.
+
+Reproduce the architecture by running `tools/fetch-regional-scenery.py SOURCE_DIR`, then Blender with `tools/render-regional-scenery.py -- SOURCE_DIR RENDER_DIR`, then `tools/import-regional-scenery.py SOURCE_DIR RENDER_DIR USER_SHEET`. Mesh and texture hashes are pinned in `tools/regional-scenery-recipes.json`; the original prepared user sheet is required to reproduce its crop assets.

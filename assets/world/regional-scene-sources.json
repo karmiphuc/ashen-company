@@ -1,0 +1,719 @@
+{
+  "assets": [
+    {
+      "file": "assets/world/scene_ruin_house.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_ruin_house",
+            "actor": "structures/carthaginians/fndn_house.xml",
+            "mesh": "structural/kart_house_a_foundation.dae",
+            "texture": "structural/kart_struct.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "26842eb2d14a890bfaec0651bad57415f66ab3a1437974c298b8493a23cc32a0",
+            "textureSha256": "8c8eada206a62372a0fbe872afadf8d8e82577a424916173755893e2ddaae683"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 195,
+      "height": 256,
+      "bytes": 86844,
+      "sha256": "2e38a44ad437a9e6705a9c27f1e9ee3301cf3eb08d040c43a8c9d5d18c074c5e"
+    },
+    {
+      "file": "assets/world/scene_ruin_farm.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_ruin_farm",
+            "actor": "structures/carthaginians/fndn_farmstead.xml",
+            "mesh": "structural/kart_farmstead_foundation.dae",
+            "texture": "structural/kart_struct.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "7b7964b02f04ba65f5f2987020c6a35857d7bd17c7d1efe0d1d1636116d90344",
+            "textureSha256": "8c8eada206a62372a0fbe872afadf8d8e82577a424916173755893e2ddaae683"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 256,
+      "height": 248,
+      "bytes": 91119,
+      "sha256": "bdf24cbf4bbc9aff4dc83290fa4d3c2abc2872a75f654f92ae8fe6fd4adb78e5"
+    },
+    {
+      "file": "assets/world/scene_chapel.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_ruin_farm",
+            "actor": "structures/carthaginians/fndn_farmstead.xml",
+            "mesh": "structural/kart_farmstead_foundation.dae",
+            "texture": "structural/kart_struct.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "7b7964b02f04ba65f5f2987020c6a35857d7bd17c7d1efe0d1d1636116d90344",
+            "textureSha256": "8c8eada206a62372a0fbe872afadf8d8e82577a424916173755893e2ddaae683"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py. Mossy forest palette.",
+      "width": 256,
+      "height": 248,
+      "bytes": 71767,
+      "sha256": "8f6673c1d71b93f75bfc662e9a5c2f84923993376484f4fb6cb5b9a8456ebf41"
+    },
+    {
+      "file": "assets/world/scene_ruin_tower.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_ruin_tower",
+            "actor": "structures/carthaginians/fndn_defense_tower.xml",
+            "mesh": "structural/kart_defense_tower_foundation.dae",
+            "texture": "structural/kart_struct.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "a1903688b5451b64434d9117ae472bdc02390c4ba3b288ae9084ef544e72437b",
+            "textureSha256": "8c8eada206a62372a0fbe872afadf8d8e82577a424916173755893e2ddaae683"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 158,
+      "height": 256,
+      "bytes": 75433,
+      "sha256": "a867df418a73e77c69fa8196ec6c3be9953f3efa64ba08780be96915c1e1afa9"
+    },
+    {
+      "file": "assets/world/scene_frost_ruin.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_ruin_tower",
+            "actor": "structures/carthaginians/fndn_defense_tower.xml",
+            "mesh": "structural/kart_defense_tower_foundation.dae",
+            "texture": "structural/kart_struct.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "a1903688b5451b64434d9117ae472bdc02390c4ba3b288ae9084ef544e72437b",
+            "textureSha256": "8c8eada206a62372a0fbe872afadf8d8e82577a424916173755893e2ddaae683"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py. Cold northern stone palette.",
+      "width": 158,
+      "height": 256,
+      "bytes": 58220,
+      "sha256": "abaf543c33e95592217284096507aa49755c9ea063700b923e641d7116f18056"
+    },
+    {
+      "file": "assets/world/scene_charred_frame.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_charred_frame",
+            "actor": "structures/destruct_wood_3x3.xml",
+            "mesh": "props/rubble_wood_3x3.dae",
+            "texture": "props/wood_burned.png",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "5943555623768f087ed8816a344c6cf2ddee27587ef4414f3e33ca880a3fdffb",
+            "textureSha256": "62b0a00d8f4e31e9362b206c819f1e3bf8a6ab5c5bef4fcf28fa869374b14860"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 241,
+      "height": 186,
+      "bytes": 55649,
+      "sha256": "c388725cd61b211c10ff3ffb269150cf70391230c15fd9f0e10fcc13e76473d1"
+    },
+    {
+      "file": "assets/world/scene_ruin_wall.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_ruin_wall",
+            "actor": "structures/destruct_stone_wall_long.xml",
+            "mesh": "props/rubble_stone_wall_long.dae",
+            "texture": "props/rubble_stone.png",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "8bb95d17d97d76c79f529c125828546152d2df67b264c287b6f5d7864c8c93e3",
+            "textureSha256": "ce6d72f5994174a7127557ea5f806886d26b4e73a90e3cd304f7f2a7a0f51ae6"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 231,
+      "height": 111,
+      "bytes": 28758,
+      "sha256": "359c4a93fa866755090291c584e162adaa4cc6d12465cc97193300fc999a4245"
+    },
+    {
+      "file": "assets/world/scene_sanctuary.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_sanctuary",
+            "actor": "props/special/eyecandy/greek_temple_unfinished.xml",
+            "mesh": "props/temple_unfinished.dae",
+            "texture": "props/hele_tile_c.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "478c4a8dcf99f175be87f4f727a0ea1b86e4a96e6f0d9fe6da59d20f2daa2d34",
+            "textureSha256": "29ca35c15a8718c1493e09805aa00eeb71f7363cedf9d69e636dfbcf5b1afad1"
+          },
+          {
+            "name": "scene_columns",
+            "actor": "props/special/eyecandy/greek_temple_unfinished_columns.xml",
+            "mesh": "props/temple_unfinished_columns.dae",
+            "texture": "props/hele_props_a.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "602e8ed6b656c7a2b4506c958c89c34028f7dd010c5cc663b366394d0e2fad7f",
+            "textureSha256": "88a111a8bab3c9b137fc0bc74b16e8c9d3cb84a033306ed2369e8caab77a5fb1"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 256,
+      "height": 172,
+      "bytes": 34863,
+      "sha256": "e7e28b47243d090367bb0e8dac197194c6bcd2f5d673c77f363e118f25296134"
+    },
+    {
+      "file": "assets/world/scene_gravestone.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_gravestone",
+            "actor": "structures/gravestone.xml",
+            "mesh": "structural/gravestone.dae",
+            "texture": "structural/gravestone.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "9967021cefa42f22e005d8133007be52b73ce7f2c01613e2480f270538bcdd40",
+            "textureSha256": "68fd2d1260de4cee24e5af2a538f348a2c5abd922c0235727319dab06bedbb1c"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 194,
+      "height": 256,
+      "bytes": 64063,
+      "sha256": "510b1ba5c5279db14f45cceb92ebb3d9029856e22699acc8f8efe05a885b1868"
+    },
+    {
+      "file": "assets/world/scene_dead_palm.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_dead_palm",
+            "actor": "flora/trees/palm_date.xml",
+            "mesh": "gaia/tree_palm_date_c.dae",
+            "texture": "gaia/tree_palmdate_b.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "b6d21aa277e066326ac9d23ffde18e87cbad22d9fc1a7a074d23ba3bff2a876f",
+            "textureSha256": "e5d0b7bfde142848fa186154766cd3bf3ee2a2665a08c998fff6d78ea98c1e84"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 226,
+      "height": 256,
+      "bytes": 58788,
+      "sha256": "cd483b6bd036b44a5b3828d33a93198b32adb9847e157879039eac8053e24273"
+    },
+    {
+      "file": "assets/world/scene_statue.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_statue",
+            "actor": "props/special/eyecandy/statues_roman.xml",
+            "mesh": "props/rome_statue_5.dae",
+            "texture": "props/rome_cc_statues.png",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "75fd68c2e7ea99aefad5f60e51379c880ab8239bb652d2d3cd511e26807d12ca",
+            "textureSha256": "c86a6b823bb3d5598e183f5efc7584eb70b6b557bafd1b156c1d7c441a8b8620"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 109,
+      "height": 256,
+      "bytes": 29202,
+      "sha256": "53d42a866b8571237bdc535207bc65e57a7930d0c26d73b059ffeda8d2721481"
+    },
+    {
+      "file": "assets/world/scene_well.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_well",
+            "actor": "props/special/eyecandy/well_1_a.xml",
+            "mesh": "props/wrld_well_a.dae",
+            "texture": "props/wrld_well_a_1.dds",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "2a269f4f585126a93d99ac08561e60b36af9e2582da290d9222a8ad1823f16aa",
+            "textureSha256": "6f93fb7cee0ee532998c94e1a8822f77573e00cae0476bef4293c68b1a7d1f27"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 256,
+      "height": 199,
+      "bytes": 87140,
+      "sha256": "470c291735891df33be11eea931009d2891bd3619a536a0f607a96791a2f2a7c"
+    },
+    {
+      "file": "assets/world/scene_angel.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "components": [
+          {
+            "name": "scene_angel",
+            "actor": "props/special/eyecandy/statues_roman.xml",
+            "mesh": "props/rome_statue_3.dae",
+            "texture": "props/rome_cc_statues.png",
+            "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+            "meshSha256": "945cfe87bce5dfbe3eee31d6987a24c46421fc93145298171dae4523622bbf49",
+            "textureSha256": "c86a6b823bb3d5598e183f5efc7584eb70b6b557bafd1b156c1d7c441a8b8620"
+          }
+        ]
+      },
+      "changes": "Transparent textured isometric Blender render; padding trimmed, palette muted and downscaled. Statues adapted to weathered stone, preserving source shapes. Recipe: tools/render-regional-scenery.py.",
+      "width": 141,
+      "height": 256,
+      "bytes": 40864,
+      "sha256": "7b7ee198869498d93ae0c618095b13adf1f78bb70ef5b38db0c97776ec2e08c5"
+    },
+    {
+      "file": "assets/world/scene_ground_ash.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/blob/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/terrain/types/dirt_burned.dds",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "texture": "textures/terrain/types/dirt_burned.dds",
+        "sourceSha256": "cae162626ab56b947a371f482e0c6f9f99e7a4c4712b7bb02b08a88ebee94cc7"
+      },
+      "changes": "Terrain texture resized into a soft irregular transparent footprint; feathered perimeter. Recipe: tools/import-regional-scenery.py.",
+      "width": 256,
+      "height": 139,
+      "bytes": 99153,
+      "sha256": "2574f7784eeba4bd49cd05ed77c5f4b9ab7d250899e4531855e2e775043d80e3"
+    },
+    {
+      "file": "assets/world/scene_ground_moss.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/blob/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/terrain/types/temperate/forestfloor_003.png",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "texture": "textures/terrain/types/temperate/forestfloor_003.png",
+        "sourceSha256": "5d3e482779dad27ba897dcf3380fff197813a69e12face14207e5dc2401d96b5"
+      },
+      "changes": "Terrain texture resized into a soft irregular transparent footprint; feathered perimeter. Recipe: tools/import-regional-scenery.py.",
+      "width": 256,
+      "height": 139,
+      "bytes": 100522,
+      "sha256": "83cd40823a8ac719d49b31174c7c917b805a304f2dae428488efefa295054e01"
+    },
+    {
+      "file": "assets/world/scene_ground_mud.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/blob/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/terrain/types/temperate/mud_01.png",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "texture": "textures/terrain/types/temperate/mud_01.png",
+        "sourceSha256": "c143ad00938d3e2c84a109764a89eabeb991fe0ceb0cedf322c9ea0abc7af4e5"
+      },
+      "changes": "Terrain texture resized into a soft irregular transparent footprint; feathered perimeter. Recipe: tools/import-regional-scenery.py.",
+      "width": 256,
+      "height": 139,
+      "bytes": 89466,
+      "sha256": "ecc3f63cde8142a8e11fcedea19bac4a46c70775c93a4852911e12b6edc6263a"
+    },
+    {
+      "file": "assets/world/scene_ground_stone.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/blob/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/terrain/types/aegean_anatolia/paving_02.png",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "texture": "textures/terrain/types/aegean_anatolia/paving_02.png",
+        "sourceSha256": "f058c8c12425be915b2d4cd66f99fd96c4d72b74b2b9db01a2297605177c28b0"
+      },
+      "changes": "Terrain texture resized into a soft irregular transparent footprint; feathered perimeter. Recipe: tools/import-regional-scenery.py.",
+      "width": 256,
+      "height": 139,
+      "bytes": 96968,
+      "sha256": "7f56ad8a8b0014d4041e72c5ce202b5c78433a04a4ffde40319bd376aa986a80"
+    },
+    {
+      "file": "assets/world/scene_ground_frost.png",
+      "author": "Wildfire Games",
+      "source": "https://github.com/0ad/0ad/blob/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/art/textures/terrain/types/alpine_dirt_snow.dds",
+      "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "original": {
+        "revision": "61a3b9507d974084e6badb88a0826bd89a6d5b8b",
+        "texture": "textures/terrain/types/alpine_dirt_snow.dds",
+        "sourceSha256": "cf6e7d3e98723c184c2547d4e0899c8891dc8d55eaed3493ba3cfce96f8ae4e5"
+      },
+      "changes": "Terrain texture resized into a soft irregular transparent footprint; feathered perimeter. Recipe: tools/import-regional-scenery.py.",
+      "width": 256,
+      "height": 139,
+      "bytes": 99759,
+      "sha256": "a55291d872b96dbdcc1b7af3ff6540f4c54d357d8a0cc46fbaa8be11b54c7614"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_blue_back.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        786,
+        0,
+        944,
+        79
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 64,
+      "bytes": 15334,
+      "sha256": "820dcf7d7caf214237a8c638328ea10f4f15afb6e8e494ca98609969a4244542"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_blue_side.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        314,
+        316,
+        473,
+        393
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 62,
+      "bytes": 11928,
+      "sha256": "fb70a77255330c8457c1dc077d7565231b75df17374de21c6e9395dcf85cdf1a"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_green_back.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        628,
+        158,
+        785,
+        237
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 64,
+      "bytes": 15506,
+      "sha256": "17a00ef12b80bbbaf53ac14a61a572097e724410b0b321d02ba245f00e23d161"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_green_side.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        155,
+        703,
+        312,
+        784
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 66,
+      "bytes": 16068,
+      "sha256": "05c6d726ec32f9865ad94093a51fd9d8bf63741f2ce745fb21f97670f2008dbc"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_red_back.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        474,
+        392,
+        633,
+        470
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 63,
+      "bytes": 15262,
+      "sha256": "66a9348928afbe33daa32efe502516fa10dfea4e78769b3156ffc28bae3e2c5f"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_red_side.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        786,
+        869,
+        945,
+        947
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 63,
+      "bytes": 15051,
+      "sha256": "c35c5a454570080e66f0658a5aec4b3c86a8b5e89ab4348b0dbcdc4f6b4bcc17"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_mail_back.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        787,
+        156,
+        946,
+        237
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 65,
+      "bytes": 15375,
+      "sha256": "2985d95f18242abe182427ac9bfb49a097b1e00fb62425e501e94f112947b53d"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_mail_side.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        314,
+        553,
+        473,
+        631
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 63,
+      "bytes": 15901,
+      "sha256": "34ae4b6650b965d98a08ebe3b6e5af4fb7021997608bfcebf3fa30beb36a55dd"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_levy.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        314,
+        863,
+        474,
+        947
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 67,
+      "bytes": 13184,
+      "sha256": "b40dba683ea2b99800d409cb741146932f7c90d9a448d1801a8e930a003e09e2"
+    },
+    {
+      "file": "assets/world/battlefield_corpse_guard.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        946,
+        869,
+        1098,
+        947
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 66,
+      "bytes": 17000,
+      "sha256": "fd9eadb5730ae73942512a041734e809b92c154b2365c2749ad95f2658563797"
+    },
+    {
+      "file": "assets/world/battlefield_skeleton_curled.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        785,
+        394,
+        943,
+        473
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 64,
+      "bytes": 20169,
+      "sha256": "870bd371b104eaf51605ba85e4f31b6f3ddccc05e457a042f21dd7216da1814e"
+    },
+    {
+      "file": "assets/world/battlefield_bones_scattered.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        855,
+        1017,
+        1032,
+        1119
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 74,
+      "bytes": 21770,
+      "sha256": "77afd44ecc536b78db4c274f3be58f5366f951a0a5cdf0ab6173d029bf169209"
+    },
+    {
+      "file": "assets/world/battlefield_loose_sword.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        1098,
+        864,
+        1176,
+        942
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 78,
+      "height": 78,
+      "bytes": 9518,
+      "sha256": "c26fa216ebb2187a19e57260b24baa57fe434bcb8212f38dc221ccc3fbd26f57"
+    },
+    {
+      "file": "assets/world/battlefield_loose_axe.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        1180,
+        948,
+        1254,
+        1106
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 60,
+      "height": 128,
+      "bytes": 9200,
+      "sha256": "e5411fcbb0cafcb64353292e32850a2955b76af87dd9597c2f3e4d975240f36f"
+    },
+    {
+      "file": "assets/world/battlefield_ash_heap.png",
+      "sourceType": "user-provided",
+      "author": "User-provided Gemini battlefield sheet",
+      "source": "Pasted battlefield sheet supplied in chat on 2026-10-04",
+      "license": "User-provided artwork authorized for this project",
+      "original": "User-pasted battlefield sheet",
+      "preparedSheetSha256": "4d0936966b4712956eddd5e886e289e33b8c5c5c883c8505f7b1a13ef33b2245",
+      "crop": [
+        787,
+        476,
+        946,
+        631
+      ],
+      "changes": "Unused casualty, skeleton, weapon and ash variations cropped from the prepared transparent sheet; downscaled. Bodies remain small world-map details. Recipe: tools/import-regional-scenery.py.",
+      "width": 128,
+      "height": 125,
+      "bytes": 28450,
+      "sha256": "c1ea5be49ef62628cffbe59fa97eef7a51eeccb18c596b0a9061c52d49d652ec"
+    }
+  ],
+  "note": "0 A.D. derivatives retain CC BY-SA 3.0. User sheet artwork has separate provenance. A/B Windows sheets were unavailable; no artwork is attributed to them."
+}
