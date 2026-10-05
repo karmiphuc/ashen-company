@@ -140,3 +140,15 @@
 @keyframes cinematic-bite{0%,48%,100%{translate:0 0}65%,82%{translate:var(--strike-x) var(--strike-y)}}
 @keyframes cinematic-skill{0%,100%{filter:none}40%,65%{filter:brightness(1.22) drop-shadow(0 0 4px #dfbd75)}}
 @media(prefers-reduced-motion:reduce){.cinematic-action .battle-pawn,.cinematic-action .bb-layer-weapon,.cinematic-action [data-layer="mount-head"]{animation:none!important}}
+
+/* Concurrent actions keep their own timing while unrelated pawns stay mounted. */
+.simultaneous-battle .battle-unit,.simultaneous-battle .battle-unit .battle-pawn,.simultaneous-battle .battle-unit .bb-layer-weapon,
+.simultaneous-battle .battle-unit [data-layer="mount-head"],.simultaneous-battle .battle-projectile,
+.simultaneous-battle .battle-unit .battle-impact,.simultaneous-battle .battle-unit .battle-order {
+ animation-delay:var(--sim-delay,0s);
+}
+.simultaneous-battle.sim-paused *,.simultaneous-battle.sim-paused *::before,.simultaneous-battle.sim-paused *::after {animation-play-state:paused!important}
+.simultaneous-battle .sim-cinematic-attack.action-swing .bb-layer-weapon{animation:cinematic-swing var(--action-time) ease-in-out;animation-delay:var(--sim-delay,0s)}
+.simultaneous-battle .sim-cinematic-attack.action-thrust .bb-layer-weapon{animation:cinematic-thrust var(--action-time) ease-in-out;animation-delay:var(--sim-delay,0s)}
+.simultaneous-battle .battle-turn{color:#d5be88}
+.combat-beta-config{margin:12px 0;padding:10px;border:1px solid #8d7953}

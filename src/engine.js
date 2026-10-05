@@ -1,3 +1,5 @@
+import { isSimultaneousBetaEnabled } from './combat-config.js';
+import { SimultaneousPathQueue, SIM_STEP_MS, SIM_ROUND_MS, initialSimultaneousClock, simultaneousPriority, simultaneousActionDelay, markSimultaneousEffect, expireSimultaneousEffects, rememberSimultaneousEvent, validateSimultaneousClock } from './simultaneous-combat.js';
 import { revealWorld, validExploration } from './world-fog.js';
 import {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier,defaultRetinue} from './retinue.js';
 export {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier} from './retinue.js';
@@ -187,7 +189,15 @@ export function createFamedItemId(baseId, seed, rulesVersion) {
   return `${version === 1 ? 'famed' : version===2?'famed2':version===3?'famed3':'famed4'}:${baseId}:${seed}`;
 }
 
+let simultaneousItemCache = null;
+const simultaneousActionCaches = new WeakMap();
 export function getItem(id) {
+  if(simultaneousItemCache?.has(id))return simultaneousItemCache.get(id);
+  const item=resolveItem(id);
+  simultaneousItemCache?.set(id,item);
+  return item;
+}
+function resolveItem(id) {
   const base = ITEM_BY_ID.get(id);
   if (base) return base;
   if (typeof id !== 'string' || id.length > 80) return undefined;
@@ -2640,7 +2650,7 @@ function battleRoll(battle) {
 }
 
 function battleLog(battle, message) {
-  battle.log.push(`Round ${battle.round}: ${message}`);
+  battle.log.push(battle.simultaneous?`Cycle ${battle.round} · ${(battle.simultaneous.time/1000).toFixed(1)}s: ${message}`.slice(0,300):`Round ${battle.round}: ${message}`);
   if (battle.log.length > 120) battle.log.shift();
 }
 
@@ -2885,6 +2895,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   orderCompanyTurnsForFormation(battle);
   if(battle.enemyOpening)battle.turnOrder.sort((a,b)=>Number(battle.units.find(u=>u.id===b).side==='enemy')-Number(battle.units.find(u=>u.id===a).side==='enemy'));
   battle.activeId = battle.turnOrder[0];
+  if(isSimultaneousBetaEnabled())battle.simultaneous=initialSimultaneousClock(battle);
   battleLog(battle, battle.enemyOpening?`${camp.name} catch the company. Enemies act first in the opening round.`:`The company engages ${camp.name}.`);
   cancelWorldSkirmish(state,encounterId);
   state.battle = battle;
@@ -2897,6 +2908,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
 }
 
 function nextBattleTurn(battle) {
+  if(battle.simultaneous)return;
   const previous = battle.units.find(unit => unit.id === battle.activeId);
   if (previous?.overwhelmed) delete previous.overwhelmed;
   if (previous?.howlTurns > 0) previous.howlTurns -= 1;
@@ -2995,7 +3007,8 @@ function openNeighbors(battle, point, occupied) {
 }
 
 function battleMovementCost(battle, actor, from, to) {
-  if (battle.units.some(unit => unit.alive && unit.side !== actor.side && getItem(unit.equipment.mount)
+  const mounts=simultaneousActionCaches.get(battle)?.mounted??battle.units;
+  if (mounts.some(unit => unit.alive && unit.side !== actor.side && getItem(unit.equipment.mount)
     && hexDistance(from, unit) <= 1 && hexDistance(to, unit) > 1)) return Infinity;
   const cost = movementCost(battle.field, from, to);
   if (!Number.isFinite(cost)) return Infinity;
@@ -3299,10 +3312,43 @@ function rangedTerrainModifier(battle, actor, from, target) {
     + (battle.weaponSkillsVersion === 1 && !hasPerk(actor, 'bullseye') ? rangedScreenModifier(battle,from,target) : 0);
 }
 
+function simultaneousTargetPath(battle,actor,target,range,keepRangedSpace,occupied,cache) {
+  const stamp=battle.units.filter(u=>u.alive).map(u=>`${u.id}:${u.q},${u.r}`).join('|');
+  if(cache.stamp!==stamp){cache.stamp=stamp;cache.paths=new Map();}
+  const key=`${actor.id}:${actor.q},${actor.r}:${actor.side}:${hasPerk(actor,'pathfinder')}:${keepRangedSpace}`;
+  let points=cache.paths.get(key);
+  if(!points){
+    const queue=new SimultaneousPathQueue({q:actor.q,r:actor.r,path:[],cost:0});
+    const best=new Map([[`${actor.q},${actor.r}`,0]]);points=[];
+    while(queue.length){
+      const p=queue.shift();if(p.cost>best.get(`${p.q},${p.r}`))continue;
+      points.push(p);
+      for(const next of openNeighbors(battle,p,occupied)){
+        if(keepRangedSpace&&nearestEnemyDistance(battle,actor,next)<2)continue;
+        const cost=p.cost+battleMovementCost(battle,actor,p,next),id=`${next.q},${next.r}`;
+        if(cost<(best.get(id)??Infinity)){best.set(id,cost);queue.push({...next,path:[...p.path,next],cost});}
+      }
+    }
+    cache.paths.set(key,points);
+  }
+  let goal=null;
+  for(const p of points){
+    if(goal&&p.cost>goal.cost)break;
+    if(hexDistance(p,target)>range||keepRangedSpace&&nearestEnemyDistance(battle,actor,p)<2)continue;
+    const aim=keepRangedSpace?rangedTerrainModifier(battle,actor,p,target):heightHitModifier(battle.field,p,target);
+    const quality=aim+(tileAt(battle.field,p.q,p.r).terrain==='trees'?5:0);
+    if(!goal||quality>goal.quality)goal={path:p.path,cost:p.cost,quality};
+  }
+  return goal?.path??(keepRangedSpace&&hexDistance(actor,target)<=range?[]:null);
+}
+
 function pathToTarget(battle, actor, target, range, keepRangedSpace = false, flank = false, flankGoal = null) {
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
+  const cache=simultaneousActionCaches.get(battle);
+  if(cache&&!flank&&!flankGoal)return simultaneousTargetPath(battle,actor,target,range,keepRangedSpace,occupied,cache);
   const flankThreats = flank ? battle.units.filter(unit=>unit.alive && unit.side!==actor.side && unit.id!==target.id) : [];
-  const queue = [{ q: actor.q, r: actor.r, path: [], cost: 0 }];
+  const first = { q: actor.q, r: actor.r, path: [], cost: 0 };
+  const queue = battle.simultaneous ? new SimultaneousPathQueue(first) : [first];
   const best = new Map([[`${actor.q},${actor.r}`, 0]]);
   let goal = null;
   while (queue.length) {
@@ -3720,8 +3766,8 @@ export function getHeadHitChance(actor, weapon, option = null) {
 function applyOverwhelm(battle, actor, target, weapon, option) {
   if (battle.perkCombatVersion !== 1 || !hasPerk(actor, 'overwhelm') || !target.alive || actor.side === target.side || !weapon.id
     || option?.reaction || option?.freeFollowup || option?.dot || option?.id === 'split-shield'
-    || option?.areaFollowup && !option?.areaAction || target.turnStartedRound === battle.round
-    || !battle.turnOrder.slice(battle.turnIndex + 1).includes(target.id)) return;
+    || option?.areaFollowup && !option?.areaAction
+    || (battle.simultaneous ? target.ap<=0 : target.turnStartedRound === battle.round || !battle.turnOrder.slice(battle.turnIndex + 1).includes(target.id))) return;
   const stacks = target.overwhelmed?.round === battle.round ? target.overwhelmed.stacks : 0;
   target.overwhelmed = { round: battle.round, stacks: Math.min(100, stacks + 1) };
 }
@@ -3939,15 +3985,17 @@ function attackTarget(state, actor, target, weapon, option = null) {
   target.hp = Math.max(0, target.hp - hpDamage);
   if ((['knock-out', 'stunning-stone'].includes(option?.id) || option?.stunChance && battleRoll(battle)<option.stunChance) && target.hp > 0 && !target.stunProtected) {
     target.stunnedTurns = 1;
+    markSimultaneousEffect(battle,target,'stunnedTurns',1);
     target.stunProtected = true;
     if(battle.weaponCompletionVersion===1)clearWeaponStances(target);
   }
   if(battle.weaponCompletionVersion===1&&target.hp>0){
-    if(option?.daze&&(!option.woundThreshold||hpDamage>=Math.ceil(target.maxHp*option.woundThreshold))&&target.undeadTraitsVersion!==1)target.dazedTurns=option.daze;
-    if(option?.stagger)target.staggeredTurns=option.stagger;
-    if(option?.disarm){target.disarmedTurns=option.disarm;target.spearwallActive=false;target.riposteActive=false;}
-    if(option?.daze||option?.stagger){const remaining=new Set(battle.turnOrder.slice(battle.turnIndex+1));battle.turnOrder.splice(battle.turnIndex+1,remaining.size,...sortTurnOrder(battle).filter(id=>remaining.has(id)));}
+    if(option?.daze&&(!option.woundThreshold||hpDamage>=Math.ceil(target.maxHp*option.woundThreshold))&&target.undeadTraitsVersion!==1){target.dazedTurns=option.daze;markSimultaneousEffect(battle,target,'dazedTurns',option.daze);}
+    if(option?.stagger){target.staggeredTurns=option.stagger;markSimultaneousEffect(battle,target,'staggeredTurns',option.stagger);}
+    if(option?.disarm){target.disarmedTurns=option.disarm;markSimultaneousEffect(battle,target,'disarmedTurns',option.disarm);target.spearwallActive=false;target.riposteActive=false;}
+    if(!battle.simultaneous&&(option?.daze||option?.stagger)){const remaining=new Set(battle.turnOrder.slice(battle.turnIndex+1));battle.turnOrder.splice(battle.turnIndex+1,remaining.size,...sortTurnOrder(battle).filter(id=>remaining.has(id)));}
     if(option?.bleed&&hpDamage>=3&&target.undeadTraitsVersion!==1){
+      if(battle.simultaneous)target.bleedTickRound=battle.round;
       target.bleeding={damage:Math.min(18,(target.bleeding?.damage??0)+option.bleed),turns:2,sourceId:actor.id};
     }
   }
@@ -4053,6 +4101,7 @@ function performHorseCharge(state, actor, target, weapon, plan) {
   const impact = attackTarget(state, actor, target, weapon, { ...COMBAT_SKILLS.charge, ap: 0 });
   if (impact.hit && target.alive) {
     target.stunnedTurns = 1;
+    markSimultaneousEffect(battle,target,'stunnedTurns',1);
     target.stunProtected = true;
     clearWeaponStances(target);
     const destination = { q: target.q + plan.direction[0], r: target.r + plan.direction[1] };
@@ -4092,7 +4141,7 @@ function wargHowl(state, actor) {
   if (battle.mountBalanceVersion !== 1 || !actor.alive || !mount?.howlChance) return;
   const targets = battle.units.filter(unit => unit.alive && unit.side !== actor.side && hexDistance(actor, unit) <= mount.howlRadius);
   if (!targets.length || battleRoll(battle) >= mount.howlChance) return;
-  for (const target of targets) target.howlTurns = 2;
+  for (const target of targets) { target.howlTurns = 2; markSimultaneousEffect(battle,target,'howlTurns',2); }
   const message = `${actor.name}'s warg uses Howling: nearby enemies deal 20% less damage for their next 2 turns.`;
   battle.lastEvent.effects = [...(battle.lastEvent.effects ?? []), { id: 'howling', amount: 20 }];
   battle.lastEvent.message = (battle.lastEvent.message + ' Howling: nearby enemy damage −20% for 2 turns.').slice(0, 300);
@@ -5043,9 +5092,71 @@ function advanceBattleV2(state) {
   return result(true, battle.lastEvent.message);
 }
 
+function refreshSimultaneousRound(state) {
+  const battle=state.battle,clock=battle.simultaneous;
+  battle.round++;clock.roundEndsAt+=SIM_ROUND_MS;
+  battle.turnOrder=sortTurnOrder(battle);orderCompanyTurnsForFormation(battle);
+  battle.turnIndex=0;battle.activeId=battle.turnOrder[0];
+  for(const unit of battle.units){
+    delete unit.overwhelmed;
+    if(!unit.alive)continue;
+    unit.ap=9+(unit.pendingBerserkAp??0);unit.pendingBerserkAp=0;
+    unit.shieldWallActive=false;unit.spearwallActive=false;unit.riposteActive=false;
+    unit.movementCredit=Math.max(0,movementBudget(unit,battle)-2)*2;
+    if(unit.bleeding){unit.bleedTickRound=battle.round;tickBleeding(state,unit);rememberSimultaneousEvent(battle,battle.lastEvent,300);}
+  }
+  finishBattlePhase(battle);
+}
+
+// Delta is simulation milliseconds; speed and pause belong to the UI.
+export function advanceSimultaneousBattle(state,elapsedMs=SIM_STEP_MS,{maxActions=Infinity,budgetMs=Infinity}={}) {
+  const battle=state.battle,clock=battle?.simultaneous;
+  if(!clock||battle.status!=='active')return result(false,'There is no active simultaneous battle.');
+  if(!Number.isFinite(elapsedMs)||elapsedMs<0||!(maxActions>0)||!(budgetMs>0))return result(false,'Invalid battle time.');
+  if(elapsedMs===0)return {...result(true,'The battle is paused.'),actions:0};
+  const total=clock.carryMs+Math.min(elapsedMs,2000)+clock.backlogMs;
+  clock.carryMs=total%SIM_STEP_MS;
+  clock.backlogMs=Math.min(2000,Math.floor(total/SIM_STEP_MS)*SIM_STEP_MS);
+  const started=globalThis.performance?.now()??0;
+  let actions=0;
+  while((clock.backlogMs>=SIM_STEP_MS||clock.pendingIds.length)&&battle.status==='active'){
+    if(!clock.pendingIds.length){
+      if(clock.time+SIM_STEP_MS>=1000*SIM_ROUND_MS)break;
+      clock.backlogMs-=SIM_STEP_MS;clock.time+=SIM_STEP_MS;expireSimultaneousEffects(battle);
+      if(clock.time>=clock.roundEndsAt)refreshSimultaneousRound(state);
+      if(battle.status!=='active')break;
+      if(updateEnemyTactic(battle,getItem,state.supplies.ammo))battleLog(battle,`Enemy tactic changes to ${enemyBattleTactic(battle,getItem)}.`);
+      clock.pendingIds=battle.units.filter(unit=>unit.alive&&unit.ap>0&&clock.actors[unit.id].readyAt<=clock.time&&!unit.stunnedTurns).sort(simultaneousPriority).map(u=>u.id);
+    }
+    while(clock.pendingIds.length&&battle.status==='active'){
+      if(actions>=maxActions||actions>0&&(globalThis.performance?.now()??0)-started>=budgetMs)return {...result(true,battle.lastEvent?.message??'The simultaneous battle continues.'),actions};
+      const actorId=clock.pendingIds.shift(),actor=battle.units.find(u=>u.id===actorId);
+      // Earlier equal-time actions may kill or stun a fighter. Never commit a stale action.
+      if(!actor.alive||actor.ap<=0||actor.stunnedTurns)continue;
+      battle.turnIndex=battle.turnOrder.indexOf(actor.id);battle.activeId=actor.id;
+      const before=actor.ap,previous=battle.lastEvent,previousItems=simultaneousItemCache;
+      simultaneousItemCache=new Map();
+      simultaneousActionCaches.set(battle,{mounted:battle.units.filter(u=>getItem(u.equipment.mount))});
+      try { advanceBattleV2(state); }
+      finally { simultaneousItemCache=previousItems;simultaneousActionCaches.delete(battle); }
+      const event=battle.lastEvent===previous?null:battle.lastEvent;
+      const berserkRefund=event?.effects?.some(e=>e.id==='berserk'&&!e.nextTurn)?4:0;
+      const delay=simultaneousActionDelay(actor,before-actor.ap+berserkRefund,event);
+      clock.actors[actor.id].readyAt=actor.ap>0?clock.time+delay:Math.max(clock.roundEndsAt,clock.time+delay);
+      rememberSimultaneousEvent(battle,event,delay);actions++;
+      if(battle.status==='active'){
+        const active=battle.units.filter(u=>u.alive).sort(simultaneousPriority)[0];
+        battle.activeId=active.id;battle.turnIndex=battle.turnOrder.indexOf(active.id);
+      }
+    }
+  }
+  return {...result(true,battle.lastEvent?.message??'The simultaneous battle continues.'),actions};
+}
+
 export function advanceBattle(state) {
   const battle = state.battle;
   if (!battle || battle.status !== 'active') return result(false, 'There is no active battle.');
+  if(battle.simultaneous)return advanceSimultaneousBattle(state);
   if (battle.rulesVersion === 2) {
     if (updateEnemyTactic(battle,getItem,state.supplies.ammo)) battleLog(battle,`Enemy tactic changes to ${enemyBattleTactic(battle,getItem)}.`);
     return advanceBattleV2(state);
@@ -5303,7 +5414,7 @@ export function advanceBattle(state) {
 
 export function resolveBattle(state) {
   if (!state.battle || state.battle.status !== 'active') return result(false, 'There is no active battle.');
-  for (let turn = 0; turn < (state.battle.rulesVersion === 2 ? 2000 : 500) && state.battle.status === 'active'; turn++) advanceBattle(state);
+  for (let turn = 0; turn < (state.battle.rulesVersion === 2 ? 2000 : 500) && state.battle.status === 'active'; turn++) state.battle.simultaneous?advanceSimultaneousBattle(state,500):advanceBattle(state);
   return state.battle.status === 'active' ? result(false, 'The battle is still underway.') : result(true, `Battle ended in ${state.battle.status}.`);
 }
 
@@ -5808,6 +5919,8 @@ function validateBattle(input, party, worldState) {
   assert(Number.isSafeInteger(input.turnIndex) && input.turnIndex >= 0 && input.turnIndex < input.turnOrder.length, 'battle turn index');
   assert(input.status === 'active' ? input.activeId === input.turnOrder[input.turnIndex] && units.some(unit => unit.id === input.activeId && unit.alive) : input.activeId === null, 'battle active unit');
   assert(Array.isArray(input.log) && input.log.length <= 120 && input.log.every(entry => typeof entry === 'string' && entry.length <= 300), 'battle log');
+  const simultaneous=input.simultaneous===undefined?undefined:validateSimultaneousClock(input.simultaneous,units,input.round);
+  assert(simultaneous===undefined||rulesVersion===2&&input.weaponCompletionVersion===1,'simultaneous combat rules');
   const event = input.lastEvent;
   assert(event === null || (recordObject(event) && ['attack', 'move', 'hit', 'miss', 'fall', 'retreat', 'recover', 'hold', 'swap', 'use'].includes(event.type) && typeof event.message === 'string' && event.message.length <= 300 && (event.actorId === null || ids.has(event.actorId)) && (event.targetId === null || ids.has(event.targetId))), 'battle event');
   if (event?.head !== undefined) assert(typeof event.head === 'boolean', 'battle event head');
@@ -5901,6 +6014,7 @@ function validateBattle(input, party, worldState) {
     ...(input.weaponSkillsVersion === undefined ? {} : { weaponSkillsVersion }),
     ...(input.mountSkillsVersion === undefined ? {} : { mountSkillsVersion }),
     ...(input.mountBalanceVersion === undefined ? {} : { mountBalanceVersion }),
+    ...(simultaneous===undefined?{}:{simultaneous}),
     field, units, turnOrder: [...input.turnOrder], turnIndex: input.turnIndex, rng: input.rng, lootSeed,
     log: [...input.log], lastEvent: normalizedEvent,
     loot: { gold: loot.gold, food: loot.food, tools: loot.tools, medicine: loot.medicine, ammo: loot.ammo, items: [...loot.items], itemConditions: [...itemConditions] },
