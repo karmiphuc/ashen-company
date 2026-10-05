@@ -157,3 +157,35 @@ test('ephemeral event sequence survives worker restarts without replaying or sup
  globalThis.Worker=class{postMessage(data){if(data.type==='init')assert.equal(data.eventSerial,event.id);}terminate(){}};
  try{queueSimultaneousFrame(s,50);}finally{stopSimultaneousWorker();delete globalThis.Worker;}
 });
+
+test('exhausted cycles skip the empty tail only after final recovery and survive reload',()=>{
+ const s=battle(),b=s.battle;b.simultaneous.time=1000;
+ for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=1300;}
+ const affected=b.units[0];affected.howlTurns=2;markSimultaneousEffect(b,affected,'howlTurns',2);
+ const reloaded=validateSave(JSON.parse(JSON.stringify(s)));
+ for(const state of [s,reloaded]){
+  advanceSimultaneousBattle(state,250);assert.equal(state.battle.simultaneous.time,1250);assert.equal(state.battle.round,1);
+  advanceSimultaneousBattle(state,50);assert.equal(state.battle.simultaneous.time,1300);assert.equal(state.battle.round,1);
+  advanceSimultaneousBattle(state,50,{maxActions:1});assert.equal(state.battle.simultaneous.time,6000);assert.equal(state.battle.round,2);safe(state);
+ }
+ assert.deepEqual(s,reloaded);assert.equal(s.battle.simultaneous.actors[affected.id].effects.howlTurns,13000);assert.equal(s.battle.units[0].howlTurns,2);
+});
+
+test('remaining AP, timed stun and explicit pause prevent an early AP refresh',()=>{
+ const s=battle(),b=s.battle;b.simultaneous.time=1000;
+ for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=1000;}
+ const actor=b.units[0];actor.ap=2;b.simultaneous.actors[actor.id].readyAt=5000;
+ advanceSimultaneousBattle(s,250);assert.equal(b.simultaneous.time,1250);assert.equal(b.round,1);safe(s);
+ actor.ap=9;actor.stunnedTurns=1;actor.stunProtected=true;markSimultaneousEffect(b,actor,'stunnedTurns',1);b.simultaneous.actors[actor.id].readyAt=1000;
+ advanceSimultaneousBattle(s,1000);assert.equal(b.simultaneous.time,2250);assert.equal(b.round,1);assert.equal(actor.stunnedTurns,1);safe(s);
+ actor.ap=0;const before=structuredClone(s);advanceSimultaneousBattle(s,0);assert.deepEqual(s,before);
+});
+
+test('early AP refresh still applies bleeding once and supports old exhausted readiness timestamps',()=>{
+ const s=battle(),b=s.battle;b.simultaneous.time=1000;
+ for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=1000;}
+ const u=b.units[0],hp=u.hp;u.bleeding={damage:3,turns:2,sourceId:b.units.find(x=>x.side==='enemy').id};u.bleedTickRound=1;
+ advanceSimultaneousBattle(s,50,{maxActions:1});assert.equal(b.round,2);assert.equal(u.hp,hp-3);assert.equal(u.bleeding.turns,1);assert.equal(u.bleedTickRound,2);safe(s);
+ const old=battle();for(const unit of old.battle.units){unit.ap=0;old.battle.simultaneous.actors[unit.id].readyAt=6000;}
+ const restored=validateSave(JSON.parse(JSON.stringify(old)));advanceSimultaneousBattle(restored,1000);assert.equal(restored.battle.simultaneous.time,1000);safe(restored);
+});

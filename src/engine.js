@@ -1,5 +1,5 @@
 import { isSimultaneousBetaEnabled } from './combat-config.js';
-import { SimultaneousPathQueue, SIM_STEP_MS, SIM_ROUND_MS, initialSimultaneousClock, simultaneousPriority, simultaneousActionDelay, markSimultaneousEffect, expireSimultaneousEffects, rememberSimultaneousEvent, validateSimultaneousClock } from './simultaneous-combat.js';
+import { SimultaneousPathQueue, SIM_STEP_MS, SIM_ROUND_MS, initialSimultaneousClock, simultaneousPriority, simultaneousActionDelay, simultaneousEventDuration, markSimultaneousEffect, expireSimultaneousEffects, rememberSimultaneousEvent, validateSimultaneousClock } from './simultaneous-combat.js';
 import { revealWorld, validExploration } from './world-fog.js';
 import {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier,defaultRetinue} from './retinue.js';
 export {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier} from './retinue.js';
@@ -5122,6 +5122,12 @@ export function advanceSimultaneousBattle(state,elapsedMs=SIM_STEP_MS,{maxAction
   while((clock.backlogMs>=SIM_STEP_MS||clock.pendingIds.length)&&battle.status==='active'){
     if(!clock.pendingIds.length){
       if(clock.time+SIM_STEP_MS>=1000*SIM_ROUND_MS)break;
+      // End an exhausted AP cycle after its final recoveries/animations, rather
+      // than showing several seconds of an empty battlefield. Advance virtual
+      // time through the idle tail so effect expiry and cycle bookkeeping agree.
+      const living=battle.units.filter(u=>u.alive);
+      if(living.every(u=>u.ap<=0&&clock.actors[u.id].readyAt<=clock.time))
+        clock.time=Math.max(clock.time,clock.roundEndsAt-SIM_STEP_MS);
       clock.backlogMs-=SIM_STEP_MS;clock.time+=SIM_STEP_MS;expireSimultaneousEffects(battle);
       if(clock.time>=clock.roundEndsAt)refreshSimultaneousRound(state);
       if(battle.status!=='active')break;
@@ -5141,8 +5147,8 @@ export function advanceSimultaneousBattle(state,elapsedMs=SIM_STEP_MS,{maxAction
       finally { simultaneousItemCache=previousItems;simultaneousActionCaches.delete(battle); }
       const event=battle.lastEvent===previous?null:battle.lastEvent;
       const berserkRefund=event?.effects?.some(e=>e.id==='berserk'&&!e.nextTurn)?4:0;
-      const delay=simultaneousActionDelay(actor,before-actor.ap+berserkRefund,event);
-      clock.actors[actor.id].readyAt=actor.ap>0?clock.time+delay:Math.max(clock.roundEndsAt,clock.time+delay);
+      const delay=simultaneousActionDelay(actor,event?.type==='hold'?0:before-actor.ap+berserkRefund,event);
+      clock.actors[actor.id].readyAt=clock.time+(actor.ap>0?delay:Math.ceil(Math.max(delay,simultaneousEventDuration(event,delay))/SIM_STEP_MS)*SIM_STEP_MS);
       rememberSimultaneousEvent(battle,event,delay);actions++;
       if(battle.status==='active'){
         const active=battle.units.filter(u=>u.alive).sort(simultaneousPriority)[0];
