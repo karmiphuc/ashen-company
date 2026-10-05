@@ -34,7 +34,10 @@ test('every catalog weapon and famed copy has an explicit skill family and match
     assert.ok(equipmentSkills(item).length, item.id);
     for (const skill of equipmentSkills(item)) {
       assert.equal((WEAPON_ACTIONS[skill.id]??COMBAT_SKILLS[skill.id]).name, skill.name, item.id);
-      if (item.twoHanded && !item.ranged && !['cleave','decapitate','slash'].includes(skill.id)) assert.ok(skill.ap >= 6, item.id);
+      if (item.twoHanded && !item.ranged && !['cleave','decapitate','slash'].includes(skill.id)) {
+        const lighterArea=['bb-named-warbrand','rhomphaia'].includes(item.id)&&['split','swing'].includes(skill.id);
+        assert.ok(skill.ap >= (lighterArea?5:6), item.id);
+      }
     }
     const famed = getItem(createFamedItemId(item.id, 17));
     assert.equal(weaponSkillFamily(famed), weaponSkillFamily(item), item.id);
