@@ -47,7 +47,7 @@ export const PERKS = Object.freeze([
   { id: 'battle-forged', name: 'Battle Forged', description: 'Armor takes 15% less damage from hits.', minLevel: 5 },
   { id: 'nimble', name: 'Nimble', description: 'Gain +5 melee and ranged defense when armor and helmet fatigue total at most 15.', minLevel: 4 },
   { id: 'reach-advantage', name: 'Reach Advantage', description: 'Gain +5 melee defense while wielding a two-handed melee weapon.', minLevel: 4 },
-  { id: 'duelist', name: 'Duelist', description: 'Deal 12% more melee damage with a one-handed weapon and no shield.', minLevel: 4 },
+  { id: 'duelist', name: 'Duelist', description: 'Deal 12% more melee damage with a one-handed weapon and an empty offhand or buckler.', minLevel: 4 },
   { id: 'opportunist', name: 'Opportunist', description: 'Deal 10% more melee damage to enemies without a shield.', minLevel: 4 },
   { id: 'last-stand', name: 'Last Stand', description: 'Gain +8 melee and ranged defense while at or below half health.', minLevel: 5 },
   { id: 'marksman', name: 'Marksman', description: 'Gain +8 hit chance with ranged attacks from at least three hexes away.', minLevel: 3 },

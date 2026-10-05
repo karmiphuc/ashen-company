@@ -14,7 +14,7 @@ Astra reviewed the plan once before implementation. The named weapon `onEquip()`
 - Cudgel dazes for two owner turns: −25% damage, fatigue capacity and initiative. Smite/Shatter/Repel stagger for one owner turn: −50% initiative. Remaining turn order and initiative-dependent Dodge/Lunge respond immediately; original stats remain intact.
 - Cleave/Decapitate/Rupture wounds inflict 3 bleeding health per owner turn; Whip inflicts 6. Repeated wounds stack to 18 and refresh two turns. Explicit undead troops resist bleeding/daze. Bleeding uses ordinary death, morale and killer XP/perk handling without attack AP, fatigue, ammo, reload or mount attacks.
 - Repel and Impaler push surviving targets to a legal neighboring hex farther from the attacker, canceling stances. Terrain, occupancy and height checks share existing shield displacement rules.
-- Warbrand and 2H cleaver basics cost 4 AP before mastery. Spetum Spearwall costs 6 AP / 35 fatigue before mastery and guards its two-hex boundary. Reload remains an automatic combat action.
+- Warbrand and 2H cleaver basics cost 4 AP before mastery. Warbrand and Rhomphaia Split/Swing cost 5 AP; Rhomphaia retains Reap alongside these attacks. Riposte costs 2 AP. Goedendag Knock Out deals 75% normal damage while other mace Knock Out attacks remain at 50%. Duelist works with an empty offhand or a buckler, including named bucklers. Spetum Spearwall costs 6 AP / 35 fatigue before mastery and guards its two-hex boundary. Reload remains an automatic combat action.
 
 ## Deliberate adaptations and remaining fidelity work
 
@@ -26,7 +26,7 @@ Follow-up candidates: location-specific injury rules, net/root eligibility, fall
 
 | Weapon | Combat profile | Actions (AP before mastery) |
 | --- | --- | --- |
-| arming-sword | sword | Slash (4), Riposte (4) |
+| arming-sword | sword | Slash (4), Riposte (2) |
 | spear | spear | Thrust (4), Spearwall (4) |
 | wood-axe | axe | Chop (4), Split Shield (4) |
 | bludgeon | mace | Bash (4), Knock Out (4) |
@@ -34,7 +34,7 @@ Follow-up candidates: location-specific injury rules, net/root eligibility, fall
 | billhook | billhook | Strike (6), Hook (6) |
 | hunting-bow | bow | Quick Shot (4), Aimed Shot (7) |
 | light-crossbow | crossbow | Shoot Bolt (3), Piercing Bolt (3) |
-| falchion | sword | Slash (4), Riposte (4) |
+| falchion | sword | Slash (4), Riposte (2) |
 | fighting-spear | spear | Thrust (4), Spearwall (4) |
 | military-cleaver | cleaver | Cleave (4), Decapitate (4) |
 | flail | flail | Flail (4), Lash (4) |
@@ -69,7 +69,7 @@ Follow-up candidates: location-specific injury rules, net/root eligibility, fall
 | composite-bow | bow | Quick Shot (4), Aimed Shot (7) |
 | throwing-spears | javelin | Throw Javelin (4), Power Throw (4) |
 | fighting-knife | dagger | Stab (3), Puncture (4) |
-| rhomphaia | scythe | Strike (6), Reap (6) |
+| rhomphaia | rhomphaia | Strike (6), Reap (6), Split (5), Swing (5) |
 | reinforced-crossbow | crossbow | Shoot Bolt (3), Piercing Bolt (3) |
 | military-spear | spear | Thrust (4), Spearwall (4) |
 | longsword | greatsword | Overhead Strike (6), Split (6), Swing (6), Split Shield (6) |
@@ -91,7 +91,7 @@ Follow-up candidates: location-specific injury rules, net/root eligibility, fall
 | bb-named-dagger | dagger | Stab (3), Puncture (4) |
 | bb-named-fencing-sword | fencing | Slash (4), Lunge (4) |
 | bb-named-flail | flail | Flail (4), Lash (4) |
-| bb-named-goblin-falchion | sword | Slash (4), Riposte (4) |
+| bb-named-goblin-falchion | sword | Slash (4), Riposte (2) |
 | bb-named-goblin-heavy-bow | bow | Quick Shot (4), Aimed Shot (7) |
 | bb-named-goblin-pike | goblinpike | Rupture (6), Repel (6) |
 | bb-named-goblin-spear | spear | Thrust (4), Spearwall (4) |
@@ -113,7 +113,7 @@ Follow-up candidates: location-specific injury rules, net/root eligibility, fall
 | bb-named-skullhammer | heavyhammer | Smite (6), Shatter (6), Split Shield (6) |
 | bb-named-spear | spear | Thrust (4), Spearwall (4) |
 | bb-named-spetum | spetum | Prong (6), Spearwall (6) |
-| bb-named-sword | sword | Slash (4), Riposte (4) |
+| bb-named-sword | sword | Slash (4), Riposte (2) |
 | bb-named-swordlance | scythe | Strike (6), Reap (6) |
 | bb-named-three-headed-flail | threeflail | Cascade (4), Hail (4) |
 | bb-named-throwing-axe | throwingaxe | Throw Axe (4), Power Throw (4) |
@@ -123,7 +123,7 @@ Follow-up candidates: location-specific injury rules, net/root eligibility, fall
 | bb-named-two-handed-scimitar | heavycleaver | Cleave (4), Decapitate (4), Split Shield (6) |
 | bb-named-two-handed-spiked-mace | heavymace | Cudgel (6), Strike Down (6), Split Shield (6) |
 | bb-named-warbow | bow | Quick Shot (4), Aimed Shot (7) |
-| bb-named-warbrand | warbrand | Slash (4), Split (6), Swing (6) |
+| bb-named-warbrand | warbrand | Slash (4), Split (5), Swing (5) |
 | bb-named-warhammer | hammer | Hammer (4), Crush Armor (4) |
 | bb-named-warscythe | scythe | Strike (6), Reap (6) |
 | impaler | impaler | Impaler Bolt (3), Piercing Bolt (3) |
