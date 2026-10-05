@@ -1,4 +1,10 @@
-# Verification - version 0.48.0, 2026-10-03
+# Verification
+
+## v0.53.0 temporary injury checks — 2026-10-05
+
+The final full Node run completed with 1,138 passing tests out of 1,149. All 11 failures were reproduced on unchanged main at `31c4988`; their failure names match exactly. They concern portrait/weapon/mount geometry, progression fixtures, and an outdated reserve-shield UI expectation. PR auto-merge remains disabled while these baseline failures persist.
+
+All 51 focused injury, weapon and mount checks passed, including 21 new injury tests covering thresholds, wound effects, AP costs, bleeding, daily medicine, recovery, treatment, perks, legacy saves and strict save validation. Chromium checks at 1400, 768 and 390 pixels passed for wound hints, Doctor treatment, save/load, overflow and combat icons, with no browser errors. Offline cache generation and whitespace checks passed. Permanent-injury survival remains outside this temporary-injury phase.
 
 ## v0.48.0 Ashen Winter checks
 
