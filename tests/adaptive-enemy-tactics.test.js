@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createGame,getCampSites,startBattle,advanceBattle,validateSave,getItem,shieldMaximum,setBattleTactic,resolveBattle} from '../src/engine.js';
-import {enemyBattleTactic,recommendEnemyTactic,updateEnemyTactic,ENEMY_TACTIC_COOLDOWN} from '../src/tactical-ai.js';
+import {enemyBattleTactic,enemyUnitTactic,recommendEnemyTactic,updateEnemyTactic,ENEMY_TACTIC_COOLDOWN} from '../src/tactical-ai.js';
 import {hexDistance,tileAt} from '../src/battle-terrain.js';
 import {battleHTML} from '../src/battle-view.js';
 
@@ -102,7 +102,9 @@ test('enemy skirmish sorties persist through reload and fall back after shooting
 test('incoming hits and misses latch recent ranged pressure without depending on the last animation event',()=>{
  const f=fixture();step(f,f.company[0]);assert.ok(['attack','miss'].includes(f.b.lastEvent.type));
  assert.equal(f.b.enemyTacticalState.lastRangedAttackRound,1);const plan=structuredClone(f.b.enemyTacticalState);
- step(f,f.front);assert.equal(f.b.lastEvent.type,'hold');assert.deepEqual(f.b.enemyTacticalState,plan);
+ assert.equal(enemyUnitTactic(f.b,f.front,getItem),'shield-wall');
+ step(f,f.front);assert.equal(f.b.lastEvent.skillName,'Shieldwall');assert.deepEqual(f.b.enemyTacticalState,plan);
+ const before=hexDistance(f.front,f.company[0]);assert.equal(step(f,f.front).type,'move');assert.ok(hexDistance(f.front,f.company[0])<before);
  refresh(f);assert.equal(f.b.enemyTacticalState.lastRangedAttackRound,1);
 });
 
@@ -128,4 +130,59 @@ test('adaptive camp battles resolve identically with stepped reloads and instant
   }
   assert.notEqual(loaded.battle.status,'active');assert.deepEqual(loaded,instant);
  }
+});
+
+test('nearby infantry counteradvance immediately even with enough archers to retain army defense',()=>{
+ const f=fixture();for(const [i,u] of f.foes.slice(2).entries())Object.assign(u,{q:8,r:7+i*2});
+ assert.equal(recommendEnemyTactic(f.b,getItem,f.s.supplies.ammo),'defense');
+ const original={q:f.front.q,r:f.front.r};step(f,f.company[0]);
+ assert.ok(f.front.rangedProvocation,'shooting the line alerts nearby infantry, even when an archer is the target');
+ const pressure=structuredClone(f.front.rangedProvocation);refresh(f);assert.deepEqual(f.front.rangedProvocation,pressure);
+ assert.equal(enemyBattleTactic(f.b,getItem),'defense');assert.equal(step(f,f.front).skillName,'Shieldwall');
+ assert.equal(step(f,f.front).type,'move');assert.equal(hexDistance(original,f.front),1);
+ assert.equal(enemyBattleTactic(f.b,getItem),'defense');assert.equal(f.b.enemyTacticalState.lastChangedRound,1);
+ assert.deepEqual(validateSave(structuredClone(f.s)),f.s);
+});
+test('unshielded nearby melee advances under fire instead of holding the defense or skirmish line',()=>{
+ for(const tactic of ['defense','skirmish']){
+  const f=fixture(false);f.b.enemyTacticalState.tactic=tactic;step(f,f.company[0]);
+  const before=Math.min(...f.company.map(u=>hexDistance(u,f.front)));
+  assert.equal(enemyUnitTactic(f.b,f.front,getItem),'offense');
+  assert.equal(step(f,f.front).type,'move');assert.ok(Math.min(...f.company.map(u=>hexDistance(u,f.front)))<before);
+  assert.equal(enemyBattleTactic(f.b,getItem),tactic);assert.deepEqual(validateSave(structuredClone(f.s)),f.s);
+ }
+});
+test('a recent miss provokes nearby melee too, and the response survives unrelated events',()=>{
+ let missed=false;
+ for(let rng=1;rng<=20&&!missed;rng++){
+  const f=fixture(false);f.company[0].rangedSkill=0;for(const u of f.foes)u.rangedDefense=300;f.b.rng=rng;
+  step(f,f.company[0]);if(f.b.lastEvent.type!=='miss')continue;missed=true;
+  assert.ok(f.front.rangedProvocation);f.b.lastEvent={...f.b.lastEvent,type:'hold',projectile:null,ranged:false};
+  refresh(f);assert.equal(step(f,f.front).type,'move');
+ }
+ assert.ok(missed,'fixture must exercise an actual missed projectile');
+});
+test('provocation expires, does not reach distant infantry, and leaves ranged defenders holding',()=>{
+ const f=fixture();step(f,f.company[0]);
+ assert.equal(f.foes.at(-1).rangedProvocation,undefined);assert.equal(enemyUnitTactic(f.b,f.archer,getItem),'defense');
+ f.b.round=4;assert.equal(enemyUnitTactic(f.b,f.front,getItem),'defense');
+ f.b.round=1;f.front.rangedProvocation={sourceId:f.company[0].id,round:1};f.company[0].alive=false;f.company[0].hp=0;
+ assert.equal(enemyUnitTactic(f.b,f.front,getItem),'defense');f.company[0].alive=true;f.company[0].hp=f.company[0].maxHp;
+ Object.assign(f.company[0],{q:0,r:0});assert.equal(enemyUnitTactic(f.b,f.front,getItem),'defense');
+});
+test('ranged provocation validates its side, source and timestamp without mutating imported saves',()=>{
+ const f=fixture();step(f,f.company[0]);
+ for(const pressure of [{sourceId:f.front.id,round:1},{sourceId:'missing',round:1},{sourceId:f.company[0].id,round:0},{sourceId:f.company[0].id,round:2},{sourceId:f.company[0].id,round:1,extra:true}]){
+  const bad=structuredClone(f.s);bad.battle.units.find(u=>u.id===f.front.id).rangedProvocation=pressure;
+  const snapshot=structuredClone(bad);assert.throws(()=>validateSave(bad),/ranged provocation/);assert.deepEqual(bad,snapshot);
+ }
+ const legacy=structuredClone(f.s);for(const u of legacy.battle.units)delete u.rangedProvocation;
+ assert.deepEqual(validateSave(legacy),legacy);
+});
+test('provoked melee still stages safely when remaining AP cannot pay for an approach and attack',()=>{
+ const f=fixture(false);step(f,f.company[0]);
+ f.company[0].equipment.weapon='arming-sword';for(const u of f.company.slice(1)){u.alive=false;u.hp=0;}
+ Object.assign(f.front,{q:6,r:8,ap:2,turnStartedRound:1,tacticalRole:'flanker'});
+ const origin={q:f.front.q,r:f.front.r};step(f,f.front);assert.deepEqual({q:f.front.q,r:f.front.r},origin);
+ assert.ok(f.front.ap>=0);assert.ok(f.front.fatigue<=f.front.maxFatigue);
 });

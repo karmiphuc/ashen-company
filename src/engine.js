@@ -34,7 +34,7 @@ import { settlementAccess } from './settlement-access.js';
 import { UNDEAD_TYPES, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
 import { COMBAT_SKILLS, WEAPON_ACTIONS, equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
-import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, isAffordableAction, rankTacticalActions, enemyBattleTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
+import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, isAffordableAction, rankTacticalActions, enemyBattleTactic, enemyUnitTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
 
 export { PERKS } from './perks.js';
 
@@ -3483,7 +3483,7 @@ function skirmishReturnPath(battle, actor) {
 
 function returnSkirmisher(state, actor) {
   const battle=state.battle,plan=actor.skirmishReturn;
-  if ((actor.side==='enemy' ? enemyBattleTactic(battle,getItem) : battle.tactic)!=='skirmish' || actor.ally || !plan) return null;
+  if (combatCommand(battle,actor)!=='skirmish' || actor.ally || !plan) return null;
   const weapon=getItem(actor.equipment.weapon);
   if (plan.phase==='aim' && (roleRules(battle)&&actor.disarmedTurns || !battleWeaponHasAmmo(state,actor,weapon) || actor.reload>0
     || actor.fatigue+attackFatigueCost(actor,weapon,battle)>tacticalFatigueLimit(battle,actor))) plan.phase='return';
@@ -3508,7 +3508,7 @@ function returnSkirmisher(state, actor) {
 function skirmishPosition(state, actor, enemies, weapon, ammunitionSpent) {
   const battle=state.battle;
   if (roleRules(battle) && actor.tacticalRole==='flanker') return null;
-  if (actor.ally || (actor.side==='enemy' ? enemyBattleTactic(battle,getItem) : battle.tactic)!=='skirmish' || ammunitionSpent || !skirmishFireSupport(state,actor.side)) return null;
+  if (actor.ally || combatCommand(battle,actor)!=='skirmish' || ammunitionSpent || !skirmishFireSupport(state,actor.side)) return null;
   const nearest=nearestEnemyDistance(battle,actor,actor);
   const occupied=new Set(battle.units.filter(u=>u.alive && u.id!==actor.id).map(u=>`${u.q},${u.r}`));
   if (skirmishLineDuty(state,actor)) {
@@ -3812,8 +3812,13 @@ function attackTarget(state, actor, target, weapon, option = null) {
   if(battle.weaponCompletionVersion===1&&battle.weaponSkillsVersion===1&&!option?.id)option={...equipmentSkills(weapon)[0],...option};
   if(!option?.strikeFollowup&&(option?.hits>1||option?.oppositeHit))return attackMultiple(state,actor,target,weapon,option);
   const ranged = weapon.ranged === true;
-  if (battle.enemyAdaptiveRulesVersion===1 && ranged && actor.side==='company' && target.side==='enemy')
+  if (battle.enemyAdaptiveRulesVersion===1 && ranged && !option?.dot && actor.side==='company' && target.side==='enemy') {
     battle.enemyTacticalState.lastRangedAttackRound=battle.round;
+    // Hits and near misses alert the target's nearby infantry, including when an ally fires.
+    for (const defender of battle.units) if (defender.side==='enemy' && defender.alive && !defender.escaped
+      && hexDistance(defender,target)<=2 && hexDistance(defender,actor)<=7)
+      defender.rangedProvocation={sourceId:actor.id,round:battle.round};
+  }
   if (!option?.reaction && !option?.areaFollowup) {
     if (weapon.throwing) actor.throwingAmmo.active = Math.max(0, actor.throwingAmmo.active - 1);
     else if (ranged && actor.side === 'company' && !actor.ally) state.supplies.ammo = Math.max(0, state.supplies.ammo - 1);
@@ -4264,7 +4269,7 @@ function combatInitiative(unit){return unit.initiative*(unit.staggeredTurns>0?.5
 function availableFatigue(unit){return unit.maxFatigue*(unit.dazedTurns>0?.75:1);}
 
 function roleRules(battle){return battle?.roleConsistencyVersion===1&&battle.weaponSkillsVersion===1;}
-function combatCommand(battle,actor){return actor.side==='enemy'?enemyBattleTactic(battle,getItem):actor.ally?'offense':battle.tactic;}
+function combatCommand(battle,actor){return actor.side==='enemy'?enemyUnitTactic(battle,actor,getItem):actor.ally?'offense':battle.tactic;}
 function tacticalFatigueLimit(battle,actor){return roleRules(battle)?availableFatigue(actor):actor.maxFatigue;}
 function canAfford(battle,actor,apCost,fatigueCost){return isAffordableAction({...actor,maxFatigue:tacticalFatigueLimit(battle,actor)},{apCost,fatigueCost});}
 function canFireAfterMove(state,actor,weapon,point,moveAp=0,moveFatigue=0){
@@ -4459,7 +4464,7 @@ function advanceBattleV2(state) {
   const skillFamily = battle.weaponSkillsVersion === 1 && !noAmmo ? weaponSkillFamily(weapon) : null;
   const candidates = [];
   const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
-  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
+  const companyTactic = combatCommand(battle,actor);
   const skirmishMoveResult=skirmishPosition(state,actor,enemies,weapon,ammunitionSpent);
   if (skirmishMoveResult) return skirmishMoveResult;
   if (rangedAI && spacingWeapon && (!wingDuty || nearest<=1) && (companyTactic!=='skirmish' || nearest<=1)) {
@@ -5025,7 +5030,7 @@ export function advanceBattle(state) {
           - rangedTerrainModifier(battle, actor, actor, b.target) : 0)
       || hexDistance(actor, a.target) - hexDistance(actor, b.target) || a.target.id.localeCompare(b.target.id));
   if (actor.side === 'company' && battle.focusTargetId && !enemies.some(enemy => enemy.id === battle.focusTargetId)) battle.focusTargetId = null;
-  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
+  const companyTactic = combatCommand(battle,actor);
   let choice = targets[0];
   if (companyTactic === 'focus') {
     const shared = targets.find(entry => entry.target.id === battle.focusTargetId);
@@ -5592,6 +5597,10 @@ function validateBattle(input, party, worldState) {
     for (const key of ['spearwallActive', 'riposteActive', 'stunProtected'])
       assert(unit[key] === undefined || weaponSkillsVersion === 1 && typeof unit[key] === 'boolean', `battle ${key}`);
     for(const key of ['dazedTurns','staggeredTurns','disarmedTurns'])assert(unit[key]===undefined||input.weaponCompletionVersion===1&&validCount(unit[key])&&unit[key]<=(key==='dazedTurns'?2:1),`battle ${key}`);
+    if(unit.rangedProvocation!==undefined)assert(input.enemyAdaptiveRulesVersion===1 && unit.side==='enemy'
+      && recordObject(unit.rangedProvocation) && Object.keys(unit.rangedProvocation).sort().join(',')==='round,sourceId'
+      && validCount(unit.rangedProvocation.round) && unit.rangedProvocation.round>=1 && unit.rangedProvocation.round<=input.round
+      && input.units.some(source=>source.side==='company' && source.id===unit.rangedProvocation.sourceId),'battle ranged provocation');
     assert(unit.bleedTickRound===undefined||input.weaponCompletionVersion===1&&validCount(unit.bleedTickRound)&&unit.bleedTickRound<=input.round,'battle bleed tick');
     if(unit.bleeding!==undefined)assert(input.weaponCompletionVersion===1&&recordObject(unit.bleeding)&&Object.keys(unit.bleeding).sort().join(',')==='damage,sourceId,turns'&&validCount(unit.bleeding.damage)&&unit.bleeding.damage>=1&&unit.bleeding.damage<=18&&[1,2].includes(unit.bleeding.turns)&&input.units.some(x=>x.id===unit.bleeding.sourceId),'battle bleeding');
     assert(unit.stunnedTurns === undefined || weaponSkillsVersion === 1 && validCount(unit.stunnedTurns) && unit.stunnedTurns <= 1, 'battle stun');
@@ -5627,6 +5636,7 @@ function validateBattle(input, party, worldState) {
       ...(unit.champion?{champion:true,championItemId:unit.championItemId}:{}),
       ...Object.fromEntries(['dazedTurns','staggeredTurns','disarmedTurns','bleedTickRound'].filter(key=>unit[key]!==undefined).map(key=>[key,unit[key]])),
       ...(unit.bleeding===undefined?{}:{bleeding:{...unit.bleeding}}),
+      ...(unit.rangedProvocation===undefined?{}:{rangedProvocation:{...unit.rangedProvocation}}),
       ...(unit.howlTurns === undefined ? {} : { howlTurns: unit.howlTurns }),
       ...(unit.fleeRollRound === undefined ? {} : { fleeRollRound: unit.fleeRollRound }),
       ...(unit.firstFleeRound===undefined?{}:{firstFleeRound:unit.firstFleeRound}),
