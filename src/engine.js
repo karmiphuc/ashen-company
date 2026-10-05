@@ -22,7 +22,7 @@ import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.
 import { enemyProgression, enemyRosterSize } from './enemy-progression.js';
 import { getRegionalCampText } from './enemy-rosters.js';
 import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk, weaponTrainingVisual } from './perks.js';
-import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile, makeTalents, talentGain } from './recruits.js';
+import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile, makeRecruitName, makeTalents, talentGain } from './recruits.js';
 import { BOUNTY_HUNTER_COST, discoveryEvent, discoveryBonuses, championRoster, bountyOffer } from './discovery.js';
 import { deserterOffer, deserterEncounter, deserterEquipmentReward } from './deserters.js';
 import { ARMORY_STOCK_VERSION, townFacilities, townArmoryBudget, townDesign } from './town-facilities.js';
@@ -2273,12 +2273,14 @@ function recruitOfferDay(id) {
   return match && TOWN_BY_ID.has(match[1]) ? Number(match[2]) : null;
 }
 
-function recruitPerson(state, town, slot) {
+function recruitPerson(state, town, slot, usedNames = []) {
   const profile = makeRecruitProfile(state.seed, town.id, state.day, slot, town.kind);
   const background = RECRUIT_BACKGROUND_BY_ID.get(profile.backgroundId);
+  const regionId=regionAt(town.x,town.y).id;
+  const culture=regionId==='northern-highlands'?'northern':['sunlands','saffron-coast'].includes(regionId)?'southern':'western';
   const person = normalizeMember({
     id: `recruit-${town.id}-${state.day}-${slot}`,
-    name: profile.name,
+    name: state.party.find(p=>p.id===`recruit-${town.id}-${state.day}-${slot}`)?.name ?? makeRecruitName(profile.personSeed,background.id,{culture,usedNames}),
     background: background.name,
     backgroundId: background.id,
     ...(background.appearanceId ? { appearanceId: background.appearanceId } : {}),
@@ -2296,7 +2298,10 @@ export function getRecruitOffers(state) {
   const town = townAt(state);
   if (!town || townBlocked(state, town.id)) return [];
   const consumed = new Set(state.hiredRecruitOffers ?? []);
-  return Array.from({ length: SETTLEMENT_TYPES[town.kind].hires }, (_, slot) => recruitPerson(state, town, slot))
+  const slots=SETTLEMENT_TYPES[town.kind].hires;
+  const boardIds=new Set(Array.from({length:slots},(_,slot)=>`recruit-${town.id}-${state.day}-${slot}`));
+  const usedNames=state.party.filter(p=>!boardIds.has(p.id)).map(p=>p.name);
+  return Array.from({ length: slots }, (_, slot) => {const offer=recruitPerson(state,town,slot,usedNames);usedNames.push(offer.person.name);return offer;})
     .filter(offer => !consumed.has(offer.id))
     .map(offer => ({
       ...offer,
