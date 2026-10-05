@@ -2,7 +2,7 @@ import { getNightHitPenalty } from './engine.js';
 import { BATTLE_PROJECTION, tilePosition, elevationFaces } from './battle-geometry.js';
 import { enemyBattleTactic, ENEMY_TACTIC_COOLDOWN } from './tactical-ai.js';
 import { weaponSkillFamily } from './combat-skills.js';
-import { getEquipment, getItem, getMoraleEffects, isMoraleImmune, shieldMaximum } from './engine.js';
+import { getEquipment, getItem, getDoubleGripBonus, getMoraleEffects, isMoraleImmune, shieldMaximum } from './engine.js';
 import { portraitHTML, portraitWeaponAnchor, portraitGroundAnchor, itemImage } from './portraits.js';
 
 const LEGACY_FIELD = { columns: 10, rows: 5, biome: 'grassland', tiles: [] };
@@ -157,6 +157,7 @@ function perkEffectsHTML(effects) {
 
 function statusIconsHTML(unit, battle) {
   const statuses = [
+    unit.alive && battle.weaponCompletionVersion===1 && getDoubleGripBonus(unit)>0 ? ['double-grip','Double Grip: +25% one-handed melee damage with an empty offhand','<path d="M3 2h2v5l2 2 2-2V2h2v6l-3 5H6L3 8z"/>'] : null,
     unit.disarmedTurns>0?['disarmed','Disarmed: weapon attacks and reactions disabled for one turn','<path d="m2 2 12 12M3 12l9-9"/>']:null,
     unit.dazedTurns>0?['dazed','Dazed: −25% damage, fatigue capacity and initiative for '+unit.dazedTurns+' turns','<circle cx="8" cy="8" r="5"/>']:null,
     unit.staggeredTurns>0?['staggered','Staggered: −50% initiative for one turn','<path d="m3 3 10 10M13 3 3 13"/>']:null,

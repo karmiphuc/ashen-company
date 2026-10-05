@@ -92,3 +92,9 @@ Reproduce the architecture by running `tools/fetch-regional-scenery.py SOURCE_DI
 ### User-supplied wilderness ruins (v0.50.9)
 
 Eight building sprites are cropped from `Gemini_Generated_Image_3wfjv23wfjv23wfj.jpg`, attached by the user: ruined manor, clocktower, cathedral, chapel, windmill, house, fortress and town hall. The uniform gray background was removed through image editing; neighbouring atlas fragments were excluded, and sprites were resized for the world map. This is user-provided project artwork, not attributed to the unrelated free-asset packs. Preparation hash, crop bounds, final dimensions and file hashes are recorded in `assets/world/user-ruin-sources.json`; the crop recipe is `tools/import-user-ruins.py`.
+
+Version 0.50.28 corrects Direwolf Fur to the pinned Legends
+`inventory_cloak_pelt_wolf_dire_01.png` and corresponding front/back worn
+layers. These unchanged source PNGs include the wolf's head. The rear layer
+uses 85% CSS scale to fit the portrait. Exact source paths and hashes are in
+[fur/mail provenance](../assets/fur-mail-attachments-source.json).

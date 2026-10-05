@@ -56,6 +56,7 @@ export function getItemDetails(item, condition) {
       { label: 'Attack fatigue', value: String(Math.max(0,(equipmentSkills(item)[0]?.fatigue ?? item.fatigueCost ?? (ranged ? 9 : 11))+(item.fatigueOnSkillUse??0))) },
       { label: 'Hands', value: item.twoHanded ? 'Two; shield stowed' : 'One; shield allowed' },
     );
+    if (!ranged && !item.twoHanded) notes.push('Double Grip: +25% damage while the offhand is empty. An equipped shield, including a broken shield, prevents this bonus. Stacks with Duelist.');
     if (ranged) {
       stats.push({ label: 'Ammunition', value: item.throwing ? '1 bundle charge per throw' : '1 per shot' });
       if (item.throwing) stats.push({ label: 'Bundle throws', value: `${Number.isFinite(condition) ? Math.max(0, Math.min(throwingCapacity(item), condition)) : throwingCapacity(item)} / ${throwingCapacity(item)}` });

@@ -59,6 +59,13 @@ test('Heraldic inventory and worn front/back assets are swapped together',()=>{
 
 test('new mail and pelt assets match their pinned source bytes',()=>{
  const manifest=JSON.parse(readFileSync(new URL('../assets/fur-mail-attachments-source.json',import.meta.url),'utf8'));
- assert.equal(manifest.assets.length,10);
+ assert.equal(manifest.assets.length,11);
  for(const asset of manifest.assets){const bytes=readFileSync(new URL('../'+asset.local,import.meta.url));assert.equal(bytes.length,asset.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),asset.sha256);}
+});
+
+test('Direwolf Fur uses the wolf-headed direwolf pelt icon and both worn layers',()=>{
+ const manifest=JSON.parse(readFileSync(new URL('../assets/fur-mail-attachments-source.json',import.meta.url),'utf8'));
+ const assets=manifest.assets.filter(a=>a.itemId==='direwolf-fur');assert.equal(assets.length,3);assert.ok(assets.every(a=>a.source.includes('cloak_pelt_wolf_dire_01')));
+ const item=ARMOR_ATTACHMENTS.find(i=>i.id==='direwolf-fur'),html=portraitHTML(PERSON,{armor:ARMOR,attachment:item});
+ assert.match(html,/attachment-direwolf-fur.png/);assert.match(html,/attachment-direwolf-fur-back.png/);assert.ok(layerIndex(html,'attachment-back')<layerIndex(html,'attachment-front'));
 });

@@ -44,3 +44,13 @@ one new opponent; wounded fighters and approaches into multiple new melee
 threats still require the attack budget. Already-engaged fighters remain free
 to attack or move without being forced to retreat. Legacy battles keep their
 previous approach policy.
+
+Double Grip automatically multiplies one-handed melee weapon damage by 1.25
+when the active offhand is empty. It applies to ordinary/named weapons, weapon
+skills and weapon reactions for all factions, and is included in AI damage
+predictions. It stacks multiplicatively with Duelist (1.25 × 1.12 = 1.40).
+Ranged/throwing weapons, two-handed weapons, unarmed attacks, mount bites and
+fixed damage do not receive it. Equipped shields, including broken shields,
+prevent Double Grip; reserve shields do not. Eligibility updates on weapon
+swaps without saving an extra stat. Older pre-completion battle rules stay
+unchanged. Weapon details and a battle status icon explain the bonus.
