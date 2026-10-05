@@ -1,9 +1,9 @@
 const PERK_CATEGORIES = {
-  general: ['colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist'],
+  general: ['colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist', 'overwhelm', 'head-hunter'],
   weapon: ['backstabber', 'sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training', 'shield-strike'],
-  defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'layered-armor', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'agile-defense', 'reach-advantage', 'last-stand'],
+  defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'layered-armor', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'agile-defense', 'reach-advantage', 'last-stand', 'underdog', 'lone-wolf'],
   ranged: ['bullseye', 'anticipation', 'bow-mastery', 'crossbow-mastery', 'marksman', 'point-blank', 'volley-fire', 'reload-drill'],
-  mobility: ['pathfinder', 'recover', 'fleet-footed', 'relentless', 'marathoner', 'high-ground', 'quick-hands', 'combat-bandaging'],
+  mobility: ['pathfinder', 'recover', 'fleet-footed', 'relentless', 'marathoner', 'high-ground', 'quick-hands', 'combat-bandaging', 'rotation'],
 };
 const CATEGORY_ICONS = { general: 'executioner', weapon: 'backstabber', defense: 'shield-expert', ranged: 'bullseye', mobility: 'pathfinder' };
 const ORIGINAL_PERK_ICONS = new Set(['colossus', 'pathfinder', 'fast-adaptation', 'recover', 'bullseye', 'executioner', 'steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'backstabber', 'anticipation', 'brawny', 'bow-mastery', 'crossbow-mastery', 'berserk', 'killing-frenzy', 'fearsome']);
@@ -11,6 +11,11 @@ const ORIGINAL_PERK_ICONS = new Set(['colossus', 'pathfinder', 'fast-adaptation'
 export const REMOVED_PERK_MIN_LEVEL = new Map([['student', 2], ['field-medic', 2], ['forager', 2], ['paymaster', 2], ['trailblazer', 3]]);
 
 export const PERKS = Object.freeze([
+  { id: 'rotation', name: 'Rotation', description: 'Swap with an adjacent ally for 3 AP and 25 fatigue, ignoring zones of control. Neither fighter may be stunned or immobilized. The AI rescues exposed, wounded allies or withdraws a vulnerable fighter behind a healthier melee ally.', minLevel: 3 },
+  { id: 'overwhelm', name: 'Overwhelm', description: 'Each weapon attack, hit or miss, applies −10% melee and ranged skill to an enemy who has not yet taken their turn this round. Stacks from repeated attacks and expires after their turn. Reactions and mount bites do not apply it.', minLevel: 6 },
+  { id: 'lone-wolf', name: 'Lone Wolf', description: 'Gain 15% melee skill, ranged skill, melee defense, ranged defense and resolve while no living ally is within 3 hexes. Updates immediately as fighters move.', minLevel: 5 },
+  { id: 'underdog', name: 'Underdog', description: 'Enemies gain no surrounding hit bonus against you, including Backstabber. In new battles each additional adjacent attacker normally grants +5 hit chance, or +10 with Backstabber.', minLevel: 5 },
+  { id: 'head-hunter', name: 'Head Hunter', description: 'A successful weapon head hit banks a guaranteed head hit on your next successful attack that can hit the head. That hit consumes the bonus. Misses and body-only skills preserve it; bleeding and mount bites do not trigger it.', minLevel: 6 },
   { id: 'colossus', name: 'Colossus', description: 'Gain 25% maximum health.', minLevel: 2 },
   { id: 'gifted', name: 'Gifted', description: 'Gain +3 melee and ranged skill and +2 melee and ranged defense.', minLevel: 2 },
   { id: 'pathfinder', name: 'Pathfinder', description: 'Reduce rough terrain and uphill movement costs by 1, to a minimum of 1.', minLevel: 2 },

@@ -50,7 +50,7 @@ function battleWithCaptain(perks = [], weapon = 'arming-sword') {
 }
 
 test('perk catalog gives one independent point per level and learning is atomic', () => {
-  assert.equal(PERKS.length, 48);
+  assert.equal(PERKS.length, 53);
   assert.equal(new Set(PERKS.map(perk => perk.id)).size, PERKS.length);
   assert.ok(PERKS.every(perk => Object.isFrozen(perk) && perk.minLevel >= 2));
   assert.ok(PERKS.every(perk => ['general', 'weapon', 'defense', 'ranged', 'mobility'].includes(perk.category) && typeof perk.icon === 'string'));
@@ -238,7 +238,8 @@ test('Bullseye, Anticipation, Backstabber, and Fast Adaptation alter determinist
 
   const backstabber = battleWithCaptain([], 'arming-sword');
   Object.assign(backstabber.captain, { meleeSkill: 0 });
-  Object.assign(backstabber.target, { meleeDefense: 0 });
+  // Offset the new ordinary +5 surround bonus to isolate Backstabber's extra +5.
+  Object.assign(backstabber.target, { meleeDefense: 5 });
   Object.assign(backstabber.byId('guard'), { q: 3, r: 1 });
   backstabber.battle.rng = 2;
   const flanking = structuredClone(backstabber.state);
