@@ -2887,7 +2887,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [], itemConditions: [] },
     casualties: [], xp: {},
   };
-  battle.enemyTacticalState = {tactic:enemyBattleTactic(battle,getItem),lastChangedRound:1,lastEvaluatedRound:0,lastRangedAttackRound:0};
+  battle.enemyTacticalState = {tactic:'offense',lastChangedRound:1,lastEvaluatedRound:0,lastRangedAttackRound:0};
   battle.enemyAdaptiveRulesVersion = 1;
   for (const unit of battle.units) unit.movementCredit = Math.max(0, movementBudget(unit, battle) - 2) * 2;
   battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(battle.tactic) ? makeFormationAdvancePlan(battle) : null;

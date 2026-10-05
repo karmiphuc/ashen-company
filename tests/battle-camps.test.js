@@ -63,8 +63,8 @@ test('rendered palisades, cliffs and pawn feet retain row depth without a global
 });
 
 
-test('an actual three-ranged camp preserves defensive rules through reloads and resolves without stalling',()=>{
- const state=m.createGame(51),site=m.getCampSites(state).find(c=>c.id==='wild-camp-8');state.position={x:site.x,y:site.y};m.startBattle(state,site.id);assert.equal(enemyBattleTactic(state.battle,m.getItem),'defense');
+test('an actual three-ranged camp opens offensively, preserves its command through reloads and resolves without stalling',()=>{
+ const state=m.createGame(51),site=m.getCampSites(state).find(c=>c.id==='wild-camp-8');state.position={x:site.x,y:site.y};m.startBattle(state,site.id);assert.equal(enemyBattleTactic(state.battle,m.getItem),'offense');
  let loaded=m.validateSave(structuredClone(state)),steps=0;const invalid=structuredClone(loaded);invalid.battle.enemyTacticsVersion=2;assert.throws(()=>m.validateSave(invalid));
  const instant=structuredClone(loaded);m.resolveBattle(instant);while(loaded.battle.status==='active'&&steps++<2200){m.advanceBattle(loaded);assert.ok(loaded.battle.units.filter(u=>u.alive).every(u=>!blockedTerrain(tileAt(loaded.battle.field,u.q,u.r).terrain)));loaded=m.validateSave(structuredClone(loaded));}
  assert.notEqual(loaded.battle.status,'active');assert.deepEqual(loaded,instant);

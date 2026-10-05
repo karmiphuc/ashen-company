@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {setSimultaneousBetaEnabled} from '../src/combat-config.js';
 import assert from 'node:assert/strict';
 import {createGame,getCampSites,startBattle,advanceBattle,validateSave,getItem,shieldMaximum,setBattleTactic,resolveBattle} from '../src/engine.js';
 import {enemyBattleTactic,recommendEnemyTactic,updateEnemyTactic,ENEMY_TACTIC_COOLDOWN} from '../src/tactical-ai.js';
@@ -7,7 +8,7 @@ import {battleHTML} from '../src/battle-view.js';
 
 function fixture(shielded=true) {
  const s=createGame(51),camp=getCampSites(s).find(c=>c.id==='wild-camp-8');s.position={x:camp.x,y:camp.y};assert.ok(startBattle(s,camp.id).ok);
- const b=s.battle;for(const tile of b.field.tiles){tile.terrain='open';tile.height=0;}
+ const b=s.battle,openingTactic=b.enemyTacticalState.tactic;for(const tile of b.field.tiles){tile.terrain='open';tile.height=0;}
  const company=b.units.filter(u=>u.side==='company');
  company.forEach((u,i)=>Object.assign(u,{q:i===0?4:3,r:8+i*2,equipment:{...u.equipment,weapon:'hunting-bow',shield:null},shieldDurability:0,maxShieldDurability:0,rangedSkill:100}));
  // Keep battle and campaign equipment aligned for save validation.
@@ -19,7 +20,7 @@ function fixture(shielded=true) {
    tacticalRole:front?'frontliner':'ranged',equipment:{...u.equipment,weapon:front?'arming-sword':'light-crossbow',shield},
    shieldDurability:shieldMaximum(shield),maxShieldDurability:shieldMaximum(shield),reload:0,throwingAmmo:{active:0,reserve:0}});
  });
- b.enemyTacticalState.tactic='defense';return{s,b,company,foes,front:foes[0],archer:foes[2]};
+ b.enemyTacticalState.tactic='defense';return{s,b,company,foes,openingTactic,front:foes[0],archer:foes[2]};
 }
 function activate(f,u){f.b.activeId=u.id;f.b.turnIndex=f.b.turnOrder.indexOf(u.id);}
 function step(f,u){activate(f,u);assert.ok(advanceBattle(f.s).ok);return f.b.lastEvent;}
@@ -127,5 +128,24 @@ test('adaptive camp battles resolve identically with stepped reloads and instant
    assert.ok(loaded.battle.units.filter(u=>u.alive).every(u=>!['palisade','dense-trees'].includes(tileAt(loaded.battle.field,u.q,u.r).terrain)));
   }
   assert.notEqual(loaded.battle.status,'active');assert.deepEqual(loaded,instant);
+ }
+});
+
+
+test('new enemies open offensively for two rounds/cycles then adapt, including ranged-heavy camps and reloads',()=>{
+ for(const simultaneous of [false,true]){
+  setSimultaneousBetaEnabled(simultaneous);let f;
+  try{f=fixture();}finally{setSimultaneousBetaEnabled(false);}
+  assert.equal(f.openingTactic,'offense');assert.equal(!!f.b.simultaneous,simultaneous);
+  f.b.enemyTacticalState.tactic=f.openingTactic;
+  for(const [i,u] of f.foes.slice(2).entries())Object.assign(u,{q:8,r:7+i*2});
+  assert.equal(recommendEnemyTactic(f.b,getItem,f.s.supplies.ammo),'defense');
+  for(const round of [1,2,3]){
+   f.b.round=round;if(simultaneous){f.b.simultaneous.time=(round-1)*6000;f.b.simultaneous.roundEndsAt=round*6000;}
+   const changed=updateEnemyTactic(f.b,getItem,f.s.supplies.ammo);
+   assert.equal(changed,round===3);assert.equal(enemyBattleTactic(f.b,getItem),round<3?'offense':'defense');
+   refresh(f);assert.equal(enemyBattleTactic(f.b,getItem),round<3?'offense':'defense');
+   assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false,'same-round calls cannot change the command');
+  }
  }
 });
