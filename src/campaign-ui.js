@@ -1,4 +1,4 @@
-import { RETINUE_MEMBERS, hasRetinue, getScoutLevel, getBattleLootGold, getBattleChampionBounty, getBattleExperience, SETTLEMENTS, getTimeOfDay, getCompanyCart, getStashCapacity, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum, getMountRewardEvents, getLootKeepQuote, getDiscoveryEvent, getRetinue, getTownServiceQuote, MAX_COMPANY_SIZE, MAX_BATTLE_SIZE, AUTO_AMMO_CAP, getReserveSlots, getBattleRoster, getSettlementAccess } from './engine.js';
+import { RETINUE_MEMBERS, hasRetinue, getScoutLevel, getBattleLootGold, getBattleChampionBounty, getBattleExperience, SETTLEMENTS, getTimeOfDay, getCompanyCart, getStashCapacity, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum, getMountRewardEvents, getLootKeepQuote, getDiscoveryEvent, getRetinue, getTownServiceQuote, MAX_COMPANY_SIZE, MAX_BATTLE_SIZE, AUTO_AMMO_CAP, getReserveSlots, getBattleRoster, getSettlementAccess, getLegendaryBlacksmith } from './engine.js';
 import { townFacilities } from './town-facilities.js';
 import { portraitHTML, itemImage } from './portraits.js';
 import { SETTLEMENT_TYPES, townAt } from './engine.js';
@@ -36,10 +36,11 @@ export function townFacilitiesHTML(state,townId) {
 export function townActionsHTML(state, townId, cards=false) {
   if(townAt(state)?.id!==townId)return '';
   const actions=[['market','Marketplace','Equipment, trade goods and supplies'],['recruit','Hiring','Find brothers to fight under your banner'],['contracts','Contracts','Work for the local settlement']];
+  if(townId==='ironford'&&getLegendaryBlacksmith(state).discovered)actions.push(['legendary-blacksmith','Legendary Blacksmith','Odran’s side quests, named merging and full transfers']);
   if(cards)actions.push(['retinue','Retinue','Company bonuses and rare finds']);
   if(getTownServiceQuote(state,'doctor').totalAmount>0)actions.push(['doctor','Doctor','Instantly heal all brothers for crowns']);
   if(getTownServiceQuote(state,'smithy').totalAmount>0)actions.push(['smithy','Smithy','Instantly repair equipped armor, attachments and shields']);
-  const art={market:'trade_cart',recruit:'militia_trainingcamp_01',contracts:'townhall_02',retinue:'figure_player_troupe',doctor:'figure_player_seer',smithy:'workshop_01'};
+  const art={market:'trade_cart',recruit:'militia_trainingcamp_01',contracts:'townhall_02',retinue:'figure_player_troupe',doctor:'figure_player_seer',smithy:'workshop_01','legendary-blacksmith':'legendary-blacksmith'};
   return actions.map(([action,label,description])=>`<button data-action="${action}"${cards?` class="settlement-service" title="${esc(description)}" aria-label="${label}: ${esc(description)}"`:''}>${cards?`<img src="./assets/world/${art[action]}.png" alt="" draggable="false"><strong>${label}</strong>`:label}</button>`).join('');
 }
 

@@ -42,6 +42,7 @@ export function getItemDetails(item, condition) {
   const notes = [];
   if (isAncientHelmet(item)) notes.push('Morale immunity while equipped: no positive or negative morale changes, no morale bonuses or penalties to attack and defense, and no automatic fleeing.');
   if(item.signatureDescription)notes.push(item.signatureDescription);
+  if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;

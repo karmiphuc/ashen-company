@@ -1,3 +1,5 @@
+import { BLACKSMITH_STAGES, initialBlacksmith, blacksmithIndex, blacksmithUnlocked, discoverBlacksmith, blacksmithEncounters, validateBlacksmith } from './legendary-blacksmith.js';
+import { resolveForgeItem, extractForgeProfile, forgeBaseline, encodeForgeItem, forgeGroups, forgeProfileRows, FORGE_KEYS, FORGE_LIMITS, isNamedItem, isForgeSlot } from './reforged-items.js';
 import { isSimultaneousBetaEnabled } from './combat-config.js';
 import { SimultaneousPathQueue, SIM_STEP_MS, SIM_ROUND_MS, initialSimultaneousClock, simultaneousPriority, simultaneousActionDelay, simultaneousEventDuration, markSimultaneousEffect, expireSimultaneousEffects, rememberSimultaneousEvent, validateSimultaneousClock } from './simultaneous-combat.js';
 import { revealWorld, validExploration } from './world-fog.js';
@@ -200,6 +202,7 @@ export function getItem(id) {
 function resolveItem(id) {
   const base = ITEM_BY_ID.get(id);
   if (base) return base;
+  if(typeof id==='string'&&id.startsWith('forge1:'))return resolveForgeItem(id,key=>ITEM_BY_ID.get(key));
   if (typeof id !== 'string' || id.length > 80) return undefined;
   const match = FAMED_ID.exec(id);
   if (!match) return undefined;
@@ -275,6 +278,108 @@ export function mergeOwnedNamedBonuses(state) {
   }
   if(changed)record(state,'Named equipment regains its legacy traits and craftsmanship alongside the newer stat rolls. Existing damage and roll seeds are preserved.');
   return changed;
+}
+
+
+// Legendary side quests are independent of the ordinary contract slot.
+function blacksmithEncounter(state,stage,acceptedDay){
+ const town=TOWN_BY_ID.get('ironford'),spec=BLACKSMITH_STAGES[stage-1],seed=hashSeed(`${state.seed}:blacksmith:${stage}:${acceptedDay}:v1`);
+ const radii=stage===2?[210,270,330]:stage===3?[470,530,610]:[680,740,810];let point=null;
+ for(const radius of radii)for(let j=0;j<24&&!point;j++){
+  const angle=(seed%360+j*15)*Math.PI/180,candidate=nearestWorldPoint({x:clamped(town.x+Math.cos(angle)*radius,WORLD_BOUNDS.minX+30,WORLD_BOUNDS.maxX-30),y:clamped(town.y+Math.sin(angle)*radius,WORLD_BOUNDS.minY+30,WORLD_BOUNDS.maxY-30)});
+  if(candidate&&worldRoute(town,candidate)&&SETTLEMENTS.every(t=>distance(t,candidate)>TOWN_RADIUS+65)&&CAMP_SITES.every(c=>distance(c,candidate)>95))point=candidate;
+ }
+ if(!point)throw new TypeError('No reachable blacksmith quest site.');
+ const pool=stage===3?ancientEnemies(3):worldEnemyTemplates(point.x,point.y,spec.difficulty);
+ const enemies=Array.from({length:spec.size},(_,i)=>regionalOutfit(pool[(i+seed%pool.length)%pool.length],`blacksmith:${seed}`,i,point.x,point.y,spec.difficulty,{champions:false,...(stage===3?{theme:'ancient'}:{})}));
+ if(stage===4){enemies[0]={...enemies[0],name:'The Collector',weapon:createFamedItemId('arming-sword',hashSeed(`${seed}:collector`)),champion:true};enemies[0].championItemId=enemies[0].weapon;}
+ return {id:`blacksmith-${stage}-${seed}`,name:spec.site,kind:'blacksmith',...point,difficulty:spec.difficulty,enemies,reward:100+spec.difficulty*95,acceptedDay,ancient:stage===3};
+}
+export function getBlacksmithQuestEncounters(state){return blacksmithEncounters(state);}
+export function checkBlacksmithDiscovery(state){
+ const discovered=discoverBlacksmith(state,getItem);
+ if(discovered)record(state,'Word of your named collection has reached Odran, the Last Ember. Visit the Legendary Blacksmith in Ironford. Restore his forge with 8 Iron, 6 Timber and 10 Tools.');
+ return discovered;
+}
+export function acknowledgeBlacksmithSummons(state){const c=state.legendaryBlacksmith;if(!c||c.announcement!=='pending')return result(false,'There is no pending summons.');c.announcement='read';return result(true,'Odran’s directions remain in Side quests.');}
+export function getLegendaryBlacksmith(state){
+ const c=state.legendaryBlacksmith??initialBlacksmith(),index=blacksmithIndex(state),q=index>=0?c.quests[index]:null;
+ const materials={iron:state.cargo.iron??0,timber:state.cargo.timber??0,tools:state.supplies.tools};
+ return {...structuredClone(c),discovered:c.triggeredDay!==null,unlocked:blacksmithUnlocked(state),stage:index+1,quest:index>=0?{...BLACKSMITH_STAGES[index],...structuredClone(q),ready:q.status==='ready'||index===0&&q.status==='active'&&materials.iron>=8&&materials.timber>=6&&materials.tools>=10}:null,materials,town:TOWN_BY_ID.get('ironford'),access:getSettlementAccess(state,'ironford')};
+}
+function blacksmithAccess(state){const blocked=actionBlocked(state);if(blocked)return blocked;const access=requireTown(state);if(access.error)return access.error;if(access.town.id!=='ironford'||state.destination)return result(false,'Visit Odran’s forge in Ironford.');if(state.legendaryBlacksmith?.triggeredDay===null||!state.legendaryBlacksmith)return result(false,'Odran has not sent his summons yet. Own five named items and wait for the next daily discovery check.');return null;}
+export function acceptBlacksmithQuest(state,stage){
+ const blocked=blacksmithAccess(state);if(blocked)return blocked;
+ const c=state.legendaryBlacksmith,index=blacksmithIndex(state);if(stage!==index+1||c.quests[index]?.status!=='offered')return result(false,'That side quest is not available to accept.');
+ const encounter=stage>1?blacksmithEncounter(state,stage,state.day):null;
+ Object.assign(c.quests[index],{status:'active',acceptedDay:state.day,encounter,survivors:encounter?encounter.enemies.map((_,i)=>i):null});
+ const message=`Accepted ${BLACKSMITH_STAGES[index].name}. ${BLACKSMITH_STAGES[index].objective}`;record(state,message);return result(true,message);
+}
+export function turnInBlacksmithQuest(state,stage){
+ const blocked=blacksmithAccess(state);if(blocked)return blocked;
+ const c=state.legendaryBlacksmith,index=blacksmithIndex(state),view=getLegendaryBlacksmith(state);
+ if(stage!==index+1||!view.quest?.ready)return result(false,'Finish this side quest’s objective before returning to Odran.');
+ if(stage===1){consumeCargoOrigins(state,'iron',8,'ironford');consumeCargoOrigins(state,'timber',6,'ironford');state.cargo.iron-=8;state.cargo.timber-=6;if(!state.cargo.iron)delete state.cargo.iron;if(!state.cargo.timber)delete state.cargo.timber;state.supplies.tools-=10;}
+ c.quests[index].status='turnedIn';state.gold=Math.min(1000000000,state.gold+BLACKSMITH_STAGES[index].reward);
+ if(stage<4)c.quests[index+1].status='offered';else{c.freeUse=true;c.rewardId=createFamedItemId('arming-sword',hashSeed(`${state.seed}:blacksmith:reward:v1`));}
+ const message=stage===4?'Odran’s forge is restored. Named merging and full transfers are unlocked; your first reforge is free. Claim the named sword at the forge.':`Odran pays ${BLACKSMITH_STAGES[index].reward} crowns. Next: ${BLACKSMITH_STAGES[index+1].name}. ${BLACKSMITH_STAGES[index+1].objective}`;
+ record(state,message);return result(true,message);
+}
+export function claimBlacksmithReward(state){
+ const blocked=blacksmithAccess(state);if(blocked)return blocked;const c=state.legendaryBlacksmith;
+ if(!blacksmithUnlocked(state)||c.rewardClaimed||!c.rewardId)return result(false,'There is no unclaimed forge reward.');
+ if(state.inventory.length>=getStashCapacity(state))return result(false,'Free one stash slot to claim Odran’s named sword.');
+ state.inventory.push(c.rewardId);state.inventoryCondition.push(itemCondition(c.rewardId));c.rewardClaimed=true;return result(true,'Odran’s named sword joins the stash.');
+}
+function recordBlacksmithBattle(state,battle){
+ const c=state.legendaryBlacksmith,index=c?.quests.findIndex(q=>q.status==='active'&&q.encounter?.id===battle.campId);if(index===undefined||index<1)return;
+ const q=c.quests[index],units=battle.units.filter(u=>u.side==='enemy');
+ const success=battle.status==='victory'&&(index!==3||!q.survivors.includes(0)||units.some(u=>u.champion&&!u.alive&&!u.escaped));
+ if(success){q.status='ready';q.survivors=[];q.damage={};record(state,`${BLACKSMITH_STAGES[index].name}: quest object recovered. Return to Odran in Ironford to turn it in.`);return;}
+ q.survivors=units.filter(u=>u.alive||u.escaped).map(u=>Number(u.id.slice(6))-1);
+ if(!q.survivors.length){q.survivors=[0];q.damage={};}else q.damage=Object.fromEntries(units.filter(u=>u.alive||u.escaped).map(u=>[Number(u.id.slice(6))-1,{hp:u.escaped?u.maxHp:u.hp,bodyArmor:u.bodyArmor,headArmor:u.headArmor,shieldDurability:u.shieldDurability}]));
+ record(state,`${BLACKSMITH_STAGES[index].name} remains active. Surviving guards and their worn equipment await a retry.`);
+}
+const forgeCatalog=id=>ITEM_BY_ID.get(id);
+const forgeProfile=item=>extractForgeProfile(item,forgeCatalog,{shieldMaximum,shieldDamage:shieldImpactDamage});
+function forgeStamp(state){return JSON.stringify([state.inventory,state.inventoryCondition,state.gold,state.legendaryBlacksmith?.forgeSerial,state.legendaryBlacksmith?.freeUse,state.legendaryBlacksmith?.quests[3].status]);}
+export function getReforgeQuote(state,donorIndex,recipientIndex,mode){
+ const blocked=blacksmithAccess(state);if(blocked)return {...blocked};
+ if(!blacksmithUnlocked(state))return result(false,'Complete Odran’s four side quests to unlock reforging.');
+ if(!Number.isSafeInteger(donorIndex)||!Number.isSafeInteger(recipientIndex)||donorIndex===recipientIndex||donorIndex<0||recipientIndex<0)return result(false,'Choose two different stash copies.');
+ const donor=getItem(state.inventory[donorIndex]),recipient=getItem(state.inventory[recipientIndex]);
+ if(!isNamedItem(donor)||!isForgeSlot(donor.slot)||!recipient||recipient.slot!==donor.slot)return result(false,'Sacrifice named gear to another item in the same category. All weapon classes are compatible.');
+ const expectedMode=isNamedItem(recipient)?'merge':'transfer';if(mode!==expectedMode)return result(false,expectedMode==='merge'?'Named recipients use accumulating merges.':'Ordinary recipients receive a full transfer.');
+ const source=forgeProfile(donor),existing=mode==='merge'?forgeProfile(recipient):{},base=ITEM_BY_ID.get(recipient.baseId??recipient.id);
+ if(!source||!existing||!base)return result(false,'This enhancement package cannot be reforged safely.');
+ const c=state.legendaryBlacksmith;if(c.forgeSerial>=1000000)return result(false,'The forge record is full.');
+ let selected=Object.keys(source),profile={...existing};
+ if(mode==='merge'){
+  const groups=forgeGroups(source,forgeBaseline(base)).filter(group=>group.some(key=>(existing[key]??0)<FORGE_LIMITS[FORGE_KEYS.indexOf(key)]));
+  if(!groups.length)return result(false,'This donor has no applicable improvement left for that recipient.');
+  const seed=hashSeed(`${state.seed}:forge:${c.forgeSerial}:${donor.id}:${recipient.id}`),count=Math.min(groups.length,1+seed%3);
+  selected=groups.map((keys,i)=>({keys,score:hashSeed(`${seed}:${i}`)})).sort((a,b)=>a.score-b.score).slice(0,count).flatMap(g=>g.keys);
+ }
+ for(const key of selected)profile[key]=Math.min(FORGE_LIMITS[FORGE_KEYS.indexOf(key)],(profile[key]??0)+source[key]);
+ let resultId;try{resultId=encodeForgeItem(base.id,profile,forgeCatalog);}catch{return result(false,'This combination is outside the forge’s safety bounds.');}
+ const forged=getItem(resultId),oldMax=itemCondition(recipient.id),newMax=itemCondition(resultId),current=state.inventoryCondition[recipientIndex];
+ const condition=oldMax===null?null:recipient.throwing?Math.min(newMax,current):Math.max(0,newMax-(oldMax-current));
+ const fee=c.freeUse?0:1000;
+ return {ok:true,message:mode==='merge'?'Adds 1–3 randomly selected donor bonuses; the recipient keeps its existing enhancements.':'Transfers the donor’s complete enhancement package.',mode,donorIndex,recipientIndex,donor,recipient,result:forged,resultId,condition,fee,affordable:state.gold>=fee,stamp:forgeStamp(state),selected,possible:forgeProfileRows(source,forgeBaseline(base)),warnings:forged.forgeWarnings};
+}
+export function reforgeItem(state,quote){
+ if(!quote||!quote.ok)return result(false,'Select a valid reforge before confirming.');
+ const fresh=getReforgeQuote(state,quote.donorIndex,quote.recipientIndex,quote.mode);
+ if(!fresh.ok)return fresh;
+ if(fresh.stamp!==quote.stamp||fresh.resultId!==quote.resultId||fresh.fee!==quote.fee)return result(false,'The stash or forge quote changed. Review the new preview before destroying anything.');
+ if(!fresh.affordable)return result(false,`Odran requires ${fresh.fee} crowns.`);
+ const ids=[...state.inventory],conditions=[...state.inventoryCondition];ids[fresh.recipientIndex]=fresh.resultId;conditions[fresh.recipientIndex]=fresh.condition;
+ ids.splice(fresh.donorIndex,1);conditions.splice(fresh.donorIndex,1);
+ state.inventory=ids;state.inventoryCondition=conditions;state.gold-=fresh.fee;state.legendaryBlacksmith.freeUse=false;state.legendaryBlacksmith.forgeSerial++;
+ const previous=fresh.mode==='merge'?forgeProfile(fresh.recipient):{};
+ const added=forgeProfileRows(Object.fromEntries(fresh.selected.map(k=>[k,(fresh.result.forgeProfile[k]??0)-(previous[k]??0)]).filter(([,n])=>n>0)),fresh.result);
+ const message=`Odran destroys ${fresh.donor.name} and reforges ${fresh.recipient.name}. ${added.map(r=>`${r.label} ${r.value}`).join('; ')}.`;
+ record(state,message.slice(0,470));return {...result(true,message),itemId:fresh.resultId,added};
 }
 
 const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...NAMED_WEAPONS.map(item => item.id)]);
@@ -610,6 +715,8 @@ export function getCompanyStats(person) {
     reserveShieldDurability: person.armorDurability?.reserveShield ?? shieldMaximum(person.reserveEquipment?.shield),
     maxReserveShieldDurability: shieldMaximum(person.reserveEquipment?.shield),
   };
+  if(Object.values(person.equipment).some(id=>getItem(id)?.forgeVersion))for(const key of ['meleeSkill','rangedSkill','meleeDefense','rangedDefense','maxFatigue','initiative','resolve'])stats[key]=Math.min(300,stats[key]);
+  return stats;
 }
 
 function baseDailyFood(state) {
@@ -1495,7 +1602,7 @@ function startHostileContact(state, bandId) {
   return startBattle(state, bandId, {enemyOpening:true});
 }
 
-export function getEncounterSites(state) { return [...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
+export function getEncounterSites(state) { return [...getBlacksmithQuestEncounters(state), ...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
 
 export function getQuestEncounter(state) {
   const contract = state.contract;
@@ -1582,6 +1689,7 @@ export function activateMapTarget(state, type, id) {
     return result(true, message);
   }
   const target = type === 'town' ? TOWN_BY_ID.get(id) : type === 'camp' ? getCampSites(state).find(site => site.id === id)
+    : type==='blacksmith'?getBlacksmithQuestEncounters(state).find(e=>e.id===id)
     : ['rescue','deserters','bounty'].includes(type) ? (getQuestEncounter(state)?.id === id ? getQuestEncounter(state) : null) : null;
   if (!target) return result(false, 'That destination is unavailable.');
   if (type === 'camp' && target.cleared) return result(false, 'This camp has already been cleared.');
@@ -1599,7 +1707,7 @@ export function activateMapTarget(state, type, id) {
     state.destination = null; state.pursuit = null; state.destinationAction = null;
     return { ...result(true, `Entering ${target.name}.`), openTown: id };
   }
-  if (['camp', 'rescue', 'deserters','bounty'].includes(type) && distance(state.position, target) <= CAMP_RADIUS) return startBattle(state, id);
+  if (['camp', 'rescue', 'deserters','bounty','blacksmith'].includes(type) && distance(state.position, target) <= CAMP_RADIUS) return startBattle(state, id);
   const travel = travelTo(state, target.x, target.y);
   if (travel.ok) {
     state.destinationAction = { type, id, ...(type === 'camp' ? { generation: target.generation } : {}) };
@@ -1698,6 +1806,7 @@ function atMidnight(state) {
     record(state, 'The company could not collect full wages.');
   }
   if (!foodShort && !wagesShort) record(state, `Paid ${wages} crowns and ate ${foodNeeded} provisions.`);
+  checkBlacksmithDiscovery(state);
 }
 
 function advanceClock(state, hours) {
@@ -1749,6 +1858,7 @@ export function tick(state, hours) {
   const pendingEnemy=state.pursuit??(UNDEAD_TYPES.includes(state.destinationAction?.type)?state.destinationAction.id:null);
   const joint=pendingEnemy&&alliedBattleAgainst(state,pendingEnemy);
   if(joint){const joined=joinPatrolBattle(state,joint.patrol.id);if(!joined.ok||state.battle)return joined;}
+  checkBlacksmithDiscovery(state);
   let remaining = hours;
   let engagement = null;
   while (remaining > 1e-9) {
@@ -1822,6 +1932,7 @@ export function tick(state, hours) {
         ? startBattle(state, arrivedAction.id) : result(false, 'That camp is no longer available to attack.');
     }
     else if (!engagement && arrivedAction?.type==='patrol') engagement=joinPatrolBattle(state,arrivedAction.id);
+    else if(!engagement&&arrivedAction?.type==='blacksmith')engagement=getBlacksmithQuestEncounters(state).some(e=>e.id===arrivedAction.id)?startBattle(state,arrivedAction.id):result(false,'That side quest site is no longer active.');
     else if (!engagement && ['rescue','deserters','bounty'].includes(arrivedAction?.type)) engagement = getQuestEncounter(state)?.id === arrivedAction.id
       ? startBattle(state, arrivedAction.id) : result(false, 'The caravan is no longer awaiting rescue.');
     if (!engagement && state.pursuit) {
@@ -1976,6 +2087,7 @@ export function buyItem(state, itemId, quantity = 1) {
   const message = `Bought ${quantity > 1 ? `${quantity} x ` : ''}${item.name} for ${cost} crowns.`;
   record(state, message);
   mergeOwnedNamedBonuses(state);
+  checkBlacksmithDiscovery(state);
   applyCompanyAutomation(state);
   return result(true, message);
 }
@@ -2420,6 +2532,7 @@ export function trainAttribute() {
 }
 
 function advanceStationaryTime(state, hours) {
+  checkBlacksmithDiscovery(state);
   let remaining = hours;
   while (remaining > 1e-9) {
     const now = worldHours(state);
@@ -2740,9 +2853,10 @@ function shieldWallDeployment(company) {
 export function startBattle(state, encounterId, {enemyOpening=false,patrolId=null}={}) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
+  const blacksmith=getBlacksmithQuestEncounters(state).find(e=>e.id===encounterId);
   const undead = getUndeadEncounters(state).find(e => e.id === encounterId);
-  const encounterType = undead ? undead.kind : getQuestEncounter(state)?.id === encounterId ? state.contract.type : BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
-  const camp = undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
+  const encounterType = blacksmith ? 'blacksmith' : undead ? undead.kind : getQuestEncounter(state)?.id === encounterId ? state.contract.type : BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
+  const camp = blacksmith ?? undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
   if (!camp) return result(false, 'That hostile group is no longer here.');
   if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${Math.ceil(camp.respawnHours/24)} days.`);
   const npcFight=worldSkirmishFor(state,encounterId);
@@ -2765,7 +2879,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   applyCompanyAutomation(state);
   if(['camp','band'].includes(encounterType)){state.discoveryRolls??={};state.discoveryRolls[camp.id]={cycle:camp.generation??camp.spawnCycle,...discoveryBonuses(state,camp)};}
   refillThrowingAmmo(state);
-  const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y), {fortified:encounterType === 'camp' || encounterType === 'undead-commander'});
+  const field = createBattleField(state.seed, (blacksmith?`${camp.id}:${camp.acceptedDay}:blacksmith`:`${camp.id}:${state.day}:${state.contractSerial}`), terrainAt(camp.x, camp.y), {fortified:encounterType === 'camp' || encounterType === 'undead-commander'});
   const company = getFormation(state).flatMap((personId, index) => {
     const person = personById(state, personId);
     if (!person) return [];
@@ -2794,7 +2908,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     }];
   });
   if (['shield-wall','skirmish'].includes(state.tactic)) shieldWallDeployment(company);
-  const makeEnemyUnit = (enemy, index, unitDifficulty=camp.difficulty, unitRank=camp.veteranRank??0, undeadUnit=Boolean(undead)) => {
+  const makeEnemyUnit = (enemy, index, unitDifficulty=camp.difficulty, unitRank=camp.veteranRank??0, undeadUnit=Boolean(undead||blacksmith?.ancient)) => {
     const rank = unitRank;
     const rareMount = getItem(enemy.mount);
     const gear = { armor: enemy.armor, attachment: enemy.attachment ?? null, attachment2:null, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield, mount: rareMount?.id ?? null };
@@ -5562,8 +5676,9 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     else if (battle.encounterType === 'rescue') {
       if (state.contract?.type === 'rescue' && state.contract.rescueId === battle.campId) state.contract.rescued = true;
     }
-    else { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+campRespawnHours(state,battle.campId,camp.generation),generation:camp.generation }; }
+    else if(battle.encounterType!=='blacksmith') { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+campRespawnHours(state,battle.campId,camp.generation),generation:camp.generation }; }
   }
+  if(battle.encounterType==='blacksmith')recordBlacksmithBattle(state,battle);
   if (!victory && undeadEncounter) {
     const remaining = battle.units.filter(u => u.side === 'enemy' && u.alive);
     recordAshenCasualties(state, battle.campId, remaining.map(u => u.troopIndex), Object.fromEntries(remaining.map(u => [u.troopIndex, { hp: u.hp, bodyArmor: u.bodyArmor, headArmor: u.headArmor, shieldDurability: u.shieldDurability }])));
@@ -5606,6 +5721,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   state.battle = null;
   for(const fight of [...(state.worldSkirmishes??[])])if((fight.aKind==='undead-host'&&!state.ashenWinter?.hosts[fight.aId])||(fight.bKind==='undead-host'&&!state.ashenWinter?.hosts[fight.bId]))cancelWorldSkirmish(state,fight.aId);
   mergeOwnedNamedBonuses(state);
+  checkBlacksmithDiscovery(state);
   applyCompanyAutomation(state);
   return result(true, message);
 }
@@ -5634,10 +5750,11 @@ function validateBattleField(input) {
 function validateBattle(input, party, worldState) {
   if (input === undefined || input === null) return null;
   const encounterType = input.encounterType ?? 'camp';
+  const blacksmith=encounterType==='blacksmith'?getBlacksmithQuestEncounters(worldState).find(e=>e.id===input.campId):null;
   const undead = UNDEAD_TYPES.includes(encounterType) ? getUndeadEncounters(worldState).find(e => e.id === input.campId && e.kind === encounterType) : null;
   assert(recordObject(input) && (encounterType === 'camp' ? isCampId(input.campId) : encounterType === 'band' ? BAND_BY_ID.has(input.campId)
-    : undead || ['rescue','deserters','bounty'].includes(encounterType) && worldState.contract?.type===encounterType && getQuestEncounter(worldState)?.id === input.campId), 'battle encounter');
-  const encounter = undead ?? (encounterType === 'band' ? BAND_BY_ID.get(input.campId) : ['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(worldState)
+    : blacksmith || undead || ['rescue','deserters','bounty'].includes(encounterType) && worldState.contract?.type===encounterType && getQuestEncounter(worldState)?.id === input.campId), 'battle encounter');
+  const encounter = blacksmith ?? undead ?? (encounterType === 'band' ? BAND_BY_ID.get(input.campId) : ['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(worldState)
     : getCampSites(worldState).find(camp=>camp.id===input.campId));
   if (undead) assert(recordObject(input.crisisContext) && input.crisisContext.crisisId === worldState.ashenWinter.crisisId && input.crisisContext.frontId === undead.frontId && input.crisisContext.townId === undead.townId && input.crisisContext.forceSeed === undead.force.seed && input.crisisContext.generation === undead.force.generation, 'crisis battle context');
   else assert(input.crisisContext === undefined, 'unexpected crisis context');
@@ -5729,6 +5846,7 @@ function validateBattle(input, party, worldState) {
     ids.add(unit.id);
     assert(unit.side === 'company' || unit.side === 'enemy', 'battle side');
     if (undead && unit.side === 'enemy') assert(unit.undeadTraitsVersion === 1 && undead.force.troops.includes(unit.troopIndex) && unit.id === `enemy-${unit.troopIndex + 1}` && unit.morale === 60, 'undead troop');
+    else if(blacksmith?.ancient&&unit.side==='enemy')assert(unit.undeadTraitsVersion===1&&blacksmith.enemies.some(e=>e.troopIndex===unit.troopIndex)&&unit.id===`enemy-${unit.troopIndex+1}`&&unit.morale===60,'blacksmith ancient troop');
     else assert(unit.undeadTraitsVersion === undefined && unit.troopIndex === undefined, 'unexpected undead traits');
     assert(unit.ally === undefined || unit.ally === true, 'battle ally marker');
     assert(unit.ally ? (questAllies||patrolAssist) && unit.side === 'company' && new RegExp(`^ally-[1-${patrolAssist?patrolAssist.troops.length:3}]$`).test(unit.id)
@@ -6336,8 +6454,9 @@ export function validateSave(input) {
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const destinationAction = input.destinationAction ?? null;
   if (destinationAction !== null) {
-    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan', 'patrol', 'rescue', 'deserters', 'bounty', ...UNDEAD_TYPES].includes(destinationAction.type), 'destination action');
+    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan', 'patrol', 'rescue', 'deserters', 'bounty', 'blacksmith', ...UNDEAD_TYPES].includes(destinationAction.type), 'destination action');
     const target = UNDEAD_TYPES.includes(destinationAction.type) ? getUndeadEncounters(input).find(e => e.id === destinationAction.id) : destinationAction.type === 'town' ? (TOWN_BY_ID.has(destinationAction.id) && townBlocked(input, destinationAction.id) && input.destination?.x !== TOWN_BY_ID.get(destinationAction.id).x ? exteriorPoint(TOWN_BY_ID.get(destinationAction.id), SETTLEMENTS) : TOWN_BY_ID.get(destinationAction.id))
+      : destinationAction.type === 'blacksmith' ? getBlacksmithQuestEncounters(input).find(e=>e.id===destinationAction.id)
       : destinationAction.type === 'patrol' ? getJoinablePatrolBattle(input,destinationAction.id)?.patrol
       : destinationAction.type === 'camp' ? getCampSites(input).find(site => site.id === destinationAction.id)
       : ['rescue','deserters','bounty'].includes(destinationAction.type) ? getQuestEncounter(input)?.id === destinationAction.id ? getQuestEncounter(input) : null
@@ -6346,9 +6465,10 @@ export function validateSave(input) {
       && (['caravan','patrol'].includes(destinationAction.type) || UNDEAD_TYPES.includes(destinationAction.type) || input.destination.x === target.x && input.destination.y === target.y), 'destination action target');
     if (destinationAction.type === 'camp') assert(!target.cleared && destinationAction.generation === target.generation, 'destination camp generation');
   }
+  const legendaryBlacksmith=validateBlacksmith(input.legendaryBlacksmith,input.day,{getItem,validPoint,shieldMaximum,expectedReward:createFamedItemId('arming-sword',hashSeed(`${input.seed}:blacksmith:reward:v1`)),expectedEncounter:(stage,day)=>blacksmithEncounter(input,stage,day)});
   const battle = validateBattle(input.battle, input.party, input);
   assert(!battle || battle.tactic === tactic, 'battle tactic');
-  assert(!battle || input.destination === null && pursuit === null && (UNDEAD_TYPES.includes(battle.encounterType) ? Boolean(getUndeadEncounters(input).find(e => e.id === battle.campId)) : battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');
+  assert(!battle || input.destination === null && pursuit === null && (battle.encounterType==='blacksmith'?Boolean(getBlacksmithQuestEncounters(input).find(e=>e.id===battle.campId)):UNDEAD_TYPES.includes(battle.encounterType) ? Boolean(getUndeadEncounters(input).find(e => e.id === battle.campId)) : battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');
   assert(!gameOver || input.party.length === 0 && battle === null, 'game over state');
   assert(Array.isArray(input.visited) && input.visited.length <= SETTLEMENTS.length && input.visited.every(id => TOWN_BY_ID.has(id)) && new Set(input.visited).size === input.visited.length, 'visited settlements');
   assert(Array.isArray(input.log) && input.log.length <= MAX_LOG && input.log.every(entry => typeof entry === 'string' && entry.length <= 500), 'log');
@@ -6403,6 +6523,7 @@ export function validateSave(input) {
   return {
     ...(input.worldExploration===undefined?{}:{worldExploration:input.worldExploration}),
     version: 1, seed: input.seed, day: input.day, hour: input.hour,
+    ...(legendaryBlacksmith===undefined?{}:{legendaryBlacksmith}),
     ashenWinter,
     gold: input.gold, food: input.food, renown: input.renown,
     party, formation: expandedFormation(formation), reserveIds:[...reserveIds],automation:{buyAmmo:automation.buyAmmo,equipBandages:automation.equipBandages},

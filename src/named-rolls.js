@@ -6,7 +6,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
   const roll=(min,max)=>{state=(state+0x6D2B79F5)>>>0;let x=state;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return min+((x^(x>>>14))>>>0)%(max-min+1);};
   const design=original.sourceArmor!==undefined;
   const item={...original,id,baseId:original.id,rarity:design||original.sourceNamedWeapon?'named':'famed',rollVersion:rulesVersion};
-  const bonuses=[],mods=[];
+  const bonuses=[],mods=[],profile={};
   delete item.signature;
   if(design){item.armor=original.sourceArmor;item.fatigue=original.sourceFatigue;delete item.statBonuses;}
   // Fangshire remains a unique story helmet with its campaign-specific innate bonus.
@@ -14,7 +14,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
   const add=(key,label,value)=>{mods.push(key);bonuses.push(Object.freeze({label,value}));};
   if(['armor','helmet'].includes(item.slot)){
     const armor=item.armor,fatigue=item.fatigue??0,pct=roll(110,125),relief=item.slot==='armor'?roll(3,9):roll(1,4);
-    item.armor=Math.floor(armor*pct/100);item.fatigue=Math.max(Math.min(fatigue,item.slot==='armor'?8:4),fatigue-relief);
+    profile.armorPct=pct-100;item.armor=Math.floor(armor*pct/100);item.fatigue=Math.max(Math.min(fatigue,item.slot==='armor'?8:4),fatigue-relief);
     add('protection','Protection',`+${item.armor-armor} (${pct-100}%)`);add('weight','Fatigue cost',`-${fatigue-item.fatigue}`);
   }else{
     const pool=[];
@@ -25,7 +25,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
       pool.push(()=>{item.durability=Math.round(shieldDurability*roll(120,160)/100);add('durability','Shield durability',`+${item.durability-shieldDurability}`);});
       pool.push(()=>{const old=item.fatigue??0;item.fatigue=Math.round(old*roll(70,90)/100);add('weight','Fatigue cost',`-${old-item.fatigue}`);});
     }else{
-      pool.push(()=>{const pct=roll(110,130);item.damageMin=Math.round(original.damageMin*pct/100);item.damageMax=Math.round(original.damageMax*pct/100);add('damage','Damage',`+${pct-100}%`);});
+      pool.push(()=>{const pct=roll(110,130);profile.damagePct=pct-100;item.damageMin=Math.round(original.damageMin*pct/100);item.damageMax=Math.round(original.damageMax*pct/100);add('damage','Damage',`+${pct-100}%`);});
       pool.push(()=>{const pct=roll(10,30);item.armorDamage=Math.round(((original.armorDamage??1)+pct/100)*100)/100;add('armor-damage','Armor damage',`+${pct} percentage points`);});
       pool.push(()=>{const pct=roll(10,20);item.headChance=(original.headChance??.22)+pct/100;add('head-chance','Head hit chance',`+${pct} percentage points`);});
       if((original.armorPiercing??.3)<1)pool.push(()=>{const pct=roll(8,16);item.armorPiercing=Math.min(1,(original.armorPiercing??.3)+pct/100);add('piercing','Damage through armor',`+${Math.round((item.armorPiercing-(original.armorPiercing??.3))*100)} percentage points`);});
@@ -51,7 +51,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
       for(const [key,value] of Object.entries(item.statBonuses))bonuses.push(Object.freeze({label:traits.find(t=>t[2]===key)?.[3]||key,value:`+${value}`}));
     }else if(item.slot==='weapon'){
       const low=2+bits(0)%5,high=low+1+bits(4)%3,accuracy=2+bits(8)%7,armor=10+bits(12)%3*5;
-      item.damageMin+=low;item.damageMax+=high;item.hitBonus=(item.hitBonus??0)+accuracy;item.armorDamage=Math.round((item.armorDamage+armor/100)*100)/100;
+      profile.damageLow=low;profile.damageHigh=high;item.damageMin+=low;item.damageMax+=high;item.hitBonus=(item.hitBonus??0)+accuracy;item.armorDamage=Math.round((item.armorDamage+armor/100)*100)/100;
       bonuses.push(Object.freeze({label:'Legacy damage bonus',value:`+${low} to +${high}`}),Object.freeze({label:'Legacy accuracy bonus',value:`+${accuracy}`}),Object.freeze({label:'Legacy armor damage bonus',value:`+${armor} percentage points`}));
       item.signatureDescription='Its old craftsmanship adds damage, accuracy and armor-breaking power alongside its two rolled modifiers.';
     }else if(item.slot==='shield'){
@@ -63,6 +63,6 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
     item.description+=` ${item.signatureDescription}`;
   }
   item.price=Math.min(original.collection?20000:5000,Math.round(original.price*2.4+(['armor','helmet'].includes(item.slot)?item.armor-(design?original.sourceArmor:original.armor):0)));
-  item.rollModifiers=Object.freeze(mods);item.bonuses=Object.freeze(bonuses);
+  item.enhancementProfile=Object.freeze(profile);item.rollModifiers=Object.freeze(mods);item.bonuses=Object.freeze(bonuses);
   return Object.freeze(item);
 }
