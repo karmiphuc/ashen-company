@@ -213,25 +213,48 @@
   #modal .retinue-choice{padding:12px;gap:8px}
 }
 
-/* Compact category rail leaves the main trading surface for equipment. */
-.market-browser{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;align-items:start}
+/* Item-first market: navigation and filters share one narrow rail. */
+#modal.market-modal{width:min(1120px,calc(100vw - 28px))}
+.market-status{display:flex;align-items:center;gap:14px;margin-bottom:10px;min-height:30px}
+.market-purse{display:flex;align-items:center;gap:5px;font-size:17px;color:#ead096;white-space:nowrap}
+.market-status .supply-symbol{width:21px;height:21px}
+.market-status .market-readiness{margin:0;gap:8px 14px;flex:1}
+.market-readiness>span{display:flex;align-items:center;gap:4px}
+.market-browser{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:start}
 .market-content{min-width:0}
-#modal .market-workspace .market-tabs{display:flex;flex-direction:column;gap:6px;padding:0;margin:0;background:none}
-#modal .market-workspace .market-tabs button{width:100%;min-height:44px;padding:6px;font-size:12px;text-align:left}
-.market-workspace .market-ledger{grid-template-columns:150px minmax(0,1fr);gap:10px}
-.market-workspace .market-ledger>section{padding:8px}
-.market-workspace .trader-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
-.market-workspace .market-item-inspect{padding:6px 3px;gap:3px}
-.market-workspace .market-item-inspect .equipment-icon{width:40px;height:40px}
-.market-workspace .market-item-inspect strong{font-size:11px;overflow-wrap:anywhere}
-.market-workspace .market-item-inspect small{font-size:10px}
-.market-workspace .market-item-trade{padding:5px 3px;font-size:11px;min-height:44px}
-.market-workspace .market-filters{gap:6px 10px;margin-bottom:8px}
-.market-workspace .market-filters select{min-width:95px}
-@media(max-width:620px){
-  .market-browser{grid-template-columns:76px minmax(0,1fr);gap:8px}
-  #modal .market-workspace .market-tabs button{font-size:11px}
-  .market-workspace .trader-grid,.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .market-workspace .market-item-inspect strong{font-size:12px}
+#modal .market-workspace .market-tabs{display:flex;flex-direction:column;gap:5px;padding:0;margin:0;background:none}
+#modal .market-workspace .market-tabs>button{width:100%;min-height:44px;padding:5px;display:grid;place-items:center;background:#211c16;box-shadow:none}
+#modal .market-workspace .market-tabs>button[aria-pressed="true"]{background:#665132;border-color:#d5b86d;box-shadow:inset 3px 0 #d5b86d}
+.market-nav-symbol{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 1px 2px #0008)}
+.market-tabs .market-filters{display:grid;grid-template-columns:1fr 1fr;gap:6px 4px;margin:8px 0 0;padding-top:10px;border-top:1px solid #776346}
+.market-tabs .market-filters>label:not(.market-check){grid-column:1/-1;min-width:0;font-size:10px;gap:3px}
+.market-tabs .market-filters select{width:100%;min-width:0;min-height:44px;padding:5px;font-size:11px}
+.market-tabs .market-check{justify-content:center;gap:4px;min-height:44px;border:1px solid #776346;background:#211c16;cursor:pointer}
+.market-tabs .market-check:has(input:checked){border-color:#d5b86d;background:#665132;color:#ffe8a9}
+.market-tabs .market-check:focus-within{outline:2px solid #e0c06e;outline-offset:2px}
+.market-tabs .market-check>span{font-size:16px}
+.market-workspace .market-ledger{grid-template-columns:minmax(240px,.9fr) minmax(0,1.4fr);gap:12px}
+.market-workspace .market-ledger>section{padding:10px;min-width:0}
+.market-workspace .trader-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.market-workspace .shop-stash{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#modal .market-workspace .trader-grid,#modal .market-workspace .shop-stash{max-height:min(650px,calc(88dvh - 190px));min-height:0}
+.market-workspace .market-item-inspect{padding:8px 4px;gap:4px}
+.market-workspace .market-item-inspect .equipment-icon{width:44px;height:44px}
+.market-workspace .market-item-inspect strong{font-size:12px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;min-height:30px}
+.market-workspace .market-item-inspect small{font-size:10px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.market-workspace .market-item-trade{padding:5px 3px;font-size:12px;min-height:44px}
+@media(min-width:621px) and (max-width:900px){
+ .market-workspace .market-ledger{display:flex;flex-direction:column}
+ .market-workspace .market-trader-stock{order:0}.market-workspace .market-company-stock{order:1}
+ .market-workspace .shop-stash{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+@media(max-width:620px){
+ #modal.market-modal .modal-body{padding:12px}
+ .market-browser{grid-template-columns:92px minmax(0,1fr);gap:8px}
+ .market-status{gap:8px;flex-wrap:wrap}.market-status .market-readiness{gap:6px;flex-basis:60%}
+ .market-workspace .trader-grid,.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .market-workspace .market-ledger>section{padding:6px}
+}
+.market-status .company-hint-button{min-width:44px;min-height:44px}
+/* Keep categories and filters reachable while comparing the two inventories. */
+#modal .market-workspace .market-tabs{position:sticky;top:88px;max-height:calc(88dvh - 125px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
