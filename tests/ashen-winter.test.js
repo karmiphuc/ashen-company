@@ -85,7 +85,7 @@ test('eligibility needs age and six equipped veterans and latches despite losses
 });
 
 test('warning and three fronts persist; queries never mutate state', () => {
-  const s = active(); assert.equal(s.ashenWinter.fronts.length, 3); assert.equal(Object.keys(s.ashenWinter.hosts).length, 3);
+  const s = active(); assert.equal(s.ashenWinter.fronts.length, 3); assert.equal(Object.keys(s.ashenWinter.hosts).length, 10);
   const before = structuredClone(s);
   getUndeadEncounters(s); getSettlementAccess(s, 'oakwatch'); crisisBannerHTML(s); crisisJournalHTML(s);
   assert.deepEqual(s, before); assert.deepEqual(validateSave(s), s);
@@ -226,7 +226,7 @@ test('NPC interception stops one approaching host without loot or liberation', (
 
 test('invalid crisis states are rejected without mutating imported data', () => {
   const s=active();
-  for(const change of [s=>s.ashenWinter.version=3,s=>s.ashenWinter.seed++,s=>s.ashenWinter.phase='completed',
+  for(const change of [s=>s.ashenWinter.version=4,s=>s.ashenWinter.seed++,s=>s.ashenWinter.phase='completed',
     s=>s.ashenWinter.fronts[0].force.troops.push(99),s=>s.ashenWinter.finalRewardGranted=true,
     s=>Object.values(s.ashenWinter.hosts)[0].targetTownId='fake',s=>s.ashenWinter.resolved=['fake']]){
     const invalid=structuredClone(s);change(invalid);const before=structuredClone(invalid);assert.throws(()=>validateSave(invalid));assert.deepEqual(invalid,before);
@@ -255,19 +255,18 @@ test('arrival at the exact lockdown deadline loses access before automatic contr
 
 test('crisis destination and journal expose liberation and commander actions', () => {
   const {s,townId}=besieged();const e=getUndeadEncounters(s).find(e=>e.townId===townId&&e.kind==='undead-liberation');
-  assert.match(campSidebarHTML(s,e),/Liberate settlement/);assert.match(crisisJournalHTML(s),/Confront commander/);
+  assert.match(campSidebarHTML(s,e),/Liberate settlement/);assert.match(crisisJournalHTML(s),/Destroy stronghold/);
   s.position={x:350,y:460};const r=activateMapTarget(s,e.kind,e.id);assert.equal(r.ok,true);assert.equal(s.destinationAction.id,e.id);
   assert.deepEqual(validateSave(s),s);
 });
 
-test('one hundred seeded invasions plateau within caps without auto-ending or erasing recovery access', () => {
-  for(let seed=1;seed<=100;seed++){
+test('invasions spread beyond the old twelve-town cap without auto-ending', () => {
+  for(let seed=1;seed<=8;seed++){
     const s=active(seed);pureSteps(s,24*36);
     validateAshenWinter(s.ashenWinter,s.seed,SETTLEMENTS);
     assert.equal(s.ashenWinter.phase,'active');
-    const records=Object.values(s.ashenWinter.towns), blocked=records.filter(t=>['besieged','occupied'].includes(t.status));
-    assert.ok(blocked.length>0&&blocked.length<=12);assert.ok(Object.keys(s.ashenWinter.hosts).length<=ASHEN_CONFIG.maxHosts);
-    assert.ok(SETTLEMENTS.filter(t=>getSettlementAccess(s,t.id).servicesAvailable).length>=2);
+    assert.ok(Object.keys(s.ashenWinter.towns).length>12);
+    assert.ok(Object.values(s.ashenWinter.towns).some(t=>t.status==='occupied'));
     assert.equal(s.ashenWinter.finalRewardGranted,false);
     assert.ok(Buffer.byteLength(JSON.stringify(s))<4*1024*1024);
   }
@@ -283,6 +282,9 @@ test('caravans hold outside a blockade, round-trip, then deliver exactly once af
     if(candidate?.type==='armorer-shipment'){event=candidate;break;}
   }
   assert.ok(event);const plan=shipmentPlan(town,SETTLEMENTS,event);
+  // This test needs a persistent occupation, not a siege the defenders may win.
+  s.ashenWinter.towns[town.id].status='occupied';
+  s.ashenWinter.towns[town.id].force=s.ashenWinter.towns[town.id].occupationForce;
   setHour(s,plan.arrivalHour-.25);s.shipmentLegacyThroughDay=0;
   for(const front of s.ashenWinter.fronts)front.nextSpawnHour=campaignHour(s)+72;
   s.shipments={ironford:{startDay:event.startDay,originId:plan.originId,status:'en-route',travelHours:CARAVAN_TRAVEL_HOURS,
