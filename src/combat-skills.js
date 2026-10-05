@@ -98,7 +98,7 @@ export const WEAPON_ACTIONS = Object.freeze({
   repel: skill('repel','Repel',6,25,'A non-damaging shove at two hexes that pushes one free hex, breaks stances and staggers.',{hitBonus:10,noDamage:true,push:true,stagger:1}),
   rupture: skill('rupture','Rupture',6,12,'A goblin-pike thrust; a wound inflicts 3 bleeding health for two turns.',{basic:true,bleed:3}),
   'demolish-armor': skill('demolish-armor','Demolish Armor',6,35,'A polehammer attack with +45% armor damage and only 6 direct health damage.',{armorMultiplier:1.45,fixedHealth:6}),
-  gash: skill('gash','Gash',4,20,'An accurate (+10 hit) shamshir cut. A wound weakens the target: −25% damage, fatigue capacity and initiative for two turns.',{hitBonus:10,daze:2,woundThreshold:.075}),
+  gash: skill('gash','Gash',4,20,'An accurate (+10 hit) shamshir cut with a 34% lower injury threshold, or 50% with Sword Mastery. Wounds persist until recovered.',{hitBonus:10,daze:2,woundThreshold:.075}),
   'whip-strike': skill('whip-strike','Whip',4,15,'Crack the whip. A wound inflicts 6 bleeding health per turn for two turns.',{basic:true,bleed:6}),
   disarm: skill('disarm','Disarm',5,30,'At −20 hit chance, prevent weapon attacks and reactions for the target’s next turn. No damage.',{hitBonus:-20,noDamage:true,disarm:1}),
   'shoot-bolt': skill('shoot-bolt','Shoot Bolt',3,12,'A normal crossbow shot; reload afterward.',{basic:true}),

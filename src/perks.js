@@ -1,5 +1,5 @@
 const PERK_CATEGORIES = {
-  general: ['colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist', 'overwhelm', 'head-hunter'],
+  general: ['crippling-strikes', 'colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist', 'overwhelm', 'head-hunter'],
   weapon: ['backstabber', 'sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training', 'shield-strike'],
   defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'layered-armor', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'agile-defense', 'reach-advantage', 'last-stand', 'underdog', 'lone-wolf'],
   ranged: ['bullseye', 'anticipation', 'bow-mastery', 'crossbow-mastery', 'marksman', 'point-blank', 'volley-fire', 'reload-drill'],
@@ -24,7 +24,8 @@ export const PERKS = Object.freeze([
   { id: 'quick-hands', name: 'Quick Hands', description: 'The first weapon-set swap or pocket weapon draw or stow each round costs no AP. Continue fighting after switching.', minLevel: 2 },
   { id: 'combat-bandaging', name: 'Combat Bandaging', description: 'The first healing item used each round costs no AP. At half health or lower, heal before other actions, even in melee. The item is still consumed.', minLevel: 2 },
   { id: 'bullseye', name: 'Bullseye', description: 'Ignore ranged accuracy penalties from trees and brush. Height still applies.', minLevel: 3 },
-  { id: 'executioner', name: 'Executioner', description: 'Deal 20% more damage to a target below full health.', minLevel: 3 },
+  { id: 'crippling-strikes', name:'Crippling Strikes', description:'Lower the health-damage threshold to inflict injuries by 34%. The minimum remains 10 health damage.', minLevel:2, icon:'executioner' },
+  { id: 'executioner', name: 'Executioner', description: 'Deal 20% more damage to a target suffering a temporary injury.', minLevel: 3 },
   { id: 'steel-brow', name: 'Steel Brow', description: 'Head hits no longer deal extra health damage.', minLevel: 3 },
   { id: 'dodge', name: 'Dodge', description: 'Gain 15% of current initiative as melee and ranged defense.', minLevel: 3 },
   { id: 'fortified-mind', name: 'Fortified Mind', description: 'Gain 25% resolve and take 20% less morale damage.', minLevel: 3 },

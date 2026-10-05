@@ -78,7 +78,7 @@ test('Whip and Rupture wounds bleed twice, survive saves and credit a bleed kill
 
 test('Demolish Armor destroys armor while Gash and Deathblow use their real effects',()=>{
  const f=fixture('bb-named-polehammer');f.at(f.t.id,7,5);f.t.bodyArmor=f.t.headArmor=120;f.t.equipment.armor='plate-harness';f.t.maxBodyArmor=300;f.t.equipment.helmet='bascinet';f.t.maxHeadArmor=175;m.advanceBattle(f.state);assert.equal(f.b.lastEvent.skillName,'Demolish Armor');assert.equal(f.b.lastEvent.hpDamage,6);assert.ok(f.b.lastEvent.armorDamage>35);roundtrip(f.state);
- const gash=fixture('bb-named-shamshir');m.advanceBattle(gash.state);assert.equal(gash.b.lastEvent.skillName,'Gash');assert.equal(gash.t.dazedTurns,2);
+ const gash=fixture('bb-named-shamshir');gash.t.hp=gash.t.maxHp=100;m.advanceBattle(gash.state);assert.equal(gash.b.lastEvent.skillName,'Gash');assert.ok(gash.t.injuries.length>0);assert.equal(gash.t.dazedTurns??0,0);roundtrip(gash.state);
  const qatal=fixture('qatal-dagger');qatal.t.dazedTurns=2;m.advanceBattle(qatal.state);assert.equal(qatal.b.lastEvent.skillName,'Deathblow');roundtrip(qatal.state);
 });
 

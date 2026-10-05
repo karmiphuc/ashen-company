@@ -1,3 +1,4 @@
+import { INJURY_BY_ID, injuryEffectText, injuryStat, injuryAdjustment } from './injuries.js';
 import { simultaneousEvents } from './simultaneous-combat.js';
 import { getNightHitPenalty } from './engine.js';
 import { BATTLE_PROJECTION, tilePosition, elevationFaces } from './battle-geometry.js';
@@ -163,6 +164,7 @@ function perkEffectsHTML(effects) {
 
 function statusIconsHTML(unit, battle) {
   const statuses = [
+    ...(unit.injuries??[]).map(wound=>['wound-'+wound.id,INJURY_BY_ID.get(wound.id).name+': '+injuryEffectText(wound),'<path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z"/>']),
     unit.alive && getLoneWolfBonus(battle, unit) > 0 ? ['lone-wolf', 'Lone Wolf: +15% melee/ranged skill, defense and resolve', '<path d="m2 1 4 3h4l4-3v7l-3 5H5L2 8zm3 5v2h2V6zm4 0v2h2V6z"/>'] : null,
     unit.alive && unit.overwhelmed?.round === battle.round ? ['overwhelmed', `Overwhelmed ×${unit.overwhelmed.stacks}: −${Math.min(100, unit.overwhelmed.stacks * 10)}% melee/ranged skill until turn ends`, '<path d="M2 2h3v6h2L3.5 13 0 8h2zm7 0h3v6h2l-3.5 5L7 8h2z"/>'] : null,
     unit.alive && unit.headHunterReady ? ['head-hunter', 'Head Hunter: next successful eligible hit strikes the head', '<path d="M8 1a4 4 0 0 1 4 4v3l-2 2v3H6v-3L4 8V5a4 4 0 0 1 4-4zm-2 4v2h1V5zm3 0v2h1V5z"/>'] : null,
@@ -429,7 +431,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         </div>
       </div>
       <aside class="battle-log" aria-label="Battle event log">
-        ${active&&!battle.simultaneous ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50) * (1 + getLoneWolfBonus(battle, active)))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<p class="battle-vitals">HP ${Math.round(number(active.hp))}/${Math.round(number(active.maxHp))} · AP ${Math.round(number(active.ap))}/${battle.rulesVersion===2?9:2}<br>Fatigue ${Math.round(number(active.fatigue))}/${Math.round(number(active.maxFatigue))}</p><details class="battle-morale-help"><summary>Morale effects</summary><small>${isMoraleImmune(active)?'Morale immune: no positive or negative morale changes, no attack or defense modifiers, and no automatic fleeing.':"Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale."}</small></details></section>` : ''}
+        ${active&&!battle.simultaneous ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50) * (1 + getLoneWolfBonus(battle, active)))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<p class="battle-vitals">HP ${Math.round(number(active.hp))}/${Math.round(number(active.maxHp))} · AP ${Math.round(number(active.ap))}/${battle.rulesVersion===2?Math.max(0,9+injuryAdjustment(active,'ap')):2}<br>Fatigue ${Math.round(number(active.fatigue))}/${Math.round(number(injuryStat(active,'maxFatigue')))}</p><details class="battle-morale-help"><summary>Morale effects</summary><small>${isMoraleImmune(active)?'Morale immune: no positive or negative morale changes, no attack or defense modifiers, and no automatic fleeing.':"Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale."}</small></details></section>` : ''}
         <details class="battle-log-details" open><summary>Combat log</summary>
         <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol></details>
       </aside>
