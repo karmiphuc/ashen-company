@@ -2485,9 +2485,27 @@ export function forage(state) {
   return result(true, message);
 }
 
+const CAMP_RESPAWN_MIN_DAYS = 14;
+const CAMP_RESPAWN_MAX_DAYS = 42;
+function campRespawnHours(state, id, generation = 0) {
+  const days = CAMP_RESPAWN_MIN_DAYS + hashSeed(`${state.seed}:${id}:${generation}:camp-respawn`) % (CAMP_RESPAWN_MAX_DAYS - CAMP_RESPAWN_MIN_DAYS + 1);
+  return days * 24;
+}
+function savedCampRespawnAt(state, id, entry) {
+  if (!entry?.clearedDay) return entry?.respawnAt ?? null;
+  const clearedDayStart = (entry.clearedDay - 1) * 24;
+  const legacyHours = CAMP_BY_ID.has(id) ? 120 : 72;
+  const previousDeadline = entry.respawnAt ?? clearedDayStart + legacyHours;
+  // Extend only pending legacy timers. Occupied camps must not disappear on loading.
+  if (previousDeadline > worldHours(state) && previousDeadline < clearedDayStart + legacyHours + 24) {
+    const clearedAt = entry.respawnAt == null ? clearedDayStart : Math.max(clearedDayStart, previousDeadline - legacyHours);
+    return clearedAt + campRespawnHours(state, id, entry.generation ?? 0);
+  }
+  return previousDeadline;
+}
 function campRecord(state, id) {
   const entry = state.camps?.[id];
-  const respawnAt = entry?.respawnAt ?? (entry?.clearedDay ? (entry.clearedDay - 1) * 24 + (CAMP_BY_ID.has(id) ? 120 : 72) : null);
+  const respawnAt = entry?.respawnAt ?? savedCampRespawnAt(state, id, entry);
   const cleared = respawnAt !== null && respawnAt > worldHours(state);
   return { cleared, respawnAt, generation: (entry?.generation ?? 0) + (respawnAt !== null && !cleared ? 1 : 0) };
 }
@@ -2716,7 +2734,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   const encounterType = undead ? undead.kind : getQuestEncounter(state)?.id === encounterId ? state.contract.type : BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
   const camp = undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
   if (!camp) return result(false, 'That hostile group is no longer here.');
-  if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${camp.respawnHours} hours.`);
+  if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${Math.ceil(camp.respawnHours/24)} days.`);
   const npcFight=worldSkirmishFor(state,encounterId);
   // A player interception can happen before the next world-simulation step.
   // Bring the nearby patrol along instead of leaving it behind when no NPC
@@ -5309,7 +5327,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     else if (battle.encounterType === 'rescue') {
       if (state.contract?.type === 'rescue' && state.contract.rescueId === battle.campId) state.contract.rescued = true;
     }
-    else { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+(camp.random?72:120),generation:camp.generation }; }
+    else { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+campRespawnHours(state,battle.campId,camp.generation),generation:camp.generation }; }
   }
   if (!victory && undeadEncounter) {
     const remaining = battle.units.filter(u => u.side === 'enemy' && u.alive);
@@ -5973,7 +5991,7 @@ export function validateSave(input) {
   for (const [id,entry] of Object.entries(camps)) {
     assert(recordObject(entry) && (entry.clearedDay === null || Number.isSafeInteger(entry.clearedDay) && entry.clearedDay >= 1 && entry.clearedDay <= input.day), 'camp state');
     assert(entry.generation===undefined || validCount(entry.generation) && entry.generation<=1000000,'camp generation');
-    assert(entry.respawnAt===undefined || entry.respawnAt===null && entry.clearedDay===null || Number.isFinite(entry.respawnAt) && entry.clearedDay!==null && entry.respawnAt>=(entry.clearedDay-1)*24 && entry.respawnAt<=worldHours(input)+(CAMP_BY_ID.has(id)?120:72),'camp respawn');
+    assert(entry.respawnAt===undefined || entry.respawnAt===null && entry.clearedDay===null || Number.isFinite(entry.respawnAt) && entry.clearedDay!==null && entry.respawnAt>=(entry.clearedDay-1)*24 && entry.respawnAt<=Math.min(worldHours(input)+CAMP_RESPAWN_MAX_DAYS*24,entry.clearedDay*24+CAMP_RESPAWN_MAX_DAYS*24),'camp respawn');
   }
   const bands = input.bands === undefined ? {} : input.bands;
   assert(recordObject(bands) && Object.keys(bands).every(id => BAND_BY_ID.has(id)), 'bands');
@@ -6160,7 +6178,7 @@ export function validateSave(input) {
     shipments: normalizedShipments,
     shipmentLegacyThroughDay,
     ...(input.mountRewards === undefined ? {} : { mountRewards: { ...mountRewards } }),
-    camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:entry.respawnAt??(entry.clearedDay?(entry.clearedDay-1)*24+(CAMP_BY_ID.has(id)?120:72):null),generation:entry.generation??0 }])),
+    camps: Object.fromEntries(Object.entries(camps).map(([id, entry]) => [id, { clearedDay:entry.clearedDay,respawnAt:savedCampRespawnAt(input,id,entry),generation:entry.generation??0 }])),
     worldLayoutVersion: WORLD_LAYOUT_VERSION,
     factionPatrols:normalizedPatrols, worldSkirmishes:structuredClone(worldSkirmishes), worldLosses:structuredClone(worldLosses), factionReports:structuredClone(factionReports), factionSimulationHour,
     bands: normalizedBands, pursuit, encounterGraceUntil, tactic,
