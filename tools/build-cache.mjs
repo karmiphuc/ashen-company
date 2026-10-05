@@ -13,6 +13,7 @@ const CORE = [
   './src/battle.css',
   './src/campaign-ui.js',
   './src/battle-view.js',
+  './src/battle-camera.js',
   './src/battle-terrain.js',
   './src/battle-geometry.js',
   './src/audio.js',
