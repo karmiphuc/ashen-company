@@ -181,7 +181,7 @@ export const VISUALS = {
     'stag-plates': { front: ['attachment-stag-plates.png', 5, 46] },
     'heraldic-shoulders': { front: ['attachment-heraldic-plates.png', 5, 46] },
     'double-mail': { front: ['attachment-double-mail.png', 5, 44] },
-    'direwolf-fur': { front: ['attachment-direwolf-fur.png', 5, 44] },
+    'direwolf-fur': { back: ['attachment-direwolf-fur-back.png', 0, 42, 'scale(.85)'], front: ['attachment-direwolf-fur.png', 5, 44] },
     'unhold-fur': { back: ['attachment-unhold-fur-back.png', 2, 42], front: ['attachment-unhold-fur-front.png', 5, 44] },
     'hyena-fur': { back: ['attachment-hyena-fur-back.png', 0, 42, 'scale(.8)'], front: ['attachment-hyena-fur-front.png', 5, 44] },
     'kraken-mantle': { front: ['attachment-kraken-mantle.png', 5, 46] },

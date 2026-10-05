@@ -3715,6 +3715,10 @@ function attackSkillFatigue(actor, weapon, option) {
   return hasWeaponMastery(actor,weapon)?Math.ceil(base*.75):base;
 }
 
+export function getDoubleGripBonus(unit, weapon = getItem(unit.equipment?.weapon)) {
+  return weapon?.slot==='weapon' && !weapon.ranged && !weapon.twoHanded && !unit.equipment?.shield ? .25 : 0;
+}
+
 function attackDamageRoll(battle, actor, target, weapon, base, head, option = null) {
   const ranged = weapon.ranged === true;
   const distance = hexDistance(actor, target);
@@ -3724,7 +3728,8 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   const bonus = option?.id === 'deathblow' && (target.stunnedTurns > 0 || battle.weaponCompletionVersion===1&&target.dazedTurns>0) ? 1.5
     : option?.id === 'decapitate' && target.hp < target.maxHp ? 1.4
       : option?.id === 'power-throw' ? 1.25 : ['knock-out', 'stunning-stone'].includes(option?.id) ? .5 : option?.damageMultiplier ?? 1;
-  const damageMultiplier = (hasPerk(actor, 'executioner') && target.hp < target.maxHp ? 1.2 : 1)
+  const damageMultiplier = (battle.weaponCompletionVersion===1 ? 1+getDoubleGripBonus(actor,weapon) : 1)
+    * (hasPerk(actor, 'executioner') && target.hp < target.maxHp ? 1.2 : 1)
     * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1)
     * (hasPerk(actor, 'polearm-training') && weaponMasteryMatches('polearm-training', weapon) ? 1.1 : 1)
     * (hasPerk(actor, 'shield-strike') && !ranged && actor.equipment.shield && actor.shieldDurability > 0 ? 1.1 : 1)
