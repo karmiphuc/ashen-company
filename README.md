@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.53.0 adds persistent temporary injuries based on original Battle Brothers: specific wound penalties, daily medicine and recovery, separate Doctor wound treatment, Crippling Strikes, and the Surgeon’s one-day recovery benefit. Compact roster badges and inspection hints show care needs. New battles use wounds for Gash and Executioner; resumed older battles keep their previous rules. See [injury rules and compatibility](docs/TEMPORARY-INJURIES.md).
+
 Version 0.48.9 gates 18–20 elite enemies behind 15 living brothers in formation. Smaller companies remain below 18. World-map soldier skirmishes now last 3–72 hours based on participating troop count, lock both sides in place, show fighting time remaining, and apply casualties/reports only at completion. Pending engagements survive save/reload and release safely when the company intervenes.
 
 Version 0.48.8 expands new combat fields to 22×24, leaving retreat space beyond enemy deployment. Enemies cannot complete escape in their first fleeing round. Camps have two rear exits in addition to two assault entrances. Allied reinforcements deploy above/below the battle near the center, away from company formation lanes. Existing saved battles keep their battlefield and escape rules.

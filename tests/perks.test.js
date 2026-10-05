@@ -50,7 +50,7 @@ function battleWithCaptain(perks = [], weapon = 'arming-sword') {
 }
 
 test('perk catalog gives one independent point per level and learning is atomic', () => {
-  assert.equal(PERKS.length, 53);
+  assert.equal(PERKS.length, 54);
   assert.equal(new Set(PERKS.map(perk => perk.id)).size, PERKS.length);
   assert.ok(PERKS.every(perk => Object.isFrozen(perk) && perk.minLevel >= 2));
   assert.ok(PERKS.every(perk => ['general', 'weapon', 'defense', 'ranged', 'mobility'].includes(perk.category) && typeof perk.icon === 'string'));
@@ -288,7 +288,7 @@ test('weapon masteries cover every bow and crossbow visual, including famed copi
 test('damage, morale, and Recover perks have concrete battle effects', () => {
   const base = battleWithCaptain([]);
   Object.assign(base.captain, { meleeSkill: 200 });
-  Object.assign(base.target, { hp: 80, maxHp: 100, morale: 80 });
+  Object.assign(base.target, { hp:80,maxHp:100,morale:80,injuries:[{id:'fractured-ribs',acquiredDay:base.state.day,healingDays:0,treated:false,fresh:true,sourceId:'captain'}] });
   base.battle.rng = 0;
   const executioner = structuredClone(base.state);
   executioner.battle.units.find(unit => unit.id === 'captain').perks = ['executioner'];

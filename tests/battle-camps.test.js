@@ -74,7 +74,7 @@ test('an actual three-ranged camp opens offensively, preserves its command throu
 test('mounted ground anchors follow the actual shared plate and equipment frame for all species',()=>{
  for(const mount of m.ITEMS.filter(i=>i.slot==='mount'))for(const weapon of ['arming-sword','greatsword','bb-named-two-handed-mace']){
   const equipment={mount,weapon:m.getItem(weapon),helmet:m.getItem('bb-named-conic-helmet-with-faceguard')},html=portraitHTML({seed:42,name:'Rider'},equipment),style=html.match(/bb-portrait-composition" style="([^"]+)"/)[1];
-  const top=Number(style.match(/top:([\d.]+)px/)[1]),scale=Number(style.match(/transform:scale\(([\d.]+)\)/)[1]);
+  const top=Number(style.match(/top:([\d.]+)px/)[1]),scale=Number(style.match(/transform:scale\(([\d.]+)\)/)?.[1]??1);
   assert.ok(Math.abs(portraitGroundAnchor(equipment).y-(top+160*scale))<1e-8,`${mount.id}:${weapon}: foot matches visible plate bottom`);
  }
 });

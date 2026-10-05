@@ -20,6 +20,7 @@ const CORE = [
   './src/app.js',
   './src/item-details.js',
   './src/engine.js',
+  './src/injuries.js',
   './src/world-fog.js',
   './src/combat-config.js',
   './src/simultaneous-combat.js',

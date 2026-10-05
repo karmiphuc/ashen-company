@@ -48,7 +48,7 @@ test('every shield and one-handed family share the right hand while the center c
       const right=s.x+pngSize(s.image)[0]*scale;
       assert.ok(s.x>=60,`${shield.id}: center chest x=38..60 remains visible`);
       assert.ok(s.x<=82 && right>=82,`${shield.id}: weapon and shield share the hand`);
-      const f=frame(html);assert.ok(f.x+right*f.scale<=104+1e-8,`${shield.id}: right edge is framed`);
+      const f=frame(html);assert.equal(f.scale,1,`${shield.id}: shield must not shrink the rider`);assert.match(html,/overflow:visible/);
       assert.match(w.image,/z-index:7/);assert.match(s.image,/z-index:6/);
     }
   }
@@ -65,13 +65,15 @@ test('one-handed melee weapons keep a 30-degree facing tilt at the hand anchor',
   }
 });
 
-test('tilted sword, mace, spear, axe and cleaver art fits the frame at every mount height',()=>{
+test('tilted sword, mace, spear, axe and cleaver art retains its unshrunk pose at every mount height',()=>{
   for(const id of ['arming-sword','bludgeon','spear','wood-axe','military-cleaver'])for(const mount of [null,...mounts]){
     const weapon=getItem(id),html=portraitHTML(person,{weapon,mount}),w=pose(html,'weapon'),f=frame(html),[width,height]=pngSize(w.image);
     for(const x of [0,width])for(const y of [0,height]){
       const [wx,wy]=transformedPoint(w.image,x,y);
       const px=f.x+(w.x+wx)*f.scale,py=f.y+(w.y+wy)*f.scale;
-      assert.ok(px>=-1e-8&&px<=104+1e-8&&py>=-1e-8&&py<=142+1e-8,`${id}${mount?` on ${mount.id}`:''}: art corner fits (${px},${py})`);
+      assert.equal(f.scale,1,`${id}: equipment cannot shrink the rider`);
+      assert.ok(Number.isFinite(px)&&Number.isFinite(py),`${id}: art corner remains positioned`);
+      assert.match(html,/overflow:visible/);
     }
   }
 });
@@ -85,7 +87,7 @@ test('mace shaft tilts about 30 degrees from upright toward the enemy',()=>{
   // Battle enemies mirror the whole portrait, so the same pose leans left toward them.
 });
 
-test('every two-handed melee family stays in proportion to the pawn and fits, including named mounted variants',()=>{
+test('every two-handed melee family retains its proportion and anchor, including named mounted variants',()=>{
   for(const weapon of weapons.filter(w=>w.twoHanded&&!w.ranged))for(const mount of [null,...mounts]){
     for(const item of [weapon,getItem(`famed:${weapon.id}:73`),{id:weapon.id,visual:weapon.visual}]){
       const html=portraitHTML(person,{weapon:item,mount,helmet:getItem('bb-flat-top-helmet')}),w=pose(html,'weapon'),f=frame(html);
@@ -98,7 +100,9 @@ test('every two-handed melee family stays in proportion to the pawn and fits, in
       for(const x of [0,width])for(const y of [0,height]){
         const px=f.x+(w.x+w.gx+scale*((x-w.gx)*Math.cos(angle)-(y-w.gy)*Math.sin(angle)))*f.scale;
         const py=f.y+(w.y+w.gy+scale*((x-w.gx)*Math.sin(angle)+(y-w.gy)*Math.cos(angle)))*f.scale;
-        assert.ok(px>=-1e-8&&px<=104+1e-8&&py>=-1e-8&&py<=142+1e-8,`${weapon.id}: blade and grip fit (${px},${py})`);
+        assert.equal(f.scale,1,`${weapon.id}: a large blade cannot shrink the character`);
+        assert.ok(Number.isFinite(px)&&Number.isFinite(py),`${weapon.id}: blade and grip remain positioned`);
+        assert.match(html,/overflow:visible/);
       }
       assert.ok(w.image.includes('--weapon-rest:')&&w.image.includes('--weapon-origin:'),`${weapon.id}: animations retain the rest pose`);
     }
@@ -186,7 +190,8 @@ test('every mount stays low on the right, visibly supports the rider and remains
     assert.ok(right-s.x<=48+1e-8,'mounted shields cannot hide the whole animal');
     const visible=head.pixels.filter(([x])=>x>right+1).length*Math.abs(head.sx*head.sy);
     assert.ok(visible>100,`${mount.id}: recognizable mount remains visible beyond ${shield.id} (${visible})`);
-    for(const part of [head,body])assert.ok(f.x+part.left*f.scale>=-1e-8&&f.x+part.right*f.scale<=104+1e-8&&f.y+part.bottom*f.scale<=142+1e-8,`${mount.id}: opaque art is framed`);
+    assert.equal(f.scale,1,`${mount.id}: mount does not shrink the rider`);
+    assert.match(html,/overflow:visible/,`${mount.id}: enlarged mounts retain their full silhouette`);
     assert.equal((html.match(/data-layer="base-plate"/g)||[]).length,1);
     if(tag(html,'head'))assert.match(tag(html,'head'),/top:0px/);
   }
