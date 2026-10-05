@@ -2,9 +2,12 @@
 
 ## v0.53.0 temporary injury checks — 2026-10-05
 
-The final full Node run completed with 1,138 passing tests out of 1,149. All 11 failures were reproduced on unchanged main at `31c4988`; their failure names match exactly. They concern portrait/weapon/mount geometry, progression fixtures, and an outdated reserve-shield UI expectation. PR auto-merge remains disabled while these baseline failures persist.
+The repaired full Node run passes all 1,151 tests with zero failures, skips or cancellations after integrating main at `79b5977`. The earlier 11 baseline failures were stale expectations: portrait tests assumed equipment-dependent shrinking and clipping, the Company test expected the removed reserve-shield bar, and progression tests depended on one patrol's reward guaranteeing a level-up. Updated fixtures retain source anchors, full-size artwork, mount support and actual progression/save assertions; production portrait rendering and reward balance are unchanged.
 
-All 51 focused injury, weapon and mount checks passed, including 21 new injury tests covering thresholds, wound effects, AP costs, bleeding, daily medicine, recovery, treatment, perks, legacy saves and strict save validation. Chromium checks at 1400, 768 and 390 pixels passed for wound hints, Doctor treatment, save/load, overflow and combat icons, with no browser errors. Offline cache generation and whitespace checks passed. Permanent-injury survival remains outside this temporary-injury phase.
+The follow-up also fixes shield-bypassing attacks subtracting full shield defense after injury reduction. A regression test compares bypassing a wounded shield with removing it; another verifies Colossus injury protection. All 52 focused injury/perk tests (23 injury tests) and 36 progression/rendering/shield checks pass.
+
+Chromium checks pass for wounds, Doctor treatment, hints and saved combat at 1400, 768 and 390 pixels. Integrated Marketplace, touch pan/pinch and log collapse, Settings-only automation and visible realtime mode pass at tablet portrait/landscape, desktop and phone sizes, without browser errors. Offline cache generation, all changed JavaScript syntax checks and whitespace checks pass. Physical iPad Safari remains untested. Permanent-injury survival stays outside this temporary-injury phase.
+
 
 ## v0.48.0 Ashen Winter checks
 
