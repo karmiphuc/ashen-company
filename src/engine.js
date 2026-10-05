@@ -34,7 +34,7 @@ import { settlementAccess } from './settlement-access.js';
 import { UNDEAD_TYPES, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
 import { COMBAT_SKILLS, WEAPON_ACTIONS, equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
-import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, isAffordableAction, rankTacticalActions, enemyBattleTactic, enemyUnitTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
+import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, isAffordableAction, rankTacticalActions, enemyBattleTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
 
 export { PERKS } from './perks.js';
 
@@ -3483,7 +3483,7 @@ function skirmishReturnPath(battle, actor) {
 
 function returnSkirmisher(state, actor) {
   const battle=state.battle,plan=actor.skirmishReturn;
-  if (combatCommand(battle,actor)!=='skirmish' || actor.ally || !plan) return null;
+  if ((actor.side==='enemy' ? enemyBattleTactic(battle,getItem) : battle.tactic)!=='skirmish' || actor.ally || !plan) return null;
   const weapon=getItem(actor.equipment.weapon);
   if (plan.phase==='aim' && (roleRules(battle)&&actor.disarmedTurns || !battleWeaponHasAmmo(state,actor,weapon) || actor.reload>0
     || actor.fatigue+attackFatigueCost(actor,weapon,battle)>tacticalFatigueLimit(battle,actor))) plan.phase='return';
@@ -3508,7 +3508,7 @@ function returnSkirmisher(state, actor) {
 function skirmishPosition(state, actor, enemies, weapon, ammunitionSpent) {
   const battle=state.battle;
   if (roleRules(battle) && actor.tacticalRole==='flanker') return null;
-  if (actor.ally || combatCommand(battle,actor)!=='skirmish' || ammunitionSpent || !skirmishFireSupport(state,actor.side)) return null;
+  if (actor.ally || (actor.side==='enemy' ? enemyBattleTactic(battle,getItem) : battle.tactic)!=='skirmish' || ammunitionSpent || !skirmishFireSupport(state,actor.side)) return null;
   const nearest=nearestEnemyDistance(battle,actor,actor);
   const occupied=new Set(battle.units.filter(u=>u.alive && u.id!==actor.id).map(u=>`${u.q},${u.r}`));
   if (skirmishLineDuty(state,actor)) {
@@ -3807,18 +3807,47 @@ function predictAttack(battle, actor, target, weapon, option = null) {
     killProbability: hits>1?0:kill * hitChance };
 }
 
+// Using a ranged attack inside hostile control provokes one free strike per
+// adjacent armed melee opponent. It happens before firing, including on a miss.
+function rangedControlReactions(state, shooter) {
+  const battle=state.battle,reactions=[];
+  const defenders=battle.units.filter(unit=>unit.alive && !unit.escaped && unit.side!==shooter.side
+    && hexDistance(unit,shooter)===1 && !unit.stunnedTurns && !unit.disarmedTurns
+    && getItem(unit.equipment.weapon) && !getItem(unit.equipment.weapon).ranged
+    && unit.fatigue+5<=tacticalFatigueLimit(battle,unit));
+  for(const defender of defenders){
+    if(!shooter.alive || shooter.stunnedTurns>0 || shooter.disarmedTurns>0)break;
+    const weapon=getItem(defender.equipment.weapon);
+    const impact=attackTarget(state,defender,shooter,weapon,{reaction:true,name:'Opportunity Strike'});
+    const event=battle.lastEvent;
+    reactions.push({actorId:defender.id,targetId:shooter.id,type:event.type,
+      from:{q:defender.q,r:defender.r},to:{q:shooter.q,r:shooter.r},
+      ...impact,weaponId:weapon.id,effects:event.effects??[],skillName:'Opportunity Strike'});
+  }
+  return reactions;
+}
+
 function attackTarget(state, actor, target, weapon, option = null) {
   const battle = state.battle;
   if(battle.weaponCompletionVersion===1&&battle.weaponSkillsVersion===1&&!option?.id)option={...equipmentSkills(weapon)[0],...option};
+  if (battle.weaponSkillsVersion===1 && weapon.ranged && !option?.reaction && !option?.areaFollowup && !option?.controlReactionChecked) {
+    const reactions = rangedControlReactions(state, actor);
+    if (!actor.alive || actor.stunnedTurns>0 || actor.disarmedTurns>0) {
+      actor.ap=Math.max(0,actor.ap-attackApCost(weapon,battle,actor,option));
+      actor.fatigue=Math.min(actor.maxFatigue,actor.fatigue+attackSkillFatigue(actor,weapon,option));
+      const message=`${actor.name}'s ranged attack is interrupted by an Opportunity Strike.`;
+      battle.lastEvent=makeBattleEvent(actor,target,'hold',message,weapon,null,{...(option?.name?{skillName:option.name}:{}),...(reactions.length?{reactions}:{})});
+      battleLog(battle,message);
+      return {hit:false,hpDamage:0,armorDamage:0,shieldDamage:0,head:false,fallen:false};
+    }
+    const impact=attackTarget(state,actor,target,weapon,{...option,controlReactionChecked:true});
+    if(reactions.length)battle.lastEvent.reactions=[...reactions,...(battle.lastEvent.reactions??[])];
+    return impact;
+  }
   if(!option?.strikeFollowup&&(option?.hits>1||option?.oppositeHit))return attackMultiple(state,actor,target,weapon,option);
   const ranged = weapon.ranged === true;
-  if (battle.enemyAdaptiveRulesVersion===1 && ranged && !option?.dot && actor.side==='company' && target.side==='enemy') {
+  if (battle.enemyAdaptiveRulesVersion===1 && ranged && actor.side==='company' && target.side==='enemy')
     battle.enemyTacticalState.lastRangedAttackRound=battle.round;
-    // Hits and near misses alert the target's nearby infantry, including when an ally fires.
-    for (const defender of battle.units) if (defender.side==='enemy' && defender.alive && !defender.escaped
-      && hexDistance(defender,target)<=2 && hexDistance(defender,actor)<=7)
-      defender.rangedProvocation={sourceId:actor.id,round:battle.round};
-  }
   if (!option?.reaction && !option?.areaFollowup) {
     if (weapon.throwing) actor.throwingAmmo.active = Math.max(0, actor.throwingAmmo.active - 1);
     else if (ranged && actor.side === 'company' && !actor.ally) state.supplies.ammo = Math.max(0, state.supplies.ammo - 1);
@@ -4269,7 +4298,7 @@ function combatInitiative(unit){return unit.initiative*(unit.staggeredTurns>0?.5
 function availableFatigue(unit){return unit.maxFatigue*(unit.dazedTurns>0?.75:1);}
 
 function roleRules(battle){return battle?.roleConsistencyVersion===1&&battle.weaponSkillsVersion===1;}
-function combatCommand(battle,actor){return actor.side==='enemy'?enemyUnitTactic(battle,actor,getItem):actor.ally?'offense':battle.tactic;}
+function combatCommand(battle,actor){return actor.side==='enemy'?enemyBattleTactic(battle,getItem):actor.ally?'offense':battle.tactic;}
 function tacticalFatigueLimit(battle,actor){return roleRules(battle)?availableFatigue(actor):actor.maxFatigue;}
 function canAfford(battle,actor,apCost,fatigueCost){return isAffordableAction({...actor,maxFatigue:tacticalFatigueLimit(battle,actor)},{apCost,fatigueCost});}
 function canFireAfterMove(state,actor,weapon,point,moveAp=0,moveFatigue=0){
@@ -4464,7 +4493,7 @@ function advanceBattleV2(state) {
   const skillFamily = battle.weaponSkillsVersion === 1 && !noAmmo ? weaponSkillFamily(weapon) : null;
   const candidates = [];
   const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
-  const companyTactic = combatCommand(battle,actor);
+  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
   const skirmishMoveResult=skirmishPosition(state,actor,enemies,weapon,ammunitionSpent);
   if (skirmishMoveResult) return skirmishMoveResult;
   if (rangedAI && spacingWeapon && (!wingDuty || nearest<=1) && (companyTactic!=='skirmish' || nearest<=1)) {
@@ -5030,7 +5059,7 @@ export function advanceBattle(state) {
           - rangedTerrainModifier(battle, actor, actor, b.target) : 0)
       || hexDistance(actor, a.target) - hexDistance(actor, b.target) || a.target.id.localeCompare(b.target.id));
   if (actor.side === 'company' && battle.focusTargetId && !enemies.some(enemy => enemy.id === battle.focusTargetId)) battle.focusTargetId = null;
-  const companyTactic = combatCommand(battle,actor);
+  const companyTactic = actor.side === 'company' && !actor.ally ? battle.tactic : actor.side === 'enemy' ? enemyBattleTactic(battle,getItem) : 'offense';
   let choice = targets[0];
   if (companyTactic === 'focus') {
     const shared = targets.find(entry => entry.target.id === battle.focusTargetId);
