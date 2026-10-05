@@ -3237,6 +3237,7 @@ function advanceFormationStep(battle, actor) {
   const from = { q: actor.q, r: actor.r };
   const cost = battleMovementCost(battle, actor, actor, destination);
   if (!Number.isFinite(cost) || roleRules(battle)&&!canAfford(battle,actor,battleMoveApCost(battle,actor,from,destination),movementFatigue(actor,cost))) return null;
+  if (!meleeApproachSafe(battle,actor,getItem(actor.equipment.weapon),destination,battleMoveApCost(battle,actor,from,destination),movementFatigue(actor,cost))) return null;
   actor.q = destination.q;
   actor.r = destination.r;
   actor.fatigue = Math.min(actor.maxFatigue, actor.fatigue + movementFatigue(actor, cost));
@@ -3417,6 +3418,7 @@ function rangedPositionStep(state, actor, enemies, weapon, tactic) {
 function moveToRangedPosition(state, actor, position, tactic) {
   const battle = state.battle, from = {q:actor.q,r:actor.r}, point = position.point;
   if(roleRules(battle)&&!canAfford(battle,actor,battleMoveApCost(battle,actor,from,point),movementFatigue(actor,battleMovementCost(battle,actor,from,point))))return null;
+  if (!meleeApproachSafe(battle,actor,getItem(actor.equipment.weapon),point,battleMoveApCost(battle,actor,from,point),movementFatigue(actor,battleMovementCost(battle,actor,from,point)))) return null;
   actor.ap -= battleMoveApCost(battle,actor,from,point);
   actor.fatigue += movementFatigue(actor,battleMovementCost(battle,actor,from,point));
   Object.assign(actor,point);clearWeaponStances(actor);consumeMovementCredit(battle,actor,from,point);
@@ -4249,6 +4251,47 @@ function canFireAfterMove(state,actor,weapon,point,moveAp=0,moveFatigue=0){
    &&canAfford(battle,actor,moveAp+attackApCost(weapon,battle,actor,option),moveFatigue+attackSkillFatigue(actor,weapon,option))));
 }
 
+// Reserve an actual attack budget before exposing a cautious melee unit.
+// Only newly entered hostile reach matters: this must not make an already
+// engaged fighter disengage, or stop useful movement through safe ground.
+function meleeApproachSafe(battle, actor, weapon, point, moveAp, moveFatigue) {
+  if (!roleRules(battle) || weapon?.ranged) return true;
+  const enemies=battle.units.filter(u=>u.alive && !u.escaped && u.side!==actor.side);
+  const threats=enemies.filter(enemy=>{
+    const enemyWeapon=getItem(enemy.equipment.weapon);
+    if (enemyWeapon?.ranged || enemy.stunnedTurns>0) return false;
+    const reach=effectiveWeaponRange(enemy,enemyWeapon);
+    return hexDistance(actor,enemy)>reach && hexDistance(point,enemy)<=reach;
+  });
+  if (!threats.length) return true;
+  if (!weapon || actor.disarmedTurns || actor.stunnedTurns || actor.reload>0) return false;
+  const frontline=actor.tacticalRole==='breaker'
+    || actor.tacticalRole==='frontliner' && effectiveWeaponRange(actor,weapon)===1
+    || actor.equipment.shield && actor.shieldDurability>0;
+  if (frontline && threats.length===1 && actor.hp>actor.maxHp*.5) return true;
+  const mover={...actor,...point};
+  const basic=battle.weaponCompletionVersion===1?equipmentSkills(weapon)[0]:null;
+  return enemies.some(target=>{
+    const options=[basic,...(battle.weaponCompletionVersion===1?completedSkillOptions(mover,target,weapon,battle):[])];
+    return options.some(option=>{
+      const range=effectiveWeaponRange(actor,weapon)+(option?.rangeBonus??0);
+      // An enemy polearm can threaten an intermediate hex before our shorter
+      // weapon reaches it. Budget the whole remaining approach, not just this step.
+      const path=hexDistance(point,target)<=range?[]:pathToTarget(battle,mover,target,range,false,actor.tacticalRole==='flanker');
+      if (!path) return false;
+      let ap=moveAp,fatigue=moveFatigue,previous=mover;
+      let credit=Math.max(0,(actor.movementCredit??0)-battleMovementCost(battle,actor,actor,point)*2);
+      for (const next of path) {
+        const stepper={...actor,movementCredit:credit};
+        ap+=battleMoveApCost(battle,stepper,previous,next);
+        const cost=battleMovementCost(battle,actor,previous,next);
+        fatigue+=movementFatigue(actor,cost);credit=Math.max(0,credit-cost*2);previous=next;
+      }
+      return canAfford(battle,actor,ap+attackApCost(weapon,battle,actor,option),fatigue+attackSkillFatigue(actor,weapon,option));
+    });
+  });
+}
+
 function battleMoveApCost(battle, actor, from, to) {
   const cost = battleMovementCost(battle, actor, from, to);
   if (!Number.isFinite(cost)) return Infinity;
@@ -4462,7 +4505,8 @@ function advanceBattleV2(state) {
     const reform = shieldWallReformStep(state, actor);
     if (reform) {
       const cost = battleMoveApCost(battle, actor, actor, reform);
-      if (actor.ap >= cost&&(!roleRules(battle)||canAfford(battle,actor,cost,movementFatigue(actor,battleMovementCost(battle,actor,actor,reform))))) {
+      if (actor.ap >= cost&&(!roleRules(battle)||canAfford(battle,actor,cost,movementFatigue(actor,battleMovementCost(battle,actor,actor,reform))))
+        && meleeApproachSafe(battle,actor,weapon,reform,cost,movementFatigue(actor,battleMovementCost(battle,actor,actor,reform)))) {
         const from = { q: actor.q, r: actor.r };
         actor.q = reform.q; actor.r = reform.r;
         actor.ap -= cost;
@@ -4656,6 +4700,10 @@ function advanceBattleV2(state) {
   if (companyTactic==='skirmish' && skirmishFireSupport(state,actor.side)) candidates.push({id:'skirmish-hold',type:'hold',apCost:0,fatigueCost:0,bonus:0});
   const offensive = action => (roleRules(battle)?['attack','area','charge','lunge']:['attack','area','charge']).includes(action.type);
   if(roleRules(battle))for(let i=candidates.length-1;i>=0;i--)if(!canAfford(battle,actor,candidates[i].apCost,candidates[i].fatigueCost)||candidates[i].legal===false)candidates.splice(i,1);
+  for (let i=candidates.length-1;i>=0;i--) {
+    const action=candidates[i];
+    if (action.type==='move' && !meleeApproachSafe(battle,actor,weapon,action.point,action.apCost,action.fatigueCost)) candidates.splice(i,1);
+  }
   // Prefer the dagger's health-focused special when it is useful and affordable.
   // A reliable single-hit finish, or an unaffordable special, still permits Stab.
   if (battle.weaponCompletionVersion===1 && ['dagger','qatal'].includes(skillFamily)) {
