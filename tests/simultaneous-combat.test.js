@@ -14,7 +14,7 @@ function steps(s,count=100){for(let i=0;i<count&&s.battle.status==='active';i++)
 function openAdjacent(s){const b=s.battle;b.field.tiles.forEach(t=>{t.terrain='open';t.height=0;});b.tactic='offense';b.formationAdvance=null;b.units.forEach((u,i)=>{u.q=u.side==='company'?8:9;u.r=(i%3)+8;u.equipment.weapon='arming-sword';u.equipment.shield=null;u.shieldDurability=0;u.maxShieldDurability=0;u.maxFatigue=150;u.fatigue=0;u.meleeSkill=60;u.meleeDefense=50;u.initiative=100;u.ap=9;u.turnStartedRound=1;b.simultaneous.actors[u.id].readyAt=0;});}
 
 test('default stays turn based, beta applies only to new battles and normal advance routes to its clock',()=>{
- setSimultaneousBetaEnabled(false);assert.equal(combatBetaConfigHTML(),'');const normal=createGame(731);normal.position={x:440,y:520};startBattle(normal,'quarry-camp');assert.equal(normal.battle.simultaneous,undefined);
+ setSimultaneousBetaEnabled(false);assert.match(combatBetaConfigHTML(),/Realtime combat/);assert.doesNotMatch(combatBetaConfigHTML(),/data-simultaneous-beta checked/);const normal=createGame(731);normal.position={x:440,y:520};startBattle(normal,'quarry-camp');assert.equal(normal.battle.simultaneous,undefined);
  const before=structuredClone(normal.battle);setSimultaneousBetaEnabled(true);assert.deepEqual(normal.battle,before);assert.match(combatBetaConfigHTML(),/data-simultaneous-beta/);setSimultaneousBetaEnabled(false);
  const s=battle();assert.equal(s.battle.simultaneous.version,1);const time=s.battle.simultaneous.time;advanceBattle(s);assert.equal(s.battle.simultaneous.time,time+SIM_STEP_MS);safe(s);
 });
