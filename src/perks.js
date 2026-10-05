@@ -1,7 +1,7 @@
 const PERK_CATEGORIES = {
   general: ['colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist'],
   weapon: ['backstabber', 'sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training', 'shield-strike'],
-  defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'layered-armor', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'reach-advantage', 'last-stand'],
+  defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'layered-armor', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'agile-defense', 'reach-advantage', 'last-stand'],
   ranged: ['bullseye', 'anticipation', 'bow-mastery', 'crossbow-mastery', 'marksman', 'point-blank', 'volley-fire', 'reload-drill'],
   mobility: ['pathfinder', 'recover', 'fleet-footed', 'relentless', 'marathoner', 'high-ground', 'quick-hands', 'combat-bandaging'],
 };
@@ -45,6 +45,7 @@ export const PERKS = Object.freeze([
   { id: 'shield-strike', name: 'Shield Strike', description: 'Deal 10% more melee damage while using a shield.', minLevel: 3 },
   { id: 'iron-jaw', name: 'Iron Jaw', description: 'Take 20% less health damage from every hit.', minLevel: 4 },
   { id: 'battle-forged', name: 'Battle Forged', description: 'Armor takes 15% less damage from hits.', minLevel: 5 },
+  { id: 'agile-defense', name: 'Agile Defense', description: 'Take 60% less health damage from hits at 15 or less combined body armor and helmet fatigue. Protection declines above 15 (about 32% at 30, none at 43). Attachments, shields, mounts and Brawny do not affect this weight check. Armor damage and bleeding are unchanged.', minLevel: 5 },
   { id: 'nimble', name: 'Nimble', description: 'Gain +5 melee and ranged defense when armor and helmet fatigue total at most 15.', minLevel: 4 },
   { id: 'reach-advantage', name: 'Reach Advantage', description: 'Gain +5 melee defense while wielding a two-handed melee weapon.', minLevel: 4 },
   { id: 'duelist', name: 'Duelist', description: 'Deal 12% more melee damage with a one-handed weapon and no shield.', minLevel: 4 },

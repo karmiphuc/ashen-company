@@ -3740,6 +3740,13 @@ export function getDoubleGripBonus(unit, weapon = getItem(unit.equipment?.weapon
   return weapon?.slot==='weapon' && !weapon.ranged && !weapon.twoHanded && !unit.equipment?.shield ? .25 : 0;
 }
 
+// BB-style light-armor protection uses original worn body/head weight, not effective fatigue.
+export function getAgileDefenseMultiplier(unit) {
+  if (!hasPerk(unit, 'agile-defense')) return 1;
+  const weight = (getItem(unit.equipment?.armor)?.fatigue ?? 0) + (getItem(unit.equipment?.helmet)?.fatigue ?? 0);
+  return Math.min(1, .4 + Math.pow(Math.max(0, weight - 15), 1.23) / 100);
+}
+
 function attackDamageRoll(battle, actor, target, weapon, base, head, option = null) {
   const ranged = weapon.ranged === true;
   const distance = hexDistance(actor, target);
@@ -3781,10 +3788,11 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   if (hasPerk(target, 'iron-jaw')) hp = Math.max(1, Math.round(hp * .8));
   // Fur reduces final received missile damage at either hit location.
   if(ranged){const multiplier=1-attachmentEffect(target.equipment,'rangedDamageReduction');hp=Math.max(1,Math.round(hp*multiplier));armorDamage=armorDamage?Math.max(1,Math.round(armorDamage*multiplier)):0;}
-  // Trample health damage bypasses armor, head multipliers and damage-reduction perks.
+  // Trample bypasses armor and earlier modifiers; Agile Defense reduces the complete hit.
   hp += battle.mountBalanceVersion === 1 && option?.id === 'charge' ? mount?.chargeDirectDamage ?? 0 : 0;
   if(option?.minimumHealth)hp=Math.max(hp,option.minimumHealth);
   if(option?.fixedHealth!==undefined)hp=option.fixedHealth;
+  if (hasPerk(target, 'agile-defense') && hp > 0) hp = Math.max(1, Math.round(hp * getAgileDefenseMultiplier(target)));
   return { hp, armorDamage, before };
 }
 

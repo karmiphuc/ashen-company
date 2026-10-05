@@ -10,7 +10,7 @@ test('company sheet keeps stats, injuries and gear actions while explanations st
  const references=[...html.matchAll(/aria-describedby="([^"]+)"/g)].map(m=>m[1]);assert.equal(references.length,new Set(references).size);
  for(const id of references)assert.ok(html.includes(`id="${id}" role="tooltip" hidden`));
  assert.ok(html.includes('Broken nose'));assert.ok(html.includes(`${person.hp} / ${stats.maxHp}`));assert.ok(html.includes('Maximum Fatigue'));assert.ok(html.includes('data-unequip="weapon"'));assert.ok(html.includes('data-swap-weapon-set'));assert.ok(html.includes('data-combat-setting="combatRole"'));
- assert.ok(html.includes('Attachment weight does not count toward Nimble or Fleet Footed'));assert.ok(html.includes('Quick Hands'));assert.ok(html.includes('Resolve reduces morale loss'));
+ assert.ok(html.includes('Attachment weight does not count toward Nimble, Agile Defense or Fleet Footed'));assert.ok(html.includes('Quick Hands'));assert.ok(html.includes('Resolve reduces morale loss'));
  assert.ok(!html.includes('class="equipment-auto-note"'));assert.ok(!html.includes('class="inventory-help"'));assert.equal(JSON.stringify(state),before);
 });
 test('compact preparation keeps checkboxes separate from tappable help and preserves Menu guidance',()=>{
