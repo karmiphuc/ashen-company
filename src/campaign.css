@@ -171,3 +171,5 @@
  .company-page .inventory-panel{align-self:stretch;display:flex;flex-direction:column}
  .company-page .detailed-company .inventory-grid{flex:1;height:0;min-height:395px;max-height:none;align-content:start;contain:size}
 }
+
+.item-equipped-comparison{margin:14px 0 0;padding:10px 12px;background:#201c1599;border-left:3px solid #8c7344;font-size:13px;line-height:1.5}.item-equipped-comparison small{display:block;margin-top:4px}.item-stat-list .item-stat-better,.item-equipped-comparison .item-stat-better{color:#9ddd95}.item-stat-list .item-stat-worse,.item-equipped-comparison .item-stat-worse{color:#ff9b91}.item-stat-arrow{font-size:9px;margin-left:2px;vertical-align:middle}
