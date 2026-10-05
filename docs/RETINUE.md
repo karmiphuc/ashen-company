@@ -67,3 +67,13 @@ trade/spoils. Each shows artwork, status, benefit chips and an explicit one-time
 cost. Unaffordable/locked actions explain the next step. Hint buttons support
 hover, keyboard focus and touch; Escape dismisses the hint. Purchases announce
 the result and preserve scroll position. Cards collapse to one column on phones.
+
+Bounty Hunter retains the permanent +5 percentage points to champion chance and
+also pays a fixed 300 crowns per defeated enemy champion when collecting a
+victory result. Retreats, defeats, and escaped or surviving champions do not
+pay a bounty. Bounties are separate from Scavenger's loot multiplier
+and loot donations. The result screen displays the same total collected once.
+
+New hard-tier enemy fights give elite troops +20 resolve. Champions receive
++40 resolve over ordinary troops (previously +20); hard-tier champions stack
+both bonuses. Existing active battles retain their saved resolve values.
