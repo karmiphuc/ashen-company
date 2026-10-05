@@ -60,20 +60,6 @@ export function enemyBattleTactic(battle, getItem) {
   return ranged.length >= 3 ? 'defense' : 'offense';
 }
 
-// A local response to fire does not replace the army's committed command.
-export function enemyUnitTactic(battle, actor, getItem) {
-  const command = enemyBattleTactic(battle, getItem);
-  const pressure = actor.rangedProvocation;
-  const weapon = getItem(actor.equipment?.weapon);
-  if (battle.enemyAdaptiveRulesVersion !== 1 || actor.side !== 'enemy' || !actor.alive || actor.escaped
-    || !['defense','skirmish'].includes(command) || weapon?.ranged || !pressure
-    || battle.round-pressure.round > 2) return command;
-  const shooter = battle.units.find(unit => unit.id===pressure.sourceId && unit.side==='company' && unit.alive && !unit.escaped);
-  if (!shooter || hexDistance(actor,shooter)>7
-    || battle.units.some(unit=>unit.side==='company' && unit.alive && !unit.escaped && hexDistance(actor,unit)<=1)) return command;
-  return actor.equipment.shield && actor.shieldDurability>0 && !weapon?.twoHanded ? 'shield-wall' : 'offense';
-}
-
 // Commands are committed once per round, never while scoring a candidate or rendering.
 export function updateEnemyTactic(battle, getItem, companyAmmo) {
   if (battle.enemyAdaptiveRulesVersion !== 1 || battle.status !== 'active') return false;

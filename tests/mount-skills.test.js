@@ -135,11 +135,14 @@ test('a wolf finisher credits its rider and grants Berserk AP immediately withou
     && !(tile.q === f.target.q && tile.r === f.target.r)) tile.terrain = 'dense-trees';
   const ammo = f.state.supplies.ammo;
   advanceBattle(f.state);
-  assert.equal(f.battle.lastEvent.type, 'miss'); assert.equal(f.battle.lastEvent.reactions[0].fallen, true);
+  assert.equal(f.battle.lastEvent.type, 'miss');
+  assert.equal(f.battle.lastEvent.reactions[0].skillName, 'Opportunity Strike');
+  const bite = f.battle.lastEvent.reactions.find(reaction => reaction.skillName === 'Wolf Bite');
+  assert.equal(bite.fallen, true);
   assert.equal(f.battle.xp[f.actor.id], 50); assert.equal(f.actor.ap, 4); assert.equal(f.actor.pendingBerserkAp, 0);
   assert.equal(f.state.supplies.ammo, ammo - 1); assert.ok(f.battle.log.some(entry => entry.includes('Wolf Bite')));
-  assert.deepEqual(f.battle.lastEvent.reactions[0].effects,[{id:'berserk',amount:4}]);
-  assert.equal(f.battle.lastEvent.reactions[0].weaponId,null);
+  assert.deepEqual(bite.effects,[{id:'berserk',amount:4}]);
+  assert.equal(bite.weaponId,null);
 });
 
 

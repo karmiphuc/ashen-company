@@ -61,6 +61,7 @@ export function getItemDetails(item, condition) {
       stats.push({ label: 'Ammunition', value: item.throwing ? '1 bundle charge per throw' : '1 per shot' });
       if (item.throwing) stats.push({ label: 'Bundle throws', value: `${Number.isFinite(condition) ? Math.max(0, Math.min(throwingCapacity(item), condition)) : throwingCapacity(item)} / ${throwingCapacity(item)}` });
       if (item.reloadTurns) stats.push({ label: 'Reload', value: '4 AP after each shot (new battles)' });
+      notes.push('Firing beside an armed melee opponent provokes a free Opportunity Strike before the shot. Each adjacent opponent can react; a surviving shooter can still fire.');
       notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
       notes.push('Bow and crossbow fighters keep their distance while ammunition remains. When ammunition runs out, they draw a pocket weapon or reserve melee set and fight according to the selected tactic. Drawing or switching costs 4 AP in new battles; Quick Hands makes the first swap each round free.');
       if (item.throwing) notes.push('Throwing weapons are one-handed; the bundle capacity shown above includes any named ammunition roll. Active and reserve bundles have separate counts, preserved when swapping or stowing. After battle, equipped bundles refill from company ammunition, one supply per restored throw; shortages leave partial bundles. Carry a spare bundle or melee weapon. Without a usable backup, the fighter punches.');
