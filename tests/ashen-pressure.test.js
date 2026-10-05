@@ -16,6 +16,8 @@ function active(seed=719){
 }
 function legacy(s){
  s.ashenWinter.version=1;
+ for(const h of Object.values(s.ashenWinter.hosts))if(!h.id.endsWith(':1')){delete s.ashenWinter.towns[h.targetTownId];delete s.ashenWinter.hosts[h.id];}
+ for(const f of s.ashenWinter.fronts)f.spawnIndex=1;
  const resize=(f,size)=>{f.size=size;f.troops=f.troops.filter(i=>i<size);};
  for(const f of s.ashenWinter.fronts){resize(f.force,12);f.nextSpawnHour=campaignHour(s)+72;}
  for(const h of Object.values(s.ashenWinter.hosts)){resize(h.force,6);resize(h.occupationForce,10);}
@@ -23,23 +25,26 @@ function legacy(s){
 }
 function engage(s,e){s.position={x:e.x,y:e.y};assert.ok(startBattle(s,e.id).ok);}
 
-test('new crisis immediately has three 20-strong hosts and daily reinforcements fill twelve roaming slots',()=>{
- const s=active();assert.equal(Object.keys(s.ashenWinter.hosts).length,3);
- assert.ok(Object.values(s.ashenWinter.hosts).every(h=>h.force.troops.length===20));
- for(let day=0;day<3;day++){setTime(s,campaignHour(s)+24);advanceAshenWinter(s,context);}
- assert.equal(Object.keys(s.ashenWinter.hosts).length,12);
- for(const front of s.ashenWinter.fronts)assert.equal(Object.values(s.ashenWinter.hosts).filter(h=>h.frontId===front.id).length,4);
- assert.ok(Object.values(s.ashenWinter.hosts).every(h=>h.force.size===20||h.force.size===24));
+test('each stronghold immediately raises 2–4 bands and saves a 3–7 day wave timer',()=>{
+ const s=active();
+ for(const f of s.ashenWinter.fronts){
+  assert.ok(f.spawnIndex>=2&&f.spawnIndex<=4);
+  assert.ok(f.nextSpawnHour-campaignHour(s)>=72&&f.nextSpawnHour-campaignHour(s)<=168);
+ }
+ assert.ok(Object.values(s.ashenWinter.hosts).every(h=>[20,24].includes(h.force.size)));
+ const before=structuredClone(s.ashenWinter);assert.deepEqual(validateSave(s),s);
+ setTime(s,campaignHour(s)+24);advanceAshenWinter(s,context);
+ assert.deepEqual(s.ashenWinter.fronts.map(f=>f.spawnIndex),before.fronts.map(f=>f.spawnIndex));
+ for(const f of s.ashenWinter.fronts){const old=f.spawnIndex;setTime(s,f.nextSpawnHour);advanceAshenWinter(s,context);assert.ok(f.spawnIndex-old>=2&&f.spawnIndex-old<=4);}
  assert.deepEqual(validateSave(s),s);
- setTime(s,campaignHour(s)+24);advanceAshenWinter(s,context);assert.equal(Object.keys(s.ashenWinter.hosts).length,12);
 });
 
 test('active old crisis receives strong hosts immediately without healing or resurrecting existing troops',()=>{
  const s=legacy(active()),host=Object.values(s.ashenWinter.hosts)[0];host.force.troops=[0,2,5];
  host.force.damage={2:{hp:20,bodyArmor:30,headArmor:20,shieldDurability:10}};
  const old=structuredClone(host.force),before=structuredClone(s);assert.deepEqual(validateSave(s),s);assert.deepEqual(s,before);
- advanceAshenWinter(s,context);assert.equal(s.ashenWinter.version,2);assert.deepEqual(host.force,old);
- assert.equal(Object.keys(s.ashenWinter.hosts).length,6);
+ advanceAshenWinter(s,context);assert.equal(s.ashenWinter.version,3);assert.deepEqual(host.force,old);
+ assert.ok(Object.keys(s.ashenWinter.hosts).length>=9);
  assert.ok(Object.values(s.ashenWinter.hosts).filter(h=>h.id.endsWith(':2')).every(h=>h.force.troops.length===24));
  assert.deepEqual(validateSave(s),s);
 });

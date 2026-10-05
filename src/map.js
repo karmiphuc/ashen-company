@@ -558,7 +558,8 @@ function draw() {
     if(!worldPointVisible(state,band))return;
     const count = bandCount(band), selected = selection === band.id, hunted = state.pursuit === band.id;
     const undead=band.kind.startsWith('undead-');
-    const art = undead?'figure_undead_host':{ 'northern-highlands':'figure_player_berserker',greenwood:'figure_player_ranger','blackwater-basin':'figure_player_slave','far-steppe':'figure_player_nomad','saffron-coast':'figure_player_nomad',sunlands:'figure_player_nomad','highland-clans':'figure_player_berserker','southern-sultanate':'figure_player_nomad',south: 'figure_player_nomad', north: 'figure_player_berserker', east: 'figure_player_assassin', forest: 'figure_player_ranger' }[band.factionId] || ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
+    const stronghold = band.kind === 'undead-commander';
+    const art = stronghold?'fortified_outpost_01':undead?'figure_undead_host':{ 'northern-highlands':'figure_player_berserker',greenwood:'figure_player_ranger','blackwater-basin':'figure_player_slave','far-steppe':'figure_player_nomad','saffron-coast':'figure_player_nomad',sunlands:'figure_player_nomad','highland-clans':'figure_player_berserker','southern-sultanate':'figure_player_nomad',south: 'figure_player_nomad', north: 'figure_player_berserker', east: 'figure_player_assassin', forest: 'figure_player_ranger' }[band.factionId] || ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
     context.save();
     if (band.behavior === 'hunting-company') {
       const angle = Math.atan2(state.position.y - band.y, state.position.x - band.x);
@@ -575,8 +576,9 @@ function draw() {
     }
     drawActorGround(band.id,band.x,band.y);
     if (!undead && count > 1) sprite(context, ['figure_player_berserker', 'figure_player_ranger', 'figure_player_slave'][index % 3], band.x - 8, band.y + 1, 25, .72,actorPoses.get(band.id)?.flip);
-    sprite(context, art, band.x + (!undead && count > 1 ? 7 : 0), band.y, undead?35:29, .72,actorPoses.get(band.id)?.flip);
+    sprite(context, art, band.x + (!undead && count > 1 ? 7 : 0), band.y, stronghold?68:undead?35:29, .72,actorPoses.get(band.id)?.flip);
     sprite(context, `banner_10${clamp(Number(band.difficulty) || Math.ceil(count / 2), 1, 3)}`, band.x + 16, band.y - 20, 17, .82);
+    if (stronghold) sprite(context,'figure_undead_host',band.x+20,band.y+8,22,.9);
     const label = `${band.enemies.some(e=>e.champion)?'★ ':''}${band.name || 'Wandering Brigands'} · ${count} ${band.kind.startsWith('undead-')?'undead':band.kind==='deserters'?'deserters':`brigand${count===1?'':'s'}`}`;
     context.font = 'bold 10px Arial'; context.textAlign = 'center'; context.lineWidth = 3; context.strokeStyle = '#1c1913cc'; if(showActorLabel(camera.zoom,selected,hunted||band.behavior==='hunting-company'))context.strokeText(label, band.x, band.y + 24);
     context.fillStyle = band.behavior==='hunting-company'?'#ed6558':'#f29b46'; if(showActorLabel(camera.zoom,selected,hunted||band.behavior==='hunting-company'))context.fillText(label, band.x, band.y + 24);

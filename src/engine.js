@@ -31,7 +31,7 @@ import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-ev
 import { CARAVAN_ATTACK_WARNING_HOURS, CARAVAN_SHORTAGE_HOURS, CARAVAN_TRAVEL_HOURS, routeSegmentDistance, shipmentId, shipmentPlan, shipmentPosition } from './caravans.js';
 import { ASHEN_CONFIG, initialAshenWinter, crisisHash } from './crisis-director.js';
 import { settlementAccess } from './settlement-access.js';
-import { UNDEAD_TYPES, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
+import { UNDEAD_TYPES, allSettlementsCaptured, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
 import { COMBAT_SKILLS, WEAPON_ACTIONS, equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
 import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, isAffordableAction, rankTacticalActions, enemyBattleTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
@@ -813,10 +813,10 @@ export function getUndeadEncounters(state) {
       name: encounter.kind === 'undead-commander' && troop === 0 ? encounter.name : pool[(troop + encounter.force.seed % pool.length) % pool.length].name,
       troopIndex: troop, undeadTraitsVersion: 1, savedDamage: encounter.force.damage[troop] ?? null }));
     const fight=worldSkirmishFor(state,encounter.id);
-    return { ...encounter,...(fight?{battleHoursRemaining:Math.max(0,fight.endHour-worldHours(state)),behavior:'fighting'}:{}), enemies, difficulty: encounter.force.tier, veteranRank: encounter.force.rank,
+    return { ...encounter,...(encounter.kind === 'undead-host' && !encounter.townId && allSettlementsCaptured(state,SETTLEMENTS)?{behavior:'hunting-company'}:{}),...(fight?{battleHoursRemaining:Math.max(0,fight.endHour-worldHours(state)),behavior:'fighting'}:{}), enemies, difficulty: encounter.force.tier, veteranRank: encounter.force.rank,
       generation: encounter.force.generation, cleared: false, factionLabel: 'Ashen Legion',
       reward: encounter.kind === 'undead-host' ? ASHEN_CONFIG.hostGold : encounter.kind === 'undead-liberation' ? ASHEN_CONFIG.liberationGold : ASHEN_CONFIG.commanderGold,
-      description: fight?`Fighting ${fight.aId===encounter.id?fight.bName:patrolDefinitions(SETTLEMENTS).find(p=>p.id===fight.aId)?.name??'faction soldiers'}. About ${Math.ceil(fight.endHour-worldHours(state))} hours remain.`: encounter.kind === 'undead-commander' ? 'Defeat this commander to stop its front from closing more settlements.'
+      description: fight?`Fighting ${fight.aId===encounter.id?fight.bName:patrolDefinitions(SETTLEMENTS).find(p=>p.id===fight.aId)?.name??'faction soldiers'}. About ${Math.ceil(fight.endHour-worldHours(state))} hours remain.`: encounter.kind === 'undead-commander' ? 'Destroy this fortified wilderness stronghold and its marshal to stop waves of 2–4 undead bands every 3–7 days.'
         : encounter.kind === 'undead-liberation' ? 'Defeat this force to reopen all settlement services.' : 'Intercept this host before it closes a settlement.' };
   });
 }
@@ -2755,7 +2755,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   applyCompanyAutomation(state);
   if(['camp','band'].includes(encounterType)){state.discoveryRolls??={};state.discoveryRolls[camp.id]={cycle:camp.generation??camp.spawnCycle,...discoveryBonuses(state,camp)};}
   refillThrowingAmmo(state);
-  const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y), {fortified:encounterType === 'camp'});
+  const field = createBattleField(state.seed, `${camp.id}:${state.day}:${state.contractSerial}`, terrainAt(camp.x, camp.y), {fortified:encounterType === 'camp' || encounterType === 'undead-commander'});
   const company = getFormation(state).flatMap((personId, index) => {
     const person = personById(state, personId);
     if (!person) return [];
