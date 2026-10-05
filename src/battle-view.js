@@ -413,13 +413,17 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         <button class="${selectedSpeed === 0 ? 'is-selected' : ''}" data-battle-speed="0" aria-pressed="${selectedSpeed === 0}">Pause</button>
         <button class="${selectedSpeed === 1 ? 'is-selected' : ''}" data-battle-speed="1" aria-pressed="${selectedSpeed === 1}">1x</button>
         <button class="${selectedSpeed === 4 ? 'is-selected' : ''}" data-battle-speed="4" aria-pressed="${selectedSpeed === 4}">4x</button>
-        <button class="${selectedSpeed === 'cinematic' ? 'is-selected' : ''}" data-battle-speed="cinematic" aria-pressed="${selectedSpeed === 'cinematic'}" title="4× movement with slow-motion attacks, skills and impacts">Cinematic</button>
+
       </div>
-      <div class="battle-camera" role="group" aria-label="Battlefield camera"><button data-battle-camera="company" aria-label="Center battlefield on your company">Company</button><button data-battle-camera="enemy" aria-label="Center battlefield on enemies" ${units.some(u=>u.side==='enemy'&&u.alive&&!u.escaped)?'':'disabled'}>Enemies</button><button data-battle-camera="active" aria-label="Center battlefield on the acting fighter" ${active?.alive&&!active.escaped?'':'disabled'}>Acting</button></div>
       <div class="battle-camera battle-zoom" role="group" aria-label="Battlefield zoom"><button data-battle-zoom="out" aria-label="Zoom out battlefield">−</button><button data-battle-zoom="reset" aria-label="Reset battlefield zoom">100%</button><button data-battle-zoom="in" aria-label="Zoom in battlefield">+</button></div>
+      <details class="battle-more"><summary aria-label="More battle controls">More ⋯</summary><div class="battle-more-panel">
+        <button class="${selectedSpeed === 'cinematic' ? 'is-selected' : ''}" data-battle-speed="cinematic" aria-pressed="${selectedSpeed === 'cinematic'}" title="4× movement with slow-motion attacks, skills and impacts">Cinematic</button>
+      <div class="battle-camera" role="group" aria-label="Battlefield camera"><button data-battle-camera="company" aria-label="Center battlefield on your company">Company</button><button data-battle-camera="enemy" aria-label="Center battlefield on enemies" ${units.some(u=>u.side==='enemy'&&u.alive&&!u.escaped)?'':'disabled'}>Enemies</button><button data-battle-camera="active" aria-label="Center battlefield on the acting fighter" ${active?.alive&&!active.escaped?'':'disabled'}>Acting</button></div>
+
       <button data-battle-log-toggle aria-expanded="true" aria-controls="battle-event-sidebar">Hide log</button>
       <button class="battle-retreat" data-action="retreat-battle" ${status === 'active' ? '' : 'disabled'}>Retreat</button>
       <button class="battle-resolve" data-action="resolve-battle" ${status === 'active' ? '' : 'disabled'}>Resolve battle</button>
+      </div></details>
     </div>
     ${tacticsHTML(battle.tactic, status !== 'active', battle.rulesVersion===2)}
     ${enemyIntentHTML(battle)}
