@@ -24,17 +24,17 @@ test('all imported helmets use the native head origin, preserving the earlier fo
  for(const item of DLC_ITEMS.filter(i=>i.slot==='armor'))assert.equal(DLC_ART[item.id].top+sourceById.get(item.id).brushBounds[3],63,item.id);
 });
 
-test('all helmet crowns and horns fit inside the portrait while every face and named variant keeps its head anchor',()=>{
+test('all helmet crowns and horns keep their full size and source anchors across faces and named variants',()=>{
  const people=new Map();for(let seed=0;seed<100;seed++){const person={name:'Alignment',seed},html=portraitHTML(person),index=Number(html.match(/data-appearance="(\d+)"/)[1]);people.set(index,person);}
  assert.ok(people.size>=6);
  for(const item of helmets)for(const person of people.values())for(const helmet of [getItem(item.id),getItem(`famed:${item.id}:123`)]){
   const art=DLC_ART[item.id],html=portraitHTML(person,{helmet,armor:getItem('leather-vest'),weapon:getItem('arming-sword'),shield:getItem('kite-shield')});
   const style=html.match(/bb-portrait-composition" style="([^"]+)"/)[1];
-  const x=Number(style.match(/left:([\d.-]+)px/)[1]),y=Number(style.match(/top:([\d.-]+)px/)[1]),scale=Number(style.match(/transform:scale\(([\d.]+)\)/)[1]);
-  assert.ok(x+art.left*scale>=-1e-9,`${item.id}: left horn fits`);
-  assert.ok(x+(art.left+art.width)*scale<=104+1e-9,`${item.id}: right horn fits`);
-  assert.ok(y+art.top*scale>=-1e-9,`${item.id}: crown fits`);
-  assert.ok(y+(art.top+art.height)*scale<=142+1e-9,`${item.id}: helmet fits vertically`);
+  const x=Number(style.match(/left:([\d.-]+)px/)[1]),y=Number(style.match(/top:([\d.-]+)px/)[1]),scale=Number(style.match(/transform:scale\(([\d.]+)\)/)?.[1]??1);
+  assert.equal(x,0,`${item.id}: equipment does not shift the rider horizontally`);
+  assert.equal(scale,1,`${item.id}: tall helmets cannot shrink the character`);
+  assert.match(html,/overflow:visible/,`${item.id}: crowns and horns can extend beyond the nominal canvas`);
+  assert.ok(Number.isFinite(y+art.top*scale),`${item.id}: source crown remains positioned`);
   if(!art.hideHead)assert.match(html,/data-layer="head"[^>]*top:0px/,`${item.id}: local face origin stays fixed`);
   assert.ok(html.includes(`left:${art.left}px;top:${art.top}px;`),`${item.id}: source anchor applies to ordinary and named gear`);
   const mounted=portraitHTML(person,{helmet,mount:getItem('war-horse')});

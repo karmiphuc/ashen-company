@@ -191,3 +191,22 @@ test('Surgeon shortens wound recovery and treatment remains available for injure
  for(let day=0;day<3;day++)assert.ok(game.tick(state,24).ok);
  assert.equal(person.injuries.length,0);assert.equal(person.hp,100);
 });
+
+test('shield-bypassing attacks remove the wounded shield contribution exactly once',()=>{
+ const {b,a,t}=battle();a.meleeSkill=45;t.meleeDefense=40;t.morale=50;t.injuries=[wound('severe-concussion')];
+ t.equipment.shield='buckler';t.shieldDurability=24;const weapon=game.getItem('bludgeon');
+ const bypass=game.attackHitChance(b,a,t,weapon,0,{shieldBypass:true});
+ const unshielded={...t,equipment:{...t.equipment,shield:null},shieldDurability:0,meleeDefense:t.meleeDefense-game.getItem('buckler').defense};
+ assert.equal(bypass,game.attackHitChance(b,a,unshielded,weapon));
+});
+
+test('Colossus raises the injury threshold while retaining the ten-damage floor',()=>{
+ const state=atTown(),person=state.party[0],normal=game.getCompanyStats(person).maxHp;
+ person.perks=['colossus'];const maximum=game.getCompanyStats(person).maxHp;
+ assert.equal(maximum,Math.round(normal*1.25));
+ const damage=Math.ceil(normal*.25),target={hp:maximum,maxHp:maximum,injuries:[]};
+ assert.ok(eligibleInjuries({...target,maxHp:normal},INJURY_POOLS.BluntBody,damage).length>0);
+ assert.equal(eligibleInjuries(target,INJURY_POOLS.BluntBody,damage).length,0);
+ assert.ok(eligibleInjuries(target,INJURY_POOLS.BluntBody,Math.ceil(maximum*.25)).length>0);
+ assert.equal(eligibleInjuries(target,INJURY_POOLS.BluntBody,9,false,.01).length,0);
+});

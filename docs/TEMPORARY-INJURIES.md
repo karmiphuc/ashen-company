@@ -15,7 +15,7 @@ New battles use `injuryRulesVersion: 1`. Original Battle Brothers thresholds and
 - Cut Artery, Cut Neck Vein and Grazed Neck cause continuing bleeding while fresh in combat. Existing wounds do not restart that bleeding in the next battle. Damage uses the existing casualty pipeline and cannot generate additional wounds.
 - Gash lowers injury thresholds to 0.66, or 0.50 with Sword Mastery, rather than applying the old temporary daze surrogate. Crippling Strikes multiplies thresholds by 0.66; the 10-health minimum remains. Executioner grants its 20% damage bonus against a target with an actual temporary injury.
 
-Wounds use a separate saved random stream, so selection does not consume existing hit/damage random draws. Effective tactical attributes are read centrally from raw values; weapon swaps and shield breaks cannot apply penalties repeatedly. Initiative also feeds the simultaneous-combat scheduler.
+Wounds use a separate saved random stream, so selection does not consume existing hit/damage random draws. Effective tactical attributes are read centrally from raw values; weapon swaps and shield breaks cannot apply penalties repeatedly. Initiative also feeds the simultaneous-combat scheduler. Shield-bypassing attacks remove the shield contribution before applying wound penalties, so wounded defenders do not lose that defense twice.
 
 ## Recovery and care
 

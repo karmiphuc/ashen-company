@@ -3939,7 +3939,9 @@ export function attackHitChance(battle, actor, target, weapon, hitBonus = 0, opt
   const anticipationDefense = ranged && hasPerk(target, 'anticipation')
     ? Math.max(10, Math.floor(injuryStat(target,'rangedDefense') * .1 * hexDistance(actor, target))) : 0;
   const shieldBypass = (option?.shieldBypass || ['flail-headshot', 'whip-crack'].includes(option?.id)) ? shieldDefenseFor(target, target.equipment.shield) : 0;
-  const defense = (Math.round(((ranged ? injuryStat(target,'rangedDefense') : injuryStat(target,'meleeDefense')) - shieldBypass) * (1 + getMoraleEffects(target).modifier)) + dodgeDefense + anticipationDefense
+  const defenseKey=ranged?'rangedDefense':'meleeDefense';
+  const baseDefense=injuryStat(shieldBypass?{...target,[defenseKey]:target[defenseKey]-shieldBypass}:target,defenseKey);
+  const defense = (Math.round((baseDefense) * (1 + getMoraleEffects(target).modifier)) + dodgeDefense + anticipationDefense
     + (!shieldBypass && target.shieldWallActive && target.shieldDurability > 0 ? shieldDefenseFor(target, target.equipment.shield,target.shieldDurability,ranged) : 0)
     + (!ranged ? reachDefense : 0)
     + (hasPerk(target, 'last-stand') && target.hp * 2 <= target.maxHp ? 8 : 0)
