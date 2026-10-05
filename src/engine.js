@@ -1,3 +1,4 @@
+import { revealWorld, validExploration } from './world-fog.js';
 import {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier,defaultRetinue} from './retinue.js';
 export {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier} from './retinue.js';
 import { landmarkCampPoint } from './world-landmarks.js';
@@ -742,6 +743,7 @@ export function createGame(seed = Date.now()) {
   state.party = state.party.map(normalizeMember);
   state.formation = seedFormation(state.party);
   advanceCaravans(state, worldHours(state));
+  revealWorld(state, SETTLEMENTS);
   record(state, 'The Ashen Company gathers at Oakwatch. The road is yours.');
   return state;
 }
@@ -1821,6 +1823,7 @@ export function tick(state, hours) {
         engagement = startBattle(state, target.id);
       } else state.destination = { x: target.x, y: target.y };
     }
+    revealWorld(state, SETTLEMENTS);
     remaining -= step;
     if(state.destinationAction?.type==='patrol'&&!getJoinablePatrolBattle(state,state.destinationAction.id)){
       state.destination=null;state.destinationAction=null;record(state,'The allied battle has ended before the company could join.');
@@ -6127,7 +6130,9 @@ export function validateSave(input) {
     }
   }
   // Return a new plain state so callers cannot mutate the imported object through aliases.
+  assert(input.worldExploration===undefined || validExploration(input.worldExploration), 'Invalid world exploration.');
   return {
+    ...(input.worldExploration===undefined?{}:{worldExploration:input.worldExploration}),
     version: 1, seed: input.seed, day: input.day, hour: input.hour,
     ashenWinter,
     gold: input.gold, food: input.food, renown: input.renown,

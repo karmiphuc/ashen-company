@@ -19,6 +19,7 @@ const CORE = [
   './src/app.js',
   './src/item-details.js',
   './src/engine.js',
+  './src/world-fog.js',
   './src/named-rolls.js',
   './src/named-weapons.js',
   './src/named-weapon-art.js',

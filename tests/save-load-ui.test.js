@@ -7,7 +7,7 @@ const code=(name,next)=>app.slice(app.indexOf(`function ${name}(`),app.indexOf(`
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 
 test('Save menu renders the actual escaped load error instead of a literal template expression',()=>{
- let html;runInNewContext(code('settings','exportSave')+'settings();',{showModal:(title,content)=>html=content,esc,state:{},saveProblem:false,unreadSave:true,corruptSave:'{}',saveError:'Invalid save: <town deadlines>',companyAutomationHTML:()=>'',audioControlsHTML:()=>'',defaultBattleSpeed:4});
+ let html;runInNewContext(code('settings','exportSave')+'settings();',{showModal:(title,content)=>html=content,esc,state:{},saveProblem:false,unreadSave:true,corruptSave:'{}',saveError:'Invalid save: <town deadlines>',companyAutomationHTML:()=>'',audioControlsHTML:()=>'',isWorldFogEnabled:()=>true,defaultBattleSpeed:4});
  assert.ok(html.includes('A save could not be loaded (Invalid save: &lt;town deadlines&gt;)'));assert.ok(!html.includes('${esc(saveError)}'));assert.ok(html.includes('data-action="export-recovery"'));
 });
 
