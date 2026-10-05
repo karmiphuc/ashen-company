@@ -1,3 +1,4 @@
+import { FOG_CELL_SIZE, FOG_COLUMNS, FOG_ROWS, WORLD_VIEW_RADIUS, isWorldFogEnabled, revealWorld, worldPointVisible, worldPointExplored } from './world-fog.js';
 import { sceneFootprintContains } from './regional-scenes.js';
 import { WORLD_LANDMARK_ASSETS, worldLandmarks, landmarkAt, drawWorldLandmark, drawMountainRanges } from './world-landmarks.js';
 import { worldRoute } from './world-navigation.js';
@@ -233,7 +234,7 @@ function drawNightLights(){const glow=(x,y,radius,strength)=>{const g=context.cr
  for(const town of SETTLEMENTS){if(Math.abs(town.x-camera.x)>width/(2*camera.zoom)+160||Math.abs(town.y-camera.y)>height/(2*camera.zoom)+160||!getSettlementAccess(state,town.id).servicesAvailable)continue;
   const p=settlementProfile(town);if(p.military){for(const dx of [-27,0,27])glow(town.x+dx,town.y-10,27,.4);}else glow(town.x,town.y-9,p.radius*1.1,town.kind==='village'?.37:.28);
  }
- for(const c of caravans())glow(c.x+5,c.y-9,18,.42);context.restore();}
+ for(const c of caravans())if(worldPointVisible(state,c))glow(c.x+5,c.y-9,18,.42);context.restore();}
 
 const SCENERY_COLORS = { danger: '#efb095', good: '#c5d895', trade: '#e5ca89' };
 function drawWorkshopEmblem(structure) {
@@ -258,7 +259,7 @@ function drawWorkshopEmblem(structure) {
 }
 function drawSettlementScenery() {
   const towns = new Map(SETTLEMENTS.map(town => [town.id, town]));
-  const visible = settlementStructures.filter(structure => Math.abs(structure.x - camera.x) < width / (2 * camera.zoom) + 140
+  const visible = settlementStructures.filter(structure => worldPointExplored(state,structure) && Math.abs(structure.x - camera.x) < width / (2 * camera.zoom) + 140
     && Math.abs(structure.y - camera.y) < height / (2 * camera.zoom) + 140);
   // Short dirt spurs connect the outlying yards to their parent settlement.
   context.save(); context.lineCap = 'round'; context.strokeStyle = '#ad956b77'; context.lineWidth = 4;
@@ -356,7 +357,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
   if (!canvas) return;
   context = canvas.getContext('2d');
   if(state?.seed!==game.seed){previousPositions.clear();actorPoses.clear();}
-  state = game; settlementStructures = worldSettlementScenery(game); townCallback = onChooseTown; campCallback = onChooseCamp; activationCallback = onActivate;
+  state = game; revealWorld(game,SETTLEMENTS); settlementStructures = worldSettlementScenery(game); townCallback = onChooseTown; campCallback = onChooseCamp; activationCallback = onActivate;
   const resize = () => {
     const rectangle = canvas.getBoundingClientRect();
     width = rectangle.width; height = rectangle.height;
@@ -420,11 +421,11 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
     pointers.delete(event.pointerId);
     if (!dragged && !pinchStart && isMapTapGesture(active && { x: active.startX, y: active.startY }, current)) {
       const world = { x: camera.x + (current.x - width / 2) / camera.zoom, y: camera.y + (current.y - height / 2) / camera.zoom };
-      const town = SETTLEMENTS.find(item => Math.hypot(item.x - world.x, item.y - world.y) < 48);
-      const camp = getCampSites(state).find(item => Math.hypot(item.x - world.x, item.y - world.y) < 34);
-      const patrol = getFactionPatrols(state).filter(p=>p.active).find(item=>Math.hypot(item.x+24-world.x,item.y-24-world.y)<24);
-      const band = nearestMapBand(bands(),world);
-      const caravan = caravans().find(item => Math.hypot(item.x - world.x, item.y - world.y) < 24);
+      const town = SETTLEMENTS.find(item => worldPointExplored(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 48);
+      const camp = getCampSites(state).find(item => worldPointExplored(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 34);
+      const patrol = getFactionPatrols(state).filter(p=>p.active && worldPointVisible(state,p)).find(item=>Math.hypot(item.x+24-world.x,item.y-24-world.y)<24);
+      const band = nearestMapBand(bands().filter(item=>worldPointVisible(state,item)),world);
+      const caravan = caravans().find(item => worldPointVisible(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 24);
       const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
       const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind.startsWith('undead-')?band.kind:['deserters','bounty'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }
         : camp ? { type: 'camp', id: camp.id, entity: camp }
@@ -437,7 +438,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       if ((target?.type?.startsWith('undead-') || target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
-      else if (!target && !sceneryAt(settlementStructures, world) && !landmarkAt(landmarks,world)) onTravel(world.x, world.y);
+      else if (!target && !sceneryAt(settlementStructures.filter(item=>worldPointExplored(state,item)), world) && !landmarkAt(landmarks.filter(item=>worldPointExplored(state,item)),world)) onTravel(world.x, world.y);
       const activation = activationTracker.tap(target, current, Number(event.timeStamp));
       if (activation && activationCallback) activationCallback(activation);
     } else activationTracker.cancel();
@@ -470,8 +471,8 @@ export function zoomMap(factor) {
 
 export function selectMapTown(town) { selection = town?.id || null; draw(); }
 export function selectMapCamp(id) { selection = id; draw(); }
-export function updateMap(game) { if(state?.seed!==game.seed){previousPositions.clear();actorPoses.clear();}state = game;
-  const actors=[{id:'company',...game.position,destination:game.destination},...bands(),...caravans(),...getFactionPatrols(game).filter(p=>p.active)];
+export function updateMap(game) { if(state?.seed!==game.seed){previousPositions.clear();actorPoses.clear();}state = game;revealWorld(game,SETTLEMENTS);
+  const actors=[{id:'company',...game.position,destination:game.destination},...bands(),...caravans(),...getFactionPatrols(game).filter(p=>p.active && worldPointVisible(state,p))];
   const next=new Map();for(const actor of actors){actorPoses.set(actor.id,movementPose(previousPositions.get(actor.id),actor,actor.destination));next.set(actor.id,{x:actor.x,y:actor.y,flip:actorPoses.get(actor.id).flip});}previousPositions=next;actorPoses=new Map(actors.map(a=>[a.id,actorPoses.get(a.id)])); settlementStructures = worldSettlementScenery(game); if (canvas?.isConnected) { if (background && background.seed!==game.seed) buildBackground(); draw(); } }
 
 function draw() {
@@ -498,6 +499,7 @@ function draw() {
   if(darkness)drawNightLights();
 
   getCampSites(state).forEach((camp, index) => {
+    if(!worldPointExplored(state,camp))return;
     context.save();
     if (camp.cleared) context.globalAlpha = .48;
     if (!camp.cleared || selection === camp.id) {
@@ -514,6 +516,7 @@ function draw() {
 
   const activeBands = bands();
   caravans().forEach(caravan => {
+    if(!worldPointVisible(state,caravan))return;
     const chosen = selection === caravan.id;
     const underAttack = caravan.status === 'under-attack';
     const inContact = caravanContact(caravan);
@@ -552,6 +555,7 @@ function draw() {
   });
 
   activeBands.forEach((band, index) => {
+    if(!worldPointVisible(state,band))return;
     const count = bandCount(band), selected = selection === band.id, hunted = state.pursuit === band.id;
     const undead=band.kind.startsWith('undead-');
     const art = undead?'figure_undead_host':{ 'northern-highlands':'figure_player_berserker',greenwood:'figure_player_ranger','blackwater-basin':'figure_player_slave','far-steppe':'figure_player_nomad','saffron-coast':'figure_player_nomad',sunlands:'figure_player_nomad','highland-clans':'figure_player_berserker','southern-sultanate':'figure_player_nomad',south: 'figure_player_nomad', north: 'figure_player_berserker', east: 'figure_player_assassin', forest: 'figure_player_ranger' }[band.factionId] || ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
@@ -584,7 +588,7 @@ function draw() {
     context.restore();
   });
 
-  getFactionPatrols(state).filter(p=>p.active).forEach(p=>{
+  getFactionPatrols(state).filter(p=>p.active && worldPointVisible(state,p)).forEach(p=>{
     context.save();context.translate(24,-24);
     context.beginPath();context.arc(p.x,p.y+3,18,0,Math.PI*2);context.strokeStyle=p.color;context.lineWidth=selection===p.id?4:2;context.stroke();
     drawActorGround(p.id,p.x,p.y);sprite(context,'figure_player_assassin',p.x,p.y,30,.85,actorPoses.get(p.id)?.flip);
@@ -599,10 +603,12 @@ function draw() {
     context.beginPath(); context.arc(state.destination.x, state.destination.y, 12, 0, Math.PI * 2); context.stroke();
   }
   for (const region of WORLD_REGIONS) {
+    if(!worldPointExplored(state,region))continue;
     context.save();context.font=`bold ${12/camera.zoom}px Georgia`;context.textAlign='center';context.lineWidth=4;context.strokeStyle='#24251ddd';
     context.strokeText(region.name.toUpperCase(),region.x,region.y);context.fillStyle=region.color;context.fillText(region.name.toUpperCase(),region.x,region.y);context.restore();
   }
   SETTLEMENTS.forEach((town, index) => {
+    if(!worldPointExplored(state,town))return;
     const access=getSettlementAccess(state,town.id);
     if(access.status!=='open'){context.font='bold 15px Georgia';context.textAlign='center';context.strokeStyle='#211b19';context.lineWidth=3;const label=access.servicesAvailable?(access.status==='threatened'?'! Undead approaching':'Rebuilding'):'☠ CLOSED';context.strokeText(label,town.x,town.y-48);context.fillStyle=access.servicesAvailable?'#f3c777':'#ff9d89';context.fillText(label,town.x,town.y-48);}
     if (selection === town.id || state.contract?.to === town.id) {
@@ -615,8 +621,37 @@ function draw() {
       context.fillStyle = '#f0e4bd'; context.fillText(town.name, town.x, town.y + 25);
     }
   });
+  drawWorldFog();
   drawActorGround('company',state.position.x,state.position.y);
   sprite(context, 'figure_player_party', state.position.x, state.position.y, 36, .7,actorPoses.get('company')?.flip);
   sprite(context, 'banner_101', state.position.x + 14, state.position.y - 23, 25, .8);
   context.restore();
+}
+
+let fogMemoryCanvas, fogMemoryBits, fogLayer;
+function drawWorldFog() {
+  if(!isWorldFogEnabled())return;
+  if(!fogMemoryCanvas){fogMemoryCanvas=document.createElement('canvas');fogMemoryCanvas.width=FOG_COLUMNS;fogMemoryCanvas.height=FOG_ROWS;}
+  if(fogMemoryBits!==state.worldExploration){
+    fogMemoryBits=state.worldExploration;
+    const target=fogMemoryCanvas.getContext('2d'),pixels=target.createImageData(FOG_COLUMNS,FOG_ROWS);
+    for(let i=0;i<FOG_COLUMNS*FOG_ROWS;i++){
+      pixels.data[i*4]=19;pixels.data[i*4+1]=23;pixels.data[i*4+2]=25;
+      pixels.data[i*4+3]=fogMemoryBits?.[i]==='1'?155:255;
+    }
+    target.putImageData(pixels,0,0);
+  }
+  // Composite on a separate layer: punching out vision must never erase the map.
+  const layer=fogLayer??=document.createElement('canvas');layer.width=Math.ceil(width);layer.height=Math.ceil(height);
+  const target=layer.getContext('2d');
+  target.fillStyle='#131719';target.fillRect(0,0,width,height);
+  target.translate(width/2,height/2);target.scale(camera.zoom,camera.zoom);target.translate(-camera.x,-camera.y);
+  target.clearRect(WORLD_BOUNDS.minX,WORLD_BOUNDS.minY,FOG_COLUMNS*FOG_CELL_SIZE,FOG_ROWS*FOG_CELL_SIZE);
+  target.imageSmoothingEnabled=true;
+  target.drawImage(fogMemoryCanvas,WORLD_BOUNDS.minX,WORLD_BOUNDS.minY,FOG_COLUMNS*FOG_CELL_SIZE,FOG_ROWS*FOG_CELL_SIZE);
+  const {x,y}=state.position,r=WORLD_VIEW_RADIUS;
+  const gradient=target.createRadialGradient(x,y,r-60,x,y,r);
+  gradient.addColorStop(0,'rgba(0,0,0,1)');gradient.addColorStop(1,'rgba(0,0,0,0)');
+  target.globalCompositeOperation='destination-out';target.fillStyle=gradient;target.beginPath();target.arc(x,y,r,0,Math.PI*2);target.fill();
+  context.save();context.setTransform(Math.min(devicePixelRatio||1,2),0,0,Math.min(devicePixelRatio||1,2),0,0);context.drawImage(layer,0,0);context.restore();
 }
