@@ -98,3 +98,11 @@ Version 0.50.28 corrects Direwolf Fur to the pinned Legends
 layers. These unchanged source PNGs include the wolf's head. The rear layer
 uses 85% CSS scale to fit the portrait. Exact source paths and hashes are in
 [fur/mail provenance](../assets/fur-mail-attachments-source.json).
+
+## Legendary blacksmith workshop (0.52.0)
+
+`assets/world/legendary-blacksmith.png` is the unchanged 305 × 259 PNG from
+[Medieval Blacksmith Isometric 2.5D](https://opengameart.org/content/medieval-blacksmith-isometric-25d)
+by **feudalwars**, released under **CC0**. The forge dialog and Ironford marker
+preserve its aspect ratio. The download URL and SHA-256 are recorded in
+[workshop provenance](../assets/world/legendary-blacksmith-source.json).
