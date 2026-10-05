@@ -31,3 +31,16 @@ Each throwing weapon carries five throws. Active and reserve bundles have separa
 Flankers approach outside the enemy melee line and avoid other enemies' melee reach while routing. Loaded throwing weapons fire from the wings instead of pursuing a distant archer when a wing shot is already available. A throwing flanker can draw a reserve dagger to attack an enemy engaged by an ally, provided a safe one-step approach, the swap, and an attack fit its AP and fatigue. This uses existing surround/backstab rules, rather than adding a new damage bonus. Breakers retain their role as frontline chargers.
 
 Dagger AI prefers an affordable Puncture against body armor, or Qatal Deathblow against a vulnerable target. Ordinary Stab takes priority when at least 75% of its successful damage rolls finish the enemy; it also remains available against unarmored targets or when the special cannot be afforded.
+
+Melee approach decisions reserve enough AP and fatigue for a real attack before
+entering new hostile melee reach. This applies to pursuit, formation advance,
+shield reformation and Skirmish movement. A shorter weapon budgets every step
+needed through a longer weapon's reach, including terrain costs, movement
+credits, mounts, mastery and dazed fatigue limits. Cautious fighters otherwise
+stage outside hostile reach, without reversing their previous approach. Safe
+movement still uses spare AP, and ranged targets do not impose a melee buffer.
+Healthy one-hex frontliners, working shield carriers and Breakers may push into
+one new opponent; wounded fighters and approaches into multiple new melee
+threats still require the attack budget. Already-engaged fighters remain free
+to attack or move without being forced to retreat. Legacy battles keep their
+previous approach policy.
