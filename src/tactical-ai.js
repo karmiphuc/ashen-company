@@ -2,7 +2,7 @@ import { hexDistance, hexLine } from './battle-terrain.js';
 
 export const COMBAT_ROLES = Object.freeze(['auto', 'frontliner', 'skirmisher', 'ranged', 'flanker', 'breaker']);
 export const SKILL_PREFERENCES = Object.freeze(['balanced', 'damage', 'control']);
-export const ENEMY_TACTIC_COOLDOWN = 5;
+export const ENEMY_TACTIC_COOLDOWN = 2;
 export const ENEMY_TACTICS = Object.freeze(['offense', 'defense', 'shield-wall', 'skirmish']);
 
 export function resolveCombatRole(member, weapon, reserveWeapon, equipment = {}) {

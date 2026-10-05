@@ -43,15 +43,15 @@ test('ranged defenders only hold when they can actually counterfire and melee co
  const empty=fixture();assert.equal(recommendEnemyTactic(empty.b,getItem,0),'offense','no current incoming arrows when the company is out of ammo');
 });
 
-test('commands commit at most once per round and never less than five full rounds apart',()=>{
+test('commands commit at most once per round and never less than two full rounds apart',()=>{
  const f=fixture(),initialRng=f.b.rng;
- for(let round=1;round<=5;round++){f.b.round=round;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'defense');}
- f.b.round=6;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');
+ for(let round=1;round<=2;round++){f.b.round=round;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'defense');}
+ f.b.round=3;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');
  for(const [i,u] of f.company.entries())Object.assign(u,{q:7,r:8+i*2});
- for(let round=7;round<6+ENEMY_TACTIC_COOLDOWN;round++){f.b.round=round;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');}
- f.b.round=11;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'offense');
+ for(let round=4;round<3+ENEMY_TACTIC_COOLDOWN;round++){f.b.round=round;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');}
+ f.b.round=5;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'offense');
  for(const [i,u] of f.company.entries())Object.assign(u,{q:4,r:8+i*2});
- assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(f.b.enemyTacticalState.lastChangedRound,11);assert.equal(f.b.rng,initialRng);
+ assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(f.b.enemyTacticalState.lastChangedRound,5);assert.equal(f.b.rng,initialRng);
  const snapshot=structuredClone(f.s);for(let i=0;i<20;i++){enemyBattleTactic(f.b,getItem);battleHTML(f.b,0);}
  assert.deepEqual(f.s,snapshot,'reading intent never reevaluates or spends randomness');
 });
@@ -65,7 +65,7 @@ test('shielded frontliners raise their shields then advance despite sustained ar
  const moved={q:f.front.q,r:f.front.r};step(f,f.front);assert.deepEqual({q:f.front.q,r:f.front.r},moved,'one protected infantry step per round');
  assert.deepEqual(f.b.formationAdvance,companyPlan,'enemy movements cannot rewrite company formation');
  assert.equal(f.b.log.filter(line=>line.includes('Enemy tactic changes')).length,1);assert.deepEqual(validateSave(structuredClone(f.s)),f.s);
- assert.match(battleHTML(f.b,0),/Shield-wall advance/);assert.match(battleHTML(f.b,0),/Change cooldown: 5 rounds/);
+ assert.match(battleHTML(f.b,0),/Shield-wall advance/);assert.match(battleHTML(f.b,0),/Change cooldown: 2 rounds/);
 });
 
 test('deep archers advance into firing range while infantry maintain the shield-wall command',()=>{
@@ -86,8 +86,8 @@ test('shield-wall movement makes progress when the remaining AP cannot cover bot
 test('losing shield coverage releases shield-wall commands only after the committed cooldown',()=>{
  const f=fixture();f.b.round=6;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));
  for(const u of f.foes)u.shieldDurability=0;
- f.b.round=10;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');
- f.b.round=11;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'skirmish');
+ f.b.round=7;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');
+ f.b.round=8;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'skirmish');
 });
 
 test('enemy skirmish sorties persist through reload and fall back after shooting without company-order interference',()=>{
@@ -123,7 +123,7 @@ test('adaptive camp battles resolve identically with stepped reloads and instant
   const instant=structuredClone(s);assert.ok(resolveBattle(instant).ok);let loaded=s,lastChange=loaded.battle.enemyTacticalState.lastChangedRound;
   for(let action=0;action<2500&&loaded.battle.status==='active';action++){
    assert.ok(advanceBattle(loaded).ok);loaded=validateSave(structuredClone(loaded));const current=loaded.battle.enemyTacticalState.lastChangedRound;
-   if(current!==lastChange){assert.ok(current-lastChange>=5);lastChange=current;}
+   if(current!==lastChange){assert.ok(current-lastChange>=2);lastChange=current;}
    assert.ok(loaded.battle.units.filter(u=>u.alive).every(u=>!['palisade','dense-trees'].includes(tileAt(loaded.battle.field,u.q,u.r).terrain)));
   }
   assert.notEqual(loaded.battle.status,'active');assert.deepEqual(loaded,instant);
