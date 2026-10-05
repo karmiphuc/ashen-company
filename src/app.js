@@ -142,14 +142,16 @@ function render(animateEvent=false){closeCompanyHint();
  resources();
  if(state.battle)tab='battle';
  const previousBattleScroll=$('.battle-scroll'),scroll=previousBattleScroll?.scrollLeft||0,scrollTop=previousBattleScroll?.scrollTop||0;
- const sidebarOpen=$('[data-battle-log-toggle]')?.getAttribute('aria-expanded')!=='false';
+ const sidebarOpen=$('[data-battle-log-toggle]')?$('[data-battle-log-toggle]').getAttribute('aria-expanded')!=='false':matchMedia('(min-width:1181px)').matches;
+ const battleMoreOpen=matchMedia('(min-width:1181px)').matches||($('.battle-more')?.open??false);
  const battleLogOpen=$('.battle-log-details')?.open??matchMedia('(min-width:721px)').matches,battleHelpOpen=$('.battle-morale-help')?.open??false;
  const focused=document.activeElement,battleFocus=focused?.closest('.battle-view')?['data-battle-speed','data-battle-camera','data-battle-zoom','data-battle-log-toggle','data-tactic','data-battle-tactic'].find(attr=>focused.hasAttribute(attr)):null;
  const battleFocusSelector=battleFocus?`[${battleFocus}="${focused.getAttribute(battleFocus)}"]`:focused?.matches('.battle-log-details>summary')?'.battle-log-details>summary':focused?.matches('.battle-morale-help>summary')?'.battle-morale-help>summary':null;
  const rosterScroll=$('#company-roster .strip-roster')?.scrollLeft??0;
  $('#main').innerHTML=state.battle?(state.battle.status==='active'||battleResultAt?battleHTML(state.battle,battleSpeed,animateEvent):battleResultsHTML(state,lootKeepSelection)):state.gameOver?gameOverHTML(state):tab==='world'?worldHTML():tab==='company'?companyHTML():tab==='town'?townHTML():journalHTML();
+ document.body.classList.toggle('combat-screen',!!$('.battle-scroll'));
  updateCompanyRoster(rosterScroll);
- if($('.battle-scroll')){const surface=$('.battle-scroll');bindBattleCamera(surface);setBattleLogVisible(sidebarOpen);surface.scrollLeft=scroll;surface.scrollTop=scrollTop;if(!previousBattleScroll)focusBattleCamera('company');$('.battle-log-details').open=battleLogOpen;if($('.battle-morale-help'))$('.battle-morale-help').open=battleHelpOpen;if(battleFocusSelector)$(battleFocusSelector)?.focus({preventScroll:true});}
+ if($('.battle-scroll')){const surface=$('.battle-scroll');bindBattleCamera(surface);$('.battle-more').open=battleMoreOpen;setBattleLogVisible(sidebarOpen);surface.scrollLeft=scroll;surface.scrollTop=scrollTop;if(!previousBattleScroll)focusBattleCamera('company');$('.battle-log-details').open=battleLogOpen;if($('.battle-morale-help'))$('.battle-morale-help').open=battleHelpOpen;if(battleFocusSelector)$(battleFocusSelector)?.focus({preventScroll:true});}
  document.querySelectorAll('.nav-tabs [data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);b.disabled=!!state.battle;});
  if(tab==='world'&&!state.battle&&!state.gameOver){mountMap(state,chooseTown,startTravel,chooseCamp,activateTarget);if(chosenCamp)selectMapCamp(chosenCamp);else selectMapTown(town(chosenTown));}updateSpeed();
 }
@@ -382,3 +384,6 @@ document.addEventListener('click',event=>{
 document.addEventListener('change',event=>{if(!event.target.matches('[data-forge-filter],[data-forge-search]'))return;forgeSelection[event.target.hasAttribute('data-forge-filter')?'filter':'search']=event.target.value;showBlacksmith();document.querySelector(event.target.hasAttribute('data-forge-filter')?'[data-forge-filter]':'[data-forge-search]')?.focus();});
 async function prepareOffline(){const label=$('#offline-status');if(!('serviceWorker'in navigator)){label.textContent='Offline unavailable';return;}try{await navigator.serviceWorker.register('./sw.js');const reg=await navigator.serviceWorker.ready;const check=()=>{const ch=new MessageChannel();ch.port1.onmessage=e=>{label.textContent=e.data?.ready?'Offline ready':'Downloading offline files…';label.classList.toggle('ready',!!e.data?.ready);};(navigator.serviceWorker.controller||reg.active)?.postMessage({type:'CHECK_OFFLINE'},[ch.port2]);};check();navigator.serviceWorker.addEventListener('controllerchange',check);}catch{label.textContent='Open online to prepare';}}
 prepareOffline();
+
+// A tablet's folded controls become the regular desktop toolbar on resize.
+window.addEventListener('resize',()=>{if(matchMedia('(min-width:1181px)').matches&&$('.battle-more'))$('.battle-more').open=true;});

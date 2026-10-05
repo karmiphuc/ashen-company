@@ -161,3 +161,48 @@
 .battle-log[hidden]{display:none}
 [data-battle-log-toggle]{min-height:44px;font-size:12px}
 @media(min-width:721px) and (max-width:1024px){.battle-layout{grid-template-columns:minmax(0,1fr) 190px}}
+
+/* Secondary controls stay available without occupying the tablet battlefield. */
+.battle-more{display:contents}
+.battle-more>summary{display:none}
+.battle-more-panel{display:contents}
+@media(max-width:1180px){
+ body.combat-screen .main-nav,body.combat-screen #time-of-day-indicator{display:none}
+ body.combat-screen .topbar{height:56px;min-height:56px;flex-wrap:nowrap;padding-block:4px}
+ body.combat-screen .topbar .resources{display:none}
+ body.combat-screen #main{padding:0}
+ body.combat-screen .battle-view{height:calc(100dvh - 56px - 132px);min-height:0;display:flex;flex-direction:column;margin:0;overflow:visible}
+ .battle-topbar{padding:5px 10px;min-height:44px;flex-wrap:nowrap;flex-shrink:0}
+ .battle-kicker,.battle-turn>span{display:none}
+ .battle-counts{margin-top:2px;font-size:11px}
+ .battle-turn strong{max-width:180px;font-size:12px}
+ .battle-controls{padding:4px 8px;gap:6px;flex-wrap:nowrap;flex-shrink:0}
+ .battle-speed button,.battle-camera button{font-size:12px;padding-inline:10px}
+ .battle-more{display:block;position:relative;margin-left:auto}
+ .battle-more>summary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 12px;border:1px solid #89734a;color:#efdfb9;background:#211f18;cursor:pointer;font:12px Arial,sans-serif;white-space:nowrap}
+ .battle-more>summary:focus-visible{outline:2px solid #e0c06e;outline-offset:2px}
+ .battle-more-panel{display:flex;flex-wrap:wrap;gap:8px;position:absolute;right:0;top:calc(100% + 4px);width:300px;max-width:calc(100vw - 20px);padding:12px;background:#211e17;border:1px solid #89734a;box-shadow:0 8px 24px #000b;z-index:40}
+ .battle-tactics{padding:3px 8px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+ .battle-tactics [role=group]{display:none}
+ .battle-tactic-picker{display:flex;align-items:center;gap:8px;color:#efdfb9;font-size:12px}
+ .battle-tactic-picker select{min-height:44px;min-width:130px;padding:5px;border:1px solid #89734a;background:#211f18;color:#efdfb9;font:12px Georgia,serif}
+ .battle-tactics p{margin:0;font-size:11px;line-height:1.25}
+ .battle-enemy-intent,.battle-night-warning{padding:4px 8px;margin:0;font-size:11px;flex-shrink:0}
+ .battle-layout{flex:1;min-height:0;position:relative;display:block}
+ .battle-scroll{height:100%;max-height:none;min-height:0;padding:6px;box-sizing:border-box}
+ .battle-log{position:absolute;right:0;top:0;width:240px;max-width:80%;height:100%;overflow:auto;z-index:25;box-sizing:border-box;box-shadow:-8px 0 20px #0009;border-left:1px solid #89734a}
+ .battle-terrain-key{position:sticky;left:0;min-width:0;width:max-content;max-width:100%;font-size:10px;gap:5px}
+ .battle-terrain-key small{display:none}
+}
+@media(max-width:600px){
+ .battle-speed [data-battle-speed=cinematic]{padding-inline:5px;font-size:10px}
+ .battle-controls{gap:4px;padding-inline:4px}
+ .battle-speed button,.battle-camera button{padding-inline:7px}
+ .battle-more>summary{padding-inline:7px}
+ .battle-tactics p{display:none}
+ .battle-turn strong{max-width:100px}
+}
+@media(max-width:1180px){.battle-controls{position:relative;z-index:50}}
+.battle-more-panel>[data-battle-speed]{min-height:44px;padding:5px 10px;border:1px solid #716340;background:#211f18;color:#d6c79f;font:700 12px Arial,sans-serif}
+.battle-more-panel>[data-battle-speed].is-selected{background:#69592e;color:#fff0bd}
+.battle-more-panel>[data-battle-speed]:focus-visible{outline:2px solid #e0c06e;outline-offset:2px}
