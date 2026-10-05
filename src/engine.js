@@ -23,7 +23,7 @@ import { enemyProgression, enemyRosterSize } from './enemy-progression.js';
 import { getRegionalCampText } from './enemy-rosters.js';
 import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk, weaponTrainingVisual } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile, makeRecruitName, makeTalents, talentGain } from './recruits.js';
-import { BOUNTY_HUNTER_COST, discoveryEvent, discoveryBonuses, championRoster, bountyOffer } from './discovery.js';
+import { BOUNTY_HUNTER_COST, CHAMPION_BOUNTY, discoveryEvent, discoveryBonuses, championRoster, bountyOffer } from './discovery.js';
 import { deserterOffer, deserterEncounter, deserterEquipmentReward } from './deserters.js';
 import { ARMORY_STOCK_VERSION, townFacilities, townArmoryBudget, townDesign } from './town-facilities.js';
 import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-events.js';
@@ -634,9 +634,14 @@ export function upgradeScout(state) {
   const message='Scout upgraded: enemy bands detect and pursue your company at 33% shorter ranges.';
   record(state,message);return result(true,message);
 }
+export function getBattleChampionBounty(state) {
+  const battle=state.battle;
+  if (!state.retinue?.bountyHunter || !battle || battle.status!=='victory') return 0;
+  return battle.units.filter(unit=>unit.side==='enemy' && unit.champion && !unit.alive && !unit.escaped).length*CHAMPION_BOUNTY;
+}
 export function getBattleLootGold(state) {
   const base=state.battle?.loot?.gold??0;
-  return Math.floor(base*(hasRetinue(state,'scavenger')&&state.battle?.status==='victory'?1.25:1));
+  return Math.floor(base*(hasRetinue(state,'scavenger')&&state.battle?.status==='victory'?1.25:1))+getBattleChampionBounty(state);
 }
 export function getBattleExperience(state,id) {
   const battle=state.battle;if(!battle)return 0;
@@ -1622,7 +1627,7 @@ function completeContract(state, town) {
   }
   state.gold += contract.reward;
   state.renown += contract.renown ?? 1;
-  if(contract.type==='bounty'){state.retinue??=defaultRetinue();state.retinue.bountyHunterUnlocked=true;record(state,'The Bounty Hunter is available: hire the retinue for 5,000 crowns for a permanent +5 percentage points to champion encounter chance.');}
+  if(contract.type==='bounty'){state.retinue??=defaultRetinue();state.retinue.bountyHunterUnlocked=true;record(state,'The Bounty Hunter is available: hire the retinue for 5,000 crowns for a permanent +5 percentage points to champion encounter chance and 300 crowns per defeated champion.');}
   const description = contract.type === 'bounty' ? 'Wanted champion defeated' : contract.type === 'deserters' ? 'Elite deserters defeated' : contract.type === 'hunt' ? 'Brigand hunt completed' : contract.type === 'assault' ? 'Joint assault completed'
     : contract.type === 'rescue' ? 'Caravan rescue completed' : contract.type === 'supply' ? `${contract.quantity} ${GOOD_BY_ID.get(contract.goodId).name.toLowerCase()} delivered` : `Dispatch from ${TOWN_BY_ID.get(contract.from).name} delivered`;
   record(state, `${description} at ${town.name}. Earned ${contract.reward} crowns and ${contract.renown ?? 1} renown.`);
@@ -2784,7 +2789,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
       meleeSkill: 30 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill, rangedSkill: 28 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill,
       meleeDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),
       rangedDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + (getItem(gear.shield)?.rangedDefense ?? shieldDefense) + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0) + attachmentBonus(gear,'rangedDefenseBonus'),
-      maxFatigue: 85 + (enemy.marshal?40:enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + unitDifficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (enemy.champion?20:0) + unitDifficulty * 8 + rank * 4 + bonus('resolve'),
+      maxFatigue: 85 + (enemy.marshal?40:enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + unitDifficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (unitDifficulty>=3?20:0) + (enemy.champion?40:0) + unitDifficulty * 8 + rank * 4 + bonus('resolve'),
     };
   };
   const enemies=camp.enemies.map((e,i)=>makeEnemyUnit(e,i));
@@ -5160,6 +5165,8 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   const sharing = victory ? getLootShareQuote(state, shareLootIndices) : null;
   if (victory && !sharing) return result(false, 'Choose valid, distinct spoils to share.');
   const shared = new Set(shareLootIndices);
+  const championBounty=getBattleChampionBounty(state);
+  const battleGold=victory?getBattleLootGold(state):0;
   const crisisWasComplete = state.ashenWinter?.phase === 'completed';
   const undeadEncounter = UNDEAD_TYPES.includes(battle.encounterType) ? getUndeadEncounters(state).find(e => e.id === battle.campId) : null;
   const formation = getFormation(state);
@@ -5208,7 +5215,8 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   state.reserveIds=getReserveSlots(state).map(id=>survivingIds.has(id)?id:null);
   if (victory) {
     const loot = battle.loot;
-    state.gold = Math.min(1000000000,state.gold+getBattleLootGold(state));
+    state.gold = Math.min(1000000000,state.gold+battleGold);
+    if (championBounty) record(state,`Bounty Hunter collects ${championBounty} crowns for ${championBounty/CHAMPION_BOUNTY} defeated champion${championBounty===CHAMPION_BOUNTY?'':'s'}.`);
     state.food += loot.food;
     for (const kind of ['tools', 'medicine', 'ammo']) state.supplies[kind] += loot[kind];
     for (let index = 0; index < loot.items.length; index++) {
@@ -5282,7 +5290,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     state.bands[battle.campId].behavior = 'patrolling';
     state.bands[battle.campId].targetId = null;
   }
-  let message = victory ? `The company claims ${battle.loot.gold} crowns and defeats ${battle.encounterName}.` : state.gameOver ? 'The company has fallen.' : 'The company survives and leaves the battlefield behind.';
+  let message = victory ? `The company claims ${battleGold} crowns and defeats ${battle.encounterName}.` : state.gameOver ? 'The company has fallen.' : 'The company survives and leaves the battlefield behind.';
   if (sharing?.selectedCount) record(state, `Shared ${sharing.selectedCount} spoils worth ${sharing.value} crowns at ${sharing.townName}: each surviving brother receives ${sharing.xp} XP and up to ${sharing.morale} morale.`);
   if (!crisisWasComplete && state.ashenWinter?.phase === 'completed') message += ' Ashen Winter ends: all settlements are free. Claim your equipment reward in the journal.';
   record(state, message);
@@ -6111,7 +6119,7 @@ export function validateSave(input) {
 
 export function getDiscoveryEvent(state) { return discoveryEvent(state); }
 export function getRetinue(state) {
-  return {unlocked:!!state.retinue?.bountyHunterUnlocked,hired:!!state.retinue?.bountyHunter,cost:BOUNTY_HUNTER_COST,championBonus:5};
+  return {unlocked:!!state.retinue?.bountyHunterUnlocked,hired:!!state.retinue?.bountyHunter,cost:BOUNTY_HUNTER_COST,championBonus:5,championBounty:CHAMPION_BOUNTY};
 }
 export function hireBountyHunter(state) {
   const blocked=actionBlocked(state);if(blocked)return blocked;
@@ -6120,6 +6128,6 @@ export function hireBountyHunter(state) {
   if(state.retinue.bountyHunter)return result(false,'The Bounty Hunter already serves your company.');
   if(state.gold<BOUNTY_HUNTER_COST)return result(false,'The Bounty Hunter requires 5,000 crowns.');
   state.gold-=BOUNTY_HUNTER_COST;state.retinue.bountyHunter=true;
-  const message='Bounty Hunter hired: permanent +5 percentage points to champion encounter chance. No formation slot or daily wage.';
+  const message='Bounty Hunter hired: permanent +5 percentage points to champion encounter chance and 300 crowns per defeated champion. No formation slot or daily wage.';
   record(state,message);return result(true,message);
 }

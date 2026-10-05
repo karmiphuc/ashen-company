@@ -1,6 +1,7 @@
 import { townEventHash as hash } from './town-events.js';
 
 export const BOUNTY_HUNTER_COST = 5000;
+export const CHAMPION_BOUNTY = 300;
 const EVENTS = [
   { id:'challengers', name:'Age of Challengers', champion:8, famed:0, mount:0, description:'Renowned fighters have gathered across the regions. Champion encounter chance rises by 8 percentage points.' },
   { id:'relic-rumors', name:'Relic Rumors', champion:0, famed:15, mount:0, description:'Old caches and trophy hoards are being uncovered. Camp named-item chance rises by 15 percentage points.' },
