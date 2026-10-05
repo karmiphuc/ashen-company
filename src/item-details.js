@@ -178,3 +178,52 @@ export function getItemDetails(item, condition) {
     notes,
   };
 }
+
+// Compare only the main worn set. Reserve and pocket items never supply a baseline.
+export function getMainItemComparison(item, brother, condition) {
+  if (!brother || !['weapon', 'armor', 'helmet', 'shield'].includes(item?.slot)) return null;
+  const equipped = getItem(brother.equipment?.[item.slot]);
+  if (!equipped) return null;
+  const equippedCondition = item.slot === 'weapon' ? (equipped.throwing ? brother.throwingAmmo?.active : undefined)
+    : brother.armorDurability?.[{ armor: 'body', helmet: 'head', shield: 'shield' }[item.slot]];
+  const details = getItemDetails(item, condition), baseline = getItemDetails(equipped, equippedCondition);
+  if (!details || !baseline) return null;
+  const higher = new Set(['Base damage', 'Hit modifier', 'Armor damage', 'Damage through armor', 'Reach',
+    'Shield damage', 'Head hit chance', 'Body armor', 'Head armor', 'Shield durability', 'Melee defense', 'Ranged defense', 'Bundle throws']);
+  const lower = new Set(['Attack AP', 'Attack fatigue', 'Fatigue load']);
+  const equippedSkills = equipmentSkills(equipped);
+  const sharedSkills = new Set(equipmentSkills(item).filter(skill => equippedSkills.some(other => other.id === skill.id)).map(skill => skill.name));
+  const rows = [...details.stats];
+  if (item.slot === 'weapon') {
+    if (baseline.stats.some(row => row.label === 'Head hit chance') && !rows.some(row => row.label === 'Head hit chance')) rows.push({ label: 'Head hit chance', value: `${Math.round((item.headChance ?? .22) * 100)}%` });
+    if (baseline.stats.some(row => row.label === 'Shield damage') && !rows.some(row => row.label === 'Shield damage')) rows.push({ label: 'Shield damage', value: '0 per hit or block' });
+  }
+  const stats = rows.map(row => {
+    let previous = baseline.stats.find(other => other.label === row.label)?.value;
+    // Optional weapon modifiers have meaningful ordinary defaults.
+    if (previous === undefined && row.label === 'Head hit chance') previous = `${Math.round((equipped.headChance ?? .22) * 100)}%`;
+    if (previous === undefined && row.label === 'Shield damage') previous = '0 per hit or block';
+    const direction = higher.has(row.label) ? 1 : lower.has(row.label) || sharedSkills.has(row.label) ? -1 : 0;
+    if (!direction || previous === undefined) return { ...row, parts: [{ text: row.value }] };
+    // Explicit numeric rows only: categorical text and differing skills stay neutral.
+    const numbers = [...previous.matchAll(/[+−-]?\d+(?:\.\d+)?/g)].map(match => Number(match[0].replace('−', '-')));
+    const matches = [...row.value.matchAll(/[+−-]?\d+(?:\.\d+)?/g)];
+    // A hyphen in a damage interval is a separator, never a negative maximum.
+    if (row.label === 'Base damage') {
+      numbers[1] = Math.abs(numbers[1]);
+      if (matches[1]?.[0].startsWith('-')) { matches[1].index++; matches[1][0] = matches[1][0].slice(1); }
+    }
+    if (numbers.length !== matches.length) return { ...row, parts: [{ text: row.value }] };
+    let cursor = 0;
+    const parts = [];
+    matches.forEach((match, index) => {
+      if (match.index > cursor) parts.push({ text: row.value.slice(cursor, match.index) });
+      const delta = Number(match[0].replace('−', '-')) - numbers[index];
+      parts.push({ text: match[0], change: delta * direction > 0 ? 'better' : delta * direction < 0 ? 'worse' : 'equal', previous: String(numbers[index]), delta });
+      cursor = match.index + match[0].length;
+    });
+    if (cursor < row.value.length) parts.push({ text: row.value.slice(cursor) });
+    return { ...row, previous, parts };
+  });
+  return { equipped, stats };
+}
