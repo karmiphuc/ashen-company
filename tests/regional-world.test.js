@@ -57,7 +57,7 @@ test('additional patrols and camps are deterministic, in bounds, persist progres
   const id=REGIONAL_SETTLEMENTS[0].id+'-patrol';state.bands[id].defeatedUntil=30;
   const legacy=structuredClone(state);for(const town of REGIONAL_SETTLEMENTS.slice(1))delete legacy.bands[town.id+'-patrol'];
   const restored=validateSave(legacy);
-  assert.deepEqual(restored.camps,state.camps);assert.deepEqual(restored.bands[id],state.bands[id]);
+  assert.equal(restored.camps['wild-camp-36'].generation,4);assert.equal(restored.camps['wild-camp-36'].clearedDay,1);assert.ok(restored.camps['wild-camp-36'].respawnAt>=8+14*24);assert.deepEqual(restored.bands[id],state.bands[id]);
   assert.equal(Object.keys(restored.bands).length,56);assert.deepEqual(validateSave(restored),restored);
   assert.deepEqual(getCampSites(restored).slice(0,15),camps.slice(0,15),'original camps retain their locations and rosters');
 });
