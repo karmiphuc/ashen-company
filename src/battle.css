@@ -152,3 +152,12 @@
 .simultaneous-battle .sim-cinematic-attack.action-thrust .bb-layer-weapon{animation:cinematic-thrust var(--action-time) ease-in-out;animation-delay:var(--sim-delay,0s)}
 .simultaneous-battle .battle-turn{color:#d5be88}
 .combat-beta-config{margin:12px 0;padding:10px;border:1px solid #8d7953}
+
+/* Camera scaling changes the scroll extent as well as the rendered field. */
+.battle-camera-space{position:relative;overflow:hidden}
+.battle-camera-space .battlefield{position:absolute;left:0;top:0;transform-origin:0 0}
+.battle-scroll{touch-action:none}
+.battle-log-collapsed .battle-layout{grid-template-columns:minmax(0,1fr)}
+.battle-log[hidden]{display:none}
+[data-battle-log-toggle]{min-height:44px;font-size:12px}
+@media(min-width:721px) and (max-width:1024px){.battle-layout{grid-template-columns:minmax(0,1fr) 190px}}

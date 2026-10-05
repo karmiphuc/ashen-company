@@ -176,3 +176,55 @@
 
 /* Odran's compact quest and reforge workbench. */
 .forge-art{width:150px;height:130px;object-fit:contain;flex-shrink:0}.forge-summons,.forge-workbench>header{display:flex;align-items:center;gap:22px}.forge-quest .forge-art{float:right;width:170px;height:150px}.forge-materials{display:flex;gap:18px;flex-wrap:wrap;padding:14px;background:#342d20;border:1px solid #75613e}.forge-warning{color:#e7b27d}.forge-columns{display:grid;grid-template-columns:1fr 1fr 1.05fr;gap:16px;margin-top:18px}.forge-columns>section{min-width:0;padding:12px;border:1px solid #786341;background:#252117}.forge-columns h4{margin:0 0 12px;color:#e0c58f}.forge-columns h4 small{display:block;font-size:11px;font-weight:normal;color:#c5ad8e}.forge-items{max-height:430px;overflow:auto;display:grid;gap:8px}.forge-item{display:flex;gap:9px;text-align:left;align-items:center;padding:8px;min-width:0;width:100%;background:#312b1e}.forge-item.selected{border-color:#ead08e;box-shadow:inset 0 0 0 1px #ead08e;background:#44391f}.forge-item img{width:46px;height:54px;object-fit:contain;flex-shrink:0}.forge-item span{min-width:0;overflow-wrap:anywhere}.forge-item strong{font-size:12px;display:block}.forge-item small{font-size:11px;display:block;margin-top:4px;color:#c7b898}.forge-badge{display:block;font-size:10px;color:#dfbf7a;margin-top:4px}.forge-filters{display:flex;gap:16px;margin:18px 0}.forge-filters label{display:grid;gap:5px;flex:1;min-width:0}.forge-filters input,.forge-filters select{width:100%;box-sizing:border-box;min-height:42px}.forge-preview p{font-size:12px;line-height:1.5}.forge-preview .primary{width:100%;min-height:44px}.forge-preview details{margin:12px 0;font-size:12px}.forge-preview dl>div,.forge-success dl>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #594e37;padding:6px 0}.forge-preview dd,.forge-success dd{margin:0;text-align:right}.forge-result-art{display:flex;align-items:center;gap:10px}.forge-result-art img,.forge-success>img{width:75px;height:90px;object-fit:contain}.forge-journal{margin-bottom:18px}.forge-success{text-align:center}.forge-success dl{text-align:left;max-width:420px;margin:auto}.forge-confirmation strong{color:#f0d290}@media(max-width:800px){.forge-columns{grid-template-columns:1fr 1fr}.forge-preview{grid-column:1/-1}.forge-items{max-height:280px}}@media(max-width:540px){.forge-summons,.forge-workbench>header{flex-direction:column;align-items:flex-start;gap:10px}.forge-workbench>header .forge-art{align-self:center}.forge-quest .forge-art{float:none;display:block;margin:auto}.forge-columns{grid-template-columns:1fr}.forge-preview{grid-column:auto}.forge-items{max-height:240px}.forge-filters{gap:8px}.forge-columns>section{padding:10px}}
+
+/* Keep long service dialogs inside the visible viewport, including Safari chrome. */
+#modal{
+  max-height:calc(100vh - 32px);
+  max-height:min(88dvh,calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scroll-padding-top:110px;
+  -webkit-overflow-scrolling:touch;
+}
+#modal .modal-header{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:#29231b;
+}
+#modal .modal-header>div{min-width:0}
+#modal .modal-header h2{overflow-wrap:anywhere}
+#modal .close-button{flex-shrink:0;min-height:44px}
+/* Stock lists scale with available height in either iPad orientation. */
+#modal .market-workspace .trader-grid,
+#modal .market-workspace .shop-stash{max-height:min(450px,40dvh);overflow-y:auto;min-height:0;overscroll-behavior-y:contain}
+#modal .market-workspace .market-tabs{position:static}
+@media(max-width:1024px){
+  #modal .modal-header{padding:12px 17px}
+  #modal .modal-body{padding:14px 17px}
+  #modal .retinue-dashboard{gap:14px}
+  #modal .retinue-choice{padding:12px;gap:8px}
+}
+
+/* Compact category rail leaves the main trading surface for equipment. */
+.market-browser{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;align-items:start}
+.market-content{min-width:0}
+#modal .market-workspace .market-tabs{display:flex;flex-direction:column;gap:6px;padding:0;margin:0;background:none}
+#modal .market-workspace .market-tabs button{width:100%;min-height:44px;padding:6px;font-size:12px;text-align:left}
+.market-workspace .market-ledger{grid-template-columns:150px minmax(0,1fr);gap:10px}
+.market-workspace .market-ledger>section{padding:8px}
+.market-workspace .trader-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.market-workspace .market-item-inspect{padding:6px 3px;gap:3px}
+.market-workspace .market-item-inspect .equipment-icon{width:40px;height:40px}
+.market-workspace .market-item-inspect strong{font-size:11px;overflow-wrap:anywhere}
+.market-workspace .market-item-inspect small{font-size:10px}
+.market-workspace .market-item-trade{padding:5px 3px;font-size:11px;min-height:44px}
+.market-workspace .market-filters{gap:6px 10px;margin-bottom:8px}
+.market-workspace .market-filters select{min-width:95px}
+@media(max-width:620px){
+  .market-browser{grid-template-columns:76px minmax(0,1fr);gap:8px}
+  #modal .market-workspace .market-tabs button{font-size:11px}
+  .market-workspace .trader-grid,.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .market-workspace .market-item-inspect strong{font-size:12px}
+}
