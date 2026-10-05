@@ -184,3 +184,54 @@
 @media(max-width:600px){.injury-row{align-items:flex-start}.injury-row>span{max-width:100%}.wound-service-tabs>button{flex:1}}
 
 .resource-care-low strong{color:#f3ba81}
+/* Keep long service dialogs inside the visible viewport, including Safari chrome. */
+#modal{
+  max-height:calc(100vh - 32px);
+  max-height:min(88dvh,calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scroll-padding-top:110px;
+  -webkit-overflow-scrolling:touch;
+}
+#modal .modal-header{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:#29231b;
+}
+#modal .modal-header>div{min-width:0}
+#modal .modal-header h2{overflow-wrap:anywhere}
+#modal .close-button{flex-shrink:0;min-height:44px}
+/* Stock lists scale with available height in either iPad orientation. */
+#modal .market-workspace .trader-grid,
+#modal .market-workspace .shop-stash{max-height:min(450px,40dvh);overflow-y:auto;min-height:0;overscroll-behavior-y:contain}
+#modal .market-workspace .market-tabs{position:static}
+@media(max-width:1024px){
+  #modal .modal-header{padding:12px 17px}
+  #modal .modal-body{padding:14px 17px}
+  #modal .retinue-dashboard{gap:14px}
+  #modal .retinue-choice{padding:12px;gap:8px}
+}
+
+/* Compact category rail leaves the main trading surface for equipment. */
+.market-browser{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;align-items:start}
+.market-content{min-width:0}
+#modal .market-workspace .market-tabs{display:flex;flex-direction:column;gap:6px;padding:0;margin:0;background:none}
+#modal .market-workspace .market-tabs button{width:100%;min-height:44px;padding:6px;font-size:12px;text-align:left}
+.market-workspace .market-ledger{grid-template-columns:150px minmax(0,1fr);gap:10px}
+.market-workspace .market-ledger>section{padding:8px}
+.market-workspace .trader-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.market-workspace .market-item-inspect{padding:6px 3px;gap:3px}
+.market-workspace .market-item-inspect .equipment-icon{width:40px;height:40px}
+.market-workspace .market-item-inspect strong{font-size:11px;overflow-wrap:anywhere}
+.market-workspace .market-item-inspect small{font-size:10px}
+.market-workspace .market-item-trade{padding:5px 3px;font-size:11px;min-height:44px}
+.market-workspace .market-filters{gap:6px 10px;margin-bottom:8px}
+.market-workspace .market-filters select{min-width:95px}
+@media(max-width:620px){
+  .market-browser{grid-template-columns:76px minmax(0,1fr);gap:8px}
+  #modal .market-workspace .market-tabs button{font-size:11px}
+  .market-workspace .trader-grid,.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .market-workspace .market-item-inspect strong{font-size:12px}
+}

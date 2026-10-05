@@ -416,6 +416,8 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         <button class="${selectedSpeed === 'cinematic' ? 'is-selected' : ''}" data-battle-speed="cinematic" aria-pressed="${selectedSpeed === 'cinematic'}" title="4× movement with slow-motion attacks, skills and impacts">Cinematic</button>
       </div>
       <div class="battle-camera" role="group" aria-label="Battlefield camera"><button data-battle-camera="company" aria-label="Center battlefield on your company">Company</button><button data-battle-camera="enemy" aria-label="Center battlefield on enemies" ${units.some(u=>u.side==='enemy'&&u.alive&&!u.escaped)?'':'disabled'}>Enemies</button><button data-battle-camera="active" aria-label="Center battlefield on the acting fighter" ${active?.alive&&!active.escaped?'':'disabled'}>Acting</button></div>
+      <div class="battle-camera battle-zoom" role="group" aria-label="Battlefield zoom"><button data-battle-zoom="out" aria-label="Zoom out battlefield">−</button><button data-battle-zoom="reset" aria-label="Reset battlefield zoom">100%</button><button data-battle-zoom="in" aria-label="Zoom in battlefield">+</button></div>
+      <button data-battle-log-toggle aria-expanded="true" aria-controls="battle-event-sidebar">Hide log</button>
       <button class="battle-retreat" data-action="retreat-battle" ${status === 'active' ? '' : 'disabled'}>Retreat</button>
       <button class="battle-resolve" data-action="resolve-battle" ${status === 'active' ? '' : 'disabled'}>Resolve battle</button>
     </div>
@@ -425,12 +427,12 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
     <div class="battle-layout">
       <div class="battle-scroll" tabindex="0" aria-label="Battlefield scroll area">
         ${terrainLegend(field)}
-        <div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company' && !unit.ally).length} company fighters, ${units.filter(unit => unit.ally).length} allied fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
+        <div class="battle-camera-space"><div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company' && !unit.ally).length} company fighters, ${units.filter(unit => unit.ally).length} allied fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
           <div class="battle-terrain">${tiles}</div>
           <div class="battle-units">${units.filter(unit => !unit.escaped).map(unit => unitHTML(unit,battle,animateEvent,field,grid,battle.simultaneous?simultaneousUnitContext(unit,battle,speed):null)).join('')}${battle.simultaneous?simultaneousEvents(battle).filter(e=>battle.simultaneous.time-e.time<e.duration).map(e=>simultaneousProjectileHTML(battle,speed,field,grid,e)).join(''):projectileHTML(battle,animateEvent,field,grid)}</div>
         </div>
-      </div>
-      <aside class="battle-log" aria-label="Battle event log">
+      </div></div>
+      <aside id="battle-event-sidebar" class="battle-log" aria-label="Battle event log">
         ${active&&!battle.simultaneous ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50) * (1 + getLoneWolfBonus(battle, active)))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<p class="battle-vitals">HP ${Math.round(number(active.hp))}/${Math.round(number(active.maxHp))} · AP ${Math.round(number(active.ap))}/${battle.rulesVersion===2?Math.max(0,9+injuryAdjustment(active,'ap')):2}<br>Fatigue ${Math.round(number(active.fatigue))}/${Math.round(number(injuryStat(active,'maxFatigue')))}</p><details class="battle-morale-help"><summary>Morale effects</summary><small>${isMoraleImmune(active)?'Morale immune: no positive or negative morale changes, no attack or defense modifiers, and no automatic fleeing.':"Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale."}</small></details></section>` : ''}
         <details class="battle-log-details" open><summary>Combat log</summary>
         <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol></details>
