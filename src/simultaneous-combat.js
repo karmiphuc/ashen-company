@@ -28,10 +28,11 @@ export function expireSimultaneousEffects(battle) {
     if(until<=clock.time){delete clock.actors[unit.id].effects[key];if(key==='stunnedTurns')unit.stunProtected=false;}
   }
 }
+export const simultaneousEventDuration = (event,delay) => event?.type==='move'?Math.min(delay,450):['attack','miss','hit','fall'].includes(event?.type)?Math.min(Math.max(delay*.8,350),900):Math.min(Math.max(delay,250),700);
 export function rememberSimultaneousEvent(battle,event,delay) {
   if(!event)return;
   const previous=frames.get(battle)??{serial:0,events:[]};
-  const duration=event.type==='move'?Math.min(delay,450):['attack','miss','hit','fall'].includes(event.type)?Math.min(Math.max(delay*.8,350),900):Math.min(Math.max(delay,250),700);
+  const duration=simultaneousEventDuration(event,delay);
   const entry={id:++previous.serial,time:battle.simultaneous.time,duration,event:structuredClone(event)};
   previous.events=previous.events.filter(e=>battle.simultaneous.time-e.time<Math.max(e.duration,1000));
   previous.events.push(entry);frames.set(battle,previous);return entry;
