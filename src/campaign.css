@@ -205,3 +205,26 @@
   #modal .retinue-dashboard{gap:14px}
   #modal .retinue-choice{padding:12px;gap:8px}
 }
+
+/* Compact category rail leaves the main trading surface for equipment. */
+.market-browser{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;align-items:start}
+.market-content{min-width:0}
+#modal .market-workspace .market-tabs{display:flex;flex-direction:column;gap:6px;padding:0;margin:0;background:none}
+#modal .market-workspace .market-tabs button{width:100%;min-height:44px;padding:6px;font-size:12px;text-align:left}
+.market-workspace .market-ledger{grid-template-columns:150px minmax(0,1fr);gap:10px}
+.market-workspace .market-ledger>section{padding:8px}
+.market-workspace .trader-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.market-workspace .market-item-inspect{padding:6px 3px;gap:3px}
+.market-workspace .market-item-inspect .equipment-icon{width:40px;height:40px}
+.market-workspace .market-item-inspect strong{font-size:11px;overflow-wrap:anywhere}
+.market-workspace .market-item-inspect small{font-size:10px}
+.market-workspace .market-item-trade{padding:5px 3px;font-size:11px;min-height:44px}
+.market-workspace .market-filters{gap:6px 10px;margin-bottom:8px}
+.market-workspace .market-filters select{min-width:95px}
+@media(max-width:620px){
+  .market-browser{grid-template-columns:76px minmax(0,1fr);gap:8px}
+  #modal .market-workspace .market-tabs button{font-size:11px}
+  .market-workspace .trader-grid,.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .market-workspace .market-item-inspect strong{font-size:12px}
+}
