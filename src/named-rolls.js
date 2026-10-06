@@ -63,7 +63,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
     }
     if(item.signatureDescription)item.description+=` ${item.signatureDescription}`;
   }
-  if(rulesVersion>=5){item.enhancementProfile=profile;applyNamedAffixes(item,original,seed,bonuses);item.description+=` ${item.signatureDescription}`;}
+  if(rulesVersion>=5){item.enhancementProfile=profile;applyNamedAffixes(item,original,seed,bonuses,{expanded:rulesVersion>=7});item.description+=` ${item.signatureDescription}`;}
   item.price=Math.min(original.collection?20000:5000,Math.round(original.price*2.4+(['armor','helmet'].includes(item.slot)?item.armor-(design?original.sourceArmor:original.armor):0)));
   item.enhancementProfile=Object.freeze(profile);item.rollModifiers=Object.freeze(mods);item.bonuses=Object.freeze(bonuses);
   return Object.freeze(item);

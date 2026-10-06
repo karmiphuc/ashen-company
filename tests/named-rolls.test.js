@@ -35,14 +35,14 @@ test('named weapons roll exactly two eligible BB modifiers across all campaign w
 });
 
 test('named ranged weapons can roll +1 range and use it for actual crossbow targeting',()=>{
- let item;for(let seed=0;seed<4096&&!item;seed++){const candidate=getItem(createFamedItemId('light-crossbow',seed));if(candidate.rollModifiers.includes('range'))item=candidate;}assert.ok(item);assert.equal(item.rollVersion,5);assert.match(item.id,/^famed5:/);assert.equal(item.range,getItem('light-crossbow').range+1);
+ let item;for(let seed=0;seed<4096&&!item;seed++){const candidate=getItem(createFamedItemId('light-crossbow',seed));if(candidate.rollModifiers.includes('range'))item=candidate;}assert.ok(item);assert.equal(item.rollVersion,7);assert.match(item.id,/^famed7:/);assert.equal(item.range,getItem('light-crossbow').range+1);
  const {state,battle,actor,at}=fight(item);at('enemy-1',2+item.range,2);const start={q:actor.q,r:actor.r};
  advanceBattle(state);
  assert.equal(battle.lastEvent.type,'attack');assert.equal(battle.lastEvent.weaponId,item.id);assert.equal(battle.lastEvent.skillName,'Piercing Bolt');
  assert.deepEqual({q:actor.q,r:actor.r},start,'the added range lets the crossbow fire without moving');
  assert.ok(item.rollModifiers.includes('range'));assert.deepEqual(validateSave(structuredClone(state)),state);
  let namedDesign;for(let seed=0;seed<4096&&!namedDesign;seed++){const candidate=getItem(createFamedItemId('bb-named-warbow',seed));if(candidate.rollModifiers.includes('range'))namedDesign=candidate;}
- assert.ok(namedDesign);assert.equal(namedDesign.rollVersion,5);assert.equal(namedDesign.range,getItem('bb-named-warbow').range+1);assert.ok(namedDesign.sourceNamedWeapon);
+ assert.ok(namedDesign);assert.equal(namedDesign.rollVersion,7);assert.equal(namedDesign.range,getItem('bb-named-warbow').range+1);assert.ok(namedDesign.sourceNamedWeapon);
 });
 
 test('legacy ranged named IDs keep their pre-range rolls and new defaults use v5 affixes and retain old ranged identities',()=>{
@@ -50,7 +50,7 @@ test('legacy ranged named IDs keep their pre-range rolls and new defaults use v5
  assert.equal(old2.rollVersion,2);assert.equal(old3.rollVersion,3);assert.ok(!old2.rollModifiers.includes('range'));assert.ok(!old3.rollModifiers.includes('range'));
  assert.deepEqual(old2.rollModifiers,['piercing','damage']);assert.equal(old2.range,getItem('hunting-bow').range);assert.equal(old2.damageMin,18);assert.equal(old2.damageMax,30);assert.equal(old2.armorPiercing,.44);
  assert.deepEqual(old3.rollModifiers,['piercing','damage']);assert.equal(old3.range,getItem('hunting-bow').range);assert.equal(old3.damageMin,24);assert.equal(old3.damageMax,37);assert.equal(old3.armorPiercing,.44);assert.equal(old3.hitBonus,2);
- assert.equal(createFamedItemId('hunting-bow',12345),'famed5:hunting-bow:12345');assert.equal(createFamedItemId('arming-sword',12345),'famed5:arming-sword:12345');
+ assert.equal(createFamedItemId('hunting-bow',12345),'famed7:hunting-bow:12345');assert.equal(createFamedItemId('arming-sword',12345),'famed7:arming-sword:12345');
  assert.throws(()=>createFamedItemId('arming-sword',1,4),TypeError);assert.equal(getItem('famed4:arming-sword:1'),undefined);
 });
 
@@ -95,7 +95,7 @@ test('increased throwing capacity survives attacks, stowing, weapon swaps and re
 });
 
 test('modern named armor market finds retain their two source-based rolls through purchase, damage and buyback',()=>{
- let state,row;for(let seed=1;seed<100&&!row;seed++){state=createGame(seed);for(const town of SETTLEMENTS){state.position={x:town.x,y:town.y};row=getMarket(state).equipment.find(r=>r.stock>0&&getItem(r.itemId)?.rollVersion===5);if(row)break;}}
+ let state,row;for(let seed=1;seed<100&&!row;seed++){state=createGame(seed);for(const town of SETTLEMENTS){state.position={x:town.x,y:town.y};row=getMarket(state).equipment.find(r=>r.stock>0&&getItem(r.itemId)?.rollVersion===7);if(row)break;}}
  assert.ok(row);const item=getItem(row.itemId);assert.equal(item.rarity,'named');assert.ok(item.sourceArmor!==undefined);state.gold=50000;assert.equal(buyItem(state,item.id).ok,true);assert.equal(getMarket(state).equipment.find(r=>r.itemId===item.id).stock,0);const index=state.inventory.indexOf(item.id);state.inventoryCondition[index]-=5;const damaged=state.inventoryCondition[index];assert.deepEqual(validateSave(structuredClone(state)),state);assert.equal(sellItem(state,item.id).ok,true);assert.equal(getMarket(state).equipment.find(r=>r.itemId===item.id).stock,1);assert.equal(buyItem(state,item.id).ok,true);assert.equal(state.inventoryCondition[state.inventory.indexOf(item.id)],damaged);assert.deepEqual(validateSave(structuredClone(state)),state);
 });
 
@@ -123,8 +123,8 @@ test('legacy market stock remains stable and does not acquire an extra named off
 test('pre-range named camp rewards survive import with their original v3 identity',()=>{
  const state=createGame(6),camp=getCampSites(state).find(c=>c.id==='wild-camp-6');
  state.position={x:camp.x,y:camp.y};assert.ok(startBattle(state,camp.id).ok);
- assert.equal(state.battle.famedDrop,'famed5:heavy-crossbow:1566254893');
- state.battle.famedDrop=state.battle.famedDrop.replace('famed5:','famed3:');
+ assert.equal(state.battle.famedDrop,'famed7:heavy-crossbow:1566254893');
+ state.battle.famedDrop=state.battle.famedDrop.replace('famed7:','famed3:');
  assert.deepEqual(validateSave(structuredClone(state)),state);
  const bad=structuredClone(state);bad.battle.famedDrop='famed3:heavy-crossbow:1';
  assert.throws(()=>validateSave(bad),/battle famed drop/);

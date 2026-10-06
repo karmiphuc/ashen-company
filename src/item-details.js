@@ -1,3 +1,4 @@
+import { PREFIX_EFFECTS, prefixEffectText } from './affix-prefixes.js';
 import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
 import { equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { isAncientHelmet } from './armory-themes.js';
@@ -45,6 +46,7 @@ export function getItemDetails(item, condition) {
   if(item.perkBoosts?.berserkAp)notes.push('Requires Berserk: adds bonus AP to its once-per-round kill proc, including reaction kills credited to the next turn. Equipment bonuses stack up to +2 AP total.');
   if(item.perkBoosts?.nimble)notes.push('Requires Nimble: +10 melee and ranged defense with armor and helmet fatigue at most 20. Multiple Nimble enhancements do not multiply again.');
   if(item.perkBoosts?.battleForged)notes.push('Requires Battle Forged: reduces incoming armor damage by another 5 percentage points per bonus, up to 10 points.');
+  for(const [key,value] of Object.entries(item.perkBoosts??{}))if(value&&PREFIX_EFFECTS[key])notes.push(prefixEffectText(key,value));
   if(item.signatureDescription)notes.push(item.signatureDescription);
   if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];

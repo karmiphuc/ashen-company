@@ -22,7 +22,7 @@ test('famed IDs resolve deterministically to immutable item stats and reject mal
   const id = createFamedItemId('arming-sword', 0x12345678);
   const base = getItem('arming-sword');
   const famed = getItem(id);
-  assert.equal(id, 'famed5:arming-sword:305419896');
+  assert.equal(id, 'famed7:arming-sword:305419896');
   assert.equal(famed.id, id);
   assert.equal(famed.baseId, base.id);
   assert.equal(famed.rarity, 'famed');
@@ -88,7 +88,7 @@ test('earned famed loot keeps its exact ID through inspection, equip, stow, sale
   const camp = atCamp(state, 'quarry-camp');
   assert.equal(startBattle(state, camp.id).ok, true);
   const famedId = state.battle.famedDrop;
-  assert.equal(famedId, 'famed5:wood-axe:1017381304');
+  assert.equal(famedId, 'famed7:wood-axe:1017381304');
   assert.equal(resolveBattle(state).ok, true);
   assert.ok(state.battle.loot.items.includes(famedId));
 

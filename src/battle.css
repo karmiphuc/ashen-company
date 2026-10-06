@@ -239,3 +239,5 @@
 
 /* Deskew the terrain plane, keeping pawns and scenery upright. */
 .battle-hex-top{transform:skewX(var(--ground-angle,0deg));transform-origin:center center}
+
+.proc-kill-momentum,.proc-kill-momentum-hit{color:#f6d17b;background:#302517ed}.proc-affix-daze{color:#a9cfec;background:#192b3bed}
