@@ -193,3 +193,48 @@ test('early AP refresh still applies bleeding once and supports old exhausted re
 test('compact worker snapshots retain the mounted immutable field',()=>{
  const s=battle(),remote=structuredClone(s),field=s.battle.field;advanceSimultaneousBattle(remote,50);const snapshotBattle=structuredClone(remote.battle);delete snapshotBattle.field;applySimultaneousSnapshot(s,{battle:snapshotBattle,supplies:structuredClone(remote.supplies),events:simultaneousEvents(remote.battle)});assert.equal(s.battle.field,field);assert.deepEqual(s,remote);
 });
+
+test('final slow attack settles at its animation end instead of its long next-action cooldown',()=>{
+ const s=battle();openAdjacent(s);const b=s.battle,actor=b.units[0];
+ for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=0;}
+ actor.ap=4;actor.initiative=10;
+ advanceSimultaneousBattle(s,50);
+ const entry=simultaneousEvents(b).find(e=>e.event.actorId===actor.id);
+ assert.ok(entry);assert.ok(['attack','miss'].includes(entry.event.type));assert.equal(actor.ap,0);
+ assert.ok(simultaneousActionDelay(actor,4,entry.event)>entry.duration+500);
+ assert.equal(b.simultaneous.actors[actor.id].readyAt,entry.time+Math.ceil(entry.duration/SIM_STEP_MS)*SIM_STEP_MS);
+ const restored=validateSave(JSON.parse(JSON.stringify(s)));
+ for(const state of [s,restored]){
+  advanceSimultaneousBattle(state,entry.duration-SIM_STEP_MS);assert.equal(state.battle.round,1);
+  advanceSimultaneousBattle(state,SIM_STEP_MS);assert.equal(state.battle.round,1);
+  advanceSimultaneousBattle(state,SIM_STEP_MS,{maxActions:1});assert.equal(state.battle.round,2);safe(state);
+ }
+ assert.deepEqual(s,restored);
+});
+
+test('fighters with remaining AP retain full recovery rather than animation-only timing',()=>{
+ const s=battle();openAdjacent(s);const b=s.battle,actor=b.units[0];
+ for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=0;}
+ actor.ap=9;actor.initiative=10;
+ advanceSimultaneousBattle(s,50);
+ const entry=simultaneousEvents(b).find(e=>e.event.actorId===actor.id);
+ assert.ok(actor.ap>0);const delay=simultaneousActionDelay(actor,9-actor.ap,entry.event);
+ assert.equal(b.simultaneous.actors[actor.id].readyAt,entry.time+delay);
+ advanceSimultaneousBattle(s,1000);assert.equal(b.round,1);assert.equal(actor.ap,5);safe(s);
+});
+
+test('a last-AP Berserk kill retains its extra action and normal recovery within the same cycle',()=>{
+ const s=battle();openAdjacent(s);const b=s.battle,actor=b.units[0];
+ const person=s.party.find(p=>p.id===actor.id);person.level=20;person.perks.push('berserk');actor.perks.push('berserk');
+ for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=0;if(u.side==='enemy'){u.hp=1;u.bodyArmor=0;u.headArmor=0;u.meleeDefense=0;}}
+ actor.ap=4;actor.initiative=10;actor.meleeSkill=200;b.rng=0;
+ advanceSimultaneousBattle(s,50);
+ const entry=simultaneousEvents(b).find(e=>e.event.actorId===actor.id);
+ assert.ok(entry.event.effects.some(e=>e.id==='berserk'&&!e.nextTurn));assert.equal(actor.ap,4);assert.equal(b.round,1);
+ const delay=simultaneousActionDelay(actor,4,entry.event);
+ assert.equal(b.simultaneous.actors[actor.id].readyAt,entry.time+delay);assert.ok(delay>entry.duration);
+ advanceSimultaneousBattle(s,1000);assert.equal(b.round,1);assert.equal(actor.ap,4);safe(s);
+ const restored=validateSave(JSON.parse(JSON.stringify(s)));
+ for(const state of [s,restored])advanceSimultaneousBattle(state,delay-1000);
+ assert.deepEqual(s,restored);assert.equal(b.round,1);assert.ok(actor.ap<4,'Berserk AP fund another action before the round refresh');assert.equal(actor.berserkRound,1);safe(s);
+});
