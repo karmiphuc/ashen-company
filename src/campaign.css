@@ -272,3 +272,9 @@
 .map-quest.is-ready:focus-visible{outline-color:#c4ff76}
 button.primary.is-ready{background:linear-gradient(#405824,#243619);border-color:#b7ef63;color:#dbffa3}
 button.primary.is-ready:focus-visible{outline:2px solid #c4ff76;outline-offset:3px}
+
+/* Center the full mounted silhouette without shrinking the rider. */
+.company-page .hero-portrait .bb-portrait{margin-inline-end:var(--portrait-overhang,0px)}
+/* Mounted roster cards reserve room for the animal's full horizontal silhouette. */
+.mini-person:has([data-layer="mount-body"]){min-width:148px;width:148px}
+.mini-person .bb-portrait{margin-inline-end:var(--portrait-overhang,0px)}

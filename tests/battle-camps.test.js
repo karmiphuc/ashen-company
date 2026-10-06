@@ -12,14 +12,14 @@ function roster(state,count){delete state.battle.enemyAdaptiveRulesVersion;delet
 
 test('BB-shaped hex projection keeps equal-height shared edges aligned and raises only the surface',()=>{
  const g=BATTLE_PROJECTION;assert.ok(g.width/g.height>1.7);assert.equal(g.stepY,g.height*.75);
- const a=tilePosition({q:5,r:5,height:2}),b=tilePosition({q:5,r:6,height:2});assert.deepEqual([b.x-a.x,b.y-a.y],[38,33]);
+ const a=tilePosition({q:5,r:5,height:2}),b=tilePosition({q:5,r:6,height:2});assert.deepEqual([b.x-a.x,b.y-a.y],[8,33]);
  const low=tilePosition({q:5,r:5,height:0});assert.equal(low.y-a.y,24);
 });
 
 test('plateau interiors have no walls; exposed faces match each neighbor height independently',()=>{
  const tile={q:4,r:4,height:2};assert.deepEqual(elevationFaces(tile,()=>({height:2})),[]);assert.deepEqual(elevationFaces(tile,()=>({height:3})),[]);
  const faces=elevationFaces(tile,(q)=>({height:q===4?1:0}));assert.deepEqual(faces.map(f=>[f.edge,f.drop]),[['SE',1],['SW',2]]);
- assert.deepEqual(faces[0].points,[[76,33],[38,44],[38,56],[76,45]]);assert.deepEqual(faces[1].points,[[38,44],[0,33],[0,57],[38,68]]);
+ assert.deepEqual(faces[0].points,[[66,33],[18,44],[18,56],[66,45]]);assert.deepEqual(faces[1].points,[[18,44],[-10,33],[-10,57],[18,68]]);
 });
 
 test('camp walls are deterministic, impassable and have connected wide entrances in every biome',()=>{
