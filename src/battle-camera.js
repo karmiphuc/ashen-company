@@ -18,7 +18,12 @@ function paint() {
 }
 export function fitBattleCamera() {
   const field=surface?.querySelector('.battlefield');if(!field||!surface.isConnected||!field.offsetWidth||!field.offsetHeight)return;
-  const style=getComputedStyle(surface),width=surface.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),height=surface.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)-(surface.querySelector('.battle-terrain-key')?.offsetHeight??0);
+  const style=getComputedStyle(surface),strip=document.querySelector('.company-strip');
+  const footer=strip&&getComputedStyle(strip).visibility!=='hidden'?strip.getBoundingClientRect().height:0;
+  const visibleHeight=Math.min(surface.clientHeight,innerHeight-surface.getBoundingClientRect().top-footer);
+  const width=surface.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
+  const height=visibleHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)-(surface.querySelector('.battle-terrain-key')?.offsetHeight??0);
+  if(width<=0||height<=0)return;
   zoom=Math.min(1,width/field.offsetWidth,height/field.offsetHeight);overview=true;paint();surface.scrollLeft=0;surface.scrollTop=0;
 }
 function scaleTo(value, x, y) {
