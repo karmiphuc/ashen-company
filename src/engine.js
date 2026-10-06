@@ -40,7 +40,7 @@ import { settlementAccess } from './settlement-access.js';
 import { UNDEAD_TYPES, allSettlementsCaptured, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
 import { COMBAT_SKILLS, WEAPON_ACTIONS, equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
-import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, isAffordableAction, rankTacticalActions, enemyBattleTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier } from './tactical-ai.js';
+import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, isAffordableAction, rankTacticalActions, enemyBattleTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier, shouldPreserveBrother } from './tactical-ai.js';
 
 export { PERKS } from './perks.js';
 
@@ -4777,6 +4777,41 @@ function rescueWithRotation(state, actor) {
   return null;
 }
 
+function preserveWoundedBrother(state, actor, enemies) {
+  const battle = state.battle;
+  if (!shouldPreserveBrother(battle, actor)) return null;
+  const weapon = getItem(actor.equipment.weapon);
+  const nearest = point => Math.min(...enemies.map(enemy => hexDistance(point, enemy)));
+  const distance = nearest(actor);
+  // Rotation runs first. Never leave melee contact and invite free attacks.
+  if (distance <= 1) {
+    if (actor.equipment.shield && actor.shieldDurability > 0 && !weapon?.twoHanded && !actor.shieldWallActive
+      && actor.ap >= 4 && actor.fatigue + shieldSkillFatigue(actor) <= availableFatigue(actor)) {
+      actor.ap -= 4; actor.fatigue += shieldSkillFatigue(actor); actor.shieldWallActive = true;
+      const message = `${actor.name} shields up to survive while allies finish the fight.`;
+      battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, weapon, null, { skillName: COMBAT_SKILLS.shieldwall.name });
+      battleLog(battle, message);
+      if (actor.ap <= 0) nextBattleTurn(battle);
+      return result(true, message);
+    }
+    return null; // Trapped fighters can still attack and control nearby threats.
+  }
+  if (weapon?.ranged && battleWeaponHasAmmo(state, actor, weapon)
+    && enemies.some(enemy => hexDistance(actor, enemy) <= effectiveWeaponRange(actor, weapon))) return null;
+  const occupied = new Set(battle.units.filter(unit => unit.alive && !unit.escaped).map(unit => `${unit.q},${unit.r}`));
+  const point = distance <= 3 ? openNeighbors(battle, actor, occupied)
+    .filter(next => nearest(next) > distance && canAfford(battle, actor,
+      battleMoveApCost(battle, actor, actor, next), movementFatigue(actor, battleMovementCost(battle, actor, actor, next))))
+    .sort((a, b) => nearest(b) - nearest(a) || a.q - b.q || a.r - b.r)[0] : null;
+  if (point) return moveToRangedPosition(state, actor,
+    { point, message: `${actor.name} falls back wounded, leaving the advance to healthier allies.` }, 'preserve');
+  actor.ap = 0; actor.fatigue = Math.max(0, actor.fatigue - 12);
+  const message = `${actor.name} holds back wounded while healthier allies fight.`;
+  battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, weapon);
+  battleLog(battle, message); nextBattleTurn(battle);
+  return result(true, message);
+}
+
 function advanceBattleV2(state) {
   const battle = state.battle;
   const actor = battle.units.find(unit => unit.id === battle.activeId);
@@ -4807,8 +4842,10 @@ function advanceBattleV2(state) {
     if (actor.fleeRound === battle.round) return fleeBattleEnemy(state, actor, enemies);
   }
   const rotation = rescueWithRotation(state, actor); if (rotation) return rotation;
-  const fallingBack=returnSkirmisher(state,actor);if (fallingBack) return fallingBack;
   if (useBattleAccessory(state, actor, enemies)) return result(true, battle.lastEvent.message);
+  const preservation = preserveWoundedBrother(state, actor, enemies); if (preservation) return preservation;
+  const preserving = shouldPreserveBrother(battle, actor);
+  const fallingBack=preserving ? null : returnSkirmisher(state,actor);if (fallingBack) return fallingBack;
   if (readyShieldWallSet(state, actor) || chooseBattleWeapon(state, actor, enemies)) return result(true, battle.lastEvent.message);
   const equipped = getItem(actor.equipment.weapon);
   const reserve = getItem(actor.reserveEquipment.weapon);
@@ -4882,7 +4919,7 @@ function advanceBattleV2(state) {
     nextBattleTurn(battle);
     return result(true, message);
   }
-  if (!wingDuty && companyTactic === 'advance-formation' && !sideInMeleeContact(battle) && actor.formationMovedRound !== battle.round) {
+  if (!preserving && !wingDuty && companyTactic === 'advance-formation' && !sideInMeleeContact(battle) && actor.formationMovedRound !== battle.round) {
     const from = { q: actor.q, r: actor.r };
     const previousFatigue = actor.fatigue;
     const previousPlan = structuredClone(battle.formationAdvance);
@@ -4906,7 +4943,7 @@ function advanceBattleV2(state) {
       return result(true, message);
     }
   }
-  if (!wingDuty && actor.side==='company' && !actor.ally && (!rangedAI || !spacingWeapon && !ammunitionSpent) && companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round && (weapon.ranged || !nearbyTarget)) {
+  if (!preserving && !wingDuty && actor.side==='company' && !actor.ally && (!rangedAI || !spacingWeapon && !ammunitionSpent) && companyTactic === 'shield-wall' && actor.formationMovedRound !== battle.round && (weapon.ranged || !nearbyTarget)) {
     const reform = shieldWallReformStep(state, actor);
     if (reform) {
       const cost = battleMoveApCost(battle, actor, actor, reform);
@@ -5107,6 +5144,7 @@ function advanceBattleV2(state) {
   if(roleRules(battle))for(let i=candidates.length-1;i>=0;i--)if(!canAfford(battle,actor,candidates[i].apCost,candidates[i].fatigueCost)||candidates[i].legal===false)candidates.splice(i,1);
   for (let i=candidates.length-1;i>=0;i--) {
     const action=candidates[i];
+    if (preserving && ['move','charge','lunge'].includes(action.type)) { candidates.splice(i,1); continue; }
     if (action.type==='move' && !meleeApproachSafe(battle,actor,weapon,action.point,action.apCost,action.fatigueCost)) candidates.splice(i,1);
   }
   // Prefer the dagger's health-focused special when it is useful and affordable.
