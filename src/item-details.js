@@ -41,6 +41,10 @@ export function getItemDetails(item, condition) {
   const stats = [];
   const notes = [];
   if (isAncientHelmet(item)) notes.push('Morale immunity while equipped: no positive or negative morale changes, no morale bonuses or penalties to attack and defense, and no automatic fleeing.');
+  if(item.rangedRangeBonus)notes.push('Extra ranged reach applies to bows and crossbows only while armor and helmet fatigue total at most 15. Multiple Farseeing effects do not stack.');
+  if(item.perkBoosts?.berserkAp)notes.push('Requires Berserk: adds bonus AP to its once-per-round kill proc, including reaction kills credited to the next turn. Equipment bonuses stack up to +2 AP total.');
+  if(item.perkBoosts?.nimble)notes.push('Requires Nimble: +10 melee and ranged defense with armor and helmet fatigue at most 20. Multiple Nimble enhancements do not multiply again.');
+  if(item.perkBoosts?.battleForged)notes.push('Requires Battle Forged: reduces incoming armor damage by another 5 percentage points per bonus, up to 10 points.');
   if(item.signatureDescription)notes.push(item.signatureDescription);
   if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];

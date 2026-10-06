@@ -1,3 +1,4 @@
+import { applyNamedAffixes } from './item-affixes.js';
 // Battle Brothers named-item rules, pinned to kovasap/battle-bros-decompiled e06d68df.
 // Existing unversioned famed IDs remain handled by the legacy resolver in engine.js.
 export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=0,merged=false,rangeRoll=false,rulesVersion=merged?3:2}={}) {
@@ -42,7 +43,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
   item.description=`A rare ${original.name.toLowerCase()} with independently rolled Battle Brothers-style modifiers. ${original.description}`;
   if(merged){
     const bits=shift=>(seed>>>shift)&15;
-    if(['armor','helmet'].includes(item.slot)){
+    if(['armor','helmet'].includes(item.slot)&&rulesVersion<5){
       const traits=[['guarded','of the Guard','meleeDefense','Melee defense',2+bits(16)%3,'Its careful fit guards the wearer in close combat.'],['deflecting','of Deflection','rangedDefense','Ranged defense',3+bits(16)%3,'Its angled surfaces turn aside distant attacks.'],['stalwart','of Resolve','resolve','Resolve',4+bits(16)%4,'Its workmanship steadies the wearer.'],['vigorous','of Vigor','maxFatigue','Maximum fatigue',4+bits(16)%4,'Its balanced weight leaves the wearer more endurance.']];
       const trait=traits.find(t=>t[0]===original.signature)||traits[bits(12)%4];
       item.signature=trait[0];
@@ -60,8 +61,9 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
       bonuses.push(Object.freeze({label:'Legacy melee and ranged defense',value:`+${defense}`}),Object.freeze({label:'Legacy fatigue relief',value:`-${relief}`}));
       item.signatureDescription='Its old craftsmanship adds defense against melee and missiles and lightens its load alongside its two rolled modifiers.';
     }
-    item.description+=` ${item.signatureDescription}`;
+    if(item.signatureDescription)item.description+=` ${item.signatureDescription}`;
   }
+  if(rulesVersion>=5){item.enhancementProfile=profile;applyNamedAffixes(item,original,seed,bonuses);item.description+=` ${item.signatureDescription}`;}
   item.price=Math.min(original.collection?20000:5000,Math.round(original.price*2.4+(['armor','helmet'].includes(item.slot)?item.armor-(design?original.sourceArmor:original.armor):0)));
   item.enhancementProfile=Object.freeze(profile);item.rollModifiers=Object.freeze(mods);item.bonuses=Object.freeze(bonuses);
   return Object.freeze(item);
