@@ -106,3 +106,5 @@ uses 85% CSS scale to fit the portrait. Exact source paths and hashes are in
 by **feudalwars**, released under **CC0**. The forge dialog and Ironford marker
 preserve its aspect ratio. The download URL and SHA-256 are recorded in
 [workshop provenance](../assets/world/legendary-blacksmith-source.json).
+
+The quest-completion horn/chime cadence is an original procedural composition released as CC0. `tools/generate-quest-tune.py` reproduces its 2.8-second mono MP3 (about 23 KB); it contains no sampled recordings or Warband audio. It plays once on successful contract payment or Odran quest turn-in and follows the sound-effects setting.

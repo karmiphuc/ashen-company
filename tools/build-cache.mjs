@@ -17,6 +17,7 @@ const CORE = [
   './src/battle-terrain.js',
   './src/battle-geometry.js',
   './src/audio.js',
+  './src/quest-completion.js',
   './src/app.js',
   './src/item-details.js',
   './src/engine.js',
