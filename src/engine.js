@@ -6542,7 +6542,7 @@ export function validateSave(input) {
   assert(Array.isArray(factionReports)&&factionReports.length<=24&&factionReports.every(r=>recordObject(r)&&Object.keys(r).length===8&&knownPatrols.has(r.patrolId)&&definitions.find(d=>d.id===r.patrolId).factionId===r.factionId
     &&(knownPatrols.has(r.opponentId)||BAND_BY_ID.has(r.opponentId)||isCampId(r.opponentId)||/^ashen:[1-3]:host:[1-9]\d*$/.test(r.opponentId))&&typeof r.opponentName==='string'&&r.opponentName.length<=120
     &&['band','camp','patrol','undead-host'].includes(r.kind)&&['victory','defeat'].includes(r.outcome)&&validCount(r.losses)&&r.losses<=9&&Number.isFinite(r.hour)&&r.hour>=0&&r.hour<=now),'faction reports');
-  const worldSkirmishes=input.worldSkirmishes??[],committed=new Set();
+  const worldSkirmishes=structuredClone(input.worldSkirmishes??[]),committed=new Set();
   assert(Array.isArray(worldSkirmishes)&&worldSkirmishes.length<=definitions.length+ASHEN_CONFIG.maxHosts,'world skirmishes');
   for(const f of worldSkirmishes){
     assert(recordObject(f)&&Object.keys(f).length===(f.aKind===undefined?14:15)&&(f.aKind===undefined||f.aKind==='undead-host')&&typeof f.id==='string'&&f.id===`skirmish:${f.aId}:${f.bId}:${Math.round(f.startHour*4)}`&&(f.aKind==='undead-host'?Boolean(ashenWinter.hosts[f.aId]):knownPatrols.has(f.aId))&&f.aId!==f.bId
@@ -6551,7 +6551,12 @@ export function validateSave(input) {
       &&Number.isFinite(f.startHour)&&f.startHour>=0&&f.startHour<=now&&Number.isFinite(f.endHour)&&validCount(f.aCycle)&&validCount(f.bCycle),'world skirmish record');
     assert(!committed.has(f.aId)&&!committed.has(f.bId),'world skirmish participants');committed.add(f.aId);committed.add(f.bId);
     const a=f.aKind==='undead-host'?ashenWinter.hosts[f.aId]:normalizedPatrols[f.aId],b=f.bKind==='patrol'?normalizedPatrols[f.bId]:f.bKind==='band'?normalizedBands[f.bId]:ashenWinter.hosts[f.bId];
-    assert(a&&b&&(f.aKind==='undead-host'?a.force.generation:a.spawnCycle)===f.aCycle&&(f.bKind==='undead-host'?b.force.generation:b.spawnCycle)===f.bCycle,'world skirmish generation');
+    // Older patrol views omitted spawnCycle, so a respawned defender was
+    // committed as cycle zero. Repair only that known omission; all troop,
+    // engagement and outcome checks below still have to pass.
+    const legacyDefenderCycle=f.bKind==='patrol'&&f.bCycle===0&&b?.spawnCycle>0;
+    assert(a&&b&&(f.aKind==='undead-host'?a.force.generation:a.spawnCycle)===f.aCycle
+      &&((f.bKind==='undead-host'?b.force.generation:b.spawnCycle)===f.bCycle||legacyDefenderCycle),'world skirmish generation');
     const ids=(list,max)=>Array.isArray(list)&&list.length>0&&list.length<=max&&new Set(list).size===list.length&&list.every(i=>validCount(i)&&i<max);
     assert(ids(f.aTroops,f.aKind==='undead-host'?a.force.size:definitions.find(d=>d.id===f.aId).size)&&ids(f.bTroops,f.bKind==='patrol'?definitions.find(d=>d.id===f.bId).size:f.bKind==='band'?20:b.force.size),'world skirmish troops');
     if(f.aKind==='undead-host')assert(JSON.stringify(a.force.troops)===JSON.stringify(f.aTroops),'world skirmish undead army');
@@ -6562,6 +6567,7 @@ export function validateSave(input) {
     const r=f.result,survivors=(list,max)=>Array.isArray(list)&&list.length<=max&&new Set(list).size===list.length&&list.every(i=>validCount(i)&&i<max);
     assert(recordObject(r)&&Object.keys(r).length===3&&typeof r.aWins==='boolean'&&survivors(r.aSurvivors,f.aTroops.length)&&survivors(r.bSurvivors,f.bTroops.length)
       &&(r.aWins?r.aSurvivors.length>0:r.bSurvivors.length>0),'world skirmish outcome');
+    if(legacyDefenderCycle)f.bCycle=b.spawnCycle;
   }
   const factionSimulationHour=input.factionSimulationHour??now;
   assert(Number.isFinite(factionSimulationHour)&&factionSimulationHour>=0&&factionSimulationHour<=now,'faction simulation clock');
