@@ -5,7 +5,7 @@ import { worldRoute } from './world-navigation.js';
 import { visualRandom, REGION_STYLE, terrainStamp, roadCurve, settlementProfile, settlementGround, overviewBorderAlpha, showActorLabel, movementPose } from './map-illustration.js';
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
 import { regionAt, regionalTownArt } from './geography.js';
-import { SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getBlacksmithQuestEncounters, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
+import { getActiveContracts, SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getBlacksmithQuestEncounters, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = ['legendary-blacksmith',
   ...SETTLEMENT_SCENERY_ASSETS,
@@ -614,12 +614,12 @@ function draw() {
     if(!worldPointExplored(state,town))return;
     const access=getSettlementAccess(state,town.id);
     if(access.status!=='open'){context.font='bold 15px Georgia';context.textAlign='center';context.strokeStyle='#211b19';context.lineWidth=3;const label=access.servicesAvailable?(access.status==='threatened'?'! Undead approaching':'Rebuilding'):'☠ CLOSED';context.strokeText(label,town.x,town.y-48);context.fillStyle=access.servicesAvailable?'#f3c777':'#ff9d89';context.fillText(label,town.x,town.y-48);}
-    if (selection === town.id || state.contract?.to === town.id) {
+    if (selection === town.id || getActiveContracts(state).some(c=>c.to===town.id)) {
       context.strokeStyle = selection === town.id ? '#f4d78f' : '#dfcb73'; context.lineWidth = 2;
       context.beginPath(); context.ellipse(town.x, town.y + 3, 45, 17, 0, 0, Math.PI * 2); context.stroke();
     }
     sprite(context, `banner_10${1 + index % 3}`, town.x + 43, town.y - 29, 22, .9);
-    if (camera.zoom >= .65 || town.major || selection === town.id || state.contract?.to === town.id) {
+    if (camera.zoom >= .65 || town.major || selection === town.id || getActiveContracts(state).some(c=>c.to===town.id)) {
       context.font = `bold ${Math.max(17,9/camera.zoom)}px Georgia`; context.textAlign = 'center'; context.lineWidth = 3/camera.zoom; context.strokeStyle = '#29291edd'; context.strokeText(town.name, town.x, town.y + 25);
       context.fillStyle = '#f0e4bd'; context.fillText(town.name, town.x, town.y + 25);
     }
