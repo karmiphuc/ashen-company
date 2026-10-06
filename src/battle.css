@@ -166,7 +166,7 @@
 .battle-more{display:contents}
 .battle-more>summary{display:none}
 .battle-more-panel{display:contents}
-@media(max-width:1180px){
+@media(max-width:1366px){
  body.combat-screen .main-nav,body.combat-screen #time-of-day-indicator{display:none}
  body.combat-screen .topbar{height:56px;min-height:56px;flex-wrap:nowrap;padding-block:4px}
  body.combat-screen .topbar .resources{display:none}
@@ -202,7 +202,37 @@
  .battle-tactics p{display:none}
  .battle-turn strong{max-width:100px}
 }
-@media(max-width:1180px){.battle-controls{position:relative;z-index:50}}
+@media(max-width:1366px){.battle-controls{position:relative;z-index:50}}
 .battle-more-panel>[data-battle-speed]{min-height:44px;padding:5px 10px;border:1px solid #716340;background:#211f18;color:#d6c79f;font:700 12px Arial,sans-serif}
 .battle-more-panel>[data-battle-speed].is-selected{background:#69592e;color:#fff0bd}
 .battle-more-panel>[data-battle-speed]:focus-visible{outline:2px solid #e0c06e;outline-offset:2px}
+
+.battle-roster-toggle{display:none}.battle-night-badge{font-size:12px;color:#afc9ea}
+@media(max-width:1366px){
+ body.combat-screen{padding-bottom:0}
+ body.combat-screen .topbar{display:none}
+ body.combat-screen .battle-view{height:100dvh;box-sizing:border-box;border:0}
+ .battle-topbar{min-height:32px;height:32px;padding:2px 8px;box-sizing:border-box;gap:12px}
+ .battle-topbar>div:first-child{display:flex;gap:10px;align-items:center}.battle-counts{margin:0}
+ .battle-topbar .battle-cycle{font-size:13px}.battle-status{font-size:11px!important;padding:3px 6px}
+ .battle-controls{height:52px;min-height:52px;box-sizing:border-box;gap:6px}
+ .battle-controls>.battle-tactics{padding:0;border:0;background:none;margin-left:auto}
+ .battle-tactics p,.battle-tactic-picker>span{display:none}
+ .battle-tactic-picker select{min-width:120px;max-width:160px}
+ .battle-more{margin-left:0}
+ .battle-more-panel{width:240px;padding:8px;gap:6px}
+ .battle-more-panel .battle-camera{flex-wrap:wrap;gap:4px}
+ .battle-more-panel button{font-size:11px;padding-inline:8px}
+ .battle-more-panel .battle-enemy-intent{width:100%;line-height:1.4;border:0}
+ .battle-night-warning,.battle-terrain-key{display:none}
+ .battle-roster-toggle{display:block;min-height:44px;height:44px;flex-shrink:0;z-index:30;border:1px solid #89734a;background:#211f18;color:#dfc18a;font-size:12px}
+ body.combat-screen #company-roster{visibility:hidden}
+ body.combat-screen.combat-roster-open #company-roster{visibility:visible}
+ body.combat-screen.combat-roster-open .company-strip{bottom:44px}
+ body.combat-screen .battle-settings{min-height:44px;color:#dfc18a;background:#211f18;border:1px solid #89734a}
+ .battle-camera-space{margin-inline:auto}
+}
+@media(max-width:650px){.battle-controls{height:auto;flex-wrap:wrap}.battle-controls>.battle-tactics{margin-left:0}.battle-topbar .battle-turn{display:none}}
+@media(max-width:1366px){.battle-scroll.battle-overview{display:flex;align-items:center;justify-content:center}.battle-scroll.battle-overview .battle-camera-space{flex-shrink:0}}
+@media(min-width:1367px){.battle-more{display:block}.battle-more-panel{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.battle-more-panel .battle-enemy-intent{flex-basis:100%;margin:0}.battle-settings{display:none}.battle-controls .battle-zoom{margin-left:0}}
+@media(min-width:651px) and (max-width:1366px){.battle-view{position:relative}.battle-view>.battle-tactics{position:absolute;right:82px;top:36px;z-index:51;padding:0;border:0;background:none;width:140px;height:44px}.battle-tactic-picker select{width:140px}.battle-controls>.battle-zoom{margin-left:0}.battle-more{margin-left:auto}}

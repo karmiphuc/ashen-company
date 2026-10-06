@@ -46,7 +46,7 @@ export function battleActionDuration(speed = 1,event=null) {
 
 export function tacticsHTML(tactic = 'offense', disabled = false, skirmishSupported = true) {
   const current = TACTICS.find(entry => entry[0] === tactic) || TACTICS[0];
-  return `<div class="battle-tactics"><div role="group" aria-label="Company tactics">${TACTICS.map(([id, label]) => `<button data-tactic="${id}" aria-pressed="${current[0] === id}" ${disabled || id==='skirmish'&&!skirmishSupported ? 'disabled' : ''}>${label}</button>`).join('')}</div><label class="battle-tactic-picker"><span>Tactic</span><select data-battle-tactic aria-label="Company tactic" ${disabled?'disabled':''}>${TACTICS.map(([id,label])=>`<option value="${id}" ${current[0]===id?'selected':''}${id==='skirmish'&&!skirmishSupported?' disabled':''}>${label}</option>`).join('')}</select></label><p>${current[2]}</p></div>`;
+  return `<div class="battle-tactics" title="${current[2]}"><div role="group" aria-label="Company tactics">${TACTICS.map(([id, label]) => `<button data-tactic="${id}" aria-pressed="${current[0] === id}" ${disabled || id==='skirmish'&&!skirmishSupported ? 'disabled' : ''}>${label}</button>`).join('')}</div><label class="battle-tactic-picker"><span>Tactic</span><select data-battle-tactic aria-label="Company tactic" ${disabled?'disabled':''}>${TACTICS.map(([id,label])=>`<option value="${id}" ${current[0]===id?'selected':''}${id==='skirmish'&&!skirmishSupported?' disabled':''}>${label}</option>`).join('')}</select></label><p>${current[2]}</p></div>`;
 }
 
 function enemyIntentHTML(battle) {
@@ -405,6 +405,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
     <header class="battle-topbar">
       <div><span class="battle-kicker">TACTICAL ENGAGEMENT</span><strong class="battle-cycle">${battle.simultaneous?`Cycle ${battle.round} · ${(battle.simultaneous.time/1000).toFixed(1)}s`:`Round ${Math.max(1, Math.round(number(battle.round, 1)))}`}</strong><small class="battle-counts">${brothers} ${brothers===1?'brother':'brothers'} · ${enemies} ${enemies===1?'enemy':'enemies'}${allies?` · ${allies} ${allies===1?'ally':'allies'}`:''}</small></div>
       <div class="battle-turn"><span>${battle.simultaneous?'SIMULTANEOUS · BETA':'TURN'}</span><strong>${battle.simultaneous?'Independent action clocks':esc(active?.name || 'Resolving')} ${!battle.simultaneous&&active ? animateEvent ? 'acting' : 'to act' : ''}</strong></div>
+      ${getNightHitPenalty(battle,true)?'<span class="battle-night-badge" title="Night: ranged −40, melee −10 hit chance on both sides">☾ Night</span>':''}
       <strong class="battle-status">${statusText(status)}</strong>
     </header>
     ${getNightHitPenalty(battle,true)?'<p class="battle-night-warning">☾ Night battle · Ranged hit chance −40 points · Melee −10 points · Both sides</p>':''}
@@ -415,7 +416,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         <button class="${selectedSpeed === 4 ? 'is-selected' : ''}" data-battle-speed="4" aria-pressed="${selectedSpeed === 4}">4x</button>
 
       </div>
-      <div class="battle-camera battle-zoom" role="group" aria-label="Battlefield zoom"><button data-battle-zoom="out" aria-label="Zoom out battlefield">−</button><button data-battle-zoom="reset" aria-label="Reset battlefield zoom">100%</button><button data-battle-zoom="in" aria-label="Zoom in battlefield">+</button></div>
+      <div class="battle-camera battle-zoom" role="group" aria-label="Battlefield zoom"><button data-battle-zoom="fit" aria-label="Show whole battlefield">Fit</button><button data-battle-zoom="out" aria-label="Zoom out battlefield">−</button><button data-battle-zoom="reset" aria-label="Reset battlefield zoom">100%</button><button data-battle-zoom="in" aria-label="Zoom in battlefield">+</button></div>
       <details class="battle-more"><summary aria-label="More battle controls">More ⋯</summary><div class="battle-more-panel">
         <button class="${selectedSpeed === 'cinematic' ? 'is-selected' : ''}" data-battle-speed="cinematic" aria-pressed="${selectedSpeed === 'cinematic'}" title="4× movement with slow-motion attacks, skills and impacts">Cinematic</button>
       <div class="battle-camera" role="group" aria-label="Battlefield camera"><button data-battle-camera="company" aria-label="Center battlefield on your company">Company</button><button data-battle-camera="enemy" aria-label="Center battlefield on enemies" ${units.some(u=>u.side==='enemy'&&u.alive&&!u.escaped)?'':'disabled'}>Enemies</button><button data-battle-camera="active" aria-label="Center battlefield on the acting fighter" ${active?.alive&&!active.escaped?'':'disabled'}>Acting</button></div>
@@ -423,10 +424,12 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
       <button data-battle-log-toggle aria-expanded="true" aria-controls="battle-event-sidebar">Hide log</button>
       <button class="battle-retreat" data-action="retreat-battle" ${status === 'active' ? '' : 'disabled'}>Retreat</button>
       <button class="battle-resolve" data-action="resolve-battle" ${status === 'active' ? '' : 'disabled'}>Resolve battle</button>
+      ${enemyIntentHTML(battle)}
+      <button class="battle-settings" data-action="settings">Save / Menu</button>
       </div></details>
     </div>
+
     ${tacticsHTML(battle.tactic, status !== 'active', battle.rulesVersion===2)}
-    ${enemyIntentHTML(battle)}
 
     <div class="battle-layout">
       <div class="battle-scroll" tabindex="0" aria-label="Battlefield scroll area">
@@ -442,6 +445,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol></details>
       </aside>
     </div>
+    <button class="battle-roster-toggle" data-battle-roster aria-expanded="false" aria-controls="company-roster">Your company ▴</button>
 
   </section>`;
 }
