@@ -236,3 +236,6 @@
 @media(max-width:1366px){.battle-scroll.battle-overview{display:flex;align-items:center;justify-content:center}.battle-scroll.battle-overview .battle-camera-space{flex-shrink:0}}
 @media(min-width:1367px){.battle-more{display:block}.battle-more-panel{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.battle-more-panel .battle-enemy-intent{flex-basis:100%;margin:0}.battle-settings{display:none}.battle-controls .battle-zoom{margin-left:0}}
 @media(min-width:651px) and (max-width:1366px){.battle-view{position:relative}.battle-view>.battle-tactics{position:absolute;right:82px;top:36px;z-index:51;padding:0;border:0;background:none;width:140px;height:44px}.battle-tactic-picker select{width:140px}.battle-controls>.battle-zoom{margin-left:0}.battle-more{margin-left:auto}}
+
+/* Deskew the terrain plane, keeping pawns and scenery upright. */
+.battle-hex-top{transform:skewX(var(--ground-angle,0deg));transform-origin:center center}
