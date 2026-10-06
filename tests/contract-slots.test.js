@@ -23,7 +23,7 @@ test('legacy single contract loads and malformed or duplicate slots are rejected
  const malformed=structuredClone(s);malformed.additionalContracts=[null];assert.throws(()=>validateSave(malformed),/Invalid save/);
 });
 
-test('combat payment preserves deliveries and a new combat contract can be accepted',()=>{
+test('combat payment preserves deliveries and a later weekly board can supply new combat work',()=>{
  const s=createGame(412);accept(s,'courier');accept(s,'supply');const rescue=accept(s,'rescue');rescue.rescued=true;
  const issuer=SETTLEMENTS.find(t=>t.id===rescue.to);s.position={x:issuer.x,y:issuer.y};s.destination={...s.position};tick(s,.01);
  assert.equal(getActiveContracts(s).length,2);assert(!getActiveContracts(s).some(c=>c.id===rescue.id));accept(s,'hunt');assert.deepEqual(validateSave(s),s);

@@ -340,3 +340,7 @@ test('Frenzy radiates from the killer and Howling exposes its debuff duration',(
   f.units[0].hp=0;f.units[0].alive=false;
   assert.doesNotMatch(battleHTML(f,0,false),/battle-frenzy-aura/);
 });
+
+test('action chrome updates omit terrain and portraits while retaining live reports',()=>{
+ const html=battleHTML(battle,4,true,true);assert.doesNotMatch(html,/class="battle-hex /);assert.doesNotMatch(html,/data-unit-id=/);assert.match(html,/battle-topbar/);assert.match(html,/battle-log/);assert.match(html,/data-battle-speed="4"/);
+});

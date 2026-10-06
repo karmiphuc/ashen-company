@@ -198,7 +198,7 @@ function impactsFor(event, unitId) {
   return impacts;
 }
 
-function unitHTML(unit, battle, animateEvent, field, grid, simultaneous = null) {
+function unitHTML(unit, battle, animateEvent, field, grid, simultaneous = null, retainedPortrait = false) {
   const { x, y, foot } = coordinates(unit, field, grid);
   const alive = unit.alive !== false && number(unit.hp, 1) > 0;
   const event = simultaneous?.event ?? (animateEvent ? battle.lastEvent || {} : {});
@@ -276,14 +276,14 @@ function unitHTML(unit, battle, animateEvent, field, grid, simultaneous = null) 
   const morale = getMoraleEffects(unit);
   const moraleLabel = isMoraleImmune(unit) ? 'Morale immune: no bonuses, penalties, or automatic fleeing.' : `${morale.name} morale: ${Math.round(number(unit.morale, 50))}/100; resolve ${Math.round(number(unit.resolve, 50) * (1 + getLoneWolfBonus(battle, unit)))}`;
 
-  return `<article class="${classes}" data-unit-id="${esc(unit.id)}"${simultaneous?` data-sim-portrait="${esc(portraitKey(unit))}"`: ''} style="${simultaneous?.style??''}left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--pawn-foot:${foot}px;--callout-space:${Math.max(34, callouts.length * 26 + 8)}px;--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" aria-label="${unit.ally?'Allied fighter, ':''}${esc(unit.name)}: ${Math.round(number(unit.hp))} health${friendlyFire?', friendly fire impact':''}">
+  return `<article class="${classes}" data-unit-id="${esc(unit.id)}"${simultaneous?` data-sim-portrait="${esc(portraitKey(unit))}"`: ''} style="${simultaneous?.style??''}left:${x}px;top:${y}px;--unit-depth:${15 + number(unit.r) * 10};--pawn-foot:${foot}px;--callout-space:${Math.max(34, callouts.length * 26 + 8)}px;--move-x:${moveOrigin.x - x}px;--move-y:${moveOrigin.y - y}px;--strike-x:${(dx / length * 13).toFixed(2)}px;--strike-y:${(dy / length * 13).toFixed(2)}px" data-portrait-key="${esc(portraitKey(unit))}" aria-label="${unit.ally?'Allied fighter, ':''}${esc(unit.name)}: ${Math.round(number(unit.hp))} health${friendlyFire?', friendly fire impact':''}">
     <div class="battle-unit-bars" aria-hidden="true">
       <span class="battle-unit-bar battle-unit-head"><i style="width:${head}%;--before-width:${beforeHead}%;--after-width:${head}%"></i></span>
       <span class="battle-unit-bar battle-unit-body"><i style="width:${body}%;--before-width:${beforeBody}%;--after-width:${body}%"></i></span>
       ${shield ? `<span class="battle-unit-bar battle-unit-shield" title="Shield: ${shield.current} / ${shield.max} durability${shield.current===0?' · Broken':''}"><i style="width:${percent(shield.current,shield.max)}%;--before-width:${beforeShield}%;--after-width:${percent(shield.current,shield.max)}%;background:#a98b55"></i></span>` : ''}
       <span class="battle-unit-bar battle-unit-health"><i style="width:${health}%;--before-width:${beforeHealth}%;--after-width:${health}%"></i></span>
     </div>
-    <span class="battle-pawn">${frenzy ? '<span class="battle-frenzy-aura" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${effects.some(effect => effect.id === 'howling') ? '<span class="battle-howl-waves" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${simultaneous?.portraitMarkup??portraitHTML(display,equipmentFor(unit),64)}</span>
+    <span class="battle-pawn">${frenzy ? '<span class="battle-frenzy-aura" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${effects.some(effect => effect.id === 'howling') ? '<span class="battle-howl-waves" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${retainedPortrait?'':simultaneous?.portraitMarkup??portraitHTML(display,equipmentFor(unit),64)}</span>
     <span class="battle-morale-flag morale-${morale.name.toLowerCase()}" title="${esc(moraleLabel)}" aria-label="${esc(moraleLabel)}">${morale.name[0]}</span>
     ${statusIconsHTML(unit, battle)}
     ${unit.ally ? '<span class="battle-ally-label" aria-label="Allied fighter"><i>Ally</i></span>' : ''}
@@ -342,15 +342,45 @@ function simultaneousProjectileHTML(battle,speed,field,grid,entry) {
     .replace('style="',`style="--action-time:${entry.duration/rate/1000}s;--sim-delay:${-age/rate/1000}s;`);
 }
 
+const turnRenderCaches=new WeakMap(),turnFullFrames=new WeakMap();
+function turnUnitKey(unit,battle,speed,animate=true) {
+ const event=battle.lastEvent??{},involved=animate&&(event.actorId===unit.id||event.targetId===unit.id||impactsFor(event,unit.id).length||reactionsFor(event).some(e=>e.actorId===unit.id||e.targetId===unit.id));
+ const active=(animate&&event.actorId?event.actorId:battle.activeId)===unit.id;
+ return JSON.stringify(unit)+':'+speed+':'+(involved?JSON.stringify(event):'')+':'+battle.round+':'+active+':'+getLoneWolfBonus(battle,unit);
+}
+/** Update action visuals without rebuilding terrain, camera or unrelated fighters. */
+export function updateTurnBattleView(root,battle,speed) {
+ const view=root.querySelector('.battle-view:not(.simultaneous-battle)'),surface=view?.querySelector('.battle-units');if(!surface)return false;
+ const field=fieldModel(battle),grid=gridModel(field),nodes=new Map([...surface.querySelectorAll('[data-unit-id]')].map(n=>[n.dataset.unitId,n]));
+ const cache=turnRenderCaches.get(view)??new Map(turnFullFrames.get(battle)??[]);
+ for(const unit of battle.units){
+  const node=nodes.get(unit.id);if(unit.escaped){node?.remove();cache.delete(unit.id);continue;}
+  const key=turnUnitKey(unit,battle,speed);
+  if(cache.get(unit.id)===key)continue;
+  const portrait=node&&portraitKey(unit)===node.dataset.portraitKey?node.querySelector('.bb-portrait'):null;
+  const template=root.ownerDocument.createElement('template');template.innerHTML=unitHTML(unit,battle,true,field,grid,null,!!portrait);
+  if(portrait)template.content.querySelector('.battle-pawn').append(portrait);
+  template.content.firstElementChild.dataset.portraitKey=portraitKey(unit);
+  if(node)node.replaceWith(template.content.firstElementChild);else surface.append(template.content.firstElementChild);cache.set(unit.id,key);
+ }
+ turnRenderCaches.set(view,cache);
+ surface.querySelectorAll('.battle-projectile').forEach(n=>n.remove());surface.insertAdjacentHTML('beforeend',projectileHTML(battle,true,field,grid));
+ const template=root.ownerDocument.createElement('template');template.innerHTML=battleHTML(battle,speed,true,true);
+ const incoming=template.content.firstElementChild;const collapsed=view.classList.contains('battle-log-collapsed');view.className=incoming.className;view.classList.toggle('battle-log-collapsed',collapsed);view.style.cssText=incoming.style.cssText;
+ for(const selector of ['.battle-topbar','.battle-log','.battle-enemy-intent']){const current=view.querySelector(selector),next=incoming.querySelector(selector);if(current&&next){next.hidden=current.hidden;const open=[...current.querySelectorAll('details')].map(n=>n.open),focusIndex=[...current.querySelectorAll('summary')].indexOf(root.ownerDocument.activeElement);current.replaceWith(next);next.querySelectorAll('details').forEach((n,i)=>n.open=open[i]);if(focusIndex>=0)next.querySelectorAll('summary')[focusIndex]?.focus({preventScroll:true});}}
+ return true;
+}
+
 // Patch changed pawns/projectiles only. Preserve camera, focused controls and other animations.
 export function updateSimultaneousBattleView(root,battle,speed) {
   const view=root.querySelector('.simultaneous-battle'),surface=view?.querySelector('.battle-units');
   if(!surface)return false;
   view.classList.toggle('sim-paused',speed===0);
+  const nodes=new Map([...surface.querySelectorAll('[data-unit-id]')].map(n=>[n.dataset.unitId,n]));
   const field=fieldModel(battle),grid=gridModel(field),cache=simultaneousRenderCaches.get(view)??new Map(simultaneousFullFrames.get(battle)??[]);
   for(const unit of battle.units){
     const context=simultaneousUnitContext(unit,battle,speed),key=JSON.stringify(unit)+':'+context.key+':'+speed;
-    const node=[...surface.querySelectorAll('[data-unit-id]')].find(n=>n.dataset.unitId===unit.id);
+    const node=nodes.get(unit.id);
     if(unit.escaped){node?.remove();cache.delete(unit.id);continue;}
     if(cache.get(unit.id)===key)continue;
     const portrait=node?.dataset.simPortrait===portraitKey(unit)?node.querySelector('.bb-portrait'):null;
@@ -385,12 +415,12 @@ function terrainLegend(field) {
 }
 
 /** Render a scrollable tactical battle surface from battle state. */
-export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
+export function battleHTML(battle = {}, speed = 1, animateEvent = false, chromeOnly = false) {
   const units = Array.isArray(battle.units) ? battle.units : [];
   const active = units.find(unit => unit.id === (animateEvent && battle.lastEvent?.actorId ? battle.lastEvent.actorId : battle.activeId));
   const field = fieldModel(battle);
   const grid = gridModel(field);
-  const tiles = field.tiles.map(tile => tileHTML(tile, grid, field)).join('');
+  const tiles = chromeOnly?'':field.tiles.map(tile => tileHTML(tile, grid, field)).join('');
   const log = Array.isArray(battle.log) ? battle.log.slice(-6).reverse() : [];
   const selectedSpeed = parseBattleSpeed(speed);
   const cinematicKind=!battle.simultaneous&&selectedSpeed==='cinematic'&&animateEvent?cinematicActionKind(battle.lastEvent):null;
@@ -399,6 +429,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
   const moralePercent = Math.round(morale.modifier * 100);
   const skillName = animateEvent && battle.lastEvent?.actorId === active?.id ? battle.lastEvent?.skillName : null;
 
+  if(!battle.simultaneous&&!chromeOnly)turnFullFrames.set(battle,new Map(units.map(u=>[u.id,turnUnitKey(u,battle,speed,animateEvent)])));
   if(battle.simultaneous)simultaneousFullFrames.set(battle,new Map(units.map(u=>[u.id,JSON.stringify(u)+':'+simultaneousUnitContext(u,battle,speed).key+':'+speed])));
   const brothers=units.filter(u=>u.side==='company'&&!u.ally&&u.alive&&!u.escaped).length,enemies=units.filter(u=>u.side==='enemy'&&u.alive&&!u.escaped).length,allies=units.filter(u=>u.ally&&u.alive&&!u.escaped).length;
   return `<section class="battle-view battle-status-${esc(status)}${battle.simultaneous?` simultaneous-battle${selectedSpeed===0?' sim-paused':''}`:''}${cinematicKind?` cinematic-action cinematic-${cinematicKind}`:''}" style="--action-time:${battleActionDuration(speed,battle.lastEvent)}s;--move-time:${speed==='cinematic'?.1375:battleActionDuration(speed,battle.lastEvent)}s" aria-label="Tactical battle">
@@ -436,7 +467,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false) {
         ${terrainLegend(field)}
         <div class="battle-camera-space"><div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company' && !unit.ally).length} company fighters, ${units.filter(unit => unit.ally).length} allied fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
           <div class="battle-terrain">${tiles}</div>
-          <div class="battle-units">${units.filter(unit => !unit.escaped).map(unit => unitHTML(unit,battle,animateEvent,field,grid,battle.simultaneous?simultaneousUnitContext(unit,battle,speed):null)).join('')}${battle.simultaneous?simultaneousEvents(battle).filter(e=>battle.simultaneous.time-e.time<e.duration).map(e=>simultaneousProjectileHTML(battle,speed,field,grid,e)).join(''):projectileHTML(battle,animateEvent,field,grid)}</div>
+          <div class="battle-units">${(chromeOnly?[]:units).filter(unit => !unit.escaped).map(unit => unitHTML(unit,battle,animateEvent,field,grid,battle.simultaneous?simultaneousUnitContext(unit,battle,speed):null)).join('')}${battle.simultaneous?simultaneousEvents(battle).filter(e=>battle.simultaneous.time-e.time<e.duration).map(e=>simultaneousProjectileHTML(battle,speed,field,grid,e)).join(''):projectileHTML(battle,animateEvent,field,grid)}</div>
         </div>
       </div></div>
       <aside id="battle-event-sidebar" class="battle-log" aria-label="Battle event log">
