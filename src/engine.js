@@ -853,6 +853,7 @@ export function createGame(seed = Date.now()) {
     destination: null,
     destinationAction: null,
     contract: null,
+    additionalContracts: [],
     contractSerial: 0,
     recruitSerial: 0,
     hiredRecruitOffers: [],
@@ -1608,6 +1609,18 @@ function startHostileContact(state, bandId) {
 
 export function getEncounterSites(state) { return [...getBlacksmithQuestEncounters(state), ...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
 
+// Keep the legacy primary contract field for old saves and combat consumers.
+export function getContractCategory(contract) {
+  return !contract.type || contract.type==='courier' ? 'courier' : contract.type==='supply' ? 'merchant' : 'combat';
+}
+export function getActiveContracts(state) { return [state.contract,...(state.additionalContracts??[])].filter(Boolean); }
+export function canAcceptContract(state, offer) { return !getActiveContracts(state).some(c=>getContractCategory(c)===getContractCategory(offer)); }
+function storeContracts(state, contracts) {
+  const combat=contracts.find(c=>getContractCategory(c)==='combat');
+  state.contract=combat??contracts[0]??null;
+  state.additionalContracts=contracts.filter(c=>c!==state.contract);
+}
+
 export function getQuestEncounter(state) {
   const contract = state.contract;
   if(contract?.type==='bounty'){if(contract.defeated)return null;const site=deserterEncounter(state.seed,contract,getItem);return {...site,kind:'bounty',name:'Wanted Champion and Retainers',acceptedDay:contract.acceptedDay,enemies:championRoster(state,{...site,acceptedDay:contract.acceptedDay,enemies:rollEncounterNamed(state,{id:site.id,generation:contract.acceptedDay},site.enemies)},getItem,championWeaponFactory(armoryTheme(regionAt(site.x,site.y).id)),{force:true}),description:'Eight elite faction fighters shelter a wanted champion. Defeat them and return for 1,000 crowns and the right to hire the Bounty Hunter retinue for 5,000 crowns. The defeated champion guarantees their named trophy.'};}
@@ -1623,8 +1636,7 @@ export function getQuestEncounter(state) {
     reward: contract.reward, cleared: false, veteranRank: scaling.rank };
 }
 
-export function getContractTarget(state) {
-  const contract = state.contract;
+export function getContractTarget(state, contract = state.contract) {
   if (!contract || contractObjectiveComplete(state, contract)) return null;
   if (['rescue','deserters','bounty'].includes(contract.type)) return getQuestEncounter(state);
   if (contract.type === 'hunt' || contract.type === 'assault') return getCampSites(state).find(site => site.id === contract.campId && !site.cleared && site.generation === contract.campGeneration) ?? null;
@@ -1730,17 +1742,15 @@ function onArrival(state) {
   if (!state.visited.includes(town.id)) state.visited.push(town.id);
   record(state, `The company arrives at ${town.name}.`);
   applyCompanyAutomation(state);
-  if (state.contract?.to === town.id && !completeContract(state, town)) {
-    if (state.contract.type === 'supply') {
-      const good = GOOD_BY_ID.get(state.contract.goodId);
-      const needed = state.contract.quantity - (state.cargo[state.contract.goodId] ?? 0);
-      record(state, `${town.name} still needs ${needed} ${good.name.toLowerCase()} before it can pay.`);
+  for(const contract of getActiveContracts(state)) {
+    if(contract.to===town.id&&!completeContract(state,town,contract)&&contract.type==='supply') {
+      const good=GOOD_BY_ID.get(contract.goodId),needed=contract.quantity-(state.cargo[contract.goodId]??0);
+      record(state,`${town.name} still needs ${needed} ${good.name.toLowerCase()} before it can pay.`);
     }
   }
 }
 
-function completeContract(state, town) {
-  const contract = state.contract;
+function completeContract(state, town, contract) {
   if (!contract || contract.to !== town.id || townBlocked(state, town.id)) return false;
   if (['hunt', 'assault', 'rescue', 'deserters','bounty'].includes(contract.type) && !contractObjectiveComplete(state, contract)) return false;
   if (contract.type === 'supply') {
@@ -1783,7 +1793,7 @@ function completeContract(state, town) {
       record(state,`${person.name}'s ${original.name} is upgraded to ${named.name}, a named-quality Deserter contract reward.`);
     }
   }
-  state.contract = null;
+  storeContracts(state,getActiveContracts(state).filter(c=>c!==contract));
   return true;
 }
 
@@ -2040,16 +2050,18 @@ export function acceptContract(state, townId, offerId) {
   const town = townAt(state);
   if (!town || town.id !== townId) return result(false, 'Visit the issuing settlement to take its contract.');
   const accessBlocked = townBlocked(state, town.id); if (accessBlocked) return accessBlocked;
-  if (state.contract) return result(false, 'Finish the current delivery before taking another.');
   const offers = getContractOffers(state, townId);
   const offer = offerId === undefined ? offers[0] : offers.find(entry => entry.id === offerId);
   if (!offer) return result(false, 'That contract is no longer available.');
+  if(!canAcceptContract(state,offer))return result(false,`Finish your current ${getContractCategory(offer)} contract before taking another of that kind.`);
+  const existingContracts=getActiveContracts(state);
   if(offer.type==='bounty'){state.retinue??=defaultRetinue();state.retinue.bountyBoards[townId]=Math.floor((state.day-1)/7);}
   if(offer.type==='deserters'){state.deserterBoards??={};state.deserterBoards[townId]=Math.floor((state.day-1)/7);}
   state.contractSerial += 1;
   const { id, ...terms } = offer;
   state.contract = { id: `delivery-${state.contractSerial}`, ...terms, acceptedDay: state.day,
     ...(offer.type === 'rescue' ? { rescued: false } : ['deserters','bounty'].includes(offer.type) ? {defeated:false} : {}) };
+  storeContracts(state,[...existingContracts,state.contract]);
   const destination = TOWN_BY_ID.get(offer.to);
   const message = offer.type === 'bounty' ? `Defeat the wanted champion and seven elite retainers, then return to ${town.name}. Earn 1,000 crowns and unlock the Bounty Hunter retinue (5,000 crowns to hire).` : offer.type === 'deserters' ? `Hunt elite faction deserters and return to ${town.name} for ${offer.reward} crowns. Hard fight; on completion, 25% chance to upgrade one non-named item equipped by your company.` : offer.type === 'supply'
     ? `Deliver ${offer.quantity} ${GOOD_BY_ID.get(offer.goodId).name.toLowerCase()} to ${destination.name} for ${offer.reward} crowns.`
@@ -2184,7 +2196,7 @@ export function buyGood(state, goodId, quantity = 1) {
   writableMarketStock(state, access.town).goods[goodId] -= quantity;
   const message = `Bought ${quantity} ${good.name.toLowerCase()} for ${cost} crowns.`;
   record(state, message);
-  return completeContract(state, access.town) ? result(true, `${message} Supply contract completed.`) : result(true, message);
+  return completeContract(state, access.town,getActiveContracts(state).find(c=>c.type==='supply'&&c.to===access.town.id)) ? result(true, `${message} Supply contract completed.`) : result(true, message);
 }
 
 export function sellGood(state, goodId, quantity = 1) {
@@ -6555,8 +6567,12 @@ export function validateSave(input) {
   assert(!gameOver || input.party.length === 0 && battle === null, 'game over state');
   assert(Array.isArray(input.visited) && input.visited.length <= SETTLEMENTS.length && input.visited.every(id => TOWN_BY_ID.has(id)) && new Set(input.visited).size === input.visited.length, 'visited settlements');
   assert(Array.isArray(input.log) && input.log.length <= MAX_LOG && input.log.every(entry => typeof entry === 'string' && entry.length <= 500), 'log');
-  if (input.contract !== null) {
-    const contract = input.contract;
+  assert(input.additionalContracts===undefined||Array.isArray(input.additionalContracts)&&input.additionalContracts.length<=2,'additional contracts');
+  assert((input.additionalContracts??[]).every(recordObject),'additional contract records');
+  const activeContracts=getActiveContracts(input);
+  assert(activeContracts.length<=3&&new Set(activeContracts.map(getContractCategory)).size===activeContracts.length&&new Set(activeContracts.map(c=>c.id)).size===activeContracts.length,'contract slots');
+  assert(!input.additionalContracts?.length||input.contract&&input.additionalContracts.every(c=>getContractCategory(c)!=='combat'),'primary combat contract');
+  for (const contract of activeContracts) {
     assert(contract && typeof contract === 'object' && !Array.isArray(contract), 'contract');
     assert(typeof contract.id === 'string' && contract.id.length <= 24 && /^delivery-[1-9]\d*$/.test(contract.id) && Number(contract.id.slice(9)) <= input.contractSerial, 'contract id');
     assert(TOWN_BY_ID.has(contract.from) && TOWN_BY_ID.has(contract.to), 'contract route');
@@ -6571,6 +6587,7 @@ export function validateSave(input) {
     else if(['deserters','bounty'].includes(contract.type))assert(contract.from===contract.to&&contract.deserterId===`${contract.type==='bounty'?'bounty':'deserters'}-${Number(contract.id.slice(9))}`&&validPoint(contract.deserterPoint)&&contract.factionId===soldierFactionAt(TOWN_BY_ID.get(contract.from).x,TOWN_BY_ID.get(contract.from).y).id&&contract.difficulty===3&&typeof contract.defeated==='boolean','deserter requirement');
     else assert(contract.from !== contract.to, 'contract route');
   }
+  const normalizeContract = contract => contract ? { id: contract.id, type: contract.type ?? 'courier', from: contract.from, to: contract.to, reward: contract.reward, renown: contract.renown ?? 1, ...(contract.type === 'supply' ? { goodId: contract.goodId, quantity: contract.quantity } : {}), ...(['hunt', 'assault'].includes(contract.type) ? { campId: contract.campId, campGeneration: contract.campGeneration??0 } : {}), ...(contract.type === 'rescue' ? { rescueId: contract.rescueId, rescuePoint: { ...contract.rescuePoint }, rescueDifficulty: contract.rescueDifficulty, rescued: contract.rescued } : {}), ...(['deserters','bounty'].includes(contract.type)?{deserterId:contract.deserterId,deserterPoint:{...contract.deserterPoint},factionId:contract.factionId,difficulty:3,defeated:contract.defeated}:{}), acceptedDay: contract.acceptedDay } : null;
   const inventory = [...input.inventory];
   const conditions = [...inventoryCondition];
   const party = input.party.map(person => normalizeMember({
@@ -6641,7 +6658,8 @@ export function validateSave(input) {
     position: { x: input.position.x, y: input.position.y },
     destination: input.destination ? { x: input.destination.x, y: input.destination.y } : null,
     destinationAction: destinationAction ? { type: destinationAction.type, id: destinationAction.id, ...(destinationAction.type === 'camp' ? { generation: destinationAction.generation } : {}) } : null,
-    contract: input.contract ? { id: input.contract.id, type: input.contract.type ?? 'courier', from: input.contract.from, to: input.contract.to, reward: input.contract.reward, renown: input.contract.renown ?? 1, ...(input.contract.type === 'supply' ? { goodId: input.contract.goodId, quantity: input.contract.quantity } : {}), ...(['hunt', 'assault'].includes(input.contract.type) ? { campId: input.contract.campId, campGeneration: input.contract.campGeneration??0 } : {}), ...(input.contract.type === 'rescue' ? { rescueId: input.contract.rescueId, rescuePoint: { ...input.contract.rescuePoint }, rescueDifficulty: input.contract.rescueDifficulty, rescued: input.contract.rescued } : {}), ...(['deserters','bounty'].includes(input.contract.type)?{deserterId:input.contract.deserterId,deserterPoint:{...input.contract.deserterPoint},factionId:input.contract.factionId,difficulty:3,defeated:input.contract.defeated}:{}), acceptedDay: input.contract.acceptedDay } : null,
+    contract: normalizeContract(input.contract),
+    additionalContracts: (input.additionalContracts??[]).map(normalizeContract),
     contractSerial: input.contractSerial, recruitSerial: input.recruitSerial, hiredRecruitOffers: [...hiredRecruitOffers],
     log: [...input.log], visited: [...input.visited],
   };
