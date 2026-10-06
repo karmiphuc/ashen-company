@@ -5358,7 +5358,10 @@ export function advanceSimultaneousBattle(state,elapsedMs=SIM_STEP_MS,{maxAction
       const event=battle.lastEvent===previous?null:battle.lastEvent;
       const berserkRefund=event?.effects?.some(e=>e.id==='berserk'&&!e.nextTurn)?4:0;
       const delay=simultaneousActionDelay(actor,event?.type==='hold'?0:before-actor.ap+berserkRefund,event);
-      clock.actors[actor.id].readyAt=clock.time+(actor.ap>0?delay:Math.ceil(Math.max(delay,simultaneousEventDuration(event,delay))/SIM_STEP_MS)*SIM_STEP_MS);
+      // Recovery paces another action when AP remain (including Berserk).
+      // Once exhausted, only the visible action must finish before the AP refresh.
+      const settle=actor.ap>0?delay:Math.ceil(simultaneousEventDuration(event,delay)/SIM_STEP_MS)*SIM_STEP_MS;
+      clock.actors[actor.id].readyAt=clock.time+settle;
       rememberSimultaneousEvent(battle,event,delay);actions++;
       if(battle.status==='active'){
         const active=battle.units.filter(u=>u.alive).sort(simultaneousPriority)[0];
