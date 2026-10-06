@@ -379,7 +379,7 @@ export function updateSimultaneousBattleView(root,battle,speed) {
   const nodes=new Map([...surface.querySelectorAll('[data-unit-id]')].map(n=>[n.dataset.unitId,n]));
   const field=fieldModel(battle),grid=gridModel(field),cache=simultaneousRenderCaches.get(view)??new Map(simultaneousFullFrames.get(battle)??[]);
   for(const unit of battle.units){
-    const context=simultaneousUnitContext(unit,battle,speed),key=JSON.stringify(unit)+':'+context.key+':'+speed;
+    const context=simultaneousUnitContext(unit,battle,speed),key=JSON.stringify(unit)+':'+context.key+':'+speed+':'+getLoneWolfBonus(battle,unit);
     const node=nodes.get(unit.id);
     if(unit.escaped){node?.remove();cache.delete(unit.id);continue;}
     if(cache.get(unit.id)===key)continue;
@@ -430,7 +430,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false, chromeO
   const skillName = animateEvent && battle.lastEvent?.actorId === active?.id ? battle.lastEvent?.skillName : null;
 
   if(!battle.simultaneous&&!chromeOnly)turnFullFrames.set(battle,new Map(units.map(u=>[u.id,turnUnitKey(u,battle,speed,animateEvent)])));
-  if(battle.simultaneous)simultaneousFullFrames.set(battle,new Map(units.map(u=>[u.id,JSON.stringify(u)+':'+simultaneousUnitContext(u,battle,speed).key+':'+speed])));
+  if(battle.simultaneous)simultaneousFullFrames.set(battle,new Map(units.map(u=>[u.id,JSON.stringify(u)+':'+simultaneousUnitContext(u,battle,speed).key+':'+speed+':'+getLoneWolfBonus(battle,u)])));
   const brothers=units.filter(u=>u.side==='company'&&!u.ally&&u.alive&&!u.escaped).length,enemies=units.filter(u=>u.side==='enemy'&&u.alive&&!u.escaped).length,allies=units.filter(u=>u.ally&&u.alive&&!u.escaped).length;
   return `<section class="battle-view battle-status-${esc(status)}${battle.simultaneous?` simultaneous-battle${selectedSpeed===0?' sim-paused':''}`:''}${cinematicKind?` cinematic-action cinematic-${cinematicKind}`:''}" style="--action-time:${battleActionDuration(speed,battle.lastEvent)}s;--move-time:${speed==='cinematic'?.1375:battleActionDuration(speed,battle.lastEvent)}s" aria-label="Tactical battle">
     <header class="battle-topbar">

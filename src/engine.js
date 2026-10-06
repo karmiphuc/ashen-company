@@ -3936,7 +3936,7 @@ function aimedFatigueCost(actor) {
 }
 
 export function getLoneWolfBonus(battle, unit) {
-  return hasPerk(unit, 'lone-wolf') && !battle.units.some(ally => ally.alive && !ally.escaped && ally.side === unit.side && ally.id !== unit.id && hexDistance(ally, unit) <= 3) ? .15 : 0;
+  return hasPerk(unit, 'lone-wolf') && !battle.units.some(ally => ally.alive && !ally.escaped && ally.side === unit.side && ally.id !== unit.id && hexDistance(ally, unit) <= 1) ? .15 : 0;
 }
 
 export function getOverwhelmMultiplier(battle, unit) {
