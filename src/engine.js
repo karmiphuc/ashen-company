@@ -1,3 +1,4 @@
+import { recordQuestCompletion } from './quest-completion.js';
 import { BLACKSMITH_STAGES, initialBlacksmith, blacksmithIndex, blacksmithUnlocked, discoverBlacksmith, blacksmithEncounters, validateBlacksmith } from './legendary-blacksmith.js';
 import { resolveForgeItem, extractForgeProfile, forgeBaseline, encodeForgeItem, forgeGroups, forgeProfileRows, FORGE_KEYS, FORGE_LIMITS, isNamedItem, isForgeSlot } from './reforged-items.js';
 import { copyInjuries, INJURY_BY_ID, injuryStat, injuryMultiplier, injuryAdjustment, injuryRange, freshInjuryBleeding, injuryHealingRange, injuryRemainingDays, injuryDailyMedicine, validInjuries, attackInjuryPool, eligibleInjuries } from './injuries.js';
@@ -324,7 +325,7 @@ export function turnInBlacksmithQuest(state,stage){
  c.quests[index].status='turnedIn';state.gold=Math.min(1000000000,state.gold+BLACKSMITH_STAGES[index].reward);
  if(stage<4)c.quests[index+1].status='offered';else{c.freeUse=true;c.rewardId=createFamedItemId('arming-sword',hashSeed(`${state.seed}:blacksmith:reward:v1`));}
  const message=stage===4?'Odran’s forge is restored. Named merging and full transfers are unlocked; your first reforge is free. Claim the named sword at the forge.':`Odran pays ${BLACKSMITH_STAGES[index].reward} crowns. Next: ${BLACKSMITH_STAGES[index+1].name}. ${BLACKSMITH_STAGES[index+1].objective}`;
- record(state,message);return result(true,message);
+ record(state,message);recordQuestCompletion(state,`blacksmith-${stage}`);return result(true,message);
 }
 export function claimBlacksmithReward(state){
  const blocked=blacksmithAccess(state);if(blocked)return blocked;const c=state.legendaryBlacksmith;
@@ -1795,6 +1796,7 @@ function completeContract(state, town, contract) {
   }
   useContractBoardSlot(state,contract.from,getContractCategory(contract),contract.acceptedDay);
   storeContracts(state,getActiveContracts(state).filter(c=>c!==contract));
+  recordQuestCompletion(state,contract.id);
   return true;
 }
 
