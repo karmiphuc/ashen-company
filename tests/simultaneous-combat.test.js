@@ -189,3 +189,7 @@ test('early AP refresh still applies bleeding once and supports old exhausted re
  const old=battle();for(const unit of old.battle.units){unit.ap=0;old.battle.simultaneous.actors[unit.id].readyAt=6000;}
  const restored=validateSave(JSON.parse(JSON.stringify(old)));advanceSimultaneousBattle(restored,1000);assert.equal(restored.battle.simultaneous.time,1000);safe(restored);
 });
+
+test('compact worker snapshots retain the mounted immutable field',()=>{
+ const s=battle(),remote=structuredClone(s),field=s.battle.field;advanceSimultaneousBattle(remote,50);const snapshotBattle=structuredClone(remote.battle);delete snapshotBattle.field;applySimultaneousSnapshot(s,{battle:snapshotBattle,supplies:structuredClone(remote.supplies),events:simultaneousEvents(remote.battle)});assert.equal(s.battle.field,field);assert.deepEqual(s,remote);
+});

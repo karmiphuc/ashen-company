@@ -835,7 +835,7 @@ export function createGame(seed = Date.now()) {
     inventory: ['cloth-hood', 'buckler'],
     inventoryCondition: [itemCondition('cloth-hood'), itemCondition('buckler')],
     cargo: {},
-    marketStock: {}, deserterBoards: {}, retinue:defaultRetinue(), discoveryRolls:{},
+    marketStock: {}, deserterBoards: {}, contractBoards: {}, retinue:defaultRetinue(), discoveryRolls:{},
     shipments: {},
     shipmentLegacyThroughDay: 0,
     mountRewards: Object.fromEntries(getMountRewardDefinitions().map(reward => [reward.id, false])),
@@ -1793,6 +1793,7 @@ function completeContract(state, town, contract) {
       record(state,`${person.name}'s ${original.name} is upgraded to ${named.name}, a named-quality Deserter contract reward.`);
     }
   }
+  useContractBoardSlot(state,contract.from,getContractCategory(contract),contract.acceptedDay);
   storeContracts(state,getActiveContracts(state).filter(c=>c!==contract));
   return true;
 }
@@ -1997,19 +1998,34 @@ export function tick(state, hours) {
   return engagement ?? result(true, state.destination ? 'The company is on the road.' : 'Time passes.');
 }
 
+export function getContractBoardRefreshDay(state) { return (Math.floor((state.day-1)/7)+1)*7+1; }
+function useContractBoardSlot(state, townId, category, acceptedDay=state.day) {
+  const week=Math.floor((acceptedDay-1)/7);
+  if(week!==Math.floor((state.day-1)/7))return;
+  state.contractBoards??={};
+  const board=state.contractBoards[townId]?.week===week?state.contractBoards[townId]:{week,used:[]};
+  if(!board.used.includes(category))board.used.push(category);
+  state.contractBoards[townId]=board;
+}
+export function isContractReady(state, contract) {
+  if(!contract)return false;
+  return getContractCategory(contract)==='combat'?contractObjectiveComplete(state,contract):contract.type==='supply'?(state.cargo[contract.goodId]??0)>=contract.quantity:townAt(state)?.id===contract.to;
+}
+
 export function getContractOffers(state, townId) {
   if (state.battle || state.gameOver) return [];
   const town = townAt(state);
   if (!town || town.id !== townId || townBlocked(state, town.id)) return [];
+  const cycle=Math.floor((state.day-1)/7),boardSeed=townEventHash(`${state.seed}:${town.id}:${cycle}:board`);
   const candidates = SETTLEMENTS.filter(place => place.id !== townId);
-  const index = (state.seed + state.contractSerial * 3 + SETTLEMENTS.indexOf(town)) % candidates.length;
+  const index = boardSeed % candidates.length;
   const courierTarget = candidates[index];
   const courierReward = Math.round((80 + distance(town, courierTarget) * .34) / 5) * 5;
   const cheapGoods = [...GOODS].sort((a, b) => MARKET_FACTORS[town.id][a.id] - MARKET_FACTORS[town.id][b.id]);
-  const good = cheapGoods[(state.seed + state.contractSerial) % 2];
+  const good = cheapGoods[boardSeed % 2];
   const buyers = [...candidates].sort((a, b) => MARKET_FACTORS[b.id][good.id] - MARKET_FACTORS[a.id][good.id]);
-  const supplyTarget = buyers[(state.seed + state.contractSerial) % 2];
-  const quantity = 4 + state.contractSerial % 2;
+  const supplyTarget = buyers[boardSeed % 2];
+  const quantity = 4 + boardSeed % 2;
   const supplyReward = Math.round((quantity * goodPrices(state, town, good).buyPrice + 60 + distance(town, supplyTarget) * .38) / 5) * 5;
   const serial = state.contractSerial + 1;
   const offers = [
@@ -2031,17 +2047,14 @@ export function getContractOffers(state, townId) {
   offers.push({ id: `rescue-${serial}`, type: 'rescue', from: town.id, to: town.id,
     rescueId: `rescue-${serial}`, rescuePoint, rescueDifficulty: state.day >= 28 ? 3 : state.day >= 10 ? 2 : 1,
     reward: 260 + Math.min(100, Math.floor(state.day / 5) * 20), renown: 3 });
-  const cycle = Math.floor((state.day - 1) / 7);
-  const boardSeed = townEventHash(`${state.seed}:${town.id}:${cycle}:board`);
-  const count = 1 + boardSeed % 3;
   const deserters=deserterOffer(state,town,serial,rescuePoint);
   if(deserters)offers.push(deserters);
   const bounty=bountyOffer(state,town,serial,rescuePoint,soldierFactionAt(town.x,town.y).id);
   if(bounty)offers.push(bounty);
-  const sorted=offers.sort((a, b) => townEventHash(`${boardSeed}:${state.contractSerial}:${a.type}`) - townEventHash(`${boardSeed}:${state.contractSerial}:${b.type}`)).slice(0, count);
-  if(deserters&&!sorted.includes(deserters))sorted[sorted.length-1]=deserters;
-  if(bounty&&!sorted.includes(bounty)){if(sorted.length<3)sorted.push(bounty);else sorted[sorted.findLastIndex(offer=>offer.type!=='deserters')]=bounty;}
-  return sorted;
+  const combat=bounty??deserters??offers.filter(o=>getContractCategory(o)==='combat').sort((a,b)=>townEventHash(`${boardSeed}:${a.type}`)-townEventHash(`${boardSeed}:${b.type}`))[0];
+  const board=[offers[0],offers[1],...(combat?[combat]:[])];
+  const used=state.contractBoards?.[townId]?.week===cycle?state.contractBoards[townId].used:[];
+  return board.filter(offer=>!used.includes(getContractCategory(offer))).map(offer=>({...offer,id:`${townId}:${cycle}:${offer.type}`}));
 }
 
 export function acceptContract(state, townId, offerId) {
@@ -2061,7 +2074,10 @@ export function acceptContract(state, townId, offerId) {
   const { id, ...terms } = offer;
   state.contract = { id: `delivery-${state.contractSerial}`, ...terms, acceptedDay: state.day,
     ...(offer.type === 'rescue' ? { rescued: false } : ['deserters','bounty'].includes(offer.type) ? {defeated:false} : {}) };
+  if(offer.type==='rescue')state.contract.rescueId=`rescue-${state.contractSerial}`;
+  if(['deserters','bounty'].includes(offer.type))state.contract.deserterId=`${offer.type}-${state.contractSerial}`;
   storeContracts(state,[...existingContracts,state.contract]);
+  useContractBoardSlot(state,townId,getContractCategory(offer));
   const destination = TOWN_BY_ID.get(offer.to);
   const message = offer.type === 'bounty' ? `Defeat the wanted champion and seven elite retainers, then return to ${town.name}. Earn 1,000 crowns and unlock the Bounty Hunter retinue (5,000 crowns to hire).` : offer.type === 'deserters' ? `Hunt elite faction deserters and return to ${town.name} for ${offer.reward} crowns. Hard fight; on completion, 25% chance to upgrade one non-named item equipped by your company.` : offer.type === 'supply'
     ? `Deliver ${offer.quantity} ${GOOD_BY_ID.get(offer.goodId).name.toLowerCase()} to ${destination.name} for ${offer.reward} crowns.`
@@ -6295,6 +6311,8 @@ export function validateSave(input) {
   for(const [key,limit] of [['foodRemainder',4],['toolRemainder',4],['repairRemainder',3]])assert(retinue[key]===undefined||validCount(retinue[key])&&retinue[key]<=limit,'retinue savings');
   const discoveryRolls=input.discoveryRolls??{};
   assert(recordObject(discoveryRolls)&&Object.entries(discoveryRolls).every(([id,roll])=>(isCampId(id)||BAND_BY_ID.has(id))&&recordObject(roll)&&validCount(roll.cycle)&&roll.cycle<=1000000&&[0,5,8,13].includes(roll.champion)&&[0,15].includes(roll.famed)&&[0,12].includes(roll.mount)),'discovery encounter rolls');
+  const contractBoards=input.contractBoards??{};
+  assert(recordObject(contractBoards)&&Object.entries(contractBoards).every(([id,board])=>TOWN_BY_ID.has(id)&&recordObject(board)&&Object.keys(board).length===2&&validCount(board.week)&&board.week<=Math.floor((input.day-1)/7)&&Array.isArray(board.used)&&board.used.length<=3&&board.used.every(c=>['courier','merchant','combat'].includes(c))&&new Set(board.used).size===board.used.length),'contract boards');
   const deserterBoards=input.deserterBoards??{};
   assert(recordObject(deserterBoards)&&Object.entries(deserterBoards).every(([id,week])=>TOWN_BY_ID.has(id)&&validCount(week)&&week<=Math.floor((input.day-1)/7)),'deserter boards');
   const markets = input.marketStock === undefined ? {} : input.marketStock;
@@ -6646,6 +6664,7 @@ export function validateSave(input) {
         buyback: (market.buyback ?? []).map(entry => ({ itemId: entry.itemId, condition: restoredCondition(entry.itemId, entry.condition) })),
       }];
     })),
+    contractBoards:Object.fromEntries(Object.entries(contractBoards).map(([id,board])=>[id,{week:board.week,used:[...board.used]}])),
     deserterBoards:{...deserterBoards},retinue:{...defaultRetinue(),...retinue,members:[...members],scoutLevel,cartLevel:retinue.cartLevel??0,bountyBoards:{...retinue.bountyBoards}},discoveryRolls:Object.fromEntries(Object.entries(discoveryRolls).map(([id,roll])=>[id,{...roll}])),
     shipments: normalizedShipments,
     shipmentLegacyThroughDay,
