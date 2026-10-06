@@ -1,7 +1,7 @@
 import { INJURY_BY_ID, injuryEffectText, injuryStat, injuryAdjustment } from './injuries.js';
 import { simultaneousEvents } from './simultaneous-combat.js';
 import { getNightHitPenalty } from './engine.js';
-import { BATTLE_PROJECTION, tilePosition, elevationFaces } from './battle-geometry.js';
+import { BATTLE_PROJECTION, BATTLE_GROUND_SHEAR, tilePosition, elevationFaces } from './battle-geometry.js';
 import { enemyBattleTactic, ENEMY_TACTIC_COOLDOWN } from './tactical-ai.js';
 import { weaponSkillFamily } from './combat-skills.js';
 import { getEquipment, getItem, getDoubleGripBonus, getLoneWolfBonus, getMoraleEffects, isMoraleImmune, shieldMaximum } from './engine.js';
@@ -465,7 +465,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false, chromeO
     <div class="battle-layout">
       <div class="battle-scroll" tabindex="0" aria-label="Battlefield scroll area">
         ${terrainLegend(field)}
-        <div class="battle-camera-space"><div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company' && !unit.ally).length} company fighters, ${units.filter(unit => unit.ally).length} allied fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
+        <div class="battle-camera-space"><div class="battlefield battle-biome-${esc(field.biome)}" style="--field-width:${grid.fieldWidth}px;--field-height:${grid.fieldHeight}px;--ground-angle:${-Math.atan(BATTLE_GROUND_SHEAR)*180/Math.PI}deg" role="group" aria-label="${field.columns} by ${field.rows} hex battlefield with ${units.filter(unit => unit.side === 'company' && !unit.ally).length} company fighters, ${units.filter(unit => unit.ally).length} allied fighters and ${units.filter(unit => unit.side !== 'company').length} enemies">
           <div class="battle-terrain">${tiles}</div>
           <div class="battle-units">${(chromeOnly?[]:units).filter(unit => !unit.escaped).map(unit => unitHTML(unit,battle,animateEvent,field,grid,battle.simultaneous?simultaneousUnitContext(unit,battle,speed):null)).join('')}${battle.simultaneous?simultaneousEvents(battle).filter(e=>battle.simultaneous.time-e.time<e.duration).map(e=>simultaneousProjectileHTML(battle,speed,field,grid,e)).join(''):projectileHTML(battle,animateEvent,field,grid)}</div>
         </div>
