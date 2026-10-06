@@ -42,7 +42,8 @@ test('attachment catalog uses the independent slot and is not famed', () => {
     assert.equal(item.slot, 'attachment');
     assert.ok(item.role);
     assert.equal(ITEMS.find(entry => entry.id === item.id), item);
-    assert.throws(() => createFamedItemId(item.id, 1));
+    assert.throws(() => createFamedItemId(item.id, 1, 3));
+    assert.equal(getItem(createFamedItemId(item.id,1)).attachmentTier,'fine');
   }
 });
 

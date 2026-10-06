@@ -1,3 +1,4 @@
+import { equipmentRangedReach } from './item-affixes.js';
 import { hexDistance, hexLine } from './battle-terrain.js';
 
 export const COMBAT_ROLES = Object.freeze(['auto', 'frontliner', 'skirmisher', 'ranged', 'flanker', 'breaker']);
@@ -101,7 +102,7 @@ export function recommendEnemyTactic(battle, getItem, companyAmmo) {
   const range = unit => {
     const weapon = getItem(unit.equipment.weapon);
     const bow = !weapon.throwing && weapon.visual?.includes('bow') && !weapon.visual.includes('crossbow');
-    return (weapon.range ?? 1) + (bow ? 1 + Number(Boolean(unit.perks?.includes('bow-mastery'))) : 0);
+    return (weapon.range ?? 1) + (!weapon.throwing?equipmentRangedReach(unit,getItem):0) + (bow ? 1 + Number(Boolean(unit.perks?.includes('bow-mastery'))) : 0);
   };
   const shooters = ranged(enemies);
   const threats = ranged(company).filter(unit => enemies.some(enemy => hexDistance(unit, enemy) <= range(unit)));

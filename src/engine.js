@@ -1,3 +1,4 @@
+import { equipmentPerk, equipmentBoost, equipmentRangedReach, rollAttachment } from './item-affixes.js';
 import { recordQuestCompletion } from './quest-completion.js';
 import { BLACKSMITH_STAGES, initialBlacksmith, blacksmithIndex, blacksmithUnlocked, discoverBlacksmith, blacksmithEncounters, validateBlacksmith } from './legendary-blacksmith.js';
 import { resolveForgeItem, extractForgeProfile, forgeBaseline, encodeForgeItem, forgeGroups, forgeProfileRows, FORGE_KEYS, FORGE_LIMITS, isNamedItem, isForgeSlot } from './reforged-items.js';
@@ -28,7 +29,7 @@ import { cityMountOffer, campMountReward, regionalMountPool } from './mount-dist
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression, enemyRosterSize } from './enemy-progression.js';
 import { getRegionalCampText } from './enemy-rosters.js';
-import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk, weaponTrainingVisual } from './perks.js';
+import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk as learnedPerk, weaponTrainingVisual } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile, makeRecruitName, makeTalents, talentGain } from './recruits.js';
 import { BOUNTY_HUNTER_COST, CHAMPION_BOUNTY, discoveryEvent, discoveryBonuses, championRoster, championExtraGear, bountyOffer } from './discovery.js';
 import { deserterOffer, deserterEncounter, deserterEquipmentReward } from './deserters.js';
@@ -183,16 +184,19 @@ const ROAMING_BANDS = Object.freeze([
 ].map(band=>Object.freeze({...band,start:compactPoint(band.start),end:compactPoint(band.end)})));
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
-const FAMED_ID = /^(famed4|famed3|famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
+const FAMED_ID = /^(famed6|famed5|famed4|famed3|famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
 const FAMED_NAMES = ['Ashen', 'Blackthorn', 'Dawnward', 'Grimwolf', 'Ironbound', 'Oathkeeper', 'Ravenmark', 'Stormborn', 'Thornheart', 'Wolfguard'];
 
 export function createFamedItemId(baseId, seed, rulesVersion) {
   const base=ITEM_BY_ID.get(baseId),rangedWeapon=base?.slot==='weapon'&&(base.ranged??base.sourceStats?.ranged)===true;
-  const version=rulesVersion??(rangedWeapon?4:3);
-  if (![1, 2, 3, 4].includes(version) || version===4&&!rangedWeapon || !base || ['accessory', 'attachment', 'mount'].includes(base.slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
-  return `${version === 1 ? 'famed' : version===2?'famed2':version===3?'famed3':'famed4'}:${baseId}:${seed}`;
+  const version=rulesVersion??5;
+  if (![1, 2, 3, 4, 5, 6].includes(version) || version===4&&!rangedWeapon || version===6&&base?.slot!=='attachment' || base?.slot==='attachment'&&version<5 || !base || ['accessory', 'mount'].includes(base.slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
+  return `${version === 1 ? 'famed' : version===2?'famed2':version===3?'famed3':version===4?'famed4':version===5?'famed5':'famed6'}:${baseId}:${seed}`;
 }
 
+const affixItemCache = new Map();
+function berserkAp(actor){return 4+equipmentBoost(actor,'berserkAp',getItem);}
+function hasPerk(actor,id){return learnedPerk(actor,id)||equipmentPerk(actor,id,getItem);}
 let simultaneousItemCache = null;
 const simultaneousActionCaches = new WeakMap();
 export function getItem(id) {
@@ -204,13 +208,18 @@ export function getItem(id) {
 function resolveItem(id) {
   const base = ITEM_BY_ID.get(id);
   if (base) return base;
-  if(typeof id==='string'&&id.startsWith('forge1:'))return resolveForgeItem(id,key=>ITEM_BY_ID.get(key));
+  if(typeof id==='string'&&(id.startsWith('forge1:')||id.startsWith('forge2:')))return resolveForgeItem(id,key=>ITEM_BY_ID.get(key));
   if (typeof id !== 'string' || id.length > 80) return undefined;
+  if(affixItemCache.has(id))return affixItemCache.get(id);
   const match = FAMED_ID.exec(id);
   if (!match) return undefined;
   const original = ITEM_BY_ID.get(match[2]);
   const seed = Number(match[3]);
-  if (!original || ['accessory', 'attachment', 'mount'].includes(original.slot) || match[1]==='famed4'&&!(original.ranged??original.sourceStats?.ranged) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
+  if (!original || ['accessory', 'mount'].includes(original.slot) || original.slot==='attachment'&&!['famed5','famed6'].includes(match[1]) || match[1]==='famed6'&&original.slot!=='attachment' || match[1]==='famed4'&&!(original.ranged??original.sourceStats?.ranged) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
+  if(['famed5','famed6'].includes(match[1])) {
+    const item=original.slot==='attachment'?rollAttachment(original,id,seed,{champion:match[1]==='famed6'}):rollNamedItem(original,id,seed,{merged:true,rangeRoll:true,rulesVersion:5,shieldDurability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
+    if(affixItemCache.size>=2048)affixItemCache.delete(affixItemCache.keys().next().value);affixItemCache.set(id,item);return item;
+  }
   if(match[1]==='famed2'||match[1]==='famed3'||match[1]==='famed4')return rollNamedItem(original,id,seed,{merged:match[1]==='famed3'||match[1]==='famed4',rangeRoll:match[1]==='famed4',rulesVersion:Number(match[1].slice(5)),shieldDurability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
   const roll = shift => (seed >>> shift) & 15;
   const bonuses = [];
@@ -294,7 +303,7 @@ function blacksmithEncounter(state,stage,acceptedDay){
  if(!point)throw new TypeError('No reachable blacksmith quest site.');
  const pool=stage===3?ancientEnemies(3):worldEnemyTemplates(point.x,point.y,spec.difficulty);
  const enemies=Array.from({length:spec.size},(_,i)=>regionalOutfit(pool[(i+seed%pool.length)%pool.length],`blacksmith:${seed}`,i,point.x,point.y,spec.difficulty,{champions:false,...(stage===3?{theme:'ancient'}:{})}));
- if(stage===4){enemies[0]={...enemies[0],name:'The Collector',weapon:createFamedItemId('arming-sword',hashSeed(`${seed}:collector`)),champion:true};enemies[0].championItemId=enemies[0].weapon;}
+ if(stage===4){enemies[0]={...enemies[0],name:'The Collector',weapon:createFamedItemId('arming-sword',hashSeed(`${seed}:collector`),3),champion:true};enemies[0].championItemId=enemies[0].weapon;}
  return {id:`blacksmith-${stage}-${seed}`,name:spec.site,kind:'blacksmith',...point,difficulty:spec.difficulty,enemies,reward:100+spec.difficulty*95,acceptedDay,ancient:stage===3};
 }
 export function getBlacksmithQuestEncounters(state){return blacksmithEncounters(state);}
@@ -323,7 +332,7 @@ export function turnInBlacksmithQuest(state,stage){
  if(stage!==index+1||!view.quest?.ready)return result(false,'Finish this side quest’s objective before returning to Odran.');
  if(stage===1){consumeCargoOrigins(state,'iron',8,'ironford');consumeCargoOrigins(state,'timber',6,'ironford');state.cargo.iron-=8;state.cargo.timber-=6;if(!state.cargo.iron)delete state.cargo.iron;if(!state.cargo.timber)delete state.cargo.timber;state.supplies.tools-=10;}
  c.quests[index].status='turnedIn';state.gold=Math.min(1000000000,state.gold+BLACKSMITH_STAGES[index].reward);
- if(stage<4)c.quests[index+1].status='offered';else{c.freeUse=true;c.rewardId=createFamedItemId('arming-sword',hashSeed(`${state.seed}:blacksmith:reward:v1`));}
+ if(stage<4)c.quests[index+1].status='offered';else{c.freeUse=true;c.rewardId=createFamedItemId('arming-sword',hashSeed(`${state.seed}:blacksmith:reward:v1`),3);}
  const message=stage===4?'Odran’s forge is restored. Named merging and full transfers are unlocked; your first reforge is free. Claim the named sword at the forge.':`Odran pays ${BLACKSMITH_STAGES[index].reward} crowns. Next: ${BLACKSMITH_STAGES[index+1].name}. ${BLACKSMITH_STAGES[index+1].objective}`;
  record(state,message);recordQuestCompletion(state,`blacksmith-${stage}`);return result(true,message);
 }
@@ -357,12 +366,12 @@ export function getReforgeQuote(state,donorIndex,recipientIndex,mode){
  const c=state.legendaryBlacksmith;if(c.forgeSerial>=1000000)return result(false,'The forge record is full.');
  let selected=Object.keys(source),profile={...existing};
  if(mode==='merge'){
-  const groups=forgeGroups(source,forgeBaseline(base)).filter(group=>group.some(key=>(existing[key]??0)<FORGE_LIMITS[FORGE_KEYS.indexOf(key)]));
+  const groups=forgeGroups(source,forgeBaseline(base)).filter(group=>group.some(key=>key==='perkFlags'?(source[key]&~(existing[key]??0))!==0:(existing[key]??0)<FORGE_LIMITS[FORGE_KEYS.indexOf(key)]));
   if(!groups.length)return result(false,'This donor has no applicable improvement left for that recipient.');
   const seed=hashSeed(`${state.seed}:forge:${c.forgeSerial}:${donor.id}:${recipient.id}`),count=Math.min(groups.length,1+seed%3);
   selected=groups.map((keys,i)=>({keys,score:hashSeed(`${seed}:${i}`)})).sort((a,b)=>a.score-b.score).slice(0,count).flatMap(g=>g.keys);
  }
- for(const key of selected)profile[key]=Math.min(FORGE_LIMITS[FORGE_KEYS.indexOf(key)],(profile[key]??0)+source[key]);
+ for(const key of selected)profile[key]=key==='perkFlags'?((profile[key]??0)|source[key]):Math.min(FORGE_LIMITS[FORGE_KEYS.indexOf(key)],(profile[key]??0)+source[key]);
  let resultId;try{resultId=encodeForgeItem(base.id,profile,forgeCatalog);}catch{return result(false,'This combination is outside the forge’s safety bounds.');}
  const forged=getItem(resultId),oldMax=itemCondition(recipient.id),newMax=itemCondition(resultId),current=state.inventoryCondition[recipientIndex];
  const condition=oldMax===null?null:recipient.throwing?Math.min(newMax,current):Math.max(0,newMax-(oldMax-current));
@@ -660,7 +669,7 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
   const background = person.background ?? '';
   const recruit = recruitBonuses(person);
   const equipped = getEquipment(person);
-  const famedStatBonus = key => (equipped.armor?.statBonuses?.[key] ?? 0) + (equipped.helmet?.statBonuses?.[key] ?? 0);
+  const famedStatBonus = key => Object.values(equipped).reduce((sum,item)=>sum+(item?.statBonuses?.[key]??0),0);
   const mountHit = person.hp > 0 ? equipped.mount?.hitBonus ?? 0 : 0;
   const mountInitiative = person.hp > 0 ? equipped.mount?.initiativeBonus ?? 0 : 0;
   const mount = person.hp > 0 ? equipped.mount : null;
@@ -673,7 +682,7 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
   const guard = legacy && (background === 'Guard' || background === 'Caravan Guard');
   const scout = legacy && (background === 'Scout' || background === 'Hunter' || background === 'Outrider');
   const captain = legacy && background === 'Captain';
-  const baseMaxHp = 100 + (guard ? 5 : 0) + (attributes.maxHp ?? 0) + (recruit.maxHp ?? 0);
+  const baseMaxHp = 100 + (guard ? 5 : 0) + (attributes.maxHp ?? 0) + (recruit.maxHp ?? 0) + famedStatBonus('maxHp');
   const maxHp = hasPerk(person, 'colossus') ? Math.round(baseMaxHp * 1.25) : baseMaxHp;
   const maxBodyArmor = armorMaximum(person.equipment?.armor);
   const maxAttachmentArmor = armorMaximum(person.equipment?.attachment);
@@ -684,18 +693,19 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
   const effectiveRangedShieldDefense=(hasPerk(person,'shield-expert')?Math.ceil(rangedShieldDefense*1.25):rangedShieldDefense)+(rangedShieldDefense&&hasPerk(person,'shield-bearer')?5:0);
   const effectiveShieldDefense = (hasPerk(person, 'shield-expert') ? Math.ceil(shieldDefense * 1.25) : shieldDefense)
     + (shieldDefense && hasPerk(person, 'shield-bearer') ? 5 : 0);
-  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) + mountInitiative + attachmentBonus(person.equipment,'initiativeBonus')
+  const initiative = Math.max(20, 105 + (scout ? 10 : 0) + (attributes.initiative ?? 0) + (recruit.initiative ?? 0) + mountInitiative + famedStatBonus('initiative') + attachmentBonus(person.equipment,'initiativeBonus')
     - (hasPerk(person, 'relentless') ? Math.ceil(perkFatigue / 2)+attachmentFatigue : fatigue));
   const dodgeDefense = hasPerk(person, 'dodge') ? Math.floor(initiative * .15) : 0;
-  const nimbleDefense = armorFatigue <= 15 && hasPerk(person, 'nimble') ? 5 : 0;
+  const nimbleBoost=equipmentBoost(person,'nimble',getItem,1);
+  const nimbleDefense = armorFatigue <= 15+nimbleBoost*5 && hasPerk(person, 'nimble') ? 5*(1+nimbleBoost) : 0;
   const reachDefense = hasPerk(person, 'reach-advantage') && equipped.weapon?.twoHanded && !equipped.weapon.ranged ? 5 : 0;
   const giftedSkill = hasPerk(person, 'gifted') ? 3 : 0;
   const giftedDefense = hasPerk(person, 'gifted') ? 2 : 0;
   const baseResolve = 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0) + (recruit.resolve ?? 0);
   const stats = {
     maxHp,
-    meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0) + giftedSkill + mountHit,
-    rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0) + giftedSkill + mountHit,
+    meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0) + giftedSkill + mountHit + famedStatBonus('meleeSkill'),
+    rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0) + giftedSkill + mountHit + famedStatBonus('rangedSkill'),
     meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + reachDefense + giftedDefense + famedStatBonus('meleeDefense') + (mount?.meleeDefenseBonus ?? 0),
     rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveRangedShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('rangedDefense') + (mount?.rangedDefenseBonus ?? 0) + attachmentBonus(person.equipment,'rangedDefenseBonus'),
     maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue - (mount?.fatigue ?? 0) + famedStatBonus('maxFatigue')),
@@ -925,7 +935,7 @@ const ASHEN_MARSHAL_KITS = [
 ];
 function ashenMarshalGear(encounter) {
   const kit=ASHEN_MARSHAL_KITS[Number(encounter.frontId.split(':')[1])-1];
-  const gear=Object.fromEntries(Object.entries(kit).map(([slot,id])=>[slot,createFamedItemId(id,crisisHash(`${encounter.force.seed}:marshal:${slot}`))]));
+  const gear=Object.fromEntries(Object.entries(kit).map(([slot,id])=>[slot,createFamedItemId(id,crisisHash(`${encounter.force.seed}:marshal:${slot}`),3)]));
   return {...gear,marshal:true,champion:true,championItemId:gear.weapon};
 }
 export function getUndeadEncounters(state) {
@@ -947,7 +957,8 @@ export function getAshenFinalItem(state) {
   const crisis = state.ashenWinter;
   if (!crisis || crisis.phase !== 'completed') return null;
   const bases = ['greatsword', 'plate-harness', 'greathelm', 'polehammer'];
-  return createFamedItemId(bases[crisisHash(`${crisis.seed}:final-base`) % bases.length], crisisHash(`${crisis.seed}:final-item`));
+  const base=bases[crisisHash(`${crisis.seed}:final-base`) % bases.length];
+  return createFamedItemId(base, crisisHash(`${crisis.seed}:final-item`),getItem(base).ranged?4:3);
 }
 export function claimAshenReward(state) {
   const blocked = actionBlocked(state); if (blocked) return blocked;
@@ -1452,7 +1463,7 @@ function roamingBand(state, band) {
     ...(tier ? { factionId: regionAt(band.start.x,band.start.y).id, factionLabel: WORLD_ENEMY_PROFILES[regionAt(band.start.x,band.start.y).id].label } : {}),
     ...(committed?{battleHoursRemaining:Math.max(0,committed.endHour-worldHours(state))}:{}),
     x: position.x, y: position.y, behavior:committed?'fighting':behavior, targetId: behavior === 'raiding-caravan' ? position.targetId : null,
-    enemies: survivingWorldEnemies(state, band.id, spawnCycle, championRoster(state,{id:band.id,spawnCycle,difficulty:tier,enemies:rollEncounterNamed(state,{id:band.id,spawnCycle},enemies)},getItem,championItemFactory(armoryTheme(regionAt(band.start.x,band.start.y).id)))),
+    enemies: survivingWorldEnemies(state, band.id, spawnCycle, championRoster(state,{id:band.id,spawnCycle,difficulty:tier,enemies:rollEncounterNamed(state,{id:band.id,spawnCycle},enemies)},getItem,championItemFactory(armoryTheme(regionAt(band.start.x,band.start.y).id),{affixes:encounterAffixes(state,band.id,spawnCycle)}))),
     description: committed ? `Fighting faction soldiers. About ${Math.ceil(committed.endHour-worldHours(state))} hours remain.` : target ? `These raiders are closing on the armorer wagon bound for ${TOWN_BY_ID.get(target.destinationId).name}. Defeat them before they reach it.`
       : position.behavior === 'hunting-company' ? 'These raiders have spotted the Ashen Company and are giving chase.'
       : tier ? `${enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${enemies.length} lightly equipped brigand${enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
@@ -2417,6 +2428,7 @@ export function equipItem(state, personId, itemId, destination = 'active') {
   if (accessory >= 0) person.accessories[accessory] = itemId;
   else set[targetSlot] = itemId;
   if (accessory < 0) setEquippedCondition(person, destination, targetSlot, condition);
+  person.hp=Math.min(person.hp,getCompanyStats(person).maxHp);
   const message = `${person.name} equipped ${item.name}${destination === 'active' ? '' : ` in ${destination}`}.`;
   record(state, message);
   return result(true, message);
@@ -2442,6 +2454,7 @@ export function unequipItem(state, personId, slot, destination = 'active') {
   state.inventory.push(itemId);
   state.inventoryCondition.push(condition);
   if (accessory < 0) setEquippedCondition(person, destination, slot, 0);
+  person.hp=Math.min(person.hp,getCompanyStats(person).maxHp);
   const message = `${person.name} stowed ${getItem(itemId).name}.`;
   record(state, message);
   return result(true, message);
@@ -2722,25 +2735,28 @@ function namedWeaponFitsTheme(item,theme) {
   if(theme==='forest')return item.fatigue<=12;
   return item.sourceCulture==='mercenary';
 }
-function championItemFactory(theme) {
+function encounterAffixes(state,id,cycle){const frozen=state.discoveryRolls?.[id];return !frozen||frozen.cycle!==cycle||frozen.namedAffixVersion===1;}
+function championItemFactory(theme,{affixes=true}={}) {
   return (baseId,seed)=>{
     const base=getItem(baseId);
+    const named=(id,roll)=>createFamedItemId(id,roll,affixes?(base.slot==='attachment'?6:5):base.ranged?4:3);
+    if(base.slot==='attachment')return named(baseId,seed);
     if (base.slot !== 'weapon') {
       const maxProtection = theme === 'forest' ? (base.slot === 'armor' ? 150 : 110)
         : base.armor <= 110 ? (base.slot === 'armor' ? 150 : 110) : 400;
       const pool = DLC_ITEMS.filter(item => item.slot === base.slot && item.rarity === 'named'
         && item.sourceKind !== 'legendary' && matchesArmoryTheme(item, theme)
         && (item.armor ?? 0) <= maxProtection && (item.fatigue ?? 0) <= (base.fatigue ?? 0) + 3);
-      return createFamedItemId(pool.length ? pool[seed % pool.length].id : baseId, seed);
+      return named(pool.length ? pool[seed % pool.length].id : baseId, seed);
     }
     const pool=NAMED_WEAPONS.filter(item=>namedWeaponFitsTheme(item,theme)
       && weaponSkillFamily(item)===weaponSkillFamily(base)&&Boolean(item.twoHanded)===Boolean(base.twoHanded)
       && Boolean(item.ranged)===Boolean(base.ranged)&&Boolean(item.throwing)===Boolean(base.throwing)
       && (item.range??1)===(base.range??1));
-    return createFamedItemId(pool.length?pool[seed%pool.length].id:baseId,seed);
+    return named(pool.length?pool[seed%pool.length].id:baseId,seed);
   };
 }
-function rollEncounterNamed(state,encounter,enemies){return enemies.map((enemy,index)=>({...enemy,...Object.fromEntries(['armor','helmet','weapon','shield'].map(slot=>{const id=enemy[slot],item=getItem(id);return [slot,(item?.sourceArmor!==undefined||item?.sourceNamedWeapon)&&item.rarity==='named'?createFamedItemId(id,hashSeed(`${state.seed}:${encounter.id}:${encounter.generation??encounter.spawnCycle??0}:${index}:${slot}:named-rolls`)):id];}))}));}
+function rollEncounterNamed(state,encounter,enemies){return enemies.map((enemy,index)=>({...enemy,...Object.fromEntries(['armor','helmet','weapon','shield'].map(slot=>{const id=enemy[slot],item=getItem(id);return [slot,(item?.sourceArmor!==undefined||item?.sourceNamedWeapon)&&item.rarity==='named'?createFamedItemId(id,hashSeed(`${state.seed}:${encounter.id}:${encounter.generation??encounter.spawnCycle??0}:${index}:${slot}:named-rolls`),encounterAffixes(state,encounter.id,encounter.generation??encounter.spawnCycle??0)?5:item.ranged?4:3):id];}))}));}
 
 function famedDropForCamp(seed, camp) {
   const chance = (FAMED_CHANCES[camp.difficulty] ?? 0) + (camp.discoveryBonuses?.famed??0)/100;
@@ -2791,7 +2807,7 @@ export function getCampSites(state) {
     const enemies = Array.from({ length: enemyRosterSize(state,camp.difficulty,camp.enemies.length) }, (_, enemyIndex) => { const enemy={...camp.enemies[enemyIndex % camp.enemies.length]}; return !fixed && enemyIndex>=camp.enemies.length ? regionalOutfit(enemy, `${state.seed}:${id}:${progress.generation}`, enemyIndex, camp.x, camp.y, camp.difficulty, {champions:false,theme:camp.factionId==='ancient'?'ancient':undefined}) : enemy; });
     if (scaling.cavalry && enemies.length && camp.factionId!=='ancient') enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation, camp.x, camp.y);
     const discovery=discoveryBonuses(state,{...camp,generation:progress.generation});
-    const champions=championRoster(state,{...camp,generation:progress.generation,enemies:rollEncounterNamed(state,{id:camp.id,generation:progress.generation},enemies)},getItem,championItemFactory(camp.factionId==='ancient'?'ancient':armoryTheme(regionAt(camp.x,camp.y).id)));
+    const champions=championRoster(state,{...camp,generation:progress.generation,enemies:rollEncounterNamed(state,{id:camp.id,generation:progress.generation},enemies)},getItem,championItemFactory(camp.factionId==='ancient'?'ancient':armoryTheme(regionAt(camp.x,camp.y).id),{affixes:encounterAffixes(state,camp.id,progress.generation)}));
     return {...camp,discoveryBonuses:discovery,description:scaling.reinforcements?`${enemies.length} fighters hold this position. Veteran reinforcements have gathered as your company has grown.`:camp.description,kind:'camp',generation:progress.generation,veteranRank:scaling.rank,famedChance:(FAMED_CHANCES[camp.difficulty]??0)+discovery.famed/100,mountChance:camp.random&&camp.difficulty===3?(12+discovery.mount)/100:0,enemies:survivingWorldEnemies(state,id,progress.generation,champions),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
   });
 }
@@ -2956,7 +2972,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   if (state.destination || (patrolId?Math.min(distance(state.position,assistance.patrol),distance(state.position,camp)):distance(state.position,camp)) > (patrolId?CAMP_RADIUS:encounterType === 'band' ? BAND_RADIUS + 7 : CAMP_RADIUS)) return result(false, 'Approach the enemy before engaging.');
   if (!getBattleRoster(state).length) return result(false, 'Move a brother from reserve into the formation before fighting.');
   applyCompanyAutomation(state);
-  if(['camp','band'].includes(encounterType)){state.discoveryRolls??={};const cycle=camp.generation??camp.spawnCycle,previous=state.discoveryRolls[camp.id];state.discoveryRolls[camp.id]={cycle,...discoveryBonuses(state,camp),...(!previous||previous.cycle!==cycle||previous.championGearVersion===1?{championGearVersion:1}:{})};}
+  if(['camp','band'].includes(encounterType)){state.discoveryRolls??={};const cycle=camp.generation??camp.spawnCycle,previous=state.discoveryRolls[camp.id];state.discoveryRolls[camp.id]={cycle,...discoveryBonuses(state,camp),...(encounterAffixes(state,camp.id,cycle)?{namedAffixVersion:1}:{}),...(!previous||previous.cycle!==cycle||previous.championGearVersion===1?{championGearVersion:1}:{})};}
   refillThrowingAmmo(state);
   const field = createBattleField(state.seed, (blacksmith?`${camp.id}:${camp.acceptedDay}:blacksmith`:`${camp.id}:${state.day}:${state.contractSerial}`), terrainAt(camp.x, camp.y), {fortified:encounterType === 'camp' || encounterType === 'undead-commander'});
   const company = getFormation(state).flatMap((personId, index) => {
@@ -2996,9 +3012,9 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     const gear = { armor: enemy.armor, attachment: enemy.attachment ?? null, attachment2:null, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield, mount: rareMount?.id ?? null };
     const shieldDefense = getItem(gear.shield)?.defense ?? 0;
     const role = enemyRoleBonuses(enemy, CAMP_BY_ID.has(camp.id) ? 0 : unitDifficulty);
-    const bonus = key => (getItem(gear.armor)?.statBonuses?.[key] ?? 0) + (getItem(gear.helmet)?.statBonuses?.[key] ?? 0);
+    const bonus = key => Object.values(gear).reduce((sum,id)=>sum+(getItem(id)?.statBonuses?.[key]??0),0);
     const baseHp = 25 + unitDifficulty * 12 + rank * 8 + ((enemy.troopIndex ?? index) === 0 && unitDifficulty === 3 ? 12 : 0);
-    const hp=enemy.marshal?baseHp*2:enemy.champion?Math.ceil(baseHp*1.4):baseHp,championSkill=enemy.marshal?26:enemy.champion?12:0,championDefense=enemy.marshal?14:enemy.champion?8:0;
+    const hp=(enemy.marshal?baseHp*2:enemy.champion?Math.ceil(baseHp*1.4):baseHp)+bonus('maxHp'),championSkill=enemy.marshal?26:enemy.champion?12:0,championDefense=enemy.marshal?14:enemy.champion?8:0;
     return {
       ...(enemy.champion?{champion:true,championItemId:enemy.championItemId}:{}),
       id: `enemy-${(enemy.troopIndex ?? index) + 1}`, ...(undeadUnit ? { undeadTraitsVersion: 1, troopIndex: enemy.troopIndex } : {}), name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + DEPLOYMENT_ROW_OFFSET + FRONT_FORMATION[index % 12],
@@ -3013,10 +3029,10 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
       seed: hashSeed(`${state.seed}:${camp.id}:${enemy.troopIndex ?? index}`), alive: true,
       morale: undeadUnit ? 60 : 55 + unitDifficulty * 8, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
       spearwallActive: false, riposteActive: false, stunnedTurns: 0, stunProtected: false, pendingBerserkAp: 0,
-      meleeSkill: 30 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill, rangedSkill: 28 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill,
+      meleeSkill: 30 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill + bonus('meleeSkill'), rangedSkill: 28 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill + bonus('rangedSkill'),
       meleeDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),
       rangedDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + (getItem(gear.shield)?.rangedDefense ?? shieldDefense) + bonus('rangedDefense') + (rareMount?.rangedDefenseBonus ?? 0) + attachmentBonus(gear,'rangedDefenseBonus'),
-      maxFatigue: 85 + (enemy.marshal?40:enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: 75 + (enemy.champion?8:0) + unitDifficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (unitDifficulty>=3?20:0) + (enemy.champion?40:0) + unitDifficulty * 8 + rank * 4 + bonus('resolve'),
+      maxFatigue: 85 + (enemy.marshal?40:enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: bonus('initiative') + 75 + (enemy.champion?8:0) + unitDifficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (unitDifficulty>=3?20:0) + (enemy.champion?40:0) + unitDifficulty * 8 + rank * 4 + bonus('resolve'),
     };
   };
   const enemies=camp.enemies.map((e,i)=>makeEnemyUnit(e,i));
@@ -3076,7 +3092,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed, camp) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     injuryRulesVersion:1, injuryRng:hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}:injuries`),
-    status: 'active', lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:1, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', itemAffixRulesVersion:1, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -3147,15 +3163,15 @@ function victoryLoot(battle, enemies) {
   const items = [];
   const itemConditions = [];
   const addItem = (id, condition = itemCondition(id), trophy=false) => {
-    if (id && items.length < (trophy ? battle.championLootVersion===1 ? Math.max(24,enemies.length*6) : battle.enemyScalingVersion===1 ? 80 : 24 : 24)) { items.push(id); itemConditions.push(condition); }
+    if (id && items.length < (trophy ? battle.championLootVersion>=1 ? Math.max(24,enemies.length*(battle.championLootVersion===2?8:6)) : battle.enemyScalingVersion===1 ? 80 : 24 : 24)) { items.push(id); itemConditions.push(condition); }
   };
   const guaranteed=new Set();
   for (const enemy of enemies) if (enemy.champion && !enemy.escaped) {
-    const slots = [['weapon','active'],['shield','active'],['armor','active'],['helmet','active'],['weapon','reserve'],['shield','reserve']];
+    const slots = [['weapon','active'],['shield','active'],['armor','active'],['helmet','active'],['attachment','active'],['attachment2','active'],['weapon','reserve'],['shield','reserve']];
     for (const [slot,set] of slots) {
       const id = (set === 'reserve' ? enemy.reserveEquipment : enemy.equipment)?.[slot];
       if (!['famed','named'].includes(getItem(id)?.rarity)) continue;
-      const maximum = itemCondition(id), worn = slot === 'armor' ? enemy.bodyArmor : slot === 'helmet' ? enemy.headArmor
+      const maximum = itemCondition(id), worn = slot === 'armor' ? enemy.bodyArmor : slot === 'helmet' ? enemy.headArmor : slot==='attachment' ? enemy.attachmentArmor : slot==='attachment2' ? enemy.attachment2Armor
         : slot === 'shield' ? set === 'reserve' ? enemy.reserveShieldDurability : enemy.shieldDurability
         : getItem(id)?.throwing ? enemy.throwingAmmo?.[set] : null;
       addItem(id, maximum === null ? null : Math.max(Math.ceil(maximum*.25),worn ?? maximum), true);
@@ -3172,7 +3188,7 @@ function victoryLoot(battle, enemies) {
         : slot === 'armor' ? enemy.bodyArmor : slot === 'attachment' ? enemy.attachmentArmor : slot==='attachment2'?enemy.attachment2Armor : slot === 'helmet' ? enemy.headArmor : slot === 'shield' ? enemy.shieldDurability : null;
       if (maximum && condition < Math.ceil(maximum * .25)) continue;
       const chance = ['named','famed'].includes(getItem(id)?.rarity) ? 100 : slot === 'weapon' ? 70 : slot === 'shield' ? 55 : 40;
-      if (roll(`${enemy.id}:${slot}`, 100) < chance) addItem(id, condition);
+      if (roll(`${enemy.id}:${slot}`, 100) < chance) {const enhanced=slot==='attachment'&&!getItem(id).rollVersion&&roll(`${enemy.id}:${slot}:fine`,100)<20?createFamedItemId(id,hashSeed(`${seed}:${enemy.id}:${slot}:attachment`),5):id;addItem(enhanced,condition);}
     }
     if (enemy.equipment.mount && roll(`${enemy.id}:mount-capture`, 2) === 0) addItem(enemy.equipment.mount);
   }
@@ -3254,7 +3270,8 @@ function battleGearFatigue(equipment) {
 
 function shieldDefenseFor(actor, shieldId, durability = actor.shieldDurability, ranged=false) {
   const item=getItem(shieldId),defense=durability>0?(ranged?item?.rangedDefense??item?.defense??0:item?.defense??0):0;
-  return (hasPerk(actor, 'shield-expert') ? Math.ceil(defense * 1.25) : defense)
+  const worn={...actor,equipment:{...actor.equipment,shield:shieldId},shieldDurability:durability};
+  return (hasPerk(worn, 'shield-expert') ? Math.ceil(defense * 1.25) : defense)
     + (defense && hasPerk(actor, 'shield-bearer') ? 5 : 0);
 }
 
@@ -3900,7 +3917,7 @@ function weaponTrainingHit(actor, weapon) {
 }
 
 function effectiveWeaponRange(actor, weapon) {
-  const range = (weapon?.range ?? 1) + (isBow(weapon) && hasPerk(actor, 'bow-mastery') ? 1 : 0);
+  const range = (weapon?.range ?? 1) + (weapon?.ranged&&!weapon.throwing?equipmentRangedReach(actor,getItem):0) + (isBow(weapon) && hasPerk(actor, 'bow-mastery') ? 1 : 0);
   return weapon ? injuryRange(actor,{...weapon,range}) : range;
 }
 
@@ -4062,7 +4079,7 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   let armorDamage = option?.noArmor || option?.id === 'puncture' ? 0 : Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1)
     * (head ? 1.1 : 1) * (option?.armorMultiplier??(option?.id === 'crush-armor' ? 1.5 : 1))
     * (hasPerk(actor, 'axe-training') && weaponMasteryMatches('axe-training', weapon) ? 1.15 : 1)
-    * (hasPerk(target, 'battle-forged') && before > 0 ? .85 : 1)));
+    * (hasPerk(target, 'battle-forged') && before > 0 ? .85-equipmentBoost(target,'battleForged',getItem)*.05 : 1)));
   const piercing = Math.min(1, (weapon.armorPiercing ?? .30)
     + (isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery') ? .2 : 0)
     + (hasPerk(actor, 'dagger-training') && weaponMasteryMatches('dagger-training', weapon) ? .15 : 0)
@@ -4256,12 +4273,12 @@ function attackTarget(state, actor, target, weapon, option = null) {
       effects.push({ id: 'killing-frenzy', amount: 25 });
     }
     if (!option?.deferKillPerks && hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round) {
-      if (battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup) actor.pendingBerserkAp = 4;
-      else actor.ap = battle.rulesVersion === 2 ? actor.ap + 4 : 2;
+      if (battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup) actor.pendingBerserkAp = berserkAp(actor);
+      else actor.ap = battle.rulesVersion === 2 ? actor.ap + berserkAp(actor) : 2;
       actor.berserkRound = battle.round;
-      effects.push({ id: 'berserk', amount: battle.rulesVersion === 2 ? 4 : 2, ...(battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup ? { nextTurn: true } : {}) });
-      perkProcs.push(battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup ? 'Berserk: +4 AP next turn.'
-        : `Berserk: +${battle.rulesVersion === 2 ? 4 : 2} AP.`);
+      effects.push({ id: 'berserk', amount: battle.rulesVersion === 2 ? berserkAp(actor) : 2, ...(battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup ? { nextTurn: true } : {}) });
+      perkProcs.push(battle.weaponSkillsVersion === 1 && option?.reaction && !option?.freeFollowup ? `Berserk: +${berserkAp(actor)} AP next turn.`
+        : `Berserk: +${battle.rulesVersion === 2 ? berserkAp(actor) : 2} AP.`);
     }
   }
   const message = option?.dot?`${target.name} loses ${hpDamage} health to bleeding${fallen?'; they fall':''}.`: `${actor.name}${option?.freeFollowup ? "'s mount uses Wolf Bite against" : ' hits'} ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}${wound?` ${target.name} suffers ${wound.name}.`:''}`;
@@ -5294,10 +5311,10 @@ function advanceBattleV2(state) {
         effects.push({ id: 'killing-frenzy', amount: 25 });
       }
       if (hasPerk(actor, 'berserk') && actor.berserkRound !== battle.round) {
-        actor.ap += 4;
+        actor.ap += berserkAp(actor);
         actor.berserkRound = battle.round;
-        procs.push('Berserk: +4 AP.');
-        effects.push({ id: 'berserk', amount: 4 });
+        procs.push(`Berserk: +${berserkAp(actor)} AP.`);
+        effects.push({ id: 'berserk', amount: berserkAp(actor) });
       }
       if (procs.length) {
         battle.lastEvent.effects = effects;
@@ -5419,7 +5436,7 @@ export function advanceSimultaneousBattle(state,elapsedMs=SIM_STEP_MS,{maxAction
       try { advanceBattleV2(state); }
       finally { simultaneousItemCache=previousItems;simultaneousActionCaches.delete(battle); }
       const event=battle.lastEvent===previous?null:battle.lastEvent;
-      const berserkRefund=event?.effects?.some(e=>e.id==='berserk'&&!e.nextTurn)?4:0;
+      const berserkRefund=event?.effects?.find(e=>e.id==='berserk'&&!e.nextTurn)?.amount??0;
       const delay=simultaneousActionDelay(actor,event?.type==='hold'?0:before-actor.ap+berserkRefund,event);
       // Recovery paces another action when AP remain (including Berserk).
       // Once exhausted, only the visible action must finish before the AP refresh.
@@ -5958,7 +5975,7 @@ function validateBattle(input, party, worldState) {
   const famedRoll = hashSeed(`${worldState.seed}:${encounter.id}:${campGeneration}:famed-roll`) % 10000;
   assert(famedDrop === null || encounterType === 'camp' && ['famed','named'].includes(famedItem?.rarity)
     && famedBasesForCamp({...encounter,difficulty})?.includes(famedItem.baseId)
-    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,2)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,3)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
+    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,2)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,3)||famedItem.slot==='weapon'&&famedItem.ranged&&famedDrop===createFamedItemId(famedItem.baseId,famedSeed,4)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
     && famedRoll < ((FAMED_CHANCES[difficulty] ?? 0)+discovery.famed/100) * 10000, 'battle famed drop');
   const previousRegionalCampName=encounterType==='camp'&&/^wild-camp-/.test(encounter.id)?worldCampText(encounter.x,encounter.y,encounter.enemies.length,Number(encounter.id.slice(10))-1).name:null;
   const legacyCampName = encounterType==='camp' && /^wild-camp-/.test(encounter.id) ? getRegionalCampText(authoredPoint(encounter).x,authoredPoint(encounter).y,difficulty,1,Number(encounter.id.slice(10))-1).name : null;
@@ -5995,7 +6012,8 @@ function validateBattle(input, party, worldState) {
   assert(validCount(lootSeed) && lootSeed <= 0xffffffff, 'battle loot seed');
   const field = validateBattleField(input.field);
   assert(input.escapeRulesVersion===undefined||input.escapeRulesVersion===1,'battle escape rules');
-  assert(input.championLootVersion===undefined||input.championLootVersion===1,'battle champion loot rules');
+  assert(input.itemAffixRulesVersion===undefined||input.itemAffixRulesVersion===1,'battle item affix rules');
+  assert(input.championLootVersion===undefined||[1,2].includes(input.championLootVersion),'battle champion loot rules');
   assert(input.enemyScalingVersion===undefined||input.enemyScalingVersion===1,'battle enemy scaling rules');
   const enemyLimit=undead?ASHEN_CONFIG.commanderSize:input.enemyScalingVersion===1?20:12;
   const validEnemyId=id=>/^enemy-[1-9]\d?$/.test(id)&&Number(id.slice(6))<=enemyLimit;
@@ -6119,7 +6137,7 @@ function validateBattle(input, party, worldState) {
       && (unit.maxReserveShieldDurability === undefined || unit.maxReserveShieldDurability === maxReserveShieldDurability)
       && typeof battleSetSwapped === 'boolean', 'battle shield durability');
     assert(validCount(unit.seed) && unit.seed <= 0xffffffff, 'battle unit seed');
-    assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= (rulesVersion === 2 ? 13 : 2), 'battle stamina');
+    assert(validCount(unit.morale) && unit.morale <= 100 && validCount(unit.fatigue) && unit.fatigue <= 300 && validCount(unit.ap) && unit.ap <= (rulesVersion === 2 ? input.itemAffixRulesVersion===1?13+Math.min(2,[...Object.values(unit.equipment),...Object.values(unit.reserveEquipment??{}),unit.pocketStowedWeapon].reduce((sum,id)=>sum+(getItem(id)?.perkBoosts?.berserkAp??0),0)):13 : 2), 'battle stamina');
     assert(unit.shieldWallActive === undefined || rulesVersion === 2 && typeof unit.shieldWallActive === 'boolean', 'battle shieldwall');
     for (const key of ['spearwallActive', 'riposteActive', 'stunProtected'])
       assert(unit[key] === undefined || weaponSkillsVersion === 1 && typeof unit[key] === 'boolean', `battle ${key}`);
@@ -6131,7 +6149,7 @@ function validateBattle(input, party, worldState) {
     assert(unit.bleedTickRound===undefined||input.weaponCompletionVersion===1&&validCount(unit.bleedTickRound)&&unit.bleedTickRound<=input.round,'battle bleed tick');
     if(unit.bleeding!==undefined)assert(input.weaponCompletionVersion===1&&recordObject(unit.bleeding)&&Object.keys(unit.bleeding).sort().join(',')==='damage,sourceId,turns'&&validCount(unit.bleeding.damage)&&unit.bleeding.damage>=1&&unit.bleeding.damage<=18&&[1,2].includes(unit.bleeding.turns)&&input.units.some(x=>x.id===unit.bleeding.sourceId),'battle bleeding');
     assert(unit.stunnedTurns === undefined || weaponSkillsVersion === 1 && validCount(unit.stunnedTurns) && unit.stunnedTurns <= 1, 'battle stun');
-    assert(unit.pendingBerserkAp === undefined || weaponSkillsVersion === 1 && [0, 4].includes(unit.pendingBerserkAp), 'battle pending Berserk');
+    assert(unit.pendingBerserkAp === undefined || weaponSkillsVersion === 1 && (input.itemAffixRulesVersion===1?[0,4,5,6]:[0,4]).includes(unit.pendingBerserkAp), 'battle pending Berserk');
     for (const key of ['fleeRollRound', 'fleeRound']) assert(unit[key] === undefined
       || weaponSkillsVersion === 1 && unit.side === 'enemy' && validCount(unit[key]) && unit[key] >= 1 && unit[key] <= input.round, `battle ${key}`);
     assert(unit.fleeRound === undefined || unit.fleeRollRound >= unit.fleeRound, 'battle flee roll');
@@ -6286,7 +6304,7 @@ function validateBattle(input, party, worldState) {
       ...(reaction.effects === undefined ? {} : { effects: reaction.effects.map(effect => ({ id: effect.id, amount: effect.amount, ...(effect.nextTurn === undefined ? {} : { nextTurn: effect.nextTurn }) })) }) })) }),
   } : null;
   const loot = input.loot;
-  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= (input.championLootVersion===1?Math.max(24,input.units.filter(u=>u.side==='enemy').length*6):undead?ASHEN_CONFIG.commanderSize*4:input.enemyScalingVersion===1?80:24) && loot.items.every(id => getItem(id)), 'battle loot');
+  assert(recordObject(loot) && validCount(loot.gold) && loot.gold <= 100000 && Array.isArray(loot.items) && loot.items.length <= (input.championLootVersion>=1?Math.max(24,input.units.filter(u=>u.side==='enemy').length*(input.championLootVersion===2?8:6)):undead?ASHEN_CONFIG.commanderSize*4:input.enemyScalingVersion===1?80:24) && loot.items.every(id => getItem(id)), 'battle loot');
   const itemConditions = (loot.itemConditions ?? loot.items.map(itemCondition)).map((condition, index) => restoredCondition(loot.items[index], condition));
   assert(Array.isArray(itemConditions) && itemConditions.length === loot.items.length && itemConditions.every((condition, index) => {
     const maximum = itemCondition(loot.items[index]);
@@ -6311,7 +6329,8 @@ function validateBattle(input, party, worldState) {
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),
     ...(input.escapeRulesVersion===undefined?{}:{escapeRulesVersion:1}),
     ...(input.enemyScalingVersion===undefined?{}:{enemyScalingVersion:1}),
-    ...(input.championLootVersion===undefined?{}:{championLootVersion:1}),
+    ...(input.itemAffixRulesVersion===undefined?{}:{itemAffixRulesVersion:1}),
+    ...(input.championLootVersion===undefined?{}:{championLootVersion:input.championLootVersion}),
     ...(input.rulesVersion === undefined ? {} : { rulesVersion }),
     ...(input.weaponSkillsVersion === undefined ? {} : { weaponSkillsVersion }),
     ...(input.mountSkillsVersion === undefined ? {} : { mountSkillsVersion }),
@@ -6378,7 +6397,7 @@ export function validateSave(input) {
   assert([0,1,2].includes(scoutLevel)&&(members.includes('scout')?scoutLevel>0:scoutLevel===0),'retinue scout');
   for(const [key,limit] of [['foodRemainder',4],['toolRemainder',4],['repairRemainder',3]])assert(retinue[key]===undefined||validCount(retinue[key])&&retinue[key]<=limit,'retinue savings');
   const discoveryRolls=input.discoveryRolls??{};
-  assert(recordObject(discoveryRolls)&&Object.entries(discoveryRolls).every(([id,roll])=>(isCampId(id)||BAND_BY_ID.has(id))&&recordObject(roll)&&(roll.championGearVersion===undefined||roll.championGearVersion===1)&&validCount(roll.cycle)&&roll.cycle<=1000000&&[0,5,8,13].includes(roll.champion)&&[0,15].includes(roll.famed)&&[0,12].includes(roll.mount)),'discovery encounter rolls');
+  assert(recordObject(discoveryRolls)&&Object.entries(discoveryRolls).every(([id,roll])=>(isCampId(id)||BAND_BY_ID.has(id))&&recordObject(roll)&&(roll.championGearVersion===undefined||roll.championGearVersion===1)&&(roll.namedAffixVersion===undefined||roll.namedAffixVersion===1)&&validCount(roll.cycle)&&roll.cycle<=1000000&&[0,5,8,13].includes(roll.champion)&&[0,15].includes(roll.famed)&&[0,12].includes(roll.mount)),'discovery encounter rolls');
   const contractBoards=input.contractBoards??{};
   assert(recordObject(contractBoards)&&Object.entries(contractBoards).every(([id,board])=>TOWN_BY_ID.has(id)&&recordObject(board)&&Object.keys(board).length===2&&validCount(board.week)&&board.week<=Math.floor((input.day-1)/7)&&Array.isArray(board.used)&&board.used.length<=3&&board.used.every(c=>['courier','merchant','combat'].includes(c))&&new Set(board.used).size===board.used.length),'contract boards');
   const deserterBoards=input.deserterBoards??{};
@@ -6652,7 +6671,7 @@ export function validateSave(input) {
       && (['caravan','patrol'].includes(destinationAction.type) || UNDEAD_TYPES.includes(destinationAction.type) || input.destination.x === target.x && input.destination.y === target.y), 'destination action target');
     if (destinationAction.type === 'camp') assert(!target.cleared && destinationAction.generation === target.generation, 'destination camp generation');
   }
-  const legendaryBlacksmith=validateBlacksmith(input.legendaryBlacksmith,input.day,{getItem,validPoint,shieldMaximum,expectedReward:createFamedItemId('arming-sword',hashSeed(`${input.seed}:blacksmith:reward:v1`)),expectedEncounter:(stage,day)=>blacksmithEncounter(input,stage,day)});
+  const legendaryBlacksmith=validateBlacksmith(input.legendaryBlacksmith,input.day,{getItem,validPoint,shieldMaximum,expectedReward:createFamedItemId('arming-sword',hashSeed(`${input.seed}:blacksmith:reward:v1`),3),expectedEncounter:(stage,day)=>blacksmithEncounter(input,stage,day)});
   const battle = validateBattle(input.battle, input.party, input);
   assert(!battle || battle.tactic === tactic, 'battle tactic');
   assert(!battle || input.destination === null && pursuit === null && (battle.encounterType==='blacksmith'?Boolean(getBlacksmithQuestEncounters(input).find(e=>e.id===battle.campId)):UNDEAD_TYPES.includes(battle.encounterType) ? Boolean(getUndeadEncounters(input).find(e => e.id === battle.campId)) : battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');

@@ -28,6 +28,7 @@ const CORE = [
   './src/simultaneous-runner.js',
   './src/simultaneous-worker.js',
   './src/named-rolls.js',
+  './src/item-affixes.js',
   './src/reforged-items.js',
   './src/legendary-blacksmith.js',
   './src/blacksmith-ui.js',
