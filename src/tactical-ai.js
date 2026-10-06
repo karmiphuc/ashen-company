@@ -5,6 +5,19 @@ export const SKILL_PREFERENCES = Object.freeze(['balanced', 'damage', 'control']
 export const ENEMY_TACTIC_COOLDOWN = 2;
 export const ENEMY_TACTICS = Object.freeze(['offense', 'defense', 'shield-wall', 'skirmish']);
 
+// Recomputed from living fighters: no saved flag can keep a recovered brother idle.
+export function shouldPreserveBrother(battle, actor) {
+  if (actor.side !== 'company' || actor.ally || !actor.alive || actor.escaped) return false;
+  const living = battle.units.filter(unit => unit.alive && !unit.escaped);
+  const allies = living.filter(unit => unit.side === actor.side);
+  const enemies = living.filter(unit => unit.side !== actor.side);
+  const health = unit => Math.max(0, Math.min(1, unit.hp / Math.max(1, unit.maxHp)));
+  if (!enemies.length || !allies.some(unit => unit.id !== actor.id && health(unit) > .5)) return false;
+  const strength = units => units.reduce((sum, unit) => sum + .25 + .75 * health(unit), 0);
+  const winning = strength(allies) >= strength(enemies) * 1.35;
+  return health(actor) <= (winning ? .45 : .25);
+}
+
 export function resolveCombatRole(member, weapon, reserveWeapon, equipment = {}) {
   if (COMBAT_ROLES.includes(member.combatRole) && member.combatRole !== 'auto') return member.combatRole;
   const weapons = [weapon, reserveWeapon].filter(Boolean);
