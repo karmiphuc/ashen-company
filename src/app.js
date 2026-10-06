@@ -236,7 +236,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
  if(b.hasAttribute('data-battle-roster')){const open=document.body.classList.toggle('combat-roster-open');b.setAttribute('aria-expanded',String(open));b.textContent=open?'Your company ▾':'Your company ▴';if(open)updateCompanyRoster();return;}
  if(b.dataset.battleZoom){zoomBattleCamera(b.dataset.battleZoom);return;}
  if(b.dataset.battleCamera){focusBattleCamera(b.dataset.battleCamera);return;}
- if(b.dataset.battleSpeed!==undefined){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=parseBattleSpeed(b.dataset.battleSpeed);battleElapsed=0;render();return;}
+ if(b.dataset.battleSpeed!==undefined){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=parseBattleSpeed(b.dataset.battleSpeed);battleElapsed=0;save();render();return;}
  if(b.dataset.fight){beginBattle(b.dataset.fight);return;}
  if(b.dataset.engage){engage(b.dataset.engage);return;}
  if(b.dataset.selectCamp){const site=getEncounterSites(state).find(c=>c.id===b.dataset.selectCamp);if(site){chosenCamp=site.id;tab='world';$('#modal').close();render();focusMap(site);}return;}
@@ -322,7 +322,7 @@ document.addEventListener('touchend',()=>gameAudio.unlock(),{capture:true});
 document.addEventListener('click',()=>gameAudio.unlock(),{capture:true});
 document.addEventListener('change',e=>{const key=e.target.dataset.combatSetting;if(!['combatRole','skillPreference'].includes(key))return;const result=setCombatSettings(state,e.target.dataset.personId,{[key]:e.target.value});toast(result.message);if(result.ok){save();render();}});
 document.addEventListener('keydown',()=>gameAudio.unlock(),{capture:true});
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&!$('#modal').open&&!['INPUT','SELECT','BUTTON'].includes(e.target.tagName)){e.preventDefault();if(state.battle?.simultaneous){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=battleSpeed?0:1;render();return;}speed=speed?0:1;updateSpeed();resources();}});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!$('#modal').open&&!['INPUT','SELECT','BUTTON'].includes(e.target.tagName)){e.preventDefault();if(state.battle?.simultaneous){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=battleSpeed?0:1;save();render();return;}speed=speed?0:1;updateSpeed();resources();}});
 async function fastResolveSimultaneous(){
  const battle=state.battle,token=++simultaneousResolveToken;
  if(!battle?.simultaneous||battle.status!=='active')return;
