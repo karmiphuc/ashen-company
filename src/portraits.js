@@ -272,7 +272,8 @@ const ONE_HANDED_DIMENSIONS = {
 // A mounted pawn is one silhouette, not a miniature rider beside an animal.
 // All species share this plate/envelope. Natural foreground heads sit on
 // connected rear bodies; the exposed lower body reaches a plate below the rider.
-const MOUNT_PLATE = {left: 0, top: 138, width: 140, height: 22};
+const MOUNT_SHIFT_X = CANVAS.width * .4;
+const MOUNT_PLATE = {left: 0, top: 138, width: 140 + MOUNT_SHIFT_X, height: 22};
 const MOUNT_BODY_BOUNDS = {
   'mount-horse-body.png':[4,9,74,96],
   'mount-war-horse-body.png':[37,20,115,117],
@@ -590,6 +591,7 @@ function mountLayer(spec, part) {
     left=facing===1?0-x1*sx:bodyWidth+x1*sx;top=bodyTop-y1*sy;
     transform=`scale(${facing*sx},${sy})`;
   }
+  left += MOUNT_SHIFT_X;
   return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT+file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:${transform};transform-origin:top left;${filter?`filter:${filter};`:''}z-index:${part==='head'?5:0};max-width:none;pointer-events:none">`;
 }
 
@@ -655,7 +657,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
         ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none;z-index:4">`}
         ${layer('helmet', helmet, equipment.helmet)}`;
 
-  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:visible;vertical-align:middle;background:transparent">
+  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:visible;vertical-align:middle;background:transparent;--portrait-overhang:${mount?(MOUNT_PLATE.width-CANVAS.width)*scale:0}px">
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
       <span class="bb-portrait-composition" style="display:block;position:absolute;left:${compositionLeft}px;top:${compositionTop}px;width:104px;height:142px;${compositionTransform}">
         ${mount ? `<span data-layer="base-plate" class="bb-portrait-base" style="position:absolute;left:${MOUNT_PLATE.left}px;top:${MOUNT_PLATE.top}px;width:${MOUNT_PLATE.width}px;height:${MOUNT_PLATE.height}px;border-radius:50%;background:linear-gradient(#c4c5bc,#81847c 45%,#535850);border:2px solid #363b34;box-shadow:inset 0 -3px 0 #3d433a;box-sizing:border-box;z-index:0"></span>` : ''}

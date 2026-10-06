@@ -180,10 +180,10 @@ test('every mount stays low on the right, visibly supports the rider and remains
     assert.ok(head.left>=64,`${mount.id}: animal is on the right, not beside the left arm`);
     assert.ok(head.top>=(mount.visual==='warhorse'||mount.visual==='armoredhorse'?35:54),`${mount.id}: animal cannot obscure the face`);
     assert.ok(head.bottom>=153.5&&head.bottom<=156,`${mount.id}: all muzzles meet the same plate`);
-    assert.ok(Math.abs(body.left-0)<1e-8&&Math.abs(body.right-(/warhorse|armoredhorse/.test(mount.visual)?140:129))<1e-8,`${mount.id}: rear body spans beneath the rider`);
+    assert.ok(Math.abs(body.left-41.6)<1e-8&&Math.abs(body.right-41.6-(/warhorse|armoredhorse/.test(mount.visual)?140:129))<1e-8,`${mount.id}: rear body spans beneath the rider`);
     assert.ok(Math.abs(body.top-(mount.visual==='warg'||mount.visual==='wolf'?78:/warhorse|armoredhorse/.test(mount.visual)?156-98*1.18:58))<1e-8&&Math.abs(body.bottom-156)<1e-8);
     const support=body.pixels.filter(([x,y])=>x>=45&&x<=80&&y>=112&&y<=146).length*Math.abs(body.sx*body.sy);
-    const grounded=body.pixels.filter(([x,y])=>x>=8&&x<=35&&y>=140&&y<=156&&((x-70)/70)**2+((y-149)/11)**2<=1).length*Math.abs(body.sx*body.sy);
+    const grounded=body.pixels.filter(([x,y])=>x>=49.6&&x<=76.6&&y>=140&&y<=156&&((x-90.8)/90.8)**2+((y-149)/11)**2<=1).length*Math.abs(body.sx*body.sy);
     assert.ok(grounded>30,`${mount.id}: lower-left haunch touches the actual plate ellipse (${grounded})`);
     assert.ok(support>100,`${mount.id}: actual opaque pixels support the rider (${support})`);
     const scale=[...s.image.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].reduce((n,m)=>n*Number(m[1]),1),right=s.x+pngSize(s.image)[0]*scale;
@@ -201,12 +201,12 @@ test('every mount stays low on the right, visibly supports the rider and remains
 
 test('mounted pawns stay grounded while enlarged war horses share the same base',()=>{
   const appearances=new Set();
-  const heads={'riding-horse':[78,54,1.25],'war-horse':[81,33.6544,1.2272],'armored-war-horse':[81,33.28,1.2272],'warg-mount':[139,70,.98],'dire-wolf-mount':[139,70,.98]};
+  const heads={'riding-horse':[119.6,54,1.25],'war-horse':[122.6,33.6544,1.2272],'armored-war-horse':[122.6,33.28,1.2272],'warg-mount':[180.6,70,.98],'dire-wolf-mount':[180.6,70,.98]};
   for(let seed=0;seed<24;seed++)for(const mount of mounts){
     const html=portraitHTML({name:'Rider',seed},{mount}),body=pose(html,'body'),raster=opaquePixels(body.image),head=pose(html,'mount-head');
     const rider=html.match(/data-layer="rider" style="([^"]+)"/)[1],drop=value(rider,'top');
     appearances.add(html.match(/data-appearance="(\d+)"/)[1]);
-    const touching=raster.pixels.filter(([x,y])=>{x+=body.x;y+=body.y+drop;return y>=140&&y<=160&&((x-70)/70)**2+((y-149)/11)**2<=1;});
+    const touching=raster.pixels.filter(([x,y])=>{x+=body.x;y+=body.y+drop;return y>=140&&y<=160&&((x-90.8)/90.8)**2+((y-149)/11)**2<=1;});
     assert.ok(touching.length>40,`${mount.id}: actual pawn pixels reach the base (${touching.length})`);
     assert.deepEqual([head.x,head.y,Number(head.image.match(/ scale\(([\d.]+)\)/)[1])],heads[mount.id],'animal feet remain anchored after the deliberate war-horse size change');
   }
