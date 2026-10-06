@@ -48,9 +48,9 @@ test('surround bonus is +5 per extra adjacent attacker and Underdog also cancels
  t.perks=['underdog'];assert.equal(attackHitChance(b,a,t,w),alone);
  t.perks=[];delete b.perkCombatVersion;assert.equal(attackHitChance(b,a,t,w),alone+5);
 });
-test('Lone Wolf activates beyond three hexes, counts NPC allies and ignores dead/escaped allies',()=>{
- const {b,a,ally}=fixture(['lone-wolf']);Object.assign(ally,{q:9,r:5});assert.equal(getLoneWolfBonus(b,a),.15);
- ally.q=8;assert.equal(getLoneWolfBonus(b,a),0);ally.ally=true;assert.equal(getLoneWolfBonus(b,a),0);
+test('Lone Wolf activates without adjacent allies, counts NPC allies and ignores dead/escaped allies',()=>{
+ const {b,a,ally}=fixture(['lone-wolf']);Object.assign(ally,{q:7,r:5});assert.equal(getLoneWolfBonus(b,a),.15);
+ ally.q=6;assert.equal(getLoneWolfBonus(b,a),0);ally.ally=true;assert.equal(getLoneWolfBonus(b,a),0);
  ally.alive=false;assert.equal(getLoneWolfBonus(b,a),.15);ally.alive=true;ally.escaped=true;assert.equal(getLoneWolfBonus(b,a),.15);
 });
 test('Lone Wolf dynamically increases melee/ranged attack skill and defense',()=>{
@@ -120,4 +120,15 @@ test('ranged Overwhelm works at distance and area attacks debuff each later enem
  const ranged=fixture(['overwhelm'],'hunting-bow');hit(ranged.s,ranged.a);assert.equal(ranged.t.overwhelmed.stacks,1);
  const {s,b,a,t}=fixture(['overwhelm'],'greatsword');const other=b.units.find(u=>u.side==='enemy'&&u!==t);Object.assign(other,{q:5,r:6,hp:500,maxHp:500,bodyArmor:0,headArmor:0});
  hit(s,a);assert.ok(b.lastEvent.affectedTargets?.length>=2);assert.equal(t.overwhelmed.stacks,1);assert.equal(other.overwhelmed.stacks,1);
+});
+
+
+test('Lone Wolf reacts immediately to all six adjacent hexes and distinguishes opposing units',()=>{
+ const {b,a,ally}=fixture(['lone-wolf']);
+ for(const [dq,dr] of [[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]]){
+  Object.assign(ally,{q:a.q+dq,r:a.r+dr,side:'company'});assert.equal(getLoneWolfBonus(b,a),0);
+  ally.side='enemy';assert.equal(getLoneWolfBonus(b,a),.15);ally.side='company';
+  ally.q=a.q+dq*2;ally.r=a.r+dr*2;assert.equal(getLoneWolfBonus(b,a),.15);
+ }
+ a.perks=[];assert.equal(getLoneWolfBonus(b,a),0);
 });
