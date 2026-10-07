@@ -1,0 +1,33 @@
+{
+  "selectedConcept": "exec-c0d7a775-a36d-4f64-b30e-27c8f97e7660.png",
+  "provenance": "Original AI-generated adaptation of the selected Moonfang concept, grounded in the existing Direwolf Hide and Direwolf Mail artwork.",
+  "references": [
+    "bb-werewolf-hide-armor",
+    "bb-werewolf-mail-armor"
+  ],
+  "assets": [
+    {
+      "layer": "icon",
+      "generatedMaster": "exec-0e8d3fde-d8e4-47c0-9e68-d4704f8b1680.png",
+      "masterSha256": "4059d00aadfb88a082e825492ab485a7057f58a2208391ee75b4e7b65594a879",
+      "path": "assets/direwolf-moonfang/icon.png",
+      "sha256": "f4e916916141098250764185198e242686ba6d164ab22224a8ec223205faa42f",
+      "packaging": "ImageMagick alpha trim, aspect-preserving resize, transparent centered canvas 140x280"
+    },
+    {
+      "layer": "portrait",
+      "generatedMaster": "exec-fc9f58eb-8610-42f9-8aea-02b8fbd40958.png",
+      "masterSha256": "0663e389eee49c4d0b2f6f28de9a85d8bd6e60744b0c10b22b190b41feb93e9d",
+      "path": "assets/direwolf-moonfang/portrait.png",
+      "sha256": "edc0ac87e333b98de9ccc0f43c48ec723a11cda1f07280a8c7002e544fccea4f",
+      "packaging": "ImageMagick transparent-margin crop 1247x941+2+176, aspect-preserving resize to 108px tall, transparent bottom-aligned canvas 148x114; portrait anchor left-28 top6",
+      "revision": "First rounded-pauldron version refined with the requested approximately 20% larger viewer-left sculpted wolf skull and greater shoulder projection. Viewer-right retains the first version\u2019s shallow silver wolf plate. Original inventory icon preserved."
+    }
+  ],
+  "selectedWornConcept": "exec-fc9f58eb-8610-42f9-8aea-02b8fbd40958.png",
+  "selectedWornDirections": [
+    "exec-0ffa9240-b534-4632-beb9-5cc4754c88d8.png",
+    "exec-5a3b978e-5ae9-4ec2-960f-f9cdb490cc48.png"
+  ],
+  "previousWornConcept": "exec-78a37fb5-5d12-4452-b196-730bc9866d25.png"
+}

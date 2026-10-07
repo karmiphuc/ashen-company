@@ -61,3 +61,45 @@ test('an open older build updates only after caching and preserves its company',
     await writeFile(workerPath, worker);await writeFile(modulePath, module);
   }
 });
+
+test('the existing Armorer exposes Direwolf tabs and saves both crafting transactions', async ({ page }) => {
+  const state = createGame(51);
+  state.gold = 3000;
+  state.inventory = ['bb-ancient-plate-harness', 'bb-ancient-plate-harness', 'bb-ancient-plate-harness', 'bb-werewolf-hide-armor', 'bb-werewolf-mail-armor'];
+  state.inventoryCondition = [0, 90, 100, 0, 0];
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(save => {
+    if (!localStorage.getItem('ashen-company-save-v1')) localStorage.setItem('ashen-company-save-v1', save);
+  }, JSON.stringify(state));
+  await page.goto('./');
+  await page.locator('[data-action="town"]').click();
+  await page.locator('[data-action="ancient-armorer"]').click();
+  await expect(page.getByRole('navigation', { name: 'Armorer recipes' })).toContainText('Direwolf fusion');
+  await page.locator('[data-ancient-design="bb-ancient-plate-harness"]').click();
+  await page.locator('[data-action="ancient-confirm"]').click();
+  await expect(page.locator('.ancient-confirmation')).toContainText('620 crowns');
+  await expect(page.locator('.ancient-confirmation')).toContainText('310 crowns refunded');
+  await page.locator('[data-action="ancient-commit"]').click();
+  const restored = await page.evaluate(() => JSON.parse(localStorage.getItem('ashen-company-save-v1')));
+  expect(restored.ancientRestorationSerial).toBe(1);
+  expect(restored.inventory).not.toContain('bb-ancient-plate-harness');
+  expect([2380, 2690]).toContain(restored.gold);
+  await page.locator('#modal [data-action="ancient-armorer"]').click();
+  await page.locator('[data-action="direwolf-helmets"]').click();
+  await expect(page.locator('#modal')).toContainText('Direwolf Leather Hood');
+  await page.locator('[data-action="direwolf-armorer"]').click();
+  await page.locator('[data-action="direwolf-confirm"]').click();
+  await page.locator('[data-action="direwolf-commit"]').click();
+  await expect(page.locator('.ancient-result')).toContainText('fully repaired');
+  const crafted = await page.evaluate(() => JSON.parse(localStorage.getItem('ashen-company-save-v1')));
+  expect(crafted.gold).toBe(restored.gold - 600);
+  expect(crafted.inventory.some(id => id.includes('direwolf-moonfang-harness'))).toBe(true);
+  expect(crafted.inventory).not.toContain('bb-werewolf-hide-armor');
+  expect(crafted.inventory).not.toContain('bb-werewolf-mail-armor');
+  await page.reload();
+  const loaded = await page.evaluate(() => JSON.parse(localStorage.getItem('ashen-company-save-v1')));
+  expect(loaded.inventory).toEqual(crafted.inventory);
+  expect(loaded.gold).toBe(crafted.gold);
+  expect(errors).toEqual([]);
+});

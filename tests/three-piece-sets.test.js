@@ -75,7 +75,7 @@ test('Northern completion is a slight upgrade and broad Ancient completion stays
 test('all curated named completions preserve worn base condition through turn-based and realtime reload/retreat',()=>{
  for(const set of selected)for(const realtime of [false,true]){
   const {state,unit}=fight(set,{bodyCondition:30,headCondition:20},realtime);
-  assert.equal(state.battle.equipmentSetRulesVersion,8);assert.equal(unit.setArmor.attachmentSlot,'attachment');
+  assert.equal(state.battle.equipmentSetRulesVersion,9);assert.equal(unit.setArmor.attachmentSlot,'attachment');
   assert.ok(validSetArmorSnapshot(unit,getItem,7));unit.bodyArmor-=3;unit.headArmor-=2;unit.attachmentArmor-=1;
   const worn={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head'),attachment:unit.attachmentArmor};
   const loaded=validateSave(JSON.parse(JSON.stringify(state)));assert.deepEqual(loaded.battle,state.battle);

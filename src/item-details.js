@@ -49,6 +49,7 @@ export function getItemDetails(item, condition) {
   if(item.perkBoosts?.battleForged)notes.push('Requires Battle Forged: reduces incoming armor damage by another 5 percentage points per bonus, up to 10 points.');
   for(const [key,value] of Object.entries(item.perkBoosts??{}))if(value&&PREFIX_EFFECTS[key])notes.push(prefixEffectText(key,value));
   if(item.signatureDescription)notes.push(item.signatureDescription);
+  if(item.intrinsicDescription)notes.push(item.intrinsicDescription);
   if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
   if(item.forgeAffixes)notes.push(item.forgeAffixes.locked?'Legacy forge bonuses are preserved. Further merges are locked; full transfers preserve the restriction.':`Affix slots: ${item.forgeAffixes.prefixes.length}/2 prefixes, ${item.forgeAffixes.suffixes.length}/2 suffixes. Duplicate affixes upgrade without adding; inactive affixes still occupy slots.`);
   const sets=equipmentSetsForItem(item);
@@ -140,6 +141,7 @@ export function getItemDetails(item, condition) {
       { label: item.slot === 'armor' ? 'Body armor' : 'Head armor', value: `${current} / ${maximum}` },
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
     );
+    if(item.meleeMoraleDamage)stats.push({label:'Melee morale damage',value:signed(item.meleeMoraleDamage)});
     notes.push(item.slot === 'armor'
       ? 'Body armor is damaged by body hits. Head hits use the helmet instead.'
       : 'Ordinary weapons: 22% of landed hits strike the head. Named rolls can raise that chance; this helmet absorbs head hits.');
@@ -182,7 +184,8 @@ export function getItemDetails(item, condition) {
     notes.push(`${skill.name}: ${skill.description}`);
   }
   if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
-  if (item.collection) {
+  if (item.collection === 'crafted') notes.push('Crafted at a town Armorer from ordinary stash pieces. Named and reforged versions preserve the original crafted design and its intrinsic effects; named bonuses apply above its crafted baseline.');
+  else if (item.collection) {
     notes.push('Ordinary protection and fatigue follow the pinned Battle Brothers definition. New named designs roll protection and weight against that source baseline. Existing legacy designs keep their saved bonuses; prices are adapted to the campaign economy.');
     notes.push('Cosmetic variants use a fixed source design. Original helmet vision penalties and scripted magical effects are not simulated.');
   }

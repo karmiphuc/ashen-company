@@ -2,6 +2,8 @@
 
 Version 0.55.0 adds bounded named-item forging, 18 matching head/body equipment families and selective three-piece completions, including Ritual Bone. The Save / Menu release label now comes from package metadata, fixing the stale 0.53.0 display. See [equipment design features](docs/EQUIPMENT-DESIGN-FEATURES.md) and [three-piece rules](docs/THREE-PIECE-SETS.md).
 
+This release also adds **Direwolf Moonfang Harness** crafting to every town Armorer: fuse one Direwolf Hide and one Direwolf Mail for 600 crowns into the selected asymmetric wolf-mantle design, with 195 armor / 13 fatigue, non-stacking melee intimidation and a 3% named chance. Direwolf Leather Hood (120/3), the existing Wolf Helmet (178/5), and combined Alpha Helm (265/15) complete a matching Direwolf set. See [crafting and artwork rules](docs/DIREWOLF-MOONFANG.md).
+
 Version 0.54.0 adds **Ancient Armory restoration** at every open settlement’s Armorer: matching recovered pieces become restored bronze or silverish steel, with a separate named-item chance, explicit failure refunds, and original-sprite color treatments. See [recipes, stats and save rules](docs/ANCIENT-RESTORATION.md).
 
 See [equipment design features](docs/EQUIPMENT-DESIGN-FEATURES.md) for named
