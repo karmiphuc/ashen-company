@@ -1,4 +1,4 @@
-import { equipmentSetForItem } from './equipment-sets.js';
+import { equipmentSetForItem, equipmentSetBonusText } from './equipment-sets.js';
 import { PREFIX_EFFECTS, prefixEffectText } from './affix-prefixes.js';
 import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
 import { equipmentSkills, weaponSkillFamily } from './combat-skills.js';
@@ -52,7 +52,7 @@ export function getItemDetails(item, condition) {
   if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
   if(item.forgeAffixes)notes.push(item.forgeAffixes.locked?'Legacy forge bonuses are preserved. Further merges are locked; full transfers preserve the restriction.':`Affix slots: ${item.forgeAffixes.prefixes.length}/2 prefixes, ${item.forgeAffixes.suffixes.length}/2 suffixes. Duplicate affixes upgrade without adding; inactive affixes still occupy slots.`);
   const armorSet=equipmentSetForItem(item);
-  if(armorSet)notes.push(`${armorSet.name} set piece: wear Assassin’s Robe with Assassin’s Face Mask or Assassin’s Head Wrap for +15% armor on both pieces, −10% helmet fatigue and −15% body fatigue. Uses rounded fitted fatigue for Nimble, Agile Defense, Fleet Footed and Brawny. Named and reforged variants count; transferring bonuses to a different design does not transfer set membership.`);
+  if(armorSet)notes.push(`${armorSet.name} set piece: ${armorSet.pairing} ${equipmentSetBonusText(armorSet)}. Uses rounded fitted fatigue for Nimble, Agile Defense, Fleet Footed and Brawny. Named and reforged variants count; transferring bonuses to a different design does not transfer set membership.`);
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;
