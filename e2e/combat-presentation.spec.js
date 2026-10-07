@@ -67,10 +67,10 @@ test('two incoming hits retain distinct timestamps and cinematic attacks finish'
   events.receiveSimultaneousEvents(b,[attack,...hits],3);render('cinematic');
   const node=root.querySelector(`[data-unit-id="${u.id}"]`),animations=node.getAnimations({subtree:true});
   const hitAges=animations.filter(a=>a.animationName==='impact-float').map(a=>a.currentTime).sort((a,b)=>a-b);
-  const swing=animations.find(a=>a.animationName==='cinematic-swing');
-  return {hitAges,cinematicDuration:swing?.effect.getTiming().duration,cinematicAge:swing?.currentTime,hitCount:node.querySelectorAll('[data-impact-event]').length};
+  const swing=animations.find(a=>a.animationName==='cinematic-swing'),impact=animations.find(a=>a.animationName==='pawn-impact');
+  return {hitAges,impactDuration:impact?.effect.getTiming().duration,cinematicDuration:swing?.effect.getTiming().duration,cinematicAge:swing?.currentTime,hitCount:node.querySelectorAll('[data-impact-event]').length};
  });
- expect(result.hitCount).toBe(2);expect(result.hitAges[0]).toBeLessThan(100);expect(result.hitAges[1]).toBeGreaterThanOrEqual(200);expect(result.cinematicDuration).toBe(900);expect(result.cinematicAge).toBeGreaterThanOrEqual(400);expect(result.cinematicAge).toBeLessThan(900);
+ expect(result.hitCount).toBe(2);expect(result.hitAges[0]).toBeLessThan(100);expect(result.hitAges[1]).toBeGreaterThanOrEqual(200);expect(result.impactDuration).toBe(900);expect(result.cinematicDuration).toBe(900);expect(result.cinematicAge).toBeGreaterThanOrEqual(400);expect(result.cinematicAge).toBeLessThan(900);
 });
 test('pausing from 4x retains animation progress',async({page})=>{
  await harness(page);

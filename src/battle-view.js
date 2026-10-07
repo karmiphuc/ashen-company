@@ -329,6 +329,11 @@ function simultaneousRate(battle,speed) {
   if(speed!==0)animationRates.set(battle,speed===4?4:1);
   return animationRates.get(battle)??1;
 }
+function presentationDuration(entry,speed){
+  if(!entry)return 450;
+  if(speed==='cinematic'&&cinematicActionKind(entry.event)==='attack')return Math.max(entry.duration,900);
+  return speed==='cinematic'&&entry.event.type==='move'?entry.duration/4:entry.duration;
+}
 const presentationIndexes=new WeakMap();
 function presentationIndex(battle){
   const time=battle.simultaneous.time,serial=simultaneousEventSerial(battle),cached=presentationIndexes.get(battle);
@@ -351,14 +356,14 @@ function simultaneousUnitContext(unit,battle,speed) {
   // Receiving a hit never borrows an older movement/attack timestamp.
   const selected=own??incoming,event=selected?.event??{};
   const rate=simultaneousRate(battle,speed);
-  const duration=selected?(speed==='cinematic'&&cinematicActionKind(event)==='attack'?Math.max(selected.duration,900):event.type==='move'&&speed==='cinematic'?selected.duration/4:selected.duration):450;
-  const impactDuration=incoming?.duration??450;
+  const duration=presentationDuration(selected,speed);
+  const impactDuration=presentationDuration(incoming,speed);
   const impactMarkup=impactEntries.map(({entry,impacts},index)=>{
     const damage=impacts.reduce((sum,x)=>sum+number(x.hpDamage),0);
     const armor=impacts.reduce((sum,x)=>sum+number(x.armorDamage),0),shield=impacts.reduce((sum,x)=>sum+number(x.shieldDamage),0);
     const friendly=entry.event.friendlyFire&&entry.event.actorId!==unit.id&&battle.units.find(x=>x.id===entry.event.actorId)?.side===unit.side;
     const label=impacts.some(x=>x.hit!==false&&x.type!=='miss')?`${friendly?'Friendly fire · ':''}${damage}${armor?` / ${armor}`:''}${shield?` · Shield −${shield}`:''}`:shield?`Deflected · Shield −${shield}`:'Miss';
-    return `<span class="battle-impact" data-impact-event="${entry.id}" data-event-time="${entry.time}" aria-hidden="true" style="top:${14+index*18}px;--impact-time:${entry.duration/rate/1000}s">${label}</span>`;
+    return `<span class="battle-impact" data-impact-event="${entry.id}" data-event-time="${entry.time}" aria-hidden="true" style="top:${14+index*18}px;--impact-time:${presentationDuration(entry,speed)/rate/1000}s">${label}</span>`;
   }).join('');
   return {event,impactMarkup,impacts:latest?.impacts??[],own,incoming,
     cinematic:speed==='cinematic'?cinematicActionKind(event):null,
@@ -369,7 +374,7 @@ function simultaneousProjectileHTML(battle,speed,field,grid,entry) {
   const rate=simultaneousRate(battle,speed);
   return projectileHTML({...battle,lastEvent:entry.event},true,field,grid)
     .replace('class="battle-projectile',`data-sim-projectile="${entry.id}" data-event-time="${entry.time}" class="battle-projectile`)
-    .replace('style="',`style="--action-time:${entry.duration/rate/1000}s;--sim-delay:0s;`);
+    .replace('style="',`style="--action-time:${presentationDuration(entry,speed)/rate/1000}s;--sim-delay:0s;`);
 }
 
 const turnRenderCaches=new WeakMap(),turnFullFrames=new WeakMap();
@@ -404,7 +409,7 @@ export function updateTurnBattleView(root,battle,speed) {
 export function battlePresentationHold(battle,speed){
   const rate=simultaneousRate(battle,speed);
   const remaining=simultaneousEvents(battle).map(entry=>{
-    const duration=speed==='cinematic'&&cinematicActionKind(entry.event)==='attack'?Math.max(entry.duration,900):entry.duration;
+    const duration=presentationDuration(entry,speed);
     return Math.max(0,entry.time+duration-battle.simultaneous.time)/rate;
   });
   return Math.min(1000,Math.max(150,...remaining)+50);
@@ -442,7 +447,7 @@ export function updateSimultaneousBattleView(root,battle,speed) {
   const entries=simultaneousEvents(battle).filter(e=>battle.simultaneous.time-e.time<e.duration&&e.event.ranged);
   const ids=new Set(entries.map(e=>String(e.id)));
   surface.querySelectorAll('[data-sim-projectile]').forEach(node=>{if(!ids.has(node.dataset.simProjectile))node.remove();});
-  for(const entry of entries){const projectile=surface.querySelector(`[data-sim-projectile="${entry.id}"]`);if(projectile)projectile.style.setProperty('--action-time',`${entry.duration/simultaneousRate(battle,speed)/1000}s`);else surface.insertAdjacentHTML('beforeend',simultaneousProjectileHTML(battle,speed,field,grid,entry));}
+  for(const entry of entries){const projectile=surface.querySelector(`[data-sim-projectile="${entry.id}"]`);if(projectile)projectile.style.setProperty('--action-time',`${presentationDuration(entry,speed)/simultaneousRate(battle,speed)/1000}s`);else surface.insertAdjacentHTML('beforeend',simultaneousProjectileHTML(battle,speed,field,grid,entry));}
   view.querySelector('.battle-cycle').textContent=`Cycle ${battle.round} · ${(battle.simultaneous.time/1000).toFixed(1)}s`;
   const count=side=>battle.units.filter(u=>u.alive&&!u.escaped&&(side==='ally'?u.ally:side==='company'?u.side===side&&!u.ally:u.side===side)).length;
   view.querySelector('.battle-counts').textContent=`${count('company')} brothers · ${count('enemy')} enemies${count('ally')?` · ${count('ally')} allies`:''}`;
