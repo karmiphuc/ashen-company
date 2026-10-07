@@ -280,3 +280,13 @@ button.primary.is-ready:focus-visible{outline:2px solid #c4ff76;outline-offset:3
 .mini-person .bb-portrait{margin-inline-end:var(--portrait-overhang,0px)}
 
 .forge-affix-slots{display:grid;gap:8px;margin:12px 0}.forge-slot-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.forge-slot-row>small{grid-column:1/-1;color:#d6b578}.forge-slot{padding:7px 5px;border:1px dashed #796440;text-align:center;color:#a88f64;overflow-wrap:anywhere;font-size:11px}.forge-slot.filled{border-style:solid;background:#3c3220;color:#efd397}.forge-recipe{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.forge-material{padding:5px 8px;background:#293125;border:1px solid #788b57;font-size:12px}.forge-material.missing{background:#432b24;border-color:#a16b52;color:#f2c0a1}.forge-free,.forge-legacy{display:block;color:#d8c38e;font-size:12px;margin:8px 0}.forge-success .forge-affix-slots{max-width:420px;margin:12px auto}
+
+/* Set link occupies the existing head/body gap, without adding a row. */
+.company-page .protection-slots{gap:8px}
+.protection-slots>.slot-wrap:first-child{position:relative}
+.armor-set-link{position:absolute;z-index:2;left:calc(100% - 14px);top:34px;margin:0;color:#8d8066}
+.armor-set-link .company-hint-button{width:36px;height:36px;min-height:36px;padding:5px;border:0;background:none;box-shadow:none;color:inherit}
+.armor-set-link svg{display:block;width:26px;height:26px;padding:3px;border-radius:50%;background:#29241b;border:1px solid #665737}
+.armor-set-link.is-active{color:#f2d084}
+.armor-set-link.is-active svg{background:#40331c;border-color:#c29b50;filter:drop-shadow(0 0 3px #c29b5055)}
+.armor-set-link .company-hint-button:hover,.armor-set-link .company-hint-button[aria-expanded=true]{background:none;color:#fff0c9}

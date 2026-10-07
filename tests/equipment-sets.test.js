@@ -1,0 +1,162 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {ITEMS,createGame,getItem,createFamedItemId,getCompanyStats,getCampSites,startBattle,advanceBattle,resolveBattle,retreatBattle,finishBattle,validateSave,equipItem,unequipItem,getAgileDefenseMultiplier} from '../src/engine.js';
+import {encodeBoundedForgeItem} from '../src/reforged-items.js';
+import {equipmentSetStatus,equipmentSetForItem,effectiveArmorFatigue,createSetArmorSnapshot,baseArmorCondition,validSetArmorSnapshot} from '../src/equipment-sets.js';
+import {equipmentSetHTML} from '../src/campaign-ui.js';
+import {getItemDetails} from '../src/item-details.js';
+import {applySimultaneousSnapshot} from '../src/simultaneous-runner.js';
+import {setSimultaneousBetaEnabled} from '../src/combat-config.js';
+
+function outfit({body='bb-assassin-robe',head='bb-assassin-face-mask',bodyCondition,headCondition}={}){
+ const state=createGame(51),person=state.party[0];
+ for(const [id,condition] of [[body,bodyCondition],[head,headCondition]]){
+  state.inventory.push(id);state.inventoryCondition.push(condition??getItem(id).armor);
+  assert.equal(equipItem(state,person.id,id).ok,true);
+ }
+ return {state,person};
+}
+function fight(options={},realtime=false){
+ const {state,person}=outfit(options),site=getCampSites(state)[0];state.position={x:site.x,y:site.y};
+ setSimultaneousBetaEnabled(realtime);
+ try{assert.equal(startBattle(state,site.id).ok,true);}finally{setSimultaneousBetaEnabled(false);}
+ return {state,person,unit:state.battle.units.find(u=>u.id===person.id)};
+}
+function leave(state){assert.equal(retreatBattle(state).ok,true);assert.equal(finishBattle(state).ok,true);validateSave(JSON.parse(JSON.stringify(state)));}
+
+test('Assassin pair grants requested armor and rounded fatigue, including the alternative head wrap',()=>{
+ const {person}=outfit(),stats=getCompanyStats(person);
+ assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:8,head:5});
+ assert.deepEqual([stats.bodyArmor,stats.maxBodyArmor,stats.headArmor,stats.maxHeadArmor],[138,138,161,161]);
+ const wrap=outfit({head:'bb-assassin-head-wrap'}).person;
+ assert.equal(getCompanyStats(wrap).headArmor,46);
+ assert.deepEqual(effectiveArmorFatigue(wrap,getItem),{body:8,head:0});
+});
+
+test('only worn matching designs count; stashing or removing a piece disables both bonuses without repairing',()=>{
+ const {state,person}=outfit({bodyCondition:80,headCondition:70});
+ assert.deepEqual([getCompanyStats(person).bodyArmor,getCompanyStats(person).headArmor],[92,80]);
+ assert.equal(unequipItem(state,person.id,'helmet').ok,true);
+ assert.equal(equipmentSetStatus(person,getItem).active,false);
+ assert.equal(getCompanyStats(person).bodyArmor,80);
+ assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:9,head:0});
+ assert.equal(equipItem(state,person.id,'bb-assassin-face-mask').ok,true);
+ assert.deepEqual(person.armorDurability.body,80);assert.equal(person.armorDurability.head,70);
+ assert.equal(equipmentSetForItem(getItem('mail-shirt')),null);
+});
+
+test('named designs qualify and transferring enhancements cannot confer membership on another design',()=>{
+ const body=createFamedItemId('bb-assassin-robe',42,5),head=createFamedItemId('bb-assassin-face-mask',43,5);
+ const {person}=outfit({body,head}),stats=getCompanyStats(person);
+ assert.equal(equipmentSetStatus(person,getItem).active,true);
+ assert.equal(stats.maxBodyArmor,Math.floor(getItem(body).armor*1.15));
+ assert.equal(stats.maxHeadArmor,Math.floor(getItem(head).armor*1.15));
+ const lookup=id=>id==='transferred'?{id,baseId:'mail-shirt',slot:'armor',armor:120,fatigue:9}:getItem(id);
+ assert.equal(equipmentSetStatus({equipment:{armor:'transferred',helmet:head}},lookup).active,false);
+ const reforged=encodeBoundedForgeItem('bb-assassin-robe',{locked:false,foundation:{armorPct:20,weight:2},prefixes:[],suffixes:[]},id=>ITEMS.find(i=>i.id===id));
+ const smith=outfit({body:reforged,head}).person;
+ assert.equal(equipmentSetStatus(smith,getItem).active,true);
+ assert.equal(getCompanyStats(smith).maxBodyArmor,Math.floor(getItem(reforged).armor*115/100));
+});
+
+test('set fitting feeds fatigue capacity and initiative before Brawny and retains light-gear defenses',()=>{
+ const {person}=outfit();person.perks=['brawny','nimble','agile-defense'];
+ const fitted=getCompanyStats(person),unpaired=structuredClone(person);unpaired.equipment.helmet=null;
+ const withoutHead=getCompanyStats(unpaired);
+ // Body 8 + head 5, then Brawny floor(13*.7)=9; body alone floor(9*.7)=6.
+ assert.equal(fitted.maxFatigue,withoutHead.maxFatigue-3);
+ assert.equal(fitted.initiative,withoutHead.initiative-3);
+ assert.equal(getAgileDefenseMultiplier(person),.4);
+ person.armorDurability.body=0;person.armorDurability.head=0;
+ assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:8,head:5});
+ assert.equal(getCompanyStats(person).bodyArmor,0);
+});
+
+test('battle snapshots survive saves and realtime worker updates and convert only actual wear',()=>{
+ for(const realtime of [false,true]){
+  const {state,unit}=fight({bodyCondition:79,headCondition:71},realtime);
+  assert.equal(unit.bodyArmor,90);assert.equal(unit.headArmor,81);
+  assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))),state);
+  const snapshot={battle:structuredClone(state.battle),supplies:structuredClone(state.supplies),events:[],eventSerial:0};
+  if(realtime)applySimultaneousSnapshot(state,snapshot);
+  assert.deepEqual(state.battle.units.find(u=>u.id===unit.id).setArmor,unit.setArmor);
+  leave(state);assert.equal(state.party[0].armorDurability.body,79);assert.equal(state.party[0].armorDurability.head,71);
+ }
+});
+
+test('taking one point or all boosted armor never heals and raw wear persists after retreat',()=>{
+ for(const damage of [1,40,138]){
+  const {state,unit}=fight();unit.bodyArmor-=damage;
+  assert.equal(baseArmorCondition(unit,'body'),120-Math.ceil(damage*120/138));
+  validateSave(JSON.parse(JSON.stringify(state)));leave(state);
+  assert.equal(state.party[0].armorDurability.body,120-Math.ceil(damage*120/138));
+ }
+});
+
+test('real strikes consume the boosted enemy pool and victory loot stores base condition',()=>{
+ const {state,unit}=fight(),battle=state.battle,enemy=battle.units.find(u=>u.side==='enemy');
+ const body=createFamedItemId('bb-assassin-robe',42,5),head=createFamedItemId('bb-assassin-face-mask',43,5);
+ Object.assign(enemy.equipment,{armor:body,helmet:head,attachment:null,attachment2:null,shield:null});
+ enemy.setArmor=createSetArmorSnapshot(enemy,getItem);enemy.bodyArmor=enemy.maxBodyArmor=enemy.setArmor.body.initial;
+ enemy.headArmor=enemy.maxHeadArmor=enemy.setArmor.head.initial;enemy.attachmentArmor=enemy.maxAttachmentArmor=enemy.attachment2Armor=enemy.maxAttachment2Armor=0;
+ Object.assign(enemy,{q:5,r:4,meleeDefense:0,morale:80,shieldDurability:0,maxShieldDurability:0});
+ Object.assign(unit,{q:4,r:4,meleeSkill:200,ap:9,fatigue:0,morale:80,turnStartedRound:battle.round});
+ for(const [i,other]of battle.units.filter(u=>u!==unit&&u!==enemy).entries())Object.assign(other,{q:0,r:i});
+ for(const tile of battle.field.tiles){tile.terrain='open';tile.height=0;}
+ battle.activeId=unit.id;battle.turnIndex=battle.turnOrder.indexOf(unit.id);battle.rng=0;
+ advanceBattle(state);assert.equal(battle.lastEvent.type,'attack');assert.ok(battle.lastEvent.armorDamage>0);
+ assert.ok(enemy.bodyArmor<enemy.maxBodyArmor||enemy.headArmor<enemy.maxHeadArmor);
+ const wear={body:baseArmorCondition(enemy,'body'),head:baseArmorCondition(enemy,'head')};
+ for(const foe of battle.units.filter(u=>u.side==='enemy')){foe.hp=0;foe.alive=false;}
+ resolveBattle(state);assert.equal(battle.status,'victory');
+ for(const [id,key]of [[body,'body'],[head,'head']]){
+  const index=battle.loot.items.indexOf(id);assert.ok(index>=0);
+  assert.equal(battle.loot.itemConditions[index],Math.max(Math.ceil(getItem(id).armor*.25),wear[key]));
+  assert.ok(battle.loot.itemConditions[index]<=getItem(id).armor);
+ }
+ finishBattle(state);validateSave(JSON.parse(JSON.stringify(state)));
+});
+
+test('victory recovers a fallen brother’s set pieces in base condition',()=>{
+ const {state,unit}=fight({bodyCondition:80,headCondition:70});unit.bodyArmor-=10;unit.headArmor-=10;
+ const wear={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
+ unit.hp=0;unit.alive=false;
+ for(const foe of state.battle.units.filter(u=>u.side==='enemy')){foe.hp=0;foe.alive=false;}
+ resolveBattle(state);assert.equal(state.battle.status,'victory');finishBattle(state);
+ for(const [id,key]of [['bb-assassin-robe','body'],['bb-assassin-face-mask','head']]){
+  const index=state.inventory.indexOf(id);assert.ok(index>=0);assert.equal(state.inventoryCondition[index],wear[key]);
+ }
+ validateSave(JSON.parse(JSON.stringify(state)));
+});
+
+test('snapshot validation rejects missing, altered, or inconsistent armor pools',()=>{
+ const {state,unit}=fight();assert.equal(validSetArmorSnapshot(unit,getItem),true);
+ for(const mutate of [u=>delete u.setArmor,u=>u.setArmor.body.effectiveMax++,u=>u.setArmor.head.initial--,u=>u.setArmor.body.baseCurrent=-1,u=>u.setArmor.id='other']){
+  const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===unit.id));
+  assert.throws(()=>validateSave(broken),/battle set armor/);
+ }
+ const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=2;
+ assert.throws(()=>validateSave(broken),/equipment set rules/);
+});
+
+test('pre-set active battles retain raw protection and fatigue until they end',()=>{
+ const {state,unit,person}=fight();delete state.battle.equipmentSetRulesVersion;
+ for(const actor of state.battle.units){if(!actor.setArmor)continue;
+  actor.bodyArmor=actor.setArmor.body.baseCurrent;actor.maxBodyArmor=actor.setArmor.body.baseMax;
+  actor.headArmor=actor.setArmor.head.baseCurrent;actor.maxHeadArmor=actor.setArmor.head.baseMax;
+  delete actor.setArmor;
+ }
+ const loaded=validateSave(JSON.parse(JSON.stringify(state))),actor=loaded.battle.units.find(u=>u.id===person.id);
+ assert.equal(actor.bodyArmor,120);assert.equal(actor.headArmor,140);
+ assert.deepEqual(effectiveArmorFatigue(actor,getItem),{body:9,head:6});
+ leave(loaded);assert.equal(getCompanyStats(loaded.party[0]).bodyArmor,138);
+});
+
+test('set hint exposes active and missing-piece states without adding a new item design',()=>{
+ const {state,person}=outfit();assert.match(equipmentSetHTML(person),/Assassin 2\/2/);
+ assert.match(equipmentSetHTML(person),/helmet fatigue −10%, body fatigue −15%/);
+ assert.match(getItemDetails(getItem('bb-assassin-robe')).notes.join(' '),/Assassin set piece/);
+ unequipItem(state,person.id,'helmet');assert.match(equipmentSetHTML(person),/Pair incomplete/);
+ assert.match(equipmentSetHTML(person),/Assassin 1\/2/);
+ assert.equal(createSetArmorSnapshot(person,getItem),null);
+});

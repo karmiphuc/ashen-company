@@ -1,3 +1,4 @@
+import { effectiveArmorFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
 import { equipmentPerk, equipmentBoost, equipmentRangedReach, rollAttachment } from './item-affixes.js';
 import { recordQuestCompletion } from './quest-completion.js';
 import { BLACKSMITH_STAGES, initialBlacksmith, blacksmithIndex, blacksmithUnlocked, discoverBlacksmith, blacksmithEncounters, validateBlacksmith } from './legendary-blacksmith.js';
@@ -352,7 +353,7 @@ function recordBlacksmithBattle(state,battle){
  const success=battle.status==='victory'&&(index!==3||!q.survivors.includes(0)||units.some(u=>u.champion&&!u.alive&&!u.escaped));
  if(success){q.status='ready';q.survivors=[];q.damage={};record(state,`${BLACKSMITH_STAGES[index].name}: quest object recovered. Return to Odran in Ironford to turn it in.`);return;}
  q.survivors=units.filter(u=>u.alive||u.escaped).map(u=>Number(u.id.slice(6))-1);
- if(!q.survivors.length){q.survivors=[0];q.damage={};}else q.damage=Object.fromEntries(units.filter(u=>u.alive||u.escaped).map(u=>[Number(u.id.slice(6))-1,{hp:u.escaped?u.maxHp:u.hp,bodyArmor:u.bodyArmor,headArmor:u.headArmor,shieldDurability:u.shieldDurability}]));
+ if(!q.survivors.length){q.survivors=[0];q.damage={};}else q.damage=Object.fromEntries(units.filter(u=>u.alive||u.escaped).map(u=>[Number(u.id.slice(6))-1,{hp:u.escaped?u.maxHp:u.hp,bodyArmor:baseArmorCondition(u,'body'),headArmor:baseArmorCondition(u,'head'),shieldDurability:u.shieldDurability}]));
  record(state,`${BLACKSMITH_STAGES[index].name} remains active. Surviving guards and their worn equipment await a retry.`);
 }
 const forgeCatalog=id=>ITEM_BY_ID.get(id);
@@ -681,7 +682,7 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
   const mountHit = person.hp > 0 ? equipped.mount?.hitBonus ?? 0 : 0;
   const mountInitiative = person.hp > 0 ? equipped.mount?.initiativeBonus ?? 0 : 0;
   const mount = person.hp > 0 ? equipped.mount : null;
-  const armorFatigue = (equipped.armor?.fatigue ?? 0) + (equipped.helmet?.fatigue ?? 0);
+  const setFatigue=effectiveArmorFatigue(person,getItem),armorFatigue=setFatigue.body+setFatigue.head;
   const attachmentFatigue=(equipped.attachment?.fatigue??0)+(equipped.attachment2?.fatigue??0);
   const otherFatigue = (equipped.weapon?.fatigue ?? 0) + (equipped.shield?.fatigue ?? 0);
   const perkFatigue = otherFatigue + (hasPerk(person, 'brawny') ? Math.floor(armorFatigue * .7) : armorFatigue);
@@ -692,10 +693,11 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
   const captain = legacy && background === 'Captain';
   const baseMaxHp = 100 + (guard ? 5 : 0) + (attributes.maxHp ?? 0) + (recruit.maxHp ?? 0) + famedStatBonus('maxHp');
   const maxHp = Math.round(baseMaxHp*(hasPerk(person,'colossus')?1.25:1)*(1+equipmentBoost(person,'healthPct',getItem)/100));
-  const maxBodyArmor = armorMaximum(person.equipment?.armor);
+  const setArmor=createSetArmorSnapshot(person,getItem,{body:person.armorDurability?.body,head:person.armorDurability?.head});
+  const maxBodyArmor = setArmor?.body.effectiveMax??armorMaximum(person.equipment?.armor);
   const maxAttachmentArmor = armorMaximum(person.equipment?.attachment);
   const maxAttachment2Armor=armorMaximum(person.equipment?.attachment2);
-  const maxHeadArmor = armorMaximum(person.equipment?.helmet);
+  const maxHeadArmor = setArmor?.head.effectiveMax??armorMaximum(person.equipment?.helmet);
   const shieldDefense = (person.armorDurability?.shield ?? shieldMaximum(person.equipment?.shield)) > 0 ? equipped.shield?.defense ?? 0 : 0;
   const rangedShieldDefense=(person.armorDurability?.shield??shieldMaximum(person.equipment?.shield))>0?equipped.shield?.rangedDefense??shieldDefense:0;
   const effectiveRangedShieldDefense=(hasPerk(person,'shield-expert')?Math.ceil(rangedShieldDefense*1.25):rangedShieldDefense)+(rangedShieldDefense&&hasPerk(person,'shield-bearer')?5:0);
@@ -724,10 +726,10 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
     nextLevelXp: level * 50,
     trainingPoints: person.pendingLevelUps?.length ?? person.trainingPoints ?? 0,
     dailyWage: Math.max(1, 5 + level - 1 + ((RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId)?.cost??0)>=700?Math.ceil(RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId).cost/200):0)),
-    bodyArmor: person.armorDurability?.body ?? maxBodyArmor,
+    bodyArmor: setArmor?.body.initial??person.armorDurability?.body??maxBodyArmor,
     attachmentArmor: person.armorDurability?.attachment ?? maxAttachmentArmor,
     attachment2Armor:person.armorDurability?.attachment2??maxAttachment2Armor,
-    headArmor: person.armorDurability?.head ?? maxHeadArmor,
+    headArmor: setArmor?.head.initial??person.armorDurability?.head??maxHeadArmor,
     maxBodyArmor,
     maxAttachmentArmor, maxAttachment2Armor,
     maxHeadArmor,
@@ -3100,6 +3102,13 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   }
   // Resolve each soldier once from the full loadout, including NPC mounts.
   for(const unit of [...enemies,...allies])unit.tacticalRole=resolveCombatRole({},getItem(unit.equipment.weapon),getItem(unit.reserveEquipment.weapon),{armor:getItem(unit.equipment.armor),mount:getItem(unit.equipment.mount)});
+  for(const unit of [...company,...allies,...enemies]){
+    const person=unit.side==='company'?personById(state,unit.id):null;
+    const raw={body:person?person.armorDurability.body:unit.bodyArmor,head:person?person.armorDurability.head:unit.headArmor};
+    const snapshot=createSetArmorSnapshot(unit,getItem,raw);if(!snapshot)continue;
+    unit.setArmor=snapshot;unit.maxBodyArmor=snapshot.body.effectiveMax;unit.bodyArmor=snapshot.body.initial;unit.maxHeadArmor=snapshot.head.effectiveMax;unit.headArmor=snapshot.head.initial;
+    if(!person){const load=effectiveArmorFatigue(unit,getItem),saving=(getItem(unit.equipment.armor)?.fatigue??0)+(getItem(unit.equipment.helmet)?.fatigue??0)-load.body-load.head;unit.maxFatigue+=saving;unit.initiative+=saving;}
+  }
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
     ...(undead ? { crisisContext: { crisisId: state.ashenWinter.crisisId, frontId: undead.frontId, townId: undead.townId, forceSeed: undead.force.seed, generation: undead.force.generation } } : {}),
@@ -3108,7 +3117,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed,camp,encounterAffixes(state,camp.id,camp.generation)) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     injuryRulesVersion:1, injuryRng:hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}:injuries`),
-    status: 'active', itemAffixRulesVersion:2, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', equipmentSetRulesVersion:1, itemAffixRulesVersion:2, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -3187,7 +3196,7 @@ function victoryLoot(battle, enemies) {
     for (const [slot,set] of slots) {
       const id = (set === 'reserve' ? enemy.reserveEquipment : enemy.equipment)?.[slot];
       if (!['famed','named'].includes(getItem(id)?.rarity)) continue;
-      const maximum = itemCondition(id), worn = slot === 'armor' ? enemy.bodyArmor : slot === 'helmet' ? enemy.headArmor : slot==='attachment' ? enemy.attachmentArmor : slot==='attachment2' ? enemy.attachment2Armor
+      const maximum = itemCondition(id), worn = slot === 'armor' ? baseArmorCondition(enemy,'body') : slot === 'helmet' ? baseArmorCondition(enemy,'head') : slot==='attachment' ? enemy.attachmentArmor : slot==='attachment2' ? enemy.attachment2Armor
         : slot === 'shield' ? set === 'reserve' ? enemy.reserveShieldDurability : enemy.shieldDurability
         : getItem(id)?.throwing ? enemy.throwingAmmo?.[set] : null;
       addItem(id, maximum === null ? null : Math.max(Math.ceil(maximum*.25),worn ?? maximum), true);
@@ -3201,7 +3210,7 @@ function victoryLoot(battle, enemies) {
       if (!id || items.length >= 24 || guaranteed.has(`${enemy.id}:${slot}`)) continue;
       const maximum = armorMaximum(id);
       const condition = slot === 'weapon' && getItem(id)?.throwing ? enemy.throwingAmmo?.active ?? throwingCapacity(id)
-        : slot === 'armor' ? enemy.bodyArmor : slot === 'attachment' ? enemy.attachmentArmor : slot==='attachment2'?enemy.attachment2Armor : slot === 'helmet' ? enemy.headArmor : slot === 'shield' ? enemy.shieldDurability : null;
+        : slot === 'armor' ? baseArmorCondition(enemy,'body') : slot === 'attachment' ? enemy.attachmentArmor : slot==='attachment2'?enemy.attachment2Armor : slot === 'helmet' ? baseArmorCondition(enemy,'head') : slot === 'shield' ? enemy.shieldDurability : null;
       if (maximum && condition < Math.ceil(maximum * .25)) continue;
       const chance = ['named','famed'].includes(getItem(id)?.rarity) ? 100 : slot === 'weapon' ? 70 : slot === 'shield' ? 55 : 40;
       if (roll(`${enemy.id}:${slot}`, 100) < chance) {const enhanced=slot==='attachment'&&!getItem(id).rollVersion&&roll(`${enemy.id}:${slot}:fine`,100)<20?createFamedItemId(id,hashSeed(`${seed}:${enemy.id}:${slot}:attachment`),5):id;addItem(enhanced,condition);}
@@ -3262,8 +3271,8 @@ function movementFatigue(actor, cost) {
 }
 
 function movementBudget(actor, battle) {
-  const lightArmor = (getItem(actor.equipment.armor)?.fatigue ?? 0) + (battle?.attachmentRulesVersion===1?0:getItem(actor.equipment.attachment)?.fatigue??0)
-    + (getItem(actor.equipment.helmet)?.fatigue ?? 0) <= 15;
+  const load=effectiveArmorFatigue(actor,getItem);
+  const lightArmor = load.body+load.head+(battle?.attachmentRulesVersion===1?0:getItem(actor.equipment.attachment)?.fatigue??0)<=15;
   return 2 + (getItem(actor.equipment.mount) && battle?.mountBalanceVersion !== 1 ? 2 : 0) + Number(lightArmor && hasPerk(actor, 'fleet-footed'));
 }
 
@@ -3306,8 +3315,8 @@ function changeBattleWeapon(actor, weaponId, shieldId, shieldDurability = actor.
   const defenseDelta = shieldDefenseFor(actor, shieldId) - oldDefense;
   const newFatigue = battleGearFatigue(actor.equipment);
   const fatigueDelta = oldFatigue - newFatigue;
-  const armorFatigue = (getItem(actor.equipment.armor)?.fatigue ?? 0) + (battle?.attachmentRulesVersion===1?0:getItem(actor.equipment.attachment)?.fatigue??0)
-    + (getItem(actor.equipment.helmet)?.fatigue ?? 0);
+  const setLoad=effectiveArmorFatigue(actor,getItem);
+  const armorFatigue = setLoad.body+setLoad.head+(battle?.attachmentRulesVersion===1?0:getItem(actor.equipment.attachment)?.fatigue??0);
   const armorPenalty = hasPerk(actor, 'brawny') ? Math.floor(armorFatigue * .7) : armorFatigue;
   const initiativeDelta = hasPerk(actor, 'relentless')
     ? Math.ceil((armorPenalty + oldFatigue) / 2) - Math.ceil((armorPenalty + newFatigue) / 2) : fatigueDelta;
@@ -4043,10 +4052,10 @@ export function getDoubleGripBonus(unit, weapon = getItem(unit.equipment?.weapon
   return weapon?.slot==='weapon' && !weapon.ranged && !weapon.twoHanded && !unit.equipment?.shield ? .25 : 0;
 }
 
-// BB-style light-armor protection uses original worn body/head weight, not effective fatigue.
+// Light-armor checks include set fitting, before Brawny or other perk discounts.
 export function getAgileDefenseMultiplier(unit) {
   if (!hasPerk(unit, 'agile-defense')) return 1;
-  const weight = (getItem(unit.equipment?.armor)?.fatigue ?? 0) + (getItem(unit.equipment?.helmet)?.fatigue ?? 0);
+  const load=effectiveArmorFatigue(unit,getItem),weight=load.body+load.head;
   return Math.min(1, .4 + Math.pow(Math.max(0, weight - 15-equipmentBoost(unit,'agileThreshold',getItem)), 1.23) / 100);
 }
 
@@ -5804,7 +5813,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     if (!unit.alive) {
       if (victory) {
         for (const [itemId, condition] of [
-          ...SLOTS.map(slot => [person.equipment[slot], slot === 'armor' ? unit.bodyArmor : slot === 'attachment' ? unit.attachmentArmor : slot==='attachment2'?unit.attachment2Armor??person.armorDurability.attachment2 : slot === 'helmet' ? unit.headArmor : slot === 'shield' ? activeShieldCondition : slot === 'weapon' && getItem(person.equipment.weapon)?.throwing ? throwingAmmo.active : null]),
+          ...SLOTS.map(slot => [person.equipment[slot], slot === 'armor' ? baseArmorCondition(unit,'body') : slot === 'attachment' ? unit.attachmentArmor : slot==='attachment2'?unit.attachment2Armor??person.armorDurability.attachment2 : slot === 'helmet' ? baseArmorCondition(unit,'head') : slot === 'shield' ? activeShieldCondition : slot === 'weapon' && getItem(person.equipment.weapon)?.throwing ? throwingAmmo.active : null]),
           ...['weapon', 'shield'].map(slot => [person.reserveEquipment[slot], slot === 'shield' ? reserveShieldCondition : slot === 'weapon' && getItem(person.reserveEquipment.weapon)?.throwing ? throwingAmmo.reserve : null]),
           ...carriedAccessories.map(id => [id, null]),
         ]) {
@@ -5821,7 +5830,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     person.morale = Math.min(100, unit.morale + (isMoraleImmune(unit) ? 0 : sharing?.morale ?? 0));
     person.accessories = carriedAccessories;
     person.throwingAmmo = throwingAmmo;
-    person.armorDurability = { body: unit.bodyArmor, attachment: unit.attachmentArmor, attachment2:unit.attachment2Armor??person.armorDurability.attachment2, head: unit.headArmor,
+    person.armorDurability = { body: baseArmorCondition(unit,'body'), attachment: unit.attachmentArmor, attachment2:unit.attachment2Armor??person.armorDurability.attachment2, head: baseArmorCondition(unit,'head'),
       shield: activeShieldCondition, reserveShield: reserveShieldCondition };
     awardExperience(person,getBattleExperience(state,person.id)+(sharing?.xp??0));
     survivors.push(person);
@@ -5875,7 +5884,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   if(battle.encounterType==='blacksmith')recordBlacksmithBattle(state,battle);
   if (!victory && undeadEncounter) {
     const remaining = battle.units.filter(u => u.side === 'enemy' && u.alive);
-    recordAshenCasualties(state, battle.campId, remaining.map(u => u.troopIndex), Object.fromEntries(remaining.map(u => [u.troopIndex, { hp: u.hp, bodyArmor: u.bodyArmor, headArmor: u.headArmor, shieldDurability: u.shieldDurability }])));
+    recordAshenCasualties(state, battle.campId, remaining.map(u => u.troopIndex), Object.fromEntries(remaining.map(u => [u.troopIndex, { hp: u.hp, bodyArmor: baseArmorCondition(u,'body'), headArmor: baseArmorCondition(u,'head'), shieldDurability: u.shieldDurability }])));
   }
   if(battle.patrolAssist){
     const a=battle.patrolAssist,p=state.factionPatrols[a.id],definition=patrolDefinitions(SETTLEMENTS).find(d=>d.id===a.id);
@@ -6026,6 +6035,7 @@ function validateBattle(input, party, worldState) {
   assert(validCount(lootSeed) && lootSeed <= 0xffffffff, 'battle loot seed');
   const field = validateBattleField(input.field);
   assert(input.escapeRulesVersion===undefined||input.escapeRulesVersion===1,'battle escape rules');
+  assert(input.equipmentSetRulesVersion===undefined||input.equipmentSetRulesVersion===1,'battle equipment set rules');
   assert(input.itemAffixRulesVersion===undefined||[1,2].includes(input.itemAffixRulesVersion),'battle item affix rules');
   assert(input.championLootVersion===undefined||[1,2].includes(input.championLootVersion),'battle champion loot rules');
   assert(input.enemyScalingVersion===undefined||input.enemyScalingVersion===1,'battle enemy scaling rules');
@@ -6144,7 +6154,10 @@ function validateBattle(input, party, worldState) {
         if (unit[key] === legacy) unit[key] = item.armor;
       }
     }
-    assert(unit.maxBodyArmor === armorMaximum(unit.equipment.armor) && maxAttachmentArmor === armorMaximum(unit.equipment.attachment) && unit.maxHeadArmor === armorMaximum(unit.equipment.helmet), 'battle armor maximum');
+    assert(unit.setArmor===undefined||input.equipmentSetRulesVersion===1&&validSetArmorSnapshot(unit,getItem),'battle set armor');
+    const expectedSet=input.equipmentSetRulesVersion===1?createSetArmorSnapshot(unit,getItem):null;
+    assert(Boolean(unit.setArmor)===Boolean(expectedSet),'battle set armor presence');
+    assert(unit.maxBodyArmor === (expectedSet?.body.effectiveMax??armorMaximum(unit.equipment.armor)) && maxAttachmentArmor === armorMaximum(unit.equipment.attachment) && unit.maxHeadArmor === (expectedSet?.head.effectiveMax??armorMaximum(unit.equipment.helmet)), 'battle armor maximum');
     assert(validCount(unit.bodyArmor) && unit.bodyArmor <= unit.maxBodyArmor && validCount(attachmentArmor) && attachmentArmor <= maxAttachmentArmor && validCount(unit.headArmor) && unit.headArmor <= unit.maxHeadArmor, 'battle armor');
     assert(validCount(shieldDurability) && shieldDurability <= maxShieldDurability && validCount(reserveShieldDurability) && reserveShieldDurability <= maxReserveShieldDurability
       && (unit.maxShieldDurability === undefined || unit.maxShieldDurability === maxShieldDurability)
@@ -6186,6 +6199,7 @@ function validateBattle(input, party, worldState) {
     return {
       id: unit.id, name: unit.name, side: unit.side, ...(unit.ally ? { ally: true } : {}), q: unit.q, r: unit.r,
       ...(input.injuryRulesVersion===1?{injuries:copyInjuries(unit.injuries)}:{}),
+      ...(unit.setArmor===undefined?{}:{setArmor:structuredClone(unit.setArmor)}),
       hp: unit.hp, maxHp: unit.maxHp, bodyArmor: unit.bodyArmor, attachmentArmor, headArmor: unit.headArmor,
       maxBodyArmor: unit.maxBodyArmor, maxAttachmentArmor, ...(input.attachmentRulesVersion===1?{attachment2Armor,maxAttachment2Armor}:{}), maxHeadArmor: unit.maxHeadArmor,
       equipment: Object.fromEntries(SLOTS.filter(slot=>slot!=='attachment2'||input.attachmentRulesVersion===1||unit.equipment.attachment2!==undefined).map(slot => [slot, unit.equipment[slot] ?? null])),
@@ -6347,6 +6361,7 @@ function validateBattle(input, party, worldState) {
     ...(input.championRulesVersion===undefined?{}:{championRulesVersion:1}),
     ...(input.escapeRulesVersion===undefined?{}:{escapeRulesVersion:1}),
     ...(input.enemyScalingVersion===undefined?{}:{enemyScalingVersion:1}),
+    ...(input.equipmentSetRulesVersion===undefined?{}:{equipmentSetRulesVersion:input.equipmentSetRulesVersion}),
     ...(input.itemAffixRulesVersion===undefined?{}:{itemAffixRulesVersion:input.itemAffixRulesVersion}),
     ...(input.championLootVersion===undefined?{}:{championLootVersion:input.championLootVersion}),
     ...(input.rulesVersion === undefined ? {} : { rulesVersion }),
