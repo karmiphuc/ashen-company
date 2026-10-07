@@ -30,7 +30,11 @@ and Alpha have prominent crowns, clear face apertures, different leather/mail
 construction and readable silhouettes at 80px roster size. The existing Wolf
 Helmet uses its unchanged original artwork and stats. Four browser scenarios
 cover both recipes, ordinary/named output, desktop/tablet/mobile, cancellation,
-inspection return, reload and storage failure/retry. Moonfang is now195/13.
+inspection return, reload and storage failure/retry. Moonfang is now 195/13.
+
+Integration checks include all nine Direwolf body/head pairings and Direwolf Fur
+trophy completion in either attachment slot. Version-8 battles stay unfitted;
+new version-9 battles preserve raw wear through save/reload and retreat.
 
 No unresolved P0/P1/P2 findings. Physical-device Safari remains untested.
 

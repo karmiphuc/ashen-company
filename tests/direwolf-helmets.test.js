@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createGame, getItem, ITEMS, getDirewolfHelmetQuote, craftDirewolfHelmet, createFamedItemId, equipItem, getCompanyStats, validateSave, getCampSites, startBattle, retreatBattle, finishBattle, getMarket } from '../src/engine.js';
 import { DIREWOLF_BODY_IDS, DIREWOLF_LEATHER_HELMET as leather, DIREWOLF_ALPHA_HELMET as alpha, DIREWOLF_EXISTING_HELMET as wolf, direwolfHelmetRecipe } from '../src/direwolf-helmets.js';
 import { direwolfCraftRoll } from '../src/direwolf-crafting.js';
-import { equipmentSetStatus, effectiveArmorFatigue, equipmentSetsForRules } from '../src/equipment-sets.js';
+import { equipmentSetStatus, effectiveArmorFatigue, effectiveAttachmentFatigue, equipmentSetsForRules } from '../src/equipment-sets.js';
 import { itemImage, portraitHTML } from '../src/portraits.js';
 import { extractForgeAffixes, encodeBoundedForgeItem } from '../src/reforged-items.js';
 import { decodePng } from '../tools/content/restore-ancient-art.mjs';
@@ -65,7 +65,7 @@ test('all nine Direwolf body/head pairs fit once with correct rounded protection
     assert.deepEqual(effectiveArmorFatigue(p, getItem), { body: Math.round(getItem(body).fatigue * .85), head: Math.round(getItem(head).fatigue * .9) });
   }
   assert.equal(equipmentSetStatus({ equipment: { armor: 'mail-shirt', helmet: leather } }, getItem).active, false);
-  assert.equal(equipmentSetsForRules(6).some(s => s.id === 'direwolf'), false);
+  assert.equal(equipmentSetsForRules(8).some(s => s.id === 'direwolf'), false);
 });
 test('named and reforged designs retain set membership; transferring affixes does not transfer the family', () => {
   const catalog = id => ITEMS.find(item => item.id === id);
@@ -79,7 +79,22 @@ test('named and reforged designs retain set membership; transferring affixes doe
     actor.equipment.helmet = other; assert.equal(equipmentSetStatus(actor, getItem).active, false);
   }
 });
-test('version-seven battle snapshots survive save/reload and retreat without healing; version-six battles stay unfitted', () => {
+test('Direwolf Fur completes the family with replacement bonuses and works in either attachment slot', () => {
+  for (const slot of ['attachment', 'attachment2']) {
+    const s = createGame(21), p = s.party[0]; p.level = 4; p.perks = ['layered-armor'];
+    for (const id of ['direwolf-moonfang-harness', alpha, 'direwolf-fur']) { s.inventory.push(id); s.inventoryCondition.push(getItem(id).armor); }
+    equipItem(s, p.id, 'direwolf-moonfang-harness'); equipItem(s, p.id, alpha); equipItem(s, p.id, 'direwolf-fur', slot === 'attachment2' ? 'attachment-2' : 'active');
+    const status = equipmentSetStatus(p, getItem), stats = getCompanyStats(p);
+    assert.equal(status.threePiece, true); assert.equal(status.attachmentSlot, slot);
+    assert.deepEqual([stats.maxBodyArmor, stats.maxHeadArmor], [243, 331]);
+    assert.deepEqual(effectiveArmorFatigue(p, getItem), { body: 10, head: 12 });
+    assert.equal(effectiveAttachmentFatigue(p, getItem)[slot], 2);
+    const camp = getCampSites(s)[0]; s.position = { x: camp.x, y: camp.y }; startBattle(s, camp.id);
+    const u = s.battle.units.find(u => u.id === p.id); assert.equal(u.setArmor.attachmentSlot, slot);
+    assert.deepEqual(validateSave(JSON.parse(JSON.stringify(s))), s);
+  }
+});
+test('version-nine battle snapshots survive save/reload and retreat without healing; version-eight battles stay unfitted', () => {
   for (const head of [leather, wolf, alpha]) {
     const s = createGame(21), p = s.party[0], body = 'direwolf-moonfang-harness';
     s.inventory.push(body, head); s.inventoryCondition.push(100, 70); equipItem(s, p.id, body); equipItem(s, p.id, head);
@@ -87,7 +102,7 @@ test('version-seven battle snapshots survive save/reload and retreat without hea
     const u = s.battle.units.find(u => u.id === p.id); assert.equal(u.setArmor.id, 'direwolf'); assert.deepEqual(validateSave(JSON.parse(JSON.stringify(s))), s);
     u.bodyArmor--; u.headArmor--; retreatBattle(s); finishBattle(s);
     assert.ok(p.armorDurability.body < 100); assert.ok(p.armorDurability.head < 70); assert.deepEqual(validateSave(s), s);
-    startBattle(s, camp.id); s.battle.equipmentSetRulesVersion = 6;
+    startBattle(s, camp.id); s.battle.equipmentSetRulesVersion = 8;
     for (const unit of s.battle.units) if (unit.setArmor?.id === 'direwolf') { unit.bodyArmor = unit.maxBodyArmor = unit.setArmor.body.baseCurrent; unit.headArmor = unit.maxHeadArmor = unit.setArmor.head.baseCurrent; delete unit.setArmor; }
     // Maxima must remain the raw design maxima for an older battle.
     const old = s.battle.units.find(u => u.id === p.id); old.maxBodyArmor = getItem(body).armor; old.maxHeadArmor = getItem(head).armor;

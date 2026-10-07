@@ -48,9 +48,7 @@ repaired piece with a separate 3% named roll using the shared saved Direwolf
 craft sequence. Worn/broken originals qualify. Added named workmanship and
 reforged versions cannot be sacrificed; the original fixed rare Wolf Helmet is
 explicitly accepted for Alpha. Confirmation lists exact copies and fees.
-These costs are implementation defaults. The revised leather stats and reuse
-of the existing Wolf Helmet replace the earlier proposed 155/6 and 195/10
-helmet baselines.
+These costs are implementation defaults.
 
 Any of Direwolf Hide, Direwolf Mail or Moonfang body armor pairs with any of the
 three helmets: **+15% body/head armor, −15% body fatigue, −10% helmet fatigue**,
@@ -58,13 +56,17 @@ using the existing floor-for-armor and round-for-fatigue rules. Thus a full
 ordinary Moonfang + Alpha pair fits at **224 body / 304 head armor** with
 **11 body / 14 head fatigue**. Named and reforged designs retain membership;
 transferred affixes cannot grant membership to another design. A single set
-bonus applies. Equipment-set rules version 7 adds this family; version-6 and
+bonus applies. Direwolf Fur or Unhold Fur in either attachment slot can complete
+the set using the existing trophy rules: the stronger completion replaces the
+pair bonus and reduces the matching attachment’s fatigue without multiplying
+native effects. With Direwolf Fur, ordinary Moonfang + Alpha reaches 243 body /
+331 head armor, with 10 body / 12 head / 2 fur fatigue; the attachment’s own 60
+armor is unchanged. Equipment-set rules version 9 adds this family; version-8 and
 older active battles retain their original snapshots until they end.
 
 New helmet icons are 140×180; worn layers are 74×110 at left14/top−26, with
 open face apertures and beard/hair handling suited to hooded headgear. The
-source manifest records masters, packaged hashes and references. The unused
-new mail-helmet concept is not shipped: existing Wolf Helmet sprites are used.
+source manifest records masters, packaged hashes and references. The mail piece uses existing Wolf Helmet sprites.
 
 ## Transaction and save behavior
 

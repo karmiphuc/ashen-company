@@ -172,7 +172,7 @@ function statusIconsHTML(unit, battle) {
     unit.alive && unit.headHunterReady ? ['head-hunter', 'Head Hunter: next successful eligible hit strikes the head', '<path d="M8 1a4 4 0 0 1 4 4v3l-2 2v3H6v-3L4 8V5a4 4 0 0 1 4-4zm-2 4v2h1V5zm3 0v2h1V5z"/>'] : null,
     unit.alive && battle.weaponCompletionVersion===1 && getDoubleGripBonus(unit)>0 ? ['double-grip','Double Grip: +25% one-handed melee damage with an empty offhand','<path d="M3 2h2v5l2 2 2-2V2h2v6l-3 5H6L3 8z"/>'] : null,
     unit.disarmedTurns>0?['disarmed','Disarmed: weapon attacks and reactions disabled for one turn','<path d="m2 2 12 12M3 12l9-9"/>']:null,
-    unit.setArmor?['armor-set',equipmentSetBonusText(equipmentSetStatus(unit,getItem).set),'<path d="M8 2l5 3v4l-5 5-5-5V5z"/>']:null,
+    unit.setArmor?['armor-set',equipmentSetBonusText(equipmentSetStatus(unit,getItem).set,{threePiece:equipmentSetStatus(unit,getItem).threePiece,bonuses:equipmentSetStatus(unit,getItem).bonuses}),'<path d="M8 2l5 3v4l-5 5-5-5V5z"/>']:null,
     unit.affixDazedTurns>0?['affix-dazed','Head-hit daze: −50% initiative and −20% melee/ranged skill for '+unit.affixDazedTurns+' turns','<circle cx="8" cy="8" r="5"/>']:null,
     unit.killMomentumPct>0?['kill-momentum','Kill momentum: +'+unit.killMomentumPct+'% damage banked for the next weapon hit','<path d="m3 13 8-8M7 3h6v6"/>']:null,
     unit.dazedTurns>0?['dazed','Dazed: −25% damage, fatigue capacity and initiative for '+unit.dazedTurns+' turns','<circle cx="8" cy="8" r="5"/>']:null,

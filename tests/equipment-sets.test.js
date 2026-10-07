@@ -136,7 +136,7 @@ test('snapshot validation rejects missing, altered, or inconsistent armor pools'
   const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===unit.id));
   assert.throws(()=>validateSave(broken),/battle set armor/);
  }
- const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=8;
+ const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=10;
  assert.throws(()=>validateSave(broken),/equipment set rules/);
 });
 

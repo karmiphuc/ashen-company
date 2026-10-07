@@ -283,7 +283,7 @@ button.primary.is-ready:focus-visible{outline:2px solid #c4ff76;outline-offset:3
 
 /* Set link occupies the existing head/body gap, without adding a row. */
 .company-page .protection-slots{gap:8px}
-.protection-slots>.slot-wrap:first-child{position:relative}
+.protection-slots>.slot-wrap{position:relative}
 .armor-set-link{position:absolute;z-index:2;left:calc(100% - 14px);top:34px;margin:0;color:#8d8066}
 .armor-set-link .company-hint-button{width:36px;height:36px;min-height:36px;padding:5px;border:0;background:none;box-shadow:none;color:inherit}
 .armor-set-link svg{display:block;width:26px;height:26px;padding:3px;border-radius:50%;background:#29241b;border:1px solid #665737}
@@ -325,3 +325,4 @@ button.primary.is-ready:focus-visible{outline:2px solid #c4ff76;outline-offset:3
 @media(max-width:650px){.direwolf-workbench{grid-template-columns:1fr}.direwolf-hero>img{height:220px;width:110px}}
 
 .direwolf-helmet-hero>img{width:140px;height:180px}
+.armor-set-link.is-completion{left:2px;top:34px}

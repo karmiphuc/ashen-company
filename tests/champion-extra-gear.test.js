@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createSetArmorSnapshot } from '../src/equipment-sets.js';
 import { championRoster } from '../src/discovery.js';
 import { createGame, getCampSites, getItem, createFamedItemId, startBattle, advanceBattle, validateSave, shieldMaximum } from '../src/engine.js';
 const named = id => ['famed','named'].includes(getItem(id)?.rarity);
@@ -69,7 +70,11 @@ test('full champion kits cannot overflow the former eighty-trophy limit', () => 
     trophies.push(...ids);u.champion=true;u.championItemId=ids[0];
     Object.assign(u.equipment,{weapon:ids[0],shield:ids[1],armor:ids[2],helmet:ids[3]});u.reserveEquipment={weapon:ids[4],shield:ids[5]};
     u.maxShieldDurability=shieldMaximum(ids[1]);u.maxReserveShieldDurability=shieldMaximum(ids[5]);u.shieldDurability=u.reserveShieldDurability=0;
-    u.maxBodyArmor=getItem(ids[2]).armor;u.maxHeadArmor=getItem(ids[3]).armor;u.bodyArmor=u.headArmor=0;u.hp=0;u.alive=false;
+    // This synthetic full kit now matches Field Mail; initialize its real set pools.
+    const snapshot=createSetArmorSnapshot(u,getItem,{},state.battle.equipmentSetRulesVersion);
+    if(snapshot)u.setArmor=snapshot;else delete u.setArmor;
+    u.maxBodyArmor=snapshot?.body.effectiveMax??getItem(ids[2]).armor;u.maxHeadArmor=snapshot?.head.effectiveMax??getItem(ids[3]).armor;
+    u.bodyArmor=u.headArmor=0;u.hp=0;u.alive=false;
   }
   const actor=state.battle.units.find(u=>u.side==='company');state.battle.activeId=actor.id;state.battle.turnIndex=state.battle.turnOrder.indexOf(actor.id);advanceBattle(state);
   assert.equal(state.battle.loot.items.length,120);

@@ -68,7 +68,7 @@ cannot accumulate an unlimited collection of effects on one item.
 
 ## Armory matching sets
 
-Matching worn head and body gear grants:
+Matching worn head and body gear grants the following two-piece bonuses:
 
 | Bonus | Calculation |
 | --- | --- |
@@ -104,29 +104,48 @@ standard Assassin's Robe and Face Mask therefore provide **138 body armor,
 Ordinary, named and reforged versions qualify by their **original design**.
 Transferring bonuses preserves the recipient's armory identity. Other families
 do not match across cultures; cultist clothing and decayed mercenary armor
-retain their separate styles.
+retain their separate styles. Restored bronze/steel Ancient pieces keep their
+Ancient membership, including named and reforged versions. All 18 families
+activate automatically for brothers, enemies and allies when both pieces are
+worn; no crafting recipe or activation payment is needed.
 
 Southern sets use specific high-end pairs to reward hunting without further
 boosting the efficiency of ordinary desert armor. Mixed Assassin/Southern gear
 does not qualify. A complete match takes priority over a partial match,
-and **only one set bonus applies**. Sets consume no prefix or suffix slots.
+and **only one set bonus applies**. Shared pieces such as Kasa, Adorned Full
+Helm and Sallet Green Helmet do not stack their families. Sets consume no prefix
+or suffix slots.
+
+Both existing plain Mail Shirt designs qualify in Field Mail, and both plain
+Mail Coif designs qualify in Basic Mail and Field Mail. Kasa is a separate item
+from Bamboo Hat. See the [exact design distinctions and fitted stat examples](EQUIPMENT-SETS.md#verified-ordinary-item-examples)
+for comparisons.
 
 Fitted fatigue counts before Nimble, Agile Defense, Fleet Footed and Brawny;
 it also affects fatigue capacity, initiative and light-armor ranged-reach
-eligibility. Attachments do not receive the head/body set bonus.
+eligibility. Attachments do not receive the head/body armor bonus.
+
+[Three-piece completions](THREE-PIECE-SETS.md) add selected named signature
+attachments, with varied **replacement** totals from +20% to +50% head/body
+armor. Northern's broad family gets the smallest increase. Its unique Ritual Bone
+completion reserves +50% armor/−20% fatigue for Ritual Armor, the 300-armor
+Ritual Helmet and named Bone Platings. Unhold and Direwolf
+trophies can complete any valid pair without needing new armor designs. Only
+one completion applies, and only its three pieces get the fitted fatigue
+reduction. The other attachment keeps its full fatigue load; neither attachment gains
+extra armor.
 
 The equipment UI uses a small **gold chain between the head and body boxes**
 for a complete pair and a muted broken chain for an incomplete pair. When
 mismatched pieces belong to different families, the hint follows the body
-armor’s matching companion. Hover,
-keyboard focus or tap reveals the family and bonuses. Equipped-item inspection
+armor’s matching companion. Hover, keyboard focus or tap reveals the family and bonuses. Equipped-item inspection
 shows fitted values, and combat uses a compact family status icon. The cue
 occupies the existing slot gap, keeping the gear itself prominent.
 
 Removing a piece disables the bonus. Stored item condition stays in base units;
 boosted combat damage converts back into wear conservatively. Entering battle,
 retreating or changing sets cannot repair equipment. Broken pieces still count
-as worn, but provide no protection. Older active battles retain their original
+as worn, but provide no protection in their own pool. Older active battles retain their original
 set rules, with newly enabled families becoming effective in the next battle.
 
 This system rewards a coherent visual style and creates a reason to keep
@@ -138,11 +157,13 @@ customization within that style.
 - [Named affix effects and bounded reforging](NAMED-AFFIXES.md)
 - [Original named craftsmanship rolls](NAMED-ROLLS.md)
 - [Equipment-set membership, wear and compatibility](EQUIPMENT-SETS.md)
+- [Three-piece bonuses and full attachment design shortlist](THREE-PIECE-SETS.md)
 - [Legendary blacksmith quest and service design](LEGENDARY-BLACKSMITH-DESIGN.md)
 
 Current behavior is defined by `src/reforged-items.js`, the forge transactions
 in `src/engine.js`, and `src/equipment-sets.js`.
 
-Battles saved under set rules 1–5 retain their original memberships and bonuses
+Battles saved under set rules 1–7 retain their original memberships and bonuses
 until they finish, including the former broad Southern family. New battles use
-version-6 rules, which add early mail, regal and Kasa pairings to the curated sets; stored gear condition remains unchanged.
+version-8 rules, which add the exact Ritual Bone completion to the curated
+sets. Stored gear condition remains unchanged.
