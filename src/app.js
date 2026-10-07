@@ -1,5 +1,5 @@
 import { hasEquipmentPerk } from './engine.js';
-import { equipmentSetStatus, effectiveArmorFatigue } from './equipment-sets.js';
+import { equipmentSetStatus, effectiveArmorFatigue, effectiveAttachmentFatigue } from './equipment-sets.js';
 import { consumeQuestCompletions } from './quest-completion.js';
 import { INJURY_BY_ID, injuryEffectText } from './injuries.js';
 import { bindBattleCamera, fitBattleCamera, zoomBattleCamera, resetBattleCamera } from './battle-camera.js';
@@ -195,6 +195,8 @@ function inspectItem(id,source,lootIndex,location='active',equippedSlot){
  const offer=marketSource&&townAt(state)?getMarket(state).equipment.find(row=>row.itemId===id):null;
  const condition=source==='equipped'&&i.throwing?p?.throwingAmmo?.[location==='reserve'?'reserve':'active']:source==='equipped'&&i.slot==='shield'?p?.armorDurability[location==='reserve'?'reserveShield':'shield']:source==='equipped'&&location==='attachment-2'?p?.armorDurability.attachment2:source==='equipped'&&location==='active'?(i.slot==='armor'?p?.armorDurability.body:i.slot==='helmet'?p?.armorDurability.head:i.slot==='attachment'?p?.armorDurability.attachment:undefined):source==='buy'?offer?.condition:source==='loot'&&Number.isInteger(lootIndex)?state.battle?.loot?.itemConditions?.[lootIndex]:source==='stash'||source==='sell'?state.inventoryCondition?.[state.inventory.indexOf(id)]:undefined;
  const details=getItemDetails(i,condition),wornComparison=getMainItemComparison(i,p,condition);
+ const completion=source==='equipped'&&i.slot==='attachment'&&equipmentSetStatus(p,getItem)?.threePiece;
+ if(completion){const status=equipmentSetStatus(p,getItem),slot=location==='attachment-2'?'attachment2':'attachment';if(status.attachmentSlot===slot)details.notes.unshift(`${status.set.name} 3/3 set active: this attachment has ${effectiveAttachmentFatigue(p,getItem)[slot]} fitted fatigue (−${status.bonuses.attachmentFatiguePct}%). Its armor protection stays unchanged. Item stats below describe the piece without set fitting.`);}
  const fitted=source==='equipped'&&location==='active'&&['armor','helmet'].includes(i.slot)&&equipmentSetStatus(p,getItem)?.active;
  if(fitted){const stats=getCompanyStats(p),load=effectiveArmorFatigue(p,getItem),body=i.slot==='armor';details.notes.unshift(`${equipmentSetStatus(p,getItem).set.name} set fitted: ${body?stats.bodyArmor:stats.headArmor} / ${body?stats.maxBodyArmor:stats.maxHeadArmor} armor · ${body?load.body:load.head} fatigue. Item stats below describe the piece without its matching set.`);}
  const wornHeader=wornComparison?`<p class="item-equipped-comparison">Compared with ${esc(p.name)}’s main <strong>${esc(wornComparison.equipped.name)}</strong> <small><span class="item-stat-better">▲ Better</span> · <span class="item-stat-worse">▼ Worse</span></small></p>`:'';
