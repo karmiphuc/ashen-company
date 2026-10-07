@@ -21,7 +21,7 @@ import {isContractReady,getActiveContracts,getContractCategory,getContractTarget
 import {portraitSVG,itemImage} from './portraits.js';
 import {setCombatSettings} from './engine.js';
 import {mapHTML,mountMap,updateMap,focusMap,zoomMap,selectMapTown,selectMapCamp} from './map.js';
-import {battleHTML,tacticsHTML,battleActionDuration,parseBattleSpeed,updateTurnBattleView,updateSimultaneousBattleView} from './battle-view.js';
+import {presentSimultaneousBattleFrame,battleHTML,tacticsHTML,battleActionDuration,parseBattleSpeed,updateTurnBattleView,updateSimultaneousBattleView} from './battle-view.js';
 import {setBattleTactic,SETTLEMENT_TYPES} from './engine.js';
 import {getItemDetails,getMainItemComparison} from './item-details.js';
 import {createGameAudio} from './audio.js';
@@ -164,6 +164,7 @@ function render(animateEvent=false){closeCompanyHint();
  const battleFocusSelector=battleFocus?`[${battleFocus}="${focused.getAttribute(battleFocus)}"]`:focused?.matches('.battle-log-details>summary')?'.battle-log-details>summary':focused?.matches('.battle-morale-help>summary')?'.battle-morale-help>summary':null;
  const rosterScroll=$('#company-roster .strip-roster')?.scrollLeft??0;
  $('#main').innerHTML=state.battle?(state.battle.status==='active'||battleResultAt?battleHTML(state.battle,battleSpeed,animateEvent):battleResultsHTML(state,lootKeepSelection)):state.gameOver?gameOverHTML(state):tab==='world'?worldHTML():tab==='company'?companyHTML():tab==='town'?townHTML():journalHTML();
+ if(state.battle?.simultaneous&&$('.simultaneous-battle'))updateSimultaneousBattleView($('#main'),state.battle,battleSpeed);
  document.body.classList.toggle('combat-screen',!!$('.battle-scroll'));if(!$('.battle-scroll'))document.body.classList.remove('combat-roster-open');
  updateCompanyRoster(rosterScroll);
  if($('.battle-scroll')){const surface=$('.battle-scroll');bindBattleCamera(surface);$('.battle-more').open=battleMoreOpen;const rosterToggle=$('[data-battle-roster]');rosterToggle.setAttribute('aria-expanded',String(document.body.classList.contains('combat-roster-open')));rosterToggle.textContent=document.body.classList.contains('combat-roster-open')?'Your company ▾':'Your company ▴';setBattleLogVisible(sidebarOpen);surface.scrollLeft=scroll;surface.scrollTop=scrollTop;if(!previousBattleScroll)focusBattleCamera(matchMedia('(max-width:1366px)').matches?'overview':'company');$('.battle-log-details').open=battleLogOpen;if($('.battle-morale-help'))$('.battle-morale-help').open=battleHelpOpen;if(battleFocusSelector)$(battleFocusSelector)?.focus({preventScroll:true});}
@@ -248,7 +249,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
  if(b.hasAttribute('data-battle-roster')){const open=document.body.classList.toggle('combat-roster-open');b.setAttribute('aria-expanded',String(open));b.textContent=open?'Your company ▾':'Your company ▴';if(open)updateCompanyRoster();return;}
  if(b.dataset.battleZoom){zoomBattleCamera(b.dataset.battleZoom);return;}
  if(b.dataset.battleCamera){focusBattleCamera(b.dataset.battleCamera);return;}
- if(b.dataset.battleSpeed!==undefined){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=parseBattleSpeed(b.dataset.battleSpeed);battleElapsed=0;save();render();return;}
+ if(b.dataset.battleSpeed!==undefined){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=parseBattleSpeed(b.dataset.battleSpeed);battleElapsed=0;save();if(state.battle?.simultaneous)updateSimultaneousBattleView($('#main'),state.battle,battleSpeed);else render();return;}
  if(b.dataset.fight){beginBattle(b.dataset.fight);return;}
  if(b.dataset.engage){engage(b.dataset.engage);return;}
  if(b.dataset.selectCamp){const site=getEncounterSites(state).find(c=>c.id===b.dataset.selectCamp);if(site){chosenCamp=site.id;tab='world';$('#modal').close();render();focusMap(site);}return;}
@@ -334,7 +335,7 @@ document.addEventListener('touchend',()=>gameAudio.unlock(),{capture:true});
 document.addEventListener('click',()=>gameAudio.unlock(),{capture:true});
 document.addEventListener('change',e=>{const key=e.target.dataset.combatSetting;if(!['combatRole','skillPreference'].includes(key))return;const result=setCombatSettings(state,e.target.dataset.personId,{[key]:e.target.value});toast(result.message);if(result.ok){save();render();}});
 document.addEventListener('keydown',()=>gameAudio.unlock(),{capture:true});
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&!$('#modal').open&&!['INPUT','SELECT','BUTTON'].includes(e.target.tagName)){e.preventDefault();if(state.battle?.simultaneous){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=battleSpeed?0:1;save();render();return;}speed=speed?0:1;updateSpeed();resources();}});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!$('#modal').open&&!['INPUT','SELECT','BUTTON'].includes(e.target.tagName)){e.preventDefault();if(state.battle?.simultaneous){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=battleSpeed?0:1;save();updateSimultaneousBattleView($('#main'),state.battle,battleSpeed);return;}speed=speed?0:1;updateSpeed();resources();}});
 async function fastResolveSimultaneous(){
  const battle=state.battle,token=++simultaneousResolveToken;
  if(!battle?.simultaneous||battle.status!=='active')return;
@@ -365,7 +366,8 @@ function animate(now){
    // Mix a bounded number of simultaneous sounds; never replay them on later frames.
    for(const entry of entries.slice(-6))gameAudio.playEvent(entry.event,entry.duration/(battleSpeed===4?4:1)/1000,{cinematic:battleSpeed==='cinematic'});
    if(entries.length)simultaneousSoundCursor=entries.at(-1).id;
-   if(step.updated||battle.simultaneous.time!==before){updateSimultaneousBattleView($('#main'),battle,battleSpeed);if(now-lastCombatResources>=250){resources();lastCombatResources=now;}}
+   presentSimultaneousBattleFrame($('#main'),battle,battleSpeed,step.updated||battle.simultaneous.time!==before,now);
+   if(now-lastCombatResources>=250){resources();lastCombatResources=now;}
    if(battle.status!=='active'){battleResultAt=now+700;save();render();}
    else if(now-lastSave>2000){save();lastSave=now;}
   }
