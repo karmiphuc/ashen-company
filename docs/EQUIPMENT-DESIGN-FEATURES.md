@@ -104,12 +104,22 @@ standard Assassin's Robe and Face Mask therefore provide **138 body armor,
 Ordinary, named and reforged versions qualify by their **original design**.
 Transferring bonuses preserves the recipient's armory identity. Other families
 do not match across cultures; cultist clothing and decayed mercenary armor
-retain their separate styles.
+retain their separate styles. Restored bronze/steel Ancient pieces keep their
+Ancient membership, including named and reforged versions. All 18 families
+activate automatically for brothers, enemies and allies when both pieces are
+worn; no crafting recipe or activation payment is needed.
 
 Southern sets use specific high-end pairs to reward hunting without further
 boosting the efficiency of ordinary desert armor. Mixed Assassin/Southern gear
 does not qualify. A complete match takes priority over a partial match,
-and **only one set bonus applies**. Sets consume no prefix or suffix slots.
+and **only one set bonus applies**. Shared pieces such as Kasa, Adorned Full
+Helm and Sallet Green Helmet do not stack their families. Sets consume no prefix
+or suffix slots.
+
+Both existing plain Mail Shirt designs qualify in Field Mail, and both plain
+Mail Coif designs qualify in Basic Mail and Field Mail. Kasa is a separate item
+from Bamboo Hat. See the [exact design distinctions and fitted stat examples](EQUIPMENT-SETS.md#verified-ordinary-item-examples)
+for comparisons.
 
 Fitted fatigue counts before Nimble, Agile Defense, Fleet Footed and Brawny;
 it also affects fatigue capacity, initiative and light-armor ranged-reach
@@ -118,8 +128,7 @@ eligibility. Attachments do not receive the head/body set bonus.
 The equipment UI uses a small **gold chain between the head and body boxes**
 for a complete pair and a muted broken chain for an incomplete pair. When
 mismatched pieces belong to different families, the hint follows the body
-armor’s matching companion. Hover,
-keyboard focus or tap reveals the family and bonuses. Equipped-item inspection
+armor’s matching companion. Hover, keyboard focus or tap reveals the family and bonuses. Equipped-item inspection
 shows fitted values, and combat uses a compact family status icon. The cue
 occupies the existing slot gap, keeping the gear itself prominent.
 
@@ -145,4 +154,5 @@ in `src/engine.js`, and `src/equipment-sets.js`.
 
 Battles saved under set rules 1–5 retain their original memberships and bonuses
 until they finish, including the former broad Southern family. New battles use
-version-6 rules, which add early mail, regal and Kasa pairings to the curated sets; stored gear condition remains unchanged.
+version-6 rules, which add early mail, regal and Kasa pairings to the curated
+sets. Stored gear condition remains unchanged.
