@@ -224,8 +224,8 @@ self.addEventListener('message', event => {
 `;
 }
 
-export async function buildCache() {
-  await buildRelease();
+export async function buildCache(releaseOptions) {
+  await buildRelease(releaseOptions);
   const source = await renderServiceWorker();
   await writeFile(join(ROOT, 'sw.js'), source, 'utf8');
   return source;
