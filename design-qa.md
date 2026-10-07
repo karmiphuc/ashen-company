@@ -1,9 +1,12 @@
 # Moonfang plated-shoulder verification
 
-Source visual truth: `/workspace/generated_images/exec-78a37fb5-5d12-4452-b196-730bc9866d25.png`.
+Source visual truth: `/workspace/generated_images/exec-fc9f58eb-8610-42f9-8aea-02b8fbd40958.png`.
 The user combined the embossed plate from the first ideation image with the
 sculpted wolf crest from the second, then requested swapped shoulders and a
-larger rounded crest. Viewer-left is the enlarged wolf-head pauldron;
+larger rounded crest. The latest refinement uses that first plated design as
+the base, enlarging the viewer-left skull by the requested approximately 20%
+and projecting it farther over the shoulder. The rejected alternative right
+shoulder revision was not packaged. Viewer-left is the enlarged wolf-head pauldron;
 viewer-right is the silver wolf relief. The original inventory icon is retained
 at the user's explicit request.
 
@@ -11,8 +14,8 @@ at the user's explicit request.
 
 The source and implementation are shown together in
 `/workspace/artifacts/moonfang-reference-comparison.png` (1100x620 viewport,
-deviceScaleFactor 1). The 1280x1280 master is cropped to 1241x916+7+201,
-aspect-preservingly resized to 106px tall and bottom-centered on a 148x110
+deviceScaleFactor 1). The 1280x1280 master is cropped to 1247x941+2+176,
+aspect-preservingly resized to 108px tall and bottom-centered on a 148x114
 transparent canvas. The comparison displays the normalized source and packaged
 sprite at twice their native size, alongside the actual Alpha composition.
 Expected downsampling is visible at that enlarged inspection scale.
@@ -44,7 +47,7 @@ No actionable P0/P1/P2 findings remain.
 
 - Typography: existing application fonts, weights, labels and wrapping retained;
   the source armor asset has no text.
-- Spacing/layout: empty neckline aligned at left-26/top10; both shoulders fit
+- Spacing/layout: empty neckline aligned at left-28/top6; both shoulders fit
   the company card and wider roster tile. No page overflow at 390px.
 - Colors: worn steel/silver, ash-grey fur and warm leather match the selected
   raster target and existing game palette.
@@ -62,8 +65,10 @@ No actionable P0/P1/P2 findings remain.
 - Fit the roster tile and inspect tablet/phone equipment screens.
 - Regenerate the offline worker and run artwork, fitting, release/offline checks.
 
-All 97 focused checks pass, including the repaired Wolf Helmet's deliberate
-render anchor; the independent imported-source anchor checks remain intact.
+All 41 focused artwork/crafting, helmet, portrait, release and offline checks
+pass for this enlargement. The preceding plated revision passed 97 focused
+checks, including the repaired Wolf Helmet’s deliberate render anchor; the
+independent imported-source anchor checks remain intact.
 Physical-device Safari is untested. A broader full-suite attempt was stopped
 while the unrelated Ashen Winter test file was still running; no complete
 full-suite result is claimed for this session.

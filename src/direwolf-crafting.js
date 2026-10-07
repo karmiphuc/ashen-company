@@ -11,7 +11,7 @@ export const MOONFANG_ITEM = Object.freeze({
 });
 export const MOONFANG_ART = Object.freeze({
   icon: './assets/direwolf-moonfang/icon.png', portrait: './assets/direwolf-moonfang/portrait.png',
-  left: -26, top: 10, width: 148, height: 110,
+  left: -28, top: 6, width: 148, height: 114,
 });
 
 // Its own saved sequence: previews, material condition, town and other recipes

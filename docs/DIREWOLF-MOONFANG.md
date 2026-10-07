@@ -5,7 +5,9 @@ silver crescent clasp. The inventory icon keeps the original wolf-mantle design.
 The worn bust uses the selected plated reinterpretation: an enlarged sculpted
 steel wolf-head crest in a rounded domed pauldron on the **viewer’s left**, and
 a shallow silver wolf relief on a curved steel plate on the **viewer’s right**.
-Upright ash-grey fur backs both shoulders. The broad metal caps protect the
+The first rounded design’s viewer-left wolf skull is enlarged by the requested
+approximately 20%, projecting farther over the shoulder; the right relief keeps
+its shallower plate design. Upright ash-grey fur backs both shoulders. The broad metal caps protect the
 shoulders without a stretched animal muzzle beside the human face.
 Named and reforged harnesses share the same artwork.
 
@@ -90,8 +92,8 @@ restoring an external pre-attempt backup restores the earlier state.
 
 ## Artwork
 
-The inventory PNG remains 140×280, and the revised worn layer is 148×110 at
-left −26 / top 10 in the existing portrait frame. Both have alpha transparency
+The inventory PNG remains 140×280, and the revised worn layer is 148×114 at
+left −28 / top 6 in the existing portrait frame. Both have alpha transparency
 and are cached offline. A 126px Moonfang roster tile makes room for both plated
 shoulders. The equipment detail and tactical anchors keep their existing
 character size and positioning. The source manifest in `assets/direwolf-moonfang/` records the selected

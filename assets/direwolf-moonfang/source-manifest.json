@@ -16,17 +16,18 @@
     },
     {
       "layer": "portrait",
-      "generatedMaster": "exec-78a37fb5-5d12-4452-b196-730bc9866d25.png",
-      "masterSha256": "9e7b7e5940dbe62e7c1a6f1f05f153524c9016b65c4fe189e92b69609c6ca354",
+      "generatedMaster": "exec-fc9f58eb-8610-42f9-8aea-02b8fbd40958.png",
+      "masterSha256": "0663e389eee49c4d0b2f6f28de9a85d8bd6e60744b0c10b22b190b41feb93e9d",
       "path": "assets/direwolf-moonfang/portrait.png",
-      "sha256": "22d7672b213683cc40650d6b8492e66fb121e3bd68f6f44c17ddd7094e766035",
-      "packaging": "ImageMagick transparent-margin crop 1241x916+7+201, aspect-preserving resize to 106px tall, transparent bottom-aligned canvas 148x110; portrait anchor left-26 top10",
-      "revision": "Viewer-left: enlarged sculpted steel wolf-head crest in a rounded domed pauldron. Viewer-right: silver wolf relief embossed into curved steel plate. Upright fur backing on both; original inventory icon preserved."
+      "sha256": "edc0ac87e333b98de9ccc0f43c48ec723a11cda1f07280a8c7002e544fccea4f",
+      "packaging": "ImageMagick transparent-margin crop 1247x941+2+176, aspect-preserving resize to 108px tall, transparent bottom-aligned canvas 148x114; portrait anchor left-28 top6",
+      "revision": "First rounded-pauldron version refined with the requested approximately 20% larger viewer-left sculpted wolf skull and greater shoulder projection. Viewer-right retains the first version\u2019s shallow silver wolf plate. Original inventory icon preserved."
     }
   ],
-  "selectedWornConcept": "exec-78a37fb5-5d12-4452-b196-730bc9866d25.png",
+  "selectedWornConcept": "exec-fc9f58eb-8610-42f9-8aea-02b8fbd40958.png",
   "selectedWornDirections": [
     "exec-0ffa9240-b534-4632-beb9-5cc4754c88d8.png",
     "exec-5a3b978e-5ae9-4ec2-960f-f9cdb490cc48.png"
-  ]
+  ],
+  "previousWornConcept": "exec-78a37fb5-5d12-4452-b196-730bc9866d25.png"
 }
