@@ -29,7 +29,7 @@ jobs:
       - run: npm run prepare-offline
       - name: Run full suite with failure annotations
         run: >-
-          node --test --test-reporter=spec --test-reporter=github
+          node --test --test-reporter=spec --test-reporter=./tools/github-test-reporter.mjs
           --test-reporter-destination=stdout --test-reporter-destination=stdout
           tests/*.test.js
       - run: npm run build
