@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildRelease } from './build-release.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const ROOT = resolve(dirname(SCRIPT), '..');
@@ -223,7 +224,8 @@ self.addEventListener('message', event => {
 `;
 }
 
-export async function buildCache() {
+export async function buildCache(releaseOptions) {
+  await buildRelease(releaseOptions);
   const source = await renderServiceWorker();
   await writeFile(join(ROOT, 'sw.js'), source, 'utf8');
   return source;
