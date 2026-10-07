@@ -85,7 +85,9 @@ standard Assassin's Robe and Face Mask therefore provide **138 body armor,
 | Assassin | Assassin's Robe with Assassin's Face Mask or Head Wrap |
 | Ancient | Any ancient body armor and ancient helmet/headpiece, including priest and lich attire |
 | Northern / Barbarian | Interchangeable northern and barbarian body/head designs, including Nordic helmets |
-| Southern | Southern, nomad and desert gear, plus Assassin pieces |
+| Ninja | Ninja/Elite Ninja Suit with Ninja/Elite Ninja Mask; regular and elite pieces can mix |
+| Golden Scale | Golden Scale Armor with Gold and Black Turban |
+| Golden Lamellar | Golden Lamellar Armor with Heavy Lamellar Helmet |
 | Noble | Noble/heraldic body gear with noble, heraldic or knightly headgear, including full helms, bascinets and sallets |
 
 Ordinary, named and reforged versions qualify by their **original design**.
@@ -93,8 +95,9 @@ Transferring bonuses preserves the recipient's armory identity. Other families
 do not match across cultures; cultist clothing and decayed mercenary armor
 retain their separate styles.
 
-A complete Assassin pair keeps its specialist identity. Mixed Assassin/Southern
-gear activates Southern. A complete match takes priority over a partial match,
+Southern sets use specific high-end pairs to reward hunting without further
+boosting the efficiency of ordinary desert armor. Mixed Assassin/Southern gear
+does not qualify. A complete match takes priority over a partial match,
 and **only one set bonus applies**. Sets consume no prefix or suffix slots.
 
 Fitted fatigue counts before Nimble, Agile Defense, Fleet Footed and Brawny;
@@ -126,3 +129,7 @@ customization within that style.
 
 Current behavior is defined by `src/reforged-items.js`, the forge transactions
 in `src/engine.js`, and `src/equipment-sets.js`.
+
+Battles saved under set rules 1–3 retain their original memberships and bonuses
+until they finish, including the former broad Southern family. New battles use
+the curated version-4 rules; stored gear condition remains unchanged.

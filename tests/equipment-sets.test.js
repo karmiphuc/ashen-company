@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ITEMS,createGame,getItem,createFamedItemId,getCompanyStats,getCampSites,startBattle,advanceBattle,resolveBattle,retreatBattle,finishBattle,validateSave,equipItem,unequipItem,getAgileDefenseMultiplier} from '../src/engine.js';
 import {encodeBoundedForgeItem} from '../src/reforged-items.js';
-import {EQUIPMENT_SETS,equipmentSetStatus,equipmentSetForItem,equipmentSetsForItem,equipmentSetBonusText,effectiveArmorFatigue,createSetArmorSnapshot,baseArmorCondition,validSetArmorSnapshot} from '../src/equipment-sets.js';
+import {EQUIPMENT_SETS,equipmentSetsForRules,equipmentSetStatus,equipmentSetForItem,equipmentSetsForItem,equipmentSetBonusText,effectiveArmorFatigue,createSetArmorSnapshot,baseArmorCondition,validSetArmorSnapshot} from '../src/equipment-sets.js';
 import {equipmentSetHTML} from '../src/campaign-ui.js';
 import {getItemDetails} from '../src/item-details.js';
 import {applySimultaneousSnapshot} from '../src/simultaneous-runner.js';
@@ -136,7 +136,7 @@ test('snapshot validation rejects missing, altered, or inconsistent armor pools'
   const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===unit.id));
   assert.throws(()=>validateSave(broken),/battle set armor/);
  }
- const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=4;
+ const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=5;
  assert.throws(()=>validateSave(broken),/equipment set rules/);
 });
 
@@ -249,9 +249,9 @@ test('cultural fitting crosses actual light-gear thresholds before Nimble, Agile
  }
 });
 
-test('every Southern and Noble pairing fits, while a full Assassin pair keeps its specialist identity',()=>{
+test('every curated Southern, Ninja and Noble pairing fits',()=>{
  const person=createGame(51).party[0];let pairs=0;
- for(const set of EQUIPMENT_SETS.filter(s=>s.since===3))for(const body of set.armorIds)for(const head of set.helmetIds){
+ for(const set of EQUIPMENT_SETS.filter(s=>s.since>=3))for(const body of set.armorIds)for(const head of set.helmetIds){
   const armor=getItem(body),helmet=getItem(head);assert.ok(armor,body);assert.ok(helmet,head);
   Object.assign(person.equipment,{armor:body,helmet:head});Object.assign(person.armorDurability,{body:armor.armor,head:helmet.armor});
   const status=equipmentSetStatus(person,getItem),stats=getCompanyStats(person);
@@ -261,22 +261,43 @@ test('every Southern and Noble pairing fits, while a full Assassin pair keeps it
   assert.equal(stats.maxBodyArmor,Math.floor(armor.armor*115/100));assert.equal(stats.maxHeadArmor,Math.floor(helmet.armor*115/100));
   assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:Math.round(armor.fatigue*.85),head:Math.round(helmet.fatigue*.9)});pairs++;
  }
- assert.equal(pairs,662);
+ assert.equal(pairs,96);
 });
 
-test('partial Assassin membership cannot hide a complete Southern pair, and item hints explain both',()=>{
- for(const gear of [{body:'bb-assassin-robe',head:'southern-helmet'},{body:'nomad-robe',head:'bb-assassin-face-mask'}]){
-  const {person,state,unit}=fight(gear);assert.equal(equipmentSetStatus(person,getItem).set.id,'southern');
-  assert.equal(unit.setArmor.id,'southern');assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))),state);
-  assert.match(equipmentSetHTML(person),/Southern 2\/2/);
+test('ordinary Southern and mixed Assassin gear no longer qualify; hints only show current sets',()=>{
+ for(const gear of [{body:'bb-assassin-robe',head:'southern-helmet'},{body:'nomad-robe',head:'bb-assassin-face-mask'},{body:'southern-mail',head:'southern-helmet'},{body:'bb-golden-scale-armor',head:'bb-heavy-lamellar-helmet'}]){
+  const {person,state,unit}=fight(gear);assert.ok(!equipmentSetStatus(person,getItem)?.active);
+  assert.equal(unit.setArmor,undefined);assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))),state);
  }
- assert.deepEqual(equipmentSetsForItem(getItem('bb-assassin-robe')).map(s=>s.id),['assassin','southern']);
- const notes=getItemDetails(getItem('bb-assassin-face-mask')).notes.join(' ');
- assert.match(notes,/Assassin set piece/);assert.match(notes,/Southern set piece/);
+ assert.deepEqual(equipmentSetsForItem(getItem('bb-assassin-robe')).map(s=>s.id),['assassin']);
+ assert.doesNotMatch(getItemDetails(getItem('bb-assassin-face-mask')).notes.join(' '),/Southern set piece/);
+});
+
+test('all retired Southern pairings retain version-three snapshots and fatigue',()=>{
+ const set=equipmentSetsForRules(3).find(s=>s.id==='southern');let pairs=0;
+ for(const body of set.armorIds)for(const head of set.helmetIds){
+  const actor={equipment:{armor:body,helmet:head}};
+  const snapshot=createSetArmorSnapshot(actor,getItem,{},3);assert.ok(snapshot);
+  const unit={...actor,side:'player',setArmor:snapshot,bodyArmor:snapshot.body.initial,headArmor:snapshot.head.initial};
+  assert.ok(validSetArmorSnapshot(unit,getItem,3));
+  assert.equal(equipmentSetStatus(unit,getItem).active,true);
+  assert.deepEqual(effectiveArmorFatigue(unit,getItem),{body:Math.round(getItem(body).fatigue*.85),head:Math.round(getItem(head).fatigue*.9)});pairs++;
+ }
+ assert.equal(pairs,572);
+ const {state,person}=fight({body:'southern-mail',head:'southern-helmet'});
+ state.battle.equipmentSetRulesVersion=3;
+ for(const unit of state.battle.units){
+  const snapshot=createSetArmorSnapshot(unit,getItem,{body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')},3);
+  // Fixtures switch memberships only; preserve raw gear condition for every unit.
+  if(unit.setArmor){unit.bodyArmor=unit.setArmor.body.baseCurrent;unit.maxBodyArmor=unit.setArmor.body.baseMax;unit.headArmor=unit.setArmor.head.baseCurrent;unit.maxHeadArmor=unit.setArmor.head.baseMax;delete unit.setArmor;}
+  if(snapshot){unit.setArmor=snapshot;unit.bodyArmor=snapshot.body.initial;unit.maxBodyArmor=snapshot.body.effectiveMax;unit.headArmor=snapshot.head.initial;unit.maxHeadArmor=snapshot.head.effectiveMax;}
+ }
+ const loaded=validateSave(JSON.parse(JSON.stringify(state)));assert.equal(loaded.battle.units.find(u=>u.id===person.id).setArmor.id,'southern');
+ leave(loaded);assert.ok(!equipmentSetStatus(loaded.party[0],getItem)?.active);
 });
 
 test('Southern and Noble named/reforged pieces retain raw wear and family guidance',()=>{
- for(const [base,head,family]of [['bb-southern-mail-shirt','nomad-head-wrap','southern'],['noble-tabard','bb-heraldic-mail-helmet','noble']]){
+ for(const [base,head,family]of [['bb-golden-scale-armor','bb-gold-and-black-turban','golden-scale'],['noble-tabard','bb-heraldic-mail-helmet','noble']]){
   for(const body of [createFamedItemId(base,92,5),encodeBoundedForgeItem(base,{locked:false,foundation:{armorPct:20},prefixes:[],suffixes:[]},id=>ITEMS.find(i=>i.id===id))]){
    const {state,person,unit}=fight({body,head,bodyCondition:30,headCondition:20});assert.equal(unit.setArmor.id,family);
    unit.bodyArmor-=3;unit.headArmor-=2;const worn={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
@@ -285,7 +306,7 @@ test('Southern and Noble named/reforged pieces retain raw wear and family guidan
    assert.ok(getItemDetails(getItem(body)).notes.some(n=>n.includes(equipmentSetStatus(person,getItem).set.name+' set piece')));
   }
  }
- for(const gear of [{body:'southern-mail',head:'full-helm'},{body:'noble-mail',head:'southern-helmet'}])assert.equal(equipmentSetStatus(outfit(gear).person,getItem).active,false);
+ for(const gear of [{body:'southern-mail',head:'full-helm'},{body:'noble-mail',head:'southern-helmet'}])assert.equal(Boolean(equipmentSetStatus(outfit(gear).person,getItem)?.active),false);
 });
 
 test('version-two battles retain old families without enabling Southern or Noble fitting on reload',()=>{
@@ -301,5 +322,16 @@ test('version-two battles retain old families without enabling Southern or Noble
   assert.equal(unit.setArmor?.id??null,gear.body.startsWith('northern')?'northern':null);
   if(!unit.setArmor){assert.equal(equipmentSetStatus(unit,getItem).active,false);assert.deepEqual(effectiveArmorFatigue(unit,getItem),{body:getItem(gear.body).fatigue,head:getItem(gear.head).fatigue});}
   leave(loaded);
+ }
+});
+
+test('every new curated pair preserves damaged condition through battle reload and retreat',()=>{
+ for(const set of EQUIPMENT_SETS.filter(s=>s.since===4))for(const body of set.armorIds)for(const head of set.helmetIds){
+  const {state,unit}=fight({body,head,bodyCondition:30,headCondition:20});
+  assert.equal(unit.setArmor.id,set.id);unit.bodyArmor-=3;unit.headArmor-=2;
+  const worn={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
+  const loaded=validateSave(JSON.parse(JSON.stringify(state)));leave(loaded);
+  assert.deepEqual({body:loaded.party[0].armorDurability.body,head:loaded.party[0].armorDurability.head},worn);
+  assert.ok(worn.body<30&&worn.head<20);
  }
 });

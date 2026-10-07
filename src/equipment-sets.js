@@ -1,12 +1,13 @@
 import { DLC_ITEMS } from './dlc-items.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
+import { FANTASY_ITEMS } from './fantasy-items.js';
 // Set membership belongs to the original item design, never to transferred affixes.
-const armorDesigns=[...DLC_ITEMS,...NORTHERN_ITEMS,...ADDITIONAL_ITEMS].filter(i=>['armor','helmet'].includes(i.slot));
-export const EQUIPMENT_SET_RULES_VERSION=3;
+const armorDesigns=[...DLC_ITEMS,...NORTHERN_ITEMS,...ADDITIONAL_ITEMS,...FANTASY_ITEMS].filter(i=>['armor','helmet'].includes(i.slot));
+export const EQUIPMENT_SET_RULES_VERSION=4;
 export const isEquipmentSetRulesVersion=version=>Number.isInteger(version)&&version>=1&&version<=EQUIPMENT_SET_RULES_VERSION;
 const family=(id,name,since,pairing,items)=>Object.freeze({id,name,since,pairing,armorIds:Object.freeze(items.filter(i=>i.slot==='armor').map(i=>i.id)),helmetIds:Object.freeze(items.filter(i=>i.slot==='helmet').map(i=>i.id)),armorPct:15,bodyFatiguePct:15,headFatiguePct:10});
-export const EQUIPMENT_SETS=Object.freeze([
+const historicalSets=Object.freeze([
  family('assassin','Assassin',1,'Wear Assassin’s Robe with Assassin’s Face Mask or Assassin’s Head Wrap.',armorDesigns.filter(i=>['bb-assassin-robe','bb-assassin-face-mask','bb-assassin-head-wrap'].includes(i.id))),
  family('ancient','Ancient',2,'Wear any ancient body armor with any ancient helmet or headpiece.',armorDesigns.filter(i=>i.id.startsWith('bb-ancient-'))),
  family('northern','Northern / Barbarian',2,'Wear any northern or barbarian body armor with any northern or barbarian helmet or headpiece.',[
@@ -19,14 +20,26 @@ export const EQUIPMENT_SETS=Object.freeze([
   {id:'bascinet',slot:'helmet'},
  ]),
 ]);
+// Keep old memberships exclusively for battles saved under earlier rules.
+export const EQUIPMENT_SETS=Object.freeze([
+ ...historicalSets.filter(s=>s.id!=='southern'),
+ family('ninja','Ninja',4,'Wear Ninja Suit or Elite Ninja Suit with Ninja Mask or Elite Ninja Mask.',armorDesigns.filter(i=>['samurai-ninja-suit','samurai-elite-ninja-suit','samurai-ninja-mask','samurai-elite-ninja-mask'].includes(i.id))),
+ family('golden-scale','Golden Scale',4,'Wear Golden Scale Armor with Gold and Black Turban.',armorDesigns.filter(i=>['bb-golden-scale-armor','bb-gold-and-black-turban'].includes(i.id))),
+ family('golden-lamellar','Golden Lamellar',4,'Wear Golden Lamellar Armor with Heavy Lamellar Helmet.',armorDesigns.filter(i=>['bb-named-golden-lamellar-armor','bb-heavy-lamellar-helmet'].includes(i.id))),
+]);
+export const equipmentSetsForRules=version=>(version<4?historicalSets:EQUIPMENT_SETS).filter(s=>s.since<=version);
 export function equipmentSetBonusText(set){return `${set.name} set: +${set.armorPct}% head/body armor; −${set.headFatiguePct}% helmet fatigue, −${set.bodyFatiguePct}% body fatigue`;}
 const designId=item=>item?.baseId??item?.id;
 export function equipmentSetsForItem(item){return EQUIPMENT_SETS.filter(s=>[...s.armorIds,...s.helmetIds].includes(designId(item)));}
 export function equipmentSetForItem(item){return equipmentSetsForItem(item)[0]??null;}
-export function equipmentSetStatus(actor,getItem,rulesVersion=EQUIPMENT_SET_RULES_VERSION){
+export function equipmentSetStatus(actor,getItem,rulesVersion){
  const armor=designId(getItem(actor.equipment?.armor)),helmet=designId(getItem(actor.equipment?.helmet));
  // Prefer a complete pair over a partial specialist match. Apply one bonus only.
- const set=EQUIPMENT_SETS.find(s=>s.since<=rulesVersion&&s.armorIds.includes(armor)&&s.helmetIds.includes(helmet))??EQUIPMENT_SETS.find(s=>s.since<=rulesVersion&&(s.armorIds.includes(armor)||s.helmetIds.includes(helmet)));if(!set)return null;
+ // Saved units retain their snapshot family, including the retired broad Southern set.
+ const sets=rulesVersion===undefined&&actor.side&&actor.setArmor
+  ? [...EQUIPMENT_SETS,...historicalSets].filter(s=>s.id===actor.setArmor.id)
+  : equipmentSetsForRules(rulesVersion??EQUIPMENT_SET_RULES_VERSION);
+ const set=sets.find(s=>s.armorIds.includes(armor)&&s.helmetIds.includes(helmet))??sets.find(s=>s.armorIds.includes(armor)||s.helmetIds.includes(helmet));if(!set)return null;
  const body=set.armorIds.includes(armor),head=set.helmetIds.includes(helmet);
  return {set,count:Number(body)+Number(head),active:body&&head&&(!actor.side||actor.setArmor?.id===set.id),body,head};
 }
