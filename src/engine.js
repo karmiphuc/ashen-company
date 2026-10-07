@@ -4239,13 +4239,13 @@ function predictAttack(battle, actor, target, weapon, option = null) {
 }
 
 // Using a ranged attack inside hostile control provokes one free strike per
-// adjacent armed melee opponent. It happens before firing, including on a miss.
+// adjacent armed melee opponent, capped at two. It happens before firing, including on a miss.
 function rangedControlReactions(state, shooter) {
   const battle=state.battle,reactions=[];
   const defenders=battle.units.filter(unit=>unit.alive && !unit.escaped && unit.side!==shooter.side
     && hexDistance(unit,shooter)===1 && !unit.stunnedTurns && !unit.disarmedTurns
     && getItem(unit.equipment.weapon) && !getItem(unit.equipment.weapon).ranged
-    && unit.fatigue+5<=tacticalFatigueLimit(battle,unit));
+    && unit.fatigue+5<=tacticalFatigueLimit(battle,unit)).slice(0,2);
   for(const defender of defenders){
     if(!shooter.alive || shooter.stunnedTurns>0 || shooter.disarmedTurns>0)break;
     const weapon=getItem(defender.equipment.weapon);
@@ -4768,13 +4768,17 @@ function roleRules(battle){return battle?.roleConsistencyVersion===1&&battle.wea
 function combatCommand(battle,actor){return actor.side==='enemy'?enemyBattleTactic(battle,getItem):actor.ally?'offense':battle.tactic;}
 function tacticalFatigueLimit(battle,actor){return roleRules(battle)?availableFatigue(actor):injuryStat(actor,'maxFatigue');}
 function canAfford(battle,actor,apCost,fatigueCost){return isAffordableAction({...actor,maxFatigue:tacticalFatigueLimit(battle,actor)},{apCost,fatigueCost});}
+function canUseRangedTarget(battle,actor,weapon,target,origin=actor){
+ return battle.weaponSkillsVersion!==1||!weapon.ranged||hexDistance(origin,target)>1||hasPerk(actor,'point-blank');
+}
 function canFireAfterMove(state,actor,weapon,point,moveAp=0,moveFatigue=0){
  const battle=state.battle;
  if(!weapon?.ranged||actor.disarmedTurns||actor.stunnedTurns||actor.reload>0||!battleWeaponHasAmmo(state,actor,weapon))return false;
  const basic=battle.weaponCompletionVersion===1?equipmentSkills(weapon)[0]:null;
  const options=[basic,...(isBow(weapon)?[COMBAT_SKILLS['aimed-shot']]:[])];
  return battle.units.some(target=>target.alive&&target.side!==actor.side&&options.some(option=>
-   hexDistance(point,target)<=effectiveWeaponRange(actor,weapon)+(option?.rangeBonus??0)
+   canUseRangedTarget(battle,actor,weapon,target,point)
+   &&hexDistance(point,target)<=effectiveWeaponRange(actor,weapon)+(option?.rangeBonus??0)
    &&canAfford(battle,actor,moveAp+attackApCost(weapon,battle,actor,option),moveFatigue+attackSkillFatigue(actor,weapon,option))));
 }
 
@@ -5178,13 +5182,13 @@ function advanceBattleV2(state) {
     }
     const lunge=!actor.disarmedTurns&&lungePlan(battle,actor,target,weapon);
     if(lunge)candidates.push({id:'lunge',type:'lunge',targetId:target.id,target,plan:lunge,apCost:attackApCost(weapon,battle,actor,lunge.option),fatigueCost:attackSkillFatigue(actor,weapon,lunge.option),...predictAttack(battle,{...actor,...lunge.point},target,weapon,lunge.option),bonus:22});
-    if (distance <= range && canAttack) {
+    if (distance <= range && canAttack && canUseRangedTarget(battle,actor,weapon,target)) {
       candidates.push({ id: 'attack', type: 'attack', targetId: target.id, target, apCost: attackCost,
         option:basicOption,fatigueCost: basicFatigue, ...normal,
         wastedAmmo: weapon.ranged && target.hp < normal.expectedHealthDamage * .4 ? 1 : 0,
         bonus: 18 + (isBow(weapon) && actor.ap >= attackCost * 2 && (!weapon.reloadTurns) && (!actor.ally && actor.side === 'company' ? state.supplies.ammo >= 2 : true) ? normal.expectedHealthDamage * .75 : 0) });
     }
-    if (skillFamily && !actor.disarmedTurns && distance <= range && actor.reload === 0) for(const option of (battle.weaponCompletionVersion===1?completedSkillOptions(actor,target,weapon,battle):[skillOptionForTarget(skillFamily, actor, target, weapon, battle)])) {
+    if (skillFamily && !actor.disarmedTurns && distance <= range && actor.reload === 0 && canUseRangedTarget(battle,actor,weapon,target)) for(const option of (battle.weaponCompletionVersion===1?completedSkillOptions(actor,target,weapon,battle):[skillOptionForTarget(skillFamily, actor, target, weapon, battle)])) {
       const fatigueCost = option && attackSkillFatigue(actor, weapon, option);
       if (option && actor.ap >= attackApCost(weapon, battle, actor, option) && actor.fatigue + fatigueCost <= availableFatigue(actor)) {
         const predicted = predictAttack(battle, actor, target, weapon, option);
@@ -5203,7 +5207,7 @@ function advanceBattleV2(state) {
         if (candidate) candidates.push(candidate);
       }
     }
-    if (!actor.disarmedTurns && aimed && distance <= range + 1 && actor.reload === 0 && actor.fatigue + aimedFatigueCost(actor) <= availableFatigue(actor)) {
+    if (!actor.disarmedTurns && aimed && canUseRangedTarget(battle,actor,weapon,target) && distance <= range + 1 && actor.reload === 0 && actor.fatigue + aimedFatigueCost(actor) <= availableFatigue(actor)) {
       candidates.push({ id: 'aimed-shot', type: 'attack', targetId: target.id, target, apCost: attackApCost(weapon, battle, actor, COMBAT_SKILLS['aimed-shot']),
         fatigueCost: aimedFatigueCost(actor), ...aimed, bonus: 15 });
     }

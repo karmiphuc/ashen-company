@@ -104,3 +104,15 @@ Astra reviewed every defined role against movement, weapon selection, target com
 Movement, reforming, firing sorties, return paths, charges and fatigue-consuming reactions now share the reduced fatigue capacity imposed by Daze. NPCs may use their existing backup equipment; the change does not manufacture new loadouts. Allies keep their independent offensive orders, while enemies keep their saved adaptive command.
 
 New battles carry `roleConsistencyVersion: 1`; an already-active battle without it retains its previous decision policy. The marker and resolved roles survive validated saves. Regressions exercise the reproduced loops, every explicit role's movement budget, focused skills, NPC backup swaps, allied role resolution, cover/shot budgets and legacy behavior. Existing formation, cover, breaker, skirmish, weapon-skill and step/reload-versus-instant tests also remain in use.
+
+## Ranged attacks in melee control
+
+In weapon-skill battles, all ranged weapons require Point Blank to target an
+adjacent enemy. Basic shots, Power Throw and other special shots follow the
+same restriction for both sides and in both combat modes. A shooter may still
+target a more distant enemy while engaged, but firing provokes up to two eligible
+adjacent melee opponents before ammunition is consumed. Each strike costs its
+defender 5 fatigue and no AP. Dead, escaped, stunned, disarmed, unarmed, ranged
+or exhausted opponents cannot react. Point Blank does not prevent reactions.
+A lethal or disabling reaction interrupts the shot. Realtime impact feedback
+labels the Opportunity Strikes even if a reacting brother starts another action.
