@@ -17,11 +17,25 @@ function materials(state, recipeId) {
   return state.inventory.slice(0, -1).map((_, i) => i);
 }
 function seedFor(named) { for (let seed = 0; seed < 20000; seed++) if (direwolfCraftRoll(createGame(seed).seed, 0).named === named) return seed; throw Error('Missing outcome'); }
-test('confirmed stats and reused Wolf Helmet artwork and intrinsic resolve are exact', () => {
+test('confirmed stats and reused Wolf Helmet icon and intrinsic resolve are exact', () => {
   for (const [id, armor, fatigue] of [[leather, 120, 3], [wolf, 178, 5], [alpha, 265, 15]]) assert.deepEqual([getItem(id).armor, getItem(id).fatigue], [armor, fatigue]);
   assert.equal(getItem('direwolf-moonfang-harness').armor, 195);
   assert.equal(getItem(wolf).statBonuses.resolve, 4); assert.equal(getItem(alpha).statBonuses.resolve, 4);
   assert.match(itemImage(getItem(wolf)), /^data:image\/png;base64,/);
+});
+test('Wolf Helmet face aperture clears the eyes, nose, mouth and chin and is cached', async () => {
+  const path = './assets/direwolf-helmets/wolf-portrait.png';
+  const png = decodePng(readFileSync(new URL('../' + path, import.meta.url)));
+  assert.deepEqual([png.width, png.height], [80, 112]);
+  // Sample through the actual face opening from eye level down through the jaw.
+  for (const [x, y] of [[50, 55], [58, 70], [50, 82], [50, 94]]) assert.equal(png.rgba[(y * png.width + x) * 4 + 3], 0);
+  assert.ok(png.rgba[(30 * png.width + 45) * 4 + 3] > 200, 'wolf crown remains opaque');
+  assert.ok((await listOfflineAssets()).includes(path));
+  for (const id of [wolf, createFamedItemId(wolf, 71, 7)]) {
+    const html = portraitHTML(createGame(1).party[0], { helmet: getItem(id) });
+    assert.ok(html.includes(`src="${path}"`));
+    assert.match(html, /data-layer="head"/);
+  }
 });
 test('leather and Alpha recipes consume exact original materials, repair output, save serial and reject replay', () => {
   for (const recipeId of [leather, alpha]) for (const named of [false, true]) {

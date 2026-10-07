@@ -28,7 +28,7 @@ Helmet expansion: inspected `/workspace/ashen-armory-study/direwolf-helmets-worn
 and `/workspace/ashen-armory-study/direwolf-alpha-workbench.png`. Leather Hood
 and Alpha have prominent crowns, clear face apertures, different leather/mail
 construction and readable silhouettes at 80px roster size. The existing Wolf
-Helmet uses its unchanged original artwork and stats. Four browser scenarios
+Helmet retains its original inventory icon and stats. Four browser scenarios
 cover both recipes, ordinary/named output, desktop/tablet/mobile, cancellation,
 inspection return, reload and storage failure/retry. Moonfang is now 195/13.
 
@@ -42,6 +42,13 @@ face right. Alpha also has a larger wolf head and thicker fur; its 86x124 worn
 layer has its own anchor to keep the face aperture aligned. Re-inspected the
 updated worn lineup at 160px and 80px. The larger Alpha silhouette and muzzle
 remain distinct without covering the character's eyes.
+
+Existing Wolf Helmet mask repair: opened the opaque brow filler and extended the
+face aperture below the mouth and jaw. The final 80x112 layer at left6/top-30
+places the remaining mail band below the chin. Inspected six different character
+faces in `/workspace/ashen-armory-study/wolf-mask-check.png` and the complete
+helmet lineup at 160px and 80px. The intermediate higher mail rim covered the
+lower face and was replaced before delivery. Inventory icon and stats stay original.
 
 No unresolved P0/P1/P2 findings. Physical-device Safari remains untested.
 

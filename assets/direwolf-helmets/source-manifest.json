@@ -1,5 +1,5 @@
 {
-  "provenance": "AI-generated Direwolf Leather Hood and Alpha Helm grounded in the selected Moonfang concept and existing Wolf Helmet/Bear Headpiece. Wolf Helmet artwork itself is reused unchanged. Both new helmets corrected to face viewer-right; Alpha enlarged with thicker fur.",
+  "provenance": "AI-generated Direwolf Leather Hood and Alpha Helm grounded in the selected Moonfang concept and existing Wolf Helmet/Bear Headpiece. Wolf Helmet inventory icon reused; worn face aperture repaired to clear eyes, mouth and jaw. Both new helmets corrected to face viewer-right; Alpha enlarged with thicker fur.",
   "assets": [
     {
       "design": "leather",
@@ -36,6 +36,15 @@
       "path": "assets/direwolf-helmets/alpha-portrait.png",
       "sha256": "57c665bd1f4c236a0f39db4eadb45b3686402d581562025b0f01b8762066b75b",
       "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 86x124 canvas, left0/top-39 portrait anchor"
+    },
+    {
+      "design": "wolf",
+      "layer": "portrait",
+      "generatedMaster": "exec-a8967747-da91-454d-a86b-1554b0d5133f.png",
+      "masterSha256": "a5d7bf5d7c2b0b5b961e6014073849c30eb5ec6ef29a33da89c598076d2d59ad",
+      "path": "assets/direwolf-helmets/wolf-portrait.png",
+      "sha256": "92251fae12574ee961155b7948000c42f6f96e106d2ceff325fef70e624fcfb5",
+      "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 80x112 canvas, left6/top-30 portrait anchor"
     }
   ]
 }

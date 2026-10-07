@@ -1,4 +1,5 @@
 import { DIREWOLF_HIDE, DIREWOLF_MAIL, MOONFANG_ID } from './direwolf-crafting.js';
+import { DLC_ART } from './dlc-art.js';
 
 export const DIREWOLF_LEATHER_HELMET = 'direwolf-leather-hood';
 export const DIREWOLF_EXISTING_HELMET = 'bb-wolf-helmet';
@@ -20,6 +21,7 @@ export const DIREWOLF_HELMET_ITEMS = Object.freeze([
   }),
 ]);
 export const DIREWOLF_HELMET_ART = Object.freeze({
+  [DIREWOLF_EXISTING_HELMET]: Object.freeze({ ...DLC_ART[DIREWOLF_EXISTING_HELMET], portrait: './assets/direwolf-helmets/wolf-portrait.png', left: 6, top: -30, width: 80, height: 112, hideHead: false, hideBeard: true }),
   [DIREWOLF_LEATHER_HELMET]: Object.freeze({ icon: './assets/direwolf-helmets/leather-icon.png', portrait: './assets/direwolf-helmets/leather-portrait.png', left: 14, top: -26, width: 74, height: 110, hideHead: false, hideBeard: true }),
   [DIREWOLF_ALPHA_HELMET]: Object.freeze({ icon: './assets/direwolf-helmets/alpha-icon.png', portrait: './assets/direwolf-helmets/alpha-portrait.png', left: 0, top: -39, width: 86, height: 124, hideHead: false, hideBeard: true }),
 });

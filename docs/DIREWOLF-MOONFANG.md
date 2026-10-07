@@ -35,7 +35,8 @@ or new set bonus is introduced.
 ## Direwolf helmets and set
 
 The existing **Wolf Helmet** is the mail piece: **178 armor / 5 fatigue / +4
-resolve**, with its original rare identity and artwork unchanged. Two new
+resolve**, with its original rare identity and inventory icon. Its worn face
+opening is repaired to show the eyes, mouth and jaw, with mail below the chin. Two new
 craft-only designs complete the family:
 
 | Piece | Armor / fatigue | Armorer recipe |
@@ -66,7 +67,8 @@ older active battles retain their original snapshots until they end.
 
 New helmet icons are 140×180; worn layers are 74×110 at left14/top−26, with
 open face apertures and beard/hair handling suited to hooded headgear. The
-source manifest records masters, packaged hashes and references. The mail piece uses existing Wolf Helmet sprites.
+source manifest records masters, packaged hashes and references. The mail piece
+keeps its existing inventory icon and uses a repaired open-face worn sprite.
 
 ## Transaction and save behavior
 
