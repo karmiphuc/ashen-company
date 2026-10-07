@@ -3,7 +3,9 @@
 The selected third design becomes a craft-only body armor: an asymmetric
 ash-tipped direwolf mantle over dark chevron leather, with a visible steel mail
 sleeve and a silver crescent clasp. Inventory and worn layers have distinct
-framing; the wolf head stays on the viewer's left shoulder. It fits beneath
+framing; the wolf head stays on the viewer's left shoulder. The worn layer
+emphasizes a larger wolf face and fangs because the portrait crops out the long
+skirt and lower torso. It fits beneath
 existing faces and helmets and uses the same art for named and reforged variants.
 
 ## Recipe and progression

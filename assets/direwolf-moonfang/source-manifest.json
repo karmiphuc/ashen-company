@@ -16,11 +16,12 @@
     },
     {
       "layer": "portrait",
-      "generatedMaster": "exec-c56cd5aa-b5ba-4310-91ed-a713ada7c931.png",
-      "masterSha256": "763b8ed6cf2eea75980ee71812a0a78882532e6dae15127f5e8dde38631dbea6",
+      "generatedMaster": "exec-50d4f507-2381-4f6c-a232-f5aa42a0a016.png",
+      "masterSha256": "27cb475c8722c831cfad297a99473736b2848de83c31734fa584f6ff1f5e9ad0",
       "path": "assets/direwolf-moonfang/portrait.png",
-      "sha256": "d41d7055024432d06c886796531ffdf7e3587b4597d038f213380c68a8077e39",
-      "packaging": "ImageMagick alpha trim, aspect-preserving resize, transparent bottom-aligned canvas 104x94; portrait anchor left0 top20"
+      "sha256": "8084a9abd2861a0078d19c2275e8d02e72b5f3599098c9aa584c07282fb7a1b2",
+      "packaging": "ImageMagick alpha trim, aspect-preserving resize, transparent bottom-aligned canvas 104x94; portrait anchor left0 top20",
+      "revision": "Enlarged wolf face and muzzle for prominence in cropped worn portraits, while retaining the central neck opening and portrait anchors."
     }
   ]
 }
