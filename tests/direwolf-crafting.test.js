@@ -118,7 +118,7 @@ test('the craft-only item stays out of normal stock and recipe copy describes ev
 });
 test('transparent icon and worn layers are packaged, aligned and available offline for ordinary/named armor', async () => {
   const cache = new Set(await listOfflineAssets());
-  for (const [name, width, height] of [['icon', 140, 280], ['portrait', 120, 104]]) {
+  for (const [name, width, height] of [['icon', 140, 280], ['portrait', 148, 110]]) {
     const path = `./assets/direwolf-moonfang/${name}.png`; const png = decodePng(readFileSync(new URL('../' + path, import.meta.url)));
     assert.deepEqual([png.width, png.height], [width, height]); assert.equal(png.rgba[3], 0);
     let transparent = 0, visible = 0; for (let i = 3; i < png.rgba.length; i += 4) png.rgba[i] === 0 ? transparent++ : visible++;
@@ -126,6 +126,6 @@ test('transparent icon and worn layers are packaged, aligned and available offli
   }
   for (const id of [MOONFANG_ID, createFamedItemId(MOONFANG_ID, 71, 7)]) {
     assert.equal(itemImage(getItem(id)), './assets/direwolf-moonfang/icon.png');
-    assert.match(portraitHTML({ name: 'Test', seed: 1 }, { armor: getItem(id) }), /data-layer="armor"[^>]*src="\.\/assets\/direwolf-moonfang\/portrait.png"[^>]*left:-10px;top:16px/);
+    assert.match(portraitHTML({ name: 'Test', seed: 1 }, { armor: getItem(id) }), /data-layer="armor"[^>]*src="\.\/assets\/direwolf-moonfang\/portrait.png"[^>]*left:-26px;top:10px/);
   }
 });

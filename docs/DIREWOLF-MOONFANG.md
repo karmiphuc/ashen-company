@@ -1,12 +1,13 @@
 # Direwolf Moonfang Harness
 
-The selected third design becomes a craft-only body armor: an asymmetric
-ash-tipped direwolf mantle over dark chevron leather, with a visible steel mail
-sleeve and a silver crescent clasp. Inventory and worn layers have distinct
-framing; the wolf head stays on the viewer's left shoulder. The worn layer
-emphasizes a larger wolf face and fangs because the portrait crops out the long
-skirt and lower torso. It fits beneath
-existing faces and helmets and uses the same art for named and reforged variants.
+Moonfang is a craft-only body armor with layered dark leather, steel mail and a
+silver crescent clasp. The inventory icon keeps the original wolf-mantle design.
+The worn bust uses the selected plated reinterpretation: an enlarged sculpted
+steel wolf-head crest in a rounded domed pauldron on the **viewer’s left**, and
+a shallow silver wolf relief on a curved steel plate on the **viewer’s right**.
+Upright ash-grey fur backs both shoulders. The broad metal caps protect the
+shoulders without a stretched animal muzzle beside the human face.
+Named and reforged harnesses share the same artwork.
 
 ## Recipe and progression
 
@@ -65,7 +66,8 @@ native effects. With Direwolf Fur, ordinary Moonfang + Alpha reaches 243 body /
 armor is unchanged. Equipment-set rules version 9 adds this family; version-8 and
 older active battles retain their original snapshots until they end.
 
-New helmet icons are 140×180; worn layers are 74×110 at left14/top−26, with
+New helmet icons are 140×180. Leather Hood uses a 74×110 worn layer at
+left14/top−26; Alpha uses an 86×124 layer at left0/top−39, with
 open face apertures and beard/hair handling suited to hooded headgear. The
 source manifest records masters, packaged hashes and references. The mail piece
 keeps its existing inventory icon and uses a repaired open-face worn sprite.
@@ -88,9 +90,11 @@ restoring an external pre-attempt backup restores the earlier state.
 
 ## Artwork
 
-The inventory PNG is 140×280, and the worn layer is 104×94 at left 0 / top 20
-in the existing portrait frame. Both have alpha transparency and are cached
-offline. The source manifest in `assets/direwolf-moonfang/` records the selected
+The inventory PNG remains 140×280, and the revised worn layer is 148×110 at
+left −26 / top 10 in the existing portrait frame. Both have alpha transparency
+and are cached offline. A 126px Moonfang roster tile makes room for both plated
+shoulders. The equipment detail and tactical anchors keep their existing
+character size and positioning. The source manifest in `assets/direwolf-moonfang/` records the selected
 concept, generated asset masters, reference designs and SHA-256 checksums.
 Image generation created the artwork; ImageMagick performs only aspect-preserving
 asset sizing and transparent canvas packaging. Generated master files remain in

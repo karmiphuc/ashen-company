@@ -1,63 +1,71 @@
-# Moonfang design verification
+# Moonfang plated-shoulder verification
 
-Target: selected third ideation image, `exec-c0d7a775-a36d-4f64-b30e-27c8f97e7660.png`.
-This is a game item adaptation, rather than a website recreation.
+Source visual truth: `/workspace/generated_images/exec-78a37fb5-5d12-4452-b196-730bc9866d25.png`.
+The user combined the embossed plate from the first ideation image with the
+sculpted wolf crest from the second, then requested swapped shoulders and a
+larger rounded crest. Viewer-left is the enlarged wolf-head pauldron;
+viewer-right is the silver wolf relief. The original inventory icon is retained
+at the user's explicit request.
 
-Compared the selected concept with the packaged inventory artwork, worn portrait
-layer and rendered Armorer preview. The asymmetric ash-grey mantle, viewer-left
-wolf head, crescent clasp, dark chevron leather and exposed right mail sleeve
-remain identifiable at game sizes. The revised worn layer enlarges the wolf
-face and muzzle to make the trophy prominent despite the bust crop. The portrait adaptation deliberately ends at
-the chest to fit the existing character frame. Uncovered heads and open/closed
-helmets remain visible and aligned.
+## Evidence and normalization
 
-The crafting panel uses the existing wood surfaces, serif type and restrained
-gold selection outlines. The armor is the visual focus; materials, cost and
-guaranteed/named outcomes are clear. Desktop, tablet and mobile checks show no
-horizontal overflow, failed images or browser errors. Exact-copy selection,
-cancellation, confirmation, inspection return, reload and save-failure retry
-work. All nine new gameplay tests pass.
+The source and implementation are shown together in
+`/workspace/artifacts/moonfang-reference-comparison.png` (1100x620 viewport,
+deviceScaleFactor 1). The 1280x1280 master is cropped to 1241x916+7+201,
+aspect-preservingly resized to 106px tall and bottom-centered on a 148x110
+transparent canvas. The comparison displays the normalized source and packaged
+sprite at twice their native size, alongside the actual Alpha composition.
+Expected downsampling is visible at that enlarged inspection scale.
 
-Evidence inspected: `/workspace/ashen-armory-study/moonfang-workbench.png` and
-`/workspace/ashen-armory-study/moonfang-worn.png`, captured from Chromium.
-The revised before/after comparison is
-`/workspace/ashen-armory-study/moonfang-head-comparison.png`; it covers uncovered
-heads, open/closed helmets, and named portraits at 64px and 80px.
+Full-view evidence: `/workspace/artifacts/moonfang-shoulder-comparison.png`
+(1320x1000 viewport, full-page capture, density 1). It compares the previous
+worn layer with the revision, then checks uncovered heads, Leather Hood,
+Wolf Helmet and Alpha at 160px detail, 80px roster and 64px named combat size.
+Focused source/packaged/worn evidence is in the reference comparison above.
 
-Helmet expansion: inspected `/workspace/ashen-armory-study/direwolf-helmets-worn.png`
-and `/workspace/ashen-armory-study/direwolf-alpha-workbench.png`. Leather Hood
-and Alpha have prominent crowns, clear face apertures, different leather/mail
-construction and readable silhouettes at 80px roster size. The existing Wolf
-Helmet retains its original inventory icon and stats. Four browser scenarios
-cover both recipes, ordinary/named output, desktop/tablet/mobile, cancellation,
-inspection return, reload and storage failure/retry. Moonfang is now 195/13.
+Real app evidence: `/workspace/artifacts/moonfang-company-tablet.png`
+(1100x850) and `/workspace/artifacts/moonfang-company-phone.png` (390x844),
+full-page captures at density 1. State: paused company with ordinary Moonfang,
+Alpha helmet, arming sword and buckler equipped. Company navigation was tested;
+all rendered portrait images decoded. Browser errors: none. Phone page overflow:
+none. This artwork revision does not claim new browser crafting-flow coverage.
 
-Integration checks include all nine Direwolf body/head pairings and Direwolf Fur
-trophy completion in either attachment slot. Version-8 battles stay unfitted;
-new version-9 battles preserve raw wear through save/reload and retreat.
+## Findings and comparison history
 
-Orientation correction: the initial new helmet crowns faced left against the
-right-facing character. Both masters and their inventory/portrait sprites now
-face right. Alpha also has a larger wolf head and thicker fur; its 86x124 worn
-layer has its own anchor to keep the face aperture aligned. Re-inspected the
-updated worn lineup at 160px and 80px. The larger Alpha silhouette and muzzle
-remain distinct without covering the character's eyes.
+The earlier fur projection crowded the character card and was clipped by the
+roster tile. The final design replaces that projection with compact metal caps.
+A 126px Moonfang roster tile keeps both shoulders visible; the equipment preview
+uses its original size and anchors. Post-fix evidence is the real tablet/phone
+capture and the final helmet lineup. The left wolf face and protective lames
+remain readable beside the helmet fur; human eyes, mouth and jaw remain clear.
+No actionable P0/P1/P2 findings remain.
 
-Existing Wolf Helmet mask repair: opened the opaque brow filler and extended the
-face aperture below the mouth and jaw. The final 80x112 layer at left6/top-30
-places the remaining mail band below the chin. Inspected six different character
-faces in `/workspace/ashen-armory-study/wolf-mask-check.png` and the complete
-helmet lineup at 160px and 80px. The intermediate higher mail rim covered the
-lower face and was replaced before delivery. Inventory icon and stats stay original.
+## Fidelity surfaces
 
-Moonfang shoulder revision: broadened the fur mantle, strengthened the mail-side
-shoulder and enlarged the snarling shoulder trophy. The worn layer is now 120x104
-at left-10/top16. Compared with original Direwolf Hide/Mail using the same Alpha
-helmet at 160px, 80px and 64px in
-`/workspace/ashen-armory-study/moonfang-shoulders-comparison.png`, and inspected
-all three helmets in the updated worn lineup. The wider body balances Alpha's
-crown; the wearer's eyes, mouth and jaw remain clear.
+- Typography: existing application fonts, weights, labels and wrapping retained;
+  the source armor asset has no text.
+- Spacing/layout: empty neckline aligned at left-26/top10; both shoulders fit
+  the company card and wider roster tile. No page overflow at 390px.
+- Colors: worn steel/silver, ash-grey fur and warm leather match the selected
+  raster target and existing game palette.
+- Asset quality: generated PNG preserves silhouette and transparency, with
+  aspect-preserving packaging; no replacement vector/CSS artwork. Native game
+  sizes remain readable; named items share the same worn layer. Inventory PNG
+  is byte-for-byte unchanged from the previous branch.
+- Copy/content: inspection now describes the plated shoulders. Recipes, fees,
+  protection, fatigue and set bonuses keep their existing values.
 
-No unresolved P0/P1/P2 findings. Physical-device Safari remains untested.
+## Implementation checklist
+
+- Package the selected worn master and record source/output SHA-256 hashes.
+- Align both shoulders, check all three helmets and named rendering.
+- Fit the roster tile and inspect tablet/phone equipment screens.
+- Regenerate the offline worker and run artwork, fitting, release/offline checks.
+
+All 97 focused checks pass, including the repaired Wolf Helmet's deliberate
+render anchor; the independent imported-source anchor checks remain intact.
+Physical-device Safari is untested. A broader full-suite attempt was stopped
+while the unrelated Ashen Winter test file was still running; no complete
+full-suite result is claimed for this session.
 
 final result: passed

@@ -16,12 +16,17 @@
     },
     {
       "layer": "portrait",
-      "generatedMaster": "exec-b3bbbf6c-536b-4220-871e-45efa33dc419.png",
-      "masterSha256": "ce3e920d9ea7916a8adb7741854af13f940c9b91d0e0ee6f4a1e990042635104",
+      "generatedMaster": "exec-78a37fb5-5d12-4452-b196-730bc9866d25.png",
+      "masterSha256": "9e7b7e5940dbe62e7c1a6f1f05f153524c9016b65c4fe189e92b69609c6ca354",
       "path": "assets/direwolf-moonfang/portrait.png",
-      "sha256": "cdd4070ba19ecdbda876012c8ca1fdb1e1828a8e1730d1e33c5a102fa1b4eb5b",
-      "packaging": "ImageMagick alpha trim, aspect-preserving resize, transparent bottom-aligned canvas 120x104; portrait anchor left-10 top16",
-      "revision": "Broadened shoulders and fur mantle with enlarged wolf trophy to balance Alpha helmet; verified at 160px, 80px and 64px."
+      "sha256": "22d7672b213683cc40650d6b8492e66fb121e3bd68f6f44c17ddd7094e766035",
+      "packaging": "ImageMagick transparent-margin crop 1241x916+7+201, aspect-preserving resize to 106px tall, transparent bottom-aligned canvas 148x110; portrait anchor left-26 top10",
+      "revision": "Viewer-left: enlarged sculpted steel wolf-head crest in a rounded domed pauldron. Viewer-right: silver wolf relief embossed into curved steel plate. Upright fur backing on both; original inventory icon preserved."
     }
+  ],
+  "selectedWornConcept": "exec-78a37fb5-5d12-4452-b196-730bc9866d25.png",
+  "selectedWornDirections": [
+    "exec-0ffa9240-b534-4632-beb9-5cc4754c88d8.png",
+    "exec-5a3b978e-5ae9-4ec2-960f-f9cdb490cc48.png"
   ]
 }

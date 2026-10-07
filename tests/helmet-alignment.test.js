@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DLC_ART} from '../src/dlc-art.js';
+import {DIREWOLF_HELMET_ART} from '../src/direwolf-helmets.js';
 import {DLC_ITEMS} from '../src/dlc-items.js';
 import {getItem} from '../src/engine.js';
 import {portraitHTML} from '../src/portraits.js';
@@ -28,7 +29,7 @@ test('all helmet crowns and horns keep their full size and source anchors across
  const people=new Map();for(let seed=0;seed<100;seed++){const person={name:'Alignment',seed},html=portraitHTML(person),index=Number(html.match(/data-appearance="(\d+)"/)[1]);people.set(index,person);}
  assert.ok(people.size>=6);
  for(const item of helmets)for(const person of people.values())for(const helmet of [getItem(item.id),getItem(`famed:${item.id}:123`)]){
-  const art=DLC_ART[item.id],html=portraitHTML(person,{helmet,armor:getItem('leather-vest'),weapon:getItem('arming-sword'),shield:getItem('kite-shield')});
+  const art=DIREWOLF_HELMET_ART[item.id] ?? DLC_ART[item.id],html=portraitHTML(person,{helmet,armor:getItem('leather-vest'),weapon:getItem('arming-sword'),shield:getItem('kite-shield')});
   const style=html.match(/bb-portrait-composition" style="([^"]+)"/)[1];
   const x=Number(style.match(/left:([\d.-]+)px/)[1]),y=Number(style.match(/top:([\d.-]+)px/)[1]),scale=Number(style.match(/transform:scale\(([\d.]+)\)/)?.[1]??1);
   assert.equal(x,0,`${item.id}: equipment does not shift the rider horizontally`);
