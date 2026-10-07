@@ -25,3 +25,19 @@ test('malformed identities and inconsistent quest progress are rejected without 
 test('a Collector killed before retreat remains dead and the remaining guards can complete the objective',()=>{const s=readyForge();const q=s.legendaryBlacksmith.quests[3];q.status='active';q.survivors=q.encounter.enemies.map((_,i)=>i);s.legendaryBlacksmith.freeUse=false;s.legendaryBlacksmith.rewardId=null;let site=getBlacksmithQuestEncounters(s)[0];s.position={x:site.x,y:site.y};startBattle(s,site.id);const collector=s.battle.units.find(u=>u.champion);collector.hp=0;collector.alive=false;retreatBattle(s);finishBattle(s);assert.equal(q.survivors.includes(0),false);site=getBlacksmithQuestEncounters(s)[0];startBattle(s,site.id);assert.deepEqual(validateSave(s),s);s.battle.units.filter(u=>u.side==='enemy').forEach(u=>{u.hp=0;u.alive=false;});resolveBattle(s);finishBattle(s);assert.equal(q.status,'ready');assert.deepEqual(validateSave(s),s);});
 test('a real ordinary contract remains untouched through the material side quest and travel/save to its combat objective',async()=>{const {acceptContract,activateMapTarget}=await import('../src/engine.js');const {findOffer}=await import('./helpers/contract-offers.js');const s=discovered();const offer=findOffer(s,'courier','ironford');assert.equal(acceptContract(s,'ironford',offer.id).ok,true);const contract=structuredClone(s.contract);assert.equal(acceptBlacksmithQuest(s,1).ok,true);s.cargo.iron=8;s.cargo.timber=6;s.supplies.tools=10;assert.equal(turnInBlacksmithQuest(s,1).ok,true);assert.deepEqual(s.contract,contract);assert.equal(acceptBlacksmithQuest(s,2).ok,true);const site=getBlacksmithQuestEncounters(s)[0];assert.equal(activateMapTarget(s,'blacksmith',site.id).ok,true);assert.equal(s.destinationAction.type,'blacksmith');assert.deepEqual(validateSave(s),s);assert.deepEqual(s.contract,contract);});
 test('inactive ranged and throwing enhancements survive a complete package transfer and reactivate on suitable gear',()=>{const s=readyForge();s.gold=5000;const original=encodeForgeItem('hunting-bow',{damagePct:20,range:1,accuracy:10},catalog);stash(s,[original,'greatsword']);const first=forge(s,0,1,'transfer').r;assert.equal(getItem(first.itemId).range,getItem('greatsword').range);assert.equal(getItem(first.itemId).forgeProfile.range,1);stash(s,[first.itemId,'hunting-bow']);const next=forge(s,0,1,'transfer').r;assert.equal(getItem(next.itemId).range,getItem('hunting-bow').range+1);});
+
+test('ranged-only prefix donors cannot consume a merge on melee named recipients',()=>{
+ const s=readyForge();
+ const donor=encodeForgeItem('hunting-bow',{rangedReach:1,rangedHit:8,volleyDistance:1},catalog);
+ stash(s,[donor,createFamedItemId('greatsword',42,3)]);
+ const before=structuredClone(s),quote=getReforgeQuote(s,0,1,'merge');
+ assert.equal(quote.ok,false);assert.match(quote.message,/no applicable improvement/);
+ assert.deepEqual(s,before);
+ stash(s,[donor,'greatsword']);
+ const transferred=forge(s,0,1,'transfer').r.itemId;
+ assert.ok(getItem(transferred).bonuses.every(row=>row.value.includes('inactive')));
+ stash(s,[transferred,'hunting-bow']);
+ const restored=getItem(forge(s,0,1,'transfer').r.itemId);
+ assert.ok(restored.bonuses.every(row=>!row.value.includes('inactive')));
+ assert.deepEqual(restored.forgeProfile,getItem(donor).forgeProfile);
+});

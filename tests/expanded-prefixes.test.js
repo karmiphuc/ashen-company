@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as game from '../src/engine.js';
 import { PREFIX_EFFECTS, EXPANDED_PREFIXES, AFFIX_MASTERIES } from '../src/affix-prefixes.js';
 import { equipmentBoost, equipmentPerk, perkFlags } from '../src/item-affixes.js';
-import { encodeForgeItem, extractForgeProfile } from '../src/reforged-items.js';
+import { encodeForgeItem, extractForgeProfile, forgeProfileRows, forgeGroups } from '../src/reforged-items.js';
 import { companySheetHTML } from '../src/campaign-ui.js';
 import { getItemDetails } from '../src/item-details.js';
 import { simultaneousInitiative } from '../src/simultaneous-combat.js';
@@ -187,4 +187,18 @@ test('removing a helmet-based attachment grant preserves layer durability and re
 
 test('camp reward identities stay in the frozen old prefix pool across reload and retreat',()=>{
   const s=game.createGame(17),site=game.getCampSites(s).find(c=>c.id==='quarry-camp');s.discoveryRolls[site.id]={cycle:site.generation,champion:0,famed:0,mount:0,championGearVersion:1,namedAffixVersion:1};s.position={x:site.x,y:site.y};assert.ok(game.startBattle(s,site.id).ok);const id=s.battle.famedDrop;assert.match(id,/^famed5:/);assert.deepEqual(reload(s),s);assert.ok(game.retreatBattle(s).ok);assert.ok(game.finishBattle(s).ok);assert.ok(game.startBattle(s,site.id).ok);assert.equal(s.battle.famedDrop,id);assert.deepEqual(reload(s),s);
+});
+
+test('cross-class reforging preserves inactive prefixes but excludes them from random merges',()=>{
+  const ranged={rangedReach:1,rangedHit:8,volleyDistance:1};
+  const sword=forged('greatsword',{accuracy:5,...ranged});
+  assert.deepEqual(sword.forgeProfile,{accuracy:5,...ranged});
+  for(const row of forgeProfileRows(ranged,sword))assert.equal(row.inactive,'Requires a ranged weapon');
+  assert.deepEqual(forgeGroups(sword.forgeProfile,sword),[['accuracy']]);
+  const bow=forged('hunting-bow',sword.forgeProfile);
+  assert.ok(forgeProfileRows(ranged,bow).every(row=>row.inactive===null));
+  assert.deepEqual(forgeGroups(ranged,bow),Object.keys(ranged).map(key=>[key]));
+  assert.ok(forgeProfileRows({rangedHit:8},catalog('mail-coif')).every(row=>row.inactive===null));
+  for(const base of ['greatsword','hunting-bow'])assert.deepEqual(forgeGroups({duelistPct:20},catalog(base)),[]);
+  assert.deepEqual(forgeGroups({duelistPct:20},catalog('arming-sword')),[['duelistPct']]);
 });
