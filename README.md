@@ -7,6 +7,8 @@ Version 0.54.0 adds **Ancient Armory restoration** at every open settlement’s 
 See [equipment design features](docs/EQUIPMENT-DESIGN-FEATURES.md) for named
 prefixes/suffixes, the bounded merging formula, and matching armory sets.
 See [release and offline update rules](docs/RELEASES.md) for versioning and safe updates.
+The verified release pipeline automatically numbers each deployed commit, tests
+the built app online/offline, and confirms the published version and cache.
 
 Version 0.53.0 adds persistent temporary injuries based on original Battle Brothers: specific wound penalties, daily medicine and recovery, separate Doctor wound treatment, Crippling Strikes, and the Surgeon’s one-day recovery benefit. Compact roster badges and inspection hints show care needs. New battles use wounds for Gash and Executioner; resumed older battles keep their previous rules. See [injury rules and compatibility](docs/TEMPORARY-INJURIES.md).
 
