@@ -27,13 +27,17 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run prepare-offline
-      - run: npm test
+      - name: Run full suite with failure annotations
+        run: >-
+          node --test --test-reporter=spec --test-reporter=github
+          --test-reporter-destination=stdout --test-reporter-destination=stdout
+          tests/*.test.js
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:release
       - name: Keep failed browser diagnostics
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: release-browser-diagnostics
           path: test-results

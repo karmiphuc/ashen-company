@@ -31,6 +31,8 @@ independent. No company reset or schema change follows from a release bump.
 
 1. Check out full history; use Node 24, pinned actions and `npm ci` with a lockfile.
 2. Regenerate development metadata/cache and run the complete Node test suite.
+   Failed tests emit GitHub annotations with their names and details, allowing
+   diagnosis from PR checks even when full log downloads are unavailable.
 3. Generate production version/cache and copy only runtime files into `dist`.
 4. Browser-test that exact build in an iPad-sized Chromium viewport: boot, correct
    version/build ID, complete offline cache, offline reload and company retention.
