@@ -1,3 +1,4 @@
+import { effectiveArmorFatigue } from './equipment-sets.js';
 import { PREFIX_EFFECTS, AFFIX_MASTERIES, eligibleExpandedPrefixes, prefixEffectText, equipmentPerkText } from './affix-prefixes.js';
 // Stable, bounded affixes. Gear grants effects while worn; it never learns perks.
 export const AFFIX_PERKS = Object.freeze(['pathfinder','fleet-footed','recover','relentless','steel-brow','shield-expert','backstabber','anticipation',...AFFIX_MASTERIES,'combat-bandaging','quick-hands','layered-armor']);
@@ -15,9 +16,9 @@ function currentAffixes(actor,getItem) {
   if(!actor?.equipment)return emptyAffixes;
   const equipment=actor.equipment,shieldUsable=(actor.shieldDurability??actor.armorDurability?.shield??1)>0;
   const cached=actorAffixes.get(actor);
-  if(cached&&cached.getItem===getItem&&cached.shieldUsable===shieldUsable
+  if(cached&&cached.getItem===getItem&&cached.shieldUsable===shieldUsable&&cached.setActive===(!actor.side||!!actor.setArmor)
     &&affixSlots.every((slot,index)=>equipment[slot]===cached.ids[index]))return cached;
-  const summary={getItem,shieldUsable,ids:affixSlots.map(slot=>equipment[slot]),perks:new Set(),boosts:{},range:0};
+  const summary={getItem,shieldUsable,setActive:!actor.side||!!actor.setArmor,ids:affixSlots.map(slot=>equipment[slot]),perks:new Set(),boosts:{},range:0};
   for(const slot of affixSlots){
     if(slot==='shield'&&!shieldUsable)continue;
     const id=equipment[slot];
@@ -28,7 +29,7 @@ function currentAffixes(actor,getItem) {
     for(const [key,value]of Object.entries(item.perkBoosts??{}))summary.boosts[key]=PREFIX_EFFECTS[key]?Math.max(summary.boosts[key]??0,value):(summary.boosts[key]??0)+value;
     summary.range+=item.rangedRangeBonus??0;
   }
-  if(summary.range){const load=affixSlots.slice(0,2).reduce((sum,slot)=>sum+(getItem(equipment[slot])?.fatigue??0),0);summary.range=load<=15?Math.min(1,summary.range):0;}
+  if(summary.range){const setLoad=effectiveArmorFatigue(actor,getItem),load=setLoad.body+setLoad.head;summary.range=load<=15?Math.min(1,summary.range):0;}
   actorAffixes.set(actor,summary);return summary;
 }
 export function equipmentBoost(actor,key,getItem,cap=PREFIX_EFFECTS[key]?.cap??2){return Math.min(cap,currentAffixes(actor,getItem).boosts[key]??0);}
