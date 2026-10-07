@@ -265,3 +265,17 @@ test('restoration preserves dark metal seams and separates polished highlights',
     assert.deepEqual(image.rgba, rgba, 'source pixels remain immutable');
   }
 });
+
+test('galvanized steel has deterministic restrained zinc facets without texturing bronze',()=>{
+ const rgba=Buffer.from(Array.from({length:64},()=>[150,130,85,255]).flat()),image={width:8,height:8,rgba};
+ const steel=restorePixels(image,'steel','bb-ancient-plate-harness','icon').rgba;
+ assert.deepEqual(steel,restorePixels(image,'steel','bb-ancient-plate-harness','icon').rgba);
+ const tones=new Set(),bronzeTones=new Set(),bronze=restorePixels(image,'bronze','bb-ancient-plate-harness','icon').rgba;
+ for(let p=0;p<rgba.length;p+=4){
+  tones.add(steel[p+1]);bronzeTones.add(bronze[p+1]);
+  assert.equal(steel[p+3],rgba[p+3]);
+  assert.ok(Math.max(...steel.subarray(p,p+3))-Math.min(...steel.subarray(p,p+3))<=8,'neutral zinc metal');
+ }
+ assert.ok(tones.size>1);assert.ok(Math.max(...tones)-Math.min(...tones)<=10,'mottling stays restrained');
+ assert.equal(bronzeTones.size,1);assert.deepEqual(image.rgba,rgba);
+});
