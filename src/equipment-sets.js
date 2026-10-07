@@ -5,7 +5,7 @@ import { FANTASY_ITEMS } from './fantasy-items.js';
 import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 // Set membership belongs to the original item design, never to transferred affixes.
 const armorDesigns=[...DLC_ITEMS,...NORTHERN_ITEMS,...ADDITIONAL_ITEMS,...FANTASY_ITEMS].filter(i=>['armor','helmet'].includes(i.slot));
-export const EQUIPMENT_SET_RULES_VERSION=7;
+export const EQUIPMENT_SET_RULES_VERSION=8;
 export const isEquipmentSetRulesVersion=version=>Number.isInteger(version)&&version>=1&&version<=EQUIPMENT_SET_RULES_VERSION;
 // Completion is intentionally absent from early mail and fatigue-efficient light sets.
 const completionRules=Object.freeze({
@@ -22,7 +22,9 @@ export const TROPHY_COMPLETIONS=Object.freeze([
  Object.freeze({since:7,namedOnly:false,attachmentId:'unhold-fur',armorPct:30,bodyFatiguePct:15,headFatiguePct:15,attachmentFatiguePct:15}),
  Object.freeze({since:7,namedOnly:false,attachmentId:'direwolf-fur',armorPct:25,bodyFatiguePct:20,headFatiguePct:20,attachmentFatiguePct:20}),
 ]);
-export const equipmentSetCompletionOptions=set=>[...(set.threePiece?[set.threePiece]:[]),...TROPHY_COMPLETIONS];
+// An exact three-piece outfit inside Northern, without broadening its other pairings.
+export const RITUAL_BONE_COMPLETION=Object.freeze({since:8,name:'Ritual Bone',attachmentId:'bone-platings',armorId:'bb-barbarian-ritual-armor',helmetId:'bb-barbarian-ritual-helmet',armorPct:50,bodyFatiguePct:20,headFatiguePct:20,attachmentFatiguePct:20,namedOnly:true});
+export const equipmentSetCompletionOptions=set=>[...(set.threePiece?[set.threePiece]:[]),...(set.id==='northern'?[RITUAL_BONE_COMPLETION]:[]),...TROPHY_COMPLETIONS];
 const family=(id,name,since,pairing,items)=>Object.freeze({id,name,since,pairing,armorIds:Object.freeze(items.filter(i=>i.slot==='armor').map(i=>i.id)),helmetIds:Object.freeze(items.filter(i=>i.slot==='helmet').map(i=>i.id)),armorPct:15,bodyFatiguePct:15,headFatiguePct:10,threePiece:completion(id)});
 const historicalSets=Object.freeze([
  family('assassin','Assassin',1,'Wear Assassin’s Robe with Assassin’s Face Mask or Assassin’s Head Wrap.',armorDesigns.filter(i=>['bb-assassin-robe','bb-assassin-face-mask','bb-assassin-head-wrap'].includes(i.id))),
@@ -58,12 +60,13 @@ export const EQUIPMENT_SETS=Object.freeze([
 export const equipmentSetsForRules=version=>(version<4?historicalSets:EQUIPMENT_SETS).filter(s=>s.since<=version);
 export function equipmentSetBonusText(set,{threePiece=false,bonuses}={}){
  const bonus=bonuses??(threePiece?set.threePiece:set);
- return `${set.name}${threePiece?' 3/3':''} set: +${bonus.armorPct}% head/body armor; −${bonus.headFatiguePct}% helmet fatigue, −${bonus.bodyFatiguePct}% body fatigue${threePiece?`, −${bonus.attachmentFatiguePct}% matching attachment fatigue`:''}`;
+ return `${bonus.name??set.name}${threePiece?' 3/3':''} set: +${bonus.armorPct}% head/body armor; −${bonus.headFatiguePct}% helmet fatigue, −${bonus.bodyFatiguePct}% body fatigue${threePiece?`, −${bonus.attachmentFatiguePct}% matching attachment fatigue`:''}`;
 }
 export function equipmentSetCompletionText(set){
  const options=equipmentSetCompletionOptions(set).map(third=>{
   const name=ARMOR_ATTACHMENTS.find(i=>i.id===third.attachmentId)?.name;
-  return `${third.namedOnly?'named ':''}${name}: +${third.armorPct}% head/body armor, −${third.attachmentFatiguePct}% fatigue`;
+  const required=third.armorId?` with ${armorDesigns.find(i=>i.id===third.armorId).name} and ${armorDesigns.find(i=>i.id===third.helmetId).name}`:'';
+  return `${third.namedOnly?'named ':''}${name}${required}: +${third.armorPct}% head/body armor, −${third.attachmentFatiguePct}% fatigue`;
  }).join('; ');
  return `Three-piece completion: wear a qualifying attachment in either slot with this head/body pair. ${options}. These bonuses replace the two-piece bonuses and reduce only the matching three pieces’ fatigue. Attachment armor and native effects are unchanged; only the strongest completion applies.`;
 }
@@ -84,7 +87,7 @@ export function equipmentSetStatus(actor,getItem,rulesVersion){
  const options=equipmentSetCompletionOptions(set).filter(c=>(rulesVersion??EQUIPMENT_SET_RULES_VERSION)>=c.since);
  const candidates=['attachment','attachment2'].flatMap(slot=>{
   const item=getItem(actor.equipment?.[slot]);
-  const bonus=item?.slot==='attachment'?options.find(c=>designId(item)===c.attachmentId&&(!c.namedOnly||['named','famed'].includes(item.rarity))):null;
+  const bonus=item?.slot==='attachment'?options.find(c=>designId(item)===c.attachmentId&&(!c.namedOnly||['named','famed'].includes(item.rarity))&&(!c.armorId||armor===c.armorId)&&(!c.helmetId||helmet===c.helmetId)):null;
   return bonus?[{slot,bonus}]:[];
  }).sort((a,b)=>b.bonus.armorPct-a.bonus.armorPct||b.bonus.attachmentFatiguePct-a.bonus.attachmentFatiguePct);
  // Legacy battles must not gain the new tier or its attachment weight discount on reload.

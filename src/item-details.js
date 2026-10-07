@@ -1,4 +1,4 @@
-import { EQUIPMENT_SETS, TROPHY_COMPLETIONS, equipmentSetsForItem, equipmentSetBonusText, equipmentSetCompletionText } from './equipment-sets.js';
+import { EQUIPMENT_SETS, TROPHY_COMPLETIONS, equipmentSetsForItem, equipmentSetCompletionOptions, equipmentSetBonusText, equipmentSetCompletionText } from './equipment-sets.js';
 import { PREFIX_EFFECTS, prefixEffectText } from './affix-prefixes.js';
 import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
 import { equipmentSkills, weaponSkillFamily } from './combat-skills.js';
@@ -56,8 +56,8 @@ export function getItemDetails(item, condition) {
    const families=sets.length===EQUIPMENT_SETS.length?'any complete matching head/body set':sets.map(s=>s.name).join(', ');
    const id=item.baseId??item.id,trophy=TROPHY_COMPLETIONS.find(c=>c.attachmentId===id);
    notes.push(`Three-piece completion attachment for ${families}. ${trophy?'Ordinary and named versions qualify.':'Only named versions count; ordinary versions keep their normal protection and effects.'}`);
-   const completions=trophy?[{name:'Any matching set',threePiece:trophy}]:sets.filter(s=>s.threePiece?.attachmentId===id);
-   for(const set of completions)notes.push(`${set.name} completion: wear ${set.threePiece.namedOnly?'a named ':''}${item.name} with its matching head/body pair for +${set.threePiece.armorPct}% head/body armor and −${set.threePiece.attachmentFatiguePct}% fatigue on those three pieces. These replace the two-piece bonuses. Attachment armor and native effects stay unchanged; only the strongest completion applies.`);
+   const completions=trophy?[{name:'Any matching set',threePiece:trophy}]:sets.flatMap(s=>equipmentSetCompletionOptions(s).filter(c=>c.attachmentId===id).map(c=>({name:c.name??s.name,threePiece:c})));
+   for(const set of completions)notes.push(`${set.name} completion: wear ${set.threePiece.namedOnly?'a named ':''}${item.name} with ${set.threePiece.armorId?`${getItem(set.threePiece.armorId).name} and ${getItem(set.threePiece.helmetId).name}`:'its matching head/body pair'} for +${set.threePiece.armorPct}% head/body armor and −${set.threePiece.attachmentFatiguePct}% fatigue on those three pieces. These replace the two-piece bonuses. Attachment armor and native effects stay unchanged; only the strongest completion applies.`);
   }else for(const armorSet of sets){
    notes.push(`${armorSet.name} set piece: ${armorSet.pairing} ${equipmentSetBonusText(armorSet)}. Uses rounded fitted fatigue for Nimble, Agile Defense, Fleet Footed and Brawny. Named and reforged variants count; transferring bonuses to a different design does not transfer set membership.`);
    notes.push(equipmentSetCompletionText(armorSet));

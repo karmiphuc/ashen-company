@@ -127,7 +127,9 @@ eligibility. Attachments do not receive the head/body armor bonus.
 
 [Three-piece completions](THREE-PIECE-SETS.md) add selected named signature
 attachments, with varied **replacement** totals from +20% to +50% head/body
-armor. Northern's broad family gets the smallest increase. Unhold and Direwolf
+armor. Northern's broad family gets the smallest increase. Its unique Ritual Bone
+completion reserves +50% armor/−20% fatigue for Ritual Armor, the 300-armor
+Ritual Helmet and named Bone Platings. Unhold and Direwolf
 trophies can complete any valid pair without needing new armor designs. Only
 one completion applies, and only its three pieces get the fitted fatigue
 reduction. The other attachment keeps its full fatigue load; neither attachment gains
@@ -161,7 +163,7 @@ customization within that style.
 Current behavior is defined by `src/reforged-items.js`, the forge transactions
 in `src/engine.js`, and `src/equipment-sets.js`.
 
-Battles saved under set rules 1–6 retain their original memberships and bonuses
+Battles saved under set rules 1–7 retain their original memberships and bonuses
 until they finish, including the former broad Southern family. New battles use
-version-7 rules, which add selective attachment completions to the curated
+version-8 rules, which add the exact Ritual Bone completion to the curated
 sets. Stored gear condition remains unchanged.

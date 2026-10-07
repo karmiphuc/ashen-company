@@ -101,7 +101,8 @@ Version 4 replaces broad Southern with the two curated pairs and adds Ninja.
 Version 5 adds Adorned, Samurai and Tycoon.
 Version 6 adds the early mail, regal and Kasa pairings.
 Version 7 adds selective attachment completions with varied replacement totals.
-Existing active battles without a version, or with versions 1–6, retain their
+Version 8 adds the exact Ritual Armor/Ritual Helmet/named Bone Platings completion.
+Existing active battles without a version, or with versions 1–7, retain their
 original protection and fatigue rules. Newly enabled sets become effective in the next battle. Save validation verifies each
 snapshot against its original item design, rule version and starting condition.
 
