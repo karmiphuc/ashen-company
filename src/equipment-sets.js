@@ -4,7 +4,7 @@ import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
 // Set membership belongs to the original item design, never to transferred affixes.
 const armorDesigns=[...DLC_ITEMS,...NORTHERN_ITEMS,...ADDITIONAL_ITEMS,...FANTASY_ITEMS].filter(i=>['armor','helmet'].includes(i.slot));
-export const EQUIPMENT_SET_RULES_VERSION=5;
+export const EQUIPMENT_SET_RULES_VERSION=6;
 export const isEquipmentSetRulesVersion=version=>Number.isInteger(version)&&version>=1&&version<=EQUIPMENT_SET_RULES_VERSION;
 const family=(id,name,since,pairing,items)=>Object.freeze({id,name,since,pairing,armorIds:Object.freeze(items.filter(i=>i.slot==='armor').map(i=>i.id)),helmetIds:Object.freeze(items.filter(i=>i.slot==='helmet').map(i=>i.id)),armorPct:15,bodyFatiguePct:15,headFatiguePct:10});
 const historicalSets=Object.freeze([
@@ -29,6 +29,14 @@ export const EQUIPMENT_SETS=Object.freeze([
  family('adorned','Adorned',5,'Wear Adorned Mail Shirt, Adorned Warrior’s Armor or Adorned Heavy Mail Hauberk with Adorned Closed Flat Top or Adorned Full Helm.',armorDesigns.filter(i=>['bb-adorned-mail-shirt','bb-adorned-warriors-armor','bb-adorned-heavy-mail-hauberk','bb-adorned-closed-flat-top-with-mail','bb-adorned-full-helm'].includes(i.id))),
  family('samurai','Samurai',5,'Wear Samurai Armor with Samurai Helmet.',armorDesigns.filter(i=>['samurai-wushi-armor','samurai-helmet'].includes(i.id))),
  family('tycoon','Tycoon',5,'Wear Tycoon Armor with Tycoon Helmet.',armorDesigns.filter(i=>['samurai-tycoon-armor','samurai-tycoon-helmet'].includes(i.id))),
+ family("basic-mail","Basic Mail",6,"Wear Basic Mail Shirt or Patched Mail Shirt with Mail Coif.",armorDesigns.filter(i=>["bb-basic-mail-shirt", "bb-patched-mail-shirt", "bb-mail-coif", "mail-coif"].includes(i.id))),
+ family("field-mail","Field Mail",6,"Wear Mail Shirt with Reinforced Mail Coif or Mail Coif.",[...armorDesigns.filter(i=>["bb-mail-shirt", "bb-reinforced-mail-coif", "bb-mail-coif", "mail-coif"].includes(i.id)),{id:'mail-shirt',slot:'armor'}]),
+ family("hauberk","Hauberk",6,"Wear Mail Hauberk or Sleeveless Hauberk with Closed Mail Coif.",armorDesigns.filter(i=>["bb-mail-hauberk", "sleeveless-hauberk", "bb-closed-mail-coif"].includes(i.id))),
+ family("black-gold","Black & Gold",6,"Wear Black And Gold Armor with Golden Feathers Helmet.",armorDesigns.filter(i=>["bb-black-and-gold-armor", "bb-golden-feathers-helmet"].includes(i.id))),
+ family("green-plate","Green Plate",6,"Wear Green Coat Of Plates Armor with Sallet Green Helmet.",armorDesigns.filter(i=>["bb-green-coat-of-plates-armor", "bb-sallet-green-helmet"].includes(i.id))),
+ family("heraldic-knight","Heraldic Knight",6,"Wear Heraldic Hauberk with Decorated Full Helm.",armorDesigns.filter(i=>["bb-heraldic-armor", "bb-faction-helm"].includes(i.id))),
+ family("wokou","Wokou",6,"Wear Wokou Light Armor with Kasa.",armorDesigns.filter(i=>["fantasy-wokou-armor", "fantasy-kasa"].includes(i.id))),
+ family("ronin","Ronin",6,"Wear Ronin Clothes with Kasa or Ronin Hat.",armorDesigns.filter(i=>["samurai-ronin-clothes", "fantasy-kasa", "samurai-ronin-hat"].includes(i.id))),
 ]);
 export const equipmentSetsForRules=version=>(version<4?historicalSets:EQUIPMENT_SETS).filter(s=>s.since<=version);
 export function equipmentSetBonusText(set){return `${set.name} set: +${set.armorPct}% head/body armor; −${set.headFatiguePct}% helmet fatigue, −${set.bodyFatiguePct}% body fatigue`;}
@@ -37,12 +45,13 @@ export function equipmentSetsForItem(item){return EQUIPMENT_SETS.filter(s=>[...s
 export function equipmentSetForItem(item){return equipmentSetsForItem(item)[0]??null;}
 export function equipmentSetStatus(actor,getItem,rulesVersion){
  const armor=designId(getItem(actor.equipment?.armor)),helmet=designId(getItem(actor.equipment?.helmet));
- // Prefer a complete pair over a partial specialist match. Apply one bonus only.
+ // Prefer a complete pair; otherwise guide toward the worn body armor’s companion.
+ // Apply one bonus only.
  // Saved units retain their snapshot family, including the retired broad Southern set.
  const sets=rulesVersion===undefined&&actor.side&&actor.setArmor
   ? [...EQUIPMENT_SETS,...historicalSets].filter(s=>s.id===actor.setArmor.id)
   : equipmentSetsForRules(rulesVersion??EQUIPMENT_SET_RULES_VERSION);
- const set=sets.find(s=>s.armorIds.includes(armor)&&s.helmetIds.includes(helmet))??sets.find(s=>s.armorIds.includes(armor)||s.helmetIds.includes(helmet));if(!set)return null;
+ const set=sets.find(s=>s.armorIds.includes(armor)&&s.helmetIds.includes(helmet))??sets.find(s=>s.armorIds.includes(armor))??sets.find(s=>s.helmetIds.includes(helmet));if(!set)return null;
  const body=set.armorIds.includes(armor),head=set.helmetIds.includes(helmet);
  return {set,count:Number(body)+Number(head),active:body&&head&&(!actor.side||actor.setArmor?.id===set.id),body,head};
 }

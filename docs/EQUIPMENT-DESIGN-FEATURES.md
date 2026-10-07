@@ -91,6 +91,14 @@ standard Assassin's Robe and Face Mask therefore provide **138 body armor,
 | Adorned | Adorned Mail Shirt, Warrior’s Armor or Heavy Mail Hauberk with Adorned Closed Flat Top or Full Helm |
 | Samurai | Samurai Armor with Samurai Helmet |
 | Tycoon | Tycoon Armor with Tycoon Helmet |
+| Basic Mail | Basic/Patched Mail Shirt with either Mail Coif design |
+| Field Mail | Either Mail Shirt design with Reinforced Mail Coif or either Mail Coif design |
+| Hauberk | Mail Hauberk/Sleeveless Hauberk with Closed Mail Coif |
+| Black & Gold | Black And Gold Armor with Golden Feathers Helmet |
+| Green Plate | Green Coat Of Plates Armor with Sallet Green Helmet |
+| Heraldic Knight | Heraldic Hauberk with Decorated Full Helm |
+| Wokou | Wokou Light Armor with Kasa |
+| Ronin | Ronin Clothes with Kasa or Ronin Hat |
 | Noble | Noble/heraldic body gear with noble, heraldic or knightly headgear, including full helms, bascinets and sallets |
 
 Ordinary, named and reforged versions qualify by their **original design**.
@@ -108,7 +116,9 @@ it also affects fatigue capacity, initiative and light-armor ranged-reach
 eligibility. Attachments do not receive the head/body set bonus.
 
 The equipment UI uses a small **gold chain between the head and body boxes**
-for a complete pair and a muted broken chain for an incomplete pair. Hover,
+for a complete pair and a muted broken chain for an incomplete pair. When
+mismatched pieces belong to different families, the hint follows the body
+armor’s matching companion. Hover,
 keyboard focus or tap reveals the family and bonuses. Equipped-item inspection
 shows fitted values, and combat uses a compact family status icon. The cue
 occupies the existing slot gap, keeping the gear itself prominent.
@@ -133,6 +143,6 @@ customization within that style.
 Current behavior is defined by `src/reforged-items.js`, the forge transactions
 in `src/engine.js`, and `src/equipment-sets.js`.
 
-Battles saved under set rules 1–4 retain their original memberships and bonuses
+Battles saved under set rules 1–5 retain their original memberships and bonuses
 until they finish, including the former broad Southern family. New battles use
-version-5 rules, which add Adorned, Samurai and Tycoon to the curated sets; stored gear condition remains unchanged.
+version-6 rules, which add early mail, regal and Kasa pairings to the curated sets; stored gear condition remains unchanged.

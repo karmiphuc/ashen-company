@@ -43,7 +43,7 @@ test('only worn matching designs count; stashing or removing a piece disables bo
  assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:9,head:0});
  assert.equal(equipItem(state,person.id,'bb-assassin-face-mask').ok,true);
  assert.deepEqual(person.armorDurability.body,80);assert.equal(person.armorDurability.head,70);
- assert.equal(equipmentSetForItem(getItem('mail-shirt')),null);
+ assert.equal(equipmentSetForItem(getItem('plate-harness')),null);
 });
 
 test('named designs qualify and transferring enhancements cannot confer membership on another design',()=>{
@@ -136,7 +136,7 @@ test('snapshot validation rejects missing, altered, or inconsistent armor pools'
   const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===unit.id));
   assert.throws(()=>validateSave(broken),/battle set armor/);
  }
- const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=6;
+ const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=7;
  assert.throws(()=>validateSave(broken),/equipment set rules/);
 });
 
@@ -261,7 +261,7 @@ test('every curated, eastern, Adorned and Noble pairing fits',()=>{
   assert.equal(stats.maxBodyArmor,Math.floor(armor.armor*115/100));assert.equal(stats.maxHeadArmor,Math.floor(helmet.armor*115/100));
   assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:Math.round(armor.fatigue*.85),head:Math.round(helmet.fatigue*.9)});pairs++;
  }
- assert.equal(pairs,104);
+ assert.equal(pairs,122);
 });
 
 test('ordinary Southern and mixed Assassin gear no longer qualify; hints only show current sets',()=>{
@@ -383,4 +383,51 @@ test('named and reforged Adorned and eastern pieces retain their original set me
    assert.deepEqual([loaded.party[0].armorDurability.body,loaded.party[0].armorDurability.head],[worn.body,worn.head]);
   }
  }
+});
+
+
+test('early mail, regal and kasa sets have precise companions and shared-hat guidance',()=>{
+ for(const set of EQUIPMENT_SETS.filter(s=>s.since===6)){
+  for(const body of set.armorIds)for(const head of set.helmetIds){
+   const {person}=outfit({body,head});assert.equal(equipmentSetStatus(person,getItem).set.id,set.id);
+   assert.match(equipmentSetHTML(person),/2\/2/);
+  }
+ }
+ assert.deepEqual(equipmentSetsForItem(getItem('fantasy-kasa')).map(s=>s.id),['wokou','ronin']);
+ const notes=getItemDetails(getItem('fantasy-kasa')).notes.join(' ');assert.match(notes,/Wokou set piece/);assert.match(notes,/Ronin set piece/);
+ for(const gear of [{body:'bb-basic-mail-shirt',head:'bb-faction-helm'},{body:'bb-green-coat-of-plates-armor',head:'bb-golden-feathers-helmet'},{body:'bb-black-and-gold-armor',head:'bb-sallet-green-helmet'},{body:'fantasy-samurai-armor',head:'fantasy-kasa'},{body:'samurai-tycoon-armor',head:'fantasy-kasa'}])assert.ok(!equipmentSetStatus(outfit(gear).person,getItem)?.active);
+});
+
+test('version-five saves keep new mail, regal and kasa pairs unfitted until the next battle',()=>{
+ for(const set of EQUIPMENT_SETS.filter(s=>s.since===6)){
+  const gear={body:set.armorIds[0],head:set.helmetIds[0]}, {state,person}=fight(gear);state.battle.equipmentSetRulesVersion=5;
+  for(const unit of state.battle.units){
+   if(!EQUIPMENT_SETS.some(s=>s.since===6&&s.id===unit.setArmor?.id))continue;
+   unit.bodyArmor=unit.setArmor.body.baseCurrent;unit.maxBodyArmor=unit.setArmor.body.baseMax;
+   unit.headArmor=unit.setArmor.head.baseCurrent;unit.maxHeadArmor=unit.setArmor.head.baseMax;delete unit.setArmor;
+  }
+  const loaded=validateSave(JSON.parse(JSON.stringify(state))),unit=loaded.battle.units.find(u=>u.id===person.id);
+  assert.equal(unit.setArmor,undefined);assert.equal(equipmentSetStatus(unit,getItem).active,false);
+  assert.deepEqual(effectiveArmorFatigue(unit,getItem),{body:getItem(gear.body).fatigue,head:getItem(gear.head).fatigue});
+  leave(loaded);assert.equal(equipmentSetStatus(loaded.party[0],getItem).set.id,set.id);
+ }
+});
+
+test('named and reforged mail, regal and kasa pieces preserve original membership and raw wear',()=>{
+ for(const set of EQUIPMENT_SETS.filter(s=>s.since===6)){
+  const base=set.armorIds[0],head=set.helmetIds[0];
+  for(const body of [createFamedItemId(base,92,5),encodeBoundedForgeItem(base,{locked:false,foundation:{armorPct:20},prefixes:[],suffixes:[]},id=>ITEMS.find(i=>i.id===id))]){
+   const {state,unit}=fight({body,head,bodyCondition:30,headCondition:20});assert.equal(unit.setArmor.id,set.id);
+   unit.bodyArmor-=3;unit.headArmor-=2;const worn={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
+   const loaded=validateSave(JSON.parse(JSON.stringify(state)));leave(loaded);
+   assert.deepEqual([loaded.party[0].armorDurability.body,loaded.party[0].armorDurability.head],[worn.body,worn.head]);
+  }
+ }
+});
+
+
+test('a mismatched regal outfit guides toward the body companion rather than a shared Noble helmet',()=>{
+ const {person}=outfit({body:'bb-black-and-gold-armor',head:'bb-sallet-green-helmet'});
+ const status=equipmentSetStatus(person,getItem);assert.equal(status.set.id,'black-gold');assert.equal(status.count,1);assert.equal(status.active,false);
+ assert.match(equipmentSetHTML(person),/Golden Feathers Helmet/);
 });
