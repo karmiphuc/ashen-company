@@ -1,7 +1,7 @@
 import { equipmentPerk, equipmentBoost, equipmentRangedReach, rollAttachment } from './item-affixes.js';
 import { recordQuestCompletion } from './quest-completion.js';
 import { BLACKSMITH_STAGES, initialBlacksmith, blacksmithIndex, blacksmithUnlocked, discoverBlacksmith, blacksmithEncounters, validateBlacksmith } from './legendary-blacksmith.js';
-import { resolveForgeItem, extractForgeProfile, forgeBaseline, encodeForgeItem, forgeGroups, forgeProfileRows, FORGE_KEYS, FORGE_LIMITS, isNamedItem, isForgeSlot } from './reforged-items.js';
+import { resolveForgeItem, extractForgeAffixes, forgeBaseline, encodeBoundedForgeItem, mergeForgeAffixes, flattenForgeAffixes, forgeAffixOptions, forgeAffixName, forgeRecipe, forgeProfileRows, isNamedItem, isForgeSlot } from './reforged-items.js';
 import { copyInjuries, INJURY_BY_ID, injuryStat, injuryMultiplier, injuryAdjustment, injuryRange, freshInjuryBleeding, injuryHealingRange, injuryRemainingDays, injuryDailyMedicine, validInjuries, attackInjuryPool, eligibleInjuries } from './injuries.js';
 import { isSimultaneousBetaEnabled } from './combat-config.js';
 import { SimultaneousPathQueue, SIM_STEP_MS, SIM_ROUND_MS, initialSimultaneousClock, simultaneousPriority, simultaneousActionDelay, simultaneousEventDuration, markSimultaneousEffect, expireSimultaneousEffects, rememberSimultaneousEvent, validateSimultaneousClock } from './simultaneous-combat.js';
@@ -29,7 +29,7 @@ import { cityMountOffer, campMountReward, regionalMountPool } from './mount-dist
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression, enemyRosterSize } from './enemy-progression.js';
 import { getRegionalCampText } from './enemy-rosters.js';
-import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk as learnedPerk, weaponTrainingVisual } from './perks.js';
+import { PERKS, PERK_BY_ID, REMOVED_PERK_MIN_LEVEL, hasPerk as learnedPerk, weaponTrainingVisual, weaponMasteryMatches } from './perks.js';
 import { RECRUIT_BACKGROUND_BY_ID, RECRUIT_TRAIT_BY_ID, makeRecruitProfile, makeRecruitName, makeTalents, talentGain } from './recruits.js';
 import { BOUNTY_HUNTER_COST, CHAMPION_BOUNTY, discoveryEvent, discoveryBonuses, championRoster, championExtraGear, bountyOffer } from './discovery.js';
 import { deserterOffer, deserterEncounter, deserterEquipmentReward } from './deserters.js';
@@ -212,7 +212,7 @@ export function getItem(id) {
 function resolveItem(id) {
   const base = ITEM_BY_ID.get(id);
   if (base) return base;
-  if(typeof id==='string'&&(id.startsWith('forge1:')||id.startsWith('forge2:')||id.startsWith('forge3:')))return resolveForgeItem(id,key=>ITEM_BY_ID.get(key));
+  if(typeof id==='string'&&/^forge[1-4]:/.test(id))return resolveForgeItem(id,key=>ITEM_BY_ID.get(key));
   if (typeof id !== 'string' || id.length > 80) return undefined;
   if(affixItemCache.has(id))return affixItemCache.get(id);
   const match = FAMED_ID.exec(id);
@@ -356,8 +356,7 @@ function recordBlacksmithBattle(state,battle){
  record(state,`${BLACKSMITH_STAGES[index].name} remains active. Surviving guards and their worn equipment await a retry.`);
 }
 const forgeCatalog=id=>ITEM_BY_ID.get(id);
-const forgeProfile=item=>extractForgeProfile(item,forgeCatalog,{shieldMaximum,shieldDamage:shieldImpactDamage});
-function forgeStamp(state){return JSON.stringify([state.inventory,state.inventoryCondition,state.gold,state.legendaryBlacksmith?.forgeSerial,state.legendaryBlacksmith?.freeUse,state.legendaryBlacksmith?.quests[3].status]);}
+function forgeStamp(state){return JSON.stringify([state.inventory,state.inventoryCondition,state.gold,state.cargo,state.cargoOrigins,state.legendaryBlacksmith?.forgeSerial,state.legendaryBlacksmith?.freeUse,state.legendaryBlacksmith?.quests[3].status]);}
 export function getReforgeQuote(state,donorIndex,recipientIndex,mode){
  const blocked=blacksmithAccess(state);if(blocked)return {...blocked};
  if(!blacksmithUnlocked(state))return result(false,'Complete Odran’s four side quests to unlock reforging.');
@@ -365,34 +364,39 @@ export function getReforgeQuote(state,donorIndex,recipientIndex,mode){
  const donor=getItem(state.inventory[donorIndex]),recipient=getItem(state.inventory[recipientIndex]);
  if(!isNamedItem(donor)||!isForgeSlot(donor.slot)||!recipient||recipient.slot!==donor.slot)return result(false,'Sacrifice named gear to another item in the same category. All weapon classes are compatible.');
  const expectedMode=isNamedItem(recipient)?'merge':'transfer';if(mode!==expectedMode)return result(false,expectedMode==='merge'?'Named recipients use accumulating merges.':'Ordinary recipients receive a full transfer.');
- const source=forgeProfile(donor),existing=mode==='merge'?forgeProfile(recipient):{},base=ITEM_BY_ID.get(recipient.baseId??recipient.id);
- if(!source||!existing||!base)return result(false,'This enhancement package cannot be reforged safely.');
+ const source=extractForgeAffixes(donor,forgeCatalog,{shieldMaximum,shieldDamage:shieldImpactDamage}),existing=mode==='merge'?extractForgeAffixes(recipient,forgeCatalog,{shieldMaximum,shieldDamage:shieldImpactDamage}):null,base=ITEM_BY_ID.get(recipient.baseId??recipient.id);
+ if(!source||mode==='merge'&&!existing||!base)return result(false,'This enhancement package cannot be reforged safely.');
  const c=state.legendaryBlacksmith;if(c.forgeSerial>=1000000)return result(false,'The forge record is full.');
- let selected=Object.keys(source),profile={...existing};
+ let affixes=source,additions=[...source.prefixes.map(affix=>({kind:'prefix',affix})),...source.suffixes.map(affix=>({kind:'suffix',affix}))];
  if(mode==='merge'){
-  const groups=forgeGroups(source,forgeBaseline(base)).filter(group=>group.some(key=>key==='perkFlags'?(source[key]&~(existing[key]??0))!==0:(existing[key]??0)<FORGE_LIMITS[FORGE_KEYS.indexOf(key)]));
-  if(!groups.length)return result(false,'This donor has no applicable improvement left for that recipient.');
-  const seed=hashSeed(`${state.seed}:forge:${c.forgeSerial}:${donor.id}:${recipient.id}`),count=Math.min(groups.length,1+seed%3);
-  selected=groups.map((keys,i)=>({keys,score:hashSeed(`${seed}:${i}`)})).sort((a,b)=>a.score-b.score).slice(0,count).flatMap(g=>g.keys);
+  if(source.locked||existing.locked)return {...result(false,'Legacy reforged gear keeps its bonuses, but further merges are locked. Full transfers preserve this restriction.'),donorAffixes:source,recipientAffixes:existing};
+  const merge=mergeForgeAffixes(source,existing,recipient,hashSeed(`${state.seed}:forge:${c.forgeSerial}:${donor.id}:${recipient.id}`));
+  if(!merge.selected.length)return {...result(false,'This donor has no applicable improvement: slots are full, rolls are already as strong, or effects are inactive.'),donorAffixes:source,recipientAffixes:existing,blockedAffixes:merge.options};
+  affixes=merge.affixes;additions=merge.selected;
  }
- for(const key of selected)profile[key]=key==='perkFlags'?((profile[key]??0)|source[key]):Math.min(FORGE_LIMITS[FORGE_KEYS.indexOf(key)],(profile[key]??0)+source[key]);
- let resultId;try{resultId=encodeForgeItem(base.id,profile,forgeCatalog);}catch{return result(false,'This combination is outside the forge’s safety bounds.');}
+ let resultId;try{resultId=encodeBoundedForgeItem(base.id,affixes,forgeCatalog);}catch{return result(false,'This combination is outside the forge’s safety bounds.');}
  const forged=getItem(resultId),oldMax=itemCondition(recipient.id),newMax=itemCondition(resultId),current=state.inventoryCondition[recipientIndex];
  const condition=oldMax===null?null:recipient.throwing?Math.min(newMax,current):Math.max(0,newMax-(oldMax-current));
  const fee=c.freeUse?0:1000;
- return {ok:true,message:mode==='merge'?'Adds 1–3 randomly selected donor bonuses; the recipient keeps its existing enhancements.':'Transfers the donor’s complete enhancement package.',mode,donorIndex,recipientIndex,donor,recipient,result:forged,resultId,condition,fee,affordable:state.gold>=fee,stamp:forgeStamp(state),selected,possible:forgeProfileRows(source,forgeBaseline(base)),warnings:forged.forgeWarnings};
+ // Charge the eligible recipe, not the hidden random outcome: costs cannot reveal or reroll the result.
+ const options=mode==='merge'?forgeAffixOptions(source,existing,recipient).filter(o=>o.eligible):additions;
+ const materials=c.freeUse?{}:forgeRecipe(options),materialsAvailable=Object.entries(materials).every(([id,n])=>(state.cargo[id]??0)>=n);
+ const selected=[...new Set(additions.flatMap(a=>Object.keys(a.affix.profile)))];
+ const possible=mode==='merge'?options.map(o=>({label:forgeAffixName(o.kind,o.affix),value:o.upgrade?'Stronger roll · replaces the existing roll':'New affix · occupies one slot'})):forgeProfileRows(flattenForgeAffixes(source),forged);
+ return {ok:true,message:mode==='merge'?'Inherits eligible affixes within two prefix and two suffix slots. Duplicate rolls improve without adding together.':'Transfers the donor’s complete package, including slot usage and inactive effects.',mode,donorIndex,recipientIndex,donor,recipient,result:forged,resultId,condition,fee,materials,materialsAvailable,ownedMaterials:{...state.cargo},donorAffixes:source,recipientAffixes:existing,affordable:state.gold>=fee&&materialsAvailable,stamp:forgeStamp(state),selected,additions,possible,warnings:forged.forgeWarnings};
 }
 export function reforgeItem(state,quote){
  if(!quote||!quote.ok)return result(false,'Select a valid reforge before confirming.');
  const fresh=getReforgeQuote(state,quote.donorIndex,quote.recipientIndex,quote.mode);
  if(!fresh.ok)return fresh;
- if(fresh.stamp!==quote.stamp||fresh.resultId!==quote.resultId||fresh.fee!==quote.fee)return result(false,'The stash or forge quote changed. Review the new preview before destroying anything.');
+ if(fresh.stamp!==quote.stamp||fresh.resultId!==quote.resultId||fresh.fee!==quote.fee)return result(false,'The stash, cargo or forge quote changed. Review the new preview before destroying anything.');
+ if(!fresh.materialsAvailable)return result(false,'Bring the required trading goods in cargo before reforging.');
  if(!fresh.affordable)return result(false,`Odran requires ${fresh.fee} crowns.`);
  const ids=[...state.inventory],conditions=[...state.inventoryCondition];ids[fresh.recipientIndex]=fresh.resultId;conditions[fresh.recipientIndex]=fresh.condition;
  ids.splice(fresh.donorIndex,1);conditions.splice(fresh.donorIndex,1);
+ for(const [id,n]of Object.entries(fresh.materials)){consumeCargoOrigins(state,id,n,'ironford');state.cargo[id]-=n;if(!state.cargo[id])delete state.cargo[id];}
  state.inventory=ids;state.inventoryCondition=conditions;state.gold-=fresh.fee;state.legendaryBlacksmith.freeUse=false;state.legendaryBlacksmith.forgeSerial++;
- const previous=fresh.mode==='merge'?forgeProfile(fresh.recipient):{};
- const added=forgeProfileRows(Object.fromEntries(fresh.selected.map(k=>[k,(fresh.result.forgeProfile[k]??0)-(previous[k]??0)]).filter(([,n])=>n>0)),fresh.result);
+ const added=fresh.additions.length?fresh.additions.map(a=>({label:forgeAffixName(a.kind,a.affix),value:a.upgrade?'Stronger roll':forgeProfileRows(a.affix.profile,fresh.result).map(r=>r.value+(r.inactive?` · inactive: ${r.inactive}`:'')).join('; ')})):forgeProfileRows(fresh.result.forgeProfile,fresh.result);
  const message=`Odran destroys ${fresh.donor.name} and reforges ${fresh.recipient.name}. ${added.map(r=>`${r.label} ${r.value}`).join('; ')}.`;
  record(state,message.slice(0,470));return {...result(true,message),itemId:fresh.resultId,added};
 }
@@ -3883,25 +3887,9 @@ function isCrossbow(weapon) {
   return weapon?.ranged === true && !weapon.throwing && weapon.visual?.includes('crossbow');
 }
 
-const SWORD_VISUALS = new Set(['sword', 'longsword', 'greatsword', 'shamshir', 'estoc', 'cleaver', 'falx']);
 const AXE_VISUALS = new Set(['axe', 'greataxe', 'hand-axe', 'longaxe', 'bardiche', 'throwingaxe', 'heavythrowingaxe']);
-const MACE_VISUALS = new Set(['mace', 'hammer', 'heavyhammer', 'polehammer', 'flail', 'three-headed-flail', 'goedendag']);
-const DAGGER_VISUALS = new Set(['dagger', 'fighting-knife', 'qatal']);
 const WEAPON_MASTERY_IDS = ['sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training'];
 
-function weaponMasteryMatches(perkId, weapon) {
-  const visual = weaponTrainingVisual(weapon);
-  switch (perkId) {
-    case 'sword-training': return SWORD_VISUALS.has(visual);
-    case 'axe-training': return AXE_VISUALS.has(visual);
-    case 'mace-training': return MACE_VISUALS.has(visual);
-    case 'spear-training': return !weapon?.throwing && /spear|pike/.test(visual ?? '');
-    case 'polearm-training': return !weapon?.ranged && (weapon?.range ?? 1) >= 2;
-    case 'dagger-training': return DAGGER_VISUALS.has(visual);
-    case 'throwing-training': return weapon?.throwing === true;
-    default: return false;
-  }
-}
 
 function hasWeaponMastery(actor, weapon) {
   return isBow(weapon) && hasPerk(actor, 'bow-mastery')

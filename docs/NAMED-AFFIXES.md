@@ -37,3 +37,15 @@ Existing Bloodrush, Featherbound, Tempered, Farseeing and equipment-perk prefixe
 Engaged camp/band generations freeze `namedAffixVersion`: absent means legacy, 1 means the original prefix pool, 2 means the expanded pool. Scripted quest/crisis rewards remain pinned to their old identities. New battles use `itemAffixRulesVersion: 2` for extended AP, kill-momentum state, head-hit daze and effect events. Older battles retain their saved version and fields.
 
 `tests/expanded-prefixes.test.js` checks every family and grade, actual combat, perk eligibility, free actions, reloads, expiry, AP refresh, attachment removal, forging and frozen encounters. The original affix suite explicitly continues to exercise version 5.
+
+## Bounded reforging
+
+New forge transactions produce immutable `forge4` identities. They encode original named craftsmanship separately from up to **two prefix families and two RPG suffix families**, including each affix's complete roll. Original named stat rolls do not consume RPG affix slots and stay fixed during merges; transferring to ordinary gear carries that craftsmanship too. Older named gear without RPG affixes represents its entire stat package as one legacy craftsmanship suffix.
+
+Named merges inherit 1–3 eligible complete affixes, bounded by the available slots. Existing families can upgrade only when the donor roll is at least as strong in every field and improves a field. Duplicate values never add. Different free masteries belong to the same Masterful family, so a single item cannot accumulate all masteries. Inactive effects occupy slots; unsuitable ranged, Duelist and mastery effects cannot consume a random merge. Full transfers preserve inactive affixes so they can reactivate on compatible gear.
+
+Existing `forge1`–`forge3` profiles lack reliable provenance. Their stats and identities remain unchanged. They cannot participate in accumulating merges; a full transfer produces a locked `forge4` package with exactly the original flattened profile. The lock survives subsequent transfers and save reloads.
+
+The first reforge waives gold and materials. Later transactions cost 1,000 crowns plus modest trading goods from cargo: timber for ranged/movement work, wool for protective/healing work, iron for other work. Each eligible affix requires one unit; Unyoked requires three iron instead. A merge's displayed recipe prepares **all eligible donor affixes**, independent of the hidden random selection. Legacy flat-package transfers require one iron. Recipes appear before confirmation, with owned/required quantities. Cargo and its purchase-origin records are consumed together only after a fresh quote passes all checks. Trading-quest reservations are not automatic: the player must retain any cargo needed for those contracts.
+
+Canonical sparse profiles, family validation, duplicate checks and slot bounds validate the new format. Decoding derives combat stats from the stored packages. `tests/bounded-forge.test.js` checks catalog round trips, atomic transactions, repeated forging, legacy locks, inactive slots, materials, live combat saves and forge UI.
