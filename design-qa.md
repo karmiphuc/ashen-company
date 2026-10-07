@@ -36,6 +36,13 @@ Integration checks include all nine Direwolf body/head pairings and Direwolf Fur
 trophy completion in either attachment slot. Version-8 battles stay unfitted;
 new version-9 battles preserve raw wear through save/reload and retreat.
 
+Orientation correction: the initial new helmet crowns faced left against the
+right-facing character. Both masters and their inventory/portrait sprites now
+face right. Alpha also has a larger wolf head and thicker fur; its 86x124 worn
+layer has its own anchor to keep the face aperture aligned. Re-inspected the
+updated worn lineup at 160px and 80px. The larger Alpha silhouette and muzzle
+remain distinct without covering the character's eyes.
+
 No unresolved P0/P1/P2 findings. Physical-device Safari remains untested.
 
 final result: passed

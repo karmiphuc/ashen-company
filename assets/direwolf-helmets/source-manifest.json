@@ -1,41 +1,41 @@
 {
-  "provenance": "AI-generated Direwolf Leather Hood and Alpha Helm grounded in the selected Moonfang concept and existing Wolf Helmet/Bear Headpiece. Wolf Helmet artwork itself is reused unchanged.",
+  "provenance": "AI-generated Direwolf Leather Hood and Alpha Helm grounded in the selected Moonfang concept and existing Wolf Helmet/Bear Headpiece. Wolf Helmet artwork itself is reused unchanged. Both new helmets corrected to face viewer-right; Alpha enlarged with thicker fur.",
   "assets": [
     {
       "design": "leather",
       "layer": "icon",
-      "generatedMaster": "exec-5660c564-9210-4770-ac13-cb7f6982c59f.png",
-      "masterSha256": "2c7af6463cbbc04452972997f702b23d24a720c2a2f4e5e6a63f0f5ecd2dc82c",
+      "generatedMaster": "exec-0baa914f-f4bd-4b51-979e-e4cabfa0d64b.png",
+      "masterSha256": "00fb1bcea6a061b97d2e76f9cb46929f1902ab90de12ea98ef0ce7f98a287ed5",
       "path": "assets/direwolf-helmets/leather-icon.png",
-      "sha256": "bb438926e208e056f82eda771d057b97eb82345af07275b71d00debe3c9f0203",
+      "sha256": "2580f20ddbbb958ccf2ef6330a358ea1b4b177292a7bb38b341000cadb196487",
       "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 140x180"
     },
     {
       "design": "leather",
       "layer": "portrait",
-      "generatedMaster": "exec-5660c564-9210-4770-ac13-cb7f6982c59f.png",
-      "masterSha256": "2c7af6463cbbc04452972997f702b23d24a720c2a2f4e5e6a63f0f5ecd2dc82c",
+      "generatedMaster": "exec-0baa914f-f4bd-4b51-979e-e4cabfa0d64b.png",
+      "masterSha256": "00fb1bcea6a061b97d2e76f9cb46929f1902ab90de12ea98ef0ce7f98a287ed5",
       "path": "assets/direwolf-helmets/leather-portrait.png",
-      "sha256": "ff06db9ff7f49fb0456d41328a18fd0b17fdb56107a307d811f5c3c486c15e85",
+      "sha256": "7ae05c3a53de93cbe6c9a35b511634fcd5b4f380c7603feb9df27ec6ced6a5b6",
       "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 74x110 canvas, left14/top-26 portrait anchor"
     },
     {
       "design": "alpha",
       "layer": "icon",
-      "generatedMaster": "exec-8a30ff2c-e7ef-434d-bf07-d352ac9a1c45.png",
-      "masterSha256": "07c578abf8051936c6508dbd1cc7b1418fec9f3e039c8709be04375125543af9",
+      "generatedMaster": "exec-a7e96df2-dee1-4b68-8be9-1ecd3891a190.png",
+      "masterSha256": "5e99c11d4de448ee684982a641e63054d4dcb3e24a97ec33d6cedf5868d1f95d",
       "path": "assets/direwolf-helmets/alpha-icon.png",
-      "sha256": "8d51e5273ca5a20f2e5e7e1c261dc3c60574d4af25830b6f0a488f0c31077e65",
+      "sha256": "944fc468126df453fb497421e1c46d2edb6238169951900d47136f5b45bf4e45",
       "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 140x180"
     },
     {
       "design": "alpha",
       "layer": "portrait",
-      "generatedMaster": "exec-8a30ff2c-e7ef-434d-bf07-d352ac9a1c45.png",
-      "masterSha256": "07c578abf8051936c6508dbd1cc7b1418fec9f3e039c8709be04375125543af9",
+      "generatedMaster": "exec-a7e96df2-dee1-4b68-8be9-1ecd3891a190.png",
+      "masterSha256": "5e99c11d4de448ee684982a641e63054d4dcb3e24a97ec33d6cedf5868d1f95d",
       "path": "assets/direwolf-helmets/alpha-portrait.png",
-      "sha256": "44786856679aa0c4caa9e00e44240193f53d05b5358b66f725e115d8b159219e",
-      "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 74x110 canvas, left14/top-26 portrait anchor"
+      "sha256": "57c665bd1f4c236a0f39db4eadb45b3686402d581562025b0f01b8762066b75b",
+      "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 86x124 canvas, left0/top-39 portrait anchor"
     }
   ]
 }

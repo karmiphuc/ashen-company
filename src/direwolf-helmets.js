@@ -21,7 +21,7 @@ export const DIREWOLF_HELMET_ITEMS = Object.freeze([
 ]);
 export const DIREWOLF_HELMET_ART = Object.freeze({
   [DIREWOLF_LEATHER_HELMET]: Object.freeze({ icon: './assets/direwolf-helmets/leather-icon.png', portrait: './assets/direwolf-helmets/leather-portrait.png', left: 14, top: -26, width: 74, height: 110, hideHead: false, hideBeard: true }),
-  [DIREWOLF_ALPHA_HELMET]: Object.freeze({ icon: './assets/direwolf-helmets/alpha-icon.png', portrait: './assets/direwolf-helmets/alpha-portrait.png', left: 14, top: -26, width: 74, height: 110, hideHead: false, hideBeard: true }),
+  [DIREWOLF_ALPHA_HELMET]: Object.freeze({ icon: './assets/direwolf-helmets/alpha-icon.png', portrait: './assets/direwolf-helmets/alpha-portrait.png', left: 0, top: -39, width: 86, height: 124, hideHead: false, hideBeard: true }),
 });
 export const DIREWOLF_HELMET_RECIPES = Object.freeze({
   [DIREWOLF_LEATHER_HELMET]: Object.freeze({ itemId: DIREWOLF_LEATHER_HELMET, fee: 300, materialIds: Object.freeze([DIREWOLF_HIDE]) }),

@@ -117,6 +117,6 @@ test('craft-only helmets never spawn in ordinary stock and transparent sprites a
   }
   for (const finish of ['leather', 'alpha']) for (const layer of ['icon', 'portrait']) {
     const path = `./assets/direwolf-helmets/${finish}-${layer}.png`, png = decodePng(readFileSync(new URL('../' + path, import.meta.url)));
-    assert.deepEqual([png.width, png.height], layer === 'portrait' ? [74, 110] : [140, 180]); assert.equal(png.rgba[3], 0); assert.ok(cache.has(path));
+    assert.deepEqual([png.width, png.height], layer === 'portrait' ? (finish === 'alpha' ? [86, 124] : [74, 110]) : [140, 180]); assert.equal(png.rgba[3], 0); assert.ok(cache.has(path));
   }
 });
