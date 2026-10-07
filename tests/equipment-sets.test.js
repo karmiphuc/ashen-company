@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ITEMS,createGame,getItem,createFamedItemId,getCompanyStats,getCampSites,startBattle,advanceBattle,resolveBattle,retreatBattle,finishBattle,validateSave,equipItem,unequipItem,getAgileDefenseMultiplier} from '../src/engine.js';
 import {encodeBoundedForgeItem} from '../src/reforged-items.js';
-import {equipmentSetStatus,equipmentSetForItem,effectiveArmorFatigue,createSetArmorSnapshot,baseArmorCondition,validSetArmorSnapshot} from '../src/equipment-sets.js';
+import {EQUIPMENT_SETS,equipmentSetStatus,equipmentSetForItem,equipmentSetBonusText,effectiveArmorFatigue,createSetArmorSnapshot,baseArmorCondition,validSetArmorSnapshot} from '../src/equipment-sets.js';
 import {equipmentSetHTML} from '../src/campaign-ui.js';
 import {getItemDetails} from '../src/item-details.js';
 import {applySimultaneousSnapshot} from '../src/simultaneous-runner.js';
 import {setSimultaneousBetaEnabled} from '../src/combat-config.js';
+import {equipmentRangedReach} from '../src/item-affixes.js';
 
 function outfit({body='bb-assassin-robe',head='bb-assassin-face-mask',bodyCondition,headCondition}={}){
  const state=createGame(51),person=state.party[0];
@@ -135,7 +136,7 @@ test('snapshot validation rejects missing, altered, or inconsistent armor pools'
   const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===unit.id));
   assert.throws(()=>validateSave(broken),/battle set armor/);
  }
- const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=2;
+ const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=3;
  assert.throws(()=>validateSave(broken),/equipment set rules/);
 });
 
@@ -159,4 +160,91 @@ test('set hint exposes active and missing-piece states without adding a new item
  unequipItem(state,person.id,'helmet');assert.match(equipmentSetHTML(person),/Pair incomplete/);
  assert.match(equipmentSetHTML(person),/Assassin 1\/2/);
  assert.equal(createSetArmorSnapshot(person,getItem),null);
+});
+
+test('every ancient and northern/barbarian head/body combination matches its own family',()=>{
+ const person=createGame(51).party[0];let pairs=0;
+ for(const set of EQUIPMENT_SETS.filter(s=>s.since===2))for(const body of set.armorIds)for(const head of set.helmetIds){
+  const armor=getItem(body),helmet=getItem(head);assert.ok(armor,body);assert.ok(helmet,head);
+  Object.assign(person.equipment,{armor:body,helmet:head});Object.assign(person.armorDurability,{body:armor.armor,head:helmet.armor});
+  const status=equipmentSetStatus(person,getItem),stats=getCompanyStats(person);
+  assert.equal(status.active,true,`${body} + ${head}`);assert.equal(status.set.id,set.id);
+  assert.equal(stats.maxBodyArmor,Math.floor(armor.armor*115/100));assert.equal(stats.maxHeadArmor,Math.floor(helmet.armor*115/100));
+  assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:Math.round(armor.fatigue*.85),head:Math.round(helmet.fatigue*.9)});
+  pairs++;
+ }
+ assert.equal(pairs,372);
+});
+
+test('cross-family pairs, cultist clothing and decayed mercenary armor do not activate cultural sets',()=>{
+ for(const [body,head]of [['bb-ancient-mail','northern-bear-head'],['northern-horned-plate','bb-ancient-legionary-helmet'],['bb-assassin-robe','barbarian-helmet'],['bb-cultist-leather-robe','bb-nordic-helmet'],['bb-decayed-coat-of-plates','bb-ancient-household-helmet']]){
+  const {person}=outfit({body,head});assert.equal(equipmentSetStatus(person,getItem).active,false);
+  assert.equal(getCompanyStats(person).maxBodyArmor,getItem(body).armor);
+ }
+ assert.equal(equipmentSetForItem(getItem('bb-cultist-hood')),null);
+ assert.equal(equipmentSetForItem(getItem('bb-decayed-full-helm')),null);
+});
+
+test('named and reforged cultural gear retain family membership and damaged wear through reload/retreat',()=>{
+ for(const [base,helmet]of [['bb-ancient-plate-harness','bb-ancient-honorguard-helmet'],['bb-rugged-scale-armor','northern-skull-helm']]){
+  for(const body of [createFamedItemId(base,92,5),encodeBoundedForgeItem(base,{locked:false,foundation:{armorPct:20},prefixes:[],suffixes:[]},id=>ITEMS.find(i=>i.id===id))]){
+   const {state,unit}=fight({body,head:helmet,bodyCondition:30,headCondition:20});
+   assert.ok(unit.setArmor);assert.equal(validSetArmorSnapshot(unit,getItem),true);
+   unit.bodyArmor-=3;unit.headArmor-=2;
+   const wear={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
+   const loaded=validateSave(JSON.parse(JSON.stringify(state)));leave(loaded);
+   assert.equal(loaded.party[0].armorDurability.body,wear.body);assert.equal(loaded.party[0].armorDurability.head,wear.head);
+  }
+ }
+});
+
+test('Assassin-only version-one battles load without retroactively enabling cultural sets',()=>{
+ for(const gear of [{body:'bb-ancient-mail',head:'bb-ancient-legionary-helmet'},{body:'northern-rusty-mail',head:'bb-nordic-helmet'},{}]){
+  const {state,person}=fight(gear);state.battle.equipmentSetRulesVersion=1;
+  for(const unit of state.battle.units){if(!unit.setArmor||unit.setArmor.id==='assassin')continue;
+   const load=effectiveArmorFatigue(unit,getItem),saving=getItem(unit.equipment.armor).fatigue+getItem(unit.equipment.helmet).fatigue-load.body-load.head;
+   unit.maxFatigue-=saving;unit.initiative-=saving;
+   unit.bodyArmor=unit.setArmor.body.baseCurrent;unit.maxBodyArmor=unit.setArmor.body.baseMax;
+   unit.headArmor=unit.setArmor.head.baseCurrent;unit.maxHeadArmor=unit.setArmor.head.baseMax;delete unit.setArmor;
+  }
+  const loaded=validateSave(JSON.parse(JSON.stringify(state))),unit=loaded.battle.units.find(u=>u.id===person.id);
+  assert.equal(Boolean(unit.setArmor),!gear.body);
+  assert.equal(createSetArmorSnapshot(unit,getItem,{},1)?.id??null,!gear.body?'assassin':null);
+  if(gear.body)assert.deepEqual(effectiveArmorFatigue(unit,getItem),{body:getItem(gear.body).fatigue,head:getItem(gear.head).fatigue});
+  leave(loaded);
+ }
+});
+
+test('cultural hint and item details describe the correct family and bonuses',()=>{
+ for(const gear of [{body:'bb-ancient-mail',head:'bb-ancient-household-helmet'},{body:'northern-fur-coat',head:'bb-nordic-helmet'}]){
+  const {state,person}=outfit(gear),set=equipmentSetStatus(person,getItem).set;
+  assert.ok(equipmentSetHTML(person).includes(`${set.name} 2/2`));
+  assert.ok(getItemDetails(getItem(gear.body)).notes.some(n=>n.includes(equipmentSetBonusText(set))));
+  unequipItem(state,person.id,'helmet');const html=equipmentSetHTML(person);
+  assert.ok(html.includes(set.pairing));assert.ok(!html.includes('Assassin’s'));
+ }
+});
+
+test('boosted named armor maxima cannot be mistaken for legacy imported armor values',()=>{
+ const body=createFamedItemId('bb-named-plated-fur-armor',75,5),{state,unit}=fight({body,head:'northern-metal-cap'});
+ const original=getItem('bb-named-plated-fur-armor');
+ const legacy=Math.min(500,original.sourceArmor+Math.max(8,Math.round(original.sourceArmor*(.15+(75&15)/100))));
+ assert.equal(unit.maxBodyArmor,legacy);assert.notEqual(unit.maxBodyArmor,getItem(body).armor);
+ assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))),state);
+});
+
+test('cultural fitting crosses actual light-gear thresholds before Nimble, Agile Defense and ranged-reach checks',()=>{
+ const helm=encodeBoundedForgeItem('bb-ancient-laurels',{locked:false,foundation:{},prefixes:[{id:'farseeing',profile:{rangedRange:1}}],suffixes:[]},id=>ITEMS.find(i=>i.id===id));
+ for(const gear of [{body:'bb-ancient-double-layer-mail',head:helm},{body:'bb-animal-hide-armor',head:'northern-bear-head'}]){
+  const {person,unit}=fight(gear);person.perks=['nimble','agile-defense'];
+  assert.equal(getItem(gear.body).fatigue+getItem(gear.head).fatigue,16);
+  const load=effectiveArmorFatigue(person,getItem);assert.ok(load.body+load.head<=15);
+  const plain=structuredClone(person);plain.perks=[];
+  assert.equal(getCompanyStats(person).meleeDefense,getCompanyStats(plain).meleeDefense+5);
+  assert.equal(getAgileDefenseMultiplier(person),.4);
+  unit.perks=['agile-defense'];assert.equal(getAgileDefenseMultiplier(unit),.4);
+  if(gear.head===helm)assert.equal(equipmentRangedReach(unit,getItem),1);
+  delete unit.setArmor;assert.ok(getAgileDefenseMultiplier(unit)>.4);
+  if(gear.head===helm)assert.equal(equipmentRangedReach(unit,getItem),0);
+ }
 });
