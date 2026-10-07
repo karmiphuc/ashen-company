@@ -38,7 +38,7 @@ export const RESTORED_ANCIENT_ITEMS = Object.freeze(Object.entries(ANCIENT_RESTO
 export function ancientRestorationRecipe(sourceId) {
   if (!Object.hasOwn(ANCIENT_RESTORATION_TARGETS, sourceId)) return null;
   const source = DLC_ITEMS.find(item => item.id === sourceId);
-  return { sourceId, count: source.slot === 'armor' ? 3 : 2, fee: source.slot === 'armor' ? 450 : 300 };
+  return { sourceId, count: source.slot === 'armor' ? 3 : 2, fee: ANCIENT_RESTORATION_TARGETS[sourceId][0] * 2 + ANCIENT_RESTORATION_TARGETS[sourceId][1] * 5 };
 }
 
 // Separate rolls: 80/10/10 first, then 3% named only when a piece exists.

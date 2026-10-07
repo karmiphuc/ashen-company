@@ -1,3 +1,4 @@
+import { DIREWOLF_BODY_IDS, DIREWOLF_HELMET_ITEMS, DIREWOLF_EXISTING_HELMET } from './direwolf-helmets.js';
 import { DLC_ITEMS } from './dlc-items.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { ADDITIONAL_ITEMS } from './additional-items.js';
@@ -5,7 +6,7 @@ import { FANTASY_ITEMS } from './fantasy-items.js';
 import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 // Set membership belongs to the original item design, never to transferred affixes.
 const armorDesigns=[...DLC_ITEMS,...NORTHERN_ITEMS,...ADDITIONAL_ITEMS,...FANTASY_ITEMS].filter(i=>['armor','helmet'].includes(i.slot));
-export const EQUIPMENT_SET_RULES_VERSION=8;
+export const EQUIPMENT_SET_RULES_VERSION=9;
 export const isEquipmentSetRulesVersion=version=>Number.isInteger(version)&&version>=1&&version<=EQUIPMENT_SET_RULES_VERSION;
 // Completion is intentionally absent from early mail and fatigue-efficient light sets.
 const completionRules=Object.freeze({
@@ -41,6 +42,7 @@ const historicalSets=Object.freeze([
 ]);
 // Keep old memberships exclusively for battles saved under earlier rules.
 export const EQUIPMENT_SETS=Object.freeze([
+ family('direwolf','Direwolf',9,'Wear Direwolf Hide, Direwolf Mail or Moonfang Harness with Direwolf Leather Hood, Wolf Helmet or Direwolf Alpha Helm.',[...DIREWOLF_BODY_IDS.map(id=>({id,slot:'armor'})),...DIREWOLF_HELMET_ITEMS,{id:DIREWOLF_EXISTING_HELMET,slot:'helmet'}]),
  ...historicalSets.filter(s=>s.id!=='southern'),
  family('ninja','Ninja',4,'Wear Ninja Suit or Elite Ninja Suit with Ninja Mask or Elite Ninja Mask.',armorDesigns.filter(i=>['samurai-ninja-suit','samurai-elite-ninja-suit','samurai-ninja-mask','samurai-elite-ninja-mask'].includes(i.id))),
  family('golden-scale','Golden Scale',4,'Wear Golden Scale Armor with Gold and Black Turban.',armorDesigns.filter(i=>['bb-golden-scale-armor','bb-gold-and-black-turban'].includes(i.id))),

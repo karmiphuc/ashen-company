@@ -43,7 +43,7 @@ frame or worker-snapshot gap of one second. Warm-up/worker startup is included.
 These are regression budgets for this controlled fixture, not a guarantee for all
 hardware, battle sizes or browser resource pressure. The first passing measured
 runs averaged about 60 FPS normally and 31–52 FPS under throttling; snapshot gaps
-were below 250ms. Physical iPad verification remains useful.
+were below 350ms after integration with the newer armory assets. Physical iPad verification remains useful.
 
 Run `npm run build` followed by `npm run test:release`. The existing realtime,
 mounted-control and battle-view Node tests check the unchanged combat rules;

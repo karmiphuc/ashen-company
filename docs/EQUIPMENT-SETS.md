@@ -102,8 +102,13 @@ Version 5 adds Adorned, Samurai and Tycoon.
 Version 6 adds the early mail, regal and Kasa pairings.
 Version 7 adds selective attachment completions with varied replacement totals.
 Version 8 adds the exact Ritual Armor/Ritual Helmet/named Bone Platings completion.
-Existing active battles without a version, or with versions 1–7, retain their
-original protection and fatigue rules. Newly enabled sets become effective in the next battle. Save validation verifies each
+Version 9 adds Direwolf Hide/Mail/Moonfang paired with Direwolf Leather Hood,
+existing Wolf Helmet or Alpha Helm, using standard pair percentages and existing
+Direwolf Fur/Unhold Fur trophy completions. Wolf Helmet stats and artwork are
+preserved. See [DIREWOLF-MOONFANG.md](DIREWOLF-MOONFANG.md) for recipes and fitted values.
+Existing active battles without a version, or with versions 1–8, retain their
+original protection and fatigue rules. Newly enabled sets become effective in the
+next battle. Save validation verifies each
 snapshot against its original item design, rule version and starting condition.
 
 Definitions have a `since` version to keep older battles stable. When adding

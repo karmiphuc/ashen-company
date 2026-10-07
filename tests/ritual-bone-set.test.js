@@ -44,7 +44,7 @@ test('named and reforged Ritual designs retain unique membership; arbitrary tran
 
 test('Ritual Bone survives either attachment slot, realtime saves and worn retreat without healing',()=>{
  for(const second of [false,true])for(const realtime of [false,true]){
-  const {state,person,unit}=fight({second},realtime);assert.equal(state.battle.equipmentSetRulesVersion,8);
+  const {state,person,unit}=fight({second},realtime);assert.equal(state.battle.equipmentSetRulesVersion,9);
   assert.equal(unit.setArmor.attachmentSlot,second?'attachment2':'attachment');unit.bodyArmor-=11;unit.headArmor-=8;
   const wear={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
   const loaded=validateSave(JSON.parse(JSON.stringify(state)));assert.deepEqual(loaded.battle,state.battle);

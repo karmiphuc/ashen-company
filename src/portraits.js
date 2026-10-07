@@ -1,3 +1,5 @@
+import { DIREWOLF_HELMET_ART } from './direwolf-helmets.js';
+import { MOONFANG_ID, MOONFANG_ART } from './direwolf-crafting.js';
 // Local raster layers from Battle-Brothers-Legends/Legends-public.
 // See assets/portraits/legends-source.json for the pinned source manifest.
 import { DLC_ITEMS } from './dlc-items.js';
@@ -543,7 +545,7 @@ function layerSpec(category, item) {
     const handY=heavy?Math.min(100,115-bottom):rangedPose?105:111;
     return [named.portrait,(heavy?78:rangedPose?70:82)-gx,handY-gy,`scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`,`${gx}px ${gy}px`];
   }
-  const source = ancientRestoredArt(item) || DLC_ART[item?.baseId || item?.id || visual(item)];
+  const source = DIREWOLF_HELMET_ART[item?.baseId || item?.id] || ((item?.baseId || item?.id) === MOONFANG_ID ? MOONFANG_ART : null) || ancientRestoredArt(item) || DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];
   const id = String(item?.baseId || item?.id || '').toLowerCase();
@@ -647,7 +649,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount, equipment.weapon);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
-  const dlcHelmet = ancientRestoredArt(equipment.helmet) || DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
+  const dlcHelmet = DIREWOLF_HELMET_ART[equipment.helmet?.baseId || equipment.helmet?.id] || ancientRestoredArt(equipment.helmet) || DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
   const hiddenHead = FANTASY_HIDDEN_HEADS.includes(helmetVisual) || dlcHelmet?.hideHead;
   const closedHelmet = dlcHelmet?.hideBeard || helmetVisual === 'greathelm' || helmetVisual === 'full-helm' || FANTASY_CLOSED_HELMETS.includes(helmetVisual);
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
@@ -684,6 +686,8 @@ export function itemImage(item) {
   const restored = ancientRestoredArt(item);
   if (restored) return restored.icon;
   const id = item?.baseId || item?.id;
+  if (DIREWOLF_HELMET_ART[id]) return DIREWOLF_HELMET_ART[id].icon;
+  if (id === MOONFANG_ID) return MOONFANG_ART.icon;
   if(NAMED_WEAPON_ART[id])return NAMED_WEAPON_ART[id].icon;
   if (DLC_ART[id]) return DLC_ART[id].icon;
   return ITEM_IMAGES[id] ? `${ITEM_ROOT}${ITEM_IMAGES[id]}` : null;
