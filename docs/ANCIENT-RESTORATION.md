@@ -11,7 +11,7 @@ do not. Players select exact copies; initial selection favors the most worn.
 
 Each confirmed attempt consumes all submitted pieces. The primary roll is 80%
 bronze, 10% silverish steel, and 10% failure. Failure creates no item and refunds
-half the recipe fee (310 crowns for the Plate Harness, 280 for the Honor Guard Helmet). Success produces one fully repaired
+half the recipe fee, rounded down to whole crowns (310 crowns for the Plate Harness, 280 for the Honor Guard Helmet). Success produces one fully repaired
 piece, followed by an independent 3% named roll using existing version-7 affixes.
 Steel adds 20% protection and 12% fatigue to the bronze baseline, rounded to the
 nearest integer once, before named bonuses. Unconditional outcomes are 77.6%

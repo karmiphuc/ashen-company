@@ -482,7 +482,7 @@ export function getAncientRestorationQuote(state, indices) {
   if (!Array.isArray(state.inventoryCondition) || state.inventoryCondition.length !== state.inventory.length) return result(false, 'The stash condition record must be repaired before crafting.');
   return { ok: true, source: getItem(sourceId), indices: [...indices].sort((a, b) => a - b), ...recipe,
     bronze: getItem(restoredAncientId(sourceId, 'bronze')), steel: getItem(restoredAncientId(sourceId, 'steel')),
-    refund: recipe.fee / 2, affordable: state.gold >= recipe.fee, stamp: ancientRestorationStamp(state) };
+    refund: Math.floor(recipe.fee / 2), affordable: state.gold >= recipe.fee, stamp: ancientRestorationStamp(state) };
 }
 export function restoreAncientEquipment(state, quote) {
   if (!quote?.ok) return result(false, 'Review a valid restoration recipe first.');

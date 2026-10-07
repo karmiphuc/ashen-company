@@ -226,7 +226,7 @@ test('every restoration fee uses repaired bronze protection and fatigue, includi
     s.inventoryCondition.fill(0);
     s.gold = fee - 1;
     const quote = getAncientRestorationQuote(s, indices);
-    assert.equal(quote.fee, fee); assert.equal(quote.refund, fee / 2);
+    assert.equal(quote.fee, fee); assert.equal(quote.refund, Math.floor(fee / 2));
     assert.equal(quote.affordable, false);
     const before = structuredClone(s);
     assert.equal(restoreAncientEquipment(s, quote).ok, false);
@@ -234,5 +234,20 @@ test('every restoration fee uses repaired bronze protection and fatigue, includi
     s.gold = fee;
     assert.equal(restoreAncientEquipment(s, getAncientRestorationQuote(s, indices)).ok, true);
     assert.equal(s.gold, 0);
+  }
+});
+
+test('failure refunds stay whole and saveable for every calculated recipe fee', () => {
+  for (const sourceId of Object.keys(ANCIENT_RESTORATION_TARGETS)) {
+    const s = createGame(seedFor(null));
+    const indices = materials(s, sourceId);
+    const quote = getAncientRestorationQuote(s, indices);
+    const outcome = restoreAncientEquipment(s, quote);
+    assert.equal(outcome.ok, true); assert.equal(outcome.crafted, false);
+    assert.equal(outcome.refund, Math.floor(quote.fee / 2));
+    assert.equal(s.gold, 900 - quote.fee + Math.floor(quote.fee / 2));
+    assert.ok(Number.isSafeInteger(s.gold));
+    assert.deepEqual(validateSave(JSON.parse(JSON.stringify(s))), s);
+    assert.match(ancientArmorerHTML(createGame(51), { sourceId, indices: [] }), new RegExp(`Failure returns ${quote.refund} of ${quote.fee} crowns`));
   }
 });
