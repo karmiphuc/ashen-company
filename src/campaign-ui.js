@@ -1,4 +1,4 @@
-import { equipmentSetStatus, effectiveArmorFatigue } from './equipment-sets.js';
+import { equipmentSetStatus, effectiveArmorFatigue, effectiveAttachmentFatigue, equipmentSetCompletionText } from './equipment-sets.js';
 import { INJURY_BY_ID, injuryEffectText, injuryDailyMedicine } from './injuries.js';
 import {hasEquipmentPerk,getContractBoardRefreshDay,canAcceptContract,getActiveContracts,getContractCategory,getInjuryCare, RETINUE_MEMBERS, hasRetinue, getScoutLevel, getBattleLootGold, getBattleChampionBounty, getBattleExperience, SETTLEMENTS, getTimeOfDay, getCompanyCart, getStashCapacity, getItem, getEquipment, getFormation, getCompanyStats, getCampSites, getLevelUp, contractObjectiveComplete, getContractTarget, PERKS, getPerkPoints, getBackground, getTraits, getTownEvent, getTownEconomy, getCaravans, getRoamingBands, getDailyFood, getCompanyTravelBonus, getMoraleEffects, shieldMaximum, getMountRewardEvents, getLootKeepQuote, getDiscoveryEvent, getRetinue, getTownServiceQuote, MAX_COMPANY_SIZE, MAX_BATTLE_SIZE, AUTO_AMMO_CAP, getReserveSlots, getBattleRoster, getSettlementAccess, getLegendaryBlacksmith } from './engine.js';
 import { townFacilities } from './town-facilities.js';
@@ -174,14 +174,17 @@ function conditionRow(label, current, max, type, status='') {
   return `<div class="condition-row"><span>${label}</span><div class="condition-meter ${type}"><i style="width:${max ? Math.max(0,Math.min(100,current/max*100)) : 0}%"></i><strong>${Math.round(current)} / ${max}${status?` · ${status}`:''}</strong></div></div>`;
 }
 
-export function equipmentSetHTML(person){
+export function equipmentSetHTML(person,completionSlot=null){
  const status=equipmentSetStatus(person,getItem);if(!status)return '';
- const {set,count,active}=status,load=effectiveArmorFatigue(person,getItem);
- const detail=active?`Both pieces worn: +${set.armorPct}% head and body armor; helmet fatigue −${set.headFatiguePct}%, body fatigue −${set.bodyFatiguePct}%. Effective load: body ${load.body}, head ${load.head}. Set fitting applies before Nimble, Agile Defense, Fleet Footed and Brawny. Fatigue rounds to the nearest integer; damaged armor is never repaired.`:`${set.pairing} Activate +${set.armorPct}% head/body armor and reduced armor fatigue. Ordinary, named and reforged versions of these designs count. Stashed pieces do not count.`;
+ const {set,count,total,bonuses,threePiece}=status,load=effectiveArmorFatigue(person,getItem);
+ const completion=completionSlot!==null;
+ if(completion&&(completionSlot!==(status.attachmentSlot??'attachment')))return '';
+ const active=completion?threePiece:status.active;
+ const detail=completion?`${equipmentSetCompletionText(set)} ${threePiece?`Three-piece bonus active. Matching attachment fitted load: ${effectiveAttachmentFatigue(person,getItem)[status.attachmentSlot]}.`:status.active?'Two-piece bonuses remain until all three matching pieces are worn.':'Wear the matching head and body pieces to activate the pair first.'}`:active?`${threePiece?'Three matching pieces':'Both pieces'} worn: +${bonuses.armorPct}% head and body armor; helmet fatigue −${bonuses.headFatiguePct}%, body fatigue −${bonuses.bodyFatiguePct}%. ${threePiece?`Matching attachment fatigue −${bonuses.attachmentFatiguePct}%. `:''}Effective load: body ${load.body}, head ${load.head}. Set fitting applies before Nimble, Agile Defense, Fleet Footed and Brawny. Fatigue rounds to the nearest integer; damaged armor is never repaired.`:`${set.pairing} Activate +${set.armorPct}% head/body armor and reduced armor fatigue. Ordinary, named and reforged versions of these designs count. Stashed pieces do not count.`;
  const chain=active?'<path d="M10 13a5 5 0 0 0 7 .7l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7-.7l-3 3a5 5 0 0 0 7 7l2-2"/>':'<path d="m9 15-2 2a4 4 0 0 1-5-6l3-3a4 4 0 0 1 5 0m4 1 2-2a4 4 0 0 1 6 5l-3 3a4 4 0 0 1-5 0M9 3l1 3m-7 3 3 1m12 4 3 1m-7 3 1 3"/>';
- const label=`${set.name} ${count}/2 · ${active?'Matching set active':'Pair incomplete'}`;
- return companyHintHTML('armor-set',label,detail)
-  .replace('class="company-hint"',`class="company-hint armor-set-link${active?' is-active':''}"`)
+ const label=`${set.name} ${completion?Number(status.body)+Number(status.head)+Number(Boolean(status.attachmentSlot)):count}/${completion?3:total} · ${active?(threePiece?'Three-piece set active':'Matching set active'):(completion?'Attachment completion':'Pair incomplete')}`;
+ return companyHintHTML(completion?'armor-set-completion':'armor-set',label,detail)
+  .replace('class="company-hint"',`class="company-hint armor-set-link${completion?' is-completion':''}${active?' is-active':''}"`)
   .replace('>?</button>',`><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${chain}</svg></button>`);
 }
 
@@ -193,7 +196,7 @@ export function companySheetHTML(state, person, filter, inventory) {
   const perkPoints = getPerkPoints(person), learned = PERKS.filter(perk => person.perks?.includes(perk.id));
   const body = (stats.bodyArmor ?? 0) + (stats.attachmentArmor ?? 0) + (stats.attachment2Armor ?? 0), head = stats.headArmor ?? gear.helmet?.armor ?? 0;
   const maxBody = (stats.maxBodyArmor ?? 0) + (stats.maxAttachmentArmor ?? 0) + (stats.maxAttachment2Armor ?? 0);
-  const equipmentSlot=(slot,entry,location,label)=>`<div class="slot-wrap"><button class="slot ${filter===slot||(slot==='accessory'&&filter==='accessory')?'active':''}" ${entry?`data-inspect="${entry.id}" data-item-source="equipped" data-item-location="${location}" data-item-slot="${slot}"`:`data-slot="${slot}"`}><small>${label}</small>${entry?itemIcon(entry):'<span class="empty-slot">Empty</span>'}<strong>${entry?.name||'Unequipped'}</strong></button>${entry?`<button class="stow-button" data-unequip="${slot}" data-equipment-location="${location}">Stow</button>`:''}${slot==='helmet'?equipmentSetHTML(person):''}</div>`;
+  const equipmentSlot=(slot,entry,location,label)=>`<div class="slot-wrap"><button class="slot ${filter===slot||(slot==='accessory'&&filter==='accessory')?'active':''}" ${entry?`data-inspect="${entry.id}" data-item-source="equipped" data-item-location="${location}" data-item-slot="${slot}"`:`data-slot="${slot}"`}><small>${label}</small>${entry?itemIcon(entry):'<span class="empty-slot">Empty</span>'}<strong>${entry?.name||'Unequipped'}</strong></button>${entry?`<button class="stow-button" data-unequip="${slot}" data-equipment-location="${location}">Stow</button>`:''}${slot==='helmet'?equipmentSetHTML(person):slot==='attachment'?equipmentSetHTML(person,location==='attachment-2'?'attachment2':'attachment'):''}</div>`;
   return `<section class="page company-page"><div class="page-heading"><div><div class="eyebrow">${esc(person.background)} · LEVEL ${stats.level || 1} · ${getReserveSlots(state).includes(person.id)?'RESERVE':'FIELDED'}</div><h1>${esc(person.name)}</h1><p>${state.party.length} / ${MAX_COMPANY_SIZE} brothers · ${state.renown} renown</p></div><div class="button-row"><button data-tab="world">Return to the world map</button></div></div>
   <div class="company-layout detailed-company"><article class="character-card"><div class="hero-portrait">${portraitHTML(person,gear,150)}</div>
   <div class="condition-list">${conditionRow('Head',head,stats.maxHeadArmor||0,'armor')}${conditionRow('Body',body,maxBody,'armor')}${gear.shield?conditionRow('Shield',stats.shieldDurability,stats.maxShieldDurability,'armor',stats.shieldDurability===0?'Broken':''):''}${conditionRow('Hitpoints',person.hp,stats.maxHp,'health')}</div>

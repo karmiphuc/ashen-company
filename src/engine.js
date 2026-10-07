@@ -1,4 +1,4 @@
-import { EQUIPMENT_SET_RULES_VERSION, isEquipmentSetRulesVersion, effectiveArmorFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
+import { EQUIPMENT_SET_RULES_VERSION, isEquipmentSetRulesVersion, effectiveArmorFatigue, effectiveAttachmentFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
 import { equipmentPerk, equipmentBoost, equipmentRangedReach, rollAttachment } from './item-affixes.js';
 import { recordQuestCompletion } from './quest-completion.js';
 import { BLACKSMITH_STAGES, initialBlacksmith, blacksmithIndex, blacksmithUnlocked, discoverBlacksmith, blacksmithEncounters, validateBlacksmith } from './legendary-blacksmith.js';
@@ -723,7 +723,7 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
   const mountInitiative = person.hp > 0 ? equipped.mount?.initiativeBonus ?? 0 : 0;
   const mount = person.hp > 0 ? equipped.mount : null;
   const setFatigue=effectiveArmorFatigue(person,getItem),armorFatigue=setFatigue.body+setFatigue.head;
-  const attachmentFatigue=(equipped.attachment?.fatigue??0)+(equipped.attachment2?.fatigue??0);
+  const setAttachments=effectiveAttachmentFatigue(person,getItem),attachmentFatigue=setAttachments.attachment+setAttachments.attachment2;
   const otherFatigue = (equipped.weapon?.fatigue ?? 0) + (equipped.shield?.fatigue ?? 0);
   const perkFatigue = otherFatigue + (hasPerk(person, 'brawny') ? Math.floor(armorFatigue * .7) : armorFatigue);
   const fatigue=perkFatigue+attachmentFatigue;
@@ -3148,7 +3148,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     const raw={body:person?person.armorDurability.body:unit.bodyArmor,head:person?person.armorDurability.head:unit.headArmor};
     const snapshot=createSetArmorSnapshot(unit,getItem,raw);if(!snapshot)continue;
     unit.setArmor=snapshot;unit.maxBodyArmor=snapshot.body.effectiveMax;unit.bodyArmor=snapshot.body.initial;unit.maxHeadArmor=snapshot.head.effectiveMax;unit.headArmor=snapshot.head.initial;
-    if(!person){const load=effectiveArmorFatigue(unit,getItem),saving=(getItem(unit.equipment.armor)?.fatigue??0)+(getItem(unit.equipment.helmet)?.fatigue??0)-load.body-load.head;unit.maxFatigue+=saving;unit.initiative+=saving;}
+    if(!person){const load=effectiveArmorFatigue(unit,getItem),attachments=effectiveAttachmentFatigue(unit,getItem),saving=(getItem(unit.equipment.armor)?.fatigue??0)+(getItem(unit.equipment.helmet)?.fatigue??0)-load.body-load.head+['attachment','attachment2'].reduce((sum,slot)=>sum+(getItem(unit.equipment[slot])?.fatigue??0)-attachments[slot],0);unit.maxFatigue+=saving;unit.initiative+=saving;}
   }
   const battle = {
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,

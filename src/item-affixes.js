@@ -16,9 +16,9 @@ function currentAffixes(actor,getItem) {
   if(!actor?.equipment)return emptyAffixes;
   const equipment=actor.equipment,shieldUsable=(actor.shieldDurability??actor.armorDurability?.shield??1)>0;
   const cached=actorAffixes.get(actor);
-  if(cached&&cached.getItem===getItem&&cached.shieldUsable===shieldUsable&&cached.setActive===(!actor.side||!!actor.setArmor)
+  if(cached&&cached.getItem===getItem&&cached.shieldUsable===shieldUsable&&cached.setActive===(!actor.side||!!actor.setArmor)&&cached.setAttachmentSlot===(actor.setArmor?.attachmentSlot??null)
     &&affixSlots.every((slot,index)=>equipment[slot]===cached.ids[index]))return cached;
-  const summary={getItem,shieldUsable,setActive:!actor.side||!!actor.setArmor,ids:affixSlots.map(slot=>equipment[slot]),perks:new Set(),boosts:{},range:0};
+  const summary={getItem,shieldUsable,setActive:!actor.side||!!actor.setArmor,setAttachmentSlot:actor.setArmor?.attachmentSlot??null,ids:affixSlots.map(slot=>equipment[slot]),perks:new Set(),boosts:{},range:0};
   for(const slot of affixSlots){
     if(slot==='shield'&&!shieldUsable)continue;
     const id=equipment[slot];

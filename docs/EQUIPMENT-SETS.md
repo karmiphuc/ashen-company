@@ -7,7 +7,7 @@ The Assassin set uses existing Assassin's Robe with Assassin's Face Mask or
 Assassin's Head Wrap. Both must be worn. Named and reforged variants qualify by
 their original design; transferred affixes do not transfer set membership.
 
-The pair adds 15% head/body armor (rounded down), reduces helmet fatigue by 10%
+The two-piece pair adds 15% head/body armor (rounded down), reduces helmet fatigue by 10%
 and body fatigue by 15% (each rounded to the nearest integer). The standard robe
 and mask therefore provide 138 body armor, 161 head armor, and 13 armor fatigue.
 Set fitting precedes fatigue-sensitive perks and Brawny. Attachments do not
@@ -67,7 +67,10 @@ names alone do not confer membership.
 Kasa means `fantasy-kasa` (105 armor, 5 fatigue), not Bamboo Hat
 (`samurai-bamboo-hat`). Ronin Hat is the alternative only for Ronin Clothes.
 
-All 18 families use the same percentages, and bonuses apply once, never stack.
+All 18 families use the same two-piece percentages. Selected attachment
+completions replace them with varied three-piece totals; see
+[three-piece completions and attachment ideas](THREE-PIECE-SETS.md).
+Bonuses apply once, never stack.
 They activate automatically when both pieces are worn, for company brothers,
 enemies and allies. Pieces in the stash do not count. Sets are not restricted
 to named items and do not require a crafting recipe or activation fee.
@@ -97,7 +100,8 @@ also enables Ancient and Northern, and version 3 adds broad Southern and Noble.
 Version 4 replaces broad Southern with the two curated pairs and adds Ninja.
 Version 5 adds Adorned, Samurai and Tycoon.
 Version 6 adds the early mail, regal and Kasa pairings.
-Existing active battles without a version, or with versions 1–5, retain their
+Version 7 adds selective attachment completions with varied replacement totals.
+Existing active battles without a version, or with versions 1–6, retain their
 original protection and fatigue rules. Newly enabled sets become effective in the next battle. Save validation verifies each
 snapshot against its original item design, rule version and starting condition.
 
@@ -116,7 +120,7 @@ missing pieces, wear, saves, and fatigue-sensitive perks in regression tests.
 
 ## Verified ordinary-item examples
 
-These values exclude attachments and perks; fatigue is the combined fitted
+These two-piece values exclude attachment completions and perks; fatigue is the combined fitted
 helmet/body load, before Brawny. Rounding can leave a low-fatigue piece unchanged.
 
 | Worn pair | Body armor | Head armor | Fitted armor fatigue |
