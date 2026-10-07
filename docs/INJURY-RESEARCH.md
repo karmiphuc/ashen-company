@@ -1,6 +1,6 @@
-# Injury research and implementation direction
+# Injury research and implementation status
 
-Researched 2026-10-05. This document proposes work; it does not change gameplay.
+Researched 2026-10-05; implementation reviewed 2026-10-07 against main commit `6293884`. The original Battle Brothers reference below is preserved. Temporary injuries shipped in v0.53.0; the implementation status and remaining scope are recorded here. This document does not change gameplay.
 
 ## Reference and confidence
 
@@ -47,7 +47,7 @@ These values come from the corresponding files under `scripts/skills/injury/` in
 | Pierced Lung | Piercing body, 50% | −60% maximum fatigue | 5–7 days |
 | Severe Concussion | Blunt head, 50% before head modifier | −50% initiative, melee/ranged skill and both defenses | 3–5 days |
 
-Use the complete source pools in a later implementation. A generic “wounded: −10% everything” loses both tactical identity and counterplay.
+The shipped catalogue contains the source temporary wounds; current supported actions use the blunt, cutting and piercing pools. A generic “wounded: −10% everything” loses both tactical identity and counterplay.
 
 ## Recovery and treatment
 
@@ -69,15 +69,30 @@ The ordinary permanent pool contains **11 entries** in this snapshot: Missing No
 
 Permanent injuries do not recover through ordinary rest or temple treatment. Their effects are individual: Brain Damage, for example, gives +15% resolve but −25% initiative and experience gain. Rare special cures, events and origin exceptions should be researched separately before claiming exhaustive OG parity.
 
-## Current Ashen Company gaps
+## Verified Ashen Company implementation
 
-At the researched main revision, `src/engine.js` models damage and HP recovery but has no persistent injury collection or recovery lifecycle. Doctor restores HP immediately. A six-hour rest consumes one medicine for the entire wounded company and restores 24 HP with medicine or 8 without it, with Surgeon scaling. The Surgeon in `src/retinue.js` costs 6,000 gold and grants +25% rest healing and −25% Doctor fees; it explicitly does not resurrect casualties.
+Temporary injuries are complete in v0.53.0. See [current rules, care and save compatibility](TEMPORARY-INJURIES.md) for the shipped behavior and explicit adaptations.
 
-Gash currently uses a daze surrogate rather than persistent cutting injuries, as documented in `docs/WEAPON-SKILL-COMPLETION.md`. Combat status effects and casualty removal cannot simply be relabeled as injuries. Existing saves and resumed battles need explicit compatibility rules.
+| Research requirement | Implemented code and verification |
+| --- | --- |
+| Data-driven wounds and action-specific pools | `src/injuries.js`: 46 individual definitions, eight body/head pools, per-action blunt/cutting/piercing selection, threshold and duplicate/exclusion filtering. Burning definitions are retained without adding fire attacks. |
+| Individual-hit thresholds and wound acquisition | `src/engine.js` (`inflictTemporaryInjury`) and `eligibleInjuries`: 10-health floor, head multiplier, one wound per surviving hit, undead/immunity checks and independent saved injury RNG. |
+| Specific effects and timing | Central injury stat/multiplier/adjustment helpers feed company stats, tactical damage/defense, fatigue, initiative, movement and AP. Fresh maximum-HP penalties are deferred; source acquisition caps and fresh bleeding are separate. |
+| Daily recovery and medicine | `recoverDailyInjuries` runs at crossed day boundaries, consumes one medicine per wound and pauses without supplies; per-wound/day hashes keep recovery stable through reload and partitioned travel. Camp reserves next-day wound medicine before optional HP care. |
+| Treatment and Surgeon | Doctor wound treatment halves durations without curing HP or wounds immediately. Quotes are affordable and repeat-safe; Surgeon shortens recovery by one day and retains the existing care discounts. |
+| Supported perk/weapon interactions | Gash uses actual cutting wounds, with Sword Mastery and Crippling Strikes threshold modifiers. Executioner checks actual wounds in new battles. Colossus affects maximum HP and thus injury thresholds. |
+| Compact UI and saved ownership | `src/company-ui.js`, `src/campaign-ui.js` and `src/app.js` expose roster counts, exact wound hints, medicine warnings, separate treatment and aftermath wounds. Engine save validation checks wound records and ownership; survivors carry wounds through battle completion. |
+| Old saves and ongoing battles | Old party saves receive empty wound arrays. `injuryRulesVersion: 1` gates new battles; resumed legacy battles retain Gash's daze surrogate, the previous Executioner trigger and their original RNG path. |
 
-## Recommended implementation order
+`tests/injuries.test.js` contains 24 passing checks covering acquisition, thresholds, effects, recovery, treatment, fresh bleeding, actual skill execution, tactical/save round-trips, UI output and legacy compatibility. The 2026-10-07 review also reruns the required release and offline checks. This is a code and regression review; it does not claim a new physical-device or full-campaign playtest.
 
-### 1. Temporary injuries and clear recovery UX
+Permanent injuries, incapacitated survivors and fatal-blow recovery are **not implemented**. Casualties remain dead; the Surgeon does not rescue them. Iron Will, injury-causing events, special cures, fire attacks and economy/campaign balancing remain follow-ups. Their OG source rules below are reference material, not current game behavior.
+
+## Delivery status and follow-up order
+
+### 1. Temporary injuries and clear recovery UX — implemented
+
+The following original acceptance direction is fulfilled by the shipped temporary-wound implementation above.
 
 Build a data-driven wound catalogue with source-verified pools, thresholds, effects, validity and timing. Start with supported attacks and living actors on both sides. Reuse existing ancient-armory/undead identities and explicit susceptibility flags; create no new races and do not assume every beast has human anatomy.
 
@@ -89,19 +104,19 @@ Preserve the existing HP treatment service and add a separate wound-treatment qu
 
 Show a compact wound badge on the sticky roster and affected stat markers in equipment/combat inspection. A hint reveals wound name, exact effects, remaining recovery range and treatment state. Clearly mark “recovery paused: no medicine.” After combat, show new wounds beside casualties. Offer a convenient reserve swap, without forced retirement or contract locking. Keep detailed mechanics behind hints, not paragraphs in the main screen.
 
-### 2. Permanent injuries and casualty recovery
+### 2. Permanent injuries and casualty recovery — pending
 
 Add a distinct incapacitated survivor outcome before removing roster members and distributing their equipment. Apply each outcome exactly once through battle completion, retreat and reload paths. Permanent wounds must remain visible in roster history and derived stats.
 
 Implement fatality eligibility explicitly; do not invent fatality types from an animation or a weapon label. Review victory, retreat and recovery outcomes against OG battle-state handling before finalizing the feature. Keep ordinary survival, Nine Lives-style death prevention and Surgeon protection separate.
 
-### 3. Perks, retinue and balancing
+### 3. Perks, retinue and balancing — supported interactions implemented
 
-Finish Crippling Strikes, Gash, injury-sensitive damage bonuses and any fresh-injury suppression against supported OG definitions. Add the Surgeon's one-day wound benefit once recovery exists. Treat his survival guarantee as a separate, reviewed balance change; silently adding it to the current 6,000-gold HP-healing service would substantially change casualty risk.
+Crippling Strikes, Gash, Executioner and the Surgeon's one-day wound benefit are implemented. Fresh-injury suppression through Iron Will is still outside the shipped scope. Treat his survival guarantee as a separate, reviewed balance change; silently adding it to the current 6,000-gold HP-healing service would substantially change casualty risk.
 
 Validate medicine availability, wounded-brother turnover and reserve usefulness through actual campaigns. Adjust economy inputs transparently if needed rather than secretly changing the injury formula. Injuries should create memorable tactical choices, not require constant menu maintenance.
 
-## Regression acceptance criteria
+## Regression acceptance criteria and scope
 
 - Threshold boundaries, the 10-damage floor, head multiplier, modified maximum HP and combined attack modifiers are tested with fixed damage fixtures.
 - Armor-only hits, unsupported damage events, immune actors and fatal hits cannot produce ordinary temporary wounds. Damage-over-time receives wounds only if its source explicitly defines an eligible injury pool.
@@ -109,8 +124,8 @@ Validate medicine availability, wounded-brother turnover and reserve usefulness 
 - Wound acquisition, delayed effects, stacking, recovery and equipment swaps preserve health deficits without granting free healing or allowing maximum-HP exploits.
 - Daily medicine use and recovery are invariant under travel partitioning, repeated UI actions, save/load and battle resumption. Shortage pauses progress rather than banking free healing days.
 - Treatment costs and effects are atomic; injury recovery cannot clear permanent injuries or silently cure unrelated combat statuses.
-- Incapacitation, permanent injuries, casualty equipment and survivor restoration resolve once. Fatality restrictions and Surgeon exceptions have explicit fixtures.
+- Pending permanent-injury follow-up: incapacitation, permanent injuries, casualty equipment and survivor restoration must resolve once. Fatality restrictions and Surgeon exceptions require explicit fixtures.
 - Existing saves remain loadable with no inferred wounds. Compatibility of active battles is versioned, with documented behavior rather than altered random outcomes by accident.
 - Browser checks cover sticky roster badges, small screens, wound hints, treatment quotes and post-combat summaries. Wounds never become a new contract lock.
 
-This research is ready to guide a temporary-injury implementation PR. Permanent casualty survival should follow in a separate PR because it changes roster ownership, equipment recovery and defeat handling.
+Temporary injuries and supported weapon/perk care interactions have shipped. The research PR now preserves the OG reference and records that completed implementation. Permanent casualty survival remains a separate future PR because it changes roster ownership, equipment recovery and defeat handling.
