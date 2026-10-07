@@ -323,3 +323,5 @@ button.primary.is-ready:focus-visible{outline:2px solid #c4ff76;outline-offset:3
 .direwolf-material strong,.direwolf-material small{display:block}
 .direwolf-material select{display:block;width:100%;min-height:44px;margin-top:6px}
 @media(max-width:650px){.direwolf-workbench{grid-template-columns:1fr}.direwolf-hero>img{height:220px;width:110px}}
+
+.direwolf-helmet-hero>img{width:140px;height:180px}

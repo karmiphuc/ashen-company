@@ -1,0 +1,41 @@
+{
+  "provenance": "AI-generated Direwolf Leather Hood and Alpha Helm grounded in the selected Moonfang concept and existing Wolf Helmet/Bear Headpiece. Wolf Helmet artwork itself is reused unchanged.",
+  "assets": [
+    {
+      "design": "leather",
+      "layer": "icon",
+      "generatedMaster": "exec-5660c564-9210-4770-ac13-cb7f6982c59f.png",
+      "masterSha256": "2c7af6463cbbc04452972997f702b23d24a720c2a2f4e5e6a63f0f5ecd2dc82c",
+      "path": "assets/direwolf-helmets/leather-icon.png",
+      "sha256": "bb438926e208e056f82eda771d057b97eb82345af07275b71d00debe3c9f0203",
+      "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 140x180"
+    },
+    {
+      "design": "leather",
+      "layer": "portrait",
+      "generatedMaster": "exec-5660c564-9210-4770-ac13-cb7f6982c59f.png",
+      "masterSha256": "2c7af6463cbbc04452972997f702b23d24a720c2a2f4e5e6a63f0f5ecd2dc82c",
+      "path": "assets/direwolf-helmets/leather-portrait.png",
+      "sha256": "ff06db9ff7f49fb0456d41328a18fd0b17fdb56107a307d811f5c3c486c15e85",
+      "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 74x110 canvas, left14/top-26 portrait anchor"
+    },
+    {
+      "design": "alpha",
+      "layer": "icon",
+      "generatedMaster": "exec-8a30ff2c-e7ef-434d-bf07-d352ac9a1c45.png",
+      "masterSha256": "07c578abf8051936c6508dbd1cc7b1418fec9f3e039c8709be04375125543af9",
+      "path": "assets/direwolf-helmets/alpha-icon.png",
+      "sha256": "8d51e5273ca5a20f2e5e7e1c261dc3c60574d4af25830b6f0a488f0c31077e65",
+      "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 140x180"
+    },
+    {
+      "design": "alpha",
+      "layer": "portrait",
+      "generatedMaster": "exec-8a30ff2c-e7ef-434d-bf07-d352ac9a1c45.png",
+      "masterSha256": "07c578abf8051936c6508dbd1cc7b1418fec9f3e039c8709be04375125543af9",
+      "path": "assets/direwolf-helmets/alpha-portrait.png",
+      "sha256": "44786856679aa0c4caa9e00e44240193f53d05b5358b66f725e115d8b159219e",
+      "packaging": "ImageMagick alpha trim and aspect-preserving resize; transparent centered 74x110 canvas, left14/top-26 portrait anchor"
+    }
+  ]
+}

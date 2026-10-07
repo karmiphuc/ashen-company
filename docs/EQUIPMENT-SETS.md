@@ -74,6 +74,10 @@ also enables Ancient and Northern, and version 3 adds broad Southern and Noble.
 Version 4 replaces broad Southern with the two curated pairs and adds Ninja.
 Version 5 adds Adorned, Samurai and Tycoon.
 Version 6 adds the early mail, regal and Kasa pairings.
+Version 7 adds Direwolf Hide/Mail/Moonfang paired with Direwolf Leather Hood,
+existing Wolf Helmet or Alpha Helm, using the same standard percentages.
+Existing Wolf Helmet stats and artwork are preserved. See
+[DIREWOLF-MOONFANG.md](DIREWOLF-MOONFANG.md) for recipes and fitted values.
 Existing active battles without a version, or with versions 1–5, retain their
 original protection and fatigue rules. Newly
 enabled sets become effective in the next battle. Save validation verifies each

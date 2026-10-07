@@ -1,3 +1,6 @@
+import { DIREWOLF_LEATHER_HELMET, direwolfHelmetRecipe } from './direwolf-helmets.js';
+import { direwolfHelmetHTML, direwolfHelmetConfirmationHTML, direwolfHelmetResultHTML } from './direwolf-helmet-ui.js';
+import { getDirewolfHelmetQuote, craftDirewolfHelmet } from './engine.js';
 import { DIREWOLF_HIDE, DIREWOLF_MAIL } from './direwolf-crafting.js';
 import { armorerNavigationHTML, direwolfArmorerHTML, direwolfConfirmationHTML, direwolfResultHTML } from './direwolf-armorer-ui.js';
 import { getDirewolfCraftQuote, craftDirewolfMoonfang } from './engine.js';
@@ -57,6 +60,7 @@ for (const settlement of SETTLEMENTS) { townArt[settlement.id] ??= regionalTownA
 let forgeSelection={donor:null,recipient:null,filter:'all',search:''},forgeQuote=null,blacksmithSummonsOpen=false;
 let ancientSelection={sourceId:null,indices:[]},ancientQuote=null;
 let direwolfSelection={hideIndex:null,mailIndex:null},direwolfQuote=null;
+let direwolfHelmetSelection={recipeId:DIREWOLF_LEATHER_HELMET,indices:[]},direwolfHelmetQuote=null;
 let simultaneousSoundBattle=null,simultaneousSoundCursor=0,simultaneousResolveToken=0;
 let lootKeepSelection=[],chosenCamp=null,battleCameraTarget=matchMedia('(max-width:1366px)').matches?'overview':'company',battleSpeed=0,battleElapsed=0,battleResultAt=0,trainingSelection=[],perkSelection=null,formationSelection=null,warnedHunters='';
 let defaultBattleSpeed=4;
@@ -214,7 +218,7 @@ function inspectItem(id,source,lootIndex,location='active',equippedSlot){
  const famed=['famed','named'].includes(details.rarity);
  const kind={armor:'BODY ARMOR',helmet:'HEAD ARMOR',attachment:'ARMOR ATTACHMENT',weapon:'WEAPON',shield:'SHIELD',accessory:'ACCESSORY',mount:'RARE MOUNT'}[i.slot];
  const comparison=famed?`<section class="item-famed-comparison"><span class="item-rarity">${details.rarity==='named'?'NAMED':'FAMED'}</span><div><strong>Improved over ${esc(details.baseName)}</strong><dl>${details.bonuses.map(row=>`<div><dt>${esc(row.label)}</dt><dd>${esc(row.value)}</dd></div>`).join('')}</dl></div></section>`:'';
- showModal(i.name,`<article class="item-detail ${famed?'item-detail-famed':''}"><div class="item-detail-intro">${icon(i)}<div><p class="item-flavor">${esc(details.description)}</p><p>${esc(details.role)}</p></div></div>${comparison}${wornHeader}<dl class="item-stat-list">${statRows.map(row=>`<div><dt>${esc(row.label)}</dt><dd>${statValue(row)}</dd></div>`).join('')}</dl><div class="item-mechanics">${details.notes.map(note=>`<p>${esc(note)}</p>`).join('')}</div>${availability?`<p class="item-availability">${esc(availability)}</p>`:''}<div class="button-row item-detail-actions">${actions}<button data-action="${source==='direwolf-armorer'?'direwolf-armorer':source==='ancient-armorer'?'ancient-armorer':source==='forge'?'legendary-blacksmith':marketSource?'market':'close-modal'}">${['ancient-armorer','direwolf-armorer'].includes(source)?'Back to Armorer':marketSource?'Back to marketplace':'Back'}</button></div></article>`,famed?`${details.rarity==='named'?'NAMED':'FAMED'} · ${kind}`:kind);
+ showModal(i.name,`<article class="item-detail ${famed?'item-detail-famed':''}"><div class="item-detail-intro">${icon(i)}<div><p class="item-flavor">${esc(details.description)}</p><p>${esc(details.role)}</p></div></div>${comparison}${wornHeader}<dl class="item-stat-list">${statRows.map(row=>`<div><dt>${esc(row.label)}</dt><dd>${statValue(row)}</dd></div>`).join('')}</dl><div class="item-mechanics">${details.notes.map(note=>`<p>${esc(note)}</p>`).join('')}</div>${availability?`<p class="item-availability">${esc(availability)}</p>`:''}<div class="button-row item-detail-actions">${actions}<button data-action="${source==='direwolf-helmets'?'direwolf-helmets':source==='direwolf-armorer'?'direwolf-armorer':source==='ancient-armorer'?'ancient-armorer':source==='forge'?'legendary-blacksmith':marketSource?'market':'close-modal'}">${['ancient-armorer','direwolf-armorer','direwolf-helmets'].includes(source)?'Back to Armorer':marketSource?'Back to marketplace':'Back'}</button></div></article>`,famed?`${details.rarity==='named'?'NAMED':'FAMED'} · ${kind}`:kind);
  $('#modal').scrollTop=0;$('#modal .close-button').focus();
 }
 function updateSpeed(notify=false){const hunters=[...getRoamingBands(state),...getUndeadEncounters(state)].filter(b=>b.behavior==='hunting-company'),key=hunters.map(b=>b.id).sort().join(',');if(notify){if(key&&key!==warnedHunters){toast(`${hunters[0].name} are pursuing you. Reach a town or prepare to fight.`);if(speed>1)speed=1;}warnedHunters=key;}document.querySelectorAll('[data-speed]').forEach(b=>b.classList.toggle('active',Number(b.dataset.speed)===speed));const s=$('#march-status');if(s){s.classList.toggle('is-threat',hunters.length>0);s.textContent=hunters.length?`${hunters[0].name} pursuing you${speed?'':' · Paused'}`:state.pursuit?(speed?'Pursuing brigands':'Pursuit paused'):state.destination?(speed?'On the march':'Travel paused'):speed?'Waiting - time passes':'Company at rest';}}
@@ -382,23 +386,44 @@ function animate(now){
 }
 mergeOwnedNamedBonuses(state);if(!unreadSave)checkBlacksmithDiscovery(state);render();requestAnimationFrame(animate);if(unreadSave)toast('Your saved company could not be loaded. The original is preserved in Save / Menu.');else save();
 function showBlacksmith(){showModal('Odran · Legendary Blacksmith',blacksmithPanelHTML(state,forgeSelection),'THE REKINDLED FORGE');}
-function showAncientArmorer(){speed=0;ancientQuote=null;direwolfQuote=null;showModal('Armorer · Ancient restoration',armorerNavigationHTML('ancient')+ancientArmorerHTML(state,ancientSelection),'ANCIENT ARMORY');}
+function showAncientArmorer(){speed=0;ancientQuote=null;direwolfQuote=null;direwolfHelmetQuote=null;showModal('Armorer · Ancient restoration',armorerNavigationHTML('ancient')+ancientArmorerHTML(state,ancientSelection),'ANCIENT ARMORY');}
 function showDirewolfArmorer(autoSelect=false){
- speed=0;ancientQuote=null;direwolfQuote=null;
+ speed=0;ancientQuote=null;direwolfQuote=null;direwolfHelmetQuote=null;
  if(autoSelect)for(const [key,id]of [['hideIndex',DIREWOLF_HIDE],['mailIndex',DIREWOLF_MAIL]])if(state.inventory[direwolfSelection[key]]!==id){direwolfSelection[key]=state.inventory.map((copy,index)=>({copy,index})).filter(row=>row.copy===id).sort((a,b)=>state.inventoryCondition[a.index]-state.inventoryCondition[b.index]||a.index-b.index)[0]?.index??null;}
  showModal('Armorer · Direwolf fusion',armorerNavigationHTML('direwolf')+direwolfArmorerHTML(state,direwolfSelection),'MOONFANG WORKMANSHIP');
+}
+function showDirewolfHelmets(autoSelect=false){
+ speed=0;ancientQuote=null;direwolfQuote=null;direwolfHelmetQuote=null;
+ const recipe=direwolfHelmetRecipe(direwolfHelmetSelection.recipeId);if(!recipe)return;
+ if(autoSelect)direwolfHelmetSelection.indices=recipe.materialIds.map((id,i)=>state.inventory[direwolfHelmetSelection.indices[i]]===id?direwolfHelmetSelection.indices[i]:state.inventory.map((copy,index)=>({copy,index})).filter(row=>row.copy===id).sort((a,b)=>state.inventoryCondition[a.index]-state.inventoryCondition[b.index]||a.index-b.index)[0]?.index??null);
+ showModal('Armorer · Direwolf helmets',armorerNavigationHTML('helmets')+direwolfHelmetHTML(state,direwolfHelmetSelection),'THE DIREWOLF SET');
 }
 function maybeShowBlacksmithSummons(){if(unreadSave||state.battle||state.gameOver||document.hidden||$('#modal').open||state.legendaryBlacksmith?.announcement!=='pending')return;save();showModal('Odran’s summons',blacksmithSummonsHTML(state),'THE REKINDLED FORGE');blacksmithSummonsOpen=true;}
 function acknowledgeSummons(){if(state.legendaryBlacksmith?.announcement==='pending'){acknowledgeBlacksmithSummons(state);save();}blacksmithSummonsOpen=false;}
 $('#modal').addEventListener('close',()=>{if(blacksmithSummonsOpen)acknowledgeSummons();});
 document.addEventListener('click',event=>{
  const button=event.target.closest('button');if(!button||button.disabled)return;
+ if(button.dataset.direwolfHelmetRecipe){const recipeId=button.dataset.direwolfHelmetRecipe;if(!direwolfHelmetRecipe(recipeId))return;direwolfHelmetSelection={recipeId,indices:[]};showDirewolfHelmets(true);document.querySelector(`[data-direwolf-helmet-recipe="${recipeId}"]`)?.focus({preventScroll:true});return;}
  if(button.dataset.ancientDesign){const sourceId=button.dataset.ancientDesign,recipe=ancientRestorationRecipe(sourceId);if(!recipe)return;ancientSelection={sourceId,indices:state.inventory.map((id,index)=>({id,index})).filter(row=>row.id===sourceId).sort((a,b)=>state.inventoryCondition[a.index]-state.inventoryCondition[b.index]||a.index-b.index).slice(0,recipe.count).map(row=>row.index)};showAncientArmorer();document.querySelector(`[data-ancient-design="${sourceId}"]`)?.focus({preventScroll:true});return;}
  if(button.dataset.forgeSelect){const side=button.dataset.forgeSelect,index=Number(button.dataset.forgeIndex);forgeSelection[side]=index;if(side==='donor'&&(forgeSelection.recipient===index||item(state.inventory[forgeSelection.recipient])?.slot!==item(state.inventory[index])?.slot))forgeSelection.recipient=null;showBlacksmith();document.querySelector(`[data-forge-select="${side}"][data-forge-index="${index}"]`)?.focus({preventScroll:true});return;}
  if(button.dataset.blacksmithAccept){const r=acceptBlacksmithQuest(state,Number(button.dataset.blacksmithAccept));toast(r.message);save();render();showBlacksmith();return;}
  if(button.dataset.blacksmithTurnin){const r=turnInBlacksmithQuest(state,Number(button.dataset.blacksmithTurnin));toast(r.message);save();render();showBlacksmith();return;}
  if(button.dataset.blacksmithSite||button.dataset.blacksmithMarch){const id=button.dataset.blacksmithSite??button.dataset.blacksmithMarch,site=getBlacksmithQuestEncounters(state).find(e=>e.id===id);if(!site)return;acknowledgeSummons();$('#modal').close();tab='world';chosenCamp=id;chosenTown=null;if(button.dataset.blacksmithMarch){const r=activateMapTarget(state,'blacksmith',id);toast(r.message);if(state.battle){enterBattleView();return;}speed=state.destination?1:0;}save();render();focusMap(site);return;}
  switch(button.dataset.action){
+ case 'direwolf-helmets':showDirewolfHelmets(true);break;
+ case 'direwolf-helmet-confirm':{
+  direwolfHelmetQuote=getDirewolfHelmetQuote(state,direwolfHelmetSelection.recipeId,direwolfHelmetSelection.indices);
+  if(!direwolfHelmetQuote.ok||!direwolfHelmetQuote.affordable){toast(direwolfHelmetQuote.message||'Bring enough crowns for crafting.');showDirewolfHelmets();break;}
+  showModal('Confirm direwolf helmet crafting',direwolfHelmetConfirmationHTML(direwolfHelmetQuote,state),'THE DIREWOLF SET');break;
+ }
+ case 'direwolf-helmet-commit':{
+  if(unreadSave){toast('Recover or replace the unreadable save before crafting.');break;}
+  const next=structuredClone(state),r=craftDirewolfHelmet(next,direwolfHelmetQuote);
+  if(!r.ok){toast(r.message);showDirewolfHelmets();break;}
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(next));}catch{toast('Crafting was not applied: saving failed. Free device storage and retry.');break;}
+  state=next;saveProblem=false;direwolfHelmetQuote=null;direwolfHelmetSelection.indices=[];
+  toast(r.message);render();showModal('Direwolf headgear complete',direwolfHelmetResultHTML(r),'THE DIREWOLF SET');break;
+ }
  case 'direwolf-armorer':showDirewolfArmorer(true);break;
  case 'direwolf-confirm':{
   direwolfQuote=getDirewolfCraftQuote(state,direwolfSelection.hideIndex,direwolfSelection.mailIndex);
@@ -436,6 +461,7 @@ document.addEventListener('click',event=>{
  }
 });
 document.addEventListener('change',event=>{if(!event.target.matches('[data-forge-filter],[data-forge-search]'))return;forgeSelection[event.target.hasAttribute('data-forge-filter')?'filter':'search']=event.target.value;showBlacksmith();document.querySelector(event.target.hasAttribute('data-forge-filter')?'[data-forge-filter]':'[data-forge-search]')?.focus();});
+document.addEventListener('change',event=>{if(!event.target.matches('[data-direwolf-helmet-copy]'))return;const index=Number(event.target.dataset.direwolfHelmetCopy);if(!Number.isSafeInteger(index)||index<0||index>=direwolfHelmetRecipe(direwolfHelmetSelection.recipeId).materialIds.length)return;direwolfHelmetSelection.indices[index]=event.target.value===''?null:Number(event.target.value);showDirewolfHelmets();document.querySelector(`[data-direwolf-helmet-copy="${index}"]`)?.focus({preventScroll:true});});
 document.addEventListener('change',event=>{if(!event.target.matches('[data-direwolf-copy]'))return;const key=event.target.dataset.direwolfCopy;if(!['hideIndex','mailIndex'].includes(key))return;direwolfSelection[key]=event.target.value===''?null:Number(event.target.value);showDirewolfArmorer();document.querySelector(`[data-direwolf-copy="${key}"]`)?.focus({preventScroll:true});});
 document.addEventListener('change',event=>{if(!event.target.matches('[data-ancient-copy]'))return;const index=Number(event.target.dataset.ancientCopy);ancientSelection.indices=event.target.checked?[...new Set([...ancientSelection.indices,index])]:ancientSelection.indices.filter(i=>i!==index);showAncientArmorer();document.querySelector(`[data-ancient-copy="${index}"]`)?.focus({preventScroll:true});});
 async function prepareOffline(){const label=$('#offline-status');if(!('serviceWorker'in navigator)){label.textContent='Offline unavailable';return;}try{await navigator.serviceWorker.register('./sw.js');const reg=await navigator.serviceWorker.ready;const check=()=>{const ch=new MessageChannel();ch.port1.onmessage=e=>{label.textContent=e.data?.ready?'Offline ready':'Downloading offline files…';label.classList.toggle('ready',!!e.data?.ready);};(navigator.serviceWorker.controller||reg.active)?.postMessage({type:'CHECK_OFFLINE'},[ch.port2]);};check();navigator.serviceWorker.addEventListener('controllerchange',check);}catch{label.textContent='Open online to prepare';}}

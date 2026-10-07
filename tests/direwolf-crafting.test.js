@@ -20,9 +20,9 @@ function seedFor(named) {
 }
 test('the selected lightweight baseline and signature survive named and bounded forge identities', () => {
   const base = getItem(MOONFANG_ID);
-  assert.deepEqual([base.armor, base.fatigue, base.meleeMoraleDamage], [180, 13, 5]);
+  assert.deepEqual([base.armor, base.fatigue, base.meleeMoraleDamage], [195, 13, 5]);
   const named = getItem(createFamedItemId(MOONFANG_ID, 71, 7));
-  assert.ok(named.armor > 180); assert.ok(named.fatigue <= 13);
+  assert.ok(named.armor > 195); assert.ok(named.fatigue <= 13);
   const catalog = id => ITEMS.find(i => i.id === id);
   const forged = getItem(encodeBoundedForgeItem(MOONFANG_ID, extractForgeAffixes(named, catalog), catalog));
   assert.equal(forged.meleeMoraleDamage, 5); assert.equal(itemImage(forged), itemImage(base));
@@ -113,7 +113,7 @@ test('Moonfang intimidation applies to melee at zero durability, never doubles w
 test('the craft-only item stays out of normal stock and recipe copy describes every cost and outcome', () => {
   const s = createGame(21); materials(s); assert.equal(getMarket(s).equipment.find(row => row.itemId === MOONFANG_ID).stock, 0);
   const html = direwolfArmorerHTML(s, { hideIndex: 2, mailIndex: 0 });
-  for (const text of ['180 armor · 13 fatigue', 'Guaranteed crafting', '3%', '600 crowns', 'permanently consumed', 'does not stack']) assert.ok(html.toLowerCase().includes(text.toLowerCase()), text);
+  for (const text of ['195 armor · 13 fatigue', 'Guaranteed crafting', '3%', '600 crowns', 'permanently consumed', 'does not stack']) assert.ok(html.toLowerCase().includes(text.toLowerCase()), text);
   assert.match(direwolfConfirmationHTML(getDirewolfCraftQuote(s, 2, 0)), /stash copy 3/);
 });
 test('transparent icon and worn layers are packaged, aligned and available offline for ordinary/named armor', async () => {

@@ -174,7 +174,7 @@ export function getItemDetails(item, condition) {
     notes.push(`${skill.name}: ${skill.description}`);
   }
   if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
-  if (item.collection === 'crafted') notes.push('Crafted at a town Armorer from ordinary stash pieces. Named and reforged versions preserve the harness design and intrinsic intimidation; named bonuses apply above its crafted baseline.');
+  if (item.collection === 'crafted') notes.push('Crafted at a town Armorer from ordinary stash pieces. Named and reforged versions preserve the original crafted design and its intrinsic effects; named bonuses apply above its crafted baseline.');
   else if (item.collection) {
     notes.push('Ordinary protection and fatigue follow the pinned Battle Brothers definition. New named designs roll protection and weight against that source baseline. Existing legacy designs keep their saved bonuses; prices are adapted to the campaign economy.');
     notes.push('Cosmetic variants use a fixed source design. Original helmet vision penalties and scripted magical effects are not simulated.');

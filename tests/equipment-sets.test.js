@@ -136,7 +136,7 @@ test('snapshot validation rejects missing, altered, or inconsistent armor pools'
   const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===unit.id));
   assert.throws(()=>validateSave(broken),/battle set armor/);
  }
- const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=7;
+ const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=8;
  assert.throws(()=>validateSave(broken),/equipment set rules/);
 });
 
@@ -261,7 +261,7 @@ test('every curated, eastern, Adorned and Noble pairing fits',()=>{
   assert.equal(stats.maxBodyArmor,Math.floor(armor.armor*115/100));assert.equal(stats.maxHeadArmor,Math.floor(helmet.armor*115/100));
   assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:Math.round(armor.fatigue*.85),head:Math.round(helmet.fatigue*.9)});pairs++;
  }
- assert.equal(pairs,122);
+ assert.equal(pairs,131);
 });
 
 test('ordinary Southern and mixed Assassin gear no longer qualify; hints only show current sets',()=>{

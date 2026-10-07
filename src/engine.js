@@ -21,6 +21,7 @@ import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
 import { DLC_ITEMS } from './dlc-items.js';
+import { DIREWOLF_HELMET_ITEMS, direwolfHelmetRecipe } from './direwolf-helmets.js';
 import { MOONFANG_ITEM, MOONFANG_ID, MOONFANG_FEE, DIREWOLF_HIDE, DIREWOLF_MAIL, direwolfCraftRoll } from './direwolf-crafting.js';
 import { RESTORED_ANCIENT_ITEMS, ancientRestorationRecipe, restoredAncientId, ancientRestorationRolls } from './ancient-restoration.js';
 import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, worldCampText, regionalOutfit, enemyRoleBonuses, ancientCampAt, ancientEnemies } from './regional-enemies.js';
@@ -83,6 +84,7 @@ export const ITEMS = Object.freeze([
   ...DLC_ITEMS,
   ...RESTORED_ANCIENT_ITEMS,
   MOONFANG_ITEM,
+  ...DIREWOLF_HELMET_ITEMS,
   ...NAMED_WEAPONS,
 ]);
 
@@ -409,6 +411,34 @@ export function reforgeItem(state,quote){
 function direwolfCraftStamp(state) {
   return JSON.stringify([state.seed, state.direwolfCraftSerial ?? 0, state.inventory, state.inventoryCondition, state.gold, townAt(state)?.id, state.destination]);
 }
+export function getDirewolfHelmetQuote(state, recipeId, indices) {
+  const blocked = actionBlocked(state); if (blocked) return blocked;
+  const access = requireTown(state); if (access.error) return access.error;
+  if (state.destination) return result(false, 'Stop at the settlement to visit its Armorer.');
+  if ((state.direwolfCraftSerial ?? 0) >= 1000000) return result(false, 'The direwolf crafting record is full.');
+  const recipe = direwolfHelmetRecipe(recipeId);
+  if (!recipe || !Array.isArray(indices) || indices.length !== recipe.materialIds.length || new Set(indices).size !== indices.length || indices.some(index => !Number.isSafeInteger(index) || index < 0 || index >= state.inventory.length)) return result(false, 'Choose the exact stash pieces required by this helmet recipe.');
+  if (indices.some((index, i) => state.inventory[index] !== recipe.materialIds[i])) return result(false, 'Use the original recipe designs. Added named workmanship and reforged variants cannot be used as materials.');
+  if (!Array.isArray(state.inventoryCondition) || state.inventoryCondition.length !== state.inventory.length) return result(false, 'The stash condition record must be repaired before crafting.');
+  return { ok: true, recipeId, indices: [...indices], fee: recipe.fee, affordable: state.gold >= recipe.fee, item: getItem(recipe.itemId), stamp: JSON.stringify([recipeId, direwolfCraftStamp(state)]) };
+}
+export function craftDirewolfHelmet(state, quote) {
+  if (!quote?.ok) return result(false, 'Review a valid helmet recipe first.');
+  const fresh = getDirewolfHelmetQuote(state, quote.recipeId, quote.indices);
+  if (!fresh.ok) return fresh;
+  if (fresh.stamp !== quote.stamp) return result(false, 'The stash or helmet quote changed. Review it before consuming any pieces.');
+  if (!fresh.affordable) return result(false, `The Armorer requires ${fresh.fee} crowns.`);
+  const roll = direwolfCraftRoll(state.seed, state.direwolfCraftSerial ?? 0);
+  const itemId = roll.named ? createFamedItemId(fresh.item.id, roll.namedSeed, 7) : fresh.item.id;
+  const maximum = itemCondition(itemId), consumed = new Set(fresh.indices);
+  const inventory = state.inventory.filter((_, index) => !consumed.has(index));
+  const conditions = state.inventoryCondition.filter((_, index) => !consumed.has(index));
+  inventory.push(itemId); conditions.push(maximum);
+  state.inventory = inventory; state.inventoryCondition = conditions;
+  state.gold -= fresh.fee; state.direwolfCraftSerial = (state.direwolfCraftSerial ?? 0) + 1;
+  const message = `The Armorer crafts ${getItem(itemId).name}. ${fresh.indices.length} ${fresh.indices.length === 1 ? 'piece' : 'pieces'} and ${fresh.fee} crowns consumed.`;
+  record(state, message); return { ...result(true, message), itemId, named: roll.named };
+}
 export function getDirewolfCraftQuote(state, hideIndex, mailIndex) {
   const blocked = actionBlocked(state); if (blocked) return blocked;
   const access = requireTown(state); if (access.error) return access.error;
@@ -476,7 +506,7 @@ export function restoreAncientEquipment(state, quote) {
   return { ...result(true, message), crafted: Boolean(itemId), itemId, finish: outcome.finish, named: outcome.named, refund: itemId ? 0 : fresh.refund };
 }
 
-const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...RESTORED_ANCIENT_ITEMS.map(item => item.id), MOONFANG_ID, ...NAMED_WEAPONS.map(item => item.id)]);
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...RESTORED_ANCIENT_ITEMS.map(item => item.id), MOONFANG_ID, ...DIREWOLF_HELMET_ITEMS.map(item => item.id), ...NAMED_WEAPONS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));

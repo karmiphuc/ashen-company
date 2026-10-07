@@ -17,7 +17,7 @@ broken pieces qualify. Equipped, named, reforged and already crafted pieces do
 not. Crafting is guaranteed, creates one fully repaired harness, and has an
 independent **3% named chance** using existing version-7 affixes.
 
-The **180 armor / 13 fatigue** baseline follows the selected lighter Moonfang
+The **195 armor / 13 fatigue** baseline follows the selected lighter Moonfang
 direction. It improves on Direwolf Hide (100/9) and Direwolf Mail (140/13) while
 keeping a mobile fighter's distinct role below the heavier restored Ancient
 armor. Price is 1,090 (original pieces' values plus crafting fee); resale uses
@@ -31,6 +31,40 @@ actions do not trigger it, undead remain immune, and armor depletion does not
 remove the effect. Named and reforged harnesses retain it; transferring affixes
 to another base design does not transfer intrinsic intimidation. No area aura
 or new set bonus is introduced.
+
+## Direwolf helmets and set
+
+The existing **Wolf Helmet** is the mail piece: **178 armor / 5 fatigue / +4
+resolve**, with its original rare identity and artwork unchanged. Two new
+craft-only designs complete the family:
+
+| Piece | Armor / fatigue | Armorer recipe |
+| --- | ---: | --- |
+| Direwolf Leather Hood | 120 / 3 | One ordinary Direwolf Hide Armor + 300 crowns |
+| Direwolf Alpha Helm | 265 / 15 | One ordinary Leather Hood + original Wolf Helmet + 450 crowns |
+
+Alpha retains the Wolf Helmet's +4 resolve. Both recipes guarantee a fully
+repaired piece with a separate 3% named roll using the shared saved Direwolf
+craft sequence. Worn/broken originals qualify. Added named workmanship and
+reforged versions cannot be sacrificed; the original fixed rare Wolf Helmet is
+explicitly accepted for Alpha. Confirmation lists exact copies and fees.
+These costs are implementation defaults. The revised leather stats and reuse
+of the existing Wolf Helmet replace the earlier proposed 155/6 and 195/10
+helmet baselines.
+
+Any of Direwolf Hide, Direwolf Mail or Moonfang body armor pairs with any of the
+three helmets: **+15% body/head armor, −15% body fatigue, −10% helmet fatigue**,
+using the existing floor-for-armor and round-for-fatigue rules. Thus a full
+ordinary Moonfang + Alpha pair fits at **224 body / 304 head armor** with
+**11 body / 14 head fatigue**. Named and reforged designs retain membership;
+transferred affixes cannot grant membership to another design. A single set
+bonus applies. Equipment-set rules version 7 adds this family; version-6 and
+older active battles retain their original snapshots until they end.
+
+New helmet icons are 140×180; worn layers are 74×110 at left14/top−26, with
+open face apertures and beard/hair handling suited to hooded headgear. The
+source manifest records masters, packaged hashes and references. The unused
+new mail-helmet concept is not shipped: existing Wolf Helmet sprites are used.
 
 ## Transaction and save behavior
 

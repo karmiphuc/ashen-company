@@ -24,6 +24,14 @@ The revised before/after comparison is
 `/workspace/ashen-armory-study/moonfang-head-comparison.png`; it covers uncovered
 heads, open/closed helmets, and named portraits at 64px and 80px.
 
+Helmet expansion: inspected `/workspace/ashen-armory-study/direwolf-helmets-worn.png`
+and `/workspace/ashen-armory-study/direwolf-alpha-workbench.png`. Leather Hood
+and Alpha have prominent crowns, clear face apertures, different leather/mail
+construction and readable silhouettes at 80px roster size. The existing Wolf
+Helmet uses its unchanged original artwork and stats. Four browser scenarios
+cover both recipes, ordinary/named output, desktop/tablet/mobile, cancellation,
+inspection return, reload and storage failure/retry. Moonfang is now195/13.
+
 No unresolved P0/P1/P2 findings. Physical-device Safari remains untested.
 
 final result: passed

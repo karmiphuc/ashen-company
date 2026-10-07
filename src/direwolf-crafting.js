@@ -4,9 +4,9 @@ export const MOONFANG_ID = 'direwolf-moonfang-harness';
 export const MOONFANG_FEE = 600;
 export const MOONFANG_ITEM = Object.freeze({
   id: MOONFANG_ID, name: 'Direwolf Moonfang Harness', slot: 'armor', visual: MOONFANG_ID,
-  armor: 180, fatigue: 13, price: 1090, craftOnly: true, collection: 'crafted', sourceKind: 'crafted', meleeMoraleDamage: 5,
+  armor: 195, fatigue: 13, price: 1090, craftOnly: true, collection: 'crafted', sourceKind: 'crafted', meleeMoraleDamage: 5,
   description: 'An ash-tipped direwolf mantle falls across layered dark hide and close-woven steel mail. A silver crescent clasps the pelt; the snarling head marks a hard-won trophy.',
-  role: 'Mobile frontline armor: 180 body protection for 13 fatigue, with the direwolf’s intimidating presence.',
+  role: 'Mobile frontline armor: 195 body protection for 13 fatigue, with the direwolf’s intimidating presence.',
   intrinsicDescription: 'Successful melee hits inflict +5 morale damage before resolve resistance. No effect on shots or undead. Intimidation does not stack with Direwolf Fur and remains active when armor is depleted.',
 });
 export const MOONFANG_ART = Object.freeze({
