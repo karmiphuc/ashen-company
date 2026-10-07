@@ -7,6 +7,7 @@ import {equipmentSetHTML} from '../src/campaign-ui.js';
 import {getItemDetails} from '../src/item-details.js';
 import {applySimultaneousSnapshot} from '../src/simultaneous-runner.js';
 import {setSimultaneousBetaEnabled} from '../src/combat-config.js';
+import {equipmentRangedReach} from '../src/item-affixes.js';
 
 function outfit({body='bb-assassin-robe',head='bb-assassin-face-mask',bodyCondition,headCondition}={}){
  const state=createGame(51),person=state.party[0];
@@ -230,4 +231,20 @@ test('boosted named armor maxima cannot be mistaken for legacy imported armor va
  const legacy=Math.min(500,original.sourceArmor+Math.max(8,Math.round(original.sourceArmor*(.15+(75&15)/100))));
  assert.equal(unit.maxBodyArmor,legacy);assert.notEqual(unit.maxBodyArmor,getItem(body).armor);
  assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))),state);
+});
+
+test('cultural fitting crosses actual light-gear thresholds before Nimble, Agile Defense and ranged-reach checks',()=>{
+ const helm=encodeBoundedForgeItem('bb-ancient-laurels',{locked:false,foundation:{rangedRange:1},prefixes:[],suffixes:[]},id=>ITEMS.find(i=>i.id===id));
+ for(const gear of [{body:'bb-ancient-double-layer-mail',head:helm},{body:'bb-animal-hide-armor',head:'northern-bear-head'}]){
+  const {person,unit}=fight(gear);person.perks=['nimble','agile-defense'];
+  assert.equal(getItem(gear.body).fatigue+getItem(gear.head).fatigue,16);
+  const load=effectiveArmorFatigue(person,getItem);assert.ok(load.body+load.head<=15);
+  const plain=structuredClone(person);plain.perks=[];
+  assert.equal(getCompanyStats(person).meleeDefense,getCompanyStats(plain).meleeDefense+5);
+  assert.equal(getAgileDefenseMultiplier(person),.4);
+  unit.perks=['agile-defense'];assert.equal(getAgileDefenseMultiplier(unit),.4);
+  if(gear.head===helm)assert.equal(equipmentRangedReach(unit,getItem),1);
+  delete unit.setArmor;assert.ok(getAgileDefenseMultiplier(unit)>.4);
+  if(gear.head===helm)assert.equal(equipmentRangedReach(unit,getItem),0);
+ }
 });
