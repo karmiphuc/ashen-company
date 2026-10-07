@@ -21,6 +21,7 @@ import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
 import { DLC_ITEMS } from './dlc-items.js';
+import { RESTORED_ANCIENT_ITEMS, ancientRestorationRecipe, restoredAncientId, ancientRestorationRolls } from './ancient-restoration.js';
 import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, worldCampText, regionalOutfit, enemyRoleBonuses, ancientCampAt, ancientEnemies } from './regional-enemies.js';
 import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad, WORLD_LAYOUT_VERSION, compactPoint, authoredPoint } from './geography.js';
 import { FRONTIER_ITEMS } from './frontier-items.js';
@@ -79,6 +80,7 @@ export const ITEMS = Object.freeze([
   ...MOUNTS,
   ...FRONTIER_ITEMS,
   ...DLC_ITEMS,
+  ...RESTORED_ANCIENT_ITEMS,
   ...NAMED_WEAPONS,
 ]);
 
@@ -402,7 +404,45 @@ export function reforgeItem(state,quote){
  record(state,message.slice(0,470));return {...result(true,message),itemId:fresh.resultId,added};
 }
 
-const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...NAMED_WEAPONS.map(item => item.id)]);
+function ancientRestorationStamp(state) {
+  return JSON.stringify([state.seed, state.ancientRestorationSerial ?? 0, state.inventory, state.inventoryCondition, state.gold, townAt(state)?.id, state.destination]);
+}
+export function getAncientRestorationQuote(state, indices) {
+  const blocked = actionBlocked(state); if (blocked) return blocked;
+  const access = requireTown(state); if (access.error) return access.error;
+  if (state.destination) return result(false, 'Stop at the settlement to visit its Armorer.');
+  if ((state.ancientRestorationSerial ?? 0) >= 1000000) return result(false, 'The restoration record is full.');
+  if (!Array.isArray(indices) || !indices.length || indices.some(index => !Number.isSafeInteger(index) || index < 0 || index >= state.inventory.length) || new Set(indices).size !== indices.length) return result(false, 'Choose distinct ancient pieces from the stash.');
+  const sourceId = state.inventory[indices[0]], recipe = ancientRestorationRecipe(sourceId);
+  if (!recipe || indices.length !== recipe.count || indices.some(index => state.inventory[index] !== sourceId)) return result(false, 'Use three matching ancient body pieces or two matching ancient helmets. Named, restored and reforged gear cannot be used as materials.');
+  if (!Array.isArray(state.inventoryCondition) || state.inventoryCondition.length !== state.inventory.length) return result(false, 'The stash condition record must be repaired before crafting.');
+  return { ok: true, source: getItem(sourceId), indices: [...indices].sort((a, b) => a - b), ...recipe,
+    bronze: getItem(restoredAncientId(sourceId, 'bronze')), steel: getItem(restoredAncientId(sourceId, 'steel')),
+    refund: recipe.fee / 2, affordable: state.gold >= recipe.fee, stamp: ancientRestorationStamp(state) };
+}
+export function restoreAncientEquipment(state, quote) {
+  if (!quote?.ok) return result(false, 'Review a valid restoration recipe first.');
+  const fresh = getAncientRestorationQuote(state, quote.indices);
+  if (!fresh.ok) return fresh;
+  if (fresh.stamp !== quote.stamp || fresh.sourceId !== quote.sourceId) return result(false, 'The stash or restoration quote changed. Review it before consuming any pieces.');
+  if (!fresh.affordable) return result(false, `The Armorer requires ${fresh.fee} crowns.`);
+  const outcome = ancientRestorationRolls(state.seed, state.ancientRestorationSerial ?? 0);
+  const baseId = outcome.finish ? restoredAncientId(fresh.sourceId, outcome.finish) : null;
+  const itemId = baseId ? outcome.named ? createFamedItemId(baseId, outcome.namedSeed, 7) : baseId : null;
+  // Build every result before applying the single inventory/currency transaction.
+  const consumed = new Set(fresh.indices);
+  const inventory = state.inventory.filter((_, index) => !consumed.has(index));
+  const conditions = state.inventoryCondition.filter((_, index) => !consumed.has(index));
+  if (itemId) { inventory.push(itemId); conditions.push(itemCondition(itemId)); }
+  state.inventory = inventory; state.inventoryCondition = conditions;
+  state.gold -= fresh.fee - (itemId ? 0 : fresh.refund);
+  state.ancientRestorationSerial = (state.ancientRestorationSerial ?? 0) + 1;
+  const message = itemId ? `The Armorer restores ${getItem(itemId).name}${outcome.named ? ' with named workmanship' : ''}. ${fresh.count} pieces and ${fresh.fee} crowns consumed.` : `Restoration fails. ${fresh.count} pieces consumed; ${fresh.refund} crowns refunded.`;
+  record(state, message);
+  return { ...result(true, message), crafted: Boolean(itemId), itemId, finish: outcome.finish, named: outcome.named, refund: itemId ? 0 : fresh.refund };
+}
+
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...RESTORED_ANCIENT_ITEMS.map(item => item.id), ...NAMED_WEAPONS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
@@ -840,6 +880,7 @@ export function createGame(seed = Date.now()) {
   const numericSeed = hashSeed(seed);
   const state = {
     version: 1,
+    ancientRestorationSerial: 0,
     ashenWinter: initialAshenWinter(numericSeed),
     worldLayoutVersion: WORLD_LAYOUT_VERSION,
     seed: numericSeed,
@@ -1113,7 +1154,7 @@ function rotatedItems(items, state, town, cycle, label) {
 function defaultArmoryStock(state, town, cycle = armoryCycle(state.day)) {
   const equipment = Object.fromEntries(ITEMS.map(item => [item.id, 0]));
   const facilities = townFacilities(state.seed,town), budget=townArmoryBudget(state.seed,town);
-  const gear = ITEMS.filter(item=>item.slot!=='mount'&&!['named','famed'].includes(item.rarity)&&townDesign(item,town)&&(!item.marketChance||townEventHash(`${state.seed}:${town.id}:${cycle}:rare-attachment:${item.id}`)%100<item.marketChance*100));
+  const gear = ITEMS.filter(item=>!item.craftOnly&&item.slot!=='mount'&&!['named','famed'].includes(item.rarity)&&townDesign(item,town)&&(!item.marketChance||townEventHash(`${state.seed}:${town.id}:${cycle}:rare-attachment:${item.id}`)%100<item.marketChance*100));
   const selected=[];
   for(const slot of ['armor','helmet','weapon','shield','attachment','accessory']) {
     const specialist=facilities.some(f=>f.id===(['armor','helmet','attachment'].includes(slot)?'armorsmith':'blacksmith'));
@@ -1181,7 +1222,7 @@ function dailyMarketStock(state, town) {
 }
 
 function addShipmentStock(equipment, state, town, event, cycle) {
-  const candidates = ITEMS.filter(item => item.slot !== 'mount' && item.rarity !== 'named' && item.price >= 250 && equipment[item.id] === 0 && townDesign(item,town));
+  const candidates = ITEMS.filter(item => !item.craftOnly && item.slot !== 'mount' && item.rarity !== 'named' && item.price >= 250 && equipment[item.id] === 0 && townDesign(item,town));
   const count = SETTLEMENT_TYPES[town.kind].shipments + Number(Boolean(town.major));
   for (const item of rotatedItems(candidates, state, town, cycle, event.id).slice(0, count)) {
     if (townEventHash(`${state.seed}:${town.id}:${event.id}:shipment:${item.id}`) % 2 === 0) equipment[item.id] += 1;
@@ -1793,7 +1834,7 @@ function completeContract(state, town, contract) {
     const event = scheduledTownEvent(state, town);
     const candidates = ITEMS.filter(item => {
       const rightTier = better ? item.price >= 250 && item.price < 450 : item.price < 250;
-      return item.slot !== 'mount' && rightTier && stock.equipment[item.id] < 1024 && visibleEquipmentStock(state, town, item, stock.equipment[item.id] + 1, event) > 0;
+      return !item.craftOnly && item.slot !== 'mount' && rightTier && stock.equipment[item.id] < 1024 && visibleEquipmentStock(state, town, item, stock.equipment[item.id] + 1, event) > 0;
     });
     if (candidates.length) {
       const item = candidates[townEventHash(`${state.seed}:${contract.id}:${town.id}:courier-choice`) % candidates.length];
@@ -6378,6 +6419,7 @@ function validateBattle(input, party, worldState) {
 
 export function validateSave(input) {
   assert(input && typeof input === 'object' && !Array.isArray(input), 'expected an object');
+  assert(input.ancientRestorationSerial === undefined || validCount(input.ancientRestorationSerial) && input.ancientRestorationSerial <= 1000000, 'ancient restoration serial');
   const ashenWinter = validateAshenWinter(input.ashenWinter, input.seed, SETTLEMENTS);
   input = { ...input, ashenWinter };
   for (const encounter of getUndeadEncounters(input)) for (const enemy of encounter.enemies) {
@@ -6767,6 +6809,7 @@ export function validateSave(input) {
   return {
     ...(input.worldExploration===undefined?{}:{worldExploration:input.worldExploration}),
     version: 1, seed: input.seed, day: input.day, hour: input.hour,
+    ...(input.ancientRestorationSerial === undefined ? {} : { ancientRestorationSerial: input.ancientRestorationSerial }),
     ...(legendaryBlacksmith===undefined?{}:{legendaryBlacksmith}),
     ashenWinter,
     gold: input.gold, food: input.food, renown: input.renown,

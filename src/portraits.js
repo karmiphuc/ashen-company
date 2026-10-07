@@ -3,6 +3,7 @@
 import { DLC_ITEMS } from './dlc-items.js';
 import { NAMED_WEAPON_ART } from './named-weapon-art.js';
 import { DLC_ART } from './dlc-art.js';
+import { ANCIENT_RESTORATION_ART } from './ancient-restoration-art.js';
 import { FANTASY_ARMOR_VISUALS, FANTASY_HELMET_VISUALS, FANTASY_ITEM_IMAGES, FANTASY_APPEARANCES, FANTASY_CLOSED_HELMETS, FANTASY_HIDDEN_HEADS } from './fantasy-art.js';
 
 const PORTRAIT_ROOT = 'assets/portraits/';
@@ -522,6 +523,10 @@ function visual(item) {
   return String(item?.visual || '').toLowerCase();
 }
 
+function ancientRestoredArt(item) {
+  return ANCIENT_RESTORATION_ART[item?.restorationSourceId]?.[item?.restorationFinish];
+}
+
 function layerSpec(category, item) {
   const named=NAMED_WEAPON_ART[item?.baseId||item?.id];
   if(category==='weapon'&&named){
@@ -538,7 +543,7 @@ function layerSpec(category, item) {
     const handY=heavy?Math.min(100,115-bottom):rangedPose?105:111;
     return [named.portrait,(heavy?78:rangedPose?70:82)-gx,handY-gy,`scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`,`${gx}px ${gy}px`];
   }
-  const source = DLC_ART[item?.baseId || item?.id || visual(item)];
+  const source = ancientRestoredArt(item) || DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];
   const id = String(item?.baseId || item?.id || '').toLowerCase();
@@ -555,7 +560,7 @@ function layer(name, spec, item) {
   const transformStyle = transform ? `${weaponStyle}transform:${transform};transform-origin:${origin};` : '';
   const famed = ['famed','named'].includes(item?.rarity) ? ' bb-layer-famed' : '';
   const zIndex = { armor: 1, ear: 4, helmet: 5, shield: 6, weapon: 7 }[name] ?? 0;
-  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none;z-index:${zIndex}">`;
+  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${/^(data:|\.\/)/.test(file) ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none;z-index:${zIndex}">`;
 }
 
 function bodyLayer(file, armored, left = 11, top = 50) {
@@ -642,7 +647,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount, equipment.weapon);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
-  const dlcHelmet = DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
+  const dlcHelmet = ancientRestoredArt(equipment.helmet) || DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
   const hiddenHead = FANTASY_HIDDEN_HEADS.includes(helmetVisual) || dlcHelmet?.hideHead;
   const closedHelmet = dlcHelmet?.hideBeard || helmetVisual === 'greathelm' || helmetVisual === 'full-helm' || FANTASY_CLOSED_HELMETS.includes(helmetVisual);
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
@@ -676,6 +681,8 @@ export const portraitSVG = portraitHTML;
 
 /** Return the locally packaged inventory icon for an engine item. */
 export function itemImage(item) {
+  const restored = ancientRestoredArt(item);
+  if (restored) return restored.icon;
   const id = item?.baseId || item?.id;
   if(NAMED_WEAPON_ART[id])return NAMED_WEAPON_ART[id].icon;
   if (DLC_ART[id]) return DLC_ART[id].icon;
