@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ITEMS,createGame,getItem,createFamedItemId,getCompanyStats,getCampSites,startBattle,advanceBattle,resolveBattle,retreatBattle,finishBattle,validateSave,equipItem,unequipItem,getAgileDefenseMultiplier} from '../src/engine.js';
 import {encodeBoundedForgeItem} from '../src/reforged-items.js';
-import {EQUIPMENT_SETS,equipmentSetStatus,equipmentSetForItem,equipmentSetBonusText,effectiveArmorFatigue,createSetArmorSnapshot,baseArmorCondition,validSetArmorSnapshot} from '../src/equipment-sets.js';
+import {EQUIPMENT_SETS,equipmentSetStatus,equipmentSetForItem,equipmentSetsForItem,equipmentSetBonusText,effectiveArmorFatigue,createSetArmorSnapshot,baseArmorCondition,validSetArmorSnapshot} from '../src/equipment-sets.js';
 import {equipmentSetHTML} from '../src/campaign-ui.js';
 import {getItemDetails} from '../src/item-details.js';
 import {applySimultaneousSnapshot} from '../src/simultaneous-runner.js';
@@ -136,7 +136,7 @@ test('snapshot validation rejects missing, altered, or inconsistent armor pools'
   const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===unit.id));
   assert.throws(()=>validateSave(broken),/battle set armor/);
  }
- const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=3;
+ const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=4;
  assert.throws(()=>validateSave(broken),/equipment set rules/);
 });
 
@@ -246,5 +246,60 @@ test('cultural fitting crosses actual light-gear thresholds before Nimble, Agile
   if(gear.head===helm)assert.equal(equipmentRangedReach(unit,getItem),1);
   delete unit.setArmor;assert.ok(getAgileDefenseMultiplier(unit)>.4);
   if(gear.head===helm)assert.equal(equipmentRangedReach(unit,getItem),0);
+ }
+});
+
+test('every Southern and Noble pairing fits, while a full Assassin pair keeps its specialist identity',()=>{
+ const person=createGame(51).party[0];let pairs=0;
+ for(const set of EQUIPMENT_SETS.filter(s=>s.since===3))for(const body of set.armorIds)for(const head of set.helmetIds){
+  const armor=getItem(body),helmet=getItem(head);assert.ok(armor,body);assert.ok(helmet,head);
+  Object.assign(person.equipment,{armor:body,helmet:head});Object.assign(person.armorDurability,{body:armor.armor,head:helmet.armor});
+  const status=equipmentSetStatus(person,getItem),stats=getCompanyStats(person);
+  assert.equal(status.active,true,`${body} + ${head}`);
+  const specialist=body==='bb-assassin-robe'&&['bb-assassin-face-mask','bb-assassin-head-wrap'].includes(head);
+  assert.equal(status.set.id,specialist?'assassin':set.id);
+  assert.equal(stats.maxBodyArmor,Math.floor(armor.armor*115/100));assert.equal(stats.maxHeadArmor,Math.floor(helmet.armor*115/100));
+  assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:Math.round(armor.fatigue*.85),head:Math.round(helmet.fatigue*.9)});pairs++;
+ }
+ assert.equal(pairs,662);
+});
+
+test('partial Assassin membership cannot hide a complete Southern pair, and item hints explain both',()=>{
+ for(const gear of [{body:'bb-assassin-robe',head:'southern-helmet'},{body:'nomad-robe',head:'bb-assassin-face-mask'}]){
+  const {person,state,unit}=fight(gear);assert.equal(equipmentSetStatus(person,getItem).set.id,'southern');
+  assert.equal(unit.setArmor.id,'southern');assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))),state);
+  assert.match(equipmentSetHTML(person),/Southern 2\/2/);
+ }
+ assert.deepEqual(equipmentSetsForItem(getItem('bb-assassin-robe')).map(s=>s.id),['assassin','southern']);
+ const notes=getItemDetails(getItem('bb-assassin-face-mask')).notes.join(' ');
+ assert.match(notes,/Assassin set piece/);assert.match(notes,/Southern set piece/);
+});
+
+test('Southern and Noble named/reforged pieces retain raw wear and family guidance',()=>{
+ for(const [base,head,family]of [['bb-southern-mail-shirt','nomad-head-wrap','southern'],['noble-tabard','bb-heraldic-mail-helmet','noble']]){
+  for(const body of [createFamedItemId(base,92,5),encodeBoundedForgeItem(base,{locked:false,foundation:{armorPct:20},prefixes:[],suffixes:[]},id=>ITEMS.find(i=>i.id===id))]){
+   const {state,person,unit}=fight({body,head,bodyCondition:30,headCondition:20});assert.equal(unit.setArmor.id,family);
+   unit.bodyArmor-=3;unit.headArmor-=2;const worn={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
+   const loaded=validateSave(JSON.parse(JSON.stringify(state)));leave(loaded);
+   assert.deepEqual([loaded.party[0].armorDurability.body,loaded.party[0].armorDurability.head],[worn.body,worn.head]);
+   assert.ok(getItemDetails(getItem(body)).notes.some(n=>n.includes(equipmentSetStatus(person,getItem).set.name+' set piece')));
+  }
+ }
+ for(const gear of [{body:'southern-mail',head:'full-helm'},{body:'noble-mail',head:'southern-helmet'}])assert.equal(equipmentSetStatus(outfit(gear).person,getItem).active,false);
+});
+
+test('version-two battles retain old families without enabling Southern or Noble fitting on reload',()=>{
+ for(const gear of [{body:'bb-assassin-robe',head:'southern-helmet'},{body:'noble-tabard',head:'full-helm'},{body:'northern-rusty-mail',head:'northern-skull-helm'}]){
+  const {state,person}=fight(gear);state.battle.equipmentSetRulesVersion=2;
+  for(const unit of state.battle.units){if(!['southern','noble'].includes(unit.setArmor?.id))continue;
+   const load=effectiveArmorFatigue(unit,getItem),saving=getItem(unit.equipment.armor).fatigue+getItem(unit.equipment.helmet).fatigue-load.body-load.head;
+   unit.maxFatigue-=saving;unit.initiative-=saving;
+   unit.bodyArmor=unit.setArmor.body.baseCurrent;unit.maxBodyArmor=unit.setArmor.body.baseMax;
+   unit.headArmor=unit.setArmor.head.baseCurrent;unit.maxHeadArmor=unit.setArmor.head.baseMax;delete unit.setArmor;
+  }
+  const loaded=validateSave(JSON.parse(JSON.stringify(state))),unit=loaded.battle.units.find(u=>u.id===person.id);
+  assert.equal(unit.setArmor?.id??null,gear.body.startsWith('northern')?'northern':null);
+  if(!unit.setArmor){assert.equal(equipmentSetStatus(unit,getItem).active,false);assert.deepEqual(effectiveArmorFatigue(unit,getItem),{body:getItem(gear.body).fatigue,head:getItem(gear.head).fatigue});}
+  leave(loaded);
  }
 });

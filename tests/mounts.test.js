@@ -1,5 +1,6 @@
 import { enemyRoleBonuses } from '../src/regional-enemies.js';
 import test from 'node:test';
+import { effectiveArmorFatigue } from '../src/equipment-sets.js';
 import assert from 'node:assert/strict';
 import {
   ITEMS, SETTLEMENTS, createGame, getItem, getMarket, buyItem, sellItem, equipItem, unequipItem,
@@ -172,7 +173,9 @@ test('rare mounted elites are visible while scouting and keep their mount in bat
   const elite = state.battle.units.find(unit => unit.id === 'enemy-1');
   assert.equal(elite.equipment.mount, band.enemies[0].mount);
   assert.ok(mountIds.includes(elite.equipment.mount));
-  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + getItem(elite.equipment.mount).initiativeBonus + enemyRoleBonuses(band.enemies[0],band.difficulty).initiative + (elite.champion?8:0));
+  const fitted=effectiveArmorFatigue(elite,getItem);
+  const setSaving=(getItem(elite.equipment.armor)?.fatigue??0)+(getItem(elite.equipment.helmet)?.fatigue??0)-fitted.body-fitted.head;
+  assert.equal(elite.initiative, 75 + band.difficulty * 6 + (band.veteranRank ?? 0) * 3 + getItem(elite.equipment.mount).initiativeBonus + enemyRoleBonuses(band.enemies[0],band.difficulty).initiative + (elite.champion?8:0) + setSaving);
   assert.deepEqual(validateSave(state), state);
 });
 

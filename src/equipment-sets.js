@@ -1,7 +1,10 @@
 import { DLC_ITEMS } from './dlc-items.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
+import { ADDITIONAL_ITEMS } from './additional-items.js';
 // Set membership belongs to the original item design, never to transferred affixes.
-const armorDesigns=[...DLC_ITEMS,...NORTHERN_ITEMS].filter(i=>['armor','helmet'].includes(i.slot));
+const armorDesigns=[...DLC_ITEMS,...NORTHERN_ITEMS,...ADDITIONAL_ITEMS].filter(i=>['armor','helmet'].includes(i.slot));
+export const EQUIPMENT_SET_RULES_VERSION=3;
+export const isEquipmentSetRulesVersion=version=>Number.isInteger(version)&&version>=1&&version<=EQUIPMENT_SET_RULES_VERSION;
 const family=(id,name,since,pairing,items)=>Object.freeze({id,name,since,pairing,armorIds:Object.freeze(items.filter(i=>i.slot==='armor').map(i=>i.id)),helmetIds:Object.freeze(items.filter(i=>i.slot==='helmet').map(i=>i.id)),armorPct:15,bodyFatiguePct:15,headFatiguePct:10});
 export const EQUIPMENT_SETS=Object.freeze([
  family('assassin','Assassin',1,'Wear Assassin’s Robe with Assassin’s Face Mask or Assassin’s Head Wrap.',armorDesigns.filter(i=>['bb-assassin-robe','bb-assassin-face-mask','bb-assassin-head-wrap'].includes(i.id))),
@@ -10,13 +13,20 @@ export const EQUIPMENT_SETS=Object.freeze([
   ...armorDesigns.filter(i=>i.id.startsWith('northern-')||i.collection==='warriors-of-the-north'&&!i.id.includes('cultist')||/^bb-(?:named-)?nordic-/.test(i.id)),
   {id:'barbarian-helmet',slot:'helmet'},
  ]),
+ family('southern','Southern',3,'Wear any southern body armor with any southern helmet or head wrap. Assassin pieces also match Southern gear.',armorDesigns.filter(i=>i.collection==='blazing-deserts'||['leather-lamellar','nomad-robe','southern-mail','nomad-head-wrap','southern-helmet','southern-turban'].includes(i.id))),
+ family('noble','Noble',3,'Wear noble or heraldic body gear with noble, heraldic, or knightly headgear.',[
+  ...armorDesigns.filter(i=>/^bb-(?:named-)?(?:noble|heraldic)-/.test(i.id)||['noble-mail','noble-tabard','sallet','full-helm','bb-full-helm','bb-adorned-full-helm','bb-bascinet-with-mail','bb-sallet-green-helmet','bb-sallet-helmet'].includes(i.id)),
+  {id:'bascinet',slot:'helmet'},
+ ]),
 ]);
 export function equipmentSetBonusText(set){return `${set.name} set: +${set.armorPct}% head/body armor; −${set.headFatiguePct}% helmet fatigue, −${set.bodyFatiguePct}% body fatigue`;}
 const designId=item=>item?.baseId??item?.id;
-export function equipmentSetForItem(item){return EQUIPMENT_SETS.find(s=>[...s.armorIds,...s.helmetIds].includes(designId(item)))??null;}
-export function equipmentSetStatus(actor,getItem,rulesVersion=2){
+export function equipmentSetsForItem(item){return EQUIPMENT_SETS.filter(s=>[...s.armorIds,...s.helmetIds].includes(designId(item)));}
+export function equipmentSetForItem(item){return equipmentSetsForItem(item)[0]??null;}
+export function equipmentSetStatus(actor,getItem,rulesVersion=EQUIPMENT_SET_RULES_VERSION){
  const armor=designId(getItem(actor.equipment?.armor)),helmet=designId(getItem(actor.equipment?.helmet));
- const set=EQUIPMENT_SETS.find(s=>s.since<=rulesVersion&&(s.armorIds.includes(armor)||s.helmetIds.includes(helmet)));if(!set)return null;
+ // Prefer a complete pair over a partial specialist match. Apply one bonus only.
+ const set=EQUIPMENT_SETS.find(s=>s.since<=rulesVersion&&s.armorIds.includes(armor)&&s.helmetIds.includes(helmet))??EQUIPMENT_SETS.find(s=>s.since<=rulesVersion&&(s.armorIds.includes(armor)||s.helmetIds.includes(helmet)));if(!set)return null;
  const body=set.armorIds.includes(armor),head=set.helmetIds.includes(helmet);
  return {set,count:Number(body)+Number(head),active:body&&head&&(!actor.side||actor.setArmor?.id===set.id),body,head};
 }
@@ -26,7 +36,7 @@ export function effectiveArmorFatigue(actor,getItem){
  // Match named-gear fatigue rounding. Never produce negative loads.
  return {body:set?Math.max(0,Math.round(body*(100-set.bodyFatiguePct)/100)):body,head:set?Math.max(0,Math.round(head*(100-set.headFatiguePct)/100)):head};
 }
-export function createSetArmorSnapshot(actor,getItem,condition={},rulesVersion=2){
+export function createSetArmorSnapshot(actor,getItem,condition={},rulesVersion=EQUIPMENT_SET_RULES_VERSION){
  // Battle initialization supplies the raw worn condition before it gains protection.
  const status=equipmentSetStatus({equipment:actor.equipment},getItem,rulesVersion);if(!status?.active)return null;
  const pool=(slot,key)=>{
@@ -43,7 +53,7 @@ export function baseArmorCondition(unit,key){
  const damage=Math.max(0,pool.initial-current);
  return Math.max(0,pool.baseCurrent-(pool.effectiveMax?Math.ceil(damage*pool.baseMax/pool.effectiveMax):0));
 }
-export function validSetArmorSnapshot(unit,getItem,rulesVersion=2){
+export function validSetArmorSnapshot(unit,getItem,rulesVersion=EQUIPMENT_SET_RULES_VERSION){
  const a=unit.setArmor;if(!a||Object.keys(a).sort().join(',')!=='body,head,id')return false;
  for(const key of ['body','head']){
   const p=a[key];if(!p||Object.keys(p).sort().join(',')!=='baseCurrent,baseMax,effectiveMax,initial'||Object.values(p).some(n=>!Number.isSafeInteger(n)||n<0)||p.baseCurrent>p.baseMax||unit[key==='body'?'bodyArmor':'headArmor']>p.initial)return false;

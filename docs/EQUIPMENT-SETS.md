@@ -19,6 +19,18 @@ bonuses. Ancient and northern pieces do not match across families. Cultist gear
 shares an expansion with barbarian gear but has a separate style; decayed
 mercenary armor is not ancient legionary gear. Neither belongs to these families.
 
+Southern gear mixes freely across the desert catalog and original southern and
+nomad equipment (22 body designs and 26 head designs). Assassin pieces also
+belong to Southern: a partial Assassin pair with a Southern companion activates
+Southern, while a full Assassin pair keeps its specialist identity. A complete
+pair takes priority over an incomplete family; bonuses apply once, never stack.
+
+Noble gear pairs noble/heraldic body clothing (including authored named noble
+mail) with noble/heraldic headgear and knightly full helms, bascinets and sallets.
+Its nine body designs and ten head designs are interchangeable within Noble.
+Plain mercenary body armor, decayed gear and culturally unrelated headgear do
+not qualify. Both new families use the same percentages and compact chain hint.
+
 Stored item condition always stays in base-armor units. New battles record an
 immutable starting condition and boosted armor pool. Only damage taken is
 converted back to base wear, rounding wear up. Entering, retreating, or changing
@@ -26,8 +38,9 @@ the pair cannot repair gear. Loot and surviving enemies also retain base wear.
 Broken pieces still count as worn, grant no protection, and retain their weight.
 
 Battle `equipmentSetRulesVersion: 1` opts into Assassin snapshots only; version 2
-also enables the cultural families. Existing active battles without a version,
-or with version 1, retain their original protection and fatigue rules. Newly
+also enables Ancient and Northern, and version 3 adds Southern and Noble.
+Existing active battles without a version, or with versions 1 or 2, retain their
+original protection and fatigue rules. Newly
 enabled sets become effective in the next battle. Save validation verifies each
 snapshot against its original item design, rule version and starting condition.
 
