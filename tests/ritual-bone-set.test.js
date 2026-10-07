@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ITEMS,createGame,getItem,createFamedItemId,getCompanyStats,getCampSites,startBattle,retreatBattle,finishBattle,validateSave,equipItem,unequipItem} from '../src/engine.js';
 import {encodeBoundedForgeItem} from '../src/reforged-items.js';
-import {equipmentSetStatus,createSetArmorSnapshot,baseArmorCondition,effectiveArmorFatigue,equipmentSetBonusText} from '../src/equipment-sets.js';
+import {EQUIPMENT_SETS,equipmentSetStatus,createSetArmorSnapshot,baseArmorCondition,effectiveArmorFatigue,effectiveAttachmentFatigue,equipmentSetBonusText} from '../src/equipment-sets.js';
 import {equipmentSetHTML} from '../src/campaign-ui.js';
 import {getItemDetails} from '../src/item-details.js';
 import {setSimultaneousBetaEnabled} from '../src/combat-config.js';
@@ -70,5 +70,39 @@ test('version-seven battles with named Bone Platings retain their prior Northern
 test('saved Ritual completions reject mismatched bases, ordinary Bones and forged attachment slots',()=>{
  const {state,person}=fight();for(const mutate of [u=>u.equipment.attachment='bone-platings',u=>u.equipment.helmet='northern-ritual-helm',u=>u.equipment.armor='northern-horned-plate',u=>u.setArmor.attachmentSlot='attachment2']){
   const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===person.id));assert.throws(()=>validateSave(broken),/set armor/);
+ }
+});
+
+test('the entire Northern catalog has exactly one Ritual Bone pairing, gated by version and rarity',()=>{
+ const northern=EQUIPMENT_SETS.find(s=>s.id==='northern');let matches=0;
+ for(const body of northern.armorIds)for(const head of northern.helmetIds)for(const attachment of ['bone-platings',bone]){
+  const actor={equipment:{armor:body,helmet:head,attachment}};
+  const qualifies=body===armor&&head===helmet&&attachment===bone;
+  assert.equal(equipmentSetStatus(actor,getItem,8).bonuses.name==='Ritual Bone',qualifies,`${body}/${head}/${attachment}`);
+  assert.notEqual(equipmentSetStatus(actor,getItem,7).bonuses.name,'Ritual Bone');
+  matches+=Number(qualifies);
+ }
+ assert.equal(matches,1);
+ for(const slot of ['armor','helmet']){
+  const actor={equipment:{armor,helmet,attachment:bone}};delete actor.equipment[slot];
+  assert.equal(equipmentSetStatus(actor,getItem).active,false);assert.equal(equipmentSetStatus(actor,getItem).threePiece,false);
+ }
+});
+
+test('Ritual Bone beats a trophy without stacking or discounting the other attachment',()=>{
+ const trophy=createFamedItemId('unhold-fur',45,6);
+ for(const second of [false,true]){
+  const {person}=outfit({second});if(!person.perks.includes('layered-armor')){person.level=10;person.perks.push('layered-armor');}
+  person.equipment[second?'attachment':'attachment2']=trophy;
+  const status=equipmentSetStatus(person,getItem),selected=second?'attachment2':'attachment',other=second?'attachment':'attachment2';
+  assert.equal(status.bonuses.name,'Ritual Bone');assert.equal(status.attachmentSlot,selected);
+  assert.equal(getCompanyStats(person).maxBodyArmor,450);
+  assert.equal(effectiveAttachmentFatigue(person,getItem)[selected],Math.round(getItem(bone).fatigue*.8));
+  assert.equal(effectiveAttachmentFatigue(person,getItem)[other],getItem(trophy).fatigue);
+  const snapshot=createSetArmorSnapshot(person,getItem,{},7);
+  const legacy={...person,side:'player',setArmor:snapshot};
+  assert.equal(equipmentSetStatus(legacy,getItem).bonuses.armorPct,30);
+  assert.equal(equipmentSetStatus(legacy,getItem).attachmentSlot,other);
+  assert.equal(effectiveAttachmentFatigue(legacy,getItem)[selected],getItem(bone).fatigue);
  }
 });

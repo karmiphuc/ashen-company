@@ -39,6 +39,21 @@ of 24 body/22 head before perks; attachment armor stays unchanged. Without the
 matching named Bones, these pieces keep their ordinary Northern fitting or an
 applicable trophy completion. Bone Platings do not boost the whole Northern family.
 
+The armor totals are **450/450 before attachments and affixes**, not a promise
+that the character sheet's combined body protection will read 450. Bone Platings
+have their own armor pool, added to body protection in the sheet; named rolls
+can change that pool. Ordinary Bone Platings have 55 armor and 2 fatigue, but
+do not unlock Ritual Bone. A named attachment's fitted fatigue is
+`round(rolled fatigue × 0.8)`; a 2-fatigue roll therefore remains 2 after rounding.
+The completion grants no new Bone Platings combat effect or affix slots.
+
+Ritual Bone is an outfit name within the Northern family, not a nineteenth
+head/body family. Wearing only one Ritual piece cannot activate it. A second
+qualifying trophy or signature never adds its bonus to Ritual Bone; only the
+selected attachment receives the fatigue discount. In a version-7 battle,
+an existing trophy completion remains selected even if the other slot holds
+named Bones; the Ritual upgrade waits until the next battle.
+
 ## Rare trophy alternatives
 
 Unhold and Direwolf pelts have no equivalent dedicated head/body family. A
@@ -98,6 +113,22 @@ Battles saved under versions 1–7 finish under their previous protection and
 fatigue rules, even when already carrying an attachment that would qualify in a
 new battle. Snapshot fitting is used by brothers, allies and enemies. Turn-based
 and realtime battles share the same wear and compatibility rules.
+
+## Regression coverage and review checklist
+
+`tests/ritual-bone-set.test.js` checks every Northern body/head combination
+with ordinary and named Bones: exactly one original-design pair can unlock
+Ritual Bone under version 8, and none under version 7. It also covers missing
+pieces, named/reforged membership, stowing, both attachment slots, competing
+trophies without stacking, fitted loads, realtime/turn-based save round trips,
+conservative retreat wear and rejection of tampered snapshot membership.
+
+The broader equipment/attachment suites cover broken pieces, incoming damage,
+fatigue-sensitive perks, champion drops and original-design loot condition.
+For future changes, verify a version-7 trophy plus Bones in the other slot as
+well as a version-7 pair with Bones alone; neither may gain protection on reload.
+Check portrait and landscape equipment layouts, attachment-slot chains,
+inspection hints and combat status text whenever eligibility or names change.
 
 ## Attachment ideas considered
 
