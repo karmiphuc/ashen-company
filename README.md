@@ -2,6 +2,9 @@
 
 Version 0.54.0 adds **Ancient Armory restoration** at every open settlement’s Armorer: matching recovered pieces become restored bronze or silverish steel, with a separate named-item chance, explicit failure refunds, and original-sprite color treatments. See [recipes, stats and save rules](docs/ANCIENT-RESTORATION.md).
 
+See [equipment design features](docs/EQUIPMENT-DESIGN-FEATURES.md) for named
+prefixes/suffixes, the bounded merging formula, and matching armory sets.
+
 Version 0.53.0 adds persistent temporary injuries based on original Battle Brothers: specific wound penalties, daily medicine and recovery, separate Doctor wound treatment, Crippling Strikes, and the Surgeon’s one-day recovery benefit. Compact roster badges and inspection hints show care needs. New battles use wounds for Gash and Executioner; resumed older battles keep their previous rules. See [injury rules and compatibility](docs/TEMPORARY-INJURIES.md).
 
 Version 0.48.9 gates 18–20 elite enemies behind 15 living brothers in formation. Smaller companies remain below 18. World-map soldier skirmishes now last 3–72 hours based on participating troop count, lock both sides in place, show fighting time remaining, and apply casualties/reports only at completion. Pending engagements survive save/reload and release safely when the company intervenes.

@@ -1,5 +1,8 @@
 # Equipment sets
 
+For the combined player-facing design overview, see
+[equipment design features](EQUIPMENT-DESIGN-FEATURES.md).
+
 The Assassin set uses existing Assassin's Robe with Assassin's Face Mask or
 Assassin's Head Wrap. Both must be worn. Named and reforged variants qualify by
 their original design; transferred affixes do not transfer set membership.

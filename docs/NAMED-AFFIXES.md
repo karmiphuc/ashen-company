@@ -1,5 +1,8 @@
 # Named equipment affixes
 
+For the combined player-facing design overview, see
+[equipment design features](EQUIPMENT-DESIGN-FEATURES.md).
+
 New equipment uses immutable `famed7` identities. Stat suffixes and effect prefixes use independent seeded streams; prefix grade and random mastery use additional independent streams. Opening menus, loading saves and retreating cannot reroll an item. Attachments retain their separate `famed5` fine / `famed6` champion protection and fitting rolls.
 
 The eligibility and effect registry lives in `src/affix-prefixes.js`. Existing `famed5` prefixes retain exactly their original pools and rolls. New grades display I / II / III: three-grade rolls use 60 / 30 / 10 percent, two-grade rolls use 70 / 30 percent. Unyoked has one-quarter the selection weight of other eligible prefixes.
