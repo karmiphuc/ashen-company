@@ -103,9 +103,9 @@ function wearHelmet(state, unit, id = 'bb-ancient-legionary-helmet') {
   if (person) { person.equipment.helmet = id; person.armorDurability.head = maximum; }
 }
 
-test('all six ancient helmets and their named variants give steady morale, even when damaged', () => {
+test('all original and restored ancient helmets and their named variants give steady morale, even when damaged', () => {
   const helmets = ITEMS.filter(isAncientHelmet);
-  assert.equal(helmets.length, 6);
+  assert.equal(helmets.length, 12);
   for (const helmet of helmets) for (const id of [helmet.id, ...[1,2,3].map(version => createFamedItemId(helmet.id, 10, version))]) {
     for (const morale of [0, 24, 50, 80, 100]) {
       const wearer = { morale, equipment: { helmet: id }, headArmor: 0 };

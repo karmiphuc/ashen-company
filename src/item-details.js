@@ -52,6 +52,7 @@ export function getItemDetails(item, condition) {
   if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
   if(item.forgeAffixes)notes.push(item.forgeAffixes.locked?'Legacy forge bonuses are preserved. Further merges are locked; full transfers preserve the restriction.':`Affix slots: ${item.forgeAffixes.prefixes.length}/2 prefixes, ${item.forgeAffixes.suffixes.length}/2 suffixes. Duplicate affixes upgrade without adding; inactive affixes still occupy slots.`);
   for(const armorSet of equipmentSetsForItem(item))notes.push(`${armorSet.name} set piece: ${armorSet.pairing} ${equipmentSetBonusText(armorSet)}. Uses rounded fitted fatigue for Nimble, Agile Defense, Fleet Footed and Brawny. Named and reforged variants count; transferring bonuses to a different design does not transfer set membership.`);
+  if(item.restorationFinish)notes.push(`Restored Ancient Armory · ${item.restorationFinish === 'steel' ? 'silverish steel' : 'bronze'} finish. The original ancient design is preserved. Already restored pieces cannot be used as restoration materials. Named bonuses apply above this restored baseline.`);
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;

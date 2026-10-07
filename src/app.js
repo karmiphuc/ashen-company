@@ -4,6 +4,9 @@ import { consumeQuestCompletions } from './quest-completion.js';
 import { INJURY_BY_ID, injuryEffectText } from './injuries.js';
 import { bindBattleCamera, fitBattleCamera, zoomBattleCamera, resetBattleCamera } from './battle-camera.js';
 import { blacksmithPanelHTML, blacksmithJournalHTML, blacksmithSummonsHTML, forgeConfirmationHTML, forgeSuccessHTML } from './blacksmith-ui.js';
+import { ancientArmorerHTML, ancientRestorationConfirmationHTML, ancientRestorationResultHTML } from './ancient-armorer-ui.js';
+import { getAncientRestorationQuote, restoreAncientEquipment } from './engine.js';
+import { ancientRestorationRecipe } from './ancient-restoration.js';
 import { getLegendaryBlacksmith, getBlacksmithQuestEncounters, checkBlacksmithDiscovery, acknowledgeBlacksmithSummons, acceptBlacksmithQuest, turnInBlacksmithQuest, claimBlacksmithReward, getReforgeQuote, reforgeItem } from './engine.js';
 import { combatBetaConfigHTML, setSimultaneousBetaEnabled } from './combat-config.js';
 import { simultaneousEvents } from './simultaneous-combat.js';
@@ -49,6 +52,7 @@ const specialties={oakwatch:'Timber & grain',greyhaven:'Wool market',ironford:'I
 const townArt=Object.fromEntries(SETTLEMENTS.map(settlement=>[settlement.id,regionalTownArt(settlement)]));
 for (const settlement of SETTLEMENTS) { townArt[settlement.id] ??= regionalTownArt(settlement); specialties[settlement.id] ??= regionalTownSpecialty(settlement); }
 let forgeSelection={donor:null,recipient:null,filter:'all',search:''},forgeQuote=null,blacksmithSummonsOpen=false;
+let ancientSelection={sourceId:null,indices:[]},ancientQuote=null;
 let simultaneousSoundBattle=null,simultaneousSoundCursor=0,simultaneousResolveToken=0;
 let lootKeepSelection=[],chosenCamp=null,battleCameraTarget=matchMedia('(max-width:1366px)').matches?'overview':'company',battleSpeed=0,battleElapsed=0,battleResultAt=0,trainingSelection=[],perkSelection=null,formationSelection=null,warnedHunters='';
 let defaultBattleSpeed=4;
@@ -206,7 +210,7 @@ function inspectItem(id,source,lootIndex,location='active',equippedSlot){
  const famed=['famed','named'].includes(details.rarity);
  const kind={armor:'BODY ARMOR',helmet:'HEAD ARMOR',attachment:'ARMOR ATTACHMENT',weapon:'WEAPON',shield:'SHIELD',accessory:'ACCESSORY',mount:'RARE MOUNT'}[i.slot];
  const comparison=famed?`<section class="item-famed-comparison"><span class="item-rarity">${details.rarity==='named'?'NAMED':'FAMED'}</span><div><strong>Improved over ${esc(details.baseName)}</strong><dl>${details.bonuses.map(row=>`<div><dt>${esc(row.label)}</dt><dd>${esc(row.value)}</dd></div>`).join('')}</dl></div></section>`:'';
- showModal(i.name,`<article class="item-detail ${famed?'item-detail-famed':''}"><div class="item-detail-intro">${icon(i)}<div><p class="item-flavor">${esc(details.description)}</p><p>${esc(details.role)}</p></div></div>${comparison}${wornHeader}<dl class="item-stat-list">${statRows.map(row=>`<div><dt>${esc(row.label)}</dt><dd>${statValue(row)}</dd></div>`).join('')}</dl><div class="item-mechanics">${details.notes.map(note=>`<p>${esc(note)}</p>`).join('')}</div>${availability?`<p class="item-availability">${esc(availability)}</p>`:''}<div class="button-row item-detail-actions">${actions}<button data-action="${source==='forge'?'legendary-blacksmith':marketSource?'market':'close-modal'}">${marketSource?'Back to marketplace':'Back'}</button></div></article>`,famed?`${details.rarity==='named'?'NAMED':'FAMED'} · ${kind}`:kind);
+ showModal(i.name,`<article class="item-detail ${famed?'item-detail-famed':''}"><div class="item-detail-intro">${icon(i)}<div><p class="item-flavor">${esc(details.description)}</p><p>${esc(details.role)}</p></div></div>${comparison}${wornHeader}<dl class="item-stat-list">${statRows.map(row=>`<div><dt>${esc(row.label)}</dt><dd>${statValue(row)}</dd></div>`).join('')}</dl><div class="item-mechanics">${details.notes.map(note=>`<p>${esc(note)}</p>`).join('')}</div>${availability?`<p class="item-availability">${esc(availability)}</p>`:''}<div class="button-row item-detail-actions">${actions}<button data-action="${source==='ancient-armorer'?'ancient-armorer':source==='forge'?'legendary-blacksmith':marketSource?'market':'close-modal'}">${source==='ancient-armorer'?'Back to Armorer':marketSource?'Back to marketplace':'Back'}</button></div></article>`,famed?`${details.rarity==='named'?'NAMED':'FAMED'} · ${kind}`:kind);
  $('#modal').scrollTop=0;$('#modal .close-button').focus();
 }
 function updateSpeed(notify=false){const hunters=[...getRoamingBands(state),...getUndeadEncounters(state)].filter(b=>b.behavior==='hunting-company'),key=hunters.map(b=>b.id).sort().join(',');if(notify){if(key&&key!==warnedHunters){toast(`${hunters[0].name} are pursuing you. Reach a town or prepare to fight.`);if(speed>1)speed=1;}warnedHunters=key;}document.querySelectorAll('[data-speed]').forEach(b=>b.classList.toggle('active',Number(b.dataset.speed)===speed));const s=$('#march-status');if(s){s.classList.toggle('is-threat',hunters.length>0);s.textContent=hunters.length?`${hunters[0].name} pursuing you${speed?'':' · Paused'}`:state.pursuit?(speed?'Pursuing brigands':'Pursuit paused'):state.destination?(speed?'On the march':'Travel paused'):speed?'Waiting - time passes':'Company at rest';}}
@@ -374,16 +378,30 @@ function animate(now){
 }
 mergeOwnedNamedBonuses(state);if(!unreadSave)checkBlacksmithDiscovery(state);render();requestAnimationFrame(animate);if(unreadSave)toast('Your saved company could not be loaded. The original is preserved in Save / Menu.');else save();
 function showBlacksmith(){showModal('Odran · Legendary Blacksmith',blacksmithPanelHTML(state,forgeSelection),'THE REKINDLED FORGE');}
+function showAncientArmorer(){speed=0;ancientQuote=null;showModal('Armorer · Ancient restoration',ancientArmorerHTML(state,ancientSelection),'ANCIENT ARMORY');}
 function maybeShowBlacksmithSummons(){if(unreadSave||state.battle||state.gameOver||document.hidden||$('#modal').open||state.legendaryBlacksmith?.announcement!=='pending')return;save();showModal('Odran’s summons',blacksmithSummonsHTML(state),'THE REKINDLED FORGE');blacksmithSummonsOpen=true;}
 function acknowledgeSummons(){if(state.legendaryBlacksmith?.announcement==='pending'){acknowledgeBlacksmithSummons(state);save();}blacksmithSummonsOpen=false;}
 $('#modal').addEventListener('close',()=>{if(blacksmithSummonsOpen)acknowledgeSummons();});
 document.addEventListener('click',event=>{
  const button=event.target.closest('button');if(!button||button.disabled)return;
+ if(button.dataset.ancientDesign){const sourceId=button.dataset.ancientDesign,recipe=ancientRestorationRecipe(sourceId);if(!recipe)return;ancientSelection={sourceId,indices:state.inventory.map((id,index)=>({id,index})).filter(row=>row.id===sourceId).sort((a,b)=>state.inventoryCondition[a.index]-state.inventoryCondition[b.index]||a.index-b.index).slice(0,recipe.count).map(row=>row.index)};showAncientArmorer();document.querySelector(`[data-ancient-design="${sourceId}"]`)?.focus({preventScroll:true});return;}
  if(button.dataset.forgeSelect){const side=button.dataset.forgeSelect,index=Number(button.dataset.forgeIndex);forgeSelection[side]=index;if(side==='donor'&&(forgeSelection.recipient===index||item(state.inventory[forgeSelection.recipient])?.slot!==item(state.inventory[index])?.slot))forgeSelection.recipient=null;showBlacksmith();document.querySelector(`[data-forge-select="${side}"][data-forge-index="${index}"]`)?.focus({preventScroll:true});return;}
  if(button.dataset.blacksmithAccept){const r=acceptBlacksmithQuest(state,Number(button.dataset.blacksmithAccept));toast(r.message);save();render();showBlacksmith();return;}
  if(button.dataset.blacksmithTurnin){const r=turnInBlacksmithQuest(state,Number(button.dataset.blacksmithTurnin));toast(r.message);save();render();showBlacksmith();return;}
  if(button.dataset.blacksmithSite||button.dataset.blacksmithMarch){const id=button.dataset.blacksmithSite??button.dataset.blacksmithMarch,site=getBlacksmithQuestEncounters(state).find(e=>e.id===id);if(!site)return;acknowledgeSummons();$('#modal').close();tab='world';chosenCamp=id;chosenTown=null;if(button.dataset.blacksmithMarch){const r=activateMapTarget(state,'blacksmith',id);toast(r.message);if(state.battle){enterBattleView();return;}speed=state.destination?1:0;}save();render();focusMap(site);return;}
  switch(button.dataset.action){
+ case 'ancient-armorer':showAncientArmorer();break;
+ case 'ancient-confirm':{ancientQuote=getAncientRestorationQuote(state,ancientSelection.indices);if(!ancientQuote.ok||!ancientQuote.affordable){toast(ancientQuote.message||'Bring enough crowns for the restoration.');showAncientArmorer();break;}showModal('Confirm ancient restoration',ancientRestorationConfirmationHTML(ancientQuote),'ANCIENT ARMORY');break;}
+ case 'ancient-commit':{
+  if(unreadSave){toast('Recover or replace the unreadable save before crafting.');break;}
+  const next=structuredClone(state),r=restoreAncientEquipment(next,ancientQuote);
+  if(!r.ok){toast(r.message);showAncientArmorer();break;}
+  // Persist the entire attempt before adopting it. A failed storage write leaves
+  // pieces, currency and the deterministic roll untouched, ready for a safe retry.
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(next));}catch{toast('Restoration was not applied: saving failed. Free device storage and retry.');break;}
+  state=next;saveProblem=false;ancientQuote=null;ancientSelection.indices=[];
+  toast(r.message);render();showModal(r.crafted?'Ancient workmanship restored':'Restoration failed',ancientRestorationResultHTML(r),'ANCIENT ARMORY');break;
+ }
  case 'legendary-blacksmith':acknowledgeSummons();showBlacksmith();break;
  case 'blacksmith-speak':acknowledgeSummons();showBlacksmith();break;
  case 'blacksmith-later':acknowledgeSummons();$('#modal').close();break;
@@ -395,6 +413,7 @@ document.addEventListener('click',event=>{
  }
 });
 document.addEventListener('change',event=>{if(!event.target.matches('[data-forge-filter],[data-forge-search]'))return;forgeSelection[event.target.hasAttribute('data-forge-filter')?'filter':'search']=event.target.value;showBlacksmith();document.querySelector(event.target.hasAttribute('data-forge-filter')?'[data-forge-filter]':'[data-forge-search]')?.focus();});
+document.addEventListener('change',event=>{if(!event.target.matches('[data-ancient-copy]'))return;const index=Number(event.target.dataset.ancientCopy);ancientSelection.indices=event.target.checked?[...new Set([...ancientSelection.indices,index])]:ancientSelection.indices.filter(i=>i!==index);showAncientArmorer();document.querySelector(`[data-ancient-copy="${index}"]`)?.focus({preventScroll:true});});
 async function prepareOffline(){const label=$('#offline-status');if(!('serviceWorker'in navigator)){label.textContent='Offline unavailable';return;}try{await navigator.serviceWorker.register('./sw.js');const reg=await navigator.serviceWorker.ready;const check=()=>{const ch=new MessageChannel();ch.port1.onmessage=e=>{label.textContent=e.data?.ready?'Offline ready':'Downloading offline files…';label.classList.toggle('ready',!!e.data?.ready);};(navigator.serviceWorker.controller||reg.active)?.postMessage({type:'CHECK_OFFLINE'},[ch.port2]);};check();navigator.serviceWorker.addEventListener('controllerchange',check);}catch{label.textContent='Open online to prepare';}}
 prepareOffline();
 
