@@ -1,7 +1,9 @@
 import { equipmentSetStatus, equipmentSetBonusText } from './equipment-sets.js';
 import { getTurnAp } from './engine.js';
 import { INJURY_BY_ID, injuryEffectText, injuryStat, injuryAdjustment } from './injuries.js';
-import { simultaneousEvents } from './simultaneous-combat.js';
+import { simultaneousEvents, simultaneousEventSerial } from './simultaneous-combat.js';
+import { patchFighter, syncPresentation, advanceBattlePresentation } from './battle-presentation.js';
+export { advanceBattlePresentation } from './battle-presentation.js';
 import { getNightHitPenalty } from './engine.js';
 import { BATTLE_PROJECTION, BATTLE_GROUND_SHEAR, tilePosition, elevationFaces } from './battle-geometry.js';
 import { enemyBattleTactic, ENEMY_TACTIC_COOLDOWN } from './tactical-ai.js';
@@ -224,7 +226,7 @@ function unitHTML(unit, battle, animateEvent, field, grid, simultaneous = null, 
   const shieldDamage = impacts.reduce((total, impact) => total + number(impact.shieldDamage), 0);
   const attacking = event.skillName!=='Bleeding'&&['attack', 'hit', 'fall', 'miss'].includes(event.type);
   const origin = coordinates(event.from || unit, field, grid, unit);
-  const moveOrigin = coordinates(primaryTarget && event.pushedFrom ? event.pushedFrom : primaryActor && event.moveFrom ? event.moveFrom : event.from || unit, field, grid, unit);
+  const moveOrigin = coordinates(simultaneous?.motion?.from??(primaryTarget && event.pushedFrom ? event.pushedFrom : primaryActor && event.moveFrom ? event.moveFrom : event.from || unit), field, grid, unit);
   const destination = coordinates(event.to || unit, field, grid, unit);
   const strikeOrigin = reaction ? coordinates(reaction.from || unit, field, grid, unit) : origin;
   const reactionTargetUnit = reaction ? battle.units.find(entry => entry.id === reaction.targetId) : null;
@@ -255,7 +257,7 @@ function unitHTML(unit, battle, animateEvent, field, grid, simultaneous = null, 
     reaction ? 'is-reacting' : '',
     primaryTarget || hasImpact || reactionTarget ? 'is-target' : '',
     ...motionClasses,
-    primaryActor && (event.type === 'move' || event.moveFrom) || primaryTarget && event.pushedFrom ? 'action-move' : '',
+    (simultaneous?simultaneous.motion:primaryActor && (event.type === 'move' || event.moveFrom) || primaryTarget && event.pushedFrom) ? 'action-move' : '',
     primaryActor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? 'action-hold' : '',
     hasHit || shieldDamage > 0 ? 'action-hit' : '',
     impactFallen ? 'action-fall' : '',
@@ -294,7 +296,7 @@ function unitHTML(unit, battle, animateEvent, field, grid, simultaneous = null, 
     ${unit.ally ? '<span class="battle-ally-label" aria-label="Allied fighter"><i>Ally</i></span>' : ''}
     <strong>${unit.champion?'<span class="champion-star" title="Champion · guaranteed named trophy">★</span> ':''}${esc(pawnName(unit))}</strong>
     <small>${Math.max(0, Math.round(number(unit.ap)))}/${maxAp} AP · ${Math.max(0, Math.round(number(unit.fatigue)))} F</small>
-    ${hasImpact || primaryMiss ? `<span class="battle-impact" aria-hidden="true">${hasHit ? `${friendlyFire ? 'Friendly fire · ' : ''}${hpDamage}${bodyDamage + headDamage ? ` / ${bodyDamage + headDamage}` : ''}${shieldDamage ? ` · Shield -${shieldDamage}` : ''}${hasMiss ? ' · Miss' : ''}` : shieldDamage ? `Deflected · Shield -${shieldDamage}` : 'Miss'}</span>` : ''}
+    ${simultaneous?simultaneous.impactMarkup:hasImpact || primaryMiss ? `<span class="battle-impact" aria-hidden="true">${hasHit ? `${friendlyFire ? 'Friendly fire · ' : ''}${hpDamage}${bodyDamage + headDamage ? ` / ${bodyDamage + headDamage}` : ''}${shieldDamage ? ` · Shield -${shieldDamage}` : ''}${hasMiss ? ' · Miss' : ''}` : shieldDamage ? `Deflected · Shield -${shieldDamage}` : 'Miss'}</span>` : ''}
     ${callouts.length ? `<span class="battle-orders">${callouts.map(label => `<span class="battle-order">${esc(label)}</span>`).join('')}</span>` : ''}
     ${effects.length ? `<span class="battle-perk-effects">${perkEffectsHTML(effects)}</span>` : ''}
   </article>`;
@@ -327,24 +329,54 @@ function simultaneousRate(battle,speed) {
   if(speed!==0)animationRates.set(battle,speed===4?4:1);
   return animationRates.get(battle)??1;
 }
+function presentationDuration(entry,speed){
+  if(!entry)return 450;
+  if(speed==='cinematic'&&cinematicActionKind(entry.event)==='attack')return Math.max(entry.duration,900);
+  return speed==='cinematic'&&entry.event.type==='move'?entry.duration/4:entry.duration;
+}
+const presentationIndexes=new WeakMap();
+function presentationIndex(battle){
+  const time=battle.simultaneous.time,serial=simultaneousEventSerial(battle),cached=presentationIndexes.get(battle);
+  if(cached?.time===time&&cached.serial===serial)return cached;
+  const own=new Map(),incoming=new Map(),motion=new Map();
+  for(const entry of simultaneousEvents(battle)){
+    if(time-entry.time>=Math.max(entry.duration,1000))continue;
+    const event=entry.event,reactions=reactionsFor(event);
+    for(const id of new Set([event.actorId,...reactions.map(r=>r.actorId)]))if(id)own.set(id,entry);
+    if(event.actorId&&(event.type==='move'||event.moveFrom))motion.set(event.actorId,{entry,from:event.moveFrom??event.from});
+    if(event.targetId&&event.pushedFrom)motion.set(event.targetId,{entry,from:event.pushedFrom});
+    const targets=new Set([event.targetId,...(event.affectedTargets??[]).map(x=>x.id??x.targetId),...reactions.map(r=>r.targetId)]);
+    for(const id of targets){if(!id)continue;const impacts=impactsFor(event,id);if(!impacts.length)continue;
+      if(!incoming.has(id))incoming.set(id,[]);incoming.get(id).push({entry,impacts});
+    }
+  }
+  const index={time,serial,own,incoming,motion};presentationIndexes.set(battle,index);return index;
+}
 function simultaneousUnitContext(unit,battle,speed) {
-  const entries=simultaneousEvents(battle);
-  const own=entries.filter(e=>e.event.actorId===unit.id||reactionsFor(e.event).some(r=>r.actorId===unit.id)).at(-1);
-  const incoming=entries.filter(e=>e.event.targetId===unit.id||impactsFor(e.event,unit.id).length).at(-1);
-  const selected=own??incoming;
-  const event=selected?{...selected.event,reactions:entries.flatMap(e=>reactionsFor(e.event))}:{};
-  const rate=simultaneousRate(battle,speed),duration=selected?(speed==='cinematic'&&cinematicActionKind(event)==='attack'?Math.max(selected.duration,900):event.type==='move'&&speed==='cinematic'?selected.duration/4:selected.duration):450;
-  const age=selected?Math.max(0,battle.simultaneous.time-selected.time):0;
-  return {event,impacts:entries.flatMap(e=>impactsFor(e.event,unit.id)),
+  const index=presentationIndex(battle),own=index.own.get(unit.id),motion=index.motion.get(unit.id);
+  const impactEntries=index.incoming.get(unit.id)??[],latest=impactEntries.at(-1),incoming=latest?.entry;
+  // Receiving a hit never borrows an older movement/attack timestamp.
+  const selected=own??incoming,event=selected?.event??{};
+  const rate=simultaneousRate(battle,speed);
+  const duration=presentationDuration(selected,speed);
+  const impactDuration=presentationDuration(incoming,speed);
+  const impactMarkup=impactEntries.map(({entry,impacts},index)=>{
+    const damage=impacts.reduce((sum,x)=>sum+number(x.hpDamage),0);
+    const armor=impacts.reduce((sum,x)=>sum+number(x.armorDamage),0),shield=impacts.reduce((sum,x)=>sum+number(x.shieldDamage),0);
+    const friendly=entry.event.friendlyFire&&entry.event.actorId!==unit.id&&battle.units.find(x=>x.id===entry.event.actorId)?.side===unit.side;
+    const label=impacts.some(x=>x.hit!==false&&x.type!=='miss')?`${friendly?'Friendly fire · ':''}${damage}${armor?` / ${armor}`:''}${shield?` · Shield −${shield}`:''}`:shield?`Deflected · Shield −${shield}`:'Miss';
+    return `<span class="battle-impact" data-impact-event="${entry.id}" data-event-time="${entry.time}" aria-hidden="true" style="top:${14+index*18}px;--impact-time:${presentationDuration(entry,speed)/rate/1000}s">${label}</span>`;
+  }).join('');
+  return {event,impactMarkup,impacts:latest?.impacts??[],own,incoming,motion,
     cinematic:speed==='cinematic'?cinematicActionKind(event):null,
-    style:`--action-time:${duration/rate/1000}s;--move-time:${duration/rate/1000}s;--sim-delay:${-age/rate/1000}s;`,
-    key:entries.filter(e=>e.event.actorId===unit.id||e.event.targetId===unit.id||impactsFor(e.event,unit.id).length||reactionsFor(e.event).some(r=>r.actorId===unit.id)).map(e=>e.id).join(',')};
+    style:`--action-time:${duration/rate/1000}s;--move-time:${presentationDuration(motion?.entry,speed)/rate/1000}s;--impact-time:${impactDuration/rate/1000}s;--sim-delay:0s;`,
+    key:`${own?.id??0}:${motion?.entry.id??0}:${impactEntries.map(x=>x.entry.id).join(',')}`};
 }
 function simultaneousProjectileHTML(battle,speed,field,grid,entry) {
-  const rate=simultaneousRate(battle,speed),age=Math.max(0,battle.simultaneous.time-entry.time);
+  const rate=simultaneousRate(battle,speed);
   return projectileHTML({...battle,lastEvent:entry.event},true,field,grid)
-    .replace('class="battle-projectile',`data-sim-projectile="${entry.id}" class="battle-projectile`)
-    .replace('style="',`style="--action-time:${entry.duration/rate/1000}s;--sim-delay:${-age/rate/1000}s;`);
+    .replace('class="battle-projectile',`data-sim-projectile="${entry.id}" data-event-time="${entry.time}" class="battle-projectile`)
+    .replace('style="',`style="--action-time:${presentationDuration(entry,speed)/rate/1000}s;--sim-delay:0s;`);
 }
 
 const turnRenderCaches=new WeakMap(),turnFullFrames=new WeakMap();
@@ -376,6 +408,22 @@ export function updateTurnBattleView(root,battle,speed) {
  return true;
 }
 
+export function battlePresentationHold(battle,speed){
+  const rate=simultaneousRate(battle,speed);
+  const remaining=simultaneousEvents(battle).map(entry=>{
+    const duration=presentationDuration(entry,speed);
+    return Math.max(0,entry.time+duration-battle.simultaneous.time)/rate;
+  });
+  return Math.min(1000,Math.max(150,...remaining)+50);
+}
+
+// Synchronize changed state once per display frame; motion also advances on
+// frames without a worker reply. No extra action queue or timeout is introduced.
+export function presentSimultaneousBattleFrame(root,battle,speed,updated){
+  if(updated)return updateSimultaneousBattleView(root,battle,speed);
+  advanceBattlePresentation(root,battle,speed);return false;
+}
+
 // Patch changed pawns/projectiles only. Preserve camera, focused controls and other animations.
 export function updateSimultaneousBattleView(root,battle,speed) {
   const view=root.querySelector('.simultaneous-battle'),surface=view?.querySelector('.battle-units');
@@ -387,19 +435,21 @@ export function updateSimultaneousBattleView(root,battle,speed) {
     const context=simultaneousUnitContext(unit,battle,speed),key=JSON.stringify(unit)+':'+context.key+':'+speed+':'+getLoneWolfBonus(battle,unit);
     const node=nodes.get(unit.id);
     if(unit.escaped){node?.remove();cache.delete(unit.id);continue;}
-    if(cache.get(unit.id)===key)continue;
+    if(cache.get(unit.id)===key){if(node&&!node.dataset.presented)syncPresentation(view,node,battle,speed,context);continue;}
     const portrait=node?.dataset.simPortrait===portraitKey(unit)?node.querySelector('.bb-portrait'):null;
     if(portrait)context.portraitMarkup='';
     const template=root.ownerDocument.createElement('template');template.innerHTML=unitHTML(unit,battle,true,field,grid,context);
-    if(portrait)template.content.querySelector('.battle-pawn').append(portrait);
-    if(node)node.replaceWith(template.content.firstElementChild);else surface.append(template.content.firstElementChild);
+    const incoming=template.content.firstElementChild;
+    const fighter=node??incoming;
+    if(node)patchFighter(node,incoming);else surface.append(fighter);
+    syncPresentation(view,fighter,battle,speed,context);
     cache.set(unit.id,key);
   }
   simultaneousRenderCaches.set(view,cache);
   const entries=simultaneousEvents(battle).filter(e=>battle.simultaneous.time-e.time<e.duration&&e.event.ranged);
   const ids=new Set(entries.map(e=>String(e.id)));
   surface.querySelectorAll('[data-sim-projectile]').forEach(node=>{if(!ids.has(node.dataset.simProjectile))node.remove();});
-  for(const entry of entries)if(!surface.querySelector(`[data-sim-projectile="${entry.id}"]`))surface.insertAdjacentHTML('beforeend',simultaneousProjectileHTML(battle,speed,field,grid,entry));
+  for(const entry of entries){const projectile=surface.querySelector(`[data-sim-projectile="${entry.id}"]`);if(projectile)projectile.style.setProperty('--action-time',`${presentationDuration(entry,speed)/simultaneousRate(battle,speed)/1000}s`);else surface.insertAdjacentHTML('beforeend',simultaneousProjectileHTML(battle,speed,field,grid,entry));}
   view.querySelector('.battle-cycle').textContent=`Cycle ${battle.round} · ${(battle.simultaneous.time/1000).toFixed(1)}s`;
   const count=side=>battle.units.filter(u=>u.alive&&!u.escaped&&(side==='ally'?u.ally:side==='company'?u.side===side&&!u.ally:u.side===side)).length;
   view.querySelector('.battle-counts').textContent=`${count('company')} brothers · ${count('enemy')} enemies${count('ally')?` · ${count('ally')} allies`:''}`;
@@ -407,6 +457,8 @@ export function updateSimultaneousBattleView(root,battle,speed) {
   const log=view.querySelector('.battle-log-details ol'),text=battle.log.slice(-6).reverse().map(x=>`<li>${esc(x)}</li>`).join('');
   if(log.innerHTML!==text)log.innerHTML=text;
   const intent=view.querySelector('.battle-enemy-intent');if(intent){const template=root.ownerDocument.createElement('template');template.innerHTML=enemyIntentHTML(battle);if(intent.outerHTML!==template.innerHTML)intent.replaceWith(template.content.firstElementChild);}
+  for(const button of view.querySelectorAll('[data-battle-speed]')){const selected=parseBattleSpeed(button.dataset.battleSpeed)===speed;button.classList.toggle('is-selected',selected);button.setAttribute('aria-pressed',String(selected));}
+  advanceBattlePresentation(root,battle,speed);
   return true;
 }
 

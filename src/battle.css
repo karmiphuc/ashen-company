@@ -241,3 +241,19 @@
 .battle-hex-top{transform:skewX(var(--ground-angle,0deg));transform-origin:center center}
 
 .proc-kill-momentum,.proc-kill-momentum-hit{color:#f6d17b;background:#302517ed}.proc-affix-daze{color:#a9cfec;background:#192b3bed}
+
+/* Locomotion, attack and receiving damage run on separate elements/clocks. */
+.simultaneous-battle .action-hit .battle-pawn{animation:none}
+.simultaneous-battle .action-swing .battle-pawn,.simultaneous-battle .action-thrust .battle-pawn{animation:pawn-lunge var(--action-time) ease-in-out}
+.simultaneous-battle .action-hit .bb-portrait{animation:pawn-impact var(--impact-time) linear}
+.simultaneous-battle .battle-impact{animation-duration:var(--impact-time)}
+.simultaneous-battle .action-hit .battle-unit-bar i{animation-duration:var(--impact-time)}
+@keyframes pawn-impact{0%,62%,100%{filter:none;translate:0 0}70%{filter:brightness(1.7) sepia(.4);translate:4px 0}80%{translate:-2px 0}}
+
+.simultaneous-battle .action-fall{animation-duration:var(--impact-time)}
+
+.simultaneous-battle .battle-unit{contain:layout style}
+.simultaneous-battle .action-move{will-change:transform}
+.simultaneous-battle .action-swing .battle-pawn,.simultaneous-battle .action-thrust .battle-pawn{will-change:transform}
+
+.simultaneous-battle .action-move:not(.action-fall){animation-duration:var(--move-time)}
