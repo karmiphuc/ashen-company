@@ -4,7 +4,7 @@ import { ADDITIONAL_ITEMS } from './additional-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
 // Set membership belongs to the original item design, never to transferred affixes.
 const armorDesigns=[...DLC_ITEMS,...NORTHERN_ITEMS,...ADDITIONAL_ITEMS,...FANTASY_ITEMS].filter(i=>['armor','helmet'].includes(i.slot));
-export const EQUIPMENT_SET_RULES_VERSION=4;
+export const EQUIPMENT_SET_RULES_VERSION=5;
 export const isEquipmentSetRulesVersion=version=>Number.isInteger(version)&&version>=1&&version<=EQUIPMENT_SET_RULES_VERSION;
 const family=(id,name,since,pairing,items)=>Object.freeze({id,name,since,pairing,armorIds:Object.freeze(items.filter(i=>i.slot==='armor').map(i=>i.id)),helmetIds:Object.freeze(items.filter(i=>i.slot==='helmet').map(i=>i.id)),armorPct:15,bodyFatiguePct:15,headFatiguePct:10});
 const historicalSets=Object.freeze([
@@ -26,6 +26,9 @@ export const EQUIPMENT_SETS=Object.freeze([
  family('ninja','Ninja',4,'Wear Ninja Suit or Elite Ninja Suit with Ninja Mask or Elite Ninja Mask.',armorDesigns.filter(i=>['samurai-ninja-suit','samurai-elite-ninja-suit','samurai-ninja-mask','samurai-elite-ninja-mask'].includes(i.id))),
  family('golden-scale','Golden Scale',4,'Wear Golden Scale Armor with Gold and Black Turban.',armorDesigns.filter(i=>['bb-golden-scale-armor','bb-gold-and-black-turban'].includes(i.id))),
  family('golden-lamellar','Golden Lamellar',4,'Wear Golden Lamellar Armor with Heavy Lamellar Helmet.',armorDesigns.filter(i=>['bb-named-golden-lamellar-armor','bb-heavy-lamellar-helmet'].includes(i.id))),
+ family('adorned','Adorned',5,'Wear Adorned Mail Shirt, Adorned Warrior’s Armor or Adorned Heavy Mail Hauberk with Adorned Closed Flat Top or Adorned Full Helm.',armorDesigns.filter(i=>['bb-adorned-mail-shirt','bb-adorned-warriors-armor','bb-adorned-heavy-mail-hauberk','bb-adorned-closed-flat-top-with-mail','bb-adorned-full-helm'].includes(i.id))),
+ family('samurai','Samurai',5,'Wear Samurai Armor with Samurai Helmet.',armorDesigns.filter(i=>['samurai-wushi-armor','samurai-helmet'].includes(i.id))),
+ family('tycoon','Tycoon',5,'Wear Tycoon Armor with Tycoon Helmet.',armorDesigns.filter(i=>['samurai-tycoon-armor','samurai-tycoon-helmet'].includes(i.id))),
 ]);
 export const equipmentSetsForRules=version=>(version<4?historicalSets:EQUIPMENT_SETS).filter(s=>s.since<=version);
 export function equipmentSetBonusText(set){return `${set.name} set: +${set.armorPct}% head/body armor; −${set.headFatiguePct}% helmet fatigue, −${set.bodyFatiguePct}% body fatigue`;}

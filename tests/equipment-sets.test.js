@@ -136,7 +136,7 @@ test('snapshot validation rejects missing, altered, or inconsistent armor pools'
   const broken=structuredClone(state);mutate(broken.battle.units.find(u=>u.id===unit.id));
   assert.throws(()=>validateSave(broken),/battle set armor/);
  }
- const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=5;
+ const broken=structuredClone(state);broken.battle.equipmentSetRulesVersion=6;
  assert.throws(()=>validateSave(broken),/equipment set rules/);
 });
 
@@ -249,7 +249,7 @@ test('cultural fitting crosses actual light-gear thresholds before Nimble, Agile
  }
 });
 
-test('every curated Southern, Ninja and Noble pairing fits',()=>{
+test('every curated, eastern, Adorned and Noble pairing fits',()=>{
  const person=createGame(51).party[0];let pairs=0;
  for(const set of EQUIPMENT_SETS.filter(s=>s.since>=3))for(const body of set.armorIds)for(const head of set.helmetIds){
   const armor=getItem(body),helmet=getItem(head);assert.ok(armor,body);assert.ok(helmet,head);
@@ -261,7 +261,7 @@ test('every curated Southern, Ninja and Noble pairing fits',()=>{
   assert.equal(stats.maxBodyArmor,Math.floor(armor.armor*115/100));assert.equal(stats.maxHeadArmor,Math.floor(helmet.armor*115/100));
   assert.deepEqual(effectiveArmorFatigue(person,getItem),{body:Math.round(armor.fatigue*.85),head:Math.round(helmet.fatigue*.9)});pairs++;
  }
- assert.equal(pairs,96);
+ assert.equal(pairs,104);
 });
 
 test('ordinary Southern and mixed Assassin gear no longer qualify; hints only show current sets',()=>{
@@ -326,12 +326,61 @@ test('version-two battles retain old families without enabling Southern or Noble
 });
 
 test('every new curated pair preserves damaged condition through battle reload and retreat',()=>{
- for(const set of EQUIPMENT_SETS.filter(s=>s.since===4))for(const body of set.armorIds)for(const head of set.helmetIds){
+ for(const set of EQUIPMENT_SETS.filter(s=>s.since>=4))for(const body of set.armorIds)for(const head of set.helmetIds){
   const {state,unit}=fight({body,head,bodyCondition:30,headCondition:20});
   assert.equal(unit.setArmor.id,set.id);unit.bodyArmor-=3;unit.headArmor-=2;
   const worn={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
   const loaded=validateSave(JSON.parse(JSON.stringify(state)));leave(loaded);
   assert.deepEqual({body:loaded.party[0].armorDurability.body,head:loaded.party[0].armorDurability.head},worn);
   assert.ok(worn.body<30&&worn.head<20);
+ }
+});
+
+
+test('Adorned, Samurai and Tycoon keep specific matching identities and compact guidance',()=>{
+ for(const [body,head,id] of [
+  ['bb-adorned-mail-shirt','bb-adorned-full-helm','adorned'],
+  ['samurai-wushi-armor','samurai-helmet','samurai'],
+  ['samurai-tycoon-armor','samurai-tycoon-helmet','tycoon'],
+ ]){
+  const {person}=outfit({body,head});assert.equal(equipmentSetStatus(person,getItem).set.id,id);
+  assert.match(equipmentSetHTML(person),/2\/2/);
+  assert.ok(getItemDetails(getItem(body)).notes.some(n=>n.includes(equipmentSetStatus(person,getItem).set.pairing)));
+ }
+ for(const gear of [
+  {body:'samurai-wushi-armor',head:'samurai-tycoon-helmet'},
+  {body:'samurai-tycoon-armor',head:'samurai-helmet'},
+  {body:'samurai-ninja-suit',head:'samurai-helmet'},
+  {body:'bb-adorned-mail-shirt',head:'bb-full-helm'},
+  {body:'fantasy-samurai-armor',head:'samurai-helmet'},
+ ])assert.ok(!equipmentSetStatus(outfit(gear).person,getItem)?.active);
+ const noble=outfit({body:'noble-tabard',head:'bb-adorned-full-helm'}).person;
+ assert.equal(equipmentSetStatus(noble,getItem).set.id,'noble');
+});
+
+test('version-four battles do not retroactively activate new adorned or eastern pairs',()=>{
+ for(const gear of [{body:'bb-adorned-mail-shirt',head:'bb-adorned-full-helm'},{body:'samurai-wushi-armor',head:'samurai-helmet'},{body:'samurai-tycoon-armor',head:'samurai-tycoon-helmet'}]){
+  const {state,person}=fight(gear);state.battle.equipmentSetRulesVersion=4;
+  for(const unit of state.battle.units){
+   if(!['adorned','samurai','tycoon'].includes(unit.setArmor?.id))continue;
+   unit.bodyArmor=unit.setArmor.body.baseCurrent;unit.maxBodyArmor=unit.setArmor.body.baseMax;
+   unit.headArmor=unit.setArmor.head.baseCurrent;unit.maxHeadArmor=unit.setArmor.head.baseMax;delete unit.setArmor;
+  }
+  const loaded=validateSave(JSON.parse(JSON.stringify(state))),unit=loaded.battle.units.find(u=>u.id===person.id);
+  assert.equal(unit.setArmor,undefined);assert.equal(equipmentSetStatus(unit,getItem).active,false);
+  assert.deepEqual(effectiveArmorFatigue(unit,getItem),{body:getItem(gear.body).fatigue,head:getItem(gear.head).fatigue});
+  leave(loaded);assert.equal(equipmentSetStatus(loaded.party[0],getItem).active,true);
+ }
+});
+
+
+test('named and reforged Adorned and eastern pieces retain their original set membership',()=>{
+ for(const [base,head,family]of [['bb-adorned-warriors-armor','bb-adorned-closed-flat-top-with-mail','adorned'],['samurai-wushi-armor','samurai-helmet','samurai'],['samurai-tycoon-armor','samurai-tycoon-helmet','tycoon']]){
+  for(const body of [createFamedItemId(base,92,5),encodeBoundedForgeItem(base,{locked:false,foundation:{armorPct:20},prefixes:[],suffixes:[]},id=>ITEMS.find(i=>i.id===id))]){
+   const {state,unit}=fight({body,head,bodyCondition:30,headCondition:20});assert.equal(unit.setArmor.id,family);
+   unit.bodyArmor-=3;unit.headArmor-=2;const worn={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head')};
+   const loaded=validateSave(JSON.parse(JSON.stringify(state)));leave(loaded);
+   assert.deepEqual([loaded.party[0].armorDurability.body,loaded.party[0].armorDurability.head],[worn.body,worn.head]);
+  }
  }
 });

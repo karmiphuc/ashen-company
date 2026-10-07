@@ -88,6 +88,9 @@ standard Assassin's Robe and Face Mask therefore provide **138 body armor,
 | Ninja | Ninja/Elite Ninja Suit with Ninja/Elite Ninja Mask; regular and elite pieces can mix |
 | Golden Scale | Golden Scale Armor with Gold and Black Turban |
 | Golden Lamellar | Golden Lamellar Armor with Heavy Lamellar Helmet |
+| Adorned | Adorned Mail Shirt, Warrior’s Armor or Heavy Mail Hauberk with Adorned Closed Flat Top or Full Helm |
+| Samurai | Samurai Armor with Samurai Helmet |
+| Tycoon | Tycoon Armor with Tycoon Helmet |
 | Noble | Noble/heraldic body gear with noble, heraldic or knightly headgear, including full helms, bascinets and sallets |
 
 Ordinary, named and reforged versions qualify by their **original design**.
@@ -130,6 +133,6 @@ customization within that style.
 Current behavior is defined by `src/reforged-items.js`, the forge transactions
 in `src/engine.js`, and `src/equipment-sets.js`.
 
-Battles saved under set rules 1–3 retain their original memberships and bonuses
+Battles saved under set rules 1–4 retain their original memberships and bonuses
 until they finish, including the former broad Southern family. New battles use
-the curated version-4 rules; stored gear condition remains unchanged.
+version-5 rules, which add Adorned, Samurai and Tycoon to the curated sets; stored gear condition remains unchanged.
