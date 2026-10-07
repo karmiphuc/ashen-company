@@ -1,4 +1,4 @@
-import { effectiveArmorFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
+import { EQUIPMENT_SET_RULES_VERSION, isEquipmentSetRulesVersion, effectiveArmorFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
 import { equipmentPerk, equipmentBoost, equipmentRangedReach, rollAttachment } from './item-affixes.js';
 import { recordQuestCompletion } from './quest-completion.js';
 import { BLACKSMITH_STAGES, initialBlacksmith, blacksmithIndex, blacksmithUnlocked, discoverBlacksmith, blacksmithEncounters, validateBlacksmith } from './legendary-blacksmith.js';
@@ -3117,7 +3117,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed,camp,encounterAffixes(state,camp.id,camp.generation)) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     injuryRulesVersion:1, injuryRng:hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}:injuries`),
-    status: 'active', equipmentSetRulesVersion:2, itemAffixRulesVersion:2, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', equipmentSetRulesVersion:EQUIPMENT_SET_RULES_VERSION, itemAffixRulesVersion:2, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -6035,7 +6035,7 @@ function validateBattle(input, party, worldState) {
   assert(validCount(lootSeed) && lootSeed <= 0xffffffff, 'battle loot seed');
   const field = validateBattleField(input.field);
   assert(input.escapeRulesVersion===undefined||input.escapeRulesVersion===1,'battle escape rules');
-  assert(input.equipmentSetRulesVersion===undefined||[1,2].includes(input.equipmentSetRulesVersion),'battle equipment set rules');
+  assert(input.equipmentSetRulesVersion===undefined||isEquipmentSetRulesVersion(input.equipmentSetRulesVersion),'battle equipment set rules');
   assert(input.itemAffixRulesVersion===undefined||[1,2].includes(input.itemAffixRulesVersion),'battle item affix rules');
   assert(input.championLootVersion===undefined||[1,2].includes(input.championLootVersion),'battle champion loot rules');
   assert(input.enemyScalingVersion===undefined||input.enemyScalingVersion===1,'battle enemy scaling rules');
@@ -6154,7 +6154,7 @@ function validateBattle(input, party, worldState) {
         if (unit[key] === legacy) unit[key] = item.armor;
       }
     }
-    assert(unit.setArmor===undefined||[1,2].includes(input.equipmentSetRulesVersion)&&validSetArmorSnapshot(unit,getItem,input.equipmentSetRulesVersion),'battle set armor');
+    assert(unit.setArmor===undefined||isEquipmentSetRulesVersion(input.equipmentSetRulesVersion)&&validSetArmorSnapshot(unit,getItem,input.equipmentSetRulesVersion),'battle set armor');
     const expectedSet=input.equipmentSetRulesVersion?createSetArmorSnapshot(unit,getItem,{},input.equipmentSetRulesVersion):null;
     assert(Boolean(unit.setArmor)===Boolean(expectedSet),'battle set armor presence');
     assert(unit.maxBodyArmor === (expectedSet?.body.effectiveMax??armorMaximum(unit.equipment.armor)) && maxAttachmentArmor === armorMaximum(unit.equipment.attachment) && unit.maxHeadArmor === (expectedSet?.head.effectiveMax??armorMaximum(unit.equipment.helmet)), 'battle armor maximum');

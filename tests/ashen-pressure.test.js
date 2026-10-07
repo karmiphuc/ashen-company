@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { baseArmorCondition } from '../src/equipment-sets.js';
 import assert from 'node:assert/strict';
 import {createGame,SETTLEMENTS,getItem,getUndeadEncounters,getFactionPatrols,startBattle,advanceBattle,validateSave,retreatBattle,finishBattle} from '../src/engine.js';
 import {ASHEN_CONFIG as C,campaignHour} from '../src/crisis-director.js';
@@ -61,10 +62,15 @@ for(const index of [0,1,2])test(`marshal ${index+1} carries four stable named tr
  assert.equal(new Set(s.battle.units.map(u=>`${u.q},${u.r}`)).size,s.battle.units.length);
  assert.deepEqual(validateSave(s),s);
  const kit=structuredClone(boss.equipment);boss.hp=100;boss.bodyArmor=120;boss.headArmor=110;boss.shieldDurability=10;
+ const worn={body:baseArmorCondition(boss,'body'),head:baseArmorCondition(boss,'head')};
+ const expectedBody=boss.setArmor?Math.floor(worn.body*boss.maxBodyArmor/boss.setArmor.body.baseMax):worn.body;
+ const expectedHead=boss.setArmor?Math.floor(worn.head*boss.maxHeadArmor/boss.setArmor.head.baseMax):worn.head;
  assert.ok(retreatBattle(s).ok);assert.ok(finishBattle(s).ok);assert.deepEqual(validateSave(s),s);
  const retry=getUndeadEncounters(s).find(u=>u.id===e.id);engage(s,retry);
  const resumed=s.battle.units.find(u=>u.troopIndex===0);
- assert.deepEqual(resumed.equipment,kit);assert.equal(resumed.hp,100);assert.equal(resumed.bodyArmor,120);assert.equal(resumed.shieldDurability,10);
+ assert.deepEqual(resumed.equipment,kit);assert.equal(resumed.hp,100);assert.equal(resumed.bodyArmor,expectedBody);assert.equal(resumed.headArmor,expectedHead);assert.equal(resumed.shieldDurability,10);
+ assert.ok(resumed.bodyArmor<=boss.bodyArmor&&resumed.headArmor<=boss.headArmor);
+ assert.equal(resumed.setArmor?.body.baseCurrent??resumed.bodyArmor,worn.body);assert.equal(resumed.setArmor?.head.baseCurrent??resumed.headArmor,worn.head);
  assert.deepEqual(validateSave(s),s);
 });
 
