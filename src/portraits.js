@@ -1,3 +1,4 @@
+import { MOONFANG_ID, MOONFANG_ART } from './direwolf-crafting.js';
 // Local raster layers from Battle-Brothers-Legends/Legends-public.
 // See assets/portraits/legends-source.json for the pinned source manifest.
 import { DLC_ITEMS } from './dlc-items.js';
@@ -543,7 +544,7 @@ function layerSpec(category, item) {
     const handY=heavy?Math.min(100,115-bottom):rangedPose?105:111;
     return [named.portrait,(heavy?78:rangedPose?70:82)-gx,handY-gy,`scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`,`${gx}px ${gy}px`];
   }
-  const source = ancientRestoredArt(item) || DLC_ART[item?.baseId || item?.id || visual(item)];
+  const source = ((item?.baseId || item?.id) === MOONFANG_ID ? MOONFANG_ART : null) || ancientRestoredArt(item) || DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];
   const id = String(item?.baseId || item?.id || '').toLowerCase();
@@ -684,6 +685,7 @@ export function itemImage(item) {
   const restored = ancientRestoredArt(item);
   if (restored) return restored.icon;
   const id = item?.baseId || item?.id;
+  if (id === MOONFANG_ID) return MOONFANG_ART.icon;
   if(NAMED_WEAPON_ART[id])return NAMED_WEAPON_ART[id].icon;
   if (DLC_ART[id]) return DLC_ART[id].icon;
   return ITEM_IMAGES[id] ? `${ITEM_ROOT}${ITEM_IMAGES[id]}` : null;

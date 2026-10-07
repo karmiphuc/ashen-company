@@ -21,6 +21,7 @@ import { ARMOR_ATTACHMENTS } from './armor-attachments.js';
 import { NORTHERN_ITEMS } from './northern-items.js';
 import { FANTASY_ITEMS } from './fantasy-items.js';
 import { DLC_ITEMS } from './dlc-items.js';
+import { MOONFANG_ITEM, MOONFANG_ID, MOONFANG_FEE, DIREWOLF_HIDE, DIREWOLF_MAIL, direwolfCraftRoll } from './direwolf-crafting.js';
 import { RESTORED_ANCIENT_ITEMS, ancientRestorationRecipe, restoredAncientId, ancientRestorationRolls } from './ancient-restoration.js';
 import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, worldCampText, regionalOutfit, enemyRoleBonuses, ancientCampAt, ancientEnemies } from './regional-enemies.js';
 import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad, WORLD_LAYOUT_VERSION, compactPoint, authoredPoint } from './geography.js';
@@ -81,6 +82,7 @@ export const ITEMS = Object.freeze([
   ...FRONTIER_ITEMS,
   ...DLC_ITEMS,
   ...RESTORED_ANCIENT_ITEMS,
+  MOONFANG_ITEM,
   ...NAMED_WEAPONS,
 ]);
 
@@ -404,6 +406,38 @@ export function reforgeItem(state,quote){
  record(state,message.slice(0,470));return {...result(true,message),itemId:fresh.resultId,added};
 }
 
+function direwolfCraftStamp(state) {
+  return JSON.stringify([state.seed, state.direwolfCraftSerial ?? 0, state.inventory, state.inventoryCondition, state.gold, townAt(state)?.id, state.destination]);
+}
+export function getDirewolfCraftQuote(state, hideIndex, mailIndex) {
+  const blocked = actionBlocked(state); if (blocked) return blocked;
+  const access = requireTown(state); if (access.error) return access.error;
+  if (state.destination) return result(false, 'Stop at the settlement to visit its Armorer.');
+  if ((state.direwolfCraftSerial ?? 0) >= 1000000) return result(false, 'The direwolf crafting record is full.');
+  if (![hideIndex, mailIndex].every(index => Number.isSafeInteger(index) && index >= 0 && index < state.inventory.length) || hideIndex === mailIndex || state.inventory[hideIndex] !== DIREWOLF_HIDE || state.inventory[mailIndex] !== DIREWOLF_MAIL) return result(false, 'Choose one ordinary Direwolf Hide Armor and one ordinary Direwolf Mail Armor from your stash.');
+  if (!Array.isArray(state.inventoryCondition) || state.inventoryCondition.length !== state.inventory.length) return result(false, 'The stash condition record must be repaired before crafting.');
+  return { ok: true, hideIndex, mailIndex, fee: MOONFANG_FEE, affordable: state.gold >= MOONFANG_FEE, item: MOONFANG_ITEM, stamp: direwolfCraftStamp(state) };
+}
+export function craftDirewolfMoonfang(state, quote) {
+  if (!quote?.ok) return result(false, 'Review a valid direwolf recipe first.');
+  const fresh = getDirewolfCraftQuote(state, quote.hideIndex, quote.mailIndex);
+  if (!fresh.ok) return fresh;
+  if (fresh.stamp !== quote.stamp) return result(false, 'The stash or crafting quote changed. Review it before consuming any pieces.');
+  if (!fresh.affordable) return result(false, `The Armorer requires ${MOONFANG_FEE} crowns.`);
+  const roll = direwolfCraftRoll(state.seed, state.direwolfCraftSerial ?? 0);
+  const itemId = roll.named ? createFamedItemId(MOONFANG_ID, roll.namedSeed, 7) : MOONFANG_ID;
+  const maximum = itemCondition(itemId);
+  const consumed = new Set([fresh.hideIndex, fresh.mailIndex]);
+  const inventory = state.inventory.filter((_, index) => !consumed.has(index));
+  const conditions = state.inventoryCondition.filter((_, index) => !consumed.has(index));
+  inventory.push(itemId); conditions.push(maximum);
+  state.inventory = inventory; state.inventoryCondition = conditions;
+  state.gold -= MOONFANG_FEE; state.direwolfCraftSerial = (state.direwolfCraftSerial ?? 0) + 1;
+  const message = `The Armorer crafts ${getItem(itemId).name}${roll.named ? ' with named workmanship' : ''}. One Direwolf Hide, one Direwolf Mail and ${MOONFANG_FEE} crowns consumed.`;
+  record(state, message);
+  return { ...result(true, message), itemId, named: roll.named };
+}
+
 function ancientRestorationStamp(state) {
   return JSON.stringify([state.seed, state.ancientRestorationSerial ?? 0, state.inventory, state.inventoryCondition, state.gold, townAt(state)?.id, state.destination]);
 }
@@ -442,7 +476,7 @@ export function restoreAncientEquipment(state, quote) {
   return { ...result(true, message), crafted: Boolean(itemId), itemId, finish: outcome.finish, named: outcome.named, refund: itemId ? 0 : fresh.refund };
 }
 
-const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...RESTORED_ANCIENT_ITEMS.map(item => item.id), ...NAMED_WEAPONS.map(item => item.id)]);
+const NEW_ITEM_IDS = new Set(['bludgeon', 'rondel-dagger', 'light-crossbow', 'billhook', 'padded-gambeson', 'reinforced-mail', 'bascinet', ...ADDITIONAL_ITEMS.map(item => item.id), ...ARMOR_ATTACHMENTS.map(item => item.id), ...NORTHERN_ITEMS.map(item => item.id), ...FANTASY_ITEMS.map(item => item.id), ...MOUNTS.map(item => item.id), ...FRONTIER_ITEMS.map(item => item.id), ...DLC_ITEMS.map(item => item.id), ...RESTORED_ANCIENT_ITEMS.map(item => item.id), MOONFANG_ID, ...NAMED_WEAPONS.map(item => item.id)]);
 const GOOD_BY_ID = new Map(GOODS.map(good => [good.id, good]));
 const TOWN_BY_ID = new Map(SETTLEMENTS.map(town => [town.id, town]));
 const CAMP_BY_ID = new Map(CAMP_SITES.map(camp => [camp.id, camp]));
@@ -881,6 +915,7 @@ export function createGame(seed = Date.now()) {
   const state = {
     version: 1,
     ancientRestorationSerial: 0,
+    direwolfCraftSerial: 0,
     ashenWinter: initialAshenWinter(numericSeed),
     worldLayoutVersion: WORLD_LAYOUT_VERSION,
     seed: numericSeed,
@@ -4309,7 +4344,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
       target.bleeding={damage:Math.min(18,(target.bleeding?.damage??0)+option.bleed),turns:2,sourceId:actor.id};
     }
   }
-  if(!option?.noDamage)changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0) + (!ranged ? attachmentEffect(actor.equipment,'meleeMoraleDamage') : 0), battle));
+  if(!option?.noDamage)changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0) + (!ranged ? Math.max(getItem(actor.equipment?.armor)?.meleeMoraleDamage ?? 0, attachmentEffect(actor.equipment,'meleeMoraleDamage')) : 0), battle));
   const wound = inflictTemporaryInjury(state,actor,target,weapon,option,hpDamage,head);
   const fallen = target.hp === 0;
   const perkProcs = [], effects = [];
@@ -6420,6 +6455,7 @@ function validateBattle(input, party, worldState) {
 export function validateSave(input) {
   assert(input && typeof input === 'object' && !Array.isArray(input), 'expected an object');
   assert(input.ancientRestorationSerial === undefined || validCount(input.ancientRestorationSerial) && input.ancientRestorationSerial <= 1000000, 'ancient restoration serial');
+  assert(input.direwolfCraftSerial === undefined || validCount(input.direwolfCraftSerial) && input.direwolfCraftSerial <= 1000000, 'direwolf craft serial');
   const ashenWinter = validateAshenWinter(input.ashenWinter, input.seed, SETTLEMENTS);
   input = { ...input, ashenWinter };
   for (const encounter of getUndeadEncounters(input)) for (const enemy of encounter.enemies) {
@@ -6810,6 +6846,7 @@ export function validateSave(input) {
     ...(input.worldExploration===undefined?{}:{worldExploration:input.worldExploration}),
     version: 1, seed: input.seed, day: input.day, hour: input.hour,
     ...(input.ancientRestorationSerial === undefined ? {} : { ancientRestorationSerial: input.ancientRestorationSerial }),
+    ...(input.direwolfCraftSerial === undefined ? {} : { direwolfCraftSerial: input.direwolfCraftSerial }),
     ...(legendaryBlacksmith===undefined?{}:{legendaryBlacksmith}),
     ashenWinter,
     gold: input.gold, food: input.food, renown: input.renown,

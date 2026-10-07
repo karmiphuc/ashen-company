@@ -182,7 +182,10 @@ test('actual engine visuals select distinct authored body equipment layers', () 
 
 test('engine item IDs resolve to packaged inventory icons and unknown items are safe', () => {
   for (const item of ITEMS) {
-    if (item.restorationFinish) {
+    if (item.id === 'direwolf-moonfang-harness') {
+      assert.equal(itemImage(item), './assets/direwolf-moonfang/icon.png');
+      assert.ok(readFileSync(new URL('../assets/direwolf-moonfang/icon.png', import.meta.url)).length > 0);
+    } else if (item.restorationFinish) {
       assert.equal(itemImage(item), `./assets/ancient-restoration/${item.restorationSourceId}-${item.restorationFinish}-icon.png`);
       assert.ok(readFileSync(new URL(`../${itemImage(item).slice(2)}`, import.meta.url)).length > 0);
     } else if (item.collection) assert.match(itemImage(item), /^data:image\/png;base64,/);

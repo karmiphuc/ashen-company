@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.55.0 adds **Direwolf Moonfang Harness** crafting to every town Armorer: fuse one Direwolf Hide and one Direwolf Mail for 600 crowns into the selected asymmetric wolf-mantle design, with 180 armor / 13 fatigue, non-stacking melee intimidation and a 3% named chance. See [crafting and artwork rules](docs/DIREWOLF-MOONFANG.md).
+
 Version 0.54.0 adds **Ancient Armory restoration** at every open settlement’s Armorer: matching recovered pieces become restored bronze or silverish steel, with a separate named-item chance, explicit failure refunds, and original-sprite color treatments. See [recipes, stats and save rules](docs/ANCIENT-RESTORATION.md).
 
 See [equipment design features](docs/EQUIPMENT-DESIGN-FEATURES.md) for named

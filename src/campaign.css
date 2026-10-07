@@ -310,3 +310,16 @@ button.primary.is-ready:focus-visible{outline:2px solid #c4ff76;outline-offset:3
 @media(max-width:650px){.ancient-workbench{grid-template-columns:1fr}.ancient-designs{grid-template-columns:repeat(2,minmax(0,1fr))}.ancient-design{gap:6px;padding:8px;font-size:12px}.ancient-design img{width:28px}.ancient-design small{font-size:11px}}
 
 .ancient-armorer p{margin-bottom:12px}
+
+.armorer-recipes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.armorer-recipes [aria-pressed="true"]{outline:2px solid var(--gold,#b88942);outline-offset:1px}
+.direwolf-workbench{display:grid;grid-template-columns:minmax(180px,1fr) minmax(260px,1.7fr);gap:24px;align-items:start}
+.direwolf-hero{margin:0;text-align:center}
+.direwolf-hero>img{width:140px;height:280px;max-width:100%;object-fit:contain;image-rendering:pixelated}
+.direwolf-workbench p{margin-bottom:14px;line-height:1.65}
+.direwolf-material{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.direwolf-material>img{width:35px;height:70px;object-fit:contain;image-rendering:pixelated}
+.direwolf-material>span{flex:1;min-width:0}
+.direwolf-material strong,.direwolf-material small{display:block}
+.direwolf-material select{display:block;width:100%;min-height:44px;margin-top:6px}
+@media(max-width:650px){.direwolf-workbench{grid-template-columns:1fr}.direwolf-hero>img{height:220px;width:110px}}

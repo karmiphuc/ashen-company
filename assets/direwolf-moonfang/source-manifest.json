@@ -1,0 +1,26 @@
+{
+  "selectedConcept": "exec-c0d7a775-a36d-4f64-b30e-27c8f97e7660.png",
+  "provenance": "Original AI-generated adaptation of the selected Moonfang concept, grounded in the existing Direwolf Hide and Direwolf Mail artwork.",
+  "references": [
+    "bb-werewolf-hide-armor",
+    "bb-werewolf-mail-armor"
+  ],
+  "assets": [
+    {
+      "layer": "icon",
+      "generatedMaster": "exec-0e8d3fde-d8e4-47c0-9e68-d4704f8b1680.png",
+      "masterSha256": "4059d00aadfb88a082e825492ab485a7057f58a2208391ee75b4e7b65594a879",
+      "path": "assets/direwolf-moonfang/icon.png",
+      "sha256": "f4e916916141098250764185198e242686ba6d164ab22224a8ec223205faa42f",
+      "packaging": "ImageMagick alpha trim, aspect-preserving resize, transparent centered canvas 140x280"
+    },
+    {
+      "layer": "portrait",
+      "generatedMaster": "exec-c56cd5aa-b5ba-4310-91ed-a713ada7c931.png",
+      "masterSha256": "763b8ed6cf2eea75980ee71812a0a78882532e6dae15127f5e8dde38631dbea6",
+      "path": "assets/direwolf-moonfang/portrait.png",
+      "sha256": "d41d7055024432d06c886796531ffdf7e3587b4597d038f213380c68a8077e39",
+      "packaging": "ImageMagick alpha trim, aspect-preserving resize, transparent bottom-aligned canvas 104x94; portrait anchor left0 top20"
+    }
+  ]
+}
