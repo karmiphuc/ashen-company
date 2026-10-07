@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createGame, getItem, ITEMS, SETTLEMENTS, getCampSites, getAncientRestorationQuote, restoreAncientEquipment, validateSave, equipItem, unequipItem, sellItem, buyItem, getMarket, getCompanyStats, createFamedItemId, startBattle, retreatBattle, finishBattle } from '../src/engine.js';
-import { ancientRestorationOutcome, ancientRestorationRolls, RESTORED_ANCIENT_ITEMS, restoredAncientId, ANCIENT_RESTORATION_TARGETS } from '../src/ancient-restoration.js';
+import { ancientRestorationOutcome, ancientRestorationRolls, RESTORED_ANCIENT_ITEMS, restoredAncientId, ANCIENT_RESTORATION_TARGETS, ancientRestorationRecipe } from '../src/ancient-restoration.js';
 import { ancientArmorerHTML, ancientRestorationConfirmationHTML, ancientRestorationResultHTML } from '../src/ancient-armorer-ui.js';
 import { townActionsHTML } from '../src/campaign-ui.js';
 import { getItemDetails } from '../src/item-details.js';
@@ -85,7 +85,7 @@ test('approved stats and all explicit variants resolve against immutable restore
 test('all four successful result types consume exact copies, create full condition, survive reload, and reject replay', () => {
   for (const finish of ['bronze', 'steel']) for (const named of [false, true]) {
     const { state, quote, outcome } = craft(finish, named);
-    assert.equal(state.gold, 450); assert.equal(state.ancientRestorationSerial, 1);
+    assert.equal(state.gold, 280); assert.equal(state.ancientRestorationSerial, 1);
     assert.equal(outcome.finish, finish); assert.equal(outcome.named, named);
     assert.deepEqual(state.inventory, ['cloth-hood', outcome.itemId]);
     assert.equal(state.inventoryCondition[1], getItem(outcome.itemId).armor);
@@ -96,8 +96,8 @@ test('all four successful result types consume exact copies, create full conditi
   }
 });
 
-test('failure consumes materials and refunds half gold; helmets use two pieces and 300 crowns', () => {
-  for (const [source, netFee, count] of [[body, 225, 3], [head, 150, 2]]) {
+test('failure refunds half the calculated fee; helmets still use two pieces', () => {
+  for (const [source, netFee, count] of [[body, 310, 3], [head, 280, 2]]) {
     const { state, quote, outcome } = craft(null, false, source);
     assert.equal(quote.count, count); assert.equal(state.gold, 900 - netFee);
     assert.deepEqual(state.inventory, ['cloth-hood']); assert.deepEqual(state.inventoryCondition, [20]);
@@ -105,7 +105,7 @@ test('failure consumes materials and refunds half gold; helmets use two pieces a
     assert.equal(state.ancientRestorationSerial, 1); assert.deepEqual(validateSave(state), state);
   }
   const { state, outcome } = craft('steel', false, head);
-  assert.equal(state.gold, 600); assert.equal(getItem(outcome.itemId).armor, 288); assert.equal(getItem(outcome.itemId).fatigue, 18);
+  assert.equal(state.gold, 340); assert.equal(getItem(outcome.itemId).armor, 288); assert.equal(getItem(outcome.itemId).fatigue, 18);
 });
 
 test('full stash crafting replaces materials without requiring another slot', () => {
@@ -129,7 +129,7 @@ test('invalid material selections, stale quotes and insufficient funds never mut
     materials(s); const quote = getAncientRestorationQuote(s, [0, 1, 2]); mutate(s);
     const before = structuredClone(s); assert.equal(restoreAncientEquipment(s, quote).ok, false); assert.deepEqual(s, before);
   }
-  materials(s); s.gold = 449; const quote = getAncientRestorationQuote(s, [0, 1, 2]), before = structuredClone(s);
+  materials(s); s.gold = 619; const quote = getAncientRestorationQuote(s, [0, 1, 2]), before = structuredClone(s);
   assert.equal(restoreAncientEquipment(s, quote).ok, false); assert.deepEqual(s, before);
 });
 
@@ -187,7 +187,7 @@ test('normal stock never contains craft-only variants; UI states exact odds, cos
   const html = ancientArmorerHTML(s, { sourceId: body, indices: [0, 1, 2] });
   assert.match(html, /80% bronze · 10% silverish steel · 10% failure/);
   assert.match(html, /separate 3%/); assert.match(html, /260 armor · 20 fatigue/); assert.match(html, /312 armor · 22 fatigue/);
-  assert.match(ancientRestorationConfirmationHTML(getAncientRestorationQuote(s, [0, 1, 2])), /225 crowns refunded/);
+  assert.match(ancientRestorationConfirmationHTML(getAncientRestorationQuote(s, [0, 1, 2])), /310 crowns refunded/);
 });
 
 test('all filtered sprites retain dimensions, every alpha value and original portrait anchors, and are cached offline', async () => {
@@ -214,4 +214,25 @@ test('all filtered sprites retain dimensions, every alpha value and original por
   const html = portraitHTML({ name: 'Test', seed: 1 }, { armor, helmet });
   assert.match(html, /src="\.\/assets\/ancient-restoration\/bb-ancient-plate-harness-steel-portrait.png"/);
   assert.match(html, /bb-ancient-honorguard-helmet-bronze-portrait.png/);
+});
+
+test('every restoration fee uses repaired bronze protection and fatigue, including exact affordability', () => {
+  for (const sourceId of Object.keys(ANCIENT_RESTORATION_TARGETS)) {
+    const bronze = getItem(restoredAncientId(sourceId, 'bronze'));
+    const fee = bronze.armor * 2 + bronze.fatigue * 5;
+    assert.equal(ancientRestorationRecipe(sourceId).fee, fee);
+    const s = createGame(seedFor('bronze'));
+    const indices = materials(s, sourceId);
+    s.inventoryCondition.fill(0);
+    s.gold = fee - 1;
+    const quote = getAncientRestorationQuote(s, indices);
+    assert.equal(quote.fee, fee); assert.equal(quote.refund, fee / 2);
+    assert.equal(quote.affordable, false);
+    const before = structuredClone(s);
+    assert.equal(restoreAncientEquipment(s, quote).ok, false);
+    assert.deepEqual(s, before);
+    s.gold = fee;
+    assert.equal(restoreAncientEquipment(s, getAncientRestorationQuote(s, indices)).ok, true);
+    assert.equal(s.gold, 0);
+  }
 });

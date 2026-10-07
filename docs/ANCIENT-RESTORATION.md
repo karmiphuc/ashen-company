@@ -2,14 +2,16 @@
 
 An Armorer at every open settlement restores ancient equipment independently of
 Odran's quest or randomly generated specialist facilities. Body recipes consume
-three matching ordinary stash pieces and 450 crowns; helmet recipes consume two
-and 300 crowns. Counts include all materials: there is no additional target item.
+three matching ordinary stash pieces; helmet recipes consume two. The gold fee
+is restored bronze armor × 2 + restored bronze fatigue × 5. Steel and named
+upgrades carry no extra charge. For example, the Plate Harness costs 620 crowns
+(260 × 2 + 20 × 5), and the Honor Guard Helmet costs 560 (240 × 2 + 16 × 5). Counts include all materials: there is no additional target item.
 Worn/broken pieces qualify. Equipped, named, reforged, and already restored items
 do not. Players select exact copies; initial selection favors the most worn.
 
 Each confirmed attempt consumes all submitted pieces. The primary roll is 80%
 bronze, 10% silverish steel, and 10% failure. Failure creates no item and refunds
-225 crowns for body armor or 150 for helmets. Success produces one fully repaired
+half the recipe fee (310 crowns for the Plate Harness, 280 for the Honor Guard Helmet). Success produces one fully repaired
 piece, followed by an independent 3% named roll using existing version-7 affixes.
 Steel adds 20% protection and 12% fatigue to the bronze baseline, rounded to the
 nearest integer once, before named bonuses. Unconditional outcomes are 77.6%
