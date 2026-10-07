@@ -85,7 +85,7 @@ test('the existing Armorer exposes Direwolf tabs and saves both crafting transac
   expect(restored.ancientRestorationSerial).toBe(1);
   expect(restored.inventory).not.toContain('bb-ancient-plate-harness');
   expect([2380, 2690]).toContain(restored.gold);
-  await page.locator('[data-action="ancient-armorer"]').click();
+  await page.locator('#modal [data-action="ancient-armorer"]').click();
   await page.locator('[data-action="direwolf-helmets"]').click();
   await expect(page.locator('#modal')).toContainText('Direwolf Leather Hood');
   await page.locator('[data-action="direwolf-armorer"]').click();
