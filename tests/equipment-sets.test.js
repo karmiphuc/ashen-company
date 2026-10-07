@@ -234,7 +234,7 @@ test('boosted named armor maxima cannot be mistaken for legacy imported armor va
 });
 
 test('cultural fitting crosses actual light-gear thresholds before Nimble, Agile Defense and ranged-reach checks',()=>{
- const helm=encodeBoundedForgeItem('bb-ancient-laurels',{locked:false,foundation:{rangedRange:1},prefixes:[],suffixes:[]},id=>ITEMS.find(i=>i.id===id));
+ const helm=encodeBoundedForgeItem('bb-ancient-laurels',{locked:false,foundation:{},prefixes:[{id:'farseeing',profile:{rangedRange:1}}],suffixes:[]},id=>ITEMS.find(i=>i.id===id));
  for(const gear of [{body:'bb-ancient-double-layer-mail',head:helm},{body:'bb-animal-hide-armor',head:'northern-bear-head'}]){
   const {person,unit}=fight(gear);person.perks=['nimble','agile-defense'];
   assert.equal(getItem(gear.body).fatigue+getItem(gear.head).fatigue,16);
