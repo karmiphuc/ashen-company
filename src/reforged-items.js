@@ -1,6 +1,6 @@
-import { PREFIX_EFFECTS, prefixEffectText } from './affix-prefixes.js';
+import { PREFIX_EFFECTS, EXPANDED_PREFIXES, AFFIX_MASTERIES, prefixEffectText } from './affix-prefixes.js';
 import { perkFlags, flaggedPerks } from './item-affixes.js';
-import {weaponTrainingVisual,PERK_BY_ID} from './perks.js';
+import {weaponTrainingVisual,weaponMasteryMatches,PERK_BY_ID} from './perks.js';
 // Immutable enhancement identities: one bounded, flattened profile per item.
 // All modifiers are beneficial increments above the recipient's unrolled base.
 export const FORGE_KEYS=Object.freeze(['armorPct','armorFlat','damagePct','damageLow','damageHigh','weight','accuracy','armorDamage','piercing','headChance','range','ammo','shieldDamage','skillFatigue','meleeDefense','rangedDefense','resolve','endurance','shieldMelee','shieldRanged','shieldDurability','meleeSkill','rangedSkill','initiative','maxHp','rangedRange','perkFlags','berserkAp','nimbleBoost','battleForgedBoost',...Object.keys(PREFIX_EFFECTS)]);
@@ -52,7 +52,7 @@ export function extractForgeProfile(item,catalog,{shieldMaximum=()=>0,shieldDama
 }
 function baseShieldDamage(item){if(item.shieldDamage!==undefined)return item.shieldDamage;const visual=weaponTrainingVisual(item)??'';return item.throwing?(visual.includes('axe')?(visual.includes('heavy')?24:18):(visual.includes('heavy')?18:12)):!item.ranged&&['axe','greataxe','hand-axe','longaxe','bardiche','throwingaxe','heavythrowingaxe'].includes(visual)?12:0;}
 const labels={armorPct:'Protection',armorFlat:'Protection',damagePct:'Damage',damageLow:'Minimum damage',damageHigh:'Maximum damage',weight:'Fatigue relief',accuracy:'Accuracy',armorDamage:'Armor damage',piercing:'Armor penetration',headChance:'Head hit chance',range:'Ranged reach',ammo:'Throwing capacity',shieldDamage:'Shield damage',skillFatigue:'Skill fatigue relief',meleeDefense:'Melee defense',rangedDefense:'Ranged defense',resolve:'Resolve',endurance:'Maximum fatigue',shieldMelee:'Melee shield defense',shieldRanged:'Ranged shield defense',shieldDurability:'Shield durability',meleeSkill:'Melee skill',rangedSkill:'Ranged skill',initiative:'Initiative',maxHp:'Hitpoints',rangedRange:'Light armor ranged reach',perkFlags:'Equipment perks',berserkAp:'Berserk bonus AP',nimbleBoost:'Nimble enhancement',battleForgedBoost:'Battle Forged enhancement'};
-export function forgeProfileRows(profile,item){return Object.entries(profile).map(([key,n])=>({key,label:labels[key]??PREFIX_EFFECTS[key]?.label,value:PREFIX_EFFECTS[key]?prefixEffectText(key,n):key==='perkFlags'?flaggedPerks(n).map(id=>PERK_BY_ID.get(id)?.name??id).join(', '):key==='nimbleBoost'?'Double defense; fatigue limit +5 (requires Nimble)':key==='battleForgedBoost'?`${n*5}% extra armor reduction (requires Battle Forged)`:key==='berserkAp'?`+${n} AP per proc (requires Berserk)`:`${['weight','skillFatigue'].includes(key)?'-':'+'}${n}${['armorPct','damagePct'].includes(key)?'%':['armorDamage','piercing','headChance'].includes(key)?' percentage points':''}`,inactive:['rangedReach','rangedHit','volleyDistance'].includes(key)&&item.slot==='weapon'&&!item.ranged?'Requires a ranged weapon':key==='duelistPct'&&(item.ranged||item.twoHanded)?'Requires a one-handed melee weapon':key==='rangedRange'&&(item.fatigue??0)>15?'Requires light armor and a bow/crossbow':key==='range'&&!item.ranged?'Requires a ranged weapon':key==='ammo'&&!item.throwing?'Requires a throwing weapon':key==='shieldDamage'&&!baseShieldDamage(item)?'Requires a shield-breaking weapon':null}));}
+export function forgeProfileRows(profile,item){return Object.entries(profile).map(([key,n])=>({key,label:labels[key]??PREFIX_EFFECTS[key]?.label,value:PREFIX_EFFECTS[key]?prefixEffectText(key,n):key==='perkFlags'?flaggedPerks(n).map(id=>PERK_BY_ID.get(id)?.name??id).join(', '):key==='nimbleBoost'?'Double defense; fatigue limit +5 (requires Nimble)':key==='battleForgedBoost'?`${n*5}% extra armor reduction (requires Battle Forged)`:key==='berserkAp'?`+${n} AP per proc (requires Berserk)`:`${['weight','skillFatigue'].includes(key)?'-':'+'}${n}${['armorPct','damagePct'].includes(key)?'%':['armorDamage','piercing','headChance'].includes(key)?' percentage points':''}`,inactive:key==='perkFlags'&&item.slot==='weapon'&&flaggedPerks(n).every(id=>AFFIX_MASTERIES.includes(id)&&!weaponMasteryMatches(id,item))?'Requires a weapon matching its mastery':['rangedReach','rangedHit','volleyDistance'].includes(key)&&item.slot==='weapon'&&!item.ranged?'Requires a ranged weapon':key==='duelistPct'&&(item.ranged||item.twoHanded)?'Requires a one-handed melee weapon':key==='rangedRange'&&(item.fatigue??0)>15?'Requires light armor and a bow/crossbow':key==='range'&&!item.ranged?'Requires a ranged weapon':key==='ammo'&&!item.throwing?'Requires a throwing weapon':key==='shieldDamage'&&!baseShieldDamage(item)?'Requires a shield-breaking weapon':null}));}
 export function forgeGroups(profile,recipient){
  const rows=forgeProfileRows(profile,recipient).filter(r=>!r.inactive);
  const groups=new Map();for(const row of rows){const group=['damagePct','damageLow','damageHigh'].includes(row.key)?'damage':['armorPct','armorFlat'].includes(row.key)?'protection':row.key;groups.set(group,[...(groups.get(group)??[]),row.key]);}return [...groups.values()];
@@ -65,6 +65,7 @@ export function encodeForgeItem(baseId,profile,catalog){
 const cache=new Map();
 export function resolveForgeItem(id,catalog){
  if(cache.has(id))return cache.get(id);
+ if(typeof id==='string'&&id.startsWith('forge4:'))return resolveBoundedForgeItem(id,catalog);
  if(typeof id!=='string'||id.length>384)return undefined;
  const match=/^(forge1|forge2|forge3):([a-z0-9-]{1,40}):([0-9a-z.]+)$/.exec(id);if(!match)return undefined;
  const definition=catalog(match[2]),parts=match[3].split('.');if(!definition||!isForgeSlot(definition.slot)||parts.length!==(match[1]==='forge1'?21:match[1]==='forge2'?30:FORGE_KEYS.length))return undefined;
@@ -73,7 +74,7 @@ export function resolveForgeItem(id,catalog){
  if(match[1]==='forge2'&&(profile.perkFlags??0)>255)return undefined;
  const item=applyForgeProfile(definition,profile,id);if(cache.size>=512)cache.delete(cache.keys().next().value);cache.set(id,item);return item;
 }
-export function applyForgeProfile(definition,p,id){
+export function applyForgeProfile(definition,p,id,affixes=null){
  const b=forgeBaseline(definition),item={...b,id,baseId:definition.id,rarity:'famed',forgeProfile:Object.freeze({...p}),forgeVersion:1,name:`${definition.name} — Reforged`},capped=[];
  const cap=(key,value,min,max)=>{const actual=Math.min(max,Math.max(min,value));if(actual!==value)capped.push(`${key} capped at ${actual}`);return actual;};
  item.fatigue=cap('Fatigue load',(b.fatigue??0)-(p.weight??0),0,80);
@@ -101,6 +102,113 @@ export function applyForgeProfile(definition,p,id){
  item.bonuses=Object.freeze(forgeProfileRows(p,b).map(r=>Object.freeze({label:r.label,value:r.value+(r.inactive?` · inactive: ${r.inactive}`:'')})));
  item.forgeWarnings=Object.freeze(capped);item.signatureDescription='Accumulated workmanship from sacrificed named gear. The original design and skills remain.';
  item.description=`${definition.description} Reforged by Odran, the Last Ember. ${capped.join('; ')}`;
+ if(affixes){
+  item.forgeVersion=4;item.forgeAffixes=freezeForgeAffixes(affixes);
+  if(!affixes.locked){
+   const prefixes=affixes.prefixes.map(a=>forgeAffixName('prefix',a)),suffixes=affixes.suffixes.map(a=>forgeAffixName('suffix',a));
+   item.name=`${prefixes.join(' ')} ${definition.name} ${suffixes.join(' & ')} — Reforged`.trim();
+  }
+  item.signatureDescription=affixes.locked?'Legacy workmanship preserved. Further merges are locked; full transfers preserve this restriction.':'Two prefix and two suffix slots. Identical affixes use the stronger roll; original craftsmanship is preserved.';
+ }
  item.price=Math.min(20000,Math.round((b.price??100)*2.4+Object.values(p).reduce((n,x)=>n+x,0)*10));
  return Object.freeze(item);
+}
+
+// forge4 keeps provenance rather than guessing slots from flattened stat fields.
+const oldPrefixes=[['bulwark','Bulwark','shield-expert'],['tireless','Tireless','recover'],['trailblazer','Trailblazer','pathfinder'],['fleet','Fleet','fleet-footed'],['balanced','Balanced','relentless'],['steadfast','Steadfast','steel-brow'],['watchful','Watchful','anticipation'],['ruthless','Ruthless','backstabber'],['farseeing','Farseeing',null,'rangedRange'],['bloodrush','Bloodrush',null,'berserkAp'],['featherbound','Featherbound',null,'nimbleBoost'],['tempered','Tempered',null,'battleForgedBoost']];
+const prefixDefinitions=new Map([...oldPrefixes.map(([id,name,perk,key])=>[id,{id,name,perk,key,grades:[1]}]),...EXPANDED_PREFIXES.map(p=>[p.id,p])]);
+const suffixNames={precision:'of Precision',ruin:'of Ruin',slaying:'of Slaying',plenty:'of Plenty',guard:'of the Guard',deflection:'of Deflection',endurance:'of Endurance',resolve:'of Resolve',vigor:'of Vigor',vitality:'of Vitality',striking:'of Striking',aim:'of Aim',alacrity:'of Alacrity',craftsmanship:'Legacy craftsmanship'};
+const prefixKeys=new Set(['rangedRange','perkFlags','berserkAp','nimbleBoost','battleForgedBoost',...Object.keys(PREFIX_EFFECTS)]);
+function freezeForgeAffixes(a){return Object.freeze({locked:a.locked,foundation:Object.freeze({...a.foundation}),prefixes:Object.freeze(a.prefixes.map(p=>Object.freeze({id:p.id,profile:Object.freeze({...p.profile})}))),suffixes:Object.freeze(a.suffixes.map(p=>Object.freeze({id:p.id,profile:Object.freeze({...p.profile})})))});}
+export function forgeAffixName(kind,a){
+ if(kind==='suffix')return suffixNames[a.id];
+ const d=prefixDefinitions.get(a.id);if(!d)return a.id;
+ const grade=d.key?d.grades.indexOf(a.profile[d.key]):-1;
+ return d.name+(d.grades.length>1&&grade>=0?` ${['I','II','III'][grade]}`:'');
+}
+export function flattenForgeAffixes(a){
+ const result={...a.foundation};
+ for(const part of [...a.prefixes,...a.suffixes])for(const [key,n]of Object.entries(part.profile))result[key]=key==='perkFlags'?(result[key]??0)|n:(result[key]??0)+n;
+ return result;
+}
+export function extractForgeAffixes(item,catalog,options={}){
+ if(item.forgeAffixes)return item.forgeAffixes;
+ const full=extractForgeProfile(item,catalog,options);if(!full)return null;
+ if(item.forgeVersion)return freezeForgeAffixes({locked:true,foundation:full,prefixes:[],suffixes:[]});
+ const foundation={...full},prefixes=[],suffixes=[];
+ if(item.affixPrefix){const profile=Object.fromEntries(Object.entries(full).filter(([key])=>prefixKeys.has(key)));if(Object.keys(profile).length)prefixes.push({id:item.affixPrefix.id,profile});for(const key of Object.keys(profile))delete foundation[key];}
+ if(item.affixSuffix?.profile){const profile={...item.affixSuffix.profile};suffixes.push({id:item.affixSuffix.id,profile});for(const [key,n]of Object.entries(profile)){foundation[key]=(foundation[key]??0)-n;if(!foundation[key])delete foundation[key];}}
+ else if(Object.keys(foundation).length){suffixes.push({id:'craftsmanship',profile:{...foundation}});for(const key of Object.keys(foundation))delete foundation[key];}
+ return freezeForgeAffixes({locked:false,foundation,prefixes,suffixes});
+}
+function validAffixRecord(a,kind,slot){
+ if(!a||typeof a!=='object'||Object.keys(a).sort().join(',')!=='id,profile')return false;
+ const p=normalizeForgeProfile(a.profile,slot);if(!p||!Object.keys(p).length)return false;
+ if(kind==='prefix'){
+  const d=prefixDefinitions.get(a.id);if(!d)return false;
+  if(d.mastery)return Object.keys(p).length===1&&flaggedPerks(p.perkFlags).length===1&&AFFIX_MASTERIES.includes(flaggedPerks(p.perkFlags)[0]);
+  return Object.keys(p).length===1&&(d.perk?p.perkFlags===perkFlags([d.perk]):d.grades.includes(p[d.key]));
+ }
+ if(!Object.hasOwn(suffixNames,a.id)||Object.keys(p).some(key=>prefixKeys.has(key)))return false;
+ if(a.id==='craftsmanship')return true;
+ const key={precision:'accuracy',ruin:'armorDamage',plenty:'ammo',guard:slot==='shield'?'shieldMelee':'meleeDefense',deflection:slot==='shield'?'shieldRanged':'rangedDefense',endurance:'shieldDurability',resolve:'resolve',vigor:'endurance',vitality:'maxHp',striking:'meleeSkill',aim:'rangedSkill',alacrity:'initiative'}[a.id];
+ const cap={precision:4,ruin:10,plenty:2,guard:4,deflection:5,endurance:10,resolve:7,vigor:7,vitality:9,striking:4,aim:4,alacrity:6}[a.id];
+ return a.id==='slaying'?Object.keys(p).sort().join(',')==='damageHigh,damageLow'&&p.damageLow===p.damageHigh&&p.damageLow<=5:Object.keys(p).length===1&&p[key]>0&&p[key]<=cap;
+}
+function validForgeAffixes(a,slot){
+ if(!a||typeof a.locked!=='boolean'||!Array.isArray(a.prefixes)||!Array.isArray(a.suffixes)||a.prefixes.length>2||a.suffixes.length>2)return false;
+ if(!normalizeForgeProfile(a.foundation,slot)||!normalizeForgeProfile(flattenForgeAffixes(a),slot))return false;
+ if(a.locked)return !a.prefixes.length&&!a.suffixes.length&&Object.keys(a.foundation).length>0;
+ return !Object.keys(a.foundation).some(key=>prefixKeys.has(key))&&['prefix','suffix'].every(kind=>{const parts=a[`${kind}es`];return new Set(parts.map(p=>p.id)).size===parts.length&&parts.every(p=>validAffixRecord(p,kind,slot));});
+}
+const sparseProfile=p=>FORGE_KEYS.flatMap((key,index)=>p[key]?[`${index.toString(36)}-${p[key].toString(36)}`]:[]).join('.')||'0';
+function parseSparseProfile(raw){
+ if(raw==='0')return {};
+ const p={};for(const part of raw.split('.')){const match=/^([0-9a-z]+)-([0-9a-z]+)$/.exec(part);if(!match)return null;const key=FORGE_KEYS[parseInt(match[1],36)],n=parseInt(match[2],36);if(!key||Object.hasOwn(p,key)||!Number.isSafeInteger(n)||n<=0)return null;p[key]=n;}
+ return sparseProfile(p)===raw?p:null;
+}
+export function encodeBoundedForgeItem(baseId,a,catalog){
+ const base=catalog(baseId);if(!base||!isForgeSlot(base.slot)||!validForgeAffixes(a,base.slot))throw new TypeError('Invalid bounded affix package.');
+ const record=parts=>[...parts].sort((a,b)=>a.id.localeCompare(b.id)).map(p=>`${p.id},${sparseProfile(p.profile)}`).join(';')||'0';
+ const id=`forge4:${baseId}:${a.locked?'l':'n'}:${sparseProfile(a.foundation)}:${record(a.prefixes)}:${record(a.suffixes)}`;
+ if(id.length>1536||!Object.keys(flattenForgeAffixes(a)).length)throw new TypeError('Invalid bounded affix identity.');return id;
+}
+function resolveBoundedForgeItem(id,catalog){
+ if(id.length>1536)return undefined;
+ const parts=id.split(':');if(parts.length!==6||!['l','n'].includes(parts[2]))return undefined;
+ const definition=catalog(parts[1]);if(!definition||!isForgeSlot(definition.slot))return undefined;
+ const parseRecords=raw=>raw==='0'?[]:raw.split(';').map(raw=>{const [id,p,...extra]=raw.split(',');const profile=p&&parseSparseProfile(p);return !extra.length&&profile?{id,profile}:null;});
+ const a={locked:parts[2]==='l',foundation:parseSparseProfile(parts[3]),prefixes:parseRecords(parts[4]),suffixes:parseRecords(parts[5])};
+ try{if(!a.foundation||a.prefixes.some(p=>!p)||a.suffixes.some(p=>!p)||encodeBoundedForgeItem(definition.id,a,catalog)!==id)return undefined;}catch{return undefined;}
+ const item=applyForgeProfile(definition,flattenForgeAffixes(a),id,a);if(cache.size>=512)cache.delete(cache.keys().next().value);cache.set(id,item);return item;
+}
+export function forgeAffixOptions(source,recipient,item){
+ if(source.locked||recipient.locked)return [];
+ return ['prefix','suffix'].flatMap(kind=>source[`${kind}es`].map(a=>{
+  const old=recipient[`${kind}es`].find(p=>p.id===a.id),inactive=forgeProfileRows(a.profile,item).find(r=>r.inactive)?.inactive;
+  // A duplicate is upgraded as a complete package only when no field regresses.
+  const stronger=!old||Object.entries(old.profile).every(([key,n])=>key==='perkFlags'?(a.profile[key]??0)===n:(a.profile[key]??0)>=n)&&Object.entries(a.profile).some(([key,n])=>n>(old.profile[key]??0));
+  return {kind,affix:a,upgrade:!!old,inactive,eligible:!inactive&&stronger&&(!!old||recipient[`${kind}es`].length<2),reason:inactive||(!stronger?'Already as strong':!old&&recipient[`${kind}es`].length>=2?'Slots full':null)};
+ }));
+}
+export function mergeForgeAffixes(source,recipient,item,seed){
+ const a={locked:false,foundation:{...recipient.foundation},prefixes:[...recipient.prefixes],suffixes:[...recipient.suffixes]},options=forgeAffixOptions(source,recipient,item).filter(o=>o.eligible),selected=[];
+ // Stable pair/serial seed: menu reopen and save reload cannot change selection.
+ const rank=(id)=>{let h=seed>>>0;for(const c of id)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;return h;};
+ for(const o of options.sort((a,b)=>rank(a.kind+a.affix.id)-rank(b.kind+b.affix.id)||a.affix.id.localeCompare(b.affix.id))){
+  const list=a[`${o.kind}es`],index=list.findIndex(p=>p.id===o.affix.id);if(index<0&&list.length>=2)continue;
+  if(index>=0)list[index]=o.affix;else list.push(o.affix);selected.push(o);if(selected.length>=1+seed%3)break;
+ }
+ return {affixes:freezeForgeAffixes(a),selected,options:forgeAffixOptions(source,recipient,item)};
+}
+export function forgeRecipe(affixes){
+ const goods={};
+ const add=(id,n)=>{goods[id]=(goods[id]??0)+n;};
+ for(const a of affixes){
+  const id=a.affix?.id??a.id;
+  if(['trueflight','longshot','volleying','farseeing','surefooted','trailblazer','fleet','plenty','precision','aim','alacrity'].includes(id))add('timber',1);
+  else if(['hearty','supple','unyielding','prescient','mending','swift-handed','layered','featherbound','balanced','tireless','guard','deflection','vigor','vitality','resolve'].includes(id))add('wool',1);
+  else add('iron',id==='unyoked'?3:1);
+ }
+ if(!Object.keys(goods).length)add('iron',1);return goods;
 }

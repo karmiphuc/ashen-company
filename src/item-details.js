@@ -49,6 +49,7 @@ export function getItemDetails(item, condition) {
   for(const [key,value] of Object.entries(item.perkBoosts??{}))if(value&&PREFIX_EFFECTS[key])notes.push(prefixEffectText(key,value));
   if(item.signatureDescription)notes.push(item.signatureDescription);
   if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
+  if(item.forgeAffixes)notes.push(item.forgeAffixes.locked?'Legacy forge bonuses are preserved. Further merges are locked; full transfers preserve the restriction.':`Affix slots: ${item.forgeAffixes.prefixes.length}/2 prefixes, ${item.forgeAffixes.suffixes.length}/2 suffixes. Duplicate affixes upgrade without adding; inactive affixes still occupy slots.`);
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;

@@ -80,3 +80,24 @@ export function hasPerk(person, perkId) {
 export function weaponTrainingVisual(weapon) {
   return weapon?.trainingVisual ?? weapon?.visual;
 }
+
+const SWORD_VISUALS = new Set(['sword', 'longsword', 'greatsword', 'shamshir', 'estoc', 'cleaver', 'falx']);
+const AXE_VISUALS = new Set(['axe', 'greataxe', 'hand-axe', 'longaxe', 'bardiche', 'throwingaxe', 'heavythrowingaxe']);
+const MACE_VISUALS = new Set(['mace', 'hammer', 'heavyhammer', 'polehammer', 'flail', 'three-headed-flail', 'goedendag']);
+const DAGGER_VISUALS = new Set(['dagger', 'fighting-knife', 'qatal']);
+
+export function weaponMasteryMatches(perkId, weapon) {
+  const visual = weaponTrainingVisual(weapon);
+  switch (perkId) {
+    case 'sword-training': return SWORD_VISUALS.has(visual);
+    case 'axe-training': return AXE_VISUALS.has(visual);
+    case 'mace-training': return MACE_VISUALS.has(visual);
+    case 'spear-training': return !weapon?.throwing && /spear|pike/.test(visual ?? '');
+    case 'polearm-training': return !weapon?.ranged && (weapon?.range ?? 1) >= 2;
+    case 'dagger-training': return DAGGER_VISUALS.has(visual);
+    case 'throwing-training': return weapon?.throwing === true;
+    case 'bow-mastery': return weapon?.ranged===true&&!weapon.throwing&&weapon.visual?.includes('bow')&&!weapon.visual.includes('crossbow');
+    case 'crossbow-mastery': return weapon?.ranged===true&&!weapon.throwing&&weapon.visual?.includes('crossbow');
+    default: return false;
+  }
+}

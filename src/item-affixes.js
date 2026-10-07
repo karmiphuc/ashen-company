@@ -22,7 +22,7 @@ function currentAffixes(actor,getItem) {
     if(slot==='shield'&&!shieldUsable)continue;
     const id=equipment[slot];
     // Legacy and ordinary gear cannot grant affixes; avoid resolving their rolls.
-    if(typeof id!=='string'||!id.startsWith('famed5:')&&!id.startsWith('famed7:')&&!id.startsWith('forge2:')&&!id.startsWith('forge3:'))continue;
+    if(typeof id!=='string'||!id.startsWith('famed5:')&&!id.startsWith('famed7:')&&!id.startsWith('forge2:')&&!id.startsWith('forge3:')&&!id.startsWith('forge4:'))continue;
     const item=getItem(id);if(!item)continue;
     for(const perk of item.grantedPerks??[])summary.perks.add(perk);
     for(const [key,value]of Object.entries(item.perkBoosts??{}))summary.boosts[key]=PREFIX_EFFECTS[key]?Math.max(summary.boosts[key]??0,value):(summary.boosts[key]??0)+value;
@@ -65,6 +65,8 @@ export function applyNamedAffixes(item, original, seed, bonuses, {expanded=false
   else if (key === 'armorDamage') item.armorDamage=Math.round((item.armorDamage+value/100)*100)/100;
   else item[key]=(item[key] ?? (key === 'ammoMax' ? 5 : 0))+value;
   bonuses.push(Object.freeze({label:`Suffix · ${label}`,value:`+${value}${key==='armorDamage'?' percentage points':''}`}));
+  const suffixKey=item.slot==='shield'?({defense:'shieldMelee',rangedDefense:'shieldRanged',durability:'shieldDurability'}[key]):({hitBonus:'accuracy',maxFatigue:'endurance',ammoMax:'ammo'}[key]??key);
+  const suffixProfile=Object.freeze(key==='damage'?{damageLow:value,damageHigh:value}:{[suffixKey]:value});
   const prefixPool = item.slot === 'shield' ? [
     ['bulwark','Bulwark','shield-expert','Shield Expert'],['tireless','Tireless','recover','Recover'],['tempered','Tempered',null,'Battle Forged: 5% extra armor damage reduction (requires the perk)']
   ] : item.slot === 'helmet' ? [
@@ -82,7 +84,7 @@ export function applyNamedAffixes(item, original, seed, bonuses, {expanded=false
   item.grantedPerks=Object.freeze(perk?[perk]:[]);
   if(prefixId==='farseeing')item.rangedRangeBonus=1;
   item.perkBoosts=Object.freeze(prefixId==='bloodrush'?{berserkAp:1}:prefixId==='featherbound'?{nimble:1}:prefixId==='tempered'?{battleForged:1}:{});
-  item.affixPrefix=Object.freeze({id:prefixId,name:prefix,effect});item.affixSuffix=Object.freeze({id:suffixId,name:suffix});
+  item.affixPrefix=Object.freeze({id:prefixId,name:prefix,effect});item.affixSuffix=Object.freeze({id:suffixId,name:suffix,profile:suffixProfile});
   item.name=`${prefix} ${item.name} ${suffix}`;
   bonuses.push(Object.freeze({label:`Prefix · ${prefix}`,value:perk?`Grants ${effect} while equipped`:effect}));
   item.signatureDescription=`${prefix}: ${effect}. Equipment perks do not stack with the same learned perk or another item granting it. Reserve gear grants no effects. Berserk bonuses stack up to +2 AP; Battle Forged up to 10% extra reduction. Nimble enhancement applies once.`;
@@ -99,7 +101,7 @@ export function applyNamedAffixes(item, original, seed, bonuses, {expanded=false
   item.perkBoosts=Object.freeze(prefix.key?{[prefix.key]:amount}:prefix.id==='bloodrush'?{berserkAp:1}:prefix.id==='featherbound'?{nimble:1}:prefix.id==='tempered'?{battleForged:1}:{});
   if(prefix.key==='shieldHealthPct'){item.unboostedShieldDurability=item.durability;item.durability=Math.ceil(item.durability*(1+amount/100));}
   const display=prefix.name+(prefix.grades.length>1?` ${['I','II','III'][grade]}`:'');
-  item.affixPrefix=Object.freeze({id:prefix.id,name:display,effect,tier:grade+1,value:amount});item.affixSuffix=Object.freeze({id:suffixId,name:suffix});
+  item.affixPrefix=Object.freeze({id:prefix.id,name:display,effect,tier:grade+1,value:amount});item.affixSuffix=Object.freeze({id:suffixId,name:suffix,profile:suffixProfile});
   item.name=`${display} ${item.name} ${suffix}`;
   bonuses.push(Object.freeze({label:`Prefix · ${display}`,value:effect}));
   item.signatureDescription=`${display}: ${effect}. Only worn gear grants effects. Graded bonuses use the strongest worn copy; learned perks are never duplicated.`;
