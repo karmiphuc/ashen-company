@@ -15,6 +15,7 @@ import { scheduledTownEvent } from '../src/town-events.js';
 import { shipmentPlan, CARAVAN_TRAVEL_HOURS } from '../src/caravans.js';
 import { advanceFactionSimulation, patrolDefinitions } from '../src/faction-patrols.js';
 import { campSidebarHTML } from '../src/campaign-ui.js';
+import { baseArmorCondition } from '../src/equipment-sets.js';
 
 const context = { settlements: SETTLEMENTS, report() {} };
 function setHour(s, hour) { s.day = Math.floor(hour / 24) + 1; s.hour = hour % 24; }
@@ -186,12 +187,19 @@ test('retreat stores troop casualties and exact damage without rerolling equipme
   const enemy=s.battle.units.find(u=>u.side==='enemy'); enemy.hp-=7; enemy.bodyArmor-=13;
   const dead=s.battle.units.find(u=>u.side==='enemy'&&u.id!==enemy.id); dead.hp=0;dead.alive=false;
   const lootSeed=s.battle.lootSeed, gear=structuredClone(enemy.equipment);
+  const worn={body:baseArmorCondition(enemy,'body'),head:baseArmorCondition(enemy,'head')};
+  // Set protection is reconstructed from persistent base wear; rounding must never heal it.
+  const expectedBody=enemy.setArmor?Math.floor(worn.body*enemy.maxBodyArmor/enemy.setArmor.body.baseMax):worn.body;
+  const expectedHead=enemy.setArmor?Math.floor(worn.head*enemy.maxHeadArmor/enemy.setArmor.head.baseMax):worn.head;
   retreatBattle(s); finishBattle(s);
   const restored=validateSave(s), next=getUndeadEncounters(restored).find(x=>x.id===e.id);
   assert.equal(next.enemies.length,e.enemies.length-1);
   restored.position={x:next.x,y:next.y}; startBattle(restored,next.id);
   const resumed=restored.battle.units.find(u=>u.id===enemy.id);
-  assert.equal(resumed.hp,enemy.hp);assert.equal(resumed.bodyArmor,enemy.bodyArmor);assert.deepEqual(resumed.equipment,gear);
+  assert.equal(resumed.hp,enemy.hp);assert.equal(resumed.bodyArmor,expectedBody);assert.equal(resumed.headArmor,expectedHead);
+  assert.ok(resumed.bodyArmor<=enemy.bodyArmor);assert.ok(resumed.headArmor<=enemy.headArmor);
+  assert.equal(resumed.setArmor?.body.baseCurrent??resumed.bodyArmor,worn.body);
+  assert.equal(resumed.setArmor?.head.baseCurrent??resumed.headArmor,worn.head);assert.deepEqual(resumed.equipment,gear);
   assert.equal(restored.battle.lootSeed,lootSeed);assert.deepEqual(validateSave(restored),restored);
 });
 
