@@ -9,8 +9,9 @@ test('built release boots, preserves its company and works offline with the exac
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(save => { if (!localStorage.getItem('ashen-company-save-v1')) localStorage.setItem('ashen-company-save-v1', save); }, JSON.stringify(createGame(51)));
-  await page.goto('/');
+  await page.goto('./');
   await expect(page.locator('#offline-status')).toHaveText('Offline ready', { timeout:60000 });
+  expect(await page.evaluate(async () => (await navigator.serviceWorker.ready).scope)).toBe('http://127.0.0.1:4174/ashen-company/');
   await page.locator('#settings-button').click();
   await expect(page.locator('.credits')).toContainText(`Version ${release.version}`);
   await expect(page.locator('.credits')).toContainText(release.commit.slice(0, 8));
@@ -39,7 +40,7 @@ test('an open older build updates only after caching and preserves its company',
   try {
     await writeFile(workerPath, oldWorker);await writeFile(modulePath, oldModule);
     await page.addInitScript(save => { if (!localStorage.getItem('ashen-company-save-v1')) localStorage.setItem('ashen-company-save-v1', save); }, JSON.stringify(createGame(52)));
-    await page.goto('/');
+    await page.goto('./');
     await expect(page.locator('#offline-status')).toHaveText('Offline ready', { timeout:60000 });
     await page.locator('#settings-button').click();
     await expect(page.locator('.credits')).toContainText(`Version ${older}`);

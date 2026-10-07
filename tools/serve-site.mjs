@@ -6,7 +6,8 @@ const mime = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', 
 http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
-    const path = resolve(root, '.' + decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname));
+    const pathname = url.pathname.startsWith('/ashen-company/') ? url.pathname.slice('/ashen-company'.length) : url.pathname;
+    const path = resolve(root, '.' + decodeURIComponent(pathname === '/' ? '/index.html' : pathname));
     if (!path.startsWith(root + sep)) { res.writeHead(403).end(); return; }
     const data = await readFile(path);
     res.writeHead(200, { 'Content-Type':mime[extname(path)] || 'application/octet-stream', 'Cache-Control':'no-cache' }).end(data);
