@@ -31,6 +31,14 @@ and gives players specific visually coherent high-end pairs to hunt.
 Ninja Suit and Elite Ninja Suit pair with Ninja Mask or Elite Ninja Mask;
 regular and elite pieces can mix. Samurai gear does not qualify as Ninja.
 Assassin fitting remains restricted to its robe and mask/head wrap.
+
+Adorned Mail Shirt, Adorned Warrior’s Armor and Adorned Heavy Mail Hauberk
+match Adorned Closed Flat Top or Adorned Full Helm. This provides a themed
+progression from medium mail to a heavy questing-knight outfit. Adorned Full
+Helm also retains its existing Noble membership; a complete pair wins and
+bonuses never stack. Samurai Armor pairs only with Samurai Helmet, and Tycoon
+Armor pairs only with Tycoon Helmet. Ninja, Samurai and Tycoon do not mix;
+other eastern designs do not automatically qualify.
 All sets use the same percentages, and bonuses apply once, never stack.
 
 Noble gear pairs noble/heraldic body clothing (including authored named noble
@@ -48,7 +56,8 @@ Broken pieces still count as worn, grant no protection, and retain their weight.
 Battle `equipmentSetRulesVersion: 1` opts into Assassin snapshots only; version 2
 also enables Ancient and Northern, and version 3 adds broad Southern and Noble.
 Version 4 replaces broad Southern with the two curated pairs and adds Ninja.
-Existing active battles without a version, or with versions 1–3, retain their
+Version 5 adds Adorned, Samurai and Tycoon.
+Existing active battles without a version, or with versions 1–4, retain their
 original protection and fatigue rules. Newly
 enabled sets become effective in the next battle. Save validation verifies each
 snapshot against its original item design, rule version and starting condition.
