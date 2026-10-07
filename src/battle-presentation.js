@@ -23,10 +23,10 @@ export function patchFighter(current,incoming) {
 }
 function displayTime(view,battle,speed,now) {
   let clock=clocks.get(battle);
-  if(!clock){clock={simulation:battle.simultaneous.time,anchor:now,shown:battle.simultaneous.time,rate:rateFor(speed),paused:speed===0};clocks.set(battle,clock);}
+  if(!clock){clock={simulation:battle.simultaneous.time,anchor:now,shown:battle.simultaneous.time,rate:rateFor(speed),paused:speed===0,status:battle.status};clocks.set(battle,clock);}
   const next=battle.simultaneous.time,rate=speed===0?clock.rate:rateFor(speed);
-  if(next!==clock.simulation||rate!==clock.rate||clock.paused!==(speed===0)){
-    clock.simulation=next;clock.anchor=now;clock.rate=rate;clock.paused=speed===0;
+  if(next!==clock.simulation||rate!==clock.rate||clock.paused!==(speed===0)||clock.status!==battle.status){
+    clock.simulation=next;clock.anchor=now;clock.rate=rate;clock.paused=speed===0;clock.status=battle.status;
   }
   // Smooth between 50ms snapshots, never build an unbounded visual queue.
   const proposed=next+(speed===0?0:Math.min(battle.status==='active'?100:1000,(now-clock.anchor)*rate));

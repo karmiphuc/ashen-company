@@ -125,7 +125,7 @@ test('a completed move can restart for the next identical rider step',async({pag
 test('terminal combat keeps advancing the final fall within a one-second hold',async({page})=>{
  await harness(page);
  const result=await page.evaluate(async()=>{
-  const actor=b.units[0],target=b.units.find(x=>x.side==='enemy');target.alive=false;target.hp=0;b.status='victory';b.simultaneous.time=100;
+  const actor=b.units[0],target=b.units.find(x=>x.side==='enemy');b.simultaneous.time=100;render(1);await new Promise(r=>setTimeout(r,200));target.alive=false;target.hp=0;b.status='victory';b.simultaneous.time=100;
   events.receiveSimultaneousEvents(b,[{id:1,time:100,duration:700,event:{actorId:actor.id,targetId:target.id,type:'fall',hit:true,fallen:true,hpDamage:5,from:actor,to:target}}],1);render(1);
   const node=root.querySelector(`[data-unit-id="${target.id}"]`),animation=node.getAnimations().find(a=>a.animationName==='pawn-fall'),hold=view.battlePresentationHold(b,1);
   const before=animation.currentTime;await new Promise(resolve=>{const start=performance.now();function frame(now){view.advanceBattlePresentation(root,b,1);if(now-start<750)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});
