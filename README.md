@@ -1,5 +1,7 @@
 # Ashen Company
 
+Version 0.54.0 adds **Ancient Armory restoration** at every open settlement’s Armorer: matching recovered pieces become restored bronze or silverish steel, with a separate named-item chance, explicit failure refunds, and original-sprite color treatments. See [recipes, stats and save rules](docs/ANCIENT-RESTORATION.md).
+
 See [equipment design features](docs/EQUIPMENT-DESIGN-FEATURES.md) for named
 prefixes/suffixes, the bounded merging formula, and matching armory sets.
 

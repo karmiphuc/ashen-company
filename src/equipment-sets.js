@@ -29,7 +29,7 @@ export const EQUIPMENT_SETS=Object.freeze([
 ]);
 export const equipmentSetsForRules=version=>(version<4?historicalSets:EQUIPMENT_SETS).filter(s=>s.since<=version);
 export function equipmentSetBonusText(set){return `${set.name} set: +${set.armorPct}% head/body armor; −${set.headFatiguePct}% helmet fatigue, −${set.bodyFatiguePct}% body fatigue`;}
-const designId=item=>item?.baseId??item?.id;
+const designId=item=>item?.restorationSourceId??item?.baseId??item?.id;
 export function equipmentSetsForItem(item){return EQUIPMENT_SETS.filter(s=>[...s.armorIds,...s.helmetIds].includes(designId(item)));}
 export function equipmentSetForItem(item){return equipmentSetsForItem(item)[0]??null;}
 export function equipmentSetStatus(actor,getItem,rulesVersion){
