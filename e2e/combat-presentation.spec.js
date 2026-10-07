@@ -126,10 +126,20 @@ test('terminal combat keeps advancing the final fall within a one-second hold',a
  await harness(page);
  const result=await page.evaluate(async()=>{
   const actor=b.units[0],target=b.units.find(x=>x.side==='enemy');b.simultaneous.time=100;render(1);await new Promise(r=>setTimeout(r,200));target.alive=false;target.hp=0;b.status='victory';b.simultaneous.time=100;
-  events.receiveSimultaneousEvents(b,[{id:1,time:100,duration:700,event:{actorId:actor.id,targetId:target.id,type:'fall',hit:true,fallen:true,hpDamage:5,from:actor,to:target}}],1);render(1);
+  events.receiveSimultaneousEvents(b,[{id:1,time:50,duration:250,event:{actorId:target.id,type:'move',from:{q:target.q-1,r:target.r},to:target}},{id:2,time:100,duration:700,event:{actorId:actor.id,targetId:target.id,type:'fall',hit:true,fallen:true,hpDamage:5,from:actor,to:target}}],2);render(1);
   const node=root.querySelector(`[data-unit-id="${target.id}"]`),animation=node.getAnimations().find(a=>a.animationName==='pawn-fall'),hold=view.battlePresentationHold(b,1);
   const before=animation.currentTime;await new Promise(resolve=>{const start=performance.now();function frame(now){view.advanceBattlePresentation(root,b,1);if(now-start<750)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});
-  return {before,after:animation.currentTime,hold};
+  return {before,after:animation.currentTime,hold,duration:animation.effect.getTiming().duration};
  });
- expect(result.before).toBeLessThan(100);expect(result.after).toBeGreaterThanOrEqual(700);expect(result.hold).toBeLessThanOrEqual(1000);
+ expect(result.duration).toBe(700);expect(result.before).toBeLessThan(100);expect(result.after).toBeGreaterThanOrEqual(700);expect(result.hold).toBeLessThanOrEqual(1000);
+});
+test('a shield push moves its recipient without replacing the ongoing attack clock',async({page})=>{
+ await harness(page);
+ const result=await page.evaluate(()=>{
+  const u=b.units[0],enemy=b.units.find(x=>x.side==='enemy'),from={q:u.q,r:u.r};u.q++;b.simultaneous.time=300;
+  events.receiveSimultaneousEvents(b,[{id:1,time:0,duration:900,event:{actorId:u.id,targetId:enemy.id,type:'attack',weaponId:u.equipment.weapon,from,to:enemy}},{id:2,time:300,duration:450,event:{actorId:enemy.id,targetId:u.id,type:'move',skillName:'Knock Back',pushedFrom:from,from:enemy,to:u}}],2);render(1);
+  const node=root.querySelector(`[data-unit-id="${u.id}"]`),animations=node.getAnimations({subtree:true});
+  return {moving:node.classList.contains('action-move'),moveAge:animations.find(a=>a.animationName==='pawn-step')?.currentTime,attackAge:animations.find(a=>a.animationName==='weapon-swing')?.currentTime};
+ });
+ expect(result.moving).toBe(true);expect(result.moveAge).toBeLessThan(100);expect(result.attackAge).toBeGreaterThanOrEqual(300);
 });

@@ -226,7 +226,7 @@ function unitHTML(unit, battle, animateEvent, field, grid, simultaneous = null, 
   const shieldDamage = impacts.reduce((total, impact) => total + number(impact.shieldDamage), 0);
   const attacking = event.skillName!=='Bleeding'&&['attack', 'hit', 'fall', 'miss'].includes(event.type);
   const origin = coordinates(event.from || unit, field, grid, unit);
-  const moveOrigin = coordinates(primaryTarget && event.pushedFrom ? event.pushedFrom : primaryActor && event.moveFrom ? event.moveFrom : event.from || unit, field, grid, unit);
+  const moveOrigin = coordinates(simultaneous?.motion?.from??(primaryTarget && event.pushedFrom ? event.pushedFrom : primaryActor && event.moveFrom ? event.moveFrom : event.from || unit), field, grid, unit);
   const destination = coordinates(event.to || unit, field, grid, unit);
   const strikeOrigin = reaction ? coordinates(reaction.from || unit, field, grid, unit) : origin;
   const reactionTargetUnit = reaction ? battle.units.find(entry => entry.id === reaction.targetId) : null;
@@ -257,7 +257,7 @@ function unitHTML(unit, battle, animateEvent, field, grid, simultaneous = null, 
     reaction ? 'is-reacting' : '',
     primaryTarget || hasImpact || reactionTarget ? 'is-target' : '',
     ...motionClasses,
-    primaryActor && (event.type === 'move' || event.moveFrom) || primaryTarget && event.pushedFrom ? 'action-move' : '',
+    (simultaneous?simultaneous.motion:primaryActor && (event.type === 'move' || event.moveFrom) || primaryTarget && event.pushedFrom) ? 'action-move' : '',
     primaryActor && ['recover', 'hold', 'swap', 'use'].includes(event.type) ? 'action-hold' : '',
     hasHit || shieldDamage > 0 ? 'action-hit' : '',
     impactFallen ? 'action-fall' : '',
@@ -338,20 +338,22 @@ const presentationIndexes=new WeakMap();
 function presentationIndex(battle){
   const time=battle.simultaneous.time,serial=simultaneousEventSerial(battle),cached=presentationIndexes.get(battle);
   if(cached?.time===time&&cached.serial===serial)return cached;
-  const own=new Map(),incoming=new Map();
+  const own=new Map(),incoming=new Map(),motion=new Map();
   for(const entry of simultaneousEvents(battle)){
     if(time-entry.time>=Math.max(entry.duration,1000))continue;
     const event=entry.event,reactions=reactionsFor(event);
     for(const id of new Set([event.actorId,...reactions.map(r=>r.actorId)]))if(id)own.set(id,entry);
+    if(event.actorId&&(event.type==='move'||event.moveFrom))motion.set(event.actorId,{entry,from:event.moveFrom??event.from});
+    if(event.targetId&&event.pushedFrom)motion.set(event.targetId,{entry,from:event.pushedFrom});
     const targets=new Set([event.targetId,...(event.affectedTargets??[]).map(x=>x.id??x.targetId),...reactions.map(r=>r.targetId)]);
     for(const id of targets){if(!id)continue;const impacts=impactsFor(event,id);if(!impacts.length)continue;
       if(!incoming.has(id))incoming.set(id,[]);incoming.get(id).push({entry,impacts});
     }
   }
-  const index={time,serial,own,incoming};presentationIndexes.set(battle,index);return index;
+  const index={time,serial,own,incoming,motion};presentationIndexes.set(battle,index);return index;
 }
 function simultaneousUnitContext(unit,battle,speed) {
-  const index=presentationIndex(battle),own=index.own.get(unit.id);
+  const index=presentationIndex(battle),own=index.own.get(unit.id),motion=index.motion.get(unit.id);
   const impactEntries=index.incoming.get(unit.id)??[],latest=impactEntries.at(-1),incoming=latest?.entry;
   // Receiving a hit never borrows an older movement/attack timestamp.
   const selected=own??incoming,event=selected?.event??{};
@@ -365,10 +367,10 @@ function simultaneousUnitContext(unit,battle,speed) {
     const label=impacts.some(x=>x.hit!==false&&x.type!=='miss')?`${friendly?'Friendly fire · ':''}${damage}${armor?` / ${armor}`:''}${shield?` · Shield −${shield}`:''}`:shield?`Deflected · Shield −${shield}`:'Miss';
     return `<span class="battle-impact" data-impact-event="${entry.id}" data-event-time="${entry.time}" aria-hidden="true" style="top:${14+index*18}px;--impact-time:${presentationDuration(entry,speed)/rate/1000}s">${label}</span>`;
   }).join('');
-  return {event,impactMarkup,impacts:latest?.impacts??[],own,incoming,
+  return {event,impactMarkup,impacts:latest?.impacts??[],own,incoming,motion,
     cinematic:speed==='cinematic'?cinematicActionKind(event):null,
-    style:`--action-time:${duration/rate/1000}s;--move-time:${duration/rate/1000}s;--impact-time:${impactDuration/rate/1000}s;--sim-delay:0s;`,
-    key:`${own?.id??0}:${impactEntries.map(x=>x.entry.id).join(',')}`};
+    style:`--action-time:${duration/rate/1000}s;--move-time:${presentationDuration(motion?.entry,speed)/rate/1000}s;--impact-time:${impactDuration/rate/1000}s;--sim-delay:0s;`,
+    key:`${own?.id??0}:${motion?.entry.id??0}:${impactEntries.map(x=>x.entry.id).join(',')}`};
 }
 function simultaneousProjectileHTML(battle,speed,field,grid,entry) {
   const rate=simultaneousRate(battle,speed);

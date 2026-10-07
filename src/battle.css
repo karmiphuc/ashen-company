@@ -255,3 +255,5 @@
 .simultaneous-battle .battle-unit{contain:layout style}
 .simultaneous-battle .action-move{will-change:transform}
 .simultaneous-battle .action-swing .battle-pawn,.simultaneous-battle .action-thrust .battle-pawn{will-change:transform}
+
+.simultaneous-battle .action-move:not(.action-fall){animation-duration:var(--move-time)}

@@ -9,7 +9,8 @@ on the fighter, attacking on the pawn/weapon, and receiving damage on the portra
 Each incoming damage callout keeps its own event identity and timestamp. A newer
 hit cannot borrow an older movement clock or replay the last second of damage.
 Health bars and falls use the incoming impact clock, while projectiles use their
-source event clock. Cinematic attacks retain their extended visual lifetime.
+source event clock. Forced movement such as shield pushes has its own motion
+clock, allowing an ongoing attack to continue without snapping the recipient. Cinematic attacks retain their extended visual lifetime.
 
 The browser presentation clock is monotonic and survives rebuilding the view.
 It extrapolates at most 100 simulation milliseconds between worker snapshots.
@@ -32,7 +33,7 @@ simulation continues in its existing worker.
 
 `e2e/combat-presentation.spec.js` covers overlapping movement and hits, multiple
 incoming hits, stable DOM/portrait identity, separate impact timestamps, cinematic
-lifetimes, pause/resume including pausing from 4x, and actual app playback controls.
+lifetimes, shield pushes during attacks, terminal falls after movement, pause/resume including pausing from 4x, and actual app playback controls.
 The mixed-combat fixture explicitly fields nine brothers (three mounted), versus
 ten foot enemies, on a 1024 x 768 viewport. It exercises the real worker at both
 speeds with normal CPU execution and Chromium's four-times CPU throttling.

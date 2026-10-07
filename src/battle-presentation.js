@@ -49,7 +49,7 @@ export function advanceBattlePresentation(root,battle,speed) {
     const list=[...animations].map(animation=>{
       const target=animation.effect?.target,node=target?.closest('[data-unit-id]'),context=contexts.get(node);
       const impact=/pawn-impact|pawn-fall|impact-bar|impact-float/.test(animation.animationName??'');
-      const entry=impact?context?.incoming:context?.own??context?.incoming;
+      const entry=animation.animationName==='pawn-step'?context?.motion?.entry:impact?context?.incoming:context?.own??context?.incoming;
       const callout=target?.closest('[data-event-time]');
       animation.pause();const timing=animation.effect.getComputedTiming();return {animation,end:timing.endTime,time:callout?Number(callout.dataset.eventTime):entry?.time??battle.simultaneous.time};
     });tracks.set(view,list);dirty.delete(view);
