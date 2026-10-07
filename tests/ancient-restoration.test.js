@@ -12,7 +12,7 @@ import { DLC_ART } from '../src/dlc-art.js';
 import { ANCIENT_RESTORATION_ART } from '../src/ancient-restoration-art.js';
 import { equipmentSetStatus } from '../src/equipment-sets.js';
 import { extractForgeAffixes, encodeBoundedForgeItem } from '../src/reforged-items.js';
-import { decodePng } from '../tools/content/restore-ancient-art.mjs';
+import { decodePng, restorePixels } from '../tools/content/restore-ancient-art.mjs';
 import { listOfflineAssets } from '../tools/build-cache.mjs';
 
 const body = 'bb-ancient-plate-harness', head = 'bb-ancient-honorguard-helmet';
@@ -249,5 +249,19 @@ test('failure refunds stay whole and saveable for every calculated recipe fee', 
     assert.ok(Number.isSafeInteger(s.gold));
     assert.deepEqual(validateSave(JSON.parse(JSON.stringify(s))), s);
     assert.match(ancientArmorerHTML(createGame(51), { sourceId, indices: [] }), new RegExp(`Failure returns ${quote.refund} of ${quote.fee} crowns`));
+  }
+});
+
+// Metal shadows must not be bleached while the silver finish gains highlights.
+test('restoration preserves dark metal seams and separates polished highlights', () => {
+  const rgba = Buffer.from([55, 50, 35, 255, 150, 130, 85, 255, 30, 30, 30, 128]);
+  const image = {width: 3, height: 1, rgba};
+  for (const finish of ['bronze', 'steel']) {
+    const result = restorePixels(image, finish, 'bb-ancient-plate-harness', 'icon').rgba;
+    const luminance = p => .299 * result[p] + .587 * result[p + 1] + .114 * result[p + 2];
+    assert.ok(luminance(0) <= 55, 'shadow remains dark');
+    assert.ok(luminance(4) - luminance(0) > 110, 'highlight stays distinct from seam');
+    assert.deepEqual(result.subarray(8), rgba.subarray(8), 'neutral outline and alpha unchanged');
+    assert.deepEqual(image.rgba, rgba, 'source pixels remain immutable');
   }
 });
