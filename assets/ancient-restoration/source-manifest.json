@@ -1,0 +1,361 @@
+{
+  "version": 1,
+  "source": "src/dlc-art.js",
+  "sourceManifest": "assets/dlc-equipment-source.json",
+  "method": "Selective metal-color mask; source pixel dimensions, alpha and portrait anchors unchanged. Neutral mail, dark leather and plumes excluded; breastplate leather skirt spatially excluded.",
+  "generator": "tools/content/restore-ancient-art.mjs",
+  "assets": [
+    {
+      "sourceId": "bb-ancient-breastplate",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-breastplate-bronze-icon.png",
+      "sourceSha256": "553fb4d7372c10e8185624eb9a59de8890fa9e35b50ed4418554709323de28b9",
+      "sha256": "795890efd7427b9f5bdc7eea7cc4dea2c57217550d94edf6b36dc2aa3c4579d2"
+    },
+    {
+      "sourceId": "bb-ancient-breastplate",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-breastplate-bronze-portrait.png",
+      "sourceSha256": "4857c658b54a7e25beb3cc7db136ce1374d7bf2302dc689d86a2cf3990ed8d6d",
+      "sha256": "7825a24af4a8eb64854c8fa210a6a9667abaf7b3308cab7cf9204fb41d56ae19"
+    },
+    {
+      "sourceId": "bb-ancient-breastplate",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-breastplate-steel-icon.png",
+      "sourceSha256": "553fb4d7372c10e8185624eb9a59de8890fa9e35b50ed4418554709323de28b9",
+      "sha256": "f4a44bbfb8b2dd699a7a06fa220ae3e73a0559bb272cfcbd0ebd155fe6a8d73b"
+    },
+    {
+      "sourceId": "bb-ancient-breastplate",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-breastplate-steel-portrait.png",
+      "sourceSha256": "4857c658b54a7e25beb3cc7db136ce1374d7bf2302dc689d86a2cf3990ed8d6d",
+      "sha256": "cd001ab1b04caeef83ac63a1d7edcca475b63457c3f7bb522e4812e643794b6a"
+    },
+    {
+      "sourceId": "bb-ancient-mail",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-mail-bronze-icon.png",
+      "sourceSha256": "444649d61dbe11af6ae54b7b559c609a057fe4eb7d6b999f2cf85e0fb9635d3f",
+      "sha256": "6cbb2996b1bf9b4c7f03edec26369417a2024bb16353e8a0c1100dac05f0b5b7"
+    },
+    {
+      "sourceId": "bb-ancient-mail",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-mail-bronze-portrait.png",
+      "sourceSha256": "28432dc3c9186cfb58fd855ce4d01ade9b1ac574efa07cfb97ca212ac5bdb4f6",
+      "sha256": "c3d44c9396507a0cc5412e2e88522e0dc922391251dbdcc971383aa825b87cf0"
+    },
+    {
+      "sourceId": "bb-ancient-mail",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-mail-steel-icon.png",
+      "sourceSha256": "444649d61dbe11af6ae54b7b559c609a057fe4eb7d6b999f2cf85e0fb9635d3f",
+      "sha256": "2e9b38e21a4403df382f75ee88a0340906ecae75571f7c033196fc07d51a5c25"
+    },
+    {
+      "sourceId": "bb-ancient-mail",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-mail-steel-portrait.png",
+      "sourceSha256": "28432dc3c9186cfb58fd855ce4d01ade9b1ac574efa07cfb97ca212ac5bdb4f6",
+      "sha256": "018b05fd82b051ac806d83218ead77d5005264e34a81c20980c36c6373ec2ffb"
+    },
+    {
+      "sourceId": "bb-ancient-double-layer-mail",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-double-layer-mail-bronze-icon.png",
+      "sourceSha256": "60591caf35bd9e8ca683bb2ec9573f738fe1914a584439428ae780a930ca5678",
+      "sha256": "a62e0d1888c87ad10488e4cc10fdbfe2dd5d0c4825308362268bf275c00b0b68"
+    },
+    {
+      "sourceId": "bb-ancient-double-layer-mail",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-double-layer-mail-bronze-portrait.png",
+      "sourceSha256": "bffe527d19119c55d1d6ba18f8ec9141056d36b2f87d9f723d59fde8f16c7054",
+      "sha256": "d78ed93cb7c9d99f6c586a19f361e5d4fc267f8ec2fa218d6e842cf09ac3eea9"
+    },
+    {
+      "sourceId": "bb-ancient-double-layer-mail",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-double-layer-mail-steel-icon.png",
+      "sourceSha256": "60591caf35bd9e8ca683bb2ec9573f738fe1914a584439428ae780a930ca5678",
+      "sha256": "f13b90a01065db8e1551ebb4fc1ca5ce7d7cc20635166645cc6255032326b3b2"
+    },
+    {
+      "sourceId": "bb-ancient-double-layer-mail",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-double-layer-mail-steel-portrait.png",
+      "sourceSha256": "bffe527d19119c55d1d6ba18f8ec9141056d36b2f87d9f723d59fde8f16c7054",
+      "sha256": "e8a3bcd0a5e50a7b498fd8cabd5b61fb128e25481afd0f885c2c16cb08df2593"
+    },
+    {
+      "sourceId": "bb-ancient-scale-harness",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-scale-harness-bronze-icon.png",
+      "sourceSha256": "d5dacae1117464640bb68b24ee524fa5f057dfdc84a50d782f0ea5d3893a0a44",
+      "sha256": "2ab0dacd00cb595fa4996c1b5029173f01b0a0384609d56ecf259d83d52457e2"
+    },
+    {
+      "sourceId": "bb-ancient-scale-harness",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-scale-harness-bronze-portrait.png",
+      "sourceSha256": "92b5d3f454bec578d0ca713b23b39631e134deaf37c581403820d6d54e641089",
+      "sha256": "54855cb6a6e872ec087fb8b7c360eafcfb106cb7de4bca1739b0c8f6b50798c8"
+    },
+    {
+      "sourceId": "bb-ancient-scale-harness",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-scale-harness-steel-icon.png",
+      "sourceSha256": "d5dacae1117464640bb68b24ee524fa5f057dfdc84a50d782f0ea5d3893a0a44",
+      "sha256": "4d9ce24fb86bf9e5701dad64499ae8a22936e9f1371281738646be04092a2058"
+    },
+    {
+      "sourceId": "bb-ancient-scale-harness",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-scale-harness-steel-portrait.png",
+      "sourceSha256": "92b5d3f454bec578d0ca713b23b39631e134deaf37c581403820d6d54e641089",
+      "sha256": "55be24af5d7590c9931770d6c44a4d036d3fa6b01c847fdccdec56aa6b72ac82"
+    },
+    {
+      "sourceId": "bb-ancient-scale-coat",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-scale-coat-bronze-icon.png",
+      "sourceSha256": "5599a88ba47d3d2a4bf4eb7e94b69ac4f143f7227c49f1084fa2a13dc5287b67",
+      "sha256": "74c2469ae1730d0647ad170e5ec6f6d88bc3a0d861b2a8f7f9703d73686b6087"
+    },
+    {
+      "sourceId": "bb-ancient-scale-coat",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-scale-coat-bronze-portrait.png",
+      "sourceSha256": "95c8a9456171ad912c32117085b216da9dfb68c814db3fe062b05325c49f0a0f",
+      "sha256": "382694cecd293a12254293f2f25ec7531e767f09f1bd82b60a7d115b60365426"
+    },
+    {
+      "sourceId": "bb-ancient-scale-coat",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-scale-coat-steel-icon.png",
+      "sourceSha256": "5599a88ba47d3d2a4bf4eb7e94b69ac4f143f7227c49f1084fa2a13dc5287b67",
+      "sha256": "bbce57705e8834b0ce0722cb025b90bdf598f6ea37f0fd3f80681637c2e7cb7b"
+    },
+    {
+      "sourceId": "bb-ancient-scale-coat",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-scale-coat-steel-portrait.png",
+      "sourceSha256": "95c8a9456171ad912c32117085b216da9dfb68c814db3fe062b05325c49f0a0f",
+      "sha256": "99763628f403d879828ebbd1909a3949af1139ae6f1b2809b4856222acf9acb1"
+    },
+    {
+      "sourceId": "bb-ancient-plated-mail-hauberk",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-plated-mail-hauberk-bronze-icon.png",
+      "sourceSha256": "8328b30962a4c536beb9be1da96967d85b93404802a5cdfa4ed45dac793d7964",
+      "sha256": "a52ea5d30599f09f0446a40898f9b2be4648fcf43ec4fa33d57b079f38e54b18"
+    },
+    {
+      "sourceId": "bb-ancient-plated-mail-hauberk",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-plated-mail-hauberk-bronze-portrait.png",
+      "sourceSha256": "b284865c420d747b7ccc1788292ac9fb6e93cc146aca6039c20ef5132a9a1bb1",
+      "sha256": "7350b207dcea9200068a282ae28446bebf22c856aedb92b98d009d51477a9177"
+    },
+    {
+      "sourceId": "bb-ancient-plated-mail-hauberk",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-plated-mail-hauberk-steel-icon.png",
+      "sourceSha256": "8328b30962a4c536beb9be1da96967d85b93404802a5cdfa4ed45dac793d7964",
+      "sha256": "26b8c113d77ef7c8df4f87169aa6da94fcc32a4ef5f7cef1730c49ccb3150fc9"
+    },
+    {
+      "sourceId": "bb-ancient-plated-mail-hauberk",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-plated-mail-hauberk-steel-portrait.png",
+      "sourceSha256": "b284865c420d747b7ccc1788292ac9fb6e93cc146aca6039c20ef5132a9a1bb1",
+      "sha256": "e10a088bd43fdf5ebc9eeaad4b97b1a9943cee49fd8b8e783b760b51a641863d"
+    },
+    {
+      "sourceId": "bb-ancient-plate-harness",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-plate-harness-bronze-icon.png",
+      "sourceSha256": "e934fa9b7c55ae7c5cd40be2f7bf5592b4d823e69a4854806fb9f87cabb4b152",
+      "sha256": "31f197ddcd6a4d9bc0c2a109b9a0de11c9efeda0aceb864c2b8ba4bef4802599"
+    },
+    {
+      "sourceId": "bb-ancient-plate-harness",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-plate-harness-bronze-portrait.png",
+      "sourceSha256": "e04fd84e6e3db7c3a6366012a88ec49bdcb71b1085f30447bfb5178f1940e83e",
+      "sha256": "d50d72108c73488983a6a47a25749938225217122e3fc8987764f8992c770e26"
+    },
+    {
+      "sourceId": "bb-ancient-plate-harness",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-plate-harness-steel-icon.png",
+      "sourceSha256": "e934fa9b7c55ae7c5cd40be2f7bf5592b4d823e69a4854806fb9f87cabb4b152",
+      "sha256": "df184e2c5470c95483e9371be839730c32f0066dfb285e3a73617b8b1395833b"
+    },
+    {
+      "sourceId": "bb-ancient-plate-harness",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-plate-harness-steel-portrait.png",
+      "sourceSha256": "e04fd84e6e3db7c3a6366012a88ec49bdcb71b1085f30447bfb5178f1940e83e",
+      "sha256": "0c27d5c089651f4ea8c119083637a01694b6ac93c900b9021116e6b5098e17c6"
+    },
+    {
+      "sourceId": "bb-ancient-plated-scale-hauberk",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-plated-scale-hauberk-bronze-icon.png",
+      "sourceSha256": "a1a4eb2f38faa60b93bbdaeac7fd2a59e9240724ac318dc57c01438fc88bfd30",
+      "sha256": "6acb746ea2d55db8c307579ee22db7fc46887ace48af8875bab2c6d6fed1f241"
+    },
+    {
+      "sourceId": "bb-ancient-plated-scale-hauberk",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-plated-scale-hauberk-bronze-portrait.png",
+      "sourceSha256": "5408e0f02cf812040f67811c436c64a4eee0871feea02dcadc62f081b91eb4fc",
+      "sha256": "59d3817c7ee22fa3d8ce55c5e3d55f9a4ebd5f741051832e2141d9073b39e787"
+    },
+    {
+      "sourceId": "bb-ancient-plated-scale-hauberk",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-plated-scale-hauberk-steel-icon.png",
+      "sourceSha256": "a1a4eb2f38faa60b93bbdaeac7fd2a59e9240724ac318dc57c01438fc88bfd30",
+      "sha256": "bb5b7c1cd54b8959218b961da330e682a63e5c6411a501dbd6e974f2b3d615e2"
+    },
+    {
+      "sourceId": "bb-ancient-plated-scale-hauberk",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-plated-scale-hauberk-steel-portrait.png",
+      "sourceSha256": "5408e0f02cf812040f67811c436c64a4eee0871feea02dcadc62f081b91eb4fc",
+      "sha256": "16c89cb33e8ecb35f348017b1513277efdcd94e7bbc32303c7838eb7de6b1066"
+    },
+    {
+      "sourceId": "bb-ancient-household-helmet",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-household-helmet-bronze-icon.png",
+      "sourceSha256": "1af1e9001a864af26748713b47e13929e351bccca2e7c029dffbd41ce5d86a49",
+      "sha256": "2a1fd19e916e87a56f612ad2be4506684e47fbe1de363c3ec3a6a919189bd2cd"
+    },
+    {
+      "sourceId": "bb-ancient-household-helmet",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-household-helmet-bronze-portrait.png",
+      "sourceSha256": "beccee19e5c953d7a9ccb133a9f910b3ec9727847d1a5dd2656ce7dc7d20d3ae",
+      "sha256": "5ff6ced38a8508672a4aacf8fd8164fb68e86bf8533d84644089cd8d52cd842d"
+    },
+    {
+      "sourceId": "bb-ancient-household-helmet",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-household-helmet-steel-icon.png",
+      "sourceSha256": "1af1e9001a864af26748713b47e13929e351bccca2e7c029dffbd41ce5d86a49",
+      "sha256": "3bd3e3c8d9548e1df23c12cb426b927e7cae0cf09d5e0c89b64bc4c35f237447"
+    },
+    {
+      "sourceId": "bb-ancient-household-helmet",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-household-helmet-steel-portrait.png",
+      "sourceSha256": "beccee19e5c953d7a9ccb133a9f910b3ec9727847d1a5dd2656ce7dc7d20d3ae",
+      "sha256": "26cfc42619dfb634a6a44d78c60604e9c739f5583c683d2d3f14f0a51174f9bb"
+    },
+    {
+      "sourceId": "bb-ancient-legionary-helmet",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-legionary-helmet-bronze-icon.png",
+      "sourceSha256": "4d42deeb2b2f3f1f1a067db748359bd5207c0e25f56a493e937b80d07b250206",
+      "sha256": "fab4ee64a25a3772e995cd3cc804bcf81d63603f9be1ad565d2c76c1b6aa712f"
+    },
+    {
+      "sourceId": "bb-ancient-legionary-helmet",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-legionary-helmet-bronze-portrait.png",
+      "sourceSha256": "d8b3ff0df78ad0b4912b0fe91aaba3d0ffb60ec281780bd791fbbcef2dc9c5d3",
+      "sha256": "eda8f99092da4fd61197e35d9f336d0dd99e25dae9267fda8409f7a5635314aa"
+    },
+    {
+      "sourceId": "bb-ancient-legionary-helmet",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-legionary-helmet-steel-icon.png",
+      "sourceSha256": "4d42deeb2b2f3f1f1a067db748359bd5207c0e25f56a493e937b80d07b250206",
+      "sha256": "3c3d3db147484888be55e508fe69cdfbb01fda338a37314d41bbd882169d8277"
+    },
+    {
+      "sourceId": "bb-ancient-legionary-helmet",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-legionary-helmet-steel-portrait.png",
+      "sourceSha256": "d8b3ff0df78ad0b4912b0fe91aaba3d0ffb60ec281780bd791fbbcef2dc9c5d3",
+      "sha256": "1ea38dcd5b4cef356eb03a12e3ec122b0e1ece6f6fd23f1cf8d624c00f1e86dc"
+    },
+    {
+      "sourceId": "bb-ancient-honorguard-helmet",
+      "finish": "bronze",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-honorguard-helmet-bronze-icon.png",
+      "sourceSha256": "58c37be2ae447ca9bcf2862097326ac5f7b673ef3fd97637b9ece78ff9e793a7",
+      "sha256": "ea25c78c453ce8b119d9583e3c3617411bf0b506c63729705bd367021343c567"
+    },
+    {
+      "sourceId": "bb-ancient-honorguard-helmet",
+      "finish": "bronze",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-honorguard-helmet-bronze-portrait.png",
+      "sourceSha256": "b380e003cd166a7d54d6949604fd73de38df7cfc080150db12056aabefd00b4d",
+      "sha256": "f2b21dd0035a987b60a8127a58eefd3421f4b4da009bcf1562afae0fcc02a5d4"
+    },
+    {
+      "sourceId": "bb-ancient-honorguard-helmet",
+      "finish": "steel",
+      "layer": "icon",
+      "path": "assets/ancient-restoration/bb-ancient-honorguard-helmet-steel-icon.png",
+      "sourceSha256": "58c37be2ae447ca9bcf2862097326ac5f7b673ef3fd97637b9ece78ff9e793a7",
+      "sha256": "e3005bb61c337a81481e5f965d8d02864b2be107c9e7442681c553d667b1e263"
+    },
+    {
+      "sourceId": "bb-ancient-honorguard-helmet",
+      "finish": "steel",
+      "layer": "portrait",
+      "path": "assets/ancient-restoration/bb-ancient-honorguard-helmet-steel-portrait.png",
+      "sourceSha256": "b380e003cd166a7d54d6949604fd73de38df7cfc080150db12056aabefd00b4d",
+      "sha256": "e565fe1573811774c3aa3f287ae8201aeef3ea651d8f43d0d98ad539116ec051"
+    }
+  ]
+}

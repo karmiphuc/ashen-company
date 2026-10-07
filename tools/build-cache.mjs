@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildRelease } from './build-release.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const ROOT = resolve(dirname(SCRIPT), '..');
@@ -13,18 +14,25 @@ const CORE = [
   './src/battle.css',
   './src/campaign-ui.js',
   './src/battle-view.js',
+  './src/battle-camera.js',
   './src/battle-terrain.js',
   './src/battle-geometry.js',
   './src/audio.js',
+  './src/quest-completion.js',
   './src/app.js',
   './src/item-details.js',
   './src/engine.js',
+  './src/injuries.js',
   './src/world-fog.js',
   './src/combat-config.js',
   './src/simultaneous-combat.js',
   './src/simultaneous-runner.js',
   './src/simultaneous-worker.js',
   './src/named-rolls.js',
+  './src/item-affixes.js', './src/affix-prefixes.js', './src/equipment-sets.js',
+  './src/reforged-items.js',
+  './src/legendary-blacksmith.js',
+  './src/blacksmith-ui.js',
   './src/named-weapons.js',
   './src/named-weapon-art.js',
   './src/crisis-director.js',
@@ -216,7 +224,8 @@ self.addEventListener('message', event => {
 `;
 }
 
-export async function buildCache() {
+export async function buildCache(releaseOptions) {
+  await buildRelease(releaseOptions);
   const source = await renderServiceWorker();
   await writeFile(join(ROOT, 'sw.js'), source, 'utf8');
   return source;

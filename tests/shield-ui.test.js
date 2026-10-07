@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createGame, getTownServiceQuote } from '../src/engine.js';
 import { battleResultsHTML, companySheetHTML, townServiceHTML } from '../src/campaign-ui.js';
 
-test('company sheet shows active and reserve shield condition, including a broken shield', () => {
+test('company sheet shows active shield condition and keeps reserve gear without a redundant bar', () => {
   const state = createGame(91);
   const captain = state.party[0];
   captain.reserveEquipment.shield = 'heater-shield';
@@ -11,7 +11,9 @@ test('company sheet shows active and reserve shield condition, including a broke
   captain.armorDurability.reserveShield = 8;
   const html = companySheetHTML(state, captain, 'shield', '');
   assert.match(html, /<span>Shield<\/span><div class="condition-meter armor"><i style="width:0%"><\/i><strong>0 \/ 24 · Broken<\/strong>/);
-  assert.match(html, /<span>Reserve shield<\/span><div class="condition-meter armor"><i style="width:12\.5%"><\/i><strong>8 \/ 64<\/strong>/);
+  assert.doesNotMatch(html, /<span>Reserve shield<\/span>/);
+  assert.match(html, /Reserve shield/);
+  assert.match(html, /Heater Shield/);
 });
 
 test('Smithy distinguishes active and reserve shield repairs and broken status', () => {

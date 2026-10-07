@@ -1,5 +1,7 @@
-// BB terrain uses broad 180×100 hex tops; keep that shape at campaign scale.
-export const BATTLE_PROJECTION = Object.freeze({width:76,height:44,stepX:76,stepY:33,stagger:38,elevation:12,padX:16,padY:88,padBottom:22});
+// A near-rectangular view of the axial board. Shear only the ground plane;
+// pawns and elevation drops stay upright. Adjacent hex edges still coincide.
+export const BATTLE_PROJECTION = Object.freeze({width:76,height:44,stepX:76,stepY:33,stagger:8,elevation:12,padX:16,padY:88,padBottom:22});
+export const BATTLE_GROUND_SHEAR = (BATTLE_PROJECTION.width / 2 - BATTLE_PROJECTION.stagger) / BATTLE_PROJECTION.stepY;
 export function tilePosition(tile, grid=BATTLE_PROJECTION) {
   return {x:grid.padX+tile.q*grid.stepX+tile.r*grid.stagger,y:grid.padY+tile.r*grid.stepY-tile.height*grid.elevation};
 }
@@ -12,6 +14,9 @@ export function elevationFaces(tile, tileAt, grid=BATTLE_PROJECTION) {
     const drop=tile.height-(neighbor?.height??0);
     if(drop<=0)return [];
     const rise=drop*grid.elevation;
-    return [{edge:edge.id,drop,points:[edge.a,edge.b,[edge.b[0],edge.b[1]+rise],[edge.a[0],edge.a[1]+rise]]}];
+    const shear=(grid.width/2-grid.stagger)/grid.stepY;
+    const a=[edge.a[0]-shear*(edge.a[1]-grid.height/2),edge.a[1]];
+    const b=[edge.b[0]-shear*(edge.b[1]-grid.height/2),edge.b[1]];
+    return [{edge:edge.id,drop,points:[a,b,[b[0],b[1]+rise],[a[0],a[1]+rise]]}];
   });
 }

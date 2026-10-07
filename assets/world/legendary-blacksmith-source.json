@@ -1,0 +1,14 @@
+{
+  "asset": "assets/world/legendary-blacksmith.png",
+  "sourcePage": "https://opengameart.org/content/medieval-blacksmith-isometric-25d",
+  "sourceURL": "https://opengameart.org/sites/default/files/blacksmith_0.png",
+  "author": "feudalwars",
+  "license": "CC0",
+  "sourceFilename": "blacksmith_0.png",
+  "dimensions": [
+    305,
+    259
+  ],
+  "preparation": "Unchanged source PNG; CSS contain preserves aspect ratio.",
+  "sha256": "bfb845d5c31c3f90b0fe13478a988b582797e12b0c2f9d1fae38a18704dfad2b"
+}

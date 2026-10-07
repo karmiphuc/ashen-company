@@ -173,3 +173,142 @@
 }
 
 .item-equipped-comparison{margin:14px 0 0;padding:10px 12px;background:#201c1599;border-left:3px solid #8c7344;font-size:13px;line-height:1.5}.item-equipped-comparison small{display:block;margin-top:4px}.item-stat-list .item-stat-better,.item-equipped-comparison .item-stat-better{color:#9ddd95}.item-stat-list .item-stat-worse,.item-equipped-comparison .item-stat-worse{color:#ff9b91}.item-stat-arrow{font-size:9px;margin-left:2px;vertical-align:middle}
+
+/* Odran's compact quest and reforge workbench. */
+.forge-art{width:150px;height:130px;object-fit:contain;flex-shrink:0}.forge-summons,.forge-workbench>header{display:flex;align-items:center;gap:22px}.forge-quest .forge-art{float:right;width:170px;height:150px}.forge-materials{display:flex;gap:18px;flex-wrap:wrap;padding:14px;background:#342d20;border:1px solid #75613e}.forge-warning{color:#e7b27d}.forge-columns{display:grid;grid-template-columns:1fr 1fr 1.05fr;gap:16px;margin-top:18px}.forge-columns>section{min-width:0;padding:12px;border:1px solid #786341;background:#252117}.forge-columns h4{margin:0 0 12px;color:#e0c58f}.forge-columns h4 small{display:block;font-size:11px;font-weight:normal;color:#c5ad8e}.forge-items{max-height:430px;overflow:auto;display:grid;gap:8px}.forge-item{display:flex;gap:9px;text-align:left;align-items:center;padding:8px;min-width:0;width:100%;background:#312b1e}.forge-item.selected{border-color:#ead08e;box-shadow:inset 0 0 0 1px #ead08e;background:#44391f}.forge-item img{width:46px;height:54px;object-fit:contain;flex-shrink:0}.forge-item span{min-width:0;overflow-wrap:anywhere}.forge-item strong{font-size:12px;display:block}.forge-item small{font-size:11px;display:block;margin-top:4px;color:#c7b898}.forge-badge{display:block;font-size:10px;color:#dfbf7a;margin-top:4px}.forge-filters{display:flex;gap:16px;margin:18px 0}.forge-filters label{display:grid;gap:5px;flex:1;min-width:0}.forge-filters input,.forge-filters select{width:100%;box-sizing:border-box;min-height:42px}.forge-preview p{font-size:12px;line-height:1.5}.forge-preview .primary{width:100%;min-height:44px}.forge-preview details{margin:12px 0;font-size:12px}.forge-preview dl>div,.forge-success dl>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #594e37;padding:6px 0}.forge-preview dd,.forge-success dd{margin:0;text-align:right}.forge-result-art{display:flex;align-items:center;gap:10px}.forge-result-art img,.forge-success>img{width:75px;height:90px;object-fit:contain}.forge-journal{margin-bottom:18px}.forge-success{text-align:center}.forge-success dl{text-align:left;max-width:420px;margin:auto}.forge-confirmation strong{color:#f0d290}@media(max-width:800px){.forge-columns{grid-template-columns:1fr 1fr}.forge-preview{grid-column:1/-1}.forge-items{max-height:280px}}@media(max-width:540px){.forge-summons,.forge-workbench>header{flex-direction:column;align-items:flex-start;gap:10px}.forge-workbench>header .forge-art{align-self:center}.forge-quest .forge-art{float:none;display:block;margin:auto}.forge-columns{grid-template-columns:1fr}.forge-preview{grid-column:auto}.forge-items{max-height:240px}.forge-filters{gap:8px}.forge-columns>section{padding:10px}}
+
+/* Wound details stay behind existing keyboard/touch accessible hints. */
+.injury-panel{margin:.65rem 0;padding:.7rem;border:1px solid #8e7747;background:rgba(31,26,19,.65);border-radius:3px}
+.injury-heading,.injury-row,.injury-care-summary{display:flex;align-items:center;justify-content:space-between;gap:.65rem}
+.injury-heading{color:#e0be7c;margin-bottom:.35rem}.injury-row{padding:.3rem 0;flex-wrap:wrap;border-top:1px solid #61543b}.injury-row>span{display:flex;align-items:center;gap:.25rem}.injury-row small{color:#d1c19a;white-space:nowrap}.injury-care-summary{margin-top:.5rem;flex-wrap:wrap}.injury-warning{color:#f3ba81}.roster-wound-badge{color:#f0c58a;white-space:nowrap}.wound-service-tabs{display:flex;gap:.5rem;margin-bottom:1rem}.wound-service-tabs [aria-pressed="true"]{border-color:#e0be7c;background:#59482c}.service-details .injury-panel{margin:.4rem 0 0}.service-details{min-width:0}.injury-row .company-hint{flex-shrink:0}
+@media(max-width:600px){.injury-row{align-items:flex-start}.injury-row>span{max-width:100%}.wound-service-tabs>button{flex:1}}
+
+.resource-care-low strong{color:#f3ba81}
+/* Keep long service dialogs inside the visible viewport, including Safari chrome. */
+#modal{
+  max-height:calc(100vh - 32px);
+  max-height:min(88dvh,calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scroll-padding-top:110px;
+  -webkit-overflow-scrolling:touch;
+}
+#modal .modal-header{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:#29231b;
+}
+#modal .modal-header>div{min-width:0}
+#modal .modal-header h2{overflow-wrap:anywhere}
+#modal .close-button{flex-shrink:0;min-height:44px}
+/* Stock lists scale with available height in either iPad orientation. */
+#modal .market-workspace .trader-grid,
+#modal .market-workspace .shop-stash{max-height:min(450px,40dvh);overflow-y:auto;min-height:0;overscroll-behavior-y:contain}
+#modal .market-workspace .market-tabs{position:static}
+@media(max-width:1024px){
+  #modal .modal-header{padding:12px 17px}
+  #modal .modal-body{padding:14px 17px}
+  #modal .retinue-dashboard{gap:14px}
+  #modal .retinue-choice{padding:12px;gap:8px}
+}
+
+/* Item-first market: navigation and filters share one narrow rail. */
+#modal.market-modal{width:min(1120px,calc(100vw - 28px))}
+.market-status{display:flex;align-items:center;gap:14px;margin-bottom:10px;min-height:30px}
+.market-purse{display:flex;align-items:center;gap:5px;font-size:17px;color:#ead096;white-space:nowrap}
+.market-status .supply-symbol{width:21px;height:21px}
+.market-status .market-readiness{margin:0;gap:8px 14px;flex:1}
+.market-readiness>span{display:flex;align-items:center;gap:4px}
+.market-browser{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:start}
+.market-content{min-width:0}
+#modal .market-workspace .market-tabs{display:flex;flex-direction:column;gap:5px;padding:0;margin:0;background:none}
+#modal .market-workspace .market-tabs>button{width:100%;min-height:44px;padding:5px;display:grid;place-items:center;background:#211c16;box-shadow:none}
+#modal .market-workspace .market-tabs>button[aria-pressed="true"]{background:#665132;border-color:#d5b86d;box-shadow:inset 3px 0 #d5b86d}
+.market-nav-symbol{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 1px 2px #0008)}
+.market-tabs .market-filters{display:grid;grid-template-columns:1fr 1fr;gap:6px 4px;margin:8px 0 0;padding-top:10px;border-top:1px solid #776346}
+.market-tabs .market-filters>label:not(.market-check){grid-column:1/-1;min-width:0;font-size:10px;gap:3px}
+.market-tabs .market-filters select{width:100%;min-width:0;min-height:44px;padding:5px;font-size:11px}
+.market-tabs .market-check{justify-content:center;gap:4px;min-height:44px;border:1px solid #776346;background:#211c16;cursor:pointer}
+.market-tabs .market-check:has(input:checked){border-color:#d5b86d;background:#665132;color:#ffe8a9}
+.market-tabs .market-check:focus-within{outline:2px solid #e0c06e;outline-offset:2px}
+.market-tabs .market-check>span{font-size:16px}
+.market-workspace .market-ledger{grid-template-columns:minmax(240px,.9fr) minmax(0,1.4fr);gap:12px}
+.market-workspace .market-ledger>section{padding:10px;min-width:0}
+.market-workspace .trader-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.market-workspace .shop-stash{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+#modal .market-workspace .trader-grid,#modal .market-workspace .shop-stash{max-height:min(650px,calc(88dvh - 190px));min-height:0}
+.market-workspace .market-item-inspect{padding:8px 4px;gap:4px}
+.market-workspace .market-item-inspect .equipment-icon{width:44px;height:44px}
+.market-workspace .market-item-inspect strong{font-size:12px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;min-height:30px}
+.market-workspace .market-item-inspect small{font-size:10px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.market-workspace .market-item-trade{padding:5px 3px;font-size:12px;min-height:44px}
+@media(min-width:621px) and (max-width:900px){
+ .market-workspace .market-ledger{display:flex;flex-direction:column}
+ .market-workspace .market-trader-stock{order:0}.market-workspace .market-company-stock{order:1}
+ .market-workspace .shop-stash{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:620px){
+ #modal.market-modal .modal-body{padding:12px}
+ .market-browser{grid-template-columns:92px minmax(0,1fr);gap:8px}
+ .market-status{gap:8px;flex-wrap:wrap}.market-status .market-readiness{gap:6px;flex-basis:60%}
+ .market-workspace .trader-grid,.market-workspace .shop-stash{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .market-workspace .market-ledger>section{padding:6px}
+}
+.market-status .company-hint-button{min-width:44px;min-height:44px}
+/* Keep categories and filters reachable while comparing the two inventories. */
+#modal .market-workspace .market-tabs{position:sticky;top:88px;max-height:calc(88dvh - 125px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+/* Contract shortcuts belong with camera navigation, always within reach. */
+.map-quests{display:flex;gap:6px;margin-right:8px}
+.map-zoom .map-quest{display:flex!important;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:44px;padding:6px 10px;background:linear-gradient(#795c31,#45311c);border:1px solid #c4a060;color:#ffe0a0;box-shadow:inset 0 1px #dfbd7040,0 2px 4px #0006}
+.map-quest>svg{width:22px;height:22px;flex-shrink:0}.map-quest>small{font-size:11px}
+.map-quest:focus-visible{outline:2px solid #ffe0a0;outline-offset:3px}
+.contract-capacity{display:flex;gap:10px;flex-wrap:wrap;align-items:center;color:#dfc18a;margin:0 0 14px}.contract-capacity small{width:100%;color:#bdac8a}
+@media(max-width:820px){.map-quests{margin-right:4px;gap:4px}.map-zoom .map-quest{padding:6px;flex-direction:column;gap:2px}.map-quest>small{font-size:9px}}
+@media(max-width:620px){.map-zoom{flex-wrap:wrap;max-width:calc(100% - 24px)}.map-quests{gap:4px}}
+@media(max-width:820px){.map-zoom{top:12px;bottom:auto}.map-quests{position:static;margin-right:4px}.map-controls #march-status{max-width:180px}}
+@media(max-width:620px){.map-zoom{top:104px;bottom:auto}.map-quests{position:static;margin-right:4px}}
+.map-zoom .map-quest.is-ready{background:linear-gradient(#405824,#243619);border-color:#b7ef63;color:#dbffa3;box-shadow:inset 0 1px #dfff8550,0 2px 4px #0006}
+.map-quest.is-ready:focus-visible{outline-color:#c4ff76}
+button.primary.is-ready{background:linear-gradient(#405824,#243619);border-color:#b7ef63;color:#dbffa3}
+button.primary.is-ready:focus-visible{outline:2px solid #c4ff76;outline-offset:3px}
+
+/* Center the full mounted silhouette without shrinking the rider. */
+.company-page .hero-portrait .bb-portrait{margin-inline-end:var(--portrait-overhang,0px)}
+/* Mounted roster cards reserve room for the animal's full horizontal silhouette. */
+.mini-person:has([data-layer="mount-body"]){min-width:148px;width:148px}
+.mini-person .bb-portrait{margin-inline-end:var(--portrait-overhang,0px)}
+
+.forge-affix-slots{display:grid;gap:8px;margin:12px 0}.forge-slot-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.forge-slot-row>small{grid-column:1/-1;color:#d6b578}.forge-slot{padding:7px 5px;border:1px dashed #796440;text-align:center;color:#a88f64;overflow-wrap:anywhere;font-size:11px}.forge-slot.filled{border-style:solid;background:#3c3220;color:#efd397}.forge-recipe{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.forge-material{padding:5px 8px;background:#293125;border:1px solid #788b57;font-size:12px}.forge-material.missing{background:#432b24;border-color:#a16b52;color:#f2c0a1}.forge-free,.forge-legacy{display:block;color:#d8c38e;font-size:12px;margin:8px 0}.forge-success .forge-affix-slots{max-width:420px;margin:12px auto}
+
+/* Set link occupies the existing head/body gap, without adding a row. */
+.company-page .protection-slots{gap:8px}
+.protection-slots>.slot-wrap{position:relative}
+.armor-set-link{position:absolute;z-index:2;left:calc(100% - 14px);top:34px;margin:0;color:#8d8066}
+.armor-set-link .company-hint-button{width:36px;height:36px;min-height:36px;padding:5px;border:0;background:none;box-shadow:none;color:inherit}
+.armor-set-link svg{display:block;width:26px;height:26px;padding:3px;border-radius:50%;background:#29241b;border:1px solid #665737}
+.armor-set-link.is-active{color:#f2d084}
+.armor-set-link.is-active svg{background:#40331c;border-color:#c29b50;filter:drop-shadow(0 0 3px #c29b5055)}
+.armor-set-link .company-hint-button:hover,.armor-set-link .company-hint-button[aria-expanded=true]{background:none;color:#fff0c9}
+/* Ancient Armory uses the settlement's existing parchment and button palette. */
+.ancient-workbench{display:grid;grid-template-columns:minmax(210px,1fr) minmax(300px,1.6fr);gap:24px;align-items:start}
+.ancient-designs{display:grid;gap:6px;max-height:55vh;overflow-y:auto;padding:3px}
+.ancient-design{display:flex;gap:12px;align-items:center;text-align:left;min-height:64px;width:100%}
+.ancient-design.selected{outline:2px solid var(--gold,#b88942);outline-offset:1px}
+.ancient-design img{width:38px;height:58px;object-fit:contain;flex-shrink:0;image-rendering:pixelated}
+.ancient-design strong,.ancient-design small,.ancient-copy small,.ancient-finishes figcaption span{display:block}
+.ancient-design small,.ancient-copy small{font-size:12px;margin-top:4px}
+.ancient-finishes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ancient-finishes figure{margin:0;text-align:center}
+.ancient-finishes img{height:140px;max-width:100%;object-fit:contain;image-rendering:pixelated}
+.ancient-finishes figcaption{font-size:14px;line-height:1.6}
+.ancient-odds{padding:12px 0;border-block:1px solid #b8894266;line-height:1.7}
+.ancient-copies{margin:16px 0;padding:12px;border:1px solid #b8894266}
+.ancient-copy{display:flex;align-items:center;gap:12px;min-height:48px;cursor:pointer}
+.ancient-copy input{width:22px;height:22px;flex-shrink:0}
+.ancient-result>img{display:block;height:200px;max-width:100%;object-fit:contain;margin:0 auto;image-rendering:pixelated}
+@media(max-width:650px){.ancient-workbench{grid-template-columns:1fr}.ancient-designs{grid-template-columns:repeat(2,minmax(0,1fr))}.ancient-design{gap:6px;padding:8px;font-size:12px}.ancient-design img{width:28px}.ancient-design small{font-size:11px}}
+
+.ancient-armorer p{margin-bottom:12px}
+
+.armor-set-link.is-completion{left:2px;top:34px}

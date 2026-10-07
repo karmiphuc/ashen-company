@@ -1,3 +1,5 @@
+import { EQUIPMENT_SETS, TROPHY_COMPLETIONS, equipmentSetsForItem, equipmentSetCompletionOptions, equipmentSetBonusText, equipmentSetCompletionText } from './equipment-sets.js';
+import { PREFIX_EFFECTS, prefixEffectText } from './affix-prefixes.js';
 import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
 import { equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { isAncientHelmet } from './armory-themes.js';
@@ -41,7 +43,26 @@ export function getItemDetails(item, condition) {
   const stats = [];
   const notes = [];
   if (isAncientHelmet(item)) notes.push('Morale immunity while equipped: no positive or negative morale changes, no morale bonuses or penalties to attack and defense, and no automatic fleeing.');
+  if(item.rangedRangeBonus)notes.push('Extra ranged reach applies to bows and crossbows only while armor and helmet fatigue total at most 15. Multiple Farseeing effects do not stack.');
+  if(item.perkBoosts?.berserkAp)notes.push('Requires Berserk: adds bonus AP to its once-per-round kill proc, including reaction kills credited to the next turn. Equipment bonuses stack up to +2 AP total.');
+  if(item.perkBoosts?.nimble)notes.push('Requires Nimble: +10 melee and ranged defense with armor and helmet fatigue at most 20. Multiple Nimble enhancements do not multiply again.');
+  if(item.perkBoosts?.battleForged)notes.push('Requires Battle Forged: reduces incoming armor damage by another 5 percentage points per bonus, up to 10 points.');
+  for(const [key,value] of Object.entries(item.perkBoosts??{}))if(value&&PREFIX_EFFECTS[key])notes.push(prefixEffectText(key,value));
   if(item.signatureDescription)notes.push(item.signatureDescription);
+  if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
+  if(item.forgeAffixes)notes.push(item.forgeAffixes.locked?'Legacy forge bonuses are preserved. Further merges are locked; full transfers preserve the restriction.':`Affix slots: ${item.forgeAffixes.prefixes.length}/2 prefixes, ${item.forgeAffixes.suffixes.length}/2 suffixes. Duplicate affixes upgrade without adding; inactive affixes still occupy slots.`);
+  const sets=equipmentSetsForItem(item);
+  if(item.slot==='attachment'&&sets.length){
+   const families=sets.length===EQUIPMENT_SETS.length?'any complete matching head/body set':sets.map(s=>s.name).join(', ');
+   const id=item.baseId??item.id,trophy=TROPHY_COMPLETIONS.find(c=>c.attachmentId===id);
+   notes.push(`Three-piece completion attachment for ${families}. ${trophy?'Ordinary and named versions qualify.':'Only named versions count; ordinary versions keep their normal protection and effects.'}`);
+   const completions=trophy?[{name:'Any matching set',threePiece:trophy}]:sets.flatMap(s=>equipmentSetCompletionOptions(s).filter(c=>c.attachmentId===id).map(c=>({name:c.name??s.name,threePiece:c})));
+   for(const set of completions)notes.push(`${set.name} completion: wear ${set.threePiece.namedOnly?'a named ':''}${item.name} with ${set.threePiece.armorId?`${getItem(set.threePiece.armorId).name} and ${getItem(set.threePiece.helmetId).name}`:'its matching head/body pair'} for +${set.threePiece.armorPct}% head/body armor and −${set.threePiece.attachmentFatiguePct}% fatigue on those three pieces. These replace the two-piece bonuses. Attachment armor and native effects stay unchanged; only the strongest completion applies.`);
+  }else for(const armorSet of sets){
+   notes.push(`${armorSet.name} set piece: ${armorSet.pairing} ${equipmentSetBonusText(armorSet)}. Uses rounded fitted fatigue for Nimble, Agile Defense, Fleet Footed and Brawny. Named and reforged variants count; transferring bonuses to a different design does not transfer set membership.`);
+   notes.push(equipmentSetCompletionText(armorSet));
+  }
+  if(item.restorationFinish)notes.push(`Restored Ancient Armory · ${item.restorationFinish === 'steel' ? 'silverish steel' : 'bronze'} finish. The original ancient design is preserved. Already restored pieces cannot be used as restoration materials. Named bonuses apply above this restored baseline.`);
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;

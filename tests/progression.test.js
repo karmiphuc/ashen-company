@@ -15,6 +15,9 @@ function approachBand(state, id) {
 }
 
 function winBand(state, id = 'road-thieves') {
+  // Exercise progression with a company one XP below its next level; a single
+  // patrol's changing reward balance must not determine whether this fixture levels.
+  for (const person of state.party) if (person.level === 1) person.xp = 49;
   approachBand(state, id);
   assert.equal(resolveBattle(state).ok, true);
   assert.equal(state.battle.status, 'victory');

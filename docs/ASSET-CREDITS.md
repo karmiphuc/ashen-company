@@ -98,3 +98,13 @@ Version 0.50.28 corrects Direwolf Fur to the pinned Legends
 layers. These unchanged source PNGs include the wolf's head. The rear layer
 uses 85% CSS scale to fit the portrait. Exact source paths and hashes are in
 [fur/mail provenance](../assets/fur-mail-attachments-source.json).
+
+## Legendary blacksmith workshop (0.52.0)
+
+`assets/world/legendary-blacksmith.png` is the unchanged 305 × 259 PNG from
+[Medieval Blacksmith Isometric 2.5D](https://opengameart.org/content/medieval-blacksmith-isometric-25d)
+by **feudalwars**, released under **CC0**. The forge dialog and Ironford marker
+preserve its aspect ratio. The download URL and SHA-256 are recorded in
+[workshop provenance](../assets/world/legendary-blacksmith-source.json).
+
+The quest-completion horn/chime cadence is an original procedural composition released as CC0. `tools/generate-quest-tune.py` reproduces its 2.8-second mono MP3 (about 23 KB); it contains no sampled recordings or Warband audio. It plays once on successful contract payment or Odran quest turn-in and follows the sound-effects setting.

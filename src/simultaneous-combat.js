@@ -1,10 +1,11 @@
+import { injuryStat } from './injuries.js';
 // An event scheduler, not a second copy of the tactical AI or damage rules.
 export const SIM_STEP_MS = 50;
 export const SIM_ROUND_MS = 6000;
-export const SIM_EFFECTS = Object.freeze({stunnedTurns:1,dazedTurns:2,staggeredTurns:1,disarmedTurns:1,howlTurns:2});
+export const SIM_EFFECTS = Object.freeze({stunnedTurns:1,dazedTurns:2,affixDazedTurns:2,staggeredTurns:1,disarmedTurns:1,howlTurns:2});
 const frames = new WeakMap();
 const clamp = (value,min,max) => Math.max(min,Math.min(max,value));
-export const simultaneousInitiative = unit => Math.max(1,unit.initiative*(unit.staggeredTurns>0?.5:1)*(unit.dazedTurns>0?.75:1)-unit.fatigue*.2);
+export const simultaneousInitiative = unit => Math.max(1,injuryStat(unit,'initiative')*(unit.staggeredTurns>0?.5:1)*(unit.affixDazedTurns>0?.5:unit.dazedTurns>0?.75:1)-unit.fatigue*.2);
 export const simultaneousPriority = (a,b) => simultaneousInitiative(b)-simultaneousInitiative(a)||a.id.localeCompare(b.id);
 export function initialSimultaneousClock(battle) {
   return {version:1,time:0,carryMs:0,backlogMs:0,pendingIds:[],roundEndsAt:SIM_ROUND_MS,actors:Object.fromEntries(battle.units.map(unit=>[unit.id,{
