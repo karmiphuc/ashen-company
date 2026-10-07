@@ -50,7 +50,11 @@ Never bypass validation by uploading files directly. Failed browser traces are u
 when diagnosing failures.
 
 The repository must use Pages **GitHub Actions** publishing, not legacy branch
-publishing. `Validate release` should also be a required branch check where an
+publishing. The deployment job checks the setting and attempts to switch it
+using its scoped `pages: write` token. If GitHub refuses, deployment fails and
+an administrator must choose Actions in Settings → Pages → Build and deployment.
+The connector's direct Pages-setting update is denied (HTTP 403).
+`Validate release` should also be a required branch check where an
 administrator can configure it. The current connector cannot read or edit
 branch-protection settings (HTTP 403); the workflow still gates deployment.
 
