@@ -8,7 +8,7 @@ async function harness(page){
   const s=engine.createGame(731);while(s.party.length<9){const p=structuredClone(s.party[0]);p.id=`fixture-${s.party.length}`;s.party.push(p);}s.party.forEach((p,i)=>p.equipment.mount=i<3?'war-horse':null);delete s.formation;
   config.setSimultaneousBetaEnabled(true);s.position={x:440,y:520};engine.startBattle(s,'quarry-camp');config.setSimultaneousBetaEnabled(false);
   window.engine=engine;window.state=s;window.b=s.battle;
-  const enemy=b.units.filter(u=>u.side==='enemy');while(enemy.length<10){const u=structuredClone(enemy[0]);u.id=`enemy-${enemy.length}`;b.units.push(u);enemy.push(u);b.simultaneous.actors[u.id]={readyAt:0,effects:{}};b.turnOrder.push(u.id);}
+  const enemy=b.units.filter(u=>u.side==='enemy');while(enemy.length<10){const u=structuredClone(enemy[0]);u.id=`enemy-fixture-${enemy.length}`;b.units.push(u);enemy.push(u);b.simultaneous.actors[u.id]={readyAt:0,effects:{}};b.turnOrder.push(u.id);}
   b.field.tiles.forEach(t=>{t.terrain='open';t.height=0;});b.units.forEach((u,i)=>{u.q=u.side==='company'?4:13;u.r=(u.side==='company'?i:enemy.indexOf(u))+2;u.tacticalRole='frontliner';});b.tactic='offense';b.formationAdvance=null;
   if(b.units.filter(u=>u.side==='company').length!==9)throw new Error('Expected nine fielded brothers');
   window.root=document.querySelector('#root');root.innerHTML=view.battleHTML(b,1,true);window.render=speed=>view.updateSimultaneousBattleView(root,b,speed);
@@ -49,14 +49,14 @@ for(const cpuRate of [1,4])test(`mixed mounted combat has bounded frame stalls a
   const results=[],initial=structuredClone(state);
   for(const speed of [1,4]){
    runner.stopSimultaneousWorker();state=structuredClone(initial);b=state.battle;root.innerHTML=view.battleHTML(b,speed,true);render(speed);
-   const gaps=[],costs=[];let last=performance.now(),start=last,updates=0,snapshots=0,maxSnapshotGap=0,lastSnapshot=last;const simStart=b.simultaneous.time;
-   await new Promise(resolve=>{function frame(now){const elapsed=now-last;gaps.push(elapsed);last=now;const t=performance.now();const step=runner.queueSimultaneousFrame(state,Math.min(250,elapsed)*speed);if(step.updated){snapshots++;maxSnapshotGap=Math.max(maxSnapshotGap,now-lastSnapshot);lastSnapshot=now;}view.presentSimultaneousBattleFrame(root,b,speed,step.updated,now);costs.push(performance.now()-t);updates++;if(now-start<2500&&b.status==='active')requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});
-   gaps.sort((a,b)=>a-b);results.push({speed,updates,fps:updates*1000/(last-start),snapshots,maxSnapshotGap,advanced:b.simultaneous.time-simStart,p95:gaps[Math.floor(gaps.length*.95)],max:Math.max(...gaps),maxWork:Math.max(...costs)});
+   const gaps=[],costs=[];let last=performance.now(),start=last,updates=0,snapshots=0,maxSnapshotGap=0,lastSnapshot=last,lastVisible=last,maxVisibleIdle=0,idleState=null;const simStart=b.simultaneous.time;
+   await new Promise(resolve=>{function frame(now){const elapsed=now-last;gaps.push(elapsed);last=now;const t=performance.now();const step=runner.queueSimultaneousFrame(state,Math.min(250,elapsed)*speed);if(step.updated){snapshots++;maxSnapshotGap=Math.max(maxSnapshotGap,now-lastSnapshot);lastSnapshot=now;}view.presentSimultaneousBattleFrame(root,b,speed,step.updated,now);costs.push(performance.now()-t);if(events.simultaneousEvents(b).some(e=>['move','attack','miss','hit','fall'].includes(e.event.type)&&b.simultaneous.time-e.time<e.duration))lastVisible=now;else {maxVisibleIdle=Math.max(maxVisibleIdle,now-lastVisible);if(!idleState&&now-lastVisible>1000)idleState={time:b.simultaneous.time,round:b.round,units:b.units.filter(u=>u.alive).map(u=>({id:u.id,ap:u.ap,stun:u.stunnedTurns,escaped:u.escaped,ready:b.simultaneous.actors[u.id].readyAt})),events:events.simultaneousEvents(b).map(e=>({time:e.time,type:e.event.type,message:e.event.message}))};}updates++;if(now-start<8000&&b.status==='active')requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});
+   gaps.sort((a,b)=>a-b);results.push({speed,updates,fps:updates*1000/(last-start),snapshots,maxSnapshotGap,maxVisibleIdle,idleState,round:b.round,advanced:b.simultaneous.time-simStart,p95:gaps[Math.floor(gaps.length*.95)],max:Math.max(...gaps),maxWork:Math.max(...costs)});
   }
   runner.stopSimultaneousWorker();return results;
  });
  console.log('Mixed combat frame metrics',JSON.stringify(metrics));
- for(const result of metrics){expect(result.updates).toBeGreaterThan(25);expect(result.snapshots).toBeGreaterThan(10);expect(result.advanced).toBeGreaterThan(1000);expect(result.maxSnapshotGap).toBeLessThan(1000);expect(result.fps).toBeGreaterThan(cpuRate===1?45:30);expect(result.p95).toBeLessThan(cpuRate===1?50:100);expect(result.max).toBeLessThan(1000);}
+ for(const result of metrics){expect(result.updates).toBeGreaterThan(25);expect(result.snapshots).toBeGreaterThan(10);expect(result.advanced).toBeGreaterThan(6000);expect(result.round).toBeGreaterThan(1);expect(result.maxVisibleIdle).toBeLessThan(1000);expect(result.maxSnapshotGap).toBeLessThan(1000);expect(result.fps).toBeGreaterThan(cpuRate===1?45:30);expect(result.p95).toBeLessThan(cpuRate===1?50:100);expect(result.max).toBeLessThan(1000);}
 });
 test('two incoming hits retain distinct timestamps and cinematic attacks finish',async({page})=>{
  await harness(page);
