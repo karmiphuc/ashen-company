@@ -50,6 +50,14 @@ faces in `/workspace/ashen-armory-study/wolf-mask-check.png` and the complete
 helmet lineup at 160px and 80px. The intermediate higher mail rim covered the
 lower face and was replaced before delivery. Inventory icon and stats stay original.
 
+Moonfang shoulder revision: broadened the fur mantle, strengthened the mail-side
+shoulder and enlarged the snarling shoulder trophy. The worn layer is now 120x104
+at left-10/top16. Compared with original Direwolf Hide/Mail using the same Alpha
+helmet at 160px, 80px and 64px in
+`/workspace/ashen-armory-study/moonfang-shoulders-comparison.png`, and inspected
+all three helmets in the updated worn lineup. The wider body balances Alpha's
+crown; the wearer's eyes, mouth and jaw remain clear.
+
 No unresolved P0/P1/P2 findings. Physical-device Safari remains untested.
 
 final result: passed

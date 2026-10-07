@@ -16,12 +16,12 @@
     },
     {
       "layer": "portrait",
-      "generatedMaster": "exec-50d4f507-2381-4f6c-a232-f5aa42a0a016.png",
-      "masterSha256": "27cb475c8722c831cfad297a99473736b2848de83c31734fa584f6ff1f5e9ad0",
+      "generatedMaster": "exec-b3bbbf6c-536b-4220-871e-45efa33dc419.png",
+      "masterSha256": "ce3e920d9ea7916a8adb7741854af13f940c9b91d0e0ee6f4a1e990042635104",
       "path": "assets/direwolf-moonfang/portrait.png",
-      "sha256": "8084a9abd2861a0078d19c2275e8d02e72b5f3599098c9aa584c07282fb7a1b2",
-      "packaging": "ImageMagick alpha trim, aspect-preserving resize, transparent bottom-aligned canvas 104x94; portrait anchor left0 top20",
-      "revision": "Enlarged wolf face and muzzle for prominence in cropped worn portraits, while retaining the central neck opening and portrait anchors."
+      "sha256": "cdd4070ba19ecdbda876012c8ca1fdb1e1828a8e1730d1e33c5a102fa1b4eb5b",
+      "packaging": "ImageMagick alpha trim, aspect-preserving resize, transparent bottom-aligned canvas 120x104; portrait anchor left-10 top16",
+      "revision": "Broadened shoulders and fur mantle with enlarged wolf trophy to balance Alpha helmet; verified at 160px, 80px and 64px."
     }
   ]
 }
