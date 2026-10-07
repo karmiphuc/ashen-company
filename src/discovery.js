@@ -45,7 +45,7 @@ export function championExtraGear(state, encounter, enemy, index, getItem, creat
       gear[slot] = createNamedItem(base.baseId ?? base.id, hash(`${key}:${i}:extra:${slot}:item`));
     }
     if (getItem(gear.reserveWeapon)?.twoHanded) gear.reserveShield = null;
-    if ((!frozen || frozen.cycle !== cycle || frozen.namedAffixVersion===1)
+    if ((!frozen || frozen.cycle !== cycle || [1,2].includes(frozen.namedAffixVersion))
       && ['famed','named'].includes(getItem(gear.armor)?.rarity) && getItem(gear.attachment)?.slot==='attachment'
       && !getItem(gear.attachment).rollVersion)
       gear.attachment=createNamedItem(gear.attachment,hash(`${key}:${i}:champion-attachment`));

@@ -1,5 +1,6 @@
+import { PREFIX_EFFECTS, AFFIX_MASTERIES, eligibleExpandedPrefixes, prefixEffectText, equipmentPerkText } from './affix-prefixes.js';
 // Stable, bounded affixes. Gear grants effects while worn; it never learns perks.
-export const AFFIX_PERKS = Object.freeze(['pathfinder','fleet-footed','recover','relentless','steel-brow','shield-expert','backstabber','anticipation']);
+export const AFFIX_PERKS = Object.freeze(['pathfinder','fleet-footed','recover','relentless','steel-brow','shield-expert','backstabber','anticipation',...AFFIX_MASTERIES,'combat-bandaging','quick-hands','layered-armor']);
 export const perkFlags = perks => (perks ?? []).reduce((flags,id) => flags | (AFFIX_PERKS.includes(id) ? 1 << AFFIX_PERKS.indexOf(id) : 0), 0);
 export const flaggedPerks = flags => AFFIX_PERKS.filter((_,index) => flags & (1 << index));
 export function activeAffixItems(actor, getItem) {
@@ -21,23 +22,23 @@ function currentAffixes(actor,getItem) {
     if(slot==='shield'&&!shieldUsable)continue;
     const id=equipment[slot];
     // Legacy and ordinary gear cannot grant affixes; avoid resolving their rolls.
-    if(typeof id!=='string'||!id.startsWith('famed5:')&&!id.startsWith('forge2:'))continue;
+    if(typeof id!=='string'||!id.startsWith('famed5:')&&!id.startsWith('famed7:')&&!id.startsWith('forge2:')&&!id.startsWith('forge3:'))continue;
     const item=getItem(id);if(!item)continue;
     for(const perk of item.grantedPerks??[])summary.perks.add(perk);
-    for(const [key,value]of Object.entries(item.perkBoosts??{}))summary.boosts[key]=(summary.boosts[key]??0)+value;
+    for(const [key,value]of Object.entries(item.perkBoosts??{}))summary.boosts[key]=PREFIX_EFFECTS[key]?Math.max(summary.boosts[key]??0,value):(summary.boosts[key]??0)+value;
     summary.range+=item.rangedRangeBonus??0;
   }
   if(summary.range){const load=affixSlots.slice(0,2).reduce((sum,slot)=>sum+(getItem(equipment[slot])?.fatigue??0),0);summary.range=load<=15?Math.min(1,summary.range):0;}
   actorAffixes.set(actor,summary);return summary;
 }
-export function equipmentBoost(actor,key,getItem,cap=2){return Math.min(cap,currentAffixes(actor,getItem).boosts[key]??0);}
+export function equipmentBoost(actor,key,getItem,cap=PREFIX_EFFECTS[key]?.cap??2){return Math.min(cap,currentAffixes(actor,getItem).boosts[key]??0);}
 export function equipmentPerk(actor,id,getItem){return currentAffixes(actor,getItem).perks.has(id);}
 export function equipmentRangedReach(actor,getItem){return currentAffixes(actor,getItem).range;}
 function seededRoll(seed, salt) {
   let state=(seed ^ salt)>>>0;
   return (min,max) => {state=(state+0x6D2B79F5)>>>0;let x=state;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return min+((x^(x>>>14))>>>0)%(max-min+1);};
 }
-export function applyNamedAffixes(item, original, seed, bonuses) {
+export function applyNamedAffixes(item, original, seed, bonuses, {expanded=false}={}) {
   const suffixRoll=seededRoll(seed,0x73756666),prefixRoll=seededRoll(seed,0x70726566);
   const light=(original.sourceFatigue ?? original.fatigue ?? 0) <= (item.slot === 'helmet' ? 9 : 15);
   const suffixes = item.slot === 'weapon' ? [
@@ -76,6 +77,7 @@ export function applyNamedAffixes(item, original, seed, bonuses) {
     ['tireless','Tireless','recover','Recover'],['trailblazer','Trailblazer','pathfinder','Pathfinder'],['bloodrush','Bloodrush',null,'Berserk: +1 AP per kill proc (requires the perk)'],
     ...(item.ranged ? [['watchful','Watchful','anticipation','Anticipation']] : [['ruthless','Ruthless','backstabber','Backstabber']])
   ];
+  if(!expanded){
   const [prefixId,prefix,perk,effect]=prefixPool[prefixRoll(0,prefixPool.length-1)];
   item.grantedPerks=Object.freeze(perk?[perk]:[]);
   if(prefixId==='farseeing')item.rangedRangeBonus=1;
@@ -84,6 +86,24 @@ export function applyNamedAffixes(item, original, seed, bonuses) {
   item.name=`${prefix} ${item.name} ${suffix}`;
   bonuses.push(Object.freeze({label:`Prefix · ${prefix}`,value:perk?`Grants ${effect} while equipped`:effect}));
   item.signatureDescription=`${prefix}: ${effect}. Equipment perks do not stack with the same learned perk or another item granting it. Reserve gear grants no effects. Berserk bonuses stack up to +2 AP; Battle Forged up to 10% extra reduction. Nimble enhancement applies once.`;
+    return;
+  }
+  const choices=[...prefixPool.map(([id,name,perk,effect])=>({id,name,perk,effect,weight:4,grades:[1]})),...eligibleExpandedPrefixes(item,light)];
+  let pick=prefixRoll(1,choices.reduce((sum,p)=>sum+p.weight,0));
+  const prefix=choices.find(p=>(pick-=p.weight)<=0);
+  const gradeRoll=seededRoll(seed,0x67726164)(0,99),grade=prefix.grades.length===3?(gradeRoll<60?0:gradeRoll<90?1:2):prefix.grades.length===2?(gradeRoll<70?0:1):0;
+  const amount=prefix.grades[grade],perk=prefix.mastery?AFFIX_MASTERIES[seededRoll(seed,0x6d617374)(0,AFFIX_MASTERIES.length-1)]:prefix.perk;
+  const effect=prefix.key?prefixEffectText(prefix.key,amount):perk?equipmentPerkText(perk):prefix.effect;
+  item.grantedPerks=Object.freeze(perk?[perk]:[]);
+  if(prefix.id==='farseeing')item.rangedRangeBonus=1;
+  item.perkBoosts=Object.freeze(prefix.key?{[prefix.key]:amount}:prefix.id==='bloodrush'?{berserkAp:1}:prefix.id==='featherbound'?{nimble:1}:prefix.id==='tempered'?{battleForged:1}:{});
+  if(prefix.key==='shieldHealthPct'){item.unboostedShieldDurability=item.durability;item.durability=Math.ceil(item.durability*(1+amount/100));}
+  const display=prefix.name+(prefix.grades.length>1?` ${['I','II','III'][grade]}`:'');
+  item.affixPrefix=Object.freeze({id:prefix.id,name:display,effect,tier:grade+1,value:amount});item.affixSuffix=Object.freeze({id:suffixId,name:suffix});
+  item.name=`${display} ${item.name} ${suffix}`;
+  bonuses.push(Object.freeze({label:`Prefix · ${display}`,value:effect}));
+  item.signatureDescription=`${display}: ${effect}. Only worn gear grants effects. Graded bonuses use the strongest worn copy; learned perks are never duplicated.`;
+
 }
 export function rollAttachment(original,id,seed,{champion=false}={}) {
   const protectionRoll=seededRoll(seed,0x61726d72),traitRoll=seededRoll(seed,0x61747472);

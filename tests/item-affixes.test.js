@@ -8,7 +8,7 @@ import { setSimultaneousBetaEnabled } from '../src/combat-config.js';
 const catalog=id=>ITEMS.find(i=>i.id===id);
 const forged=(base,profile)=>getItem(encodeForgeItem(base,profile,catalog));
 function equip(state,item) {state.inventory.push(item.id);state.inventoryCondition.push(item.slot==='shield'?shieldMaximum(item.id):item.armor??null);assert.ok(equipItem(state,'captain',item.id).ok);}
-function find(base,predicate) {for(let seed=0;seed<2000;seed++){const item=getItem(createFamedItemId(base,seed));if(predicate(item))return item;}assert.fail(`No matching affix on ${base}`);}
+function find(base,predicate) {for(let seed=0;seed<2000;seed++){const item=getItem(createFamedItemId(base,seed,5));if(predicate(item))return item;}assert.fail(`No matching affix on ${base}`);}
 function fight({weapon='arming-sword',armor=null,perks=[],realtime=false}={}) {
   const state=createGame(51);state.party[0].perks=perks;state.party[0].level=20;
   if(armor)equip(state,armor); if(typeof weapon==='object')equip(state,weapon);
@@ -24,7 +24,7 @@ function fight({weapon='arming-sword',armor=null,perks=[],realtime=false}={}) {
 test('prefix and suffix identities are independent, varied, immutable and preserve legacy identities',()=>{
   const prefixes=new Set(),suffixes=new Set(),pairs=new Map();
   for(let seed=0;seed<1000;seed++){
-    const item=getItem(createFamedItemId('cloth-hood',seed));prefixes.add(item.affixPrefix.id);suffixes.add(item.affixSuffix.id);
+    const item=getItem(createFamedItemId('cloth-hood',seed,5));prefixes.add(item.affixPrefix.id);suffixes.add(item.affixSuffix.id);
     const pool=pairs.get(item.affixSuffix.id)??new Set();pool.add(item.affixPrefix.id);pairs.set(item.affixSuffix.id,pool);
     assert.ok(Object.isFrozen(item));assert.ok(Object.isFrozen(item.statBonuses));
     assert.equal(item.name.startsWith(item.affixPrefix.name),true);assert.ok(item.name.endsWith(item.affixSuffix.name));

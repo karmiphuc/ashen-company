@@ -1,3 +1,4 @@
+import { getTurnAp } from './engine.js';
 import { INJURY_BY_ID, injuryEffectText, injuryStat, injuryAdjustment } from './injuries.js';
 import { simultaneousEvents } from './simultaneous-combat.js';
 import { getNightHitPenalty } from './engine.js';
@@ -158,8 +159,8 @@ function actionCallout(event, weapon) {
     hold: 'Hold', swap: 'Swap set', use: 'Use item' }[event.type] ?? '';
 }
 function perkEffectsHTML(effects) {
-  const names = { 'battle-flow': 'Battle Flow', 'killing-frenzy': 'Killing Frenzy', berserk: 'Berserk', howling: 'Howling' };
-  return effects.filter(effect => names[effect.id]).map(effect => `<span class="battle-perk-proc proc-${effect.id}" role="status"><i aria-hidden="true"></i>${names[effect.id]}<small>${effect.id === 'battle-flow' ? `−${number(effect.amount)} fatigue` : effect.id === 'killing-frenzy' ? '+25% damage' : effect.id === 'howling' ? 'Enemy damage −20% · 2 turns' : `+${number(effect.amount)} AP${effect.nextTurn ? ' next turn' : ''}`}</small></span>`).join('');
+  const names = { 'battle-flow': 'Battle Flow', 'killing-frenzy': 'Killing Frenzy', berserk:'Berserk',howling:'Howling','affix-daze':'Head-hit daze','kill-momentum':'Momentum ready','kill-momentum-hit':'Momentum strike' };
+  return effects.filter(effect => names[effect.id]).map(effect => `<span class="battle-perk-proc proc-${effect.id}" role="status"><i aria-hidden="true"></i>${names[effect.id]}<small>${effect.id==='affix-daze'?'−50% initiative · −20% attack':effect.id==='kill-momentum'||effect.id==='kill-momentum-hit'?`+${number(effect.amount)}% damage`:effect.id === 'battle-flow' ? `−${number(effect.amount)} fatigue` : effect.id === 'killing-frenzy' ? '+25% damage' : effect.id === 'howling' ? 'Enemy damage −20% · 2 turns' : `+${number(effect.amount)} AP${effect.nextTurn ? ' next turn' : ''}`}</small></span>`).join('');
 }
 
 function statusIconsHTML(unit, battle) {
@@ -170,6 +171,8 @@ function statusIconsHTML(unit, battle) {
     unit.alive && unit.headHunterReady ? ['head-hunter', 'Head Hunter: next successful eligible hit strikes the head', '<path d="M8 1a4 4 0 0 1 4 4v3l-2 2v3H6v-3L4 8V5a4 4 0 0 1 4-4zm-2 4v2h1V5zm3 0v2h1V5z"/>'] : null,
     unit.alive && battle.weaponCompletionVersion===1 && getDoubleGripBonus(unit)>0 ? ['double-grip','Double Grip: +25% one-handed melee damage with an empty offhand','<path d="M3 2h2v5l2 2 2-2V2h2v6l-3 5H6L3 8z"/>'] : null,
     unit.disarmedTurns>0?['disarmed','Disarmed: weapon attacks and reactions disabled for one turn','<path d="m2 2 12 12M3 12l9-9"/>']:null,
+    unit.affixDazedTurns>0?['affix-dazed','Head-hit daze: −50% initiative and −20% melee/ranged skill for '+unit.affixDazedTurns+' turns','<circle cx="8" cy="8" r="5"/>']:null,
+    unit.killMomentumPct>0?['kill-momentum','Kill momentum: +'+unit.killMomentumPct+'% damage banked for the next weapon hit','<path d="m3 13 8-8M7 3h6v6"/>']:null,
     unit.dazedTurns>0?['dazed','Dazed: −25% damage, fatigue capacity and initiative for '+unit.dazedTurns+' turns','<circle cx="8" cy="8" r="5"/>']:null,
     unit.staggeredTurns>0?['staggered','Staggered: −50% initiative for one turn','<path d="m3 3 10 10M13 3 3 13"/>']:null,
     unit.bleeding?['bleeding','Bleeding: '+unit.bleeding.damage+' health per turn · '+unit.bleeding.turns+' turns','<path d="M8 1 3 9a5 5 0 0 0 10 0Z"/>']:null,
@@ -471,7 +474,7 @@ export function battleHTML(battle = {}, speed = 1, animateEvent = false, chromeO
         </div>
       </div></div>
       <aside id="battle-event-sidebar" class="battle-log" aria-label="Battle event log">
-        ${active&&!battle.simultaneous ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50) * (1 + getLoneWolfBonus(battle, active)))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<p class="battle-vitals">HP ${Math.round(number(active.hp))}/${Math.round(number(active.maxHp))} · AP ${Math.round(number(active.ap))}/${battle.rulesVersion===2?Math.max(0,9+injuryAdjustment(active,'ap')):2}<br>Fatigue ${Math.round(number(active.fatigue))}/${Math.round(number(injuryStat(active,'maxFatigue')))}</p><details class="battle-morale-help"><summary>Morale effects</summary><small>${isMoraleImmune(active)?'Morale immune: no positive or negative morale changes, no attack or defense modifiers, and no automatic fleeing.':"Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale."}</small></details></section>` : ''}
+        ${active&&!battle.simultaneous ? `<section class="battle-morale-report morale-${morale.name.toLowerCase()}"><h3>${esc(active.name)}</h3><strong>${morale.name} · ${Math.round(number(active.morale, 50))}/100 morale</strong><p>Resolve ${Math.round(number(active.resolve, 50) * (1 + getLoneWolfBonus(battle, active)))} · ${moralePercent > 0 ? '+' : ''}${moralePercent}% attack and defense</p>${skillName?`<p class="battle-skill-status">Skill used: ${esc(skillName)}</p>`:''}${shieldCondition(active)?`<p>Shield ${shieldCondition(active).current} / ${shieldCondition(active).max} durability${shieldCondition(active).current===0?' · Broken, no defense':''}</p>`:''}<p class="battle-vitals">HP ${Math.round(number(active.hp))}/${Math.round(number(active.maxHp))} · AP ${Math.round(number(active.ap))}/${battle.rulesVersion===2?getTurnAp(active):2}<br>Fatigue ${Math.round(number(active.fatigue))}/${Math.round(number(injuryStat(active,'maxFatigue')))}</p><details class="battle-morale-help"><summary>Morale effects</summary><small>${isMoraleImmune(active)?'Morale immune: no positive or negative morale changes, no attack or defense modifiers, and no automatic fleeing.':"Resolve reduces morale loss from wounds and fallen allies. Kills lift the surviving side's morale."}</small></details></section>` : ''}
         <details class="battle-log-details" open><summary>Combat log</summary>
         <ol>${log.length ? log.map(entry => `<li>${esc(entry)}</li>`).join('') : '<li>Both lines are waiting for the first clash.</li>'}</ol></details>
       </aside>
