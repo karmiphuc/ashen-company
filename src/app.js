@@ -21,7 +21,7 @@ import {isContractReady,getActiveContracts,getContractCategory,getContractTarget
 import {portraitSVG,itemImage} from './portraits.js';
 import {setCombatSettings} from './engine.js';
 import {mapHTML,mountMap,updateMap,focusMap,zoomMap,selectMapTown,selectMapCamp} from './map.js';
-import {presentSimultaneousBattleFrame,battleHTML,tacticsHTML,battleActionDuration,parseBattleSpeed,updateTurnBattleView,updateSimultaneousBattleView} from './battle-view.js';
+import {advanceBattlePresentation,battlePresentationHold,presentSimultaneousBattleFrame,battleHTML,tacticsHTML,battleActionDuration,parseBattleSpeed,updateTurnBattleView,updateSimultaneousBattleView} from './battle-view.js';
 import {setBattleTactic,SETTLEMENT_TYPES} from './engine.js';
 import {getItemDetails,getMainItemComparison} from './item-details.js';
 import {createGameAudio} from './audio.js';
@@ -249,7 +249,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
  if(b.hasAttribute('data-battle-roster')){const open=document.body.classList.toggle('combat-roster-open');b.setAttribute('aria-expanded',String(open));b.textContent=open?'Your company ▾':'Your company ▴';if(open)updateCompanyRoster();return;}
  if(b.dataset.battleZoom){zoomBattleCamera(b.dataset.battleZoom);return;}
  if(b.dataset.battleCamera){focusBattleCamera(b.dataset.battleCamera);return;}
- if(b.dataset.battleSpeed!==undefined){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=parseBattleSpeed(b.dataset.battleSpeed);battleElapsed=0;save();if(state.battle?.simultaneous)updateSimultaneousBattleView($('#main'),state.battle,battleSpeed);else render();return;}
+ if(b.dataset.battleSpeed!==undefined){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=parseBattleSpeed(b.dataset.battleSpeed);battleElapsed=0;save();syncAudio();if(state.battle?.simultaneous)updateSimultaneousBattleView($('#main'),state.battle,battleSpeed);else render();return;}
  if(b.dataset.fight){beginBattle(b.dataset.fight);return;}
  if(b.dataset.engage){engage(b.dataset.engage);return;}
  if(b.dataset.selectCamp){const site=getEncounterSites(state).find(c=>c.id===b.dataset.selectCamp);if(site){chosenCamp=site.id;tab='world';$('#modal').close();render();focusMap(site);}return;}
@@ -335,7 +335,7 @@ document.addEventListener('touchend',()=>gameAudio.unlock(),{capture:true});
 document.addEventListener('click',()=>gameAudio.unlock(),{capture:true});
 document.addEventListener('change',e=>{const key=e.target.dataset.combatSetting;if(!['combatRole','skillPreference'].includes(key))return;const result=setCombatSettings(state,e.target.dataset.personId,{[key]:e.target.value});toast(result.message);if(result.ok){save();render();}});
 document.addEventListener('keydown',()=>gameAudio.unlock(),{capture:true});
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&!$('#modal').open&&!['INPUT','SELECT','BUTTON'].includes(e.target.tagName)){e.preventDefault();if(state.battle?.simultaneous){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=battleSpeed?0:1;save();updateSimultaneousBattleView($('#main'),state.battle,battleSpeed);return;}speed=speed?0:1;updateSpeed();resources();}});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!$('#modal').open&&!['INPUT','SELECT','BUTTON'].includes(e.target.tagName)){e.preventDefault();if(state.battle?.simultaneous){stopSimultaneousWorker();simultaneousResolveToken++;battleSpeed=battleSpeed?0:1;save();syncAudio();updateSimultaneousBattleView($('#main'),state.battle,battleSpeed);return;}speed=speed?0:1;updateSpeed();resources();}});
 async function fastResolveSimultaneous(){
  const battle=state.battle,token=++simultaneousResolveToken;
  if(!battle?.simultaneous||battle.status!=='active')return;
@@ -350,13 +350,14 @@ async function fastResolveSimultaneous(){
   updateSimultaneousBattleView($('#main'),battle,0);
   if(performance.now()-lastSave>2000){save();lastSave=performance.now();}
  }
- stopSimultaneousWorker();save();if(state.battle===battle&&battle.status!=='active'){battleResultAt=performance.now()+700;render();}
+ stopSimultaneousWorker();save();if(state.battle===battle&&battle.status!=='active'){battleResultAt=performance.now()+battlePresentationHold(battle,battleSpeed);render();}
 }
 let last=performance.now(),lastSave=0,lastCombatResources=0,lastHour='';
 function animate(now){
  const elapsed=Math.min((now-last)/1000,.25);last=now;
  if(!document.hidden&&!$('#modal').open){
-  if(state.battle?.simultaneous&&state.battle.status!=='active'&&!battleResultAt&&$('.simultaneous-battle')){stopSimultaneousWorker();battleResultAt=now+700;save();render();}
+  if(state.battle?.simultaneous&&state.battle.status!=='active'&&!battleResultAt&&$('.simultaneous-battle')){stopSimultaneousWorker();battleResultAt=now+battlePresentationHold(state.battle,battleSpeed);save();render();}
+  if(battleResultAt&&state.battle?.simultaneous)advanceBattlePresentation($('#main'),state.battle,battleSpeed);
   if(battleResultAt&&now>=battleResultAt){battleResultAt=0;battleSpeed=0;render();}
   else if(state.battle?.status==='active'&&battleSpeed&&state.battle.simultaneous){
    const battle=state.battle,before=battle.simultaneous.time;
@@ -368,7 +369,7 @@ function animate(now){
    if(entries.length)simultaneousSoundCursor=entries.at(-1).id;
    presentSimultaneousBattleFrame($('#main'),battle,battleSpeed,step.updated||battle.simultaneous.time!==before,now);
    if(now-lastCombatResources>=250){resources();lastCombatResources=now;}
-   if(battle.status!=='active'){battleResultAt=now+700;save();render();}
+   if(battle.status!=='active'){battleResultAt=now+battlePresentationHold(battle,battleSpeed);save();render();}
    else if(now-lastSave>2000){save();lastSave=now;}
   }
   else if(state.battle?.status==='active'&&battleSpeed){battleElapsed+=elapsed;if(battleElapsed>=battleActionDuration(battleSpeed,state.battle?.lastEvent)){battleElapsed=0;advanceBattle(state);if(state.battle.status!=='active')battleResultAt=now+battleActionDuration(battleSpeed,state.battle?.lastEvent)*1000;if(state.battle.status!=='active'){save();render(true);}else{gameAudio.playEvent(state.battle.lastEvent,battleActionDuration(battleSpeed,state.battle.lastEvent),{cinematic:battleSpeed==='cinematic'});if(!updateTurnBattleView($('#main'),state.battle,battleSpeed))render(true);if(now-lastSave>=2000){save();lastSave=now;}if(now-lastCombatResources>=250){resources();lastCombatResources=now;}}}}

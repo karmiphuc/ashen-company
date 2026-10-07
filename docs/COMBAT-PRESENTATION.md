@@ -16,8 +16,12 @@ It extrapolates at most 100 simulation milliseconds between worker snapshots.
 Animation progress is sought from that clock every display frame; paused playback
 retains its previous rate. Changing speed adjusts duration and progress together.
 No extra action queue, deliberate one-second delay or save fields are introduced.
+Terminal battles keep advancing the final hit/fall through a hold of at most one
+second. Completed CSS animation handles are retained so the next identical rider
+step or attack can restart without replacing its element.
+
 Full rendering initializes animation tracks immediately; playback buttons and the
-space shortcut update the existing battlefield.
+space shortcut update the existing battlefield and synchronize playback audio.
 
 Animation discovery is batched after DOM writes rather than causing one style
 flush per fighter. Unchanged DOM subtrees and finished animation tracks are skipped.
@@ -38,7 +42,7 @@ Performance guards require average FPS above 45 normally and 30 under throttling
 frame or worker-snapshot gap of one second. Warm-up/worker startup is included.
 These are regression budgets for this controlled fixture, not a guarantee for all
 hardware, battle sizes or browser resource pressure. The first passing measured
-runs averaged about 60 FPS normally and 31–49 FPS under throttling; snapshot gaps
+runs averaged about 60 FPS normally and 31–52 FPS under throttling; snapshot gaps
 were below 250ms. Physical iPad verification remains useful.
 
 Run `npm run build` followed by `npm run test:release`. The existing realtime,

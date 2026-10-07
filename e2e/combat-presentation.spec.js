@@ -109,3 +109,27 @@ test('projectiles share the display clock through speed changes and pause',async
  });
  expect(result.normal).toBeGreaterThanOrEqual(100);expect(result.fast).toBeGreaterThanOrEqual(50);expect(result.fast).toBeLessThan(75);expect(result.duration).toBe(175);expect(result.paused).toBe(result.after);expect(result.same).toBe(true);
 });
+test('a completed move can restart for the next identical rider step',async({page})=>{
+ await harness(page);
+ const result=await page.evaluate(()=>{
+  const u=b.units[0];u.q++;b.simultaneous.time=50;
+  events.receiveSimultaneousEvents(b,[{id:1,time:0,duration:250,event:{actorId:u.id,type:'move',from:{q:u.q-1,r:u.r},to:u}}],1);render(1);
+  const node=root.querySelector(`[data-unit-id="${u.id}"]`),portrait=node.querySelector('.bb-portrait');
+  b.simultaneous.time=300;render(1);u.q++;
+  events.receiveSimultaneousEvents(b,[{id:2,time:300,duration:250,event:{actorId:u.id,type:'move',from:{q:u.q-1,r:u.r},to:u}}],2);render(1);
+  const animation=node.getAnimations().find(a=>a.animationName==='pawn-step');
+  return {age:animation?.currentTime,duration:animation?.effect.getTiming().duration,same:portrait===node.querySelector('.bb-portrait')};
+ });
+ expect(result.same).toBe(true);expect(result.duration).toBe(250);expect(result.age).toBeLessThan(100);
+});
+test('terminal combat keeps advancing the final fall within a one-second hold',async({page})=>{
+ await harness(page);
+ const result=await page.evaluate(async()=>{
+  const actor=b.units[0],target=b.units.find(x=>x.side==='enemy');target.alive=false;target.hp=0;b.status='victory';b.simultaneous.time=100;
+  events.receiveSimultaneousEvents(b,[{id:1,time:100,duration:700,event:{actorId:actor.id,targetId:target.id,type:'fall',hit:true,fallen:true,hpDamage:5,from:actor,to:target}}],1);render(1);
+  const node=root.querySelector(`[data-unit-id="${target.id}"]`),animation=node.getAnimations().find(a=>a.animationName==='pawn-fall'),hold=view.battlePresentationHold(b,1);
+  const before=animation.currentTime;await new Promise(resolve=>{const start=performance.now();function frame(now){view.advanceBattlePresentation(root,b,1);if(now-start<750)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});
+  return {before,after:animation.currentTime,hold};
+ });
+ expect(result.before).toBeLessThan(100);expect(result.after).toBeGreaterThanOrEqual(700);expect(result.hold).toBeLessThanOrEqual(1000);
+});

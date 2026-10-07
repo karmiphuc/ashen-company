@@ -29,7 +29,7 @@ function displayTime(view,battle,speed,now) {
     clock.simulation=next;clock.anchor=now;clock.rate=rate;clock.paused=speed===0;
   }
   // Smooth between 50ms snapshots, never build an unbounded visual queue.
-  const proposed=next+(speed===0?0:Math.min(100,(now-clock.anchor)*rate));
+  const proposed=next+(speed===0?0:Math.min(battle.status==='active'?100:1000,(now-clock.anchor)*rate));
   clock.shown=Math.max(clock.shown,proposed);return clock.shown;
 }
 export function syncPresentation(view,node,battle,speed,context) {
@@ -42,7 +42,11 @@ export function advanceBattlePresentation(root,battle,speed) {
   const time=displayTime(view,battle,speed,performance.now()),rate=clocks.get(battle).rate;
   if(dirty.has(view)){
     // Read animations once, after all DOM writes, avoiding per-fighter style flushes.
-    const list=view.getAnimations({subtree:true}).map(animation=>{
+    // Completed paused CSS animations vanish from getAnimations(), but must
+    // be rebound for consecutive same-type actions without replacing the pawn.
+    const animations=new Set(view.getAnimations({subtree:true}));
+    for(const track of tracks.get(view)??[]){const target=track.animation.effect?.target;if(track.animation.playState!=='idle'&&target?.isConnected&&view.contains(target))animations.add(track.animation);}
+    const list=[...animations].map(animation=>{
       const target=animation.effect?.target,node=target?.closest('[data-unit-id]'),context=contexts.get(node);
       const impact=/pawn-impact|pawn-fall|impact-bar|impact-float/.test(animation.animationName??'');
       const entry=impact?context?.incoming:context?.own??context?.incoming;

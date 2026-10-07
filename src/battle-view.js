@@ -401,6 +401,15 @@ export function updateTurnBattleView(root,battle,speed) {
  return true;
 }
 
+export function battlePresentationHold(battle,speed){
+  const rate=simultaneousRate(battle,speed);
+  const remaining=simultaneousEvents(battle).map(entry=>{
+    const duration=speed==='cinematic'&&cinematicActionKind(entry.event)==='attack'?Math.max(entry.duration,900):entry.duration;
+    return Math.max(0,entry.time+duration-battle.simultaneous.time)/rate;
+  });
+  return Math.min(1000,Math.max(150,...remaining)+50);
+}
+
 // Synchronize changed state once per display frame; motion also advances on
 // frames without a worker reply. No extra action queue or timeout is introduced.
 export function presentSimultaneousBattleFrame(root,battle,speed,updated){
