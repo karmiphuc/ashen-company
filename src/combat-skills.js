@@ -10,7 +10,7 @@ export const COMBAT_SKILLS = Object.freeze({
   shieldwall: { id: 'shieldwall', name: 'Shieldwall', ap: 4, fatigue: 20, description: 'Double the active shield defense until the next turn or a gear change.' },
   'knock-back': { id: 'knock-back', name: 'Knock Back', ap: 4, fatigue: 20, description: 'Push an adjacent enemy into a free hex; no damage. Cannot push through trees, fighters or cliffs.' },
   spearwall: { id: 'spearwall', name: 'Spearwall', ap: 4, fatigue: 30, description: 'Brace a spear (Spetum: 6 AP, 35 fatigue); a hit stops an entering enemy, and a miss ends the stance.' },
-  riposte: { id: 'riposte', name: 'Riposte', ap: 4, fatigue: 25, description: 'Counter an adjacent melee attack that misses. Each counter costs 5 fatigue.' },
+  riposte: { id: 'riposte', name: 'Riposte', ap: 2, fatigue: 25, description: 'Counter an adjacent melee attack that misses. Each counter costs 5 fatigue.' },
   split: { id: 'split', name: 'Split', ap: 6, fatigue: 25, description: 'Strike a target and the next hex behind it with a two-handed sword.' },
   swing: { id: 'swing', name: 'Swing', ap: 6, fatigue: 30, damageMultiplier: .8, description: 'Strike up to three adjacent hexes with a two-handed sword at 80% damage.' },
   'knock-out': { id: 'knock-out', name: 'Knock Out', ap: 4, fatigue: 25, description: 'A half-damage mace strike that stuns on a hit; two-handed maces cost 6 AP.' },
@@ -98,7 +98,7 @@ export const WEAPON_ACTIONS = Object.freeze({
   repel: skill('repel','Repel',6,25,'A non-damaging shove at two hexes that pushes one free hex, breaks stances and staggers.',{hitBonus:10,noDamage:true,push:true,stagger:1}),
   rupture: skill('rupture','Rupture',6,12,'A goblin-pike thrust; a wound inflicts 3 bleeding health for two turns.',{basic:true,bleed:3}),
   'demolish-armor': skill('demolish-armor','Demolish Armor',6,35,'A polehammer attack with +45% armor damage and only 6 direct health damage.',{armorMultiplier:1.45,fixedHealth:6}),
-  gash: skill('gash','Gash',4,20,'An accurate (+10 hit) shamshir cut. A wound weakens the target: −25% damage, fatigue capacity and initiative for two turns.',{hitBonus:10,daze:2,woundThreshold:.075}),
+  gash: skill('gash','Gash',4,20,'An accurate (+10 hit) shamshir cut with a 34% lower injury threshold, or 50% with Sword Mastery. Wounds persist until recovered.',{hitBonus:10,daze:2,woundThreshold:.075}),
   'whip-strike': skill('whip-strike','Whip',4,15,'Crack the whip. A wound inflicts 6 bleeding health per turn for two turns.',{basic:true,bleed:6}),
   disarm: skill('disarm','Disarm',5,30,'At −20 hit chance, prevent weapon attacks and reactions for the target’s next turn. No damage.',{hitBonus:-20,noDamage:true,disarm:1}),
   'shoot-bolt': skill('shoot-bolt','Shoot Bolt',3,12,'A normal crossbow shot; reload afterward.',{basic:true}),
@@ -118,7 +118,7 @@ const PROFILES = Object.freeze({
  flail:profile('flail','flail','flail-headshot'), threeflail:profile('threeflail','cascade','hail'), heavyflail:profile('heavyflail','pound','thresh'),
  cleaver:profile('cleaver','cleave','decapitate'), heavycleaver:profile('heavycleaver','cleave','decapitate','split-shield'),
  greatsword:profile('greatsword','overhead-strike','split','swing','split-shield'), warbrand:profile('warbrand','slash','split','swing'),
- billhook:profile('billhook','strike','hook'), pike:profile('pike','impale','repel'), goblinpike:profile('goblinpike','rupture','repel'), scythe:profile('scythe','strike','reap'),
+ billhook:profile('billhook','strike','hook'), pike:profile('pike','impale','repel'), goblinpike:profile('goblinpike','rupture','repel'), scythe:profile('scythe','strike','reap'), rhomphaia:profile('rhomphaia','strike','reap','split','swing'),
  dagger:profile('dagger','stab','puncture'), qatal:profile('qatal','stab','deathblow'), whip:profile('whip','whip-strike','disarm'),
  bow:profile('bow','quick-shot','aimed-shot'), crossbow:profile('crossbow','shoot-bolt','piercing-bolt'), impaler:profile('impaler','impaler-bolt','piercing-bolt'),
  javelin:profile('javelin','throw-javelin','power-throw'), throwingaxe:profile('throwingaxe','throw-axe','power-throw'), sling:profile('sling','sling-stone','stunning-stone'), estoc:profile('estoc','estoc-thrust'),
@@ -136,7 +136,8 @@ export function weaponCombatProfile(item) {
   if(item.throwing)id=/axe/.test(visual)?'throwingaxe':'javelin';
   else if(item.ranged)id=/crossbow/.test(visual)?'crossbow':/bow/.test(visual)?'bow':/sling/.test(visual)?'sling':null;
   else if(item.fencing)id='fencing';
-  else if(/warscythe|war-scythe|battle-glaive|rhomphaia/.test(visual))id='scythe';
+  else if(visual==='rhomphaia')id='rhomphaia';
+  else if(/warscythe|war-scythe|battle-glaive/.test(visual))id='scythe';
   else if(/billhook|hooked-bill/.test(visual))id='billhook';
   else if(/pike/.test(visual))id='pike';
   else if(/polehammer/.test(visual))id='polehammer';
@@ -154,6 +155,8 @@ export function equipmentSkills(item) {
   let ap=action.ap, fatigue=action.fatigue;
   if(id==='spearwall'&&profile.id==='spetum'){ap=6;fatigue=35;}
   else if(item.twoHanded&&!item.ranged&&ap<6&&!['cleave','decapitate','slash'].includes(id))ap=6;
-  return {...action,ap,...(fatigue===undefined?{}:{fatigue}),...(index===0?{basic:true}:{}),...(id==='decapitate'?{bleed:3}:{}),...(id==='split'?{area:'line'}:id==='swing'?{area:'arc'}:{}),...(profile.id==='impaler'&&id==='piercing-bolt'?{push:true}:{})};
+  if(['warbrand','rhomphaia'].includes(profile.id)&&['split','swing'].includes(id))ap=5;
+  const knockout=id==='knock-out'&&weaponTrainingVisual(item)==='goedendag';
+  return {...action,...(knockout?{damageMultiplier:.75,description:'A Goedendag strike at 75% normal damage that stuns on a hit.'}:{}),ap,...(fatigue===undefined?{}:{fatigue}),...(index===0?{basic:true}:{}),...(id==='decapitate'?{bleed:3}:{}),...(id==='split'?{area:'line'}:id==='swing'?{area:'arc'}:{}),...(profile.id==='impaler'&&id==='piercing-bolt'?{push:true}:{})};
  });
 }

@@ -121,6 +121,9 @@ test('casualties leave the roster, their gear is recovered on victory, and defea
   const doomedSite = getCampSites(doomed)[0];
   approach(doomed, doomedSite);
   startBattle(doomed, doomedSite.id);
+  // Exercise defeat cleanup directly; a one-HP fighter can now win with Riposte.
+  const fallenCaptain=doomed.battle.units.find(unit=>unit.id==='captain');
+  fallenCaptain.hp=0;fallenCaptain.alive=false;
   resolveBattle(doomed);
   assert.equal(doomed.battle.status, 'defeat');
   finishBattle(doomed);

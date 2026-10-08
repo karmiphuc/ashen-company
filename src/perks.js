@@ -1,9 +1,9 @@
 const PERK_CATEGORIES = {
-  general: ['colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist'],
+  general: ['crippling-strikes', 'colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist', 'overwhelm', 'head-hunter'],
   weapon: ['backstabber', 'sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training', 'shield-strike'],
-  defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'layered-armor', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'reach-advantage', 'last-stand'],
+  defense: ['steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'brawny', 'layered-armor', 'shield-bearer', 'iron-jaw', 'battle-forged', 'nimble', 'agile-defense', 'reach-advantage', 'last-stand', 'underdog', 'lone-wolf'],
   ranged: ['bullseye', 'anticipation', 'bow-mastery', 'crossbow-mastery', 'marksman', 'point-blank', 'volley-fire', 'reload-drill'],
-  mobility: ['pathfinder', 'recover', 'fleet-footed', 'relentless', 'marathoner', 'high-ground', 'quick-hands', 'combat-bandaging'],
+  mobility: ['pathfinder', 'recover', 'fleet-footed', 'relentless', 'marathoner', 'high-ground', 'quick-hands', 'combat-bandaging', 'rotation'],
 };
 const CATEGORY_ICONS = { general: 'executioner', weapon: 'backstabber', defense: 'shield-expert', ranged: 'bullseye', mobility: 'pathfinder' };
 const ORIGINAL_PERK_ICONS = new Set(['colossus', 'pathfinder', 'fast-adaptation', 'recover', 'bullseye', 'executioner', 'steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'backstabber', 'anticipation', 'brawny', 'bow-mastery', 'crossbow-mastery', 'berserk', 'killing-frenzy', 'fearsome']);
@@ -11,15 +11,21 @@ const ORIGINAL_PERK_ICONS = new Set(['colossus', 'pathfinder', 'fast-adaptation'
 export const REMOVED_PERK_MIN_LEVEL = new Map([['student', 2], ['field-medic', 2], ['forager', 2], ['paymaster', 2], ['trailblazer', 3]]);
 
 export const PERKS = Object.freeze([
-  { id: 'colossus', name: 'Colossus', description: 'Gain 25% maximum health.', minLevel: 2 },
+  { id: 'rotation', name: 'Rotation', description: 'Swap with an adjacent ally for 3 AP and 25 fatigue, ignoring zones of control. Neither fighter may be stunned or immobilized. The AI rescues exposed, wounded allies or withdraws a vulnerable fighter behind a healthier melee ally.', minLevel: 3 },
+  { id: 'overwhelm', name: 'Overwhelm', description: 'Each weapon attack, hit or miss, applies −10% melee and ranged skill to an enemy who has not yet taken their turn this round. Stacks from repeated attacks and expires after their turn. Reactions and mount bites do not apply it.', minLevel: 6 },
+  { id: 'lone-wolf', name: 'Lone Wolf', description: 'Gain 15% melee skill, ranged skill, melee defense, ranged defense and resolve while no living ally is adjacent. Updates immediately as fighters move.', minLevel: 5 },
+  { id: 'underdog', name: 'Underdog', description: 'Enemies gain no surrounding hit bonus against you, including Backstabber. In new battles each additional adjacent attacker normally grants +5 hit chance, or +10 with Backstabber.', minLevel: 5 },
+  { id: 'head-hunter', name: 'Head Hunter', description: 'A successful weapon head hit banks a guaranteed head hit on your next successful attack that can hit the head. That hit consumes the bonus. Misses and body-only skills preserve it; bleeding and mount bites do not trigger it.', minLevel: 6 },
+  { id: 'colossus', name: 'Colossus', description: 'Gain 25% maximum health, raising the damage needed to inflict injuries.', minLevel: 2 },
   { id: 'gifted', name: 'Gifted', description: 'Gain +3 melee and ranged skill and +2 melee and ranged defense.', minLevel: 2 },
   { id: 'pathfinder', name: 'Pathfinder', description: 'Reduce rough terrain and uphill movement costs by 1, to a minimum of 1.', minLevel: 2 },
   { id: 'fast-adaptation', name: 'Fast Adaptation', description: 'Gain +10 hit chance after each consecutive miss. The bonus resets on a hit.', minLevel: 2 },
   { id: 'recover', name: 'Recover', description: 'When catching your breath, recover at least 22 fatigue and otherwise halve current fatigue.', minLevel: 2 },
   { id: 'quick-hands', name: 'Quick Hands', description: 'The first weapon-set swap or pocket weapon draw or stow each round costs no AP. Continue fighting after switching.', minLevel: 2 },
-  { id: 'combat-bandaging', name: 'Combat Bandaging', description: 'The first healing item used each round costs no AP. At half health or lower, heal before other actions, even in melee. The item is still consumed.', minLevel: 2 },
+  { id: 'combat-bandaging', name: 'Combat Bandaging', description: 'The first healing item used each round costs no AP. At half health or lower, heal before other actions, even in melee. The item is still consumed. Healing restores HP but does not cure injuries.', minLevel: 2 },
   { id: 'bullseye', name: 'Bullseye', description: 'Ignore ranged accuracy penalties from trees and brush. Height still applies.', minLevel: 3 },
-  { id: 'executioner', name: 'Executioner', description: 'Deal 20% more damage to a target below full health.', minLevel: 3 },
+  { id: 'crippling-strikes', name:'Crippling Strikes', description:'Lower the health-damage threshold to inflict injuries by 34%. The minimum remains 10 health damage.', minLevel:2, icon:'executioner' },
+  { id: 'executioner', name: 'Executioner', description: 'Deal 20% more damage to a target suffering a temporary injury.', minLevel: 3 },
   { id: 'steel-brow', name: 'Steel Brow', description: 'Head hits no longer deal extra health damage.', minLevel: 3 },
   { id: 'dodge', name: 'Dodge', description: 'Gain 15% of current initiative as melee and ranged defense.', minLevel: 3 },
   { id: 'fortified-mind', name: 'Fortified Mind', description: 'Gain 25% resolve and take 20% less morale damage.', minLevel: 3 },
@@ -34,7 +40,7 @@ export const PERKS = Object.freeze([
   { id: 'killing-frenzy', name: 'Killing Frenzy', description: 'After a kill, deal 25% more damage through the next 2 rounds.', minLevel: 8 },
   { id: 'battle-flow', name: 'Battle Flow', description: 'Recover 10 fatigue after a kill.', minLevel: 5 },
   { id: 'fearsome', name: 'Fearsome', description: 'Health damage from a hit inflicts 10 additional morale damage.', minLevel: 8 },
-  { id: 'sword-training', name: 'Sword Mastery', description: 'Gain +8 hit chance and spend 25% less attack fatigue with swords, cleavers, shamshirs, estocs, and falxes. Matching attacks and weapon skills cost 1 less AP in new weapon-skill battles.', minLevel: 2 },
+  { id: 'sword-training', name: 'Sword Mastery', description: 'Gain +8 hit chance and spend 25% less attack fatigue with swords, cleavers, shamshirs, estocs, and falxes. Gash uses 50% of normal injury thresholds instead of 66%. Matching attacks and weapon skills cost 1 less AP in new weapon-skill battles.', minLevel: 2 },
   { id: 'axe-training', name: 'Axe Mastery', description: 'Axes and bardiches deal 15% more armor damage and spend 25% less attack fatigue. Matching attacks and weapon skills cost 1 less AP in new weapon-skill battles.', minLevel: 2 },
   { id: 'mace-training', name: 'Mace Mastery', description: 'Maces, hammers, flails, and goedendags deal 10% more health damage and spend 25% less attack fatigue. Matching attacks and weapon skills cost 1 less AP in new weapon-skill battles.', minLevel: 2 },
   { id: 'spear-training', name: 'Spear Mastery', description: 'Gain +8 hit chance and spend 25% less attack fatigue with melee spears and pikes. Matching attacks and weapon skills cost 1 less AP in new weapon-skill battles.', minLevel: 2 },
@@ -45,13 +51,14 @@ export const PERKS = Object.freeze([
   { id: 'shield-strike', name: 'Shield Strike', description: 'Deal 10% more melee damage while using a shield.', minLevel: 3 },
   { id: 'iron-jaw', name: 'Iron Jaw', description: 'Take 20% less health damage from every hit.', minLevel: 4 },
   { id: 'battle-forged', name: 'Battle Forged', description: 'Armor takes 15% less damage from hits.', minLevel: 5 },
+  { id: 'agile-defense', name: 'Agile Defense', description: 'Take 60% less health damage from hits at 15 or less combined body armor and helmet fatigue. Protection declines above 15 (about 32% at 30, none at 43). Attachments, shields, mounts and Brawny do not affect this weight check. Armor damage and bleeding are unchanged.', minLevel: 5 },
   { id: 'nimble', name: 'Nimble', description: 'Gain +5 melee and ranged defense when armor and helmet fatigue total at most 15.', minLevel: 4 },
   { id: 'reach-advantage', name: 'Reach Advantage', description: 'Gain +5 melee defense while wielding a two-handed melee weapon.', minLevel: 4 },
-  { id: 'duelist', name: 'Duelist', description: 'Deal 12% more melee damage with a one-handed weapon and no shield.', minLevel: 4 },
+  { id: 'duelist', name: 'Duelist', description: 'Deal 12% more melee damage with a one-handed weapon and an empty offhand or buckler.', minLevel: 4 },
   { id: 'opportunist', name: 'Opportunist', description: 'Deal 10% more melee damage to enemies without a shield.', minLevel: 4 },
   { id: 'last-stand', name: 'Last Stand', description: 'Gain +8 melee and ranged defense while at or below half health.', minLevel: 5 },
   { id: 'marksman', name: 'Marksman', description: 'Gain +8 hit chance with ranged attacks from at least three hexes away.', minLevel: 3 },
-  { id: 'point-blank', name: 'Point Blank', description: 'Remove the 12-point hit penalty for shooting an adjacent enemy.', minLevel: 3 },
+  { id: 'point-blank', name: 'Point Blank', description: 'Allow ranged attacks against adjacent enemies and remove their 12-point hit penalty. Firing while adjacent to melee opponents still provokes up to two Opportunity Strikes.', minLevel: 3 },
   { id: 'volley-fire', name: 'Volley Fire', description: 'Deal 10% more ranged damage from at least three hexes away.', minLevel: 4 },
   { id: 'reload-drill', name: 'Reload Drill', description: 'Recover 12 fatigue when spending a turn reloading.', minLevel: 3 },
   { id: 'fleet-footed', name: 'Fleet Footed', description: 'Gain one movement point when advancing toward a target if armor and helmet fatigue total at most 15.', minLevel: 3 },
@@ -72,4 +79,25 @@ export function hasPerk(person, perkId) {
 
 export function weaponTrainingVisual(weapon) {
   return weapon?.trainingVisual ?? weapon?.visual;
+}
+
+const SWORD_VISUALS = new Set(['sword', 'longsword', 'greatsword', 'shamshir', 'estoc', 'cleaver', 'falx']);
+const AXE_VISUALS = new Set(['axe', 'greataxe', 'hand-axe', 'longaxe', 'bardiche', 'throwingaxe', 'heavythrowingaxe']);
+const MACE_VISUALS = new Set(['mace', 'hammer', 'heavyhammer', 'polehammer', 'flail', 'three-headed-flail', 'goedendag']);
+const DAGGER_VISUALS = new Set(['dagger', 'fighting-knife', 'qatal']);
+
+export function weaponMasteryMatches(perkId, weapon) {
+  const visual = weaponTrainingVisual(weapon);
+  switch (perkId) {
+    case 'sword-training': return SWORD_VISUALS.has(visual);
+    case 'axe-training': return AXE_VISUALS.has(visual);
+    case 'mace-training': return MACE_VISUALS.has(visual);
+    case 'spear-training': return !weapon?.throwing && /spear|pike/.test(visual ?? '');
+    case 'polearm-training': return !weapon?.ranged && (weapon?.range ?? 1) >= 2;
+    case 'dagger-training': return DAGGER_VISUALS.has(visual);
+    case 'throwing-training': return weapon?.throwing === true;
+    case 'bow-mastery': return weapon?.ranged===true&&!weapon.throwing&&weapon.visual?.includes('bow')&&!weapon.visual.includes('crossbow');
+    case 'crossbow-mastery': return weapon?.ranged===true&&!weapon.throwing&&weapon.visual?.includes('crossbow');
+    default: return false;
+  }
 }

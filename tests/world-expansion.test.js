@@ -11,13 +11,10 @@ const hours = state => (state.day - 1) * 24 + state.hour;
 const campById = (state, id) => getCampSites(state).find(camp => camp.id === id);
 
 function passHours(state, amount) {
-  while (amount > 0) {
-    const current = hours(state);
-    for (const progress of Object.values(state.bands)) progress.defeatedUntil = Math.max(progress.defeatedUntil, current + 48);
-    const step = Math.min(amount, 48);
-    assert.equal(tick(state, step).ok, true);
-    amount -= step;
-  }
+  // Test calendar boundaries without unrelated weeks of NPC battles or upkeep.
+  const next = hours(state) + amount;
+  state.day = Math.floor(next / 24) + 1;
+  state.hour = next % 24;
 }
 
 function defeatCamp(state, id) {
@@ -98,8 +95,13 @@ test('fixed and seeded camps reopen at the exact cooldown boundary', () => {
     assert.equal(initial.cleared, false);
     defeatCamp(state, id);
     const defeatedAt = hours(state);
-    const cooldown = initial.random ? 72 : 120;
     const defeated = campById(state, id);
+    const cooldown = defeated.respawnHours;
+    assert.ok(cooldown >= 14*24 && cooldown <= 42*24);
+    assert.equal(cooldown % 24, 0);
+    const restored = validateSave(JSON.parse(JSON.stringify(state)));
+    assert.equal(restored.camps[id].respawnAt, state.camps[id].respawnAt);
+    assert.equal(campById(restored,id).respawnHours,cooldown);
     assert.equal(defeated.cleared, true);
     assert.equal(defeated.respawnHours, cooldown);
     assert.equal(defeated.generation, 0);

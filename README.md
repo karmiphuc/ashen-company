@@ -1,5 +1,19 @@
 # Ashen Company
 
+Version 0.55.0 adds bounded named-item forging, 18 matching head/body equipment families and selective three-piece completions, including Ritual Bone. The Save / Menu release label now comes from package metadata, fixing the stale 0.53.0 display. See [equipment design features](docs/EQUIPMENT-DESIGN-FEATURES.md) and [three-piece rules](docs/THREE-PIECE-SETS.md).
+
+This release also adds **Direwolf Moonfang Harness** crafting to every town Armorer: fuse one Direwolf Hide and one Direwolf Mail for 600 crowns into the selected asymmetric wolf-mantle design, with 195 armor / 13 fatigue, non-stacking melee intimidation and a 3% named chance. Direwolf Leather Hood (120/3), the existing Wolf Helmet (178/5), and combined Alpha Helm (265/15) complete a matching Direwolf set. See [crafting and artwork rules](docs/DIREWOLF-MOONFANG.md).
+
+Version 0.54.0 adds **Ancient Armory restoration** at every open settlement’s Armorer: matching recovered pieces become restored bronze or silverish steel, with a separate named-item chance, explicit failure refunds, and original-sprite color treatments. See [recipes, stats and save rules](docs/ANCIENT-RESTORATION.md).
+
+See [equipment design features](docs/EQUIPMENT-DESIGN-FEATURES.md) for named
+prefixes/suffixes, the bounded merging formula, and matching armory sets.
+See [release and offline update rules](docs/RELEASES.md) for versioning and safe updates.
+The verified release pipeline automatically numbers each deployed commit, tests
+the built app online/offline, and confirms the published version and cache.
+
+Version 0.53.0 adds persistent temporary injuries based on original Battle Brothers: specific wound penalties, daily medicine and recovery, separate Doctor wound treatment, Crippling Strikes, and the Surgeon’s one-day recovery benefit. Compact roster badges and inspection hints show care needs. New battles use wounds for Gash and Executioner; resumed older battles keep their previous rules. See [injury rules and compatibility](docs/TEMPORARY-INJURIES.md).
+
 Version 0.48.9 gates 18–20 elite enemies behind 15 living brothers in formation. Smaller companies remain below 18. World-map soldier skirmishes now last 3–72 hours based on participating troop count, lock both sides in place, show fighting time remaining, and apply casualties/reports only at completion. Pending engagements survive save/reload and release safely when the company intervenes.
 
 Version 0.48.8 expands new combat fields to 22×24, leaving retreat space beyond enemy deployment. Enemies cannot complete escape in their first fleeing round. Camps have two rear exits in addition to two assault entrances. Allied reinforcements deploy above/below the battle near the center, away from company formation lanes. Existing saved battles keep their battlefield and escape rules.

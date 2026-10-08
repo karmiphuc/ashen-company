@@ -1,7 +1,7 @@
 import { undeadCombatTarget } from './faction-patrols.js';
-import { worldRoute, moveWorldToward } from './world-navigation.js';
+import { worldRoute, moveWorldToward, worldBlocked } from './world-navigation.js';
 import { ASHEN_CONFIG as C, crisisHash, campaignHour, initialAshenWinter, eligibleForAshen } from './crisis-director.js';
-import { regionAt, roadRoute, roadNetwork, WORLD_LIMITS } from './geography.js';
+import { regionAt, WORLD_LIMITS } from './geography.js';
 import { enemyProgression } from './enemy-progression.js';
 
 export const UNDEAD_TYPES = Object.freeze(['undead-host', 'undead-liberation', 'undead-commander']);
@@ -10,6 +10,7 @@ const commanders = ['The Frostbound Marshal', 'The Ashen Castellan', 'The Drowne
 const blocked = town => ['besieged', 'occupied'].includes(town.status);
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const point = p => ({ x: p.x, y: p.y });
+const rollRange = (seed, [min,max]) => min + crisisHash(seed) % (max-min+1);
 
 export function exteriorPoint(town, settlements, avoid = []) {
   for (const radius of [60, 90, 130, 180]) {
@@ -23,6 +24,20 @@ export function exteriorPoint(town, settlements, avoid = []) {
   throw new Error(`No safe exterior position for ${town.id}`);
 }
 
+function wildernessSite(home, settlements, avoid = []) {
+  for (const radius of [240, 320, 420, 560, 720]) for (let i = 0; i < 32; i++) {
+    const angle = i * Math.PI / 16;
+    const p = { x: home.x + radius * Math.cos(angle), y: home.y + radius * Math.sin(angle) };
+    if (p.x >= WORLD_LIMITS.minX && p.x <= WORLD_LIMITS.maxX && p.y >= WORLD_LIMITS.minY && p.y <= WORLD_LIMITS.maxY
+      && regionAt(p.x,p.y).id === regionAt(home.x,home.y).id && !worldBlocked(p)
+      && settlements.every(t => distance(p,t) >= 150) && avoid.every(t => distance(p,t) >= 240)) return p;
+  }
+  throw new Error(`No wilderness stronghold position for ${home.id}`);
+}
+
+export const allSettlementsCaptured = (state, settlements) => settlements.length > 0
+  && settlements.every(t => state.ashenWinter?.towns[t.id]?.status === 'occupied');
+
 function force(crisis, id, size, tier, rank = 0) {
   return { id, seed: crisisHash(`${crisis.seed}:${id}:force`), size, tier, rank,
     troops: Array.from({ length: size }, (_, i) => i), damage: {}, generation: 0 };
@@ -30,77 +45,59 @@ function force(crisis, id, size, tier, rank = 0) {
 
 function prepareFronts(state, context) {
   const crisis = state.ashenWinter;
+  const sites = [];
   crisis.fronts = frontRegions.map((regionId, i) => {
     const candidates = context.settlements.filter(t => regionAt(t.x, t.y).id === regionId).sort((a, b) => a.id.localeCompare(b.id));
     const home = candidates[crisisHash(`${crisis.seed}:${regionId}:site`) % candidates.length];
-    const id = `ashen:${i + 1}`;
-    return { id, regionId, homeId: home.id, site: exteriorPoint(home, context.settlements), name: commanders[i],
+    const id = `ashen:${i + 1}`, site = wildernessSite(home,context.settlements,sites);
+    sites.push(site);
+    return { id, regionId, homeId: home.id, site, name: commanders[i],
       defeated: false, nextSpawnHour: crisis.activationHour, spawnIndex: 0,
       force: force(crisis, `${id}:commander`, C.commanderSize, 3, Math.min(2, enemyProgression(state,3).rank)) };
   });
 }
 
-function targetFor(state, front, context) {
-  const crisis = state.ashenWinter, now = campaignHour(state);
-  const records = Object.values(crisis.towns);
-  const reservations = records.filter(t => t.status === 'threatened');
-  if (records.filter(blocked).length + reservations.length >= C.maxBlocked
-    || records.filter(t => t.frontId === front.id && (blocked(t) || t.status === 'threatened')).length >= C.blockedPerFront
-    || records.filter(t => ['threatened', 'besieged'].includes(t.status)).length >= C.maxThreats
-    || records.some(t => t.frontId === front.id && ['threatened', 'besieged'].includes(t.status))) return null;
-  const origins = context.settlements.filter(t => t.id === front.homeId || blocked(crisis.towns[t.id] ?? {}) && crisis.towns[t.id].frontId === front.id);
-  const neighborIds = new Set(roadNetwork(context.settlements).flatMap(e => origins.some(t => t.id === e.from) ? [e.to] : origins.some(t => t.id === e.to) ? [e.from] : []));
-  const home = context.settlements.find(t => t.id === front.homeId);
-  const candidates = context.settlements.filter(t => {
-    const entry = crisis.towns[t.id];
-    return (t.id === front.homeId || neighborIds.has(t.id)) && (!entry || entry.status === 'open' || entry.status === 'recovering')
-      && (entry?.protectionUntil ?? 0) <= now;
-  }).sort((a, b) => distance(a, home) - distance(b, home) || crisisHash(`${crisis.seed}:${front.spawnIndex}:${a.id}`) - crisisHash(`${crisis.seed}:${front.spawnIndex}:${b.id}`));
-  // The caps leave most of the world open. Check separation explicitly as well.
-  return candidates.find(candidate => {
-    const open = context.settlements.filter(t => t.id !== candidate.id && !blocked(crisis.towns[t.id] ?? {}) && crisis.towns[t.id]?.status !== 'threatened');
-    return open.some(a => open.some(b => distance(a, b) >= 700));
-  }) ?? null;
+function targetFor(state, origin, context) {
+  const now = campaignHour(state);
+  return context.settlements.filter(t => {
+    const entry = state.ashenWinter.towns[t.id];
+    return (!entry || ['open','recovering'].includes(entry.status)) && (entry?.protectionUntil ?? 0) <= now;
+  }).sort((a,b) => distance(a,origin)-distance(b,origin) || a.id.localeCompare(b.id))[0] ?? null;
 }
 
-function spawnHost(state, front, context) {
+function reserveTarget(state, host, front, target, context) {
+  if (!target) return;
+  const path = worldRoute(host,target);
+  if (!path) return;
+  host.route = [point(host), ...path]; host.waypoint = 1; host.targetTownId = target.id;
+  const length = host.route.slice(1).reduce((sum,p,i)=>sum+distance(p,host.route[i]),0);
+  host.warningUntil = campaignHour(state) + Math.ceil(Math.max(C.approachHours,length/C.hostSpeed+24)*4)/4;
+  state.ashenWinter.towns[target.id] = { status:'threatened', frontId:front.id, hostId:host.id, warningUntil:host.warningUntil,
+    siegeUntil:null, protectionUntil:0, recoveryUntil:0, force:null, occupationForce:null };
+  context.report(`Ashen Winter: an undead host approaches ${target.name}. Intercept it before the settlement closes.`);
+}
+
+function spawnWave(state, front, context) {
   const crisis = state.ashenWinter, now = campaignHour(state);
-  if (Object.keys(crisis.hosts).length >= C.maxHosts || Object.values(crisis.hosts).filter(h => h.frontId === front.id).length >= C.hostsPerFront) return;
-  const target = targetFor(state, front, context);
-  const index = ++front.spawnIndex, id = `${front.id}:host:${index}`;
-  const home = context.settlements.find(t => t.id === front.homeId);
-  const origin = target ? context.settlements.filter(t => t.id === home.id || crisis.towns[t.id]?.frontId === front.id && blocked(crisis.towns[t.id]))
-    .sort((a, b) => distance(a, target) - distance(b, target) || a.id.localeCompare(b.id))[0] : home;
-  const route = target ? [exteriorPoint(origin, context.settlements), ...roadRoute(context.settlements, origin.id, target.id).map(point)]
-    : [exteriorPoint(home, context.settlements), point(home), exteriorPoint(home, context.settlements)];
-  const length = route.slice(1).reduce((sum, p, i) => sum + distance(p, route[i]), 0);
-  const warningUntil = now + Math.ceil(Math.max(C.approachHours, length / C.hostSpeed + 24) * 4) / 4;
-  const host = { id, frontId: front.id, x: route[0].x, y: route[0].y, route, waypoint: 1,
-    targetTownId: target?.id ?? null, warningUntil,
-    force: force(crisis, id, index === 1 ? C.openingSize : C.hostSize, 2, index === 1 ? 0 : Math.min(1, enemyProgression(state,2).rank)),
-    occupationForce: force(crisis, `${id}:occupation`, C.garrisonSize, 2, Math.min(1, enemyProgression(state,2).rank)) };
-  crisis.hosts[id] = host;
-  if (target) {
-    crisis.towns[target.id] = { status: 'threatened', frontId: front.id, hostId: id, warningUntil,
-      siegeUntil: null, protectionUntil: 0, recoveryUntil: 0, force: null, occupationForce: null };
-    context.report(`Ashen Winter: an undead host approaches ${target.name}. Services will close no earlier than day ${Math.floor(warningUntil / 24) + 1}.`);
+  const waveSeed = `${crisis.seed}:${front.id}:wave:${front.spawnIndex}`;
+  const count = rollRange(`${waveSeed}:bands`,C.waveBands);
+  for (let n = 0; n < count; n++) {
+    const index = ++front.spawnIndex, id = `${front.id}:host:${index}`;
+    const host = { id, frontId:front.id, ...point(front.site), route:[point(front.site),point(front.site)], waypoint:1,
+      targetTownId:null, warningUntil:now + C.approachHours,
+      force:force(crisis,id,index===1?C.openingSize:C.hostSize,2,index===1?0:Math.min(1,enemyProgression(state,2).rank)),
+      occupationForce:force(crisis,`${id}:occupation`,C.garrisonSize,2,Math.min(1,enemyProgression(state,2).rank)) };
+    crisis.hosts[id] = host;
+    reserveTarget(state,host,front,targetFor(state,host,context),context);
   }
-  front.nextSpawnHour = now + C.spawnHours;
+  front.nextSpawnHour = now + rollRange(`${waveSeed}:days`,C.waveDays) * 24;
+  context.report(`${front.name}'s stronghold raised ${count} undead bands. Its next reinforcements arrive in ${Math.round((front.nextSpawnHour-now)/24)} days.`);
 }
 
 function redirectRoadHost(state, host, context) {
   const crisis = state.ashenWinter, front = crisis.fronts.find(f => f.id === host.frontId);
   if (front.defeated || host.targetTownId || crisis.phase !== 'active') return;
-  const target = targetFor(state, front, context);
-  if (!target) return;
-  const origin = [...context.settlements].sort((a,b) => distance(a,host)-distance(b,host)||a.id.localeCompare(b.id))[0];
-  host.route = [point(host), ...roadRoute(context.settlements,origin.id,target.id).map(point)];
-  host.waypoint = 1; host.targetTownId = target.id;
-  const length = host.route.slice(1).reduce((sum,p,i)=>sum+distance(p,host.route[i]),0);
-  host.warningUntil = campaignHour(state) + Math.ceil(Math.max(C.approachHours,length/C.hostSpeed+24)*4)/4;
-  crisis.towns[target.id] = { status:'threatened', frontId:front.id, hostId:host.id, warningUntil:host.warningUntil,
-    siegeUntil:null, protectionUntil:0, recoveryUntil:0, force:null, occupationForce:null };
-  context.report(`Ashen Winter: an undead host now approaches ${target.name}. Intercept it before the settlement closes.`);
+  reserveTarget(state,host,front,targetFor(state,host,context),context);
 }
 
 function moveHost(host) {
@@ -129,11 +126,24 @@ export function advanceAshenWinter(state, context) {
     context.report('Ashen Winter approaches. Three ancient commanders stir. Prepare the company before the dead close the settlements.');
   }
   if (crisis.phase === 'warning' && now >= crisis.activationHour) {
-    crisis.phase = 'active'; context.report('Ashen Winter begins. Liberate closed settlements and destroy all three commanders.');
+    crisis.phase = 'active'; context.report('Ashen Winter begins. Every settlement is threatened. Hunt down three wilderness strongholds to stop their undead reinforcement waves.');
   }
   if (!['active', 'cleanup'].includes(crisis.phase)) return null;
+  // Existing campaigns receive the new reinforcement cadence without rewriting
+  // troop identities, wounds, or forces committed to a player/NPC battle.
+  if (crisis.version < 3) {
+    crisis.version = 3;
+    const sites = [];
+    for (const front of crisis.fronts) {
+      if (!front.defeated) {
+        front.site = wildernessSite(context.settlements.find(t => t.id === front.homeId),context.settlements,sites);
+        front.nextSpawnHour = now;
+      }
+      sites.push(front.site);
+    }
+  }
   if (crisis.phase === 'active') for (const front of crisis.fronts) {
-    if (!front.defeated && now >= front.nextSpawnHour) spawnHost(state, front, context);
+    if (!front.defeated && now >= front.nextSpawnHour) spawnWave(state, front, context);
   }
   const reserved = new Set([state.pursuit, state.destinationAction?.id, state.battle?.campId]);
   let displacement = null;
@@ -141,6 +151,10 @@ export function advanceAshenWinter(state, context) {
     if(state.worldSkirmishes?.some(f=>f.aId===host.id||f.bId===host.id))continue;
     redirectRoadHost(state,host,context);
     if (reserved.has(host.id) && distance(state.position, host) <= 40) continue;
+    if (!host.targetTownId && allSettlementsCaptured(state,context.settlements)) {
+      moveWorldToward(host,state.position,C.hostSpeed*.25);
+      continue;
+    }
     const atSiege=host.targetTownId&&now>=host.warningUntil&&distance(host,host.route.at(-1))<=C.hostSpeed*.25;
     const combatTarget=!atSiege&&context.combatTargets&&undeadCombatTarget(state,host,context.combatTargets());
     if(combatTarget){moveWorldToward(host,combatTarget,C.hostSpeed*.25);continue;}
@@ -160,6 +174,17 @@ export function advanceAshenWinter(state, context) {
   }
   for (const [townId, record] of Object.entries(crisis.towns)) {
     if (record.status === 'besieged' && now >= record.siegeUntil) {
+      if (state.battle?.campId === record.force.id) continue;
+      const town = context.settlements.find(t => t.id === townId);
+      const defense = ({castle:.60,town:.38,village:.18}[town.kind] ?? .25)
+        + (1-record.force.troops.length/record.force.size)*.5 - record.force.rank*.05;
+      const roll = crisisHash(`${crisis.seed}:${townId}:${record.hostId}:${record.siegeUntil}:defense`) / 4294967296;
+      if (crisis.phase === 'active' && roll < defense) {
+        record.status = 'recovering'; record.protectionUntil = now+C.protectionHours; record.recoveryUntil = now+C.recoveryHours;
+        record.hostId = null; record.force = null; record.occupationForce = null;
+        context.report(`${town.name}'s defenders repelled the undead siege. Services reopen while the settlement recovers.`);
+        continue;
+      }
       record.status = 'occupied';
       // A deadline never resurrects casualties or changes equipment after a retreat.
       if (!Object.keys(record.force.damage).length && record.force.troops.length === record.force.size)
@@ -256,19 +281,21 @@ export function validateAshenWinter(input, seed, settlements) {
   const object = x => x && typeof x === 'object' && !Array.isArray(x);
   const keys = (x, names) => object(x) && Object.keys(x).length === names.length && names.every(k => Object.hasOwn(x,k));
   const count = x => Number.isSafeInteger(x) && x >= 0 && x <= 1000000;
-  const hour = x => Number.isFinite(x) && x >= 0 && x <= 24000024 && Number.isInteger(x * 4);
+  // Real-time travel ticks and battle outcomes use fractional campaign hours.
+  // Preserve those exact timestamps; only finite, bounded times are valid.
+  const hour = x => Number.isFinite(x) && x >= 0 && x <= 24000024;
   const nullableHour = x => x === null || hour(x);
   const validPoint = p => object(p) && Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= WORLD_LIMITS.minX && p.x <= WORLD_LIMITS.maxX && p.y >= WORLD_LIMITS.minY && p.y <= WORLD_LIMITS.maxY;
   const townIds = new Set(settlements.map(t => t.id));
   const checkForce = f => {
     check(keys(f,['id','seed','size','tier','rank','troops','damage','generation']) && typeof f.id === 'string' && /^ashen:[1-3]:(commander|host:[1-9]\d*(?::occupation)?)$/.test(f.id)
       && Number.isSafeInteger(f.seed) && f.seed === crisisHash(`${input.seed}:${f.id}:force`)
-      && [6, 8, 10, 12].includes(f.size) && [2, 3].includes(f.tier) && [0, 1, 2].includes(f.rank) && f.generation === 0, 'force');
+      && [6, 8, 10, 12, C.openingSize, C.hostSize, C.garrisonSize, C.commanderSize].includes(f.size) && [2, 3].includes(f.tier) && [0, 1, 2].includes(f.rank) && f.generation === 0, 'force');
     check(Array.isArray(f.troops) && f.troops.length <= f.size && new Set(f.troops).size === f.troops.length && f.troops.every(i => count(i) && i < f.size), 'troop identities');
     check(object(f.damage) && Object.keys(f.damage).every(i => f.troops.includes(Number(i))), 'casualty damage');
-    for (const [troop, d] of Object.entries(f.damage)) check(keys(d,['hp','bodyArmor','headArmor','shieldDurability']) && ['hp', 'bodyArmor', 'headArmor', 'shieldDurability'].every(k => count(d[k]) && d[k] <= (k === 'hp' ? 300 : 500)) && d.hp > 0 && d.hp <= 25 + f.tier * 12 + f.rank * 8 + (Number(troop) === 0 && f.tier === 3 ? 12 : 0), 'damage');
+    for (const [troop, d] of Object.entries(f.damage)) check(keys(d,['hp','bodyArmor','headArmor','shieldDurability']) && ['hp', 'bodyArmor', 'headArmor', 'shieldDurability'].every(k => count(d[k]) && d[k] <= (k === 'hp' ? 300 : 500)) && d.hp > 0 && d.hp <= (25 + f.tier * 12 + f.rank * 8 + (Number(troop) === 0 && f.tier === 3 ? 12 : 0)) * (Number(troop) === 0 && f.tier === 3 ? 2 : 1), 'damage');
   };
-  check(keys(input,['version','crisisId','seed','phase','eligibilityHour','warningHour','activationHour','completedHour','fronts','hosts','towns','resolved','liberationCount','hostVictories','finalRewardGranted','finalItemClaimed','aftermath']) && input.version === 1 && input.crisisId === 'ashen-winter' && input.seed === crisisHash(`${seed}:ashen-winter`), 'identity');
+  check(keys(input,['version','crisisId','seed','phase','eligibilityHour','warningHour','activationHour','completedHour','fronts','hosts','towns','resolved','liberationCount','hostVictories','finalRewardGranted','finalItemClaimed','aftermath']) && [1, 2, 3].includes(input.version) && input.crisisId === 'ashen-winter' && input.seed === crisisHash(`${seed}:ashen-winter`), 'identity');
   check(['dormant', 'scheduled', 'warning', 'active', 'cleanup', 'completed'].includes(input.phase), 'phase');
   check(['eligibilityHour', 'warningHour', 'activationHour', 'completedHour'].every(k => nullableHour(input[k])), 'deadlines');
   check(input.phase === 'dormant' ? input.eligibilityHour === null && input.warningHour === null && input.activationHour === null
@@ -277,29 +304,29 @@ export function validateAshenWinter(input, seed, settlements) {
   input.fronts.forEach((f, i) => {
     check(keys(f,['id','regionId','homeId','site','name','defeated','nextSpawnHour','spawnIndex','force']) && f.id === `ashen:${i + 1}` && f.regionId === frontRegions[i] && townIds.has(f.homeId) && regionAt(...['x', 'y'].map(k => settlements.find(t => t.id === f.homeId)[k])).id === f.regionId
       && validPoint(f.site) && f.name === commanders[i] && typeof f.defeated === 'boolean' && hour(f.nextSpawnHour) && count(f.spawnIndex), 'front');
-    checkForce(f.force); check(f.force.id === `${f.id}:commander` && f.force.size === 12 && f.force.tier === 3 && f.force.rank <= 2, 'commander');
+    checkForce(f.force); check(f.force.id === `${f.id}:commander` && [12, C.commanderSize].includes(f.force.size) && f.force.tier === 3 && f.force.rank <= 2, 'commander');
   });
-  check(object(input.hosts) && Object.keys(input.hosts).length <= C.maxHosts && object(input.towns) && Object.keys(input.towns).length <= settlements.length, 'entity caps');
+  check(object(input.hosts) && Object.keys(input.hosts).length <= (input.version < 3 ? C.maxHosts : 10000) && object(input.towns) && Object.keys(input.towns).length <= settlements.length, 'entity caps');
   const fronts = new Set(input.fronts.map(f => f.id));
   for (const [id, h] of Object.entries(input.hosts)) {
     check(keys(h,['id','frontId','x','y','route','waypoint','targetTownId','warningUntil','force','occupationForce']) && h.id === id && fronts.has(h.frontId) && validPoint(h) && (h.targetTownId === null || townIds.has(h.targetTownId)) && hour(h.warningUntil), 'host');
     check(Array.isArray(h.route) && h.route.length >= 2 && h.route.length <= settlements.length + 2 && h.route.every(validPoint) && count(h.waypoint) && h.waypoint >= 1 && h.waypoint <= h.route.length, 'host route');
-    checkForce(h.force); checkForce(h.occupationForce); check(h.force.id === id && h.force.troops.length > 0 && h.occupationForce.id === `${id}:occupation` && h.occupationForce.size === C.garrisonSize && h.force.tier === 2 && h.force.rank <= 1 && h.occupationForce.tier === 2 && h.occupationForce.rank <= 1 && h.force.size === (id.endsWith(':1') ? C.openingSize : C.hostSize) && Number(id.split(':')[3]) <= input.fronts.find(f=>f.id===h.frontId).spawnIndex, 'host force');
+    checkForce(h.force); checkForce(h.occupationForce); check(h.force.id === id && h.force.troops.length > 0 && h.occupationForce.id === `${id}:occupation` && [10, C.garrisonSize].includes(h.occupationForce.size) && h.force.tier === 2 && h.force.rank <= 1 && h.occupationForce.tier === 2 && h.occupationForce.rank <= 1 && (id.endsWith(':1') ? [6, C.openingSize] : [8, C.hostSize]).includes(h.force.size) && Number(id.split(':')[3]) <= input.fronts.find(f=>f.id===h.frontId).spawnIndex, 'host force');
   }
   for (const [id, t] of Object.entries(input.towns)) {
     check(townIds.has(id) && keys(t,['status','frontId','hostId','warningUntil','siegeUntil','protectionUntil','recoveryUntil','force','occupationForce']) && fronts.has(t.frontId) && ['open', 'threatened', 'besieged', 'occupied', 'recovering'].includes(t.status), 'town');
     check(hour(t.warningUntil) && nullableHour(t.siegeUntil) && hour(t.protectionUntil) && hour(t.recoveryUntil), 'town deadlines');
     if (t.status === 'threatened') check(input.hosts[t.hostId]?.targetTownId === id && input.hosts[t.hostId].frontId === t.frontId && input.hosts[t.hostId].warningUntil === t.warningUntil && !input.fronts.find(f=>f.id===t.frontId).defeated && t.force === null, 'approach reservation');
     if (blocked(t)) {
-      checkForce(t.force); checkForce(t.occupationForce); check(hour(t.siegeUntil) && !input.hosts[t.hostId] && t.force.id.startsWith(`${t.frontId}:host:`) && t.force.tier === 2 && t.force.rank <= 1 && t.force.troops.length > 0 && t.occupationForce.id === `${t.hostId}:occupation` && t.occupationForce.size === C.garrisonSize && [t.hostId,t.occupationForce.id].includes(t.force.id), 'blockade');
+      checkForce(t.force); checkForce(t.occupationForce); check(hour(t.siegeUntil) && !input.hosts[t.hostId] && t.force.id.startsWith(`${t.frontId}:host:`) && t.force.tier === 2 && t.force.rank <= 1 && t.force.troops.length > 0 && t.occupationForce.id === `${t.hostId}:occupation` && [10, C.garrisonSize].includes(t.occupationForce.size) && [t.hostId,t.occupationForce.id].includes(t.force.id), 'blockade');
     } else check(t.force === null && t.occupationForce === null, 'open force');
   }
   for (const h of Object.values(input.hosts)) if (h.targetTownId) check(input.towns[h.targetTownId]?.hostId === h.id && input.towns[h.targetTownId].status === 'threatened', 'host reservation');
   const records = Object.values(input.towns);
   const activeForces = [...input.fronts.filter(f=>!f.defeated).map(f=>f.force),...Object.values(input.hosts).map(h=>h.force),...records.filter(blocked).map(t=>t.force)];
   check(activeForces.every(f=>f.troops.length>0) && new Set(activeForces.map(f=>f.id)).size===activeForces.length,'active force identities');
-  check(records.filter(blocked).length + records.filter(t => t.status === 'threatened').length <= C.maxBlocked && records.filter(t => ['threatened', 'besieged'].includes(t.status)).length <= C.maxThreats, 'town caps');
-  for (const f of input.fronts) check(Object.values(input.hosts).filter(h => h.frontId === f.id).length <= C.hostsPerFront && records.filter(t => t.frontId === f.id && (blocked(t) || t.status === 'threatened')).length <= C.blockedPerFront
+  if (input.version < 3) check(records.filter(blocked).length + records.filter(t => t.status === 'threatened').length <= C.maxBlocked && records.filter(t => ['threatened', 'besieged'].includes(t.status)).length <= C.maxThreats, 'town caps');
+  if (input.version < 3) for (const f of input.fronts) check(Object.values(input.hosts).filter(h => h.frontId === f.id).length <= C.hostsPerFront && records.filter(t => t.frontId === f.id && (blocked(t) || t.status === 'threatened')).length <= C.blockedPerFront
     && records.filter(t => t.frontId === f.id && ['threatened', 'besieged'].includes(t.status)).length <= 1, 'front caps');
   check(Array.isArray(input.resolved) && input.resolved.length <= 10000 && new Set(input.resolved).size === input.resolved.length && input.resolved.every(id => typeof id === 'string' && /^ashen:[1-3]:(commander|host:[1-9]\d*(?::occupation)?)$/.test(id)), 'resolved objectives');
   check(count(input.liberationCount) && count(input.hostVictories) && typeof input.finalRewardGranted === 'boolean' && typeof input.finalItemClaimed === 'boolean', 'contribution');

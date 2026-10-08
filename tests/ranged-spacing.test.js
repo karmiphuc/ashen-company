@@ -188,6 +188,7 @@ test('crossbows fire from range and keep their reload turn', () => {
 
 test('a cornered bowman shoots at close range; empty ammo uses melee fallback', () => {
   const trapped = setup();
+  trapped.battle.units.find(u=>u.id==='captain').perks.push('point-blank');
   trapped.at('captain', 0, 0);
   trapped.at('enemy-1', 1, 0);
   trapped.at('guard', 0, 1);

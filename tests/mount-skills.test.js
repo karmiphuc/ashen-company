@@ -129,17 +129,20 @@ test('new mounted battles resolve identically with save reload after every actio
 
 test('a wolf finisher credits its rider and grants Berserk AP immediately without spending ammo again', () => {
   const f = fight('dire-wolf-mount', 1, 'hunting-bow');
-  f.state.party[0].level = 30; f.state.party[0].perks = ['berserk']; f.actor.perks = ['berserk'];
+  f.state.party[0].level = 30; f.state.party[0].perks = ['berserk','point-blank']; f.actor.perks = ['berserk','point-blank'];
   f.actor.ap = 4; f.actor.rangedSkill = 0; f.target.rangedDefense = 200; f.target.hp = 1; f.battle.rng = 0;
   for (const tile of f.battle.field.tiles) if (!(tile.q === f.actor.q && tile.r === f.actor.r)
     && !(tile.q === f.target.q && tile.r === f.target.r)) tile.terrain = 'dense-trees';
   const ammo = f.state.supplies.ammo;
   advanceBattle(f.state);
-  assert.equal(f.battle.lastEvent.type, 'miss'); assert.equal(f.battle.lastEvent.reactions[0].fallen, true);
+  assert.equal(f.battle.lastEvent.type, 'miss');
+  assert.equal(f.battle.lastEvent.reactions[0].skillName, 'Opportunity Strike');
+  const bite = f.battle.lastEvent.reactions.find(reaction => reaction.skillName === 'Wolf Bite');
+  assert.equal(bite.fallen, true);
   assert.equal(f.battle.xp[f.actor.id], 50); assert.equal(f.actor.ap, 4); assert.equal(f.actor.pendingBerserkAp, 0);
   assert.equal(f.state.supplies.ammo, ammo - 1); assert.ok(f.battle.log.some(entry => entry.includes('Wolf Bite')));
-  assert.deepEqual(f.battle.lastEvent.reactions[0].effects,[{id:'berserk',amount:4}]);
-  assert.equal(f.battle.lastEvent.reactions[0].weaponId,null);
+  assert.deepEqual(bite.effects,[{id:'berserk',amount:4}]);
+  assert.equal(bite.weaponId,null);
 });
 
 

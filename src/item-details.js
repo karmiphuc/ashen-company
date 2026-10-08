@@ -1,3 +1,5 @@
+import { EQUIPMENT_SETS, TROPHY_COMPLETIONS, equipmentSetsForItem, equipmentSetCompletionOptions, equipmentSetBonusText, equipmentSetCompletionText } from './equipment-sets.js';
+import { PREFIX_EFFECTS, prefixEffectText } from './affix-prefixes.js';
 import { getItem, shieldMaximum, shieldImpactDamage, throwingCapacity } from './engine.js';
 import { equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { isAncientHelmet } from './armory-themes.js';
@@ -41,7 +43,27 @@ export function getItemDetails(item, condition) {
   const stats = [];
   const notes = [];
   if (isAncientHelmet(item)) notes.push('Morale immunity while equipped: no positive or negative morale changes, no morale bonuses or penalties to attack and defense, and no automatic fleeing.');
+  if(item.rangedRangeBonus)notes.push('Extra ranged reach applies to bows and crossbows only while armor and helmet fatigue total at most 15. Multiple Farseeing effects do not stack.');
+  if(item.perkBoosts?.berserkAp)notes.push('Requires Berserk: adds bonus AP to its once-per-round kill proc, including reaction kills credited to the next turn. Equipment bonuses stack up to +2 AP total.');
+  if(item.perkBoosts?.nimble)notes.push('Requires Nimble: +10 melee and ranged defense with armor and helmet fatigue at most 20. Multiple Nimble enhancements do not multiply again.');
+  if(item.perkBoosts?.battleForged)notes.push('Requires Battle Forged: reduces incoming armor damage by another 5 percentage points per bonus, up to 10 points.');
+  for(const [key,value] of Object.entries(item.perkBoosts??{}))if(value&&PREFIX_EFFECTS[key])notes.push(prefixEffectText(key,value));
   if(item.signatureDescription)notes.push(item.signatureDescription);
+  if(item.intrinsicDescription)notes.push(item.intrinsicDescription);
+  if(item.forgeVersion){notes.push(...item.forgeWarnings,'Reforged equipment preserves accumulated bonuses through equip, combat and resale. Effective company combat stats remain bounded at 300.');}
+  if(item.forgeAffixes)notes.push(item.forgeAffixes.locked?'Legacy forge bonuses are preserved. Further merges are locked; full transfers preserve the restriction.':`Affix slots: ${item.forgeAffixes.prefixes.length}/2 prefixes, ${item.forgeAffixes.suffixes.length}/2 suffixes. Duplicate affixes upgrade without adding; inactive affixes still occupy slots.`);
+  const sets=equipmentSetsForItem(item);
+  if(item.slot==='attachment'&&sets.length){
+   const families=sets.length===EQUIPMENT_SETS.length?'any complete matching head/body set':sets.map(s=>s.name).join(', ');
+   const id=item.baseId??item.id,trophy=TROPHY_COMPLETIONS.find(c=>c.attachmentId===id);
+   notes.push(`Three-piece completion attachment for ${families}. ${trophy?'Ordinary and named versions qualify.':'Only named versions count; ordinary versions keep their normal protection and effects.'}`);
+   const completions=trophy?[{name:'Any matching set',threePiece:trophy}]:sets.flatMap(s=>equipmentSetCompletionOptions(s).filter(c=>c.attachmentId===id).map(c=>({name:c.name??s.name,threePiece:c})));
+   for(const set of completions)notes.push(`${set.name} completion: wear ${set.threePiece.namedOnly?'a named ':''}${item.name} with ${set.threePiece.armorId?`${getItem(set.threePiece.armorId).name} and ${getItem(set.threePiece.helmetId).name}`:'its matching head/body pair'} for +${set.threePiece.armorPct}% head/body armor and −${set.threePiece.attachmentFatiguePct}% fatigue on those three pieces. These replace the two-piece bonuses. Attachment armor and native effects stay unchanged; only the strongest completion applies.`);
+  }else for(const armorSet of sets){
+   notes.push(`${armorSet.name} set piece: ${armorSet.pairing} ${equipmentSetBonusText(armorSet)}. Uses rounded fitted fatigue for Nimble, Agile Defense, Fleet Footed and Brawny. Named and reforged variants count; transferring bonuses to a different design does not transfer set membership.`);
+   notes.push(equipmentSetCompletionText(armorSet));
+  }
+  if(item.restorationFinish)notes.push(`Restored Ancient Armory · ${item.restorationFinish === 'steel' ? 'silverish steel' : 'bronze'} finish. The original ancient design is preserved. Already restored pieces cannot be used as restoration materials. Named bonuses apply above this restored baseline.`);
   const bonuses = ['famed','named'].includes(item.rarity) && Array.isArray(item.bonuses) ? item.bonuses : [];
   if (item.slot === 'weapon') {
     const ranged = item.ranged === true;
@@ -56,10 +78,12 @@ export function getItemDetails(item, condition) {
       { label: 'Attack fatigue', value: String(Math.max(0,(equipmentSkills(item)[0]?.fatigue ?? item.fatigueCost ?? (ranged ? 9 : 11))+(item.fatigueOnSkillUse??0))) },
       { label: 'Hands', value: item.twoHanded ? 'Two; shield stowed' : 'One; shield allowed' },
     );
+    if (!ranged && !item.twoHanded) notes.push('Double Grip: +25% damage while the offhand is empty. An equipped shield, including a broken shield, prevents this bonus. Stacks with Duelist.');
     if (ranged) {
       stats.push({ label: 'Ammunition', value: item.throwing ? '1 bundle charge per throw' : '1 per shot' });
       if (item.throwing) stats.push({ label: 'Bundle throws', value: `${Number.isFinite(condition) ? Math.max(0, Math.min(throwingCapacity(item), condition)) : throwingCapacity(item)} / ${throwingCapacity(item)}` });
       if (item.reloadTurns) stats.push({ label: 'Reload', value: '4 AP after each shot (new battles)' });
+      notes.push('Firing beside an armed melee opponent provokes a free Opportunity Strike before the shot. Each adjacent opponent can react; a surviving shooter can still fire.');
       notes.push('Ranged attacks use ranged skill and ranged defense. The battle AI tries to keep at least two hexes from every enemy when it can.');
       notes.push('Bow and crossbow fighters keep their distance while ammunition remains. When ammunition runs out, they draw a pocket weapon or reserve melee set and fight according to the selected tactic. Drawing or switching costs 4 AP in new battles; Quick Hands makes the first swap each round free.');
       if (item.throwing) notes.push('Throwing weapons are one-handed; the bundle capacity shown above includes any named ammunition roll. Active and reserve bundles have separate counts, preserved when swapping or stowing. After battle, equipped bundles refill from company ammunition, one supply per restored throw; shortages leave partial bundles. Carry a spare bundle or melee weapon. Without a usable backup, the fighter punches.');
@@ -117,6 +141,7 @@ export function getItemDetails(item, condition) {
       { label: item.slot === 'armor' ? 'Body armor' : 'Head armor', value: `${current} / ${maximum}` },
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
     );
+    if(item.meleeMoraleDamage)stats.push({label:'Melee morale damage',value:signed(item.meleeMoraleDamage)});
     notes.push(item.slot === 'armor'
       ? 'Body armor is damaged by body hits. Head hits use the helmet instead.'
       : 'Ordinary weapons: 22% of landed hits strike the head. Named rolls can raise that chance; this helmet absorbs head hits.');
@@ -159,7 +184,8 @@ export function getItemDetails(item, condition) {
     notes.push(`${skill.name}: ${skill.description}`);
   }
   if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
-  if (item.collection) {
+  if (item.collection === 'crafted') notes.push('Crafted at a town Armorer from ordinary stash pieces. Named and reforged versions preserve the original crafted design and its intrinsic effects; named bonuses apply above its crafted baseline.');
+  else if (item.collection) {
     notes.push('Ordinary protection and fatigue follow the pinned Battle Brothers definition. New named designs roll protection and weight against that source baseline. Existing legacy designs keep their saved bonuses; prices are adapted to the campaign economy.');
     notes.push('Cosmetic variants use a fixed source design. Original helmet vision penalties and scripted magical effects are not simulated.');
   }
@@ -175,4 +201,53 @@ export function getItemDetails(item, condition) {
     stats,
     notes,
   };
+}
+
+// Compare only the main worn set. Reserve and pocket items never supply a baseline.
+export function getMainItemComparison(item, brother, condition) {
+  if (!brother || !['weapon', 'armor', 'helmet', 'shield'].includes(item?.slot)) return null;
+  const equipped = getItem(brother.equipment?.[item.slot]);
+  if (!equipped) return null;
+  const equippedCondition = item.slot === 'weapon' ? (equipped.throwing ? brother.throwingAmmo?.active : undefined)
+    : brother.armorDurability?.[{ armor: 'body', helmet: 'head', shield: 'shield' }[item.slot]];
+  const details = getItemDetails(item, condition), baseline = getItemDetails(equipped, equippedCondition);
+  if (!details || !baseline) return null;
+  const higher = new Set(['Base damage', 'Hit modifier', 'Armor damage', 'Damage through armor', 'Reach',
+    'Shield damage', 'Head hit chance', 'Body armor', 'Head armor', 'Shield durability', 'Melee defense', 'Ranged defense', 'Bundle throws']);
+  const lower = new Set(['Attack AP', 'Attack fatigue', 'Fatigue load']);
+  const equippedSkills = equipmentSkills(equipped);
+  const sharedSkills = new Set(equipmentSkills(item).filter(skill => equippedSkills.some(other => other.id === skill.id)).map(skill => skill.name));
+  const rows = [...details.stats];
+  if (item.slot === 'weapon') {
+    if (baseline.stats.some(row => row.label === 'Head hit chance') && !rows.some(row => row.label === 'Head hit chance')) rows.push({ label: 'Head hit chance', value: `${Math.round((item.headChance ?? .22) * 100)}%` });
+    if (baseline.stats.some(row => row.label === 'Shield damage') && !rows.some(row => row.label === 'Shield damage')) rows.push({ label: 'Shield damage', value: '0 per hit or block' });
+  }
+  const stats = rows.map(row => {
+    let previous = baseline.stats.find(other => other.label === row.label)?.value;
+    // Optional weapon modifiers have meaningful ordinary defaults.
+    if (previous === undefined && row.label === 'Head hit chance') previous = `${Math.round((equipped.headChance ?? .22) * 100)}%`;
+    if (previous === undefined && row.label === 'Shield damage') previous = '0 per hit or block';
+    const direction = higher.has(row.label) ? 1 : lower.has(row.label) || sharedSkills.has(row.label) ? -1 : 0;
+    if (!direction || previous === undefined) return { ...row, parts: [{ text: row.value }] };
+    // Explicit numeric rows only: categorical text and differing skills stay neutral.
+    const numbers = [...previous.matchAll(/[+−-]?\d+(?:\.\d+)?/g)].map(match => Number(match[0].replace('−', '-')));
+    const matches = [...row.value.matchAll(/[+−-]?\d+(?:\.\d+)?/g)];
+    // A hyphen in a damage interval is a separator, never a negative maximum.
+    if (row.label === 'Base damage') {
+      numbers[1] = Math.abs(numbers[1]);
+      if (matches[1]?.[0].startsWith('-')) { matches[1].index++; matches[1][0] = matches[1][0].slice(1); }
+    }
+    if (numbers.length !== matches.length) return { ...row, parts: [{ text: row.value }] };
+    let cursor = 0;
+    const parts = [];
+    matches.forEach((match, index) => {
+      if (match.index > cursor) parts.push({ text: row.value.slice(cursor, match.index) });
+      const delta = Number(match[0].replace('−', '-')) - numbers[index];
+      parts.push({ text: match[0], change: delta * direction > 0 ? 'better' : delta * direction < 0 ? 'worse' : 'equal', previous: String(numbers[index]), delta });
+      cursor = match.index + match[0].length;
+    });
+    if (cursor < row.value.length) parts.push({ text: row.value.slice(cursor) });
+    return { ...row, previous, parts };
+  });
+  return { equipped, stats };
 }

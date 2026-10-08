@@ -416,6 +416,16 @@
       "conversion": "Layered recorded foley; silence trim, pitch/gain/delay per tools/build-combat-impact-audio.py; 60 Hz high-pass, limiter, 70 ms fade; mono MP3 22.05 kHz 64 kbps, 0.55 seconds",
       "bytes": 5267,
       "sha256": "835b2d5ec6c66e7859e422ddc1f275fe1ba62a9b192431184f6768627996c48d"
+    },
+    {
+      "path": "assets/audio/quest-complete.mp3",
+      "author": "Ashen Company procedural composition",
+      "license": "CC0-1.0",
+      "source": "https://github.com/karmiphuc/ashen-company/blob/main/tools/generate-quest-tune.py",
+      "original": "Original horn/chime cadence; no sampled recordings",
+      "conversion": "mono MP3, 32 kHz, 64 kbps",
+      "bytes": 23084,
+      "sha256": "54ef9e428807fa769b0fb696b9acbecdf49ecaa477593c987a00581efb1fdda6"
     }
   ]
 }

@@ -26,7 +26,7 @@ test('settlements use three fixed classes with distinct stocks and hiring pools'
   assert.ok(average('castle', 'premium') > average('town', 'premium'));
 });
 
-test('quest boards offer one to three stable jobs, vary locally, and retain accepted terms', () => {
+test('weekly quest boards cap category work, vary locally, and retain accepted terms', () => {
   const counts = new Set(), types = new Set();
   for (let seed = 1; seed <= 30; seed++) for (const town of SETTLEMENTS) {
     const state = createGame(seed);
@@ -43,6 +43,6 @@ test('quest boards offer one to three stable jobs, vary locally, and retain acce
       assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))).contract, state.contract);
     }
   }
-  assert.deepEqual(counts, new Set([1, 2, 3]));
+  assert.deepEqual(counts, new Set([3]));
   assert.deepEqual(types, new Set(['courier', 'supply', 'hunt', 'assault', 'rescue', 'deserters', 'bounty']));
 });

@@ -26,17 +26,17 @@ Put initial balance values in one exported configuration object. These values ar
 | Delay after first eligibility | Seeded 7–14 days |
 | Global warning | 7 days |
 | Commanders | 3, one per front |
-| Host spawn interval | 72 hours per living commander, beginning on activation |
-| Active roaming hosts | At most 6 globally, 2 per front |
+| Host spawn interval | 24 hours per living commander, beginning on activation |
+| Active roaming hosts | At most 12 globally, 4 per front |
 | Simultaneous approach/siege targets | At most 3 globally, 1 per front |
 | Blocked towns | At most 12 globally, 4 per front |
 | Minimum approach warning | 48 hours; increase to route travel estimate + 24 hours when greater |
 | Siege before occupation | 72 hours after lockdown |
 | Post-liberation protection | 72 hours |
 | Town recovery conditions | 72 hours after liberation |
-| Opening host / later host size | 6 / 8 enemies |
-| Occupying garrison size | 10 enemies, never grows with time |
-| Commander encounter size | 12 enemies including commander |
+| Opening host / later host size | 20 / 24 enemies |
+| Occupying garrison size | 24 enemies, never grows with time |
+| Commander encounter size | 30 enemies including commander |
 | Relief allies | At most 3 human militia; none for commander assaults |
 
 Keep at least two geographically separated, reachable settlements open; all towns remain traversable destinations on the road graph even when services are closed. No town is permanently exempt by name. The blocked-town cap includes both sieges and occupations. A host must reserve capacity before starting a settlement approach. At the cap, further hosts patrol roads rather than locking more towns. No invasion-wide timeout, free coalition victory, or unbounded increase in garrison strength.
@@ -201,3 +201,9 @@ Physical iPad Safari validation remains a separate device check. See VERIFICATIO
 ## Implementation notes
 
 The saved director moves directly from cleanup to completed; its aftermath report and final reward entitlement are created atomically during result application rather than requiring a separately saved aftermath phase. Commander ranks snapshot existing enemy progression (capped at 2), while later hosts and garrisons cap at rank 1. Wounded besieging forces retain their troop identities, equipment, and wounds when occupation begins; the larger preset garrison replaces only an untouched siege force. Final equipment uses the existing generated famed-item mechanism.
+
+## Crisis pressure revision (0.50.22)
+
+The three commanders always carry independently seeded named one-handed weapons, shields, body armor and helmets. They have twice the ordinary commander health, +26 attack skill and +14 defense before their gear bonuses; ordinary champions have 1.4× health, +12 attack and +8 defense. All four equipped named trophies drop when the commander dies. Wounds and gear rolls persist across retreats.
+
+Existing version-1 crises upgrade their reinforcement schedule on their next world update. Existing forces keep their sizes, surviving troop identities and wounds, including player and NPC battles already underway. New hosts use the larger version-2 sizes. Existing living commanders gain their named kit on their next engagement; an already-running tactical battle remains unchanged. Defeated commanders stay defeated and completed crises never restart. Town warning, blockade and open-settlement limits remain unchanged.

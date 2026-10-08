@@ -92,11 +92,11 @@ test('enemy projectiles start at the mirrored weapon hand and travel toward the 
   // Enemy's one-handed javelin is now on the right; mirroring puts its grip on the left.
   const px=Number(projectile.match(/left:([\d.]+)px/)[1]),py=Number(projectile.match(/top:([\d.]+)px/)[1]);
   const hand=portraitWeaponAnchor({weapon:getItem('javelins')});
-  assert.ok(Math.abs(px-(662+(52-hand.x)*64/104))<1e-8);
+  assert.ok(Math.abs(px-(602+(52-hand.x)*64/104))<1e-8);
   const enemyY=Number(html.match(/data-unit-id="enemy" style="left:[^;]+;top:([\d.-]+)px/)[1]);
   const companyY=Number(html.match(/data-unit-id="captain" style="left:[^;]+;top:([\d.-]+)px/)[1]);
   assert.ok(Math.abs(py-(enemyY+10+hand.y*64/104))<1e-8);
-  assert.ok(Math.abs(Number(projectile.match(/--flight-x:([\d.-]+)px/)[1])-(282-px))<1e-8);
+  assert.ok(Math.abs(Number(projectile.match(/--flight-x:([\d.-]+)px/)[1])-(222-px))<1e-8);
   assert.ok(Math.abs(Number(projectile.match(/--flight-y:([\d.-]+)px/)[1])-(companyY+50-py))<1e-8);
   assert.match(html, /--strike-x:-13.00px;--strike-y:0.00px/);
 });
@@ -134,11 +134,11 @@ test('14 by 8 terrain fields render inspectable cover, height, and elevation-ali
   };
   const html=battleHTML(expanded,1,true);
   assert.equal((html.match(/class="battle-hex /g)||[]).length,112);
-  assert.match(html,/--field-width:1362px;--field-height:463px/);
+  assert.match(html,/--field-width:1152px;--field-height:463px/);
   assert.match(html,/battle-biome-forest/);
   assert.match(html,/data-action="inspect-terrain" data-q="2" data-r="2" data-terrain="trees" data-height="1"/);
   assert.match(html,/Trees, Height 1; high-ground attacks gain 10 hit per level\. 20 percentage points ranged protection · 2 AP to enter/);
-  for(const [id,x,ground] of [['captain',282,164],['enemy',1308,317]]){
+  for(const [id,x,ground] of [['captain',222,164],['enemy',1098,317]]){
     const tag=html.match(new RegExp('data-unit-id="'+id+'" style="([^"]+)'))[1];
     const left=Number(tag.match(/left:([\d.]+)px/)[1]),top=Number(tag.match(/top:([\d.]+)px/)[1]),foot=Number(tag.match(/--pawn-foot:([\d.]+)px/)[1]);
     assert.equal(left,x);assert.ok(Math.abs(top+foot-ground)<1e-8,id+': equipment-framed feet sit on the tile center');
@@ -162,7 +162,7 @@ test('sixteen-row fields render every tile and units on the last row', () => {
 test('fieldless legacy battles keep a flat 10 by 5 battlefield', () => {
   const html=battleHTML(battle,0);
   assert.equal((html.match(/class="battle-hex /g)||[]).length,50);
-  assert.match(html,/--field-width:944px;--field-height:364px/);
+  assert.match(html,/--field-width:824px;--field-height:364px/);
   assert.match(html,/grassland · 10 × 5/);
   assert.doesNotMatch(html,/battle-height-[12]/);
 });
@@ -339,4 +339,8 @@ test('Frenzy radiates from the killer and Howling exposes its debuff duration',(
   assert.match(paused,/battle-frenzy-aura/);assert.doesNotMatch(paused,/battle-howl-waves|effect-killing-frenzy/);
   f.units[0].hp=0;f.units[0].alive=false;
   assert.doesNotMatch(battleHTML(f,0,false),/battle-frenzy-aura/);
+});
+
+test('action chrome updates omit terrain and portraits while retaining live reports',()=>{
+ const html=battleHTML(battle,4,true,true);assert.doesNotMatch(html,/class="battle-hex /);assert.doesNotMatch(html,/data-unit-id=/);assert.match(html,/battle-topbar/);assert.match(html,/battle-log/);assert.match(html,/data-battle-speed="4"/);
 });

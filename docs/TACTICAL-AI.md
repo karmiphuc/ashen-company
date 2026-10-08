@@ -16,9 +16,9 @@ The AI compares affordable actions using expected damage, kill probability, inco
 
 ## Adaptive enemy commands
 
-New battles carry `enemyAdaptiveRulesVersion: 1` and a saved enemy command. The opening command retains the existing ranged-contingent choice. At each new round, the enemy checks current opposing fire, the last incoming ranged attack (including misses), live shooters and their ammunition/range, surviving shields and melee contact. Deep archers count as available troops but cannot justify holding a frontline they cannot support. Enemies favor Shield-wall advance when shielded infantry are being outranged, Skirmish when their ranged troops need to step up, Defense when at least three shooters can counterfire, and Offense when support is spent or infantry are engaged.
+New battles carry `enemyAdaptiveRulesVersion: 1` and a saved enemy command. Enemies open with Offense for the first two rounds (or simultaneous AP cycles), including fortified camps and ranged-heavy forces. Adaptive selection begins in round/cycle 3. At each new round, the enemy checks current opposing fire, the last incoming ranged attack (including misses), live shooters and their ammunition/range, surviving shields and melee contact. Deep archers count as available troops but cannot justify holding a frontline they cannot support. Enemies favor Shield-wall advance when shielded infantry are being outranged, Skirmish when their ranged troops need to step up, Defense when at least three shooters can counterfire, and Offense when support is spent or infantry are engaged.
 
-Every committed command holds for at least **five full battle rounds**, including the opening command; the earliest first change is round 6. This uses complete rounds, not individual AP actions or unit activations. Evaluation runs at most once per round through battle advancement. Rendering and attack scoring only read the committed command and never change tactics or consume random rolls. The displayed enemy intent names the actual command and its remaining change cooldown; each change is logged once. State and cooldown persist through saves and instant resolution.
+Every committed command holds for at least **two full battle rounds**, including the opening command; the earliest first change is round 3. This uses complete rounds, not individual AP actions or unit activations. Evaluation runs at most once per round through battle advancement. Rendering and attack scoring only read the committed command and never change tactics or consume random rolls. The displayed enemy intent names the actual command and its remaining change cooldown; each change is logged once. State and cooldown persist through saves and instant resolution.
 
 Shield-wall infantry pay the normal 4 AP and shield fatigue to raise working shields, then advance at most one hex per round while protected. They can still fight opponents in reach. When the next terrain step and shield stance cannot both fit their AP/fatigue budget, they prioritize progress rather than repeatedly raising shields without moving. Deep ranged fighters seek firing positions instead of holding behind unreachable targets. Skirmishing uses the same legal firing sorties, return-to-shelter behavior and cover checks as the company, oriented to the enemy's side. Enemy movements and pending returns do not alter company formation plans, and changing company orders does not cancel enemy returns.
 
@@ -104,3 +104,15 @@ Astra reviewed every defined role against movement, weapon selection, target com
 Movement, reforming, firing sorties, return paths, charges and fatigue-consuming reactions now share the reduced fatigue capacity imposed by Daze. NPCs may use their existing backup equipment; the change does not manufacture new loadouts. Allies keep their independent offensive orders, while enemies keep their saved adaptive command.
 
 New battles carry `roleConsistencyVersion: 1`; an already-active battle without it retains its previous decision policy. The marker and resolved roles survive validated saves. Regressions exercise the reproduced loops, every explicit role's movement budget, focused skills, NPC backup swaps, allied role resolution, cover/shot budgets and legacy behavior. Existing formation, cover, breaker, skirmish, weapon-skill and step/reload-versus-instant tests also remain in use.
+
+## Ranged attacks in melee control
+
+In weapon-skill battles, all ranged weapons require Point Blank to target an
+adjacent enemy. Basic shots, Power Throw and other special shots follow the
+same restriction for both sides and in both combat modes. A shooter may still
+target a more distant enemy while engaged, but firing provokes up to two eligible
+adjacent melee opponents before ammunition is consumed. Each strike costs its
+defender 5 fatigue and no AP. Dead, escaped, stunned, disarmed, unarmed, ranged
+or exhausted opponents cannot react. Point Blank does not prevent reactions.
+A lethal or disabling reaction interrupts the shot. Realtime impact feedback
+labels the Opportunity Strikes even if a reacting brother starts another action.

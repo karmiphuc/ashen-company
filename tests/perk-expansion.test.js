@@ -70,7 +70,7 @@ function compareAttack({ weapon, perk, distance = 1, armored = false, shield = t
 
 test('expanded perk catalog is unique, grouped, saveable, and uses bundled icon IDs', () => {
   assert.equal(added.length, 22);
-  assert.equal(PERKS.length, 47);
+  assert.equal(PERKS.length, 54);
   assert.ok(added.every(id => PERKS.some(perk => perk.id === id && perk.category && perk.icon)));
   const state = createGame(211);
   state.party[0].level = 20;
@@ -331,7 +331,9 @@ test('accuracy perks and last stand change hit outcomes at the same roll', () =>
       else plain.battle.units.find(unit => unit.id === 'captain').perks = [];
       advanceBattle(skilled);
       advanceBattle(plain);
-      changed = condition.targetPerk
+      changed = condition.perk === 'point-blank'
+        ? ['attack','miss'].includes(skilled.battle.lastEvent.type) && !['attack','miss'].includes(plain.battle.lastEvent.type)
+        : condition.targetPerk
         ? skilled.battle.lastEvent.type === 'miss' && plain.battle.lastEvent.type === 'attack'
         : skilled.battle.lastEvent.type === 'attack' && plain.battle.lastEvent.type === 'miss';
     }

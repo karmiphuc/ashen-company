@@ -62,7 +62,9 @@ function bandFight(){
 }
 for(const winner of ['undead','bandits'])test(`${winner} NPC victory settles both hostile rosters without player rewards`,()=>{
  const {s,host,band,fight}=bandFight(),gold=s.gold;
- // Keep this outcome isolated from opportunistic guards joining a new battle.
+ // Isolate settlement of this fight from guards and the other bands in its wave.
+ for(const h of Object.values(s.ashenWinter.hosts))if(h.id!==host.id){if(h.targetTownId){const t=s.ashenWinter.towns[h.targetTownId];t.status='open';t.hostId=null;}delete s.ashenWinter.hosts[h.id];}
+ for(const front of s.ashenWinter.fronts)front.nextSpawnHour=fight.endHour+72;
  for(const p of Object.values(s.factionPatrols)){p.troops=[];p.defeatedUntil=now(s)+72;}
  fight.result=winner==='undead'?{aWins:true,aSurvivors:[0,2],bSurvivors:[]}:{aWins:false,aSurvivors:[],bSurvivors:[0]};
  setTime(s,fight.endHour);tick(s,.25);

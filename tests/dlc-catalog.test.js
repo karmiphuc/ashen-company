@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { DLC_ITEMS } from '../src/dlc-items.js';
 import { DLC_SHIELDS } from '../src/dlc-shields.js';
+import { DIREWOLF_HELMET_ART } from '../src/direwolf-helmets.js';
 import { DLC_ART } from '../src/dlc-art.js';
 import { ITEMS, createGame, equipItem, unequipItem, buyItem, getItem, getCompanyStats, getMarket, validateSave } from '../src/engine.js';
 import { itemImage, portraitHTML } from '../src/portraits.js';
@@ -46,7 +47,7 @@ test('all inventory icons and actual worn atlas layers match provenance and rend
     assert.ok(Number.isFinite(art.left)&&Number.isFinite(art.top));
     for(const piece of [item,getItem(`famed:${item.id}:123`)]){
       const html=portraitHTML({name:'Veteran',seed:3},{[item.slot]:piece});
-      assert.ok(html.includes(art.portrait),`${item.id} uses its worn art`);
+      assert.ok(html.includes((DIREWOLF_HELMET_ART[item.id] ?? art).portrait),`${item.id} uses its worn art`);
       if(art.hideHead&&item.slot==='helmet')assert.ok(!html.includes('data-layer="head"'));
     }
   }

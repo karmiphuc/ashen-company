@@ -49,11 +49,40 @@ export const RECRUIT_TRAITS = Object.freeze([
 export const RECRUIT_BACKGROUND_BY_ID = new Map(RECRUIT_BACKGROUNDS.map(entry => [entry.id, entry]));
 export const RECRUIT_TRAIT_BY_ID = new Map(RECRUIT_TRAITS.map(entry => [entry.id, entry]));
 
-const NAMES = Object.freeze([
-  'Elsi Rowan', 'Garrick Vale', 'Nessa Flint', 'Odo Fen', 'Iris Blackwell', 'Hugo Reed',
-  'Ada Pike', 'Kellan Moss', 'Sera Wren', 'Milo Hart', 'Tamsin Crow', 'Rolf Mercer',
-  'Petra Dain', 'Jonas Vey', 'Lina Marsh', 'Corin Ash', 'Freya Dunn', 'Emil Rook',
-]);
+const namePool=(given,family)=>Object.freeze({given:Object.freeze(given.split(' ')),family:Object.freeze(family.split(' '))});
+export const RECRUIT_NAME_POOLS = Object.freeze({
+  western:namePool(
+    'Adelard Aldric Anselm Armin Aubrey Baldwin Berengar Bernhard Cedric Conrad Cuthbert Dietrich Edmund Edwin Elias Erhard Ewald Falk Felix Ferdinand Folker Friedrich Gawain Geoffrey Gerard Gilbert Godfrey Gotz Hadrian Haldric Hartwig Heinrich Hendrik Hermann Hilmar Hubert Ivo Jakob Jasper Jost Kilian Lambert Leofric Leopold Lothar Lucan Magnus Marlow Matthias Melchior Moritz Osric Otto Percival Quentin Rainald Raimund Rainer Roland Rupert Severin Sigmund Silas Thaddeus Theobald Ulrich Valentin Viktor Walden Walter Wendel Wulfric Alena Amalia Anika Astrid Beatrix Brigitte Carys Celia Clara Edeline Elsbeth Esther Eveline Gisela Greta Hanne Hedwig Helena Hilde Ilse Johanna Katja Leonie Lisbeth Lorelei Lucinda Margot Mathilde Mirabel Odette Otilia Rosamund Sabine Saskia Selene Solveig Sybille Ursula Verena Wilhelma',
+    'Alder Ashcroft Ashford Barrow Beck Bellmere Blackwell Bracken Briar Brook Cairn Calder Carver Claymere Colden Crowe Dain Dunwell Duskmere Evers Fenwick Fielding Flint Foxley Greybrook Hale Harrow Hart Hawthorne Hayward Hillmere Holt Ironwood Kestrel Langley Lark Marsh Mercer Millward Moss Northwick Oakley Pike Reed Rook Rowan Stonebridge Thorn Vale Wren'),
+  northern:namePool(
+    'Arne Asgeir Aslak Audun Bjarke Bjorn Brandr Einar Erik Eskil Finn Frode Geir Gunnar Halfdan Halvar Harald Hjalmar Ingvar Ivar Ketil Knut Leif Njall Odd Orvar Ragnar Rolf Sigurd Skjold Sten Stig Svend Torbjorn Torvald Trygve Ulf Vidar Yngvar Alva Asdis Eira Frida Gudrun Hildur Inga Ingrid Ragna Runa Sigrid Thora Tove Ylva',
+    'Ashenhand Bearclaw Birchborn Blackfjord Broadshield Coldbrook Emberbeard Fellwalker Frostbraid Frostholm Greywolf Hailborn Highfell Icevein Ironfist Longstride Mistfjord Oakenshield Ravenborn Redbeard Ridgewalker Rimeward Snowmantle Spearhand Stonemark Stormborn Thornfell Whitefang Wintermark Wolfguard'),
+  southern:namePool(
+    'Abbas Adil Amir Anwar Bashir Farid Fawzi Hakim Hamid Harun Hassan Idris Imran Iskandar Jabir Jalal Jamil Karim Khalid Latif Malik Mansur Marwan Mazin Nadir Nasir Qadir Qasim Rashid Rauf Rayan Ridwan Salim Samir Tariq Walid Yusuf Zahir Zayd Amina Aziza Dalia Farah Hala Jamila Layla Maryam Nadira Nura Rania Sahar Safiya Samira Soraya Yasmin Zahra Zaynab',
+    'al-Amin al-Bahr al-Barqi al-Faris al-Haddad al-Hadi al-Hakim al-Hariri al-Jabari al-Karim al-Katib al-Khayyat al-Mansur al-Najjar al-Nasri al-Qasim al-Qaysi al-Rashid al-Rimal al-Safar al-Safi al-Salim al-Sayegh al-Shams al-Tahir al-Wadi al-Warraq al-Zahir Darwish Hamdani Hashimi Hilali Kindi Madani Masri Nuri Qadri Rahmani'),
+  japanese:namePool(
+    'Akihiro Akimitsu Atsumori Daichi Daisuke Genjiro Genpachi Genzaburo Hachiro Hanzo Hayato Hideaki Hidemasa Hidetaka Hideyoshi Hikaru Hiroaki Hirotada Ichiro Isamu Iwao Jiro Jubei Katsuro Kazumasa Kenshin Kiyomasa Kojiro Kotaro Kuniyoshi Masahiro Masakatsu Masamune Masanori Michio Mitsuaki Mitsuhide Morihiro Motonari Munenori Nagamasa Nobuharu Nobukatsu Nobumasa Nobunaga Nobuyuki Norihiro Ranmaru Ren Saburo Sadao Sadayoshi Sakon Seijuro Shigenobu Shintaro Shiro Shoji Tadakatsu Tadanao Tadaoki Tadayoshi Takahiro Takamori Takeo Takeshi Tarō Terumasa Tomonori Toshihisa Toshimitsu Tsunemoto Yasumasa Yoshihiro Yoshikatsu Yoshimasa Yukimori Yukimura Yutaka Akiko Chiyo Fumiko Hana Kiku Maki Michiko Natsu Shizuka Tomoe Yuki',
+    'Akechi Akimoto Asakura Ashikaga Date Fujibayashi Fukushima Hattori Hayashi Honda Hosokawa Imagawa Ishida Ito Kato Kobayashi Kondo Kuroda Maeda Matsudaira Miyamoto Mori Nagai Nakagawa Nakamura Oda Okabe Otomo Saito Sakai Sanada Sasaki Shimazu Suzuki Tachibana Takeda Tanaka Tokugawa Uesugi Watanabe Yagyu Yamamoto'),
+  elf:namePool('Aelar Aelion Aerith Alarion Arannis Caladrel Caelith Celanor Elandir Elenwe Elowen Faelar Falaniel Galathil Ilyana Ilmare Ithilion Laerion Lethariel Lirael Lorien Maeral Meriel Naivara Nymara Olorin Rilith Saelith Seren Sylvar Taeral Thalion Vaeril Yaviel', 'Amberleaf Dawnweaver Dewsong Duskwillow Fernwhisper Greenbough Moonbrook Moonvale Mossglade Nightbloom Oakwhisper Rainweaver Reedwind Silverbranch Silversong Starfall Sunleaf Thornshade Wildsong Willowmere'),
+  dwarf:namePool('Balin Barik Bjarni Borin Bram Brokk Dagna Dagr Dori Durni Edda Eitri Frerin Gilda Gorm Grundi Hakon Harbek Hilda Kargan Kili Magni Marda Orik Orri Rurik Sigrun Skorri Thrain Tilda Torin Ulfar Varrik Vetra', 'Anvilhand Axebrow Blackstone Bronzehelm Coalbraid Deepdelver Flintbeard Forgeheart Goldvein Granitefist Hammerfall Hearthguard Ironbrow Ironroot Oathstone Oreseeker Redforge Rockmantle Slateheart Stoneward'),
+  orc:namePool('Argash Borzug Brakka Brog Dorgash Drakka Durog Garna Gorak Gorruk Grakka Grosh Harka Karg Kragga Lugrak Morga Nargash Orzag Ragga Rukha Shagra Sharg Thorg Ugra Urgash Vorga Vorgul Zagra Zog', 'Ashfang Blacktusk Bloodscar Bonebreaker Cinderjaw Cragfist Fangsplitter Flintjaw Grimscar Hardhide Ironfang Redtusk Rockbite Skullcleaver Stonefist Stormtusk Thornjaw Warbrand'),
+  goblin:namePool('Bik Brik Chik Drib Fizz Gik Glib Grik Grub Hek Ikk Jib Kex Kip Krik Mek Nib Nix Okk Pib Rik Rizz Skib Skik Skrit Snag Snik Spik Tikk Vek Vizz Zek Zib Zikk', 'Ashsnout Beetlefang Cinderbite Cricketsnap Ditchrunner Fernsnag Flintpick Grubcatcher Marshskip Mosslick Mudfoot Needlefang Nettlebite Reedcutter Rustpick Sootnose Thornsnip Twigknife'),
+});
+const BACKGROUND_NAME_CULTURES=Object.freeze({samurai:'japanese',ninja:'japanese',ronin:'japanese','warrior-monk':'japanese','elf-wanderer':'elf','dwarf-guard':'dwarf','half-orc-mercenary':'orc','goblin-scout':'goblin'});
+
+// Names have their own seed stream: expanding a name pool never changes stats,
+// backgrounds, traits or talents. Prefer an unused given name, then full name.
+export function makeRecruitName(seed,backgroundId,{culture='western',usedNames=[]}={}) {
+  const kind=BACKGROUND_NAME_CULTURES[backgroundId]??(RECRUIT_NAME_POOLS[culture]?culture:'western'),pool=RECRUIT_NAME_POOLS[kind];
+  const used=new Set(usedNames.map(name=>name.trim().toLowerCase())),givenUsed=new Set([...used].map(name=>name.split(/\s+/)[0]));
+  const first=mixSeed(`${seed}:${kind}:given`)%pool.given.length,last=mixSeed(`${seed}:${kind}:family`)%pool.family.length;
+  for(const avoidGiven of [true,false])for(let i=0;i<pool.given.length;i++){
+    const given=pool.given[(first+i)%pool.given.length];if(avoidGiven&&givenUsed.has(given.toLowerCase()))continue;
+    for(let j=0;j<pool.family.length;j++){const name=`${given} ${pool.family[(last+j)%pool.family.length]}`;if(!used.has(name.toLowerCase()))return name;}
+  }
+  const base=`${pool.given[first]} ${pool.family[last]}`;let suffix=2;while(used.has(`${base} ${suffix}`.toLowerCase()))suffix++;
+  return `${base} ${suffix}`;
+}
 const TOWN_ROLE_BACKGROUNDS = Object.freeze({
   frontline: Object.freeze(['farmhand', 'deserter', 'caravan-guard', 'brawler', 'militia', 'miner']),
   ranged: Object.freeze(['tinker', 'hunter', 'outrider', 'poacher']),
@@ -113,7 +142,7 @@ export function makeRecruitProfile(seed, townId, day, slot, kind = 'town') {
   }
   return Object.freeze({
     offerId: `hire:${townId}:${day}:${slot}`,
-    name: NAMES[(base + slot * 7) % NAMES.length],
+    name: makeRecruitName(hashSeed(`${base}:${slot}:person`),backgroundId),
     backgroundId,
     traitIds: Object.freeze(traits),
     personSeed: hashSeed(`${base}:${slot}:person`),
