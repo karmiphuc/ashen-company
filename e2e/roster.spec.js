@@ -20,6 +20,10 @@ test('tablet roster halves its height and highlights only unspent progression', 
     await page.setViewportSize(viewport);
     expect((await page.locator('.company-strip').boundingBox()).height).toBe(66);
     expect((await card.boundingBox()).height).toBe(55);
+    const portrait = await card.locator('.bb-portrait').boundingBox();
+    expect(portrait.height).toBeLessThan(40);
+    expect(portrait.width / portrait.height).toBeCloseTo(80 / 109, 2);
+    expect(portrait.y + portrait.height).toBeLessThanOrEqual((await card.locator('.mini-name').boundingBox()).y + 1);
   }
   await page.setViewportSize({ width: 1440, height: 900 });
   expect((await page.locator('.company-strip').boundingBox()).height).toBe(132);
