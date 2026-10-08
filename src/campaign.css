@@ -359,3 +359,35 @@ body.world-screen>#time-of-day-indicator{display:none}
  body.world-screen .world-status-row{flex-shrink:0}
  body.world-screen .world-layout{flex:1;min-height:0;height:auto}
 }
+
+/* After-battle performance: compact cards, with casualties first and fully legible. */
+.result-columns>section{min-width:0}
+.result-roster-heading{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.result-roster-heading h2{margin:0;flex:1}
+.result-fallen-count{color:#ffc2a3;border:1px solid #aa6850;background:#522f25;padding:3px 8px;font-size:14px}
+.result-brother-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:start}
+.result-brother{min-width:0;padding:9px;border:1px solid #806541;background:linear-gradient(135deg,#3a3025,#221f19);box-shadow:inset 0 0 12px #0003}
+.result-brother.fallen{border:2px solid #b7745b;padding:8px;background:linear-gradient(135deg,#493026,#261f1b)}
+.result-brother header{display:flex;align-items:center;gap:7px;min-height:56px;margin-bottom:7px}
+.result-brother header>.bb-portrait{flex-shrink:0}
+.result-brother header>div:last-child{min-width:0}
+.result-brother header strong{display:block;font-size:14px;font-weight:400;color:#efdab1;overflow-wrap:anywhere;line-height:1.2}
+.result-status{display:inline-block;color:#ffc2a3;font-size:11px;margin-top:4px}
+.result-status.ally{color:#c3c9ac}
+.result-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px 4px;margin:0}
+.result-metric{min-width:0;padding:4px 2px;text-align:center;background:#15151166;border:1px solid #655238}
+.result-metric dt{display:flex;align-items:center;justify-content:center;gap:2px;font:9px/1.2 Arial,sans-serif;color:#c4b38e;white-space:nowrap}
+.result-metric svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.result-metric dd{margin:3px 0 0;font:15px/1.1 Georgia,serif;color:#edd4a4;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.result-metric.armor-in dd{color:#e2a586}.result-metric.health dd{color:#c2d4a3;font-size:12px}.fallen .result-metric.health dd{color:#e2a586}.result-metric.xp dd{color:#dac270}
+.result-wounds{margin-top:7px;color:#e0b593;font-size:11px}.result-wounds summary{cursor:pointer}.result-wounds .injury-panel{margin-top:6px}
+.result-company>h3{margin:16px 0 9px;font-size:17px;color:#c4b392}
+@media(max-width:620px){.result-brother{padding:7px}.result-brother.fallen{padding:6px}.result-brother header strong{font-size:12px}.result-metric dt{font-size:8px}.result-metric svg{width:11px;height:11px}.result-metric dd{font-size:13px}.result-metric.health dd{font-size:11px}}
+@media(max-width:620px){.result-metric dt{flex-direction:column;gap:1px}}
+.result-metric dt{flex-wrap:wrap}
+.result-company{align-self:start}
+.button-row.loot-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.loot-actions>button{min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 5px;font-size:12px}
+.loot-actions>button:only-child{grid-column:1/-1}.loot-actions>button>span[aria-hidden]{font-size:17px;line-height:1}
+.loot-actions .named-loot-shortcut{border-color:#b69654;color:#ffe0a2;background:linear-gradient(#625033,#392e20)}
+.result-loot-heading{display:flex;align-items:center;gap:9px;margin-bottom:12px}.result-loot-heading h2{flex:1;margin:0}

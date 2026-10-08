@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, getCampSites, startBattle, advanceBattle, finishBattle, getLootShareQuote, getLootKeepQuote,
+import { createGame, getCampSites, startBattle, advanceBattle, finishBattle, getLootShareQuote, getLootKeepQuote, getNamedLootKeepQuote,
   getItem, getMarket, getTownEvent, SETTLEMENTS, createFamedItemId, sellItem, tick, validateSave } from '../src/engine.js';
 import { battleResultsHTML } from '../src/campaign-ui.js';
 
@@ -113,8 +113,8 @@ test('loot controls select copies to keep and preview the donation of all untick
   const state=victory(),quote=getLootKeepQuote(state,[1]),html=battleResultsHTML(state,[1]);
   assert.match(html,/data-keep-loot="1" checked/);assert.match(html,/data-loot-index="1"/);
   assert.match(html,new RegExp(`\\+${quote.xp} XP`));assert.match(html,/Unticked items are donated/);
-  assert.match(html,/Keep selected &amp; donate the rest/);assert.match(html,/Donate all/);assert.match(html,/Take all loot and continue/);
-  assert.match(html,/1 kept · 2 donated/);assert.match(battleResultsHTML(state),/data-action="keep-loot" disabled/);
+  assert.match(html,/aria-label="Keep selected items and donate the rest"/);assert.match(html,/Donate all/);assert.match(html,/Take all loot and continue/);
+  assert.match(html,/1 kept · 2 donated/);assert.match(battleResultsHTML(state),/data-action="keep-loot"[^>]*disabled/);
   assert.match(battleResultsHTML(state),/0 kept · 3 donated/);assert.match(battleResultsHTML(state,[0,1,2]),/All items kept · no donation/);
 });
 
@@ -148,4 +148,17 @@ test('Donate all uses an empty keep selection; keeping all grants no donation XP
   for(const indices of [[0,0],[-1],[3],[.5],null,'0'])assert.equal(getLootKeepQuote(state,indices),null);
   assert.deepEqual(state,before);assert.equal(finishBattle(state,{shareLootIndices:all.donateIndices}).ok,true);
   assert.ok(!state.inventory.includes('mail-shirt'));assert.ok(!state.inventory.includes('arming-sword'));assert.equal(state.gold,before.gold+before.battle.loot.gold);validateSave(structuredClone(state));
+});
+
+test('Named shortcut keeps exact named copies and donates only the remainder',()=>{
+ const state=victory(),weapon=createFamedItemId('arming-sword',42),armor=createFamedItemId('mail-shirt',13);
+ state.battle.loot.items=['mail-shirt',weapon,'arming-sword',weapon,armor];state.battle.loot.itemConditions=[17,null,null,null,31];const before=structuredClone(state);
+ const quote=getNamedLootKeepQuote(state);assert.deepEqual(quote.keepIndices,[1,3,4]);assert.deepEqual(quote.donateIndices,[0,2]);assert.deepEqual(state,before);
+ const weapons=getNamedLootKeepQuote(state,true);assert.deepEqual(weapons.keepIndices,[1,3]);assert.deepEqual(weapons.donateIndices,[0,2,4]);
+ assert.ok(finishBattle(state,{shareLootIndices:quote.donateIndices}).ok);assert.equal(state.inventory.filter(id=>id===weapon).length,2);assert.ok(state.inventory.includes(armor));assert.equal(state.inventoryCondition[state.inventory.indexOf(armor)],31);assert.deepEqual(validateSave(state),state);
+});
+test('Named shortcut handles all-named, no-named and non-victory loot',()=>{
+ const state=victory();assert.deepEqual(getNamedLootKeepQuote(state).keepIndices,[]);assert.deepEqual(getNamedLootKeepQuote(state).donateIndices,[0,1,2]);
+ state.battle.loot.items=[createFamedItemId('arming-sword',4)];state.battle.loot.itemConditions=[null];assert.deepEqual(getNamedLootKeepQuote(state).donateIndices,[]);
+ state.battle.status='retreat';assert.equal(getNamedLootKeepQuote(state),null);
 });
