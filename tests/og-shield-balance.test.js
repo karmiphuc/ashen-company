@@ -1,3 +1,4 @@
+import {itemImage} from '../src/portraits.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -80,5 +81,11 @@ test('unversioned named campaign shields still apply their labeled bonus to both
   assert.equal(item.defense-plain.defense,bonus);assert.equal(item.rangedDefense-plain.rangedDefense,bonus);
   const old=getItem(`famed:${previousShieldId(base)}:${seed}`),oldPlain=getItem(previousShieldId(base));
   assert.equal((old.rangedDefense??old.defense)-oldPlain.defense,bonus);
+ }
+});
+
+test('temporary battle shield aliases retain ordinary, named and reforged inventory artwork',()=>{
+ for(const base of Object.keys(PREVIOUS_SHIELDS))for(const id of [base,`famed:${base}:73`,`famed7:${base}:73`,encodeBoundedForgeItem(base,{locked:false,foundation:{weight:2},prefixes:[],suffixes:[]},getItem)]){
+  assert.ok(itemImage(getItem(id)),id);assert.equal(itemImage(getItem(previousShieldId(id))),itemImage(getItem(id)));
  }
 });

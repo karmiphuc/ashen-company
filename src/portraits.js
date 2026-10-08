@@ -690,7 +690,7 @@ export const portraitSVG = portraitHTML;
 export function itemImage(item) {
   const restored = ancientRestoredArt(item);
   if (restored) return restored.icon;
-  const id = item?.baseId || item?.id;
+  const id = item?.legacyShieldId || item?.baseId || item?.id;
   if (DIREWOLF_HELMET_ART[id]) return DIREWOLF_HELMET_ART[id].icon;
   if (id === MOONFANG_ID) return MOONFANG_ART.icon;
   if(NAMED_WEAPON_ART[id])return NAMED_WEAPON_ART[id].icon;
