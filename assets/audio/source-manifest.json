@@ -426,6 +426,66 @@
       "conversion": "mono MP3, 32 kHz, 64 kbps",
       "bytes": 23084,
       "sha256": "54ef9e428807fa769b0fb696b9acbecdf49ecaa477593c987a00581efb1fdda6"
+    },
+    {
+      "path": "assets/audio/world-harp.mp3",
+      "author": "Melissa Elliott (0xabad1dea)",
+      "license": "CC-BY-4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://github.com/0xabad1dea/glorytales/tree/b11b570de5b3072fc5f409a3e515a28e62ae56be",
+      "original": "002-StartMenuScreen-80BPM-loop.mp3",
+      "conversion": "First 54.05 seconds; loudness normalization, 1s fade-in and 2s fade-out; mono MP3, 24 kHz, 48 kbps",
+      "bytes": 324524,
+      "sha256": "9c7dfd95f812504f4ae282eeee0c4ad73596651dddc965eaf19e12f55f128e11",
+      "sourceSha256": "94bca53432f4f41392495644c5c18f5639ca7501545809a9b9d0f1af30c8c7f0"
+    },
+    {
+      "path": "assets/audio/world-village.mp3",
+      "author": "Melissa Elliott (0xabad1dea)",
+      "license": "CC-BY-4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://github.com/0xabad1dea/glorytales/tree/b11b570de5b3072fc5f409a3e515a28e62ae56be",
+      "original": "005-HistoricVillage-99BPM-loop.mp3",
+      "conversion": "First 58.23 seconds; loudness normalization, 1s fade-in and 2s fade-out; mono MP3, 24 kHz, 48 kbps",
+      "bytes": 349724,
+      "sha256": "fffd1850b5eeca72af54e234a01fe20d2fe1ca0adf14362934eba217b6ad350e",
+      "sourceSha256": "7a8763365f925611c7ab3ed81a0478d91598721e649f3fb7517db85b16188458"
+    },
+    {
+      "path": "assets/audio/world-forest.mp3",
+      "author": "Melissa Elliott (0xabad1dea)",
+      "license": "CC-BY-4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://github.com/0xabad1dea/glorytales/tree/b11b570de5b3072fc5f409a3e515a28e62ae56be",
+      "original": "007-MagicalForest-85BPM-loop.mp3",
+      "conversion": "First 75.00 seconds; loudness normalization, 1s fade-in and 2s fade-out; mono MP3, 24 kHz, 48 kbps",
+      "bytes": 450524,
+      "sha256": "1e2e38638052d00b13f30a45e4c91e75fa4f3ba210c3d6c7bef4a00f2a6b8279",
+      "sourceSha256": "609220aa79d3806d92c0146b9a3fc2282c72b058c13fda3e95b04cc97a1c4ccc"
+    },
+    {
+      "path": "assets/audio/world-road.mp3",
+      "author": "Melissa Elliott (0xabad1dea)",
+      "license": "CC-BY-4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://github.com/0xabad1dea/glorytales/tree/b11b570de5b3072fc5f409a3e515a28e62ae56be",
+      "original": "013-LongRoad-100BPM-loop.mp3",
+      "conversion": "First 75.00 seconds; loudness normalization, 1s fade-in and 2s fade-out; mono MP3, 24 kHz, 48 kbps",
+      "bytes": 450524,
+      "sha256": "a099f811d6a8f9e338548195cebb6cccaa71965fd72ae59fb7f7a9da35717caa",
+      "sourceSha256": "8648a0f26dce1af08ca4126eef51aa59a3101a6bd9575b58ddf72328819b5d27"
+    },
+    {
+      "path": "assets/audio/world-waltz.mp3",
+      "author": "Melissa Elliott (0xabad1dea)",
+      "license": "CC-BY-4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "source": "https://github.com/0xabad1dea/glorytales/tree/b11b570de5b3072fc5f409a3e515a28e62ae56be",
+      "original": "014-CatsEyeWaltz-96BPM-loop.mp3",
+      "conversion": "First 75.00 seconds; loudness normalization, 1s fade-in and 2s fade-out; mono MP3, 24 kHz, 48 kbps",
+      "bytes": 450524,
+      "sha256": "6dd9d3c64becb95d1df9e3c3371dc37f2f9333d25676aaa93a43b4f69eab0328",
+      "sourceSha256": "0eefa7b5f3c4115fce2c1bdefe40ba6a437f33f247cf6c70873faeba5fd1811b"
     }
   ]
 }
