@@ -1,0 +1,32 @@
+import { test, expect } from '@playwright/test';
+import { createGame } from '../src/engine.js';
+
+test('world music starts on a tap, advances offline and follows screens and the saved mute setting',async({page,context})=>{
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.addInitScript(save=>{if(!localStorage.getItem('ashen-company-save-v1'))localStorage.setItem('ashen-company-save-v1',save);},JSON.stringify(createGame(51)));
+ await page.goto('./');
+ await expect(page.locator('#world-music')).toHaveCount(0);
+ await expect(page.locator('#offline-status')).toHaveText('Offline ready',{timeout:60000});
+ await page.locator('[data-action="center"]').click();
+ await expect.poll(()=>page.locator('#world-music').evaluate(m=>!m.paused&&m.readyState>=2)).toBe(true);
+ const first=await page.locator('#world-music').evaluate(m=>m.src);
+ await context.setOffline(true);
+ await page.locator('#world-music').evaluate(m=>{m.pause();m.dispatchEvent(new Event('ended'));});
+ await expect.poll(()=>page.locator('#world-music').evaluate(m=>m.src)).not.toBe(first);
+ await expect.poll(()=>page.locator('#world-music').evaluate(m=>!m.paused&&m.readyState>=2)).toBe(true);
+ await page.locator('#settings-button').click();
+ await expect.poll(()=>page.locator('#world-music').evaluate(m=>m.paused)).toBe(true);
+ await page.locator('[data-audio-toggle="music"]').click();
+ await expect(page.locator('[data-audio-toggle="music"]')).toHaveAttribute('aria-pressed','false');
+ await page.getByRole('button',{name:'Close dialog',exact:true}).click();
+ await page.reload();await page.locator('[data-action="center"]').click();
+ await expect(page.locator('#world-music')).toHaveCount(0);
+ await page.locator('#settings-button').click();
+ await expect(page.locator('[data-audio-toggle="music"]')).toHaveAttribute('aria-pressed','false');
+ await page.locator('[data-audio-toggle="music"]').click();
+ await page.getByRole('button',{name:'Close dialog',exact:true}).click();
+ await expect.poll(()=>page.locator('#world-music').evaluate(m=>!m.paused&&m.readyState>=2)).toBe(true);
+ await page.locator('.nav-tabs [data-tab="company"]').click();
+ await expect.poll(()=>page.locator('#world-music').evaluate(m=>m.paused)).toBe(true);
+ expect(errors).toEqual([]);
+});

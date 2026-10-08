@@ -34,7 +34,7 @@ The v0.45.7 weapon effects add bow and three swish recordings from [Battle Sound
 
 The v0.49.0 impact foley adds distinct flesh, arrow, thrown-pierce, bolt, slash and cavalry layers, remixed from Kenney Impact Sounds (CC0). Hoofbeats are adapted wood-impact foley. The reproducible recipes in `tools/build-combat-impact-audio.py` document every source, pitch, gain and delay; these are layered recordings rather than synthesized tones. Armor/shield contact and health damage can play together, while misses have no damage contact.
 
-The [audio manifest](../assets/audio/source-manifest.json) records each source file, conversion, size and SHA-256 hash. Mono MP3 conversions total about 1.3 MB. One looping music element and at most eight short effect voices keep memory and playback work bounded. Audio is cached for offline play; the world map has no music. Music and effects can be muted independently in the Save menu.
+The [audio manifest](../assets/audio/source-manifest.json) records each source file, conversion, size and SHA-256 hash. Mono MP3 conversions total about 3.5 MB. Battle and world-map music use separate elements, with only the current scene audible; at most eight short effect voices keep playback work bounded. Audio is cached for offline play. Music and effects can be muted independently in the Save menu.
 
 Fantasy Brothers 6.2 and Samurai 2.1 recruit and equipment artwork is documented
 in [FANTASY-SAMURAI.md](FANTASY-SAMURAI.md) and
@@ -108,3 +108,7 @@ preserve its aspect ratio. The download URL and SHA-256 are recorded in
 [workshop provenance](../assets/world/legendary-blacksmith-source.json).
 
 The quest-completion horn/chime cadence is an original procedural composition released as CC0. `tools/generate-quest-tune.py` reproduces its 2.8-second mono MP3 (about 23 KB); it contains no sampled recordings or Warband audio. It plays once on successful contract payment or Odran quest turn-in and follows the sound-effects setting.
+
+## World-map music
+
+Five excerpts from [Glorytales](https://github.com/0xabad1dea/glorytales), composed by **Melissa Elliott (0xabad1dea)**, are used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): **Start Menu Screen**, **Historic Village**, **Magical Forest**, **Long Road** and **Cat’s-Eye Waltz**. Each is shortened to at most 75 seconds, normalized, faded and compressed to mono MP3 at 24 kHz / 48 kbps. These adaptations total approximately 2.0 MB. The source revision, original filenames, transformations and checksums are recorded in the audio manifest. Rebuild with `python3 tools/build-world-music.py` (requires FFmpeg); source checksums are verified before conversion. Attribution is also visible in the game's Audio settings. The playlist shuffles all five tracks without immediately repeating one at a cycle boundary. Travel can be paused while the world music continues; combat, other screens and hidden tabs pause it.
