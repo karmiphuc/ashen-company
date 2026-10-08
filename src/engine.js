@@ -5184,7 +5184,8 @@ function advanceBattleV2(state) {
     const distance = hexDistance(actor, target);
     const normal = predictAttack(battle, actor, target, weapon,basicOption);
     const aimed = isBow(weapon) ? predictAttack(battle, actor, target, weapon, 15) : null;
-    const charge = !actor.disarmedTurns && ['offense', 'focus'].includes(companyTactic) && horseChargePlan(battle, actor, target, weapon);
+    const charge = !(role==='breaker' && battle.round<5 && distance>nearest)
+      && !actor.disarmedTurns && ['offense', 'focus'].includes(companyTactic) && horseChargePlan(battle, actor, target, weapon);
     if (charge && (!wingDuty || flankerGoal(battle,actor,target,false)(charge.path.at(-1))
       && !enemies.some(e=>e.id!==target.id && hexDistance(charge.path.at(-1),e)<=1))) {
       const predicted = predictAttack(battle, { ...actor, ...charge.path.at(-1) }, target, weapon, COMBAT_SKILLS.charge);
@@ -5268,17 +5269,27 @@ function advanceBattleV2(state) {
     if (candidate) candidates.push(candidate);
   }
   const targetPaths = enemies.map(target => {
-    const priority = rangedAI ? tacticalTargetPriority(role,target,getItem(target.equipment.weapon),hexDistance(actor,target),nearest) : 0;
-    const flanking = wingDuty && nearest>1 || role==='breaker' && priority>0 && nearest>1;
+    const priority = rangedAI ? tacticalTargetPriority(role,target,getItem(target.equipment.weapon),hexDistance(actor,target),nearest,battle.round) : 0;
+    const flanking = wingDuty && nearest>1;
     return {target,priority,path:pathToTarget(battle,actor,target,range,weapon.ranged===true,flanking,wingDuty&&nearest>1?flankerGoal(battle,actor,target,weapon.ranged===true):null)};
-  }).filter(entry=>roleRules(battle)?entry.path!==null:entry.path?.length).sort((a,b)=>(['flanker','breaker','skirmisher'].includes(role) ? b.priority-a.priority : 0)
+  }).filter(entry=>roleRules(battle)?entry.path!==null:entry.path?.length).sort((a,b)=>(['flanker','skirmisher'].includes(role) ? b.priority-a.priority : 0)
     || pathCost(battle,actor,actor,a.path)-pathCost(battle,actor,actor,b.path)
     || b.priority-a.priority || a.target.id.localeCompare(b.target.id));
   const arrived=roleRules(battle)&&targetPaths.find(entry=>entry.target.id===actor.aiTargetId&&entry.path.length===0);
+  const breakerHunt=role==='breaker' && !weapon.ranged && battle.round>=5 && ['offense','focus'].includes(companyTactic);
+  const cheapest=targetPaths[0];
+  // Hunt through openings, rather than taking a long Flanker detour.
+  const breakthrough=breakerHunt && (nearest===1 || !nearbyTarget) && targetPaths.filter(entry=>entry.path.length
+    && (getItem(entry.target.equipment.weapon)?.ranged || (getItem(entry.target.equipment.weapon)?.range??1)>1)
+    && pathCost(battle,actor,actor,entry.path)<=pathCost(battle,actor,actor,cheapest.path)+2
+    && (nearest>1 || enemies.filter(enemy=>hexDistance(actor,enemy)===1)
+      .every(enemy=>hexDistance(entry.path[0],enemy)===1)))
+    .sort((a,b)=>b.priority-a.priority || pathCost(battle,actor,actor,a.path)-pathCost(battle,actor,actor,b.path))[0];
   const preferred=arrived&&arrived.priority>=(targetPaths[0]?.priority??0)?arrived:targetPaths[0];
-  const specialFlank = nearest>1 && preferred && (roleRules(battle)&&role==='flanker' || role==='breaker'&&preferred.priority>0) ? preferred : null;
+  const specialFlank = nearest>1 && preferred && roleRules(battle)&&role==='flanker' ? preferred : null;
   const pursuit = (companyTactic === 'focus' && targetPaths.find(entry=>entry.target.id===battle.focusTargetId))
-    || specialFlank || (role==='skirmisher' ? targetPaths[0] : targetPaths.find(entry=>entry.target.id===actor.aiTargetId)) || targetPaths[0];
+    || breakthrough || specialFlank || (['skirmisher','breaker'].includes(role) ? targetPaths[0] : targetPaths.find(entry=>entry.target.id===actor.aiTargetId)) || targetPaths[0];
+  const breakingThrough=breakthrough && pursuit===breakthrough;
   const formationLocked = companyTactic === 'advance-formation' && (actor.formationMovedRound === battle.round
     || !wingDuty && (sideInMeleeContact(battle) || battle.formationAdvance?.completedRound >= battle.round));
   const wallLocked = wingDuty && ['shield-wall','skirmish'].includes(companyTactic) && actor.formationMovedRound===battle.round
@@ -5286,7 +5297,7 @@ function advanceBattleV2(state) {
     || (!rangedAI || !ammunitionSpent) && companyTactic === 'shield-wall' && (actor.side==='enemy'
       ? !weapon.ranged && actor.formationMovedRound===battle.round
       : actor.formationMovedRound===battle.round || battle.round - battle.lastContactRound < 4));
-  for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank || !pursuit || !pursuit.path.length ? [] : [pursuit]) {
+  for (const entry of formationLocked || wallLocked || nearbyTarget && !specialFlank && !breakingThrough || !pursuit || !pursuit.path.length ? [] : [pursuit]) {
     const point = entry.path[0];
     // Pursuit must respect the same rear-line boundary as reformation. A
     // reach fighter may leave shelter to acquire a target in reach, but not
@@ -5303,7 +5314,7 @@ function advanceBattleV2(state) {
       && hexDistance(unit, entry.target) <= 1).length;
     const adjacentThreats = enemies.filter(enemy => hexDistance(point, enemy) <= 1).length;
     candidates.push({ id: `move-${entry.target.id}`, type: 'move', targetId: entry.target.id, point, apCost,
-      fatigueCost: movementFatigue(actor, battleMovementCost(battle, actor, actor, point)), bonus: 14 + ((rangedAI ? ammunitionSpent : noAmmo) ? 15 : 0) + (specialFlank && pursuit===specialFlank && !weapon.ranged ? 35 : 0)
+      fatigueCost: movementFatigue(actor, battleMovementCost(battle, actor, actor, point)), bonus: 14 + (breakingThrough ? 35 : 0) + ((rangedAI ? ammunitionSpent : noAmmo) ? 15 : 0) + (specialFlank && pursuit===specialFlank && !weapon.ranged ? 35 : 0)
         + (companyTactic === 'advance-formation' || companyTactic === 'shield-wall' ? 20 : 0),
       spacingGain: weapon.ranged ? nearestEnemyDistance(battle, actor, point) - nearest : 0,
       flankGain: alliesOnTarget && hexDistance(point, entry.target) <= 1 && hexDistance(actor, entry.target) > 1 ? 1 : 0,
@@ -5364,6 +5375,9 @@ function advanceBattleV2(state) {
       if (offensive(candidates[index]) && !hitsFocus(candidates[index])) candidates.splice(index, 1);
     }
   }
+  for (const action of candidates) if (role==='breaker' && action.type==='area') {
+    action.bonus += 8 * Math.max(0,action.targets.filter(target=>target.side!==actor.side).length-1);
+  }
   for (const action of candidates) if (action.targetId) {
     action.target ??= enemies.find(enemy=>enemy.id===action.targetId);
     if (action.target) {action.targetWeapon=getItem(action.target.equipment.weapon);action.targetDistance=hexDistance(actor,action.target);}
@@ -5378,7 +5392,7 @@ function advanceBattleV2(state) {
     if (path && candidates.some(canReturn)) for (let i=candidates.length-1;i>=0;i--)
       if (offensive(candidates[i]) && !canReturn(candidates[i])) candidates.splice(i,1);
   }
-  const ranked = rankTacticalActions(battle.weaponCompletionVersion===1?{...actor,maxFatigue:availableFatigue(actor)}:actor, candidates, { role, targetPriorities:rangedAI, nearestDistance:nearest, tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
+  const ranked = rankTacticalActions(battle.weaponCompletionVersion===1?{...actor,maxFatigue:availableFatigue(actor)}:actor, candidates, { role, round:battle.round, targetPriorities:rangedAI, nearestDistance:nearest, tactic: battle.enemyTacticsVersion === 1 ? companyTactic : battle.tactic, focusTargetId: battle.enemyTacticsVersion === 1 && actor.side === 'enemy' ? null : battle.focusTargetId,
     previousTargetId: enemies.some(enemy => enemy.id === actor.aiTargetId) ? actor.aiTargetId : null });
   const permittedExceptions = ranked.filter(entry => entry.type === 'area' && entry.safety.exception)
     .sort((a, b) => compareAreaSafety(a.safety, b.safety));

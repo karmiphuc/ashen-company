@@ -53,7 +53,7 @@ export function scoreTacticalAction(actor, action, context = {}) {
   if (role === 'ranged' || role === 'skirmisher') score += 3 * value('spacingGain');
   if (role === 'flanker' || role === 'breaker') score += 4 * value('flankGain');
   if (context.targetPriorities !== false && action.target) score += tacticalTargetPriority(role, action.target, action.targetWeapon,
-    value('targetDistance'), context.nearestDistance ?? value('targetDistance'));
+    value('targetDistance'), context.nearestDistance ?? value('targetDistance'), context.round ?? 1);
   return score + value('bonus');
 }
 
@@ -123,9 +123,9 @@ export function recommendEnemyTactic(battle, getItem, companyAmmo) {
 }
 
 
-export function tacticalTargetPriority(role, target, weapon, distance, nearest = distance) {
+export function tacticalTargetPriority(role, target, weapon, distance, nearest = distance, round = 1) {
   if (role === 'flanker') return weapon?.ranged ? 40 : (weapon?.range ?? 1) > 1 ? 30 : 0;
-  if (role === 'breaker') return (weapon?.ranged ? 22 : (weapon?.range ?? 1)>1 ? 14 : 0)
+  if (role === 'breaker') return (round >= 5 ? (weapon?.ranged ? 22 : (weapon?.range ?? 1)>1 ? 14 : 0) : 0)
     + (target.equipment?.shield && target.shieldDurability>0 ? 0 : 8)
     + Math.max(0,Math.min(10,(20-(target.meleeDefense ?? 0))*.4))
     + Math.max(0,Math.min(12,(1-target.hp/Math.max(1,target.maxHp))*12));
