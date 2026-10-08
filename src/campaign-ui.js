@@ -19,7 +19,7 @@ const combatRoleHelp = {
   skirmisher:'Keeps space and pressures the nearest front line; closes when ammunition runs out.',
   ranged:'Keeps space, seeks defensive cover and picks exposed or finishing targets; closes when ammunition runs out.',
   breaker:'Aggressive frontliner: charges weak points and uses area attacks to open gaps. From round 5, exploits openings and chases exposed archers and polearms. Avoids unsafe disengagement, crowded landings and Spearwall; obeys company tactics.',
-  flanker:'Prefers ranged and polearm enemies, taking safe routes around their front line.',
+  flanker:'Prefers ranged and polearm enemies, taking safe routes around their front line. Mounted and unengaged: prioritizes catching broken enemies with a melee weapon, then stays in contact for opportunity strikes.',
 };
 const skillPreferences = {balanced:'Balanced',damage:'Damage',control:'Control'};
 

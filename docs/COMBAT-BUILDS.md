@@ -54,3 +54,17 @@ fixed damage do not receive it. Equipped shields, including broken shields,
 prevent Double Grip; reserve shields do not. Eligibility updates on weapon
 swaps without saving an extra stat. Older pre-completion battle rules stay
 unchanged. Weapon details and a battle status icon explain the bonus.
+
+Mounted Flankers prioritize intercepting reachable broken enemies (morale below
+25, excluding morale-immune enemies) when no opponent is adjacent. They approach
+within one hex, using their current melee weapon or drawing a melee reserve or
+pocket weapon with normal swap costs. This interception duty takes precedence
+over wing targeting and formation commands; wounded-brother preservation still
+wins. Routes avoid other opponents’ adjacent hexes and obey terrain, fatigue,
+movement AP and approach-safety checks. Already engaged riders do not abandon
+healthy adjacent opponents to pursue another enemy. At contact with a broken
+enemy they retain melee gear and prefer attacking that enemy, so normal escape
+attempts provoke existing opportunity strikes. This adds no guaranteed root,
+free stun or escape cancellation: casualties and existing combat effects decide
+whether the enemy gets away. Targets are reevaluated every action, so recovery,
+death, escape and blocked paths do not leave stale pursuit orders.

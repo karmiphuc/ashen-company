@@ -3515,6 +3515,9 @@ function chooseBattleWeapon(state, actor, enemies) {
   if (!roleRules(state.battle)&&(actor.side !== 'company' || actor.ally)) return false;
   const nearest = Math.min(...enemies.map(enemy => hexDistance(actor, enemy)));
   if (state.battle.rulesVersion === 2 && actor.ap < 4 && !(hasPerk(actor, 'quick-hands') && actor.freeSwapRound !== state.battle.round)) return false;
+  if (roleRules(state.battle) && actor.tacticalRole==='flanker' && getItem(actor.equipment.mount)
+    && getItem(actor.equipment.weapon) && !getItem(actor.equipment.weapon).ranged
+    && enemies.some(enemy=>!isMoraleImmune(enemy) && enemy.morale<25 && hexDistance(actor,enemy)===1)) return false;
   const archer = companyArcherWeapon(state, actor);
   if (actor.pocketDrawnFrom !== null) {
     const readyToShoot = archer ? nearest >= 2 : nearest >= 3 && state.battle.round >= actor.pocketDrawnRound + 2;
@@ -3584,6 +3587,48 @@ function chooseBattleWeapon(state, actor, enemies) {
     return switchBattleSet(state, actor, `${actor.name} readies ${reserve.name} behind ${getItem(actor.reserveEquipment.shield)?.name ?? 'the line'}.`);
   }
   return false;
+}
+
+// Mounted wing fighters pin broken enemies with a real melee weapon in hand.
+// Recompute paths each action: no pursuit state survives recovery or casualties.
+function mountedFlankerPursuit(state, actor, enemies) {
+  const battle=state.battle;
+  if (!roleRules(battle) || actor.tacticalRole!=='flanker' || !getItem(actor.equipment.mount)
+    || actor.disarmedTurns || shouldPreserveBrother(battle,actor)) return null;
+  const broken=enemies.filter(enemy=>!enemy.escaped && !isMoraleImmune(enemy) && enemy.morale<25);
+  if (!broken.length) return null;
+  const adjacent=enemies.filter(enemy=>hexDistance(actor,enemy)===1);
+  if (adjacent.length && !adjacent.some(enemy=>broken.includes(enemy))) return null;
+  const active=getItem(actor.equipment.weapon),reserve=getItem(actor.reserveEquipment.weapon);
+  const pocket=actor.accessories.findIndex(id=>getItem(id)?.pocketWeapon && !getItem(id).ranged);
+  if ((!active || active.ranged) && (!reserve || reserve.ranged) && pocket<0) return null;
+  const choices=(adjacent.length?broken.filter(enemy=>hexDistance(actor,enemy)===1):broken)
+    .map(target=>({target,path:pathToTarget(battle,actor,target,1,false,true)}))
+    .filter(entry=>entry.path!==null)
+    .sort((a,b)=>pathCost(battle,actor,actor,a.path)-pathCost(battle,actor,actor,b.path)
+      || a.target.id.localeCompare(b.target.id));
+  if (!choices.length) return null;
+  const {target,path}=choices[0];
+  if (!active || active.ranged) {
+    const swapCost=hasPerk(actor,'quick-hands') && actor.freeSwapRound!==battle.round?0:4;
+    if (actor.ap<swapCost) return null;
+    actor.aiTargetId=target.id;
+    if (reserve && !reserve.ranged) {
+      switchBattleSet(state,actor,`${actor.name} draws ${reserve.name} to intercept a broken enemy.`);
+    } else {
+      actor.pocketStowedWeapon=actor.equipment.weapon;actor.pocketStowedReload=actor.reload;
+      actor.pocketDrawnFrom=pocket;actor.pocketDrawnRound=battle.round;
+      changeBattleWeapon(actor,actor.accessories[pocket],actor.equipment.shield,actor.shieldDurability,battle);
+      actor.accessories[pocket]=null;actor.reload=0;
+      finishBattleSwap(state,actor,`${actor.name} draws a pocket weapon to intercept a broken enemy.`);
+    }
+    return result(true,battle.lastEvent.message);
+  }
+  // Once engaged, retain the melee set and let normal adjacent attacks resolve.
+  if (adjacent.length || !path.length) return null;
+  const moved=moveToRangedPosition(state,actor,{point:path[0],message:`${actor.name} rides to intercept ${target.name}.`},'pursuit');
+  if (moved) actor.aiTargetId=target.id;
+  return moved;
 }
 
 function enemiesAdjacent(battle,actor) {
@@ -5030,6 +5075,7 @@ function advanceBattleV2(state) {
   if (useBattleAccessory(state, actor, enemies)) return result(true, battle.lastEvent.message);
   const preservation = preserveWoundedBrother(state, actor, enemies); if (preservation) return preservation;
   const preserving = shouldPreserveBrother(battle, actor);
+  const mountedPursuit=mountedFlankerPursuit(state,actor,enemies);if(mountedPursuit)return mountedPursuit;
   const fallingBack=preserving ? null : returnSkirmisher(state,actor);if (fallingBack) return fallingBack;
   if (readyShieldWallSet(state, actor) || chooseBattleWeapon(state, actor, enemies)) return result(true, battle.lastEvent.message);
   const equipped = getItem(actor.equipment.weapon);
@@ -5380,6 +5426,8 @@ function advanceBattleV2(state) {
   }
   for (const action of candidates) if (action.targetId) {
     action.target ??= enemies.find(enemy=>enemy.id===action.targetId);
+    if (action.target && wingDuty && getItem(actor.equipment.mount) && !weapon.ranged
+      && !isMoraleImmune(action.target) && action.target.morale<25 && hexDistance(actor,action.target)===1) action.bonus+=60;
     if (action.target) {action.targetWeapon=getItem(action.target.equipment.weapon);action.targetDistance=hexDistance(actor,action.target);}
   }
   if (actor.skirmishReturn?.phase==='aim') {
