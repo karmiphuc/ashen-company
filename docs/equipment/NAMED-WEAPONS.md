@@ -44,7 +44,7 @@ Weapons use the campaign's existing family skill set, plus the fencing Lunge and
 
 ## Reproducible sources
 
-The source remains [kovasap/battle-bros-decompiled at e06d68df](https://github.com/kovasap/battle-bros-decompiled/tree/e06d68df0915827967f98a05d0c705c1f53df0b7). [The manifest](../assets/named-weapons-source.json) records every imported definition, excluded named script, name pool, selected variant, inventory icon, worn brush/crop/grip and SHA-256 hash. [The importer](../tools/content/import-bb-named-weapons.py) rebuilds deterministic data and embedded art:
+The source remains [kovasap/battle-bros-decompiled at e06d68df](https://github.com/kovasap/battle-bros-decompiled/tree/e06d68df0915827967f98a05d0c705c1f53df0b7). [The manifest](../../assets/named-weapons-source.json) records every imported definition, excluded named script, name pool, selected variant, inventory icon, worn brush/crop/grip and SHA-256 hash. [The importer](../../tools/content/import-bb-named-weapons.py) rebuilds deterministic data and embedded art:
 
 ```sh
 python tools/content/import-bb-named-weapons.py --cache /tmp/bb-source
@@ -52,6 +52,6 @@ npm run prepare-offline
 npm test
 ```
 
-The actual `named/*.nut`, `scripts/config/item_names.nut`, `brushes/entity_icons.brush`, `gfx/entity_icons.png`, and `split_shield.nut`/`lunge_skill.nut` rules were inspected. BB art attribution remains in [ASSET-CREDITS.md](ASSET-CREDITS.md).
+The actual `named/*.nut`, `scripts/config/item_names.nut`, `brushes/entity_icons.brush`, `gfx/entity_icons.png`, and `split_shield.nut`/`lunge_skill.nut` rules were inspected. BB art attribution remains in [ASSET-CREDITS.md](../art/ASSET-CREDITS.md).
 
 The v0.47.1 portrait correction bounds the complete rotated named two-handed sprite above the pawn ground anchor. Designs with grips above long handle butts move upward individually, preserving their size and mounted rider offset, with a shallower opposite-shoulder resting angle. Pixel-based regression coverage checks every named two-hander, alternate rolls and all mount species.

@@ -15,7 +15,7 @@ Sources:
 The source manifest records archive hashes, inventory paths, atlas coordinates,
 brush names and the hashes of the packaged PNGs. Sprites are cropped from the
 original atlases; this project does not claim authorship or a new asset license.
-The [horse source manifest](../assets/fantasy-mount-source.json) records the
+The [horse source manifest](../../assets/fantasy-mount-source.json) records the
 War Horse and Armored War Horse crops from Fantasy Brothers' `entity_xx` atlas.
 Each portrait uses a rear layer and a front head layer around the rider; the
 inventory icons come from that archive. Their stats and separate mount slot are

@@ -12,7 +12,7 @@ The combat log reports shield damage. At zero durability, shield defense and shi
 
 Highpass receives one Riding Horse on days 8, 22, 36 and every 14 days after. It stays in the equipment market through that week until bought. Prices still follow town events. This gives a reliable route without flooding every settlement with mounts.
 
-Large towns and castles retain a 2% weekly chance to stock one random mount. The pool includes Riding Horse, War Horse, Armored War Horse, Warg and Dire Wolf. War Horse and Armored War Horse use actual Fantasy Brothers artwork; see [asset provenance](../assets/fantasy-mount-source.json). A captured mount is also possible after defeating rare mounted elite enemies, with their existing late-game gate preserved.
+Large towns and castles retain a 2% weekly chance to stock one random mount. The pool includes Riding Horse, War Horse, Armored War Horse, Warg and Dire Wolf. War Horse and Armored War Horse use actual Fantasy Brothers artwork; see [asset provenance](../../assets/fantasy-mount-source.json). A captured mount is also possible after defeating rare mounted elite enemies, with their existing late-game gate preserved.
 
 Living mounted fighters control adjacent hexes. An enemy can enter the zone or circle within it, but cannot step out while that rider lives. This applies to both sides and to formation movement and ranged repositioning. Dead riders exert no control. Every equipped mount adds 10% company travel speed and extra daily food consumption.
 

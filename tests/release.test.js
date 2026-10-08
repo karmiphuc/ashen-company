@@ -14,7 +14,7 @@ test('displayed release is generated from package metadata and cached offline', 
   assert.match(app, /Version \$\{APP_VERSION\}/);
   assert.doesNotMatch(app, /Version \d+\.\d+\.\d+/);
   assert.ok((await listOfflineAssets()).includes('./src/release.js'));
-  assert.match(await readFile(new URL('README.md', root), 'utf8'), new RegExp(`Version ${pkg.version.replaceAll('.', '\\.')}`));
+  assert.match(await readFile(new URL('docs/releases/NOTES.md', root), 'utf8'), new RegExp(`Version ${pkg.version.replaceAll('.', '\\.')}`));
 });
 
 test('automatic versions are deterministic, advance past the base and reject invalid counters', () => {

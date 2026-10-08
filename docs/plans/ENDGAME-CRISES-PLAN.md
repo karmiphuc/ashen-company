@@ -2,7 +2,7 @@
 
 Status: Ashen Winter implemented in v0.48.0; faction war remains a roadmap. Release publication has not been performed.
 
-For the first release, [Ashen Winter implementation specification](ASHEN-WINTER-IMPLEMENTATION-SPEC.md) is authoritative. It fixes the scope and rules below where the original roadmap proposed alternatives. War remains a later release.
+For the first release, [Ashen Winter implementation specification](../world/ASHEN-WINTER-IMPLEMENTATION-SPEC.md) is authoritative. It fixes the scope and rules below where the original roadmap proposed alternatives. War remains a later release.
 
 ## Campaign promise
 
