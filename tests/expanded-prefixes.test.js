@@ -33,7 +33,7 @@ test('every requested prefix and grade is reachable, deterministic, inspected an
   const seen=new Map(),masteries=new Set();
   for(const base of ['arming-sword','hunting-bow','patched-coat','cloth-hood','round-shield'])for(let seed=0;seed<6000;seed++){
     const item=game.getItem(game.createFamedItemId(base,seed)),prefix=item.affixPrefix;
-    assert.equal(item.rollVersion,7);assert.deepEqual(item,game.getItem(item.id));
+    assert.equal(item.rollVersion,['armor','helmet'].includes(item.slot)?8:7);assert.deepEqual(item,game.getItem(item.id));
     const values=seen.get(prefix.id)??new Set();values.add(prefix.value);seen.set(prefix.id,values);
     if(prefix.id==='masterful')item.grantedPerks.forEach(id=>masteries.add(id));
     if(seed<100){const profile=extractForgeProfile(item,catalog,{shieldMaximum:game.shieldMaximum,shieldDamage:game.shieldImpactDamage});assert.ok(profile,item.id);const copy=forged(base,profile);assert.deepEqual(copy.perkBoosts,Object.fromEntries([...Object.entries(item.perkBoosts),...['berserkAp','nimble','battleForged'].filter(k=>!Object.hasOwn(item.perkBoosts,k)).map(k=>[k,0])]));assert.deepEqual(copy.grantedPerks,item.grantedPerks);}

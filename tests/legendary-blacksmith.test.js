@@ -58,3 +58,16 @@ test('ranged-only prefix donors cannot consume a merge on melee named recipients
  assert.ok(restored.bonuses.every(row=>!row.value.includes('inactive')));
  assert.deepEqual(restored.forgeProfile,getItem(donor).forgeProfile);
 });
+
+test('a zero-load named armor donor transfers its real fatigue credit through the complete forge transaction',()=>{
+ const s=readyForge(),donor=createFamedItemId('bb-assassin-head-wrap',73);
+ for(const recipient of ['bb-ancient-laurels','greathelm']){
+  s.gold=50000;stash(s,[donor,recipient]);
+  const q=getReforgeQuote(s,0,1,'transfer');assert.ok(q.ok,q.message);
+  const result=reforgeItem(s,q);assert.ok(result.ok,result.message);
+  const item=getItem(result.itemId);assert.match(result.itemId,/^forge5:/);
+  assert.equal(item.fatigue,(getItem(recipient).fatigue??0)-1);
+  assert.equal(item.forgeAffixes.foundation.weight,1);
+  assert.deepEqual(validateSave(structuredClone(s)),s);
+ }
+});

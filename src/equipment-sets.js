@@ -100,8 +100,9 @@ export function equipmentSetStatus(actor,getItem,rulesVersion){
 export function effectiveArmorFatigue(actor,getItem){
  const status=equipmentSetStatus(actor,getItem),set=status?.active?status.bonuses:null;
  const body=getItem(actor.equipment?.armor)?.fatigue??0,head=getItem(actor.equipment?.helmet)?.fatigue??0;
- // Match named-gear fatigue rounding. Never produce negative loads.
- return {body:set?Math.max(0,Math.round(body*(100-set.bodyFatiguePct)/100)):body,head:set?Math.max(0,Math.round(head*(100-set.headFatiguePct)/100)):head};
+ // Set discounts preserve modern negative named loads without multiplying their credit.
+ const load=(value,pct)=>value<0?value:Math.max(0,Math.round(value*(100-pct)/100));
+ return {body:set?load(body,set.bodyFatiguePct):body,head:set?load(head,set.headFatiguePct):head};
 }
 export function effectiveAttachmentFatigue(actor,getItem){
  const status=equipmentSetStatus(actor,getItem);

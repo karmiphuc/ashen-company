@@ -23,7 +23,7 @@ function currentAffixes(actor,getItem) {
     if(slot==='shield'&&!shieldUsable)continue;
     const id=equipment[slot];
     // Legacy and ordinary gear cannot grant affixes; avoid resolving their rolls.
-    if(typeof id!=='string'||!id.startsWith('famed5:')&&!id.startsWith('famed7:')&&!id.startsWith('forge2:')&&!id.startsWith('forge3:')&&!id.startsWith('forge4:'))continue;
+    if(typeof id!=='string'||!id.startsWith('famed5:')&&!id.startsWith('famed7:')&&!id.startsWith('famed8:')&&!id.startsWith('forge2:')&&!id.startsWith('forge3:')&&!id.startsWith('forge4:')&&!id.startsWith('forge5:'))continue;
     const item=getItem(id);if(!item)continue;
     for(const perk of item.grantedPerks??[])summary.perks.add(perk);
     for(const [key,value]of Object.entries(item.perkBoosts??{}))summary.boosts[key]=PREFIX_EFFECTS[key]?Math.max(summary.boosts[key]??0,value):(summary.boosts[key]??0)+value;

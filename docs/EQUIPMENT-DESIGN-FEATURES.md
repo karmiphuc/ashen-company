@@ -167,3 +167,5 @@ Battles saved under set rules 1–7 retain their original memberships and bonuse
 until they finish, including the former broad Southern family. New battles use
 version-8 rules, which add the exact Ritual Bone completion to the curated
 sets. Stored gear condition remains unchanged.
+
+Named body armor and helmets now guarantee a fatigue bonus between −11 and −1. If the old weight floor would give zero relief, the protection bonus doubles and fatigue decreases by one; zero-load gear can become −1. This relief transfers through the legendary blacksmith. See [the formula and compatibility rules](NAMED-ROLLS.md#guaranteed-fatigue-relief).

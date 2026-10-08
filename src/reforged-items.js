@@ -65,7 +65,7 @@ export function encodeForgeItem(baseId,profile,catalog){
 const cache=new Map();
 export function resolveForgeItem(id,catalog){
  if(cache.has(id))return cache.get(id);
- if(typeof id==='string'&&id.startsWith('forge4:'))return resolveBoundedForgeItem(id,catalog);
+ if(typeof id==='string'&&/^forge[45]:/.test(id))return resolveBoundedForgeItem(id,catalog);
  if(typeof id!=='string'||id.length>384)return undefined;
  const match=/^(forge1|forge2|forge3):([a-z0-9-]{1,40}):([0-9a-z.]+)$/.exec(id);if(!match)return undefined;
  const definition=catalog(match[2]),parts=match[3].split('.');if(!definition||!isForgeSlot(definition.slot)||parts.length!==(match[1]==='forge1'?21:match[1]==='forge2'?30:FORGE_KEYS.length))return undefined;
@@ -77,7 +77,7 @@ export function resolveForgeItem(id,catalog){
 export function applyForgeProfile(definition,p,id,affixes=null){
  const b=forgeBaseline(definition),item={...b,id,baseId:definition.id,rarity:'famed',forgeProfile:Object.freeze({...p}),forgeVersion:1,name:`${definition.name} — Reforged`},capped=[];
  const cap=(key,value,min,max)=>{const actual=Math.min(max,Math.max(min,value));if(actual!==value)capped.push(`${key} capped at ${actual}`);return actual;};
- item.fatigue=cap('Fatigue load',(b.fatigue??0)-(p.weight??0),0,80);
+ item.fatigue=cap('Fatigue load',(b.fatigue??0)-(p.weight??0),id.startsWith('forge5:')&&['armor','helmet'].includes(b.slot)?-11:0,80);
  item.fatigueOnSkillUse=(b.fatigueOnSkillUse??0)-(p.skillFatigue??0);
  if(['armor','helmet'].includes(b.slot)){
   item.armor=cap('Protection',Math.floor(b.armor*(1+(p.armorPct??0)/100))+(p.armorFlat??0),0,b.slot==='armor'?650:500);
@@ -103,7 +103,7 @@ export function applyForgeProfile(definition,p,id,affixes=null){
  item.forgeWarnings=Object.freeze(capped);item.signatureDescription='Accumulated workmanship from sacrificed named gear. The original design and skills remain.';
  item.description=`${definition.description} Reforged by Odran, the Last Ember. ${capped.join('; ')}`;
  if(affixes){
-  item.forgeVersion=4;item.forgeAffixes=freezeForgeAffixes(affixes);
+  item.forgeVersion=id.startsWith('forge5:')?5:4;item.forgeAffixes=freezeForgeAffixes(affixes);
   if(!affixes.locked){
    const prefixes=affixes.prefixes.map(a=>forgeAffixName('prefix',a)),suffixes=affixes.suffixes.map(a=>forgeAffixName('suffix',a));
    item.name=`${prefixes.join(' ')} ${definition.name} ${suffixes.join(' & ')} — Reforged`.trim();
@@ -167,10 +167,12 @@ function parseSparseProfile(raw){
  const p={};for(const part of raw.split('.')){const match=/^([0-9a-z]+)-([0-9a-z]+)$/.exec(part);if(!match)return null;const key=FORGE_KEYS[parseInt(match[1],36)],n=parseInt(match[2],36);if(!key||Object.hasOwn(p,key)||!Number.isSafeInteger(n)||n<=0)return null;p[key]=n;}
  return sparseProfile(p)===raw?p:null;
 }
-export function encodeBoundedForgeItem(baseId,a,catalog){
+export function encodeBoundedForgeItem(baseId,a,catalog,version){
+ version??=['armor','helmet'].includes(catalog(baseId)?.slot)?5:4;
+ if(![4,5].includes(version))throw new TypeError('Invalid bounded forge version.');
  const base=catalog(baseId);if(!base||!isForgeSlot(base.slot)||!validForgeAffixes(a,base.slot))throw new TypeError('Invalid bounded affix package.');
  const record=parts=>[...parts].sort((a,b)=>a.id.localeCompare(b.id)).map(p=>`${p.id},${sparseProfile(p.profile)}`).join(';')||'0';
- const id=`forge4:${baseId}:${a.locked?'l':'n'}:${sparseProfile(a.foundation)}:${record(a.prefixes)}:${record(a.suffixes)}`;
+ const id=`forge${version}:${baseId}:${a.locked?'l':'n'}:${sparseProfile(a.foundation)}:${record(a.prefixes)}:${record(a.suffixes)}`;
  if(id.length>1536||!Object.keys(flattenForgeAffixes(a)).length)throw new TypeError('Invalid bounded affix identity.');return id;
 }
 function resolveBoundedForgeItem(id,catalog){
@@ -179,7 +181,7 @@ function resolveBoundedForgeItem(id,catalog){
  const definition=catalog(parts[1]);if(!definition||!isForgeSlot(definition.slot))return undefined;
  const parseRecords=raw=>raw==='0'?[]:raw.split(';').map(raw=>{const [id,p,...extra]=raw.split(',');const profile=p&&parseSparseProfile(p);return !extra.length&&profile?{id,profile}:null;});
  const a={locked:parts[2]==='l',foundation:parseSparseProfile(parts[3]),prefixes:parseRecords(parts[4]),suffixes:parseRecords(parts[5])};
- try{if(!a.foundation||a.prefixes.some(p=>!p)||a.suffixes.some(p=>!p)||encodeBoundedForgeItem(definition.id,a,catalog)!==id)return undefined;}catch{return undefined;}
+ try{if(!a.foundation||a.prefixes.some(p=>!p)||a.suffixes.some(p=>!p)||encodeBoundedForgeItem(definition.id,a,catalog,Number(parts[0].slice(5)))!==id)return undefined;}catch{return undefined;}
  const item=applyForgeProfile(definition,flattenForgeAffixes(a),id,a);if(cache.size>=512)cache.delete(cache.keys().next().value);cache.set(id,item);return item;
 }
 export function forgeAffixOptions(source,recipient,item){

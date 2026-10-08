@@ -14,9 +14,13 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
   if(original.id==='bb-fangshire')item.statBonuses=original.statBonuses;
   const add=(key,label,value)=>{mods.push(key);bonuses.push(Object.freeze({label,value}));};
   if(['armor','helmet'].includes(item.slot)){
-    const armor=item.armor,fatigue=item.fatigue??0,pct=roll(110,125),relief=item.slot==='armor'?roll(3,9):roll(1,4);
-    profile.armorPct=pct-100;item.armor=Math.floor(armor*pct/100);item.fatigue=Math.max(Math.min(fatigue,item.slot==='armor'?8:4),fatigue-relief);
-    add('protection','Protection',`+${item.armor-armor} (${pct-100}%)`);add('weight','Fatigue cost',`-${fatigue-item.fatigue}`);
+    const armor=item.armor,fatigue=item.fatigue??0,pct=roll(110,125),relief=item.slot==='armor'?roll(3,rulesVersion>=8?11:9):roll(1,4);
+    const legacyLoad=Math.max(Math.min(fatigue,item.slot==='armor'?8:4),fatigue-relief);
+    const compensated=rulesVersion>=8&&legacyLoad===fatigue;
+    profile.armorPct=(pct-100)*(compensated?2:1);
+    item.armor=Math.floor(armor*(100+profile.armorPct)/100);
+    item.fatigue=rulesVersion>=8?fatigue-Math.min(11,Math.max(1,fatigue-legacyLoad)):legacyLoad;
+    add('protection','Protection',`+${item.armor-armor} (${profile.armorPct}%)`);add('weight','Fatigue cost',`-${fatigue-item.fatigue}`);
   }else{
     const pool=[];
     if(item.slot==='shield'){
