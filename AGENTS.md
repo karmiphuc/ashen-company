@@ -18,3 +18,27 @@ production artifact, and checks the live commit/cache. Wait for it before
 reporting deployment. Docs/test merges get distinct build numbers too.
 Release versions are separate from save and combat rule versions; do not change
 save schemas merely to update the displayed release number.
+
+# Torso armor artwork
+
+Preserve the Battle Brothers worn torso perspective: the wearer turns slightly
+toward their own left (the viewer's right). This is a shallow three-quarter
+turn, not a square, symmetrical front view or a pronounced side view. Ground
+the exact angle in the original worn armor layer being replaced.
+
+Keep the reference's unequal shoulder widths, sleeve projection, offset collar
+opening, chest-plane angles and plate overlaps. Carry that perspective through
+new plates, pauldrons, reinforcement, recoloring and generated artwork. A clean
+material finish must not flatten the torso into a front-facing inventory display.
+
+Treat inventory icons and worn torso layers as distinct compositions. Adapt the
+approved design to the existing worn silhouette and perspective; do not squeeze
+or stretch a full-length icon into the short, wide torso layer. Preserve neck and
+shoulder placement, portrait anchors, transparency, layering and character scale.
+
+Before accepting new armor art, compare it with the original worn layer and
+inspect it on an assembled brother at inventory and combat sizes, including
+helmet, weapon and shield overlap. Check that the slight turn remains visible
+and that the shoulders and collar fit. Include these perspective requirements
+and the original worn layer in image-generation references/prompts. Reject a
+symmetrical front-facing torso even if its standalone finish looks cleaner.
