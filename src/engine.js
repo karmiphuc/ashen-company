@@ -1,4 +1,4 @@
-import {previousShieldDefinitions,migrateShieldBalance,rebalanceShieldCondition} from './shield-balance.js';
+import {PREVIOUS_SHIELDS,previousShieldDefinitions,migrateShieldBalance,rebalanceShieldCondition} from './shield-balance.js';
 import { EQUIPMENT_SET_RULES_VERSION, isEquipmentSetRulesVersion, effectiveArmorFatigue, effectiveAttachmentFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
 import { equipmentPerk, equipmentBoost, equipmentRangedReach, rollAttachment } from './item-affixes.js';
 import { recordQuestCompletion } from './quest-completion.js';
@@ -259,6 +259,7 @@ function resolveItem(id) {
     bonuses.push({ label: signature.label, value: `+${signature.value}` });
   } else if (original.slot === 'shield') {
     item.defense = (original.defense ?? 0) + 2 + roll(0) % 4;
+    if(Object.hasOwn(PREVIOUS_SHIELDS,original.id))item.rangedDefense=(original.rangedDefense??original.defense??0)+2+roll(0)%4;
     item.fatigue = Math.max(0, (original.fatigue ?? 0) - (1 + roll(4) % 3));
     bonuses.push({ label: 'Melee and ranged defense', value: `+${item.defense - original.defense}` });
     if (item.fatigue < original.fatigue) bonuses.push({ label: 'Fatigue cost', value: `-${original.fatigue - item.fatigue}` });

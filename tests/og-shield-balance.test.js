@@ -73,3 +73,12 @@ test('persistent Ashen force damage adopts OG durability without regenerating tr
  assert.deepEqual(updated.force.troops,troops);assert.equal(updated.enemies.find(u=>u.troopIndex===enemy.troopIndex).savedDamage.shieldDurability,Math.floor(shieldMaximum(enemy.shield)/2));
 });
 
+
+test('unversioned named campaign shields still apply their labeled bonus to both defenses',()=>{
+ for(const base of Object.keys(PREVIOUS_SHIELDS))for(const seed of [0,73,0xffffffff]){
+  const item=getItem(`famed:${base}:${seed}`),plain=getItem(base),bonus=2+(seed&15)%4;
+  assert.equal(item.defense-plain.defense,bonus);assert.equal(item.rangedDefense-plain.rangedDefense,bonus);
+  const old=getItem(`famed:${previousShieldId(base)}:${seed}`),oldPlain=getItem(previousShieldId(base));
+  assert.equal((old.rangedDefense??old.defense)-oldPlain.defense,bonus);
+ }
+});
