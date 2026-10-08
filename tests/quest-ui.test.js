@@ -80,7 +80,7 @@ test('allied militia are identified in battle and separated from company casualt
   assert.match(owned, /Mara Voss/);
   assert.doesNotMatch(owned, /Militia Captain/);
   assert.match(allied, /Militia Captain/);
-  assert.match(allied, /Fell in battle · Ally/);
+  assert.match(allied, /† Fallen/);
   assert.match(results, /All brothers survived/);
   assert.doesNotMatch(results, /Militia Captain.*experience/);
 });
