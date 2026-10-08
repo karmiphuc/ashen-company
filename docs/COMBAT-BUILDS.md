@@ -68,3 +68,28 @@ attempts provoke existing opportunity strikes. This adds no guaranteed root,
 free stun or escape cancellation: casualties and existing combat effects decide
 whether the enemy gets away. Targets are reevaluated every action, so recovery,
 death, escape and blocked paths do not leave stale pursuit orders.
+
+## Reach Support
+
+Auto selects Reach Support for an equipped melee weapon with more than one hex
+of reach, before the mounted Breaker rule; explicit roles and ranged-loadout
+rules retain priority. The role is also selectable in Battle behavior. Existing
+active battles retain their saved role until the next battle.
+
+Reach Support attacks from a useful current position instead of repositioning
+for marginal cover. When it advances, it prefers a position immediately behind
+an intact shield carrier, then another melee teammate, provided the screen is
+closer to the target and its route costs no more than two extra movement-cost
+units. Without a screen it approaches only to weapon reach, avoiding every
+opponent's adjacent hexes along the route. Occupancy, terrain and enemy movement
+are reevaluated each action; rough terrain can select an alternate route rather
+than repeatedly attempting an unaffordable attack position. Steps entering its
+attack range reserve AP and fatigue for an actual basic attack.
+
+An adjacent opponent causes fighting rather than disengagement. An affordable
+one-hex melee reserve can be drawn if the swap and an attack fit the budget;
+the reach weapon returns once unengaged. Without a usable backup it keeps fighting
+with the current weapon. It never uses mounted Charge, and does not Hook a
+nonadjacent enemy into its own adjacent hex. Formation commands, friendly-fire
+safety and wounded-brother preservation still apply. This is a positioning role,
+not an extra range, damage, armor or free-movement bonus.
