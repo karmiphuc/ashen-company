@@ -3641,6 +3641,8 @@ function mountedFlankerPursuit(state, actor, enemies) {
   }
   // Once engaged, retain the melee set and let normal adjacent attacks resolve.
   if (adjacent.length || !path.length) return null;
+  const charge=horseChargePlan(battle,actor,target,active);
+  if (charge) {performHorseCharge(state,actor,target,active,charge);return result(true,battle.lastEvent.message);}
   const moved=moveToRangedPosition(state,actor,{point:path[0],message:`${actor.name} rides to intercept ${target.name}.`},'pursuit');
   if (moved) actor.aiTargetId=target.id;
   return moved;
@@ -4527,7 +4529,7 @@ const SWING_DIRECTIONS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
 function horseChargePlan(battle, actor, target, weapon) {
   const mount = getItem(actor.equipment.mount);
   if (battle.mountSkillsVersion !== 1 || !/horse/.test(mount?.visual ?? '') || weapon.ranged
-    || ['ranged','flanker','reach-support'].includes(actor.tacticalRole) || actor.ap < 6
+    || ['ranged','reach-support'].includes(actor.tacticalRole) || actor.ap < 6
     || battle.units.some(unit => unit.alive && unit.side !== actor.side && hexDistance(actor, unit) === 1)) return null;
   const distance = hexDistance(actor, target);
   if (distance < 3 || distance > 4) return null;
@@ -4545,6 +4547,13 @@ function horseChargePlan(battle, actor, target, weapon) {
     path.push(point); from = point;
   }
   if (actor.fatigue + fatigueCost > tacticalFatigueLimit(battle,actor)) return null;
+  if (actor.tacticalRole==='flanker') {
+    const others=battle.units.filter(unit=>unit.alive && !unit.escaped && unit.side!==actor.side && unit.id!==target.id);
+    if (others.some(unit=>hexDistance(unit,target)<=2)
+      || path.some(point=>others.some(unit=>hexDistance(point,unit)<=1))
+      || path.some(point=>battle.units.some(unit=>unit.alive && !unit.escaped && unit.side!==actor.side
+        && unit.spearwallActive && hexDistance(point,unit)<=1))) return null;
+  }
   if (actor.tacticalRole==='breaker') {
     const threats=battle.units.filter(u=>u.alive && u.side!==actor.side && u.id!==target.id);
     if (threats.filter(u=>hexDistance(path.at(-1),u)<=1).length>2
@@ -5280,8 +5289,7 @@ function advanceBattleV2(state) {
     const aimed = isBow(weapon) ? predictAttack(battle, actor, target, weapon, 15) : null;
     const charge = !(role==='breaker' && battle.round<5 && distance>nearest)
       && !actor.disarmedTurns && ['offense', 'focus'].includes(companyTactic) && horseChargePlan(battle, actor, target, weapon);
-    if (charge && (!wingDuty || flankerGoal(battle,actor,target,false)(charge.path.at(-1))
-      && !enemies.some(e=>e.id!==target.id && hexDistance(charge.path.at(-1),e)<=1))) {
+    if (charge) {
       const predicted = predictAttack(battle, { ...actor, ...charge.path.at(-1) }, target, weapon, COMBAT_SKILLS.charge);
       candidates.push({ id: 'charge', type: 'charge', targetId: target.id, target, plan: charge, apCost: 6,
         fatigueCost: charge.fatigueCost, ...predicted, preventedDamage: injuryStat(target,'meleeSkill') * .25,
