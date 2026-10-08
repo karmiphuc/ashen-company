@@ -55,3 +55,15 @@ test('modern armor credit is bounded through subsequent forging without changing
  assert.equal(item.fatigue,-11);assert.ok(item.forgeWarnings.some(w=>w.includes('Fatigue load capped at -11')));
  const restored=g.getItem(encodeBoundedForgeItem('bb-noble-gear',extractForgeAffixes(item,catalog),catalog));assert.equal(restored.fatigue,-11);
 });
+
+test('an engaged expanded-affix encounter keeps its version-7 armor while new encounters use version 8',()=>{
+ const state=g.createGame(1),site=g.getCampSites(state).find(c=>c.id==='wild-camp-19');
+ const frozen={cycle:site.generation,champion:0,famed:0,mount:0,championGearVersion:1,namedAffixVersion:2};
+ state.discoveryRolls[site.id]=frozen;
+ const armorIds=()=>g.getCampSites(state).find(c=>c.id===site.id).enemies.flatMap(e=>[e.armor,e.helmet]).filter(id=>id.startsWith('famed'));
+ const prior=armorIds();assert.ok(prior.length);assert.ok(prior.every(id=>id.startsWith('famed7:')));
+ const saved=g.validateSave(structuredClone(state));assert.deepEqual(saved.discoveryRolls[site.id],frozen);
+ state.discoveryRolls[site.id]={...frozen,namedAffixVersion:3};
+ assert.deepEqual(armorIds(),prior.map(id=>id.replace('famed7:','famed8:')));
+ assert.deepEqual(g.validateSave(structuredClone(state)),state);
+});
