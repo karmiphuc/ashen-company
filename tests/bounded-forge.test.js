@@ -37,6 +37,18 @@ test('every catalog named package round-trips without changing its complete bonu
  assert.ok(checked>3000);
 });
 
+test('source named shields retain durability suffixes above their unrolled baseline when reforged',()=>{
+ const base='bb-named-bandit-heater-shield';
+ for(const version of [5,7]){
+  const original=game.getItem(game.createFamedItemId(base,73,version));
+  const affixes=extractForgeAffixes(original,catalog,{shieldMaximum:game.shieldMaximum,shieldDamage:game.shieldImpactDamage});
+  assert.equal(affixes.foundation.shieldDurability??0,0);
+  assert.equal(affixes.suffixes[0].profile.shieldDurability,10);
+  const restored=game.getItem(encodeBoundedForgeItem(base,affixes,catalog));
+  assert.equal(restored.durability,original.durability);
+ }
+});
+
 test('bounded identities reject extra slots, duplicate families and forged bundles of unrelated effects',()=>{
  const valid=packageOf({prefixes:[prefix('bloodrush','berserkAp',1),prefix('unyoked','actionPoints',1)],suffixes:[suffix('precision','accuracy',4),{id:'slaying',profile:{damageLow:5,damageHigh:5}}]});
  const id=encodeBoundedForgeItem('arming-sword',valid,catalog);assert.ok(game.getItem(id));

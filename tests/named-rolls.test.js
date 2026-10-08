@@ -95,7 +95,7 @@ test('increased throwing capacity survives attacks, stowing, weapon swaps and re
 });
 
 test('modern named armor market finds retain their two source-based rolls through purchase, damage and buyback',()=>{
- let state,row;for(let seed=1;seed<100&&!row;seed++){state=createGame(seed);for(const town of SETTLEMENTS){state.position={x:town.x,y:town.y};row=getMarket(state).equipment.find(r=>r.stock>0&&getItem(r.itemId)?.rollVersion===7);if(row)break;}}
+ let state,row;for(let seed=1;seed<100&&!row;seed++){state=createGame(seed);for(const town of SETTLEMENTS){state.position={x:town.x,y:town.y};row=getMarket(state).equipment.find(r=>r.stock>0&&getItem(r.itemId)?.rollVersion===7&&getItem(r.itemId)?.sourceArmor!==undefined);if(row)break;}}
  assert.ok(row);const item=getItem(row.itemId);assert.equal(item.rarity,'named');assert.ok(item.sourceArmor!==undefined);state.gold=50000;assert.equal(buyItem(state,item.id).ok,true);assert.equal(getMarket(state).equipment.find(r=>r.itemId===item.id).stock,0);const index=state.inventory.indexOf(item.id);state.inventoryCondition[index]-=5;const damaged=state.inventoryCondition[index];assert.deepEqual(validateSave(structuredClone(state)),state);assert.equal(sellItem(state,item.id).ok,true);assert.equal(getMarket(state).equipment.find(r=>r.itemId===item.id).stock,1);assert.equal(buyItem(state,item.id).ok,true);assert.equal(state.inventoryCondition[state.inventory.indexOf(item.id)],damaged);assert.deepEqual(validateSave(structuredClone(state)),state);
 });
 

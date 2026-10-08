@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { DLC_ITEMS } from '../src/dlc-items.js';
+import { DLC_SHIELDS } from '../src/dlc-shields.js';
 import { DIREWOLF_HELMET_ART } from '../src/direwolf-helmets.js';
 import { DLC_ART } from '../src/dlc-art.js';
 import { ITEMS, createGame, equipItem, unequipItem, buyItem, getItem, getCompanyStats, getMarket, validateSave } from '../src/engine.js';
@@ -104,9 +105,9 @@ test('a campaign trading in every settlement stays exportable with the expanded 
 
 test('collection browser lists every design, filters expansions, escapes text, and exposes safe inspection actions', async () => {
   const { equipmentCatalogHTML } = await import('../src/equipment-catalog.js');
-  const all=equipmentCatalogHTML();assert.equal((all.match(/data-item-source="catalog"/g)||[]).length,264);
+  const all=equipmentCatalogHTML();assert.equal((all.match(/data-item-source="catalog"/g)||[]).length,264+DLC_SHIELDS.length);
   const south=equipmentCatalogHTML('blazing-deserts');
-  assert.equal((south.match(/data-item-source="catalog"/g)||[]).length,DLC_ITEMS.filter(item=>item.collection==='blazing-deserts').length);
+  assert.equal((south.match(/data-item-source="catalog"/g)||[]).length,[...DLC_ITEMS,...DLC_SHIELDS].filter(item=>item.collection==='blazing-deserts').length);
   assert.ok(!south.includes('data-inspect="bb-heavy-iron-armor"'));
   assert.equal(equipmentCatalogHTML('<script>'),all);
   assert.ok(all.includes('data-catalog-filter'));

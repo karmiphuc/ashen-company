@@ -23,7 +23,7 @@ test('every weapon including famed copies exposes its family signatures and corr
 });
 
 test('every catalog item has useful details without changing the item', () => {
-  assert.equal(ITEMS.length, 462);
+  assert.equal(ITEMS.length, 488);
   for (const entry of ITEMS) {
     const before = structuredClone(entry);
     const details = getItemDetails(entry);

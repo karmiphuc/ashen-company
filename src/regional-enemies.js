@@ -1,6 +1,7 @@
 import { regionAt } from './geography.js';
 import { REGIONAL_ENEMY_FACTIONS } from './enemy-rosters.js';
 import { DLC_ITEMS } from './dlc-items.js';
+import { DLC_SHIELDS } from './dlc-shields.js';
 import { armoryTheme, matchesArmoryTheme } from './armory-themes.js';
 
 const profile = (label, family, names, camps, collections, extra = '') => Object.freeze({label, family, names: Object.freeze(names), camps: Object.freeze(camps), collections: Object.freeze(collections), extra});
@@ -40,7 +41,7 @@ export function worldCampText(x,y,enemyCount,index) {
 // Stable rolls use authored IDs, campaign seed and generation, never the frame clock.
 function hash(value) { let h=2166136261;for(const char of String(value)){h^=char.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0; }
 const pools = new Map();
-export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true,theme=armoryTheme(regionAt(x,y).id)}={}) {
+export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true,shieldDesigns=true,theme=armoryTheme(regionAt(x,y).id)}={}) {
   if(difficulty===0)return {...enemy};
   const result={...enemy,name:enemy.name.replace(/ Champion$/,'')},role=enemyCombatRole(enemy);
   for(const slot of ['armor','helmet']) {
@@ -54,6 +55,17 @@ export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true,t
     if(!pools.has(key))pools.set(key,DLC_ITEMS.filter(item=>item.slot===slot&&item.sourceKind==='ordinary'&&item.armor>=min&&item.armor<=max&&item.fatigue<=fatigueMax&&matchesArmoryTheme(item,theme)));
     const choices=pools.get(key);
     if(choices.length)result[slot]=choices[hash(`${seed}:${index}:${slot}`)%choices.length].id;
+  }
+  // Only existing shield bearers receive imported shields; no new unit types.
+  if(shieldDesigns&&result.shield){
+    const choices=DLC_SHIELDS.filter(item=>item.sourceKind==='ordinary'
+      &&(theme==='ancient'?item.sourceCulture==='ancient':item.sourceCulture!=='ancient'&&(!item.region||item.region===theme))
+      &&item.fatigue<=[0,12,16,20][difficulty]);
+    if(choices.length)result.shield=choices[hash(`${seed}:${index}:shield-design`)%choices.length].id;
+    const trophies=DLC_SHIELDS.filter(item=>item.sourceKind==='named'
+      &&(theme==='ancient'?item.sourceCulture==='ancient':item.sourceCulture!=='ancient'&&(!item.region||item.region===theme)));
+    if(champions&&difficulty===3&&index===0&&hash(`${seed}:shield-trophy`)%8===0&&trophies.length)
+      result.shield=trophies[hash(`${seed}:shield-design`)%trophies.length].id;
   }
   // Reclaimed decorative layers enter regional outfits as real armor attachments.
   if(difficulty>=2&&hash(`${seed}:${index}:reclaimed-attachment`)%5===0){
