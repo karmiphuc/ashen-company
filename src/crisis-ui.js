@@ -4,10 +4,11 @@ import { campaignHour } from './crisis-director.js';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const hoursLeft = (state, until) => Math.max(0, Math.ceil(until - campaignHour(state)));
 
-export function crisisBannerHTML(state) {
+export function crisisBannerHTML(state, compact=false) {
   const crisis = state.ashenWinter;
   if (!crisis || ['dormant', 'scheduled', 'completed'].includes(crisis.phase)) return '';
   const closed = Object.values(crisis.towns).filter(t => ['besieged', 'occupied'].includes(t.status)).length;
+  if(compact){const detail=crisis.phase==='warning'?`${hoursLeft(state,crisis.activationHour)} hours until invasion. Stock food and repair the company.`:`${crisis.fronts.filter(f=>f.defeated).length} / 3 strongholds destroyed; ${closed} settlements closed. Liberate settlements to restore services.`;return `<button class="world-event-chip crisis-chip" data-tab="journal" title="Ashen Winter · ${esc(crisis.phase)}: ${esc(detail)}" aria-label="Ashen Winter · ${esc(crisis.phase)}: ${esc(detail)} Open crisis journal."><span aria-hidden="true">☠</span> Crisis <small>${crisis.phase==='warning'?`${hoursLeft(state,crisis.activationHour)}h`:`${closed} closed`}</small></button>`;}
   return `<section class="crisis-banner" role="status"><strong>Ashen Winter · ${esc(crisis.phase)}</strong><span>${crisis.phase === 'warning'
     ? `${hoursLeft(state, crisis.activationHour)} hours until the invasion. Stock food and repair the company.`
     : `${crisis.fronts.filter(f => f.defeated).length} / 3 strongholds destroyed · ${closed} settlements closed. ${crisis.phase === 'cleanup' ? 'Liberate every remaining settlement.' : 'Defeat the dead to restore services.'}`}</span><button data-tab="journal">Crisis journal</button></section>`;

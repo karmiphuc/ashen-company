@@ -326,3 +326,36 @@ button.primary.is-ready:focus-visible{outline:2px solid #c4ff76;outline-offset:3
 
 .direwolf-helmet-hero>img{width:140px;height:180px}
 .armor-set-link.is-completion{left:2px;top:34px}
+
+/* Map sidebar prioritizes destinations and actions over repeated descriptions. */
+.world-sidebar .location-header{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:8px;text-align:left;grid-row:auto}
+.world-sidebar .settlement-portrait{width:64px;height:64px;margin:0}
+.world-sidebar .location-summary{min-width:0;position:relative;padding-right:22px}
+.world-sidebar .location-summary>.company-hint{position:absolute;right:0;top:0}
+.world-sidebar .location-header h2{font-size:19px;line-height:1.1;margin:3px 0}
+.world-sidebar .location-header .eyebrow{font-size:8px;letter-spacing:.7px}
+.world-sidebar .town-specialty{font-size:10px;line-height:1.3}
+.world-sidebar .sidebar-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.world-sidebar .sidebar-actions>button{min-height:44px;padding:4px 5px;font-size:11px;line-height:1.2}
+.map-action{display:flex;align-items:center;justify-content:center;gap:5px;min-width:0}
+.map-action img{width:22px;height:25px;object-fit:contain;flex-shrink:0}
+.world-sidebar .travel-estimate{grid-column:1/-1;font-size:11px}
+.world-sidebar .destination-label{font-size:10px;margin-bottom:-7px}
+.world-sidebar #destinations{min-width:0;width:100%;font-size:12px;min-height:36px}
+body.world-screen>#time-of-day-indicator{display:none}
+.world-status-row{display:flex;align-items:center;gap:6px;min-height:36px;padding:2px 12px;background:#24251e;border-bottom:1px solid #766541;flex-wrap:wrap}
+.world-status-row>div:empty{display:none}
+.world-time{display:flex;align-items:center;gap:5px;white-space:nowrap;font:11px system-ui;color:#d4e9f5}
+.world-time .company-hint-button{width:22px;height:22px;min-height:22px;font-size:11px}
+.world-status-row .world-event-chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 9px;border:1px solid #897449;background:#3b3222;color:#ecd092;font:12px Georgia;white-space:nowrap}
+.world-event-chip small{font:10px system-ui;color:#b9ad8f}
+.world-status-row .crisis-chip{border-color:#a97857;color:#f0ba81}
+@media(min-width:1450px){.world-sidebar .sidebar-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.world-sidebar .location-header{grid-column:1/-1}.world-sidebar .sidebar-actions{grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr))}.world-status-row{padding-inline:8px}}
+@media(min-width:701px){
+ body.world-screen{display:flex;flex-direction:column;height:100dvh}
+ body.world-screen>.topbar,body.world-screen>.main-nav{flex-shrink:0}
+ body.world-screen #main{display:flex;flex-direction:column;flex:1;min-height:0}
+ body.world-screen .world-status-row{flex-shrink:0}
+ body.world-screen .world-layout{flex:1;min-height:0;height:auto}
+}
