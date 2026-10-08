@@ -3541,6 +3541,18 @@ function chooseBattleWeapon(state, actor, enemies) {
   const active = getItem(actor.equipment.weapon);
   const reserve = getItem(actor.reserveEquipment.weapon);
   const reserveHasAmmo = battleWeaponHasAmmo(state, actor, reserve, 'reserve');
+  if (roleRules(state.battle) && actor.tacticalRole==='reach-support') {
+    const swapCost=hasPerk(actor,'quick-hands') && actor.freeSwapRound!==state.battle.round?0:4;
+    if (!active?.ranged && !reserve?.ranged && reserve) {
+      const backup=nearest===1 && (active?.range??1)>1 && (reserve.range??1)===1;
+      const restore=nearest>=2 && (active?.range??1)===1 && (reserve.range??1)>1;
+      if ((backup && canAfford(state.battle,actor,swapCost+attackApCost(reserve,state.battle,actor),attackFatigueCost(actor,reserve,state.battle)))
+        || restore && actor.ap>=swapCost) {
+        return switchBattleSet(state,actor,`${actor.name} draws ${reserve.name} ${backup?'for close fighting':'to support the line'}.`);
+      }
+    }
+  }
+
   const outOfAmmo = roleRules(state.battle)?!battleWeaponHasAmmo(state,actor,active):active?.throwing ? (actor.throwingAmmo?.active ?? 0) === 0 : state.supplies.ammo === 0;
   if (roleRules(state.battle) && actor.tacticalRole==='flanker' && active?.throwing && !outOfAmmo
     && nearest>1 && ['dagger','qatal'].includes(weaponSkillFamily(reserve))) {
@@ -3730,7 +3742,7 @@ function rangedTerrainModifier(battle, actor, from, target) {
     + (battle.weaponSkillsVersion === 1 && !hasPerk(actor, 'bullseye') ? rangedScreenModifier(battle,from,target) : 0);
 }
 
-function simultaneousTargetPath(battle,actor,target,range,keepRangedSpace,occupied,cache) {
+function simultaneousTargetPath(battle,actor,target,range,keepRangedSpace,occupied,cache,goalTest=null) {
   const stamp=battle.units.filter(u=>u.alive).map(u=>`${u.id}:${u.q},${u.r}`).join('|');
   if(cache.stamp!==stamp){cache.stamp=stamp;cache.paths=new Map();}
   const key=`${actor.id}:${actor.q},${actor.r}:${actor.side}:${hasPerk(actor,'pathfinder')}:${equipmentBoost(actor,'heightRelief',getItem)}:${keepRangedSpace}`;
@@ -3752,18 +3764,18 @@ function simultaneousTargetPath(battle,actor,target,range,keepRangedSpace,occupi
   let goal=null;
   for(const p of points){
     if(goal&&p.cost>goal.cost)break;
-    if(hexDistance(p,target)>range||keepRangedSpace&&nearestEnemyDistance(battle,actor,p)<2)continue;
+    if(goalTest&&!goalTest(p)||hexDistance(p,target)>range||keepRangedSpace&&nearestEnemyDistance(battle,actor,p)<2)continue;
     const aim=keepRangedSpace?rangedTerrainModifier(battle,actor,p,target):heightHitModifier(battle.field,p,target);
     const quality=aim+(tileAt(battle.field,p.q,p.r).terrain==='trees'?5:0);
     if(!goal||quality>goal.quality)goal={path:p.path,cost:p.cost,quality};
   }
-  return goal?.path??(keepRangedSpace&&hexDistance(actor,target)<=range?[]:null);
+  return goal?.path??(keepRangedSpace&&hexDistance(actor,target)<=range&&(!goalTest||goalTest(actor))?[]:null);
 }
 
 function pathToTarget(battle, actor, target, range, keepRangedSpace = false, flank = false, flankGoal = null) {
   const occupied = new Set(battle.units.filter(unit => unit.alive && unit.id !== actor.id).map(unit => `${unit.q},${unit.r}`));
   const cache=simultaneousActionCaches.get(battle);
-  if(cache&&!flank&&!flankGoal)return simultaneousTargetPath(battle,actor,target,range,keepRangedSpace,occupied,cache);
+  if(cache&&!flank)return simultaneousTargetPath(battle,actor,target,range,keepRangedSpace,occupied,cache,flankGoal);
   const flankThreats = flank ? battle.units.filter(unit=>unit.alive && unit.side!==actor.side && unit.id!==target.id) : [];
   const first = { q: actor.q, r: actor.r, path: [], cost: 0 };
   const queue = battle.simultaneous ? new SimultaneousPathQueue(first) : [first];
@@ -3793,6 +3805,37 @@ function pathToTarget(battle, actor, target, range, keepRangedSpace = false, fla
     }
   }
   return goal?.path ?? (keepRangedSpace && hexDistance(actor, target) <= range && (!flankGoal || flankGoal(actor)) ? [] : null);
+}
+
+// Safe melee reach uses the same occupancy/terrain search as other roles.
+// A useful current position is always stable; cover only influences an advance.
+function reachSupportPath(battle, actor, target, weapon) {
+  const range=effectiveWeaponRange(actor,weapon);
+  if (range<=1 || weapon.ranged || enemiesAdjacent(battle,actor))
+    return pathToTarget(battle,actor,target,range,weapon.ranged===true);
+  let direct=pathToTarget(battle,actor,target,range,true);
+  if (!direct?.length) return direct;
+  const enemies=battle.units.filter(unit=>unit.alive && !unit.escaped && unit.side!==actor.side);
+  const canAdvance=path=>!path?.length || !enemies.some(enemy=>hexDistance(path[0],enemy)<=range)
+    || canAfford(battle,actor,battleMoveApCost(battle,actor,actor,path[0])+attackApCost(weapon,battle,actor),
+      movementFatigue(actor,battleMovementCost(battle,actor,actor,path[0]))+attackFatigueCost(actor,weapon,battle));
+  if (!canAdvance(direct)) {
+    // Wait after spending AP; at a fresh turn find a usable alternate route.
+    const cheapestStep=Math.min(...hexNeighbors(battle.field,actor).map(point=>battleMoveApCost(battle,actor,actor,point)));
+    if (actor.ap<attackApCost(weapon,battle,actor)+cheapestStep) return null;
+    direct=pathToTarget(battle,actor,target,range,true,false,point=>canAdvance(point.path));
+    if (!direct) return null;
+  }
+  const allies=battle.units.filter(unit=>unit.alive && !unit.escaped && unit.side===actor.side && unit.id!==actor.id
+    && hexDistance(unit,target)<=range && !getItem(unit.equipment.weapon)?.ranged);
+  const behind=(point,screen)=>hexDistance(point,screen)===1 && hexDistance(screen,target)<hexDistance(point,target);
+  const shields=allies.filter(unit=>unit.equipment.shield && unit.shieldDurability>0);
+  for (const screens of [shields,allies]) {
+    if (!screens.length) continue;
+    const sheltered=pathToTarget(battle,actor,target,range,true,false,point=>canAdvance(point.path) && screens.some(screen=>behind(point,screen)));
+    if (sheltered && pathCost(battle,actor,actor,sheltered)<=pathCost(battle,actor,actor,direct)+2) return sheltered;
+  }
+  return direct;
 }
 
 // Axial r + q/2 is the lateral axis of the battlefield. Flankers work
@@ -4483,7 +4526,7 @@ const SWING_DIRECTIONS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
 function horseChargePlan(battle, actor, target, weapon) {
   const mount = getItem(actor.equipment.mount);
   if (battle.mountSkillsVersion !== 1 || !/horse/.test(mount?.visual ?? '') || weapon.ranged
-    || ['ranged','flanker'].includes(actor.tacticalRole) || actor.ap < 6
+    || ['ranged','flanker','reach-support'].includes(actor.tacticalRole) || actor.ap < 6
     || battle.units.some(unit => unit.alive && unit.side !== actor.side && hexDistance(actor, unit) === 1)) return null;
   const distance = hexDistance(actor, target);
   if (distance < 3 || distance > 4) return null;
@@ -5253,6 +5296,10 @@ function advanceBattleV2(state) {
         bonus: 18 + (isBow(weapon) && actor.ap >= attackCost * 2 && (!weapon.reloadTurns) && (!actor.ally && actor.side === 'company' ? state.supplies.ammo >= 2 : true) ? normal.expectedHealthDamage * .75 : 0) });
     }
     if (skillFamily && !actor.disarmedTurns && distance <= range && actor.reload === 0 && canUseRangedTarget(battle,actor,weapon,target)) for(const option of (battle.weaponCompletionVersion===1?completedSkillOptions(actor,target,weapon,battle):[skillOptionForTarget(skillFamily, actor, target, weapon, battle)])) {
+      if (role==='reach-support' && option?.id==='hook' && nearest>1) {
+        const pulled=hookDestination(battle,actor,target);
+        if (pulled && hexDistance(actor,pulled)===1) continue;
+      }
       const fatigueCost = option && attackSkillFatigue(actor, weapon, option);
       if (option && actor.ap >= attackApCost(weapon, battle, actor, option) && actor.fatigue + fatigueCost <= availableFatigue(actor)) {
         const predicted = predictAttack(battle, actor, target, weapon, option);
@@ -5321,7 +5368,8 @@ function advanceBattleV2(state) {
   const targetPaths = enemies.map(target => {
     const priority = rangedAI ? tacticalTargetPriority(role,target,getItem(target.equipment.weapon),hexDistance(actor,target),nearest,battle.round) : 0;
     const flanking = wingDuty && nearest>1;
-    return {target,priority,path:pathToTarget(battle,actor,target,range,weapon.ranged===true,flanking,wingDuty&&nearest>1?flankerGoal(battle,actor,target,weapon.ranged===true):null)};
+    return {target,priority,path:role==='reach-support'?reachSupportPath(battle,actor,target,weapon)
+      :pathToTarget(battle,actor,target,range,weapon.ranged===true,flanking,wingDuty&&nearest>1?flankerGoal(battle,actor,target,weapon.ranged===true):null)};
   }).filter(entry=>roleRules(battle)?entry.path!==null:entry.path?.length).sort((a,b)=>(['flanker','skirmisher'].includes(role) ? b.priority-a.priority : 0)
     || pathCost(battle,actor,actor,a.path)-pathCost(battle,actor,actor,b.path)
     || b.priority-a.priority || a.target.id.localeCompare(b.target.id));
@@ -5338,7 +5386,7 @@ function advanceBattleV2(state) {
   const preferred=arrived&&arrived.priority>=(targetPaths[0]?.priority??0)?arrived:targetPaths[0];
   const specialFlank = nearest>1 && preferred && roleRules(battle)&&role==='flanker' ? preferred : null;
   const pursuit = (companyTactic === 'focus' && targetPaths.find(entry=>entry.target.id===battle.focusTargetId))
-    || breakthrough || specialFlank || (['skirmisher','breaker'].includes(role) ? targetPaths[0] : targetPaths.find(entry=>entry.target.id===actor.aiTargetId)) || targetPaths[0];
+    || breakthrough || specialFlank || (['skirmisher','breaker','reach-support'].includes(role) ? targetPaths[0] : targetPaths.find(entry=>entry.target.id===actor.aiTargetId)) || targetPaths[0];
   const breakingThrough=breakthrough && pursuit===breakthrough;
   const formationLocked = companyTactic === 'advance-formation' && (actor.formationMovedRound === battle.round
     || !wingDuty && (sideInMeleeContact(battle) || battle.formationAdvance?.completedRound >= battle.round));
@@ -5360,6 +5408,10 @@ function advanceBattleV2(state) {
         &&!enemies.some(enemy=>hexDistance(point,enemy)<=range))continue;
     }
     const apCost = battleMoveApCost(battle, actor, actor, point);
+    if (role==='reach-support' && !weapon.ranged && range>1
+      && enemies.some(enemy=>hexDistance(point,enemy)<=range)
+      && !canAfford(battle,actor,apCost+attackCost,
+        movementFatigue(actor,battleMovementCost(battle,actor,actor,point))+basicFatigue)) continue;
     const alliesOnTarget = battle.units.filter(unit => unit.alive && unit.side === actor.side && unit.id !== actor.id
       && hexDistance(unit, entry.target) <= 1).length;
     const adjacentThreats = enemies.filter(enemy => hexDistance(point, enemy) <= 1).length;

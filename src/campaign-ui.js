@@ -12,9 +12,10 @@ const itemIcon = (entry, alt=entry?.name) => `<img class="equipment-icon${entry?
 export function companyHintHTML(id,label,detail){const key=`company-hint-${id}`;return `<span class="company-hint"><button type="button" class="company-hint-button" data-company-hint aria-label="About ${esc(label)}" aria-describedby="${esc(key)}" aria-expanded="false">?</button><span class="company-hint-tip" id="${esc(key)}" role="tooltip" hidden><strong>${esc(label)}</strong><span>${esc(detail)}</span></span></span>`;}
 function talentHTML(person,key){const stars=person.talents?.[key]??0;return stars?` <span class="talent-stars" role="img" aria-label="${stars}-star talent" title="${stars===3?'Always +5 at level-up':`+${stars} to level-up rolls (maximum +5)`}">${'★'.repeat(stars)}</span>`:'';}
 export const statLabels = {maxHp:'Hitpoints',maxFatigue:'Maximum Fatigue',resolve:'Resolve',initiative:'Initiative',meleeSkill:'Melee Skill',rangedSkill:'Ranged Skill',meleeDefense:'Melee Defense',rangedDefense:'Ranged Defense'};
-const combatRoles = {auto:'Auto',frontliner:'Frontliner',skirmisher:'Skirmisher',ranged:'Ranged',flanker:'Flanker',breaker:'Breaker'};
+const combatRoles = {auto:'Auto',frontliner:'Frontliner',skirmisher:'Skirmisher',ranged:'Ranged',flanker:'Flanker',breaker:'Breaker','reach-support':'Reach Support'};
 const combatRoleHelp = {
-  auto:'Auto follows current gear: melee riders on war horses with 160+ body armor become Breakers; bows, crossbows and throwing weapons keep their ranged roles.',
+  auto:'Auto follows current gear: extended melee reach selects Reach Support; other melee riders on war horses with 160+ body armor become Breakers. Bows, crossbows and throwing weapons keep their ranged roles.',
+  'reach-support':'Uses extended melee reach from behind allies, preferring shielded frontliners. Holds useful attack positions, advances without entering adjacent enemy hexes, and fights or draws a melee backup when engaged.',
   frontliner:'Closes with the enemy and holds the front.',
   skirmisher:'Keeps space and pressures the nearest front line; closes when ammunition runs out.',
   ranged:'Keeps space, seeks defensive cover and picks exposed or finishing targets; closes when ammunition runs out.',
