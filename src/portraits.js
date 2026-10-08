@@ -144,7 +144,7 @@ export const VISUALS = {
     'northern-sling': ['weapon-northern-sling.png', 73, 57, 'rotate(-25deg)', '5px 60px'],
   },
   shield: {
-    ...Object.fromEntries(Object.entries(DLC_SHIELD_ART).map(([id,art])=>[id,[art.portrait,art.left,art.top,'scale(1)','0px 0px']])),
+    ...Object.fromEntries(Object.entries(DLC_SHIELD_ART).map(([id,art])=>[id,[art.portrait,Math.max(60,art.left),art.top,'scale(1)','0px 0px']])),
     round: ['shield-round.png', 62, 68],
     kite: ['shield-kite.png', 62, 54],
     heater: ['shield-heater.png', 62, 54],
@@ -549,7 +549,7 @@ function layerSpec(category, item) {
     return [named.portrait,(heavy?78:rangedPose?70:82)-gx,handY-gy,`scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`,`${gx}px ${gy}px`];
   }
   const shieldSource = category === 'shield' && DLC_SHIELD_ART[item?.baseId || item?.id || visual(item)];
-  if(shieldSource)return [shieldSource.portrait,shieldSource.left,shieldSource.top,'scale(1)','0px 0px'];
+  if(shieldSource)return [shieldSource.portrait,Math.max(60,shieldSource.left),shieldSource.top,'scale(1)','0px 0px'];
   const source = DIREWOLF_HELMET_ART[item?.baseId || item?.id] || ((item?.baseId || item?.id) === MOONFANG_ID ? MOONFANG_ART : null) || ancientRestoredArt(item) || DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];

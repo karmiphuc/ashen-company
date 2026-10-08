@@ -37,7 +37,7 @@ export function extractForgeProfile(item,catalog,{shieldMaximum=()=>0,shieldDama
   for(const [stat,key] of [['meleeDefense','meleeDefense'],['rangedDefense','rangedDefense'],['resolve','resolve'],['maxFatigue','endurance'],['meleeSkill','meleeSkill'],['rangedSkill','rangedSkill'],['initiative','initiative'],['maxHp','maxHp']])diff(key,item.statBonuses?.[stat],base.statBonuses?.[stat]);
  }else if(item.slot==='shield'){
   diff('shieldMelee',item.defense,base.defense);diff('shieldRanged',item.rangedDefense??item.defense,base.rangedDefense??base.defense);
-  diff('shieldDurability',item.unboostedShieldDurability??item.durability??shieldMaximum(item.id),shieldMaximum(definition.id));
+  diff('shieldDurability',item.unboostedShieldDurability??item.durability??shieldMaximum(item.id),base.durability??shieldMaximum(definition.id));
  }else{
   if(!p.damagePct){diff('damageLow',item.damageMin,base.damageMin);diff('damageHigh',item.damageMax,base.damageMax);}
   diff('accuracy',item.hitBonus,base.hitBonus);diff('armorDamage',100*(item.armorDamage??1),100*(base.armorDamage??1));
