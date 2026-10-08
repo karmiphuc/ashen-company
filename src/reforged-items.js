@@ -110,7 +110,7 @@ export function applyForgeProfile(definition,p,id,affixes=null){
    const prefixes=affixes.prefixes.map(a=>forgeAffixName('prefix',a)),suffixes=affixes.suffixes.map(a=>forgeAffixName('suffix',a));
    item.name=`${prefixes.join(' ')} ${definition.name} ${suffixes.join(' & ')} — Reforged`.trim();
   }
-  item.signatureDescription=affixes.locked?'Legacy workmanship preserved. Further merges are locked; full transfers preserve this restriction.':'Two prefix and two suffix slots. Identical affixes use the stronger roll; original craftsmanship is preserved.';
+  item.signatureDescription=affixes.locked?'Legacy workmanship preserved. Further merges are locked; full transfers preserve this restriction.':'Two prefix and two suffix slots. Identical affixes use the stronger roll; the stronger workmanship values are kept without adding duplicate values.';
  }
  item.price=Math.min(20000,Math.round((b.price??100)*2.4+Object.values(p).reduce((n,x)=>n+x,0)*10));
  return Object.freeze(item);
@@ -123,6 +123,7 @@ const suffixNames={precision:'of Precision',ruin:'of Ruin',slaying:'of Slaying',
 const prefixKeys=new Set(['rangedRange','perkFlags','berserkAp','nimbleBoost','battleForgedBoost',...Object.keys(PREFIX_EFFECTS)]);
 function freezeForgeAffixes(a){return Object.freeze({locked:a.locked,foundation:Object.freeze({...a.foundation}),prefixes:Object.freeze(a.prefixes.map(p=>Object.freeze({id:p.id,profile:Object.freeze({...p.profile})}))),suffixes:Object.freeze(a.suffixes.map(p=>Object.freeze({id:p.id,profile:Object.freeze({...p.profile})})))});}
 export function forgeAffixName(kind,a){
+ if(kind==='foundation')return 'Craftsmanship';
  if(kind==='suffix')return suffixNames[a.id];
  const d=prefixDefinitions.get(a.id);if(!d)return a.id;
  const grade=d.key?d.grades.indexOf(a.profile[d.key]):-1;
@@ -134,13 +135,19 @@ export function flattenForgeAffixes(a){
  return result;
 }
 export function extractForgeAffixes(item,catalog,options={}){
- if(item.forgeAffixes)return item.forgeAffixes;
+ if(item.forgeAffixes){
+  const a=item.forgeAffixes,legacy=a.suffixes.find(part=>part.id==='craftsmanship');
+  if(a.locked||!legacy)return a;
+  const foundation={...a.foundation};
+  for(const [key,n]of Object.entries(legacy.profile))foundation[key]=(foundation[key]??0)+n;
+  return freezeForgeAffixes({...a,foundation,suffixes:a.suffixes.filter(part=>part!==legacy)});
+ }
  const full=extractForgeProfile(item,catalog,options);if(!full)return null;
  if(item.forgeVersion)return freezeForgeAffixes({locked:true,foundation:full,prefixes:[],suffixes:[]});
  const foundation={...full},prefixes=[],suffixes=[];
  if(item.affixPrefix){const profile=Object.fromEntries(Object.entries(full).filter(([key])=>prefixKeys.has(key)));if(Object.keys(profile).length)prefixes.push({id:item.affixPrefix.id,profile});for(const key of Object.keys(profile))delete foundation[key];}
  if(item.affixSuffix?.profile){const profile={...item.affixSuffix.profile};suffixes.push({id:item.affixSuffix.id,profile});for(const [key,n]of Object.entries(profile)){foundation[key]=(foundation[key]??0)-n;if(!foundation[key])delete foundation[key];}}
- else if(Object.keys(foundation).length){suffixes.push({id:'craftsmanship',profile:{...foundation}});for(const key of Object.keys(foundation))delete foundation[key];}
+
  return freezeForgeAffixes({locked:false,foundation,prefixes,suffixes});
 }
 function validAffixRecord(a,kind,slot){
@@ -189,19 +196,38 @@ function resolveBoundedForgeItem(id,catalog){
 export function forgeAffixOptions(source,recipient,item){
  if(source.locked||recipient.locked)return [];
  return ['prefix','suffix'].flatMap(kind=>source[`${kind}es`].map(a=>{
-  const old=recipient[`${kind}es`].find(p=>p.id===a.id),inactive=forgeProfileRows(a.profile,item).find(r=>r.inactive)?.inactive;
+  const old=recipient[`${kind}es`].find(p=>p.id===a.id);
+  if(kind==='suffix'&&a.id==='craftsmanship'&&old)a={id:a.id,profile:bestCraftsmanship(old.profile,a.profile)};
+  const inactive=forgeProfileRows(a.profile,item).find(r=>r.inactive)?.inactive;
   // A duplicate is upgraded as a complete package only when no field regresses.
   const stronger=!old||Object.entries(old.profile).every(([key,n])=>key==='perkFlags'?(a.profile[key]??0)===n:(a.profile[key]??0)>=n)&&Object.entries(a.profile).some(([key,n])=>n>(old.profile[key]??0));
   return {kind,affix:a,upgrade:!!old,inactive,eligible:!inactive&&stronger&&(!!old||recipient[`${kind}es`].length<2),reason:inactive||(!stronger?'Already as strong':!old&&recipient[`${kind}es`].length>=2?'Slots full':null)};
  }));
 }
+function bestCraftsmanship(existing,incoming){
+ const profile={...existing};
+ for(const [key,n]of Object.entries(incoming))profile[key]=Math.max(profile[key]??0,n);
+ return profile;
+}
+export function forgeCraftsmanshipOption(source,recipient,item){
+ if(source.locked||recipient.locked)return null;
+ const profile=bestCraftsmanship(recipient.foundation,source.foundation);
+ const improvements=Object.fromEntries(Object.entries(profile).filter(([key,n])=>n>(recipient.foundation[key]??0)));
+ if(!Object.keys(improvements).length)return null;
+ // Cross-class reach and ammunition retain their requirements.
+ const applicable=Object.fromEntries(Object.entries(improvements).filter(([key,n])=>!forgeProfileRows({[key]:n},item)[0].inactive));
+ if(!Object.keys(applicable).length)return null;
+ return {kind:'foundation',affix:{id:'craftsmanship',profile:applicable},upgrade:true,eligible:true};
+}
 export function mergeForgeAffixes(source,recipient,item,seed){
  const a={locked:false,foundation:{...recipient.foundation},prefixes:[...recipient.prefixes],suffixes:[...recipient.suffixes]},options=forgeAffixOptions(source,recipient,item).filter(o=>o.eligible),selected=[];
+ const craftsmanship=forgeCraftsmanshipOption(source,recipient,item);
+ if(craftsmanship){Object.assign(a.foundation,craftsmanship.affix.profile);selected.push(craftsmanship);}
  // Stable pair/serial seed: menu reopen and save reload cannot change selection.
  const rank=(id)=>{let h=seed>>>0;for(const c of id)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;return h;};
  for(const o of options.sort((a,b)=>rank(a.kind+a.affix.id)-rank(b.kind+b.affix.id)||a.affix.id.localeCompare(b.affix.id))){
   const list=a[`${o.kind}es`],index=list.findIndex(p=>p.id===o.affix.id);if(index<0&&list.length>=2)continue;
-  if(index>=0)list[index]=o.affix;else list.push(o.affix);selected.push(o);if(selected.length>=1+seed%3)break;
+  if(index>=0)list[index]=o.affix;else list.push(o.affix);selected.push(o);if(selected.filter(part=>part.kind!=='foundation').length>=1+seed%3)break;
  }
  return {affixes:freezeForgeAffixes(a),selected,options:forgeAffixOptions(source,recipient,item)};
 }
