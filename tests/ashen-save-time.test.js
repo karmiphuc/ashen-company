@@ -36,7 +36,7 @@ test('player host victory, siege, occupation and liberation keep their fractiona
 });
 
 test('legacy crisis upgrade and final rewards preserve fractional campaign time',()=>{
- const s=active();for(const h of Object.values(s.ashenWinter.hosts))if(!h.id.endsWith(':1')){delete s.ashenWinter.towns[h.targetTownId];delete s.ashenWinter.hosts[h.id];}s.ashenWinter.fronts.forEach(f=>f.spawnIndex=1);s.ashenWinter.version=1;roundTrip(s);setTime(s,campaignHour(s)+.017);advanceAshenWinter(s,context);assert.equal(s.ashenWinter.version,3);roundTrip(s);
+ const s=active();for(const h of Object.values(s.ashenWinter.hosts))if(!h.id.endsWith(':1')){delete s.ashenWinter.towns[h.targetTownId];delete s.ashenWinter.hosts[h.id];}s.ashenWinter.fronts.forEach(f=>f.spawnIndex=1);s.ashenWinter.fronts.forEach(f=>{f.force.size=30;f.force.troops=Array.from({length:30},(_,i)=>i);});s.ashenWinter.version=1;roundTrip(s);setTime(s,campaignHour(s)+.017);advanceAshenWinter(s,context);assert.equal(s.ashenWinter.version,4);roundTrip(s);
  for(const e of getUndeadEncounters(s).filter(e=>e.kind==='undead-commander'))resolveAshenObjective(s,e,context);
  assert.equal(s.ashenWinter.phase,'completed');assert.equal(s.ashenWinter.completedHour,campaignHour(s));assert.equal(s.ashenWinter.aftermath.completedHour,campaignHour(s));roundTrip(s);
 });

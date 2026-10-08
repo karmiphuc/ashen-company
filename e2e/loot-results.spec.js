@@ -12,7 +12,8 @@ function results(){
 test('loot performance cards stay in two columns on tablets, show casualties first and preserve loot actions',async({page})=>{
  const {state,deadId}=results();await page.addInitScript(save=>localStorage.setItem('ashen-company-save-v1',save),JSON.stringify(state));await page.goto('./');
  const cards=page.locator('.result-company > .result-brother-grid > .result-brother');await expect(cards.first()).toHaveAttribute('data-result-brother',deadId);await expect(cards.first()).toHaveClass(/fallen/);await expect(cards.first().locator('.result-status')).toHaveText('† Fallen');
- await expect(page.locator('[aria-label="Armor damage dealt to enemies: 145"]')).toBeVisible();await expect(page.locator('[aria-label="Hitpoint damage dealt to enemies: 82"]')).toBeVisible();await expect(page.locator('[aria-label="Armor damage received: 51"]')).toBeVisible();
+ await expect(page.locator('[aria-label$="Armor damage dealt to enemies: 145"]')).toBeVisible();await expect(page.locator('[aria-label$="Hitpoint damage dealt to enemies: 82"]')).toBeVisible();await expect(page.locator('[aria-label="Armor damage received: 51"]')).toBeVisible();
+ await expect(page.locator('[data-mvp="Most Lethal"]')).toHaveCount(1);await expect(page.locator('[data-mvp="Tank Killer"]')).toHaveCount(1);await expect(page.locator('[data-mvp="Assassin"]')).toHaveCount(1);await expect(cards.first().locator('[data-mvp="Tanker"]')).toBeVisible();
  for(const viewport of [{width:1024,height:768},{width:768,height:1024},{width:1366,height:1024},{width:390,height:844}]){
   await page.setViewportSize(viewport);const first=await cards.nth(0).boundingBox(),second=await cards.nth(1).boundingBox();expect(Math.abs(first.y-second.y)).toBeLessThan(2);expect(second.x).toBeGreaterThan(first.x+first.width);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);

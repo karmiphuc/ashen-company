@@ -15,7 +15,7 @@ export function crisisHash(value) {
 }
 export const campaignHour = state => (state.day - 1) * 24 + state.hour;
 export function initialAshenWinter(seed) {
-  return { version: 3, crisisId: 'ashen-winter', seed: crisisHash(`${seed}:ashen-winter`),
+  return { version: 4, crisisId: 'ashen-winter', seed: crisisHash(`${seed}:ashen-winter`),
     phase: 'dormant', eligibilityHour: null, warningHour: null, activationHour: null,
     completedHour: null, fronts: [], hosts: {}, towns: {}, resolved: [],
     liberationCount: 0, hostVictories: 0, finalRewardGranted: false,

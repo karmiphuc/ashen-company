@@ -128,7 +128,7 @@ test('liberation supports fifteen fielded brothers and preserves three reserves'
   assert.equal(startBattle(s, encounter.id).ok, true);
   assert.equal(getBattleRoster(s).length, 15);
   assert.equal(s.battle.units.filter(u => u.side === 'company' && !u.ally).length, 15);
-  assert.equal(s.battle.units.filter(u => u.ally).length, 3);
+  assert.ok(s.battle.units.filter(u => u.ally).length >= 10 && s.battle.units.filter(u => u.ally).length <= 14);
   s.battle = validateSave(s).battle;
   for(let i = 0; i < 8 && s.battle.status === 'active'; i++) resolveBattle(s);
   assert.equal(s.battle.status, 'victory');
@@ -168,7 +168,7 @@ test('real liberation battle, allies, undead traits and active save validation',
   const { s, townId } = besieged(); strong(s);
   const e = getUndeadEncounters(s).find(e => e.townId === townId && e.kind === 'undead-liberation');
   s.position = { x: e.x, y: e.y }; assert.equal(startBattle(s, e.id).ok, true);
-  assert.equal(s.battle.units.filter(u => u.ally).length, 3);
+  assert.ok(s.battle.units.filter(u => u.ally).length >= 10 && s.battle.units.filter(u => u.ally).length <= 14);
   assert.ok(s.battle.units.filter(u => u.side === 'enemy').every(u => u.undeadTraitsVersion === 1 && u.morale === 60));
   assert.deepEqual(validateSave(s), s);
   for (let i=0; i<8 && s.battle.status==='active'; i++) resolveBattle(s);
@@ -234,7 +234,7 @@ test('NPC interception stops one approaching host without loot or liberation', (
 
 test('invalid crisis states are rejected without mutating imported data', () => {
   const s=active();
-  for(const change of [s=>s.ashenWinter.version=4,s=>s.ashenWinter.seed++,s=>s.ashenWinter.phase='completed',
+  for(const change of [s=>s.ashenWinter.version=5,s=>s.ashenWinter.seed++,s=>s.ashenWinter.phase='completed',
     s=>s.ashenWinter.fronts[0].force.troops.push(99),s=>s.ashenWinter.finalRewardGranted=true,
     s=>Object.values(s.ashenWinter.hosts)[0].targetTownId='fake',s=>s.ashenWinter.resolved=['fake']]){
     const invalid=structuredClone(s);change(invalid);const before=structuredClone(invalid);assert.throws(()=>validateSave(invalid));assert.deepEqual(invalid,before);

@@ -391,3 +391,6 @@ body.world-screen>#time-of-day-indicator{display:none}
 .loot-actions>button:only-child{grid-column:1/-1}.loot-actions>button>span[aria-hidden]{font-size:17px;line-height:1}
 .loot-actions .named-loot-shortcut{border-color:#b69654;color:#ffe0a2;background:linear-gradient(#625033,#392e20)}
 .result-loot-heading{display:flex;align-items:center;gap:9px;margin-bottom:12px}.result-loot-heading h2{flex:1;margin:0}
+
+.result-metric.result-mvp{border:2px solid #c8ad60;padding:5px;background:linear-gradient(135deg,#b9973526,#312819)}
+.result-mvp-symbol{font-size:.72em;color:#dace79;margin-right:4px}
