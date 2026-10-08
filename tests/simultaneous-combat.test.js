@@ -42,9 +42,15 @@ test('split ticks and mid-cycle save/reload retain identical combat, RNG and rea
 test('timed stun blocks the fighter for a full cycle and survives reload; all timed effects expire',()=>{
  const s=battle(),u=s.battle.units[0];u.stunnedTurns=1;u.stunProtected=true;markSimultaneousEffect(s.battle,u,'stunnedTurns',1);
  for(const [key,n] of [['dazedTurns',2],['staggeredTurns',1],['disarmedTurns',1],['howlTurns',2]]){u[key]=n;markSimultaneousEffect(s.battle,u,key,n);}
- const reload=validateSave(JSON.parse(JSON.stringify(s)));steps(reload,100);const actor=reload.battle.units.find(x=>x.id===u.id);assert.equal(actor.stunnedTurns,1);assert.ok(!simultaneousEvents(reload.battle).some(e=>e.event.actorId===actor.id));safe(reload);
- steps(reload,20);assert.equal(actor.stunnedTurns,0);assert.equal(actor.disarmedTurns,0);assert.equal(actor.staggeredTurns,0);assert.equal(actor.dazedTurns,1);safe(reload);
- steps(reload,120);assert.equal(actor.dazedTurns,0);assert.equal(actor.howlTurns,0);safe(reload);
+ const reload=validateSave(JSON.parse(JSON.stringify(s))),actor=reload.battle.units.find(x=>x.id===u.id);
+ // Empty cycles may skip wall-clock time; effects retain their simulation expiry.
+ while(reload.battle.simultaneous.time<6000){
+  advanceSimultaneousBattle(reload,SIM_STEP_MS);
+  if(reload.battle.simultaneous.time<6000){assert.equal(actor.stunnedTurns,1);assert.ok(!simultaneousEvents(reload.battle).some(e=>e.event.actorId===actor.id));}
+ }
+ assert.equal(actor.stunnedTurns,0);assert.equal(actor.disarmedTurns,0);assert.equal(actor.staggeredTurns,0);assert.equal(actor.dazedTurns,1);safe(reload);
+ while(reload.battle.simultaneous.time<12000&&reload.battle.status==='active')advanceSimultaneousBattle(reload,SIM_STEP_MS);
+ assert.equal(actor.dazedTurns,0);assert.equal(actor.howlTurns,0);safe(reload);
 });
 
 test('pause is a zero delta, invalid time is rejected, and catch-up is bounded',()=>{
@@ -171,13 +177,15 @@ test('exhausted cycles skip the empty tail only after final recovery and survive
  assert.deepEqual(s,reloaded);assert.equal(s.battle.simultaneous.actors[affected.id].effects.howlTurns,13000);assert.equal(s.battle.units[0].howlTurns,2);
 });
 
-test('remaining AP, timed stun and explicit pause prevent an early AP refresh',()=>{
+test('actionable AP blocks early refresh but a lone stunned fighter does not stall the cycle',()=>{
  const s=battle(),b=s.battle;b.simultaneous.time=1000;
  for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=1000;}
  const actor=b.units[0];actor.ap=2;b.simultaneous.actors[actor.id].readyAt=5000;
  advanceSimultaneousBattle(s,250);assert.equal(b.simultaneous.time,1250);assert.equal(b.round,1);safe(s);
  actor.ap=9;actor.stunnedTurns=1;actor.stunProtected=true;markSimultaneousEffect(b,actor,'stunnedTurns',1);b.simultaneous.actors[actor.id].readyAt=1000;
- advanceSimultaneousBattle(s,1000);assert.equal(b.simultaneous.time,2250);assert.equal(b.round,1);assert.equal(actor.stunnedTurns,1);safe(s);
+ const expiry=b.simultaneous.actors[actor.id].effects.stunnedTurns;
+ advanceSimultaneousBattle(s,50,{maxActions:1});assert.equal(b.round,2);assert.equal(actor.stunnedTurns,1);
+ assert.equal(b.simultaneous.actors[actor.id].effects.stunnedTurns,expiry);safe(s);
  actor.ap=0;const before=structuredClone(s);advanceSimultaneousBattle(s,0);assert.deepEqual(s,before);
 });
 
@@ -212,15 +220,16 @@ test('final slow attack settles at its animation end instead of its long next-ac
  assert.deepEqual(s,restored);
 });
 
-test('fighters with remaining AP retain full recovery rather than animation-only timing',()=>{
+test('slow fighters with remaining AP recover within one second rather than waiting out a long cooldown',()=>{
  const s=battle();openAdjacent(s);const b=s.battle,actor=b.units[0];
  for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=0;}
  actor.ap=9;actor.initiative=10;
  advanceSimultaneousBattle(s,50);
  const entry=simultaneousEvents(b).find(e=>e.event.actorId===actor.id);
  assert.ok(actor.ap>0);const delay=simultaneousActionDelay(actor,9-actor.ap,entry.event);
- assert.equal(b.simultaneous.actors[actor.id].readyAt,entry.time+delay);
- advanceSimultaneousBattle(s,1000);assert.equal(b.round,1);assert.equal(actor.ap,5);safe(s);
+ assert.ok(delay>1000);assert.equal(b.simultaneous.actors[actor.id].readyAt,entry.time+1000);
+ advanceSimultaneousBattle(s,950);assert.equal(actor.ap,5);
+ advanceSimultaneousBattle(s,50);assert.equal(b.round,1);assert.equal(actor.ap,1);safe(s);
 });
 
 test('a last-AP Berserk kill retains its extra action and normal recovery within the same cycle',()=>{
@@ -231,10 +240,21 @@ test('a last-AP Berserk kill retains its extra action and normal recovery within
  advanceSimultaneousBattle(s,50);
  const entry=simultaneousEvents(b).find(e=>e.event.actorId===actor.id);
  assert.ok(entry.event.effects.some(e=>e.id==='berserk'&&!e.nextTurn));assert.equal(actor.ap,4);assert.equal(b.round,1);
- const delay=simultaneousActionDelay(actor,4,entry.event);
+ const delay=Math.min(simultaneousActionDelay(actor,4,entry.event),1000);
  assert.equal(b.simultaneous.actors[actor.id].readyAt,entry.time+delay);assert.ok(delay>entry.duration);
- advanceSimultaneousBattle(s,1000);assert.equal(b.round,1);assert.equal(actor.ap,4);safe(s);
+ advanceSimultaneousBattle(s,900);assert.equal(b.round,1);assert.equal(actor.ap,4);safe(s);
  const restored=validateSave(JSON.parse(JSON.stringify(s)));
- for(const state of [s,restored])advanceSimultaneousBattle(state,delay-1000);
+ for(const state of [s,restored])advanceSimultaneousBattle(state,delay-900);
  assert.deepEqual(s,restored);assert.equal(b.round,1);assert.ok(actor.ap<4,'Berserk AP fund another action before the round refresh');assert.equal(actor.berserkRound,1);safe(s);
+});
+
+test('a stunned straggler cannot skip the incoming impact animation at an otherwise empty cycle end',()=>{
+ const s=battle(),b=s.battle;b.simultaneous.time=1000;
+ for(const u of b.units){u.ap=0;b.simultaneous.actors[u.id].readyAt=1000;}
+ const target=b.units[0],attacker=b.units.find(u=>u.side!==target.side);
+ target.ap=9;target.stunnedTurns=1;target.stunProtected=true;markSimultaneousEffect(b,target,'stunnedTurns',1);
+ rememberSimultaneousEvent(b,{type:'attack',actorId:attacker.id,targetId:target.id},1125);
+ advanceSimultaneousBattle(s,850);assert.equal(b.round,1);
+ advanceSimultaneousBattle(s,50);assert.equal(b.round,1);
+ advanceSimultaneousBattle(s,50,{maxActions:1});assert.equal(b.round,2);assert.equal(target.stunnedTurns,1);safe(s);
 });

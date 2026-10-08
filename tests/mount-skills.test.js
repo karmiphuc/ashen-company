@@ -129,7 +129,7 @@ test('new mounted battles resolve identically with save reload after every actio
 
 test('a wolf finisher credits its rider and grants Berserk AP immediately without spending ammo again', () => {
   const f = fight('dire-wolf-mount', 1, 'hunting-bow');
-  f.state.party[0].level = 30; f.state.party[0].perks = ['berserk']; f.actor.perks = ['berserk'];
+  f.state.party[0].level = 30; f.state.party[0].perks = ['berserk','point-blank']; f.actor.perks = ['berserk','point-blank'];
   f.actor.ap = 4; f.actor.rangedSkill = 0; f.target.rangedDefense = 200; f.target.hp = 1; f.battle.rng = 0;
   for (const tile of f.battle.field.tiles) if (!(tile.q === f.actor.q && tile.r === f.actor.r)
     && !(tile.q === f.target.q && tile.r === f.target.r)) tile.terrain = 'dense-trees';

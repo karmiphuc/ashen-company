@@ -27,7 +27,7 @@ function adjacentArcher(side,mount){
   for(const tile of battle.field.tiles){tile.terrain='open';tile.height=0;}
   for(const unit of battle.units)if(unit!==company&&unit!==enemy){unit.hp=0;unit.alive=false;unit.ap=0;}
   const actor=side==='company'?company:enemy,rider=side==='company'?enemy:company;
-  actor.equipment.weapon='hunting-bow';actor.reserveEquipment={weapon:null,shield:null};actor.accessories=[null,null];actor.equipment.mount=null;
+  actor.equipment.shield=null;actor.shieldDurability=0;actor.maxShieldDurability=0;actor.equipment.weapon='hunting-bow';actor.reserveEquipment={weapon:null,shield:null};actor.accessories=[null,null];actor.equipment.mount=null;
   rider.equipment.mount=mount;Object.assign(actor,{q:5,r:3});Object.assign(rider,{q:6,r:3});
   battle.activeId=actor.id;battle.turnIndex=battle.turnOrder.indexOf(actor.id);return{state,battle,actor,rider};
 }

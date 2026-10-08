@@ -5,7 +5,7 @@ import { BLACKSMITH_STAGES, initialBlacksmith, blacksmithIndex, blacksmithUnlock
 import { resolveForgeItem, extractForgeAffixes, forgeBaseline, encodeBoundedForgeItem, mergeForgeAffixes, flattenForgeAffixes, forgeAffixOptions, forgeAffixName, forgeRecipe, forgeProfileRows, isNamedItem, isForgeSlot } from './reforged-items.js';
 import { copyInjuries, INJURY_BY_ID, injuryStat, injuryMultiplier, injuryAdjustment, injuryRange, freshInjuryBleeding, injuryHealingRange, injuryRemainingDays, injuryDailyMedicine, validInjuries, attackInjuryPool, eligibleInjuries } from './injuries.js';
 import { isSimultaneousBetaEnabled } from './combat-config.js';
-import { SimultaneousPathQueue, SIM_STEP_MS, SIM_ROUND_MS, initialSimultaneousClock, simultaneousPriority, simultaneousActionDelay, simultaneousEventDuration, markSimultaneousEffect, expireSimultaneousEffects, rememberSimultaneousEvent, validateSimultaneousClock } from './simultaneous-combat.js';
+import { SimultaneousPathQueue, SIM_STEP_MS, SIM_ROUND_MS, initialSimultaneousClock, simultaneousPriority, simultaneousActionDelay, simultaneousEventDuration, simultaneousEvents, markSimultaneousEffect, expireSimultaneousEffects, rememberSimultaneousEvent, validateSimultaneousClock } from './simultaneous-combat.js';
 import { revealWorld, validExploration } from './world-fog.js';
 import {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier,defaultRetinue} from './retinue.js';
 export {RETINUE_MEMBERS,hasRetinue,getScoutLevel,getBandAwarenessMultiplier} from './retinue.js';
@@ -5549,7 +5549,8 @@ export function advanceSimultaneousBattle(state,elapsedMs=SIM_STEP_MS,{maxAction
       // than showing several seconds of an empty battlefield. Advance virtual
       // time through the idle tail so effect expiry and cycle bookkeeping agree.
       const living=battle.units.filter(u=>u.alive);
-      if(living.every(u=>u.ap<=0&&clock.actors[u.id].readyAt<=clock.time))
+      if(living.every(u=>(u.ap<=0||u.stunnedTurns>0)&&clock.actors[u.id].readyAt<=clock.time)
+        && simultaneousEvents(battle).every(entry=>entry.time+entry.duration<=clock.time))
         clock.time=Math.max(clock.time,clock.roundEndsAt-SIM_STEP_MS);
       clock.backlogMs-=SIM_STEP_MS;clock.time+=SIM_STEP_MS;expireSimultaneousEffects(battle);
       if(clock.time>=clock.roundEndsAt)refreshSimultaneousRound(state);
@@ -5573,7 +5574,9 @@ export function advanceSimultaneousBattle(state,elapsedMs=SIM_STEP_MS,{maxAction
       const delay=simultaneousActionDelay(actor,event?.type==='hold'?0:before-actor.ap+berserkRefund,event);
       // Recovery paces another action when AP remain (including Berserk).
       // Once exhausted, only the visible action must finish before the AP refresh.
-      const settle=actor.ap>0?delay:Math.ceil(simultaneousEventDuration(event,delay)/SIM_STEP_MS)*SIM_STEP_MS;
+      // Keep initiative-based recovery without leaving a slow straggler idle
+      // for multiple seconds after its animation has already finished.
+      const settle=actor.ap>0?Math.min(delay,1000):Math.ceil(simultaneousEventDuration(event,delay)/SIM_STEP_MS)*SIM_STEP_MS;
       clock.actors[actor.id].readyAt=clock.time+settle;
       rememberSimultaneousEvent(battle,event,delay);actions++;
       if(battle.status==='active'){
