@@ -331,7 +331,9 @@ test('accuracy perks and last stand change hit outcomes at the same roll', () =>
       else plain.battle.units.find(unit => unit.id === 'captain').perks = [];
       advanceBattle(skilled);
       advanceBattle(plain);
-      changed = condition.targetPerk
+      changed = condition.perk === 'point-blank'
+        ? ['attack','miss'].includes(skilled.battle.lastEvent.type) && !['attack','miss'].includes(plain.battle.lastEvent.type)
+        : condition.targetPerk
         ? skilled.battle.lastEvent.type === 'miss' && plain.battle.lastEvent.type === 'attack'
         : skilled.battle.lastEvent.type === 'attack' && plain.battle.lastEvent.type === 'miss';
     }

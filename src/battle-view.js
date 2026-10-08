@@ -365,7 +365,8 @@ function simultaneousUnitContext(unit,battle,speed) {
     const armor=impacts.reduce((sum,x)=>sum+number(x.armorDamage),0),shield=impacts.reduce((sum,x)=>sum+number(x.shieldDamage),0);
     const friendly=entry.event.friendlyFire&&entry.event.actorId!==unit.id&&battle.units.find(x=>x.id===entry.event.actorId)?.side===unit.side;
     const label=impacts.some(x=>x.hit!==false&&x.type!=='miss')?`${friendly?'Friendly fire · ':''}${damage}${armor?` / ${armor}`:''}${shield?` · Shield −${shield}`:''}`:shield?`Deflected · Shield −${shield}`:'Miss';
-    return `<span class="battle-impact" data-impact-event="${entry.id}" data-event-time="${entry.time}" aria-hidden="true" style="top:${14+index*18}px;--impact-time:${presentationDuration(entry,speed)/rate/1000}s">${label}</span>`;
+    const opportunities=impacts.filter(x=>x.skillName==='Opportunity Strike').length;
+    return `<span class="battle-impact" data-impact-event="${entry.id}" data-event-time="${entry.time}" aria-hidden="true" style="top:${14+index*18}px;--impact-time:${presentationDuration(entry,speed)/rate/1000}s">${opportunities?`Opportunity ×${opportunities} · `:''}${label}</span>`;
   }).join('');
   return {event,impactMarkup,impacts:latest?.impacts??[],own,incoming,motion,
     cinematic:speed==='cinematic'?cinematicActionKind(event):null,

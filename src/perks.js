@@ -58,7 +58,7 @@ export const PERKS = Object.freeze([
   { id: 'opportunist', name: 'Opportunist', description: 'Deal 10% more melee damage to enemies without a shield.', minLevel: 4 },
   { id: 'last-stand', name: 'Last Stand', description: 'Gain +8 melee and ranged defense while at or below half health.', minLevel: 5 },
   { id: 'marksman', name: 'Marksman', description: 'Gain +8 hit chance with ranged attacks from at least three hexes away.', minLevel: 3 },
-  { id: 'point-blank', name: 'Point Blank', description: 'Remove the 12-point hit penalty for shooting an adjacent enemy.', minLevel: 3 },
+  { id: 'point-blank', name: 'Point Blank', description: 'Allow ranged attacks against adjacent enemies and remove their 12-point hit penalty. Firing while adjacent to melee opponents still provokes up to two Opportunity Strikes.', minLevel: 3 },
   { id: 'volley-fire', name: 'Volley Fire', description: 'Deal 10% more ranged damage from at least three hexes away.', minLevel: 4 },
   { id: 'reload-drill', name: 'Reload Drill', description: 'Recover 12 fatigue when spending a turn reloading.', minLevel: 3 },
   { id: 'fleet-footed', name: 'Fleet Footed', description: 'Gain one movement point when advancing toward a target if armor and helmet fatigue total at most 15.', minLevel: 3 },
