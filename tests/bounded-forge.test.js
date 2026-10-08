@@ -58,11 +58,11 @@ test('bounded identities reject extra slots, duplicate families and forged bundl
  for(const bad of [id+'x',id.replace('unyoked','unknown'),id.replace('6-4','06-4'),id.replace(':n:',':l:'),id.replace(':arming-sword:',':war-horse:')])assert.equal(game.getItem(bad),undefined);
 });
 
-test('duplicates upgrade as complete rolls at full slots, never add, and craftsmanship stays fixed',()=>{
+test('duplicates upgrade as complete rolls at full slots, never add, and craftsmanship upgrades without stacking',()=>{
  const s=ready(),recipient=forged('mail-shirt',{foundation:{armorPct:20,weight:3},prefixes:[prefix('hearty','healthPct',5),prefix('unyoked','actionPoints',1)],suffixes:[suffix('vitality','maxHp',5),suffix('guard','meleeDefense',2)]});
  const donor=forged('mail-shirt',{foundation:{armorPct:25,weight:6},prefixes:[prefix('hearty','healthPct',15)],suffixes:[suffix('vitality','maxHp',9)]});
  stash(s,[donor,recipient]);let item=commit(s).item;stash(s,[donor,item]);if(quote(s).ok)item=commit(s).item;
- assert.deepEqual(item.forgeAffixes.foundation,{armorPct:20,weight:3});assert.equal(item.perkBoosts.healthPct,15);assert.equal(item.statBonuses.maxHp,9);
+ assert.deepEqual(item.forgeAffixes.foundation,{armorPct:25,weight:6});assert.equal(item.perkBoosts.healthPct,15);assert.equal(item.statBonuses.maxHp,9);
  assert.equal(item.forgeAffixes.prefixes.length,2);assert.equal(item.forgeAffixes.suffixes.length,2);
  stash(s,[donor,item]);const before=structuredClone(s);assert.equal(quote(s).ok,false);assert.deepEqual(s,before);
 });
@@ -163,4 +163,28 @@ test('recipes use only existing goods, with a modest premium for the extra AP ef
  assert.deepEqual(forgeRecipe([prefix('unyoked','actionPoints',1)]),{iron:3});
  assert.deepEqual(forgeRecipe([prefix('longshot','rangedReach',1),prefix('mending','perkFlags',perkFlags(['combat-bandaging']))]),{timber:1,wool:1});
  assert.equal(forgeAffixName('prefix',prefix('hearty','healthPct',15)),'Hearty III');
+});
+
+
+test('legacy named workmanship merges at full affix slots without consuming or weakening those slots',()=>{
+ const s=ready(),donor=game.getItem(game.createFamedItemId('mail-shirt',73,3));
+ const recipient=forged('mail-shirt',{foundation:{armorPct:10,weight:1},prefixes:[prefix('hearty','healthPct',5),prefix('unyoked','actionPoints',1)],suffixes:[suffix('vitality','maxHp',5),suffix('guard','meleeDefense',2)]});
+ const source=extractForgeAffixes(donor,catalog);assert.equal(source.suffixes.length,0);assert.ok(Object.keys(source.foundation).length>2);
+ stash(s,[donor,recipient]);const {q,item}=commit(s);
+ assert.ok(q.additions.some(a=>a.kind==='foundation'));
+ for(const [key,n]of Object.entries(source.foundation))assert.ok(item.forgeAffixes.foundation[key]>=n);
+ assert.deepEqual(item.forgeAffixes.prefixes,recipient.forgeAffixes.prefixes);assert.deepEqual(item.forgeAffixes.suffixes,recipient.forgeAffixes.suffixes);
+ stash(s,[donor,item]);assert.equal(quote(s).ok,false,'same workmanship cannot stack a second time');
+});
+
+test('existing legacy craftsmanship suffixes merge mixed stronger stats without dropping either old benefit',()=>{
+ const s=ready(),recipient=forged('arming-sword',{suffixes:[{id:'craftsmanship',profile:{accuracy:8,armorDamage:10}}]}),donor=forged('arming-sword',{suffixes:[{id:'craftsmanship',profile:{accuracy:4,armorDamage:30}}]});
+ stash(s,[donor,recipient]);const {item}=commit(s);assert.deepEqual(item.forgeAffixes.foundation,{accuracy:8,armorDamage:30});assert.equal(item.forgeAffixes.suffixes.length,0);
+});
+
+test('moving old craftsmanship out of a suffix preserves its complete additive profile exactly',()=>{
+ const original=forged('mail-shirt',{foundation:{armorPct:20,weight:3},suffixes:[{id:'craftsmanship',profile:{armorPct:10,weight:2,resolve:6}},{id:'guard',profile:{meleeDefense:3}}]});
+ const a=extractForgeAffixes(original,catalog);assert.deepEqual(flattenForgeAffixes(a),original.forgeProfile);
+ assert.deepEqual(a.foundation,{armorPct:30,weight:5,resolve:6});assert.equal(a.suffixes.length,1);
+ const s=ready();stash(s,[original,'mail-shirt']);const {item}=commit(s);assert.equal(item.armor,original.armor);assert.equal(item.fatigue,original.fatigue);assert.deepEqual(item.statBonuses,original.statBonuses);
 });

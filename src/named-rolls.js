@@ -1,4 +1,4 @@
-import { applyNamedAffixes } from './item-affixes.js';
+import { applyNamedAffixes, NAMED_PREFIX_CHANCE } from './item-affixes.js';
 // Battle Brothers named-item rules, pinned to kovasap/battle-bros-decompiled e06d68df.
 // Existing unversioned famed IDs remain handled by the legacy resolver in engine.js.
 export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=0,merged=false,rangeRoll=false,rulesVersion=merged?3:2}={}) {
@@ -67,7 +67,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
     }
     if(item.signatureDescription)item.description+=` ${item.signatureDescription}`;
   }
-  if(rulesVersion>=5){item.enhancementProfile=profile;applyNamedAffixes(item,original,seed,bonuses,{expanded:rulesVersion>=7});item.description+=` ${item.signatureDescription}`;}
+  if(rulesVersion>=5){item.enhancementProfile=profile;applyNamedAffixes(item,original,seed,bonuses,{expanded:rulesVersion>=7,prefixChance:rulesVersion>=9?NAMED_PREFIX_CHANCE:100});item.description+=` ${item.signatureDescription}`;}
   item.price=Math.min(original.collection?20000:5000,Math.round(original.price*2.4+(['armor','helmet'].includes(item.slot)?item.armor-(design?original.sourceArmor:original.armor):0)));
   item.enhancementProfile=Object.freeze(profile);item.rollModifiers=Object.freeze(mods);item.bonuses=Object.freeze(bonuses);
   return Object.freeze(item);

@@ -23,9 +23,10 @@ test('named merging inherits whole affixes within slot limits and repeated quote
   const a=createFamedItemId('arming-sword',seed,7),b=createFamedItemId('greatsword',seed+42,7);stash(s,[a,b]);
   const q=getReforgeQuote(s,0,1,'merge');assert.deepEqual(getReforgeQuote(s,0,1,'merge'),q);
   if(!q.ok){const before=structuredClone(s);assert.equal(reforgeItem(s,q).ok,false);assert.deepEqual(s,before);continue;}
-  successes++;assert.ok(q.additions.length>=1&&q.additions.length<=3);
+  successes++;assert.ok(q.additions.length>=1&&q.additions.length<=4);
   assert.ok(q.result.forgeAffixes.prefixes.length<=2);assert.ok(q.result.forgeAffixes.suffixes.length<=2);
-  assert.deepEqual(q.result.forgeAffixes.foundation,q.recipientAffixes.foundation);
+  for(const [key,n]of Object.entries(q.recipientAffixes.foundation))assert.ok(q.result.forgeAffixes.foundation[key]>=n);
+  assert.ok(q.additions.filter(a=>a.kind!=='foundation').length<=3);
   for(const kind of ['prefixes','suffixes'])for(const old of q.recipientAffixes[kind]){
    const after=q.result.forgeAffixes[kind].find(a=>a.id===old.id);assert.ok(after);
    for(const [key,n]of Object.entries(old.profile))assert.ok(after.profile[key]>=n);

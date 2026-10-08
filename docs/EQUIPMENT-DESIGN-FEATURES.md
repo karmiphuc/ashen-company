@@ -14,10 +14,13 @@ bonuses:
 - **Suffixes** improve stats such as accuracy, defense, health, or fatigue
   capacity.
 
+Newly generated named gear has a **35% chance of one prefix** and a **65% chance of no prefix**; its stat suffix remains guaranteed. Existing gear keeps its rolled prefixes.
+
 Reforged equipment can hold **up to two prefix families and two suffix
 families**. Original named craftsmanship remains separate from those slots.
-Older named gear without RPG affixes represents its stat package as a legacy
-craftsmanship suffix.
+Older named gear without RPG affixes retains its entire stat package as
+craftsmanship. Reforging older bounded items moves legacy craftsmanship out
+of suffix slots without losing any stats.
 
 The legendary blacksmith's four side quests unlock reforging without occupying
 a normal contract slot. Select a named donor and a recipient from the stash;
@@ -26,11 +29,11 @@ confirming destroys the donor and improves the recipient.
 | Recipient | Result |
 | --- | --- |
 | Ordinary item | Receives the donor's complete enhancement package, including craftsmanship and affixes. |
-| Named item | Keeps its own craftsmanship and inherits 1–3 eligible complete affixes, subject to available slots. |
+| Named item | Keeps the stronger applicable value for each craftsmanship stat and inherits 1–3 eligible complete affixes, subject to available slots. |
 
 The named merge formula is:
 
-**Recipient design + existing craftsmanship + bounded merged prefixes and
+**Recipient design + best craftsmanship values + bounded merged prefixes and
 suffixes**
 
 The recipient keeps its existing affixes. New families occupy free slots;

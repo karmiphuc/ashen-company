@@ -11,9 +11,9 @@ test('every new named body/head design has 1–11 fatigue relief and zero-relief
  for(const base of g.ITEMS.filter(i=>['armor','helmet'].includes(i.slot)))for(const seed of [0,1,73,1234,0xffffffff]){
   const item=named(base.id,seed),old=named(base.id,seed,7),load=base.sourceFatigue??base.fatigue??0;
   const relief=load-item.fatigue;
-  assert.equal(item.rollVersion,8);assert.ok(relief>=1&&relief<=11,item.id);reachedEleven ||= relief===11;
+  assert.equal(item.rollVersion,9);assert.ok(relief>=1&&relief<=11,item.id);reachedEleven ||= relief===11;
   assert.equal(item.enhancementProfile.armorPct,old.enhancementProfile.armorPct*(old.fatigue===load?2:1));
-  assert.deepEqual(item.affixPrefix,old.affixPrefix);assert.deepEqual(item.affixSuffix,old.affixSuffix);
+  if(item.affixPrefix)assert.deepEqual(item.affixPrefix,old.affixPrefix);assert.deepEqual(item.affixSuffix,old.affixSuffix);
   assert.ok(!item.bonuses.some(b=>b.label==='Fatigue cost'&&b.value==='-0'));
  }
  assert.ok(reachedEleven);
