@@ -3,7 +3,7 @@
 For the combined player-facing design overview, see
 [equipment design features](EQUIPMENT-DESIGN-FEATURES.md).
 
-New equipment uses immutable `famed7` identities. Stat suffixes and effect prefixes use independent seeded streams; prefix grade and random mastery use additional independent streams. Opening menus, loading saves and retreating cannot reroll an item. Attachments retain their separate `famed5` fine / `famed6` champion protection and fitting rolls.
+New weapons and shields use immutable `famed7` identities; new body armor and helmets use `famed8` for guaranteed fatigue relief (see [named rolls](NAMED-ROLLS.md)). Stat suffixes and effect prefixes use independent seeded streams; prefix grade and random mastery use additional independent streams. Opening menus, loading saves and retreating cannot reroll an item. Attachments retain their separate `famed5` fine / `famed6` champion protection and fitting rolls.
 
 The eligibility and effect registry lives in `src/affix-prefixes.js`. Existing `famed5` prefixes retain exactly their original pools and rolls. New grades display I / II / III: three-grade rolls use 60 / 30 / 10 percent, two-grade rolls use 70 / 30 percent. Unyoked has one-quarter the selection weight of other eligible prefixes.
 
@@ -37,13 +37,13 @@ Existing Bloodrush, Featherbound, Tempered, Farseeing and equipment-perk prefixe
 
 `forge1` retains its original 21-field profile; `forge2` retains its 30 fields and original eight perk bits. `forge3` stores additional effects and expanded perk flags. Existing key positions and flag positions never move. Canonical encodings and per-effect bounds reject malformed profiles; all ordinary-gear full transfers and named-gear partial merges preserve applicable effects.
 
-Engaged camp/band generations freeze `namedAffixVersion`: absent means legacy, 1 means the original prefix pool, 2 means the expanded pool. Scripted quest/crisis rewards remain pinned to their old identities. New battles use `itemAffixRulesVersion: 2` for extended AP, kill-momentum state, head-hit daze and effect events. Older battles retain their saved version and fields.
+Engaged camp/band generations freeze `namedAffixVersion`: absent means legacy, 1 means the original prefix pool, 2 means the expanded pool, and 3 adds the nonzero armor-fatigue rule. Scripted quest/crisis rewards remain pinned to their old identities. New battles use `itemAffixRulesVersion: 2` for extended AP, kill-momentum state, head-hit daze and effect events. Older battles retain their saved version and fields.
 
 `tests/expanded-prefixes.test.js` checks every family and grade, actual combat, perk eligibility, free actions, reloads, expiry, AP refresh, attachment removal, forging and frozen encounters. The original affix suite explicitly continues to exercise version 5.
 
 ## Bounded reforging
 
-New forge transactions produce immutable `forge4` identities. They encode original named craftsmanship separately from up to **two prefix families and two RPG suffix families**, including each affix's complete roll. Original named stat rolls do not consume RPG affix slots and stay fixed during merges; transferring to ordinary gear carries that craftsmanship too. Older named gear without RPG affixes represents its entire stat package as one legacy craftsmanship suffix.
+New weapon/shield forge transactions produce immutable `forge4` identities; armor/helmet transactions use `forge5` to preserve negative fatigue loads down to −11. Both encode original named craftsmanship separately from up to **two prefix families and two RPG suffix families**, including each affix's complete roll. Original named stat rolls do not consume RPG affix slots and stay fixed during merges; transferring to ordinary gear carries that craftsmanship too. Older named gear without RPG affixes represents its entire stat package as one legacy craftsmanship suffix.
 
 Named merges inherit 1–3 eligible complete affixes, bounded by the available slots. Existing families can upgrade only when the donor roll is at least as strong in every field and improves a field. Duplicate values never add. Different free masteries belong to the same Masterful family, so a single item cannot accumulate all masteries. Inactive effects occupy slots; unsuitable ranged, Duelist and mastery effects cannot consume a random merge. Full transfers preserve inactive affixes so they can reactivate on compatible gear.
 

@@ -193,13 +193,13 @@ const ROAMING_BANDS = Object.freeze([
 ].map(band=>Object.freeze({...band,start:compactPoint(band.start),end:compactPoint(band.end)})));
 
 const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
-const FAMED_ID = /^(famed7|famed6|famed5|famed4|famed3|famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
+const FAMED_ID = /^(famed8|famed7|famed6|famed5|famed4|famed3|famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
 const FAMED_NAMES = ['Ashen', 'Blackthorn', 'Dawnward', 'Grimwolf', 'Ironbound', 'Oathkeeper', 'Ravenmark', 'Stormborn', 'Thornheart', 'Wolfguard'];
 
 export function createFamedItemId(baseId, seed, rulesVersion) {
   const base=ITEM_BY_ID.get(baseId),rangedWeapon=base?.slot==='weapon'&&(base.ranged??base.sourceStats?.ranged)===true;
-  const version=rulesVersion??(base?.slot==='attachment'?5:7);
-  if (![1, 2, 3, 4, 5, 6, 7].includes(version) || version===4&&!rangedWeapon || version===6&&base?.slot!=='attachment' || version===7&&base?.slot==='attachment' || base?.slot==='attachment'&&version<5 || !base || ['accessory', 'mount'].includes(base.slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
+  const version=rulesVersion??(base?.slot==='attachment'?5:['armor','helmet'].includes(base?.slot)?8:7);
+  if (![1, 2, 3, 4, 5, 6, 7, 8].includes(version) || version===4&&!rangedWeapon || version===6&&base?.slot!=='attachment' || version===7&&base?.slot==='attachment' || version===8&&!['armor','helmet'].includes(base?.slot) || base?.slot==='attachment'&&version<5 || !base || ['accessory', 'mount'].includes(base.slot) || !Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new TypeError('Invalid famed item base or seed.');
   return `${version===1?'famed':`famed${version}`}:${baseId}:${seed}`;
 }
 
@@ -221,15 +221,15 @@ export function getItem(id) {
 function resolveItem(id) {
   const base = ITEM_BY_ID.get(id);
   if (base) return base;
-  if(typeof id==='string'&&/^forge[1-4]:/.test(id))return resolveForgeItem(id,key=>ITEM_BY_ID.get(key));
+  if(typeof id==='string'&&/^forge[1-5]:/.test(id))return resolveForgeItem(id,key=>ITEM_BY_ID.get(key));
   if (typeof id !== 'string' || id.length > 80) return undefined;
   if(affixItemCache.has(id))return affixItemCache.get(id);
   const match = FAMED_ID.exec(id);
   if (!match) return undefined;
   const original = ITEM_BY_ID.get(match[2]);
   const seed = Number(match[3]);
-  if (!original || ['accessory', 'mount'].includes(original.slot) || original.slot==='attachment'&&!['famed5','famed6'].includes(match[1]) || match[1]==='famed6'&&original.slot!=='attachment' || match[1]==='famed4'&&!(original.ranged??original.sourceStats?.ranged) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
-  if(['famed5','famed6','famed7'].includes(match[1])) {
+  if (!original || ['accessory', 'mount'].includes(original.slot) || original.slot==='attachment'&&!['famed5','famed6'].includes(match[1]) || match[1]==='famed6'&&original.slot!=='attachment' || match[1]==='famed8'&&!['armor','helmet'].includes(original.slot) || match[1]==='famed4'&&!(original.ranged??original.sourceStats?.ranged) || !Number.isSafeInteger(seed) || seed > 0xffffffff) return undefined;
+  if(['famed5','famed6','famed7','famed8'].includes(match[1])) {
     const item=original.slot==='attachment'?rollAttachment(original,id,seed,{champion:match[1]==='famed6'}):rollNamedItem(original,id,seed,{merged:true,rangeRoll:true,rulesVersion:Number(match[1].slice(5)),shieldDurability:original.sourceNamedShield?original.sourceStats.durability:shieldMaximum(original.id),shieldDamage:shieldImpactDamage(original.sourceStats?{...original,...original.sourceStats}:original)});
     if(affixItemCache.size>=2048)affixItemCache.delete(affixItemCache.keys().next().value);affixItemCache.set(id,item);return item;
   }
@@ -431,7 +431,7 @@ export function craftDirewolfHelmet(state, quote) {
   if (fresh.stamp !== quote.stamp) return result(false, 'The stash or helmet quote changed. Review it before consuming any pieces.');
   if (!fresh.affordable) return result(false, `The Armorer requires ${fresh.fee} crowns.`);
   const roll = direwolfCraftRoll(state.seed, state.direwolfCraftSerial ?? 0);
-  const itemId = roll.named ? createFamedItemId(fresh.item.id, roll.namedSeed, 7) : fresh.item.id;
+  const itemId = roll.named ? createFamedItemId(fresh.item.id, roll.namedSeed) : fresh.item.id;
   const maximum = itemCondition(itemId), consumed = new Set(fresh.indices);
   const inventory = state.inventory.filter((_, index) => !consumed.has(index));
   const conditions = state.inventoryCondition.filter((_, index) => !consumed.has(index));
@@ -457,7 +457,7 @@ export function craftDirewolfMoonfang(state, quote) {
   if (fresh.stamp !== quote.stamp) return result(false, 'The stash or crafting quote changed. Review it before consuming any pieces.');
   if (!fresh.affordable) return result(false, `The Armorer requires ${MOONFANG_FEE} crowns.`);
   const roll = direwolfCraftRoll(state.seed, state.direwolfCraftSerial ?? 0);
-  const itemId = roll.named ? createFamedItemId(MOONFANG_ID, roll.namedSeed, 7) : MOONFANG_ID;
+  const itemId = roll.named ? createFamedItemId(MOONFANG_ID, roll.namedSeed) : MOONFANG_ID;
   const maximum = itemCondition(itemId);
   const consumed = new Set([fresh.hideIndex, fresh.mailIndex]);
   const inventory = state.inventory.filter((_, index) => !consumed.has(index));
@@ -494,7 +494,7 @@ export function restoreAncientEquipment(state, quote) {
   if (!fresh.affordable) return result(false, `The Armorer requires ${fresh.fee} crowns.`);
   const outcome = ancientRestorationRolls(state.seed, state.ancientRestorationSerial ?? 0);
   const baseId = outcome.finish ? restoredAncientId(fresh.sourceId, outcome.finish) : null;
-  const itemId = baseId ? outcome.named ? createFamedItemId(baseId, outcome.namedSeed, 7) : baseId : null;
+  const itemId = baseId ? outcome.named ? createFamedItemId(baseId, outcome.namedSeed) : baseId : null;
   // Build every result before applying the single inventory/currency transaction.
   const consumed = new Set(fresh.indices);
   const inventory = state.inventory.filter((_, index) => !consumed.has(index));
@@ -2867,11 +2867,12 @@ function namedWeaponFitsTheme(item,theme) {
   if(theme==='forest')return item.fatigue<=12;
   return item.sourceCulture==='mercenary';
 }
-function encounterAffixes(state,id,cycle){const frozen=state.discoveryRolls?.[id];return !frozen||frozen.cycle!==cycle?2:frozen.namedAffixVersion??0;}
-function championItemFactory(theme,{affixes=2}={}) {
+function encounterAffixes(state,id,cycle){const frozen=state.discoveryRolls?.[id];return !frozen||frozen.cycle!==cycle?3:frozen.namedAffixVersion??0;}
+function namedRollVersion(item,affixes){return affixes>=3?(['armor','helmet'].includes(item.slot)?8:7):affixes===2?7:affixes===1?5:item.ranged?4:3;}
+function championItemFactory(theme,{affixes=3}={}) {
   return (baseId,seed)=>{
     const base=getItem(baseId);
-    const named=(id,roll)=>createFamedItemId(id,roll,affixes?(base.slot==='attachment'?6:affixes===2?7:5):base.ranged?4:3);
+    const named=(id,roll)=>createFamedItemId(id,roll,base.slot==='attachment'?(affixes?6:3):namedRollVersion(getItem(id),affixes));
     if(base.slot==='attachment')return named(baseId,seed);
     if (base.slot !== 'weapon') {
       const maxProtection = theme === 'forest' ? (base.slot === 'armor' ? 150 : 110)
@@ -2888,14 +2889,14 @@ function championItemFactory(theme,{affixes=2}={}) {
     return named(pool.length?pool[seed%pool.length].id:baseId,seed);
   };
 }
-function rollEncounterNamed(state,encounter,enemies){return enemies.map((enemy,index)=>({...enemy,...Object.fromEntries(['armor','helmet','weapon','shield'].map(slot=>{const id=enemy[slot],item=getItem(id);return [slot,(item?.sourceArmor!==undefined||item?.sourceNamedWeapon||item?.sourceNamedShield)&&item.rarity==='named'?createFamedItemId(id,hashSeed(`${state.seed}:${encounter.id}:${encounter.generation??encounter.spawnCycle??0}:${index}:${slot}:named-rolls`),encounterAffixes(state,encounter.id,encounter.generation??encounter.spawnCycle??0)===2?7:encounterAffixes(state,encounter.id,encounter.generation??encounter.spawnCycle??0)===1?5:item.ranged?4:3):id];}))}));}
+function rollEncounterNamed(state,encounter,enemies){return enemies.map((enemy,index)=>({...enemy,...Object.fromEntries(['armor','helmet','weapon','shield'].map(slot=>{const id=enemy[slot],item=getItem(id);return [slot,(item?.sourceArmor!==undefined||item?.sourceNamedWeapon||item?.sourceNamedShield)&&item.rarity==='named'?createFamedItemId(id,hashSeed(`${state.seed}:${encounter.id}:${encounter.generation??encounter.spawnCycle??0}:${index}:${slot}:named-rolls`),namedRollVersion(item,encounterAffixes(state,encounter.id,encounter.generation??encounter.spawnCycle??0))):id];}))}));}
 
-function famedDropForCamp(seed,camp,affixVersion=2) {
+function famedDropForCamp(seed,camp,affixVersion=3) {
   const chance = (FAMED_CHANCES[camp.difficulty] ?? 0) + (camp.discoveryBonuses?.famed??0)/100;
   if (hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-roll`) % 10000 >= chance * 10000) return null;
   const bases = famedBasesForCamp(camp);
   const baseId = bases[hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-base`) % bases.length];
-  return createFamedItemId(baseId,hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-item`),affixVersion===2?7:affixVersion===1?5:getItem(baseId).ranged?4:3);
+  return createFamedItemId(baseId,hashSeed(`${seed}:${camp.id}:${camp.generation}:famed-item`),namedRollVersion(getItem(baseId),affixVersion));
 }
 
 function rareEnemyMount(seed, encounterId, cycle, x, y) {
@@ -6121,7 +6122,7 @@ function validateBattle(input, party, worldState) {
   const famedRoll = hashSeed(`${worldState.seed}:${encounter.id}:${campGeneration}:famed-roll`) % 10000;
   assert(famedDrop === null || encounterType === 'camp' && ['famed','named'].includes(famedItem?.rarity)
     && famedBasesForCamp({...encounter,difficulty})?.includes(famedItem.baseId)
-    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,2)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,3)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,5)||famedItem.slot==='weapon'&&famedItem.ranged&&famedDrop===createFamedItemId(famedItem.baseId,famedSeed,4)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
+    && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,2)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,3)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,5)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,7)||famedItem.slot==='weapon'&&famedItem.ranged&&famedDrop===createFamedItemId(famedItem.baseId,famedSeed,4)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
     && famedRoll < ((FAMED_CHANCES[difficulty] ?? 0)+discovery.famed/100) * 10000, 'battle famed drop');
   const previousRegionalCampName=encounterType==='camp'&&/^wild-camp-/.test(encounter.id)?worldCampText(encounter.x,encounter.y,encounter.enemies.length,Number(encounter.id.slice(10))-1).name:null;
   const legacyCampName = encounterType==='camp' && /^wild-camp-/.test(encounter.id) ? getRegionalCampText(authoredPoint(encounter).x,authoredPoint(encounter).y,difficulty,1,Number(encounter.id.slice(10))-1).name : null;
@@ -6555,7 +6556,7 @@ export function validateSave(input) {
   assert([0,1,2].includes(scoutLevel)&&(members.includes('scout')?scoutLevel>0:scoutLevel===0),'retinue scout');
   for(const [key,limit] of [['foodRemainder',4],['toolRemainder',4],['repairRemainder',3]])assert(retinue[key]===undefined||validCount(retinue[key])&&retinue[key]<=limit,'retinue savings');
   const discoveryRolls=input.discoveryRolls??{};
-  assert(recordObject(discoveryRolls)&&Object.entries(discoveryRolls).every(([id,roll])=>(isCampId(id)||BAND_BY_ID.has(id))&&recordObject(roll)&&(roll.championGearVersion===undefined||roll.championGearVersion===1)&&(roll.namedAffixVersion===undefined||[1,2].includes(roll.namedAffixVersion))&&validCount(roll.cycle)&&roll.cycle<=1000000&&[0,5,8,13].includes(roll.champion)&&[0,15].includes(roll.famed)&&[0,12].includes(roll.mount)),'discovery encounter rolls');
+  assert(recordObject(discoveryRolls)&&Object.entries(discoveryRolls).every(([id,roll])=>(isCampId(id)||BAND_BY_ID.has(id))&&recordObject(roll)&&(roll.championGearVersion===undefined||roll.championGearVersion===1)&&(roll.namedAffixVersion===undefined||[1,2,3].includes(roll.namedAffixVersion))&&validCount(roll.cycle)&&roll.cycle<=1000000&&[0,5,8,13].includes(roll.champion)&&[0,15].includes(roll.famed)&&[0,12].includes(roll.mount)),'discovery encounter rolls');
   const contractBoards=input.contractBoards??{};
   assert(recordObject(contractBoards)&&Object.entries(contractBoards).every(([id,board])=>TOWN_BY_ID.has(id)&&recordObject(board)&&Object.keys(board).length===2&&validCount(board.week)&&board.week<=Math.floor((input.day-1)/7)&&Array.isArray(board.used)&&board.used.length<=3&&board.used.every(c=>['courier','merchant','combat'].includes(c))&&new Set(board.used).size===board.used.length),'contract boards');
   const deserterBoards=input.deserterBoards??{};
