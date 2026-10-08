@@ -48,7 +48,7 @@ test('every shield and one-handed family share the right hand while the center c
       const right=s.x+pngSize(s.image)[0]*scale;
       assert.ok(s.x>=60,`${shield.id}: center chest x=38..60 remains visible`);
       assert.ok(s.x<=82 && right>=82,`${shield.id}: weapon and shield share the hand`);
-      const f=frame(html);assert.ok(f.x+right*f.scale<=104+1e-8,`${shield.id}: right edge is framed`);
+      const f=frame(html);assert.equal(f.scale,1,`${shield.id}: shield must not shrink the rider`);assert.match(html,/overflow:visible/);
       assert.match(w.image,/z-index:7/);assert.match(s.image,/z-index:6/);
     }
   }
@@ -65,13 +65,15 @@ test('one-handed melee weapons keep a 30-degree facing tilt at the hand anchor',
   }
 });
 
-test('tilted sword, mace, spear, axe and cleaver art fits the frame at every mount height',()=>{
+test('tilted sword, mace, spear, axe and cleaver art retains its unshrunk pose at every mount height',()=>{
   for(const id of ['arming-sword','bludgeon','spear','wood-axe','military-cleaver'])for(const mount of [null,...mounts]){
     const weapon=getItem(id),html=portraitHTML(person,{weapon,mount}),w=pose(html,'weapon'),f=frame(html),[width,height]=pngSize(w.image);
     for(const x of [0,width])for(const y of [0,height]){
       const [wx,wy]=transformedPoint(w.image,x,y);
       const px=f.x+(w.x+wx)*f.scale,py=f.y+(w.y+wy)*f.scale;
-      assert.ok(px>=-1e-8&&px<=104+1e-8&&py>=-1e-8&&py<=142+1e-8,`${id}${mount?` on ${mount.id}`:''}: art corner fits (${px},${py})`);
+      assert.equal(f.scale,1,`${id}: equipment cannot shrink the rider`);
+      assert.ok(Number.isFinite(px)&&Number.isFinite(py),`${id}: art corner remains positioned`);
+      assert.match(html,/overflow:visible/);
     }
   }
 });
@@ -85,7 +87,7 @@ test('mace shaft tilts about 30 degrees from upright toward the enemy',()=>{
   // Battle enemies mirror the whole portrait, so the same pose leans left toward them.
 });
 
-test('every two-handed melee family stays in proportion to the pawn and fits, including named mounted variants',()=>{
+test('every two-handed melee family retains its proportion and anchor, including named mounted variants',()=>{
   for(const weapon of weapons.filter(w=>w.twoHanded&&!w.ranged))for(const mount of [null,...mounts]){
     for(const item of [weapon,getItem(`famed:${weapon.id}:73`),{id:weapon.id,visual:weapon.visual}]){
       const html=portraitHTML(person,{weapon:item,mount,helmet:getItem('bb-flat-top-helmet')}),w=pose(html,'weapon'),f=frame(html);
@@ -98,7 +100,9 @@ test('every two-handed melee family stays in proportion to the pawn and fits, in
       for(const x of [0,width])for(const y of [0,height]){
         const px=f.x+(w.x+w.gx+scale*((x-w.gx)*Math.cos(angle)-(y-w.gy)*Math.sin(angle)))*f.scale;
         const py=f.y+(w.y+w.gy+scale*((x-w.gx)*Math.sin(angle)+(y-w.gy)*Math.cos(angle)))*f.scale;
-        assert.ok(px>=-1e-8&&px<=104+1e-8&&py>=-1e-8&&py<=142+1e-8,`${weapon.id}: blade and grip fit (${px},${py})`);
+        assert.equal(f.scale,1,`${weapon.id}: a large blade cannot shrink the character`);
+        assert.ok(Number.isFinite(px)&&Number.isFinite(py),`${weapon.id}: blade and grip remain positioned`);
+        assert.match(html,/overflow:visible/);
       }
       assert.ok(w.image.includes('--weapon-rest:')&&w.image.includes('--weapon-origin:'),`${weapon.id}: animations retain the rest pose`);
     }
@@ -176,17 +180,18 @@ test('every mount stays low on the right, visibly supports the rider and remains
     assert.ok(head.left>=64,`${mount.id}: animal is on the right, not beside the left arm`);
     assert.ok(head.top>=(mount.visual==='warhorse'||mount.visual==='armoredhorse'?35:54),`${mount.id}: animal cannot obscure the face`);
     assert.ok(head.bottom>=153.5&&head.bottom<=156,`${mount.id}: all muzzles meet the same plate`);
-    assert.ok(Math.abs(body.left-0)<1e-8&&Math.abs(body.right-(/warhorse|armoredhorse/.test(mount.visual)?140:129))<1e-8,`${mount.id}: rear body spans beneath the rider`);
+    assert.ok(Math.abs(body.left-41.6)<1e-8&&Math.abs(body.right-41.6-(/warhorse|armoredhorse/.test(mount.visual)?140:129))<1e-8,`${mount.id}: rear body spans beneath the rider`);
     assert.ok(Math.abs(body.top-(mount.visual==='warg'||mount.visual==='wolf'?78:/warhorse|armoredhorse/.test(mount.visual)?156-98*1.18:58))<1e-8&&Math.abs(body.bottom-156)<1e-8);
     const support=body.pixels.filter(([x,y])=>x>=45&&x<=80&&y>=112&&y<=146).length*Math.abs(body.sx*body.sy);
-    const grounded=body.pixels.filter(([x,y])=>x>=8&&x<=35&&y>=140&&y<=156&&((x-70)/70)**2+((y-149)/11)**2<=1).length*Math.abs(body.sx*body.sy);
+    const grounded=body.pixels.filter(([x,y])=>x>=49.6&&x<=76.6&&y>=140&&y<=156&&((x-90.8)/90.8)**2+((y-149)/11)**2<=1).length*Math.abs(body.sx*body.sy);
     assert.ok(grounded>30,`${mount.id}: lower-left haunch touches the actual plate ellipse (${grounded})`);
     assert.ok(support>100,`${mount.id}: actual opaque pixels support the rider (${support})`);
     const scale=[...s.image.match(/transform:([^;]+)/)[1].matchAll(/scale\(([\d.]+)\)/g)].reduce((n,m)=>n*Number(m[1]),1),right=s.x+pngSize(s.image)[0]*scale;
     assert.ok(right-s.x<=48+1e-8,'mounted shields cannot hide the whole animal');
     const visible=head.pixels.filter(([x])=>x>right+1).length*Math.abs(head.sx*head.sy);
     assert.ok(visible>100,`${mount.id}: recognizable mount remains visible beyond ${shield.id} (${visible})`);
-    for(const part of [head,body])assert.ok(f.x+part.left*f.scale>=-1e-8&&f.x+part.right*f.scale<=104+1e-8&&f.y+part.bottom*f.scale<=142+1e-8,`${mount.id}: opaque art is framed`);
+    assert.equal(f.scale,1,`${mount.id}: mount does not shrink the rider`);
+    assert.match(html,/overflow:visible/,`${mount.id}: enlarged mounts retain their full silhouette`);
     assert.equal((html.match(/data-layer="base-plate"/g)||[]).length,1);
     if(tag(html,'head'))assert.match(tag(html,'head'),/top:0px/);
   }
@@ -196,12 +201,12 @@ test('every mount stays low on the right, visibly supports the rider and remains
 
 test('mounted pawns stay grounded while enlarged war horses share the same base',()=>{
   const appearances=new Set();
-  const heads={'riding-horse':[78,54,1.25],'war-horse':[81,33.6544,1.2272],'armored-war-horse':[81,33.28,1.2272],'warg-mount':[139,70,.98],'dire-wolf-mount':[139,70,.98]};
+  const heads={'riding-horse':[119.6,54,1.25],'war-horse':[122.6,33.6544,1.2272],'armored-war-horse':[122.6,33.28,1.2272],'warg-mount':[180.6,70,.98],'dire-wolf-mount':[180.6,70,.98]};
   for(let seed=0;seed<24;seed++)for(const mount of mounts){
     const html=portraitHTML({name:'Rider',seed},{mount}),body=pose(html,'body'),raster=opaquePixels(body.image),head=pose(html,'mount-head');
     const rider=html.match(/data-layer="rider" style="([^"]+)"/)[1],drop=value(rider,'top');
     appearances.add(html.match(/data-appearance="(\d+)"/)[1]);
-    const touching=raster.pixels.filter(([x,y])=>{x+=body.x;y+=body.y+drop;return y>=140&&y<=160&&((x-70)/70)**2+((y-149)/11)**2<=1;});
+    const touching=raster.pixels.filter(([x,y])=>{x+=body.x;y+=body.y+drop;return y>=140&&y<=160&&((x-90.8)/90.8)**2+((y-149)/11)**2<=1;});
     assert.ok(touching.length>40,`${mount.id}: actual pawn pixels reach the base (${touching.length})`);
     assert.deepEqual([head.x,head.y,Number(head.image.match(/ scale\(([\d.]+)\)/)[1])],heads[mount.id],'animal feet remain anchored after the deliberate war-horse size change');
   }

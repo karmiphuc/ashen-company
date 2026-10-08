@@ -1,6 +1,7 @@
 import { getItem } from './engine.js';
 import { weaponSkillFamily } from './combat-skills.js';
 const MUSIC_URL = new URL('../assets/audio/heartfelt-battle.mp3', import.meta.url).href;
+const QUEST_URL = new URL('../assets/audio/quest-complete.mp3', import.meta.url).href;
 export const EFFECT_NAMES = Object.freeze(['swing', 'metal', 'impact', 'cloth', 'sword-swish', 'heavy-swish', 'thrust',
   'bow-release', 'dagger-swish', 'axe-chop', 'chain', 'crossbow-release', 'sling-release', 'whip-release', 'reload',
   'shield-wood', 'armor-clang', 'armor-dent', 'blunt-hit', 'pierce-hit', 'cut-hit', 'hammer-hit', 'flesh-hit', 'arrow-pierce', 'throwing-pierce', 'bolt-pierce',
@@ -67,6 +68,7 @@ export function combatSoundCue(event, duration = .55, {cinematic=false} = {}) {
 }
 
 export function createGameAudio({ createMusic = () => typeof Audio === 'function' ? new Audio(MUSIC_URL) : null,
+  createQuestSound = () => typeof Audio === 'function' ? new Audio(QUEST_URL) : null,
   createContext = () => { const Context = globalThis.AudioContext || globalThis.webkitAudioContext; return Context ? new Context() : null; },
   fetcher = (...args) => fetch(...args), storage, clock = () => performance.now() } = {}) {
   let preferences = { music: true, effects: true };
@@ -77,6 +79,29 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
   let scene = { active: false, playing: false, hidden: false, battleId: null }, lastEffectAt = -Infinity;
   const buffers = new Map(), voices = new Map();
   let pending = [], lastLoadAt = -Infinity;
+  let questSound=null, questUnlocked=false, questPriming=false, questPendingAt=null;
+  function stopQuestSound(){questPendingAt=null;questSound?.pause();}
+  function playQuestComplete(){
+    if(!preferences.effects||scene.hidden)return;
+    if(questPriming){questPendingAt=clock();return;}
+    try{
+      questSound??=createQuestSound();if(!questSound)return;
+      questSound.pause();questSound.currentTime=0;questSound.loop=false;questSound.volume=.45;
+      Promise.resolve(questSound.play()).catch(()=>{questUnlocked=false;});
+    }catch{}
+  }
+  function primeQuestSound(){
+    if(!preferences.effects||questUnlocked||questPriming)return;
+    try{
+      questSound??=createQuestSound();if(!questSound)return;
+      questSound.loop=false;questSound.volume=0;questPriming=true;
+      Promise.resolve(questSound.play()).then(()=>{questUnlocked=true;}).catch(()=>{}).finally(()=>{
+        questPriming=false;questSound.pause();questSound.currentTime=0;
+        const at=questPendingAt;questPendingAt=null;
+        if(at!==null&&clock()-at<2000)playQuestComplete();
+      });
+    }catch{questPriming=false;}
+  }
   const audible = () => preferences.effects && scene.active && scene.playing && !scene.hidden;
   const contact = name => /^(?:impact|metal|shield-.+|axe-chop|armor-.+|.+-hit|.+-pierce)$/.test(name);
   function stopVoice(source) {
@@ -91,6 +116,7 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
     for (const source of voices.keys()) stopVoice(source);
   }
   function applyScene() {
+    if(scene.hidden||!preferences.effects)stopQuestSound();
     const audible = scene.active && scene.playing && !scene.hidden;
     if (!audible || !preferences.effects) stopEffects();
     if (music && !priming) {
@@ -152,6 +178,7 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
   }
   function unlock() {
     if (scene.hidden) return;
+    primeQuestSound();
     if (preferences.effects) {
       try {
         context ??= createContext();
@@ -172,7 +199,7 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
     applyScene();
   }
   function sync(next) {
-    if (next.hidden) musicUnlocked = false;
+    if (next.hidden) { musicUnlocked = false; questUnlocked=false; }
     if (next.battleId !== scene.battleId) { stopEffects(); lastEffectAt = -Infinity; }
     if (next.battleId !== scene.battleId && music) { try { music.currentTime = 0; } catch {} }
     scene = { ...next };
@@ -199,5 +226,5 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
     try { storage?.setItem(SETTINGS_KEY, JSON.stringify(preferences)); } catch {}
     unlock(); applyScene();
   }
-  return { unlock, sync, playEvent, toggle, getPreferences: () => ({ ...preferences }) };
+  return { unlock, sync, playEvent, playQuestComplete, toggle, getPreferences: () => ({ ...preferences }) };
 }

@@ -260,3 +260,39 @@ test('neutral patrol casualties and victory apply once after a shared fight',()=
  assert.deepEqual(s.factionPatrols[army.id].troops,[2,5]);assert.equal(s.factionPatrols[army.id].wins,1);assert.equal(s.factionReports.length,1);assert.equal(s.worldSkirmishes.length,0);
  const after=structuredClone(s);assert.equal(finishBattle(s).ok,false);assert.deepEqual(s,after);assert.deepEqual(validateSave(s),s);
 });
+
+function respawnedRivalFight(){
+ const s=createGame(88),a=getFactionPatrols(s)[0],b=getFactionPatrols(s).find(p=>p.factionId==='eastern-march');
+ for(const p of Object.values(s.factionPatrols))p.cooldownUntil=14;
+ s.factionPatrols[a.id].cooldownUntil=0;
+ Object.assign(s.factionPatrols[b.id],{x:a.x,y:a.y,spawnCycle:3,cooldownUntil:0});
+ const context={settlements:SETTLEMENTS,getItem,hostiles:()=>[],currentHostile:()=>null,hostileResult:()=>assert.fail('patrol fight has no hostile result')};
+ s.hour=8.25;advanceFactionSimulation(s,context);assert.equal(s.worldSkirmishes.length,1);return {s,a,b,context};
+}
+
+test('respawned patrol defenders commit their current generation and survive mid-fight reload',()=>{
+ const {s,b,context}=respawnedRivalFight();assert.equal(getFactionPatrols(s).find(p=>p.id===b.id).spawnCycle,3);assert.equal(s.worldSkirmishes[0].bCycle,3);
+ const reloaded=validateSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(reloaded,s);
+ s.hour+=.25;reloaded.hour+=.25;advanceFactionSimulation(s,context);advanceFactionSimulation(reloaded,context);
+ assert.equal(s.worldSkirmishes.length,1);assert.deepEqual(s,reloaded);assert.deepEqual(validateSave(s),s);
+});
+
+test('legacy zero-generation patrol defender repairs only metadata without mutating input or company',()=>{
+ const {s,context}=respawnedRivalFight();s.worldSkirmishes[0].bCycle=0;const original=structuredClone(s),repaired=validateSave(s);
+ assert.deepEqual(s,original);const expected=structuredClone(original);expected.worldSkirmishes[0].bCycle=3;assert.deepEqual(repaired,expected);
+ assert.deepEqual(validateSave(repaired),repaired);
+ const end=repaired.worldSkirmishes[0].endHour;setTime(repaired,end);advanceFactionSimulation(repaired,context);
+ assert.equal(repaired.worldSkirmishes.length,0);assert.equal(repaired.factionReports.length,2);assert.deepEqual(validateSave(repaired),repaired);
+});
+
+test('generation recovery still rejects stale engagements, incorrect troops, outcomes and other generation errors',()=>{
+ const {s}=respawnedRivalFight();s.worldSkirmishes[0].bCycle=0;
+ for(const edit of [
+  s=>s.worldSkirmishes[0].bCycle=2,
+  s=>s.worldSkirmishes[0].aCycle=1,
+  s=>s.factionPatrols[s.worldSkirmishes[0].bId].behavior='touring',
+  s=>s.factionPatrols[s.worldSkirmishes[0].bId].targetId=null,
+  s=>s.worldSkirmishes[0].bTroops.pop(),
+  s=>s.worldSkirmishes[0].result.bSurvivors=[99],
+ ]){const bad=structuredClone(s);edit(bad);const before=structuredClone(bad);assert.throws(()=>validateSave(bad),/Invalid save/);assert.deepEqual(bad,before);}
+});

@@ -1,8 +1,11 @@
+import { DIREWOLF_HELMET_ART } from './direwolf-helmets.js';
+import { MOONFANG_ID, MOONFANG_ART } from './direwolf-crafting.js';
 // Local raster layers from Battle-Brothers-Legends/Legends-public.
 // See assets/portraits/legends-source.json for the pinned source manifest.
 import { DLC_ITEMS } from './dlc-items.js';
 import { NAMED_WEAPON_ART } from './named-weapon-art.js';
 import { DLC_ART } from './dlc-art.js';
+import { ANCIENT_RESTORATION_ART } from './ancient-restoration-art.js';
 import { FANTASY_ARMOR_VISUALS, FANTASY_HELMET_VISUALS, FANTASY_ITEM_IMAGES, FANTASY_APPEARANCES, FANTASY_CLOSED_HELMETS, FANTASY_HIDDEN_HEADS } from './fantasy-art.js';
 
 const PORTRAIT_ROOT = 'assets/portraits/';
@@ -181,7 +184,7 @@ export const VISUALS = {
     'stag-plates': { front: ['attachment-stag-plates.png', 5, 46] },
     'heraldic-shoulders': { front: ['attachment-heraldic-plates.png', 5, 46] },
     'double-mail': { front: ['attachment-double-mail.png', 5, 44] },
-    'direwolf-fur': { front: ['attachment-direwolf-fur.png', 5, 44] },
+    'direwolf-fur': { back: ['attachment-direwolf-fur-back.png', 0, 42, 'scale(.85)'], front: ['attachment-direwolf-fur.png', 5, 44] },
     'unhold-fur': { back: ['attachment-unhold-fur-back.png', 2, 42], front: ['attachment-unhold-fur-front.png', 5, 44] },
     'hyena-fur': { back: ['attachment-hyena-fur-back.png', 0, 42, 'scale(.8)'], front: ['attachment-hyena-fur-front.png', 5, 44] },
     'kraken-mantle': { front: ['attachment-kraken-mantle.png', 5, 46] },
@@ -272,7 +275,8 @@ const ONE_HANDED_DIMENSIONS = {
 // A mounted pawn is one silhouette, not a miniature rider beside an animal.
 // All species share this plate/envelope. Natural foreground heads sit on
 // connected rear bodies; the exposed lower body reaches a plate below the rider.
-const MOUNT_PLATE = {left: 0, top: 138, width: 140, height: 22};
+const MOUNT_SHIFT_X = CANVAS.width * .4;
+const MOUNT_PLATE = {left: 0, top: 138, width: 140 + MOUNT_SHIFT_X, height: 22};
 const MOUNT_BODY_BOUNDS = {
   'mount-horse-body.png':[4,9,74,96],
   'mount-war-horse-body.png':[37,20,115,117],
@@ -521,6 +525,10 @@ function visual(item) {
   return String(item?.visual || '').toLowerCase();
 }
 
+function ancientRestoredArt(item) {
+  return ANCIENT_RESTORATION_ART[item?.restorationSourceId]?.[item?.restorationFinish];
+}
+
 function layerSpec(category, item) {
   const named=NAMED_WEAPON_ART[item?.baseId||item?.id];
   if(category==='weapon'&&named){
@@ -537,7 +545,7 @@ function layerSpec(category, item) {
     const handY=heavy?Math.min(100,115-bottom):rangedPose?105:111;
     return [named.portrait,(heavy?78:rangedPose?70:82)-gx,handY-gy,`scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`,`${gx}px ${gy}px`];
   }
-  const source = DLC_ART[item?.baseId || item?.id || visual(item)];
+  const source = DIREWOLF_HELMET_ART[item?.baseId || item?.id] || ((item?.baseId || item?.id) === MOONFANG_ID ? MOONFANG_ART : null) || ancientRestoredArt(item) || DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];
   const id = String(item?.baseId || item?.id || '').toLowerCase();
@@ -554,7 +562,7 @@ function layer(name, spec, item) {
   const transformStyle = transform ? `${weaponStyle}transform:${transform};transform-origin:${origin};` : '';
   const famed = ['famed','named'].includes(item?.rarity) ? ' bb-layer-famed' : '';
   const zIndex = { armor: 1, ear: 4, helmet: 5, shield: 6, weapon: 7 }[name] ?? 0;
-  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${file.startsWith('data:') ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none;z-index:${zIndex}">`;
+  return `<img data-layer="${name}" class="bb-layer bb-layer-${name}${famed}" src="${/^(data:|\.\/)/.test(file) ? file : PORTRAIT_ROOT + file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;${transformStyle}max-width:none;pointer-events:none;z-index:${zIndex}">`;
 }
 
 function bodyLayer(file, armored, left = 11, top = 50) {
@@ -590,6 +598,7 @@ function mountLayer(spec, part) {
     left=facing===1?0-x1*sx:bodyWidth+x1*sx;top=bodyTop-y1*sy;
     transform=`scale(${facing*sx},${sy})`;
   }
+  left += MOUNT_SHIFT_X;
   return `<img data-layer="mount-${part}" class="bb-layer bb-layer-mount" src="${PORTRAIT_ROOT+file}" alt="" draggable="false" style="position:absolute;left:${left}px;top:${top}px;transform:${transform};transform-origin:top left;${filter?`filter:${filter};`:''}z-index:${part==='head'?5:0};max-width:none;pointer-events:none">`;
 }
 
@@ -640,7 +649,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
   const weapon = mountedWeapon(layerSpec('weapon', equipment.weapon), equipment.mount, equipment.weapon);
   const helmetVisual = visual(equipment.helmet);
   const coveredHead = Boolean(helmet);
-  const dlcHelmet = DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
+  const dlcHelmet = DIREWOLF_HELMET_ART[equipment.helmet?.baseId || equipment.helmet?.id] || ancientRestoredArt(equipment.helmet) || DLC_ART[equipment.helmet?.baseId || equipment.helmet?.id];
   const hiddenHead = FANTASY_HIDDEN_HEADS.includes(helmetVisual) || dlcHelmet?.hideHead;
   const closedHelmet = dlcHelmet?.hideBeard || helmetVisual === 'greathelm' || helmetVisual === 'full-helm' || FANTASY_CLOSED_HELMETS.includes(helmetVisual);
   const faceClip = helmetVisual === 'bascinet' ? 'clip-path:polygon(9px 17px,49px 17px,49px 54px,10px 58px);' : '';
@@ -655,7 +664,7 @@ export function portraitHTML(person = {}, equipment = {}, size = 160) {
         ${closedHelmet || !appearance.beard ? '' : `<img data-layer="beard" class="bb-layer bb-layer-beard" src="${PORTRAIT_ROOT}${appearance.beard}" alt="" draggable="false" style="position:absolute;left:27px;top:0;${faceClip}max-width:none;pointer-events:none;z-index:4">`}
         ${layer('helmet', helmet, equipment.helmet)}`;
 
-  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:visible;vertical-align:middle;background:transparent">
+  return `<span class="bb-portrait" data-portrait-canvas="${CANVAS.width}x${CANVAS.height}" data-appearance="${appearanceIndex}" style="display:inline-block;position:relative;width:${width}px;height:${height}px;overflow:visible;vertical-align:middle;background:transparent;--portrait-overhang:${mount?(MOUNT_PLATE.width-CANVAS.width)*scale:0}px">
     <span class="bb-portrait-canvas" style="display:block;position:absolute;width:104px;height:142px;transform:scale(${scale});transform-origin:top left">
       <span class="bb-portrait-composition" style="display:block;position:absolute;left:${compositionLeft}px;top:${compositionTop}px;width:104px;height:142px;${compositionTransform}">
         ${mount ? `<span data-layer="base-plate" class="bb-portrait-base" style="position:absolute;left:${MOUNT_PLATE.left}px;top:${MOUNT_PLATE.top}px;width:${MOUNT_PLATE.width}px;height:${MOUNT_PLATE.height}px;border-radius:50%;background:linear-gradient(#c4c5bc,#81847c 45%,#535850);border:2px solid #363b34;box-shadow:inset 0 -3px 0 #3d433a;box-sizing:border-box;z-index:0"></span>` : ''}
@@ -674,7 +683,11 @@ export const portraitSVG = portraitHTML;
 
 /** Return the locally packaged inventory icon for an engine item. */
 export function itemImage(item) {
+  const restored = ancientRestoredArt(item);
+  if (restored) return restored.icon;
   const id = item?.baseId || item?.id;
+  if (DIREWOLF_HELMET_ART[id]) return DIREWOLF_HELMET_ART[id].icon;
+  if (id === MOONFANG_ID) return MOONFANG_ART.icon;
   if(NAMED_WEAPON_ART[id])return NAMED_WEAPON_ART[id].icon;
   if (DLC_ART[id]) return DLC_ART[id].icon;
   return ITEM_IMAGES[id] ? `${ITEM_ROOT}${ITEM_IMAGES[id]}` : null;

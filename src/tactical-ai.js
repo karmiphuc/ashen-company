@@ -1,9 +1,23 @@
+import { equipmentRangedReach, equipmentBoost, equipmentPerk } from './item-affixes.js';
 import { hexDistance, hexLine } from './battle-terrain.js';
 
 export const COMBAT_ROLES = Object.freeze(['auto', 'frontliner', 'skirmisher', 'ranged', 'flanker', 'breaker']);
 export const SKILL_PREFERENCES = Object.freeze(['balanced', 'damage', 'control']);
-export const ENEMY_TACTIC_COOLDOWN = 5;
+export const ENEMY_TACTIC_COOLDOWN = 2;
 export const ENEMY_TACTICS = Object.freeze(['offense', 'defense', 'shield-wall', 'skirmish']);
+
+// Recomputed from living fighters: no saved flag can keep a recovered brother idle.
+export function shouldPreserveBrother(battle, actor) {
+  if (actor.side !== 'company' || actor.ally || !actor.alive || actor.escaped) return false;
+  const living = battle.units.filter(unit => unit.alive && !unit.escaped);
+  const allies = living.filter(unit => unit.side === actor.side);
+  const enemies = living.filter(unit => unit.side !== actor.side);
+  const health = unit => Math.max(0, Math.min(1, unit.hp / Math.max(1, unit.maxHp)));
+  if (!enemies.length || !allies.some(unit => unit.id !== actor.id && health(unit) > .5)) return false;
+  const strength = units => units.reduce((sum, unit) => sum + .25 + .75 * health(unit), 0);
+  const winning = strength(allies) >= strength(enemies) * 1.35;
+  return health(actor) <= (winning ? .45 : .25);
+}
 
 export function resolveCombatRole(member, weapon, reserveWeapon, equipment = {}) {
   if (COMBAT_ROLES.includes(member.combatRole) && member.combatRole !== 'auto') return member.combatRole;
@@ -88,7 +102,7 @@ export function recommendEnemyTactic(battle, getItem, companyAmmo) {
   const range = unit => {
     const weapon = getItem(unit.equipment.weapon);
     const bow = !weapon.throwing && weapon.visual?.includes('bow') && !weapon.visual.includes('crossbow');
-    return (weapon.range ?? 1) + (bow ? 1 + Number(Boolean(unit.perks?.includes('bow-mastery'))) : 0);
+    return (weapon.range ?? 1) + equipmentBoost(unit,'rangedReach',getItem) + (!weapon.throwing?equipmentRangedReach(unit,getItem):0) + (bow ? 1 + Number(Boolean(unit.perks?.includes('bow-mastery')||equipmentPerk(unit,'bow-mastery',getItem))) : 0);
   };
   const shooters = ranged(enemies);
   const threats = ranged(company).filter(unit => enemies.some(enemy => hexDistance(unit, enemy) <= range(unit)));

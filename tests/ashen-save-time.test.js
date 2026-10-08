@@ -17,7 +17,7 @@ function roundTrip(s){const input=JSON.parse(JSON.stringify(s)),before=structure
 test('fractional travel time preserves warning, activation, reinforcement and approach timestamps on reload',()=>{
  const s=active();assert.ok(!Number.isInteger(s.ashenWinter.activationHour*4));
  for(const h of Object.values(s.ashenWinter.hosts))assert.ok(!Number.isInteger(h.warningUntil*4));
- roundTrip(s);setTime(s,campaignHour(s)+C.spawnHours+.037);advanceAshenWinter(s,context);roundTrip(s);
+ roundTrip(s);setTime(s,campaignHour(s)+24+.037);advanceAshenWinter(s,context);roundTrip(s);
 });
 
 test('NPC host victory at the reported day-130 fractional time remains saveable without rounding protection',()=>{
@@ -36,7 +36,7 @@ test('player host victory, siege, occupation and liberation keep their fractiona
 });
 
 test('legacy crisis upgrade and final rewards preserve fractional campaign time',()=>{
- const s=active();s.ashenWinter.version=1;roundTrip(s);setTime(s,campaignHour(s)+.017);advanceAshenWinter(s,context);assert.equal(s.ashenWinter.version,2);roundTrip(s);
+ const s=active();for(const h of Object.values(s.ashenWinter.hosts))if(!h.id.endsWith(':1')){delete s.ashenWinter.towns[h.targetTownId];delete s.ashenWinter.hosts[h.id];}s.ashenWinter.fronts.forEach(f=>f.spawnIndex=1);s.ashenWinter.version=1;roundTrip(s);setTime(s,campaignHour(s)+.017);advanceAshenWinter(s,context);assert.equal(s.ashenWinter.version,3);roundTrip(s);
  for(const e of getUndeadEncounters(s).filter(e=>e.kind==='undead-commander'))resolveAshenObjective(s,e,context);
  assert.equal(s.ashenWinter.phase,'completed');assert.equal(s.ashenWinter.completedHour,campaignHour(s));assert.equal(s.ashenWinter.aftermath.completedHour,campaignHour(s));roundTrip(s);
 });

@@ -310,3 +310,35 @@ test('shield deflections exclude body contact; penetration plays each damaged ma
  const area={...hit,affectedTargets:Array.from({length:3},()=>({...hit,hit:true}))};
  assert.deepEqual(combatSoundCue(area).map(c=>c.name),['sword-swish','shield-slash','armor-slash','slash-hit']);
 });
+
+test('quest cue plays outside combat, restarts without overlap and respects mute/visibility',async()=>{
+ const sound=fakeMusic(),audio=createGameAudio({createQuestSound:()=>sound,createMusic:()=>null,createContext:()=>null,storage:emptyStorage});
+ const world={active:false,playing:false,hidden:false,battleId:null};audio.sync(world);audio.unlock();await flush();
+ assert.deepEqual(sound.plays,[0]);assert.equal(sound.paused,true);
+ audio.playQuestComplete();assert.equal(sound.plays.at(-1),.45);assert.equal(sound.loop,false);
+ sound.currentTime=1;audio.playQuestComplete();assert.equal(sound.currentTime,0);assert.equal(sound.plays.length,3);
+ audio.sync(world);assert.equal(sound.paused,false,'world render does not interrupt the tune');
+ audio.sync({...world,hidden:true});assert.equal(sound.paused,true);audio.playQuestComplete();assert.equal(sound.plays.length,3);
+ audio.sync(world);assert.equal(sound.paused,true,'returning does not replay a completion');
+ audio.toggle('effects');audio.playQuestComplete();assert.equal(sound.plays.length,3);
+});
+
+test('completion on the first gesture waits for silent priming exactly once',async()=>{
+ const sound=fakeMusic();let resolvePrime;sound.play=function(){this.plays.push(this.volume);this.paused=false;return this.plays.length===1?new Promise(resolve=>{resolvePrime=resolve;}):Promise.resolve();};
+ const audio=createGameAudio({createQuestSound:()=>sound,createMusic:()=>null,createContext:()=>null,storage:emptyStorage});
+ audio.unlock();audio.playQuestComplete();audio.playQuestComplete();assert.deepEqual(sound.plays,[0]);resolvePrime();await flush();
+ assert.deepEqual(sound.plays,[0,.45]);assert.equal(sound.paused,false);
+});
+
+test('quest audio tolerates absent support and rejected autoplay',async()=>{
+ const audio=createGameAudio({createQuestSound:()=>null,createMusic:()=>null,createContext:()=>null,storage:emptyStorage});assert.doesNotThrow(()=>{audio.unlock();audio.playQuestComplete();});
+ const sound=fakeMusic();sound.play=()=>Promise.reject(Error('gesture required'));
+ const blocked=createGameAudio({createQuestSound:()=>sound,createMusic:()=>null,createContext:()=>null,storage:emptyStorage});blocked.unlock();blocked.playQuestComplete();await flush();assert.equal(sound.paused,true);
+});
+
+test('hiding during gesture priming discards a queued completion',async()=>{
+ const sound=fakeMusic();let resolvePrime;sound.play=function(){this.plays.push(this.volume);return new Promise(resolve=>{resolvePrime=resolve;});};
+ const audio=createGameAudio({createQuestSound:()=>sound,createMusic:()=>null,createContext:()=>null,storage:emptyStorage});
+ audio.unlock();audio.playQuestComplete();audio.sync({active:false,playing:false,hidden:true,battleId:null});resolvePrime();await flush();
+ audio.sync({active:false,playing:false,hidden:false,battleId:null});assert.deepEqual(sound.plays,[0]);assert.equal(sound.paused,true);
+});

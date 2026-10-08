@@ -21,24 +21,6 @@
       "sha256": "6425a8cc187d930b324adf51823a017c9ac9dbd64f788e36a5983fc2f1cf61f7"
     },
     {
-      "itemId": "direwolf-fur",
-      "kind": "inventory",
-      "local": "assets/items/direwolf-fur.png",
-      "source": "gfx/ui/items/legend_armor/inventory_cloak_fur_01.png",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_cloak_fur_01.png",
-      "bytes": 10331,
-      "sha256": "fc0cf6817e6dafa46c38af08b9242e6ab6feccc78dfb7149b40132c50d403152"
-    },
-    {
-      "itemId": "direwolf-fur",
-      "kind": "front",
-      "local": "assets/portraits/attachment-direwolf-fur.png",
-      "source": "unpacked/legend_armor/entity/legend_armor/cloak_fur_01.png",
-      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/cloak_fur_01.png",
-      "bytes": 15064,
-      "sha256": "5351735fc976e947ccb757f6d03f5f8ec7e2ed64b430a7b3d2976f55733f1105"
-    },
-    {
       "itemId": "unhold-fur",
       "kind": "inventory",
       "local": "assets/items/unhold-fur.png",
@@ -91,6 +73,33 @@
       "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/cloak_fur_hyena_01_front.png",
       "bytes": 7996,
       "sha256": "05f9b9b0fda2c52cd8dfa6d0df86057909cb9c2fcb830eabec2f5b0adf33520f"
+    },
+    {
+      "itemId": "direwolf-fur",
+      "kind": "inventory",
+      "local": "assets/items/direwolf-fur.png",
+      "source": "gfx/ui/items/legend_armor/inventory_cloak_pelt_wolf_dire_01.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/legend_armor/inventory_cloak_pelt_wolf_dire_01.png",
+      "bytes": 8554,
+      "sha256": "30c2033d8aa466b9b0c2a94c53bda3bfc30142b1f1528212305afbd9e596256b"
+    },
+    {
+      "itemId": "direwolf-fur",
+      "kind": "front",
+      "local": "assets/portraits/attachment-direwolf-fur.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/front_back/cloak_pelt_wolf_dire_01_front.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/cloak_pelt_wolf_dire_01_front.png",
+      "bytes": 8219,
+      "sha256": "42a1fe63fed90782b727fdea1821a17c3ec0629ae5d53831d6b11a4b40f71677"
+    },
+    {
+      "itemId": "direwolf-fur",
+      "kind": "back",
+      "local": "assets/portraits/attachment-direwolf-fur-back.png",
+      "source": "unpacked/legend_armor/entity/legend_armor/front_back/cloak_pelt_wolf_dire_01_back.png",
+      "url": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_armor/entity/legend_armor/front_back/cloak_pelt_wolf_dire_01_back.png",
+      "bytes": 9220,
+      "sha256": "d41460f0b39b7d7659a80fb94ba27a2b22f7c4391ec4250e11d312b38fbb06d2"
     }
   ]
 }

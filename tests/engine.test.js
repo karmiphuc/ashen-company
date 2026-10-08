@@ -6,7 +6,9 @@ import {
   getMarket, buyFood, buyGood, sellGood, buyItem, sellItem, equipItem, unequipItem, recruit, camp, forage,
   getEquipment, terrainAt, validateSave, retreatBattle, finishBattle,
 } from '../src/engine.js';
-import { VISUALS } from '../src/portraits.js';
+import { MOONFANG_ID, MOONFANG_ART } from '../src/direwolf-crafting.js';
+import { DIREWOLF_HELMET_ART } from '../src/direwolf-helmets.js';
+import { VISUALS, portraitHTML } from '../src/portraits.js';
 
 function ownedItems(state) {
   return [...state.inventory, ...state.party.flatMap(person => Object.values(person.equipment).filter(Boolean))].sort();
@@ -39,7 +41,11 @@ test('new games are deterministic and start in Oakwatch with valid saves', () =>
 });
 
 test('every item visual is supported by the portrait renderer', () => {
-  for (const item of ITEMS) assert.ok(VISUALS[item.slot]?.[item.visual], `${item.id} has unsupported art`);
+  for (const item of ITEMS) {
+    const customArt = item.id === MOONFANG_ID ? MOONFANG_ART : DIREWOLF_HELMET_ART[item.id];
+    assert.ok(customArt || VISUALS[item.slot]?.[item.visual], `${item.id} has unsupported art`);
+    if (customArt) assert.ok(portraitHTML({ name: 'Veteran', seed: 3 }, { [item.slot]: item }).includes(customArt.portrait), `${item.id} renders its custom worn art`);
+  }
   for (const id of ['plate-harness', 'kettle-helm', 'greathelm', 'hunting-bow']) assert.ok(ITEMS.some(item => item.id === id));
 });
 

@@ -2,13 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+import {APP_VERSION} from '../src/release.js';
 const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
 const code=(name,next)=>app.slice(app.indexOf(`function ${name}(`),app.indexOf(`function ${next}(`));
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 
 test('Save menu renders the actual escaped load error instead of a literal template expression',()=>{
- let html;runInNewContext(code('settings','exportSave')+'settings();',{showModal:(title,content)=>html=content,esc,state:{},saveProblem:false,unreadSave:true,corruptSave:'{}',saveError:'Invalid save: <town deadlines>',companyAutomationHTML:()=>'',audioControlsHTML:()=>'',defaultBattleSpeed:4});
+ for(const BUILD_COMMIT of [null,'ab'.repeat(20)]){
+ let html;runInNewContext(code('settings','exportSave')+'settings();',{APP_VERSION,BUILD_COMMIT,showModal:(title,content)=>html=content,esc,state:{},saveProblem:false,unreadSave:true,corruptSave:'{}',saveError:'Invalid save: <town deadlines>',companyAutomationHTML:()=>'',combatBetaConfigHTML:()=>'',audioControlsHTML:()=>'',isWorldFogEnabled:()=>true,defaultBattleSpeed:4});
  assert.ok(html.includes('A save could not be loaded (Invalid save: &lt;town deadlines&gt;)'));assert.ok(!html.includes('${esc(saveError)}'));assert.ok(html.includes('data-action="export-recovery"'));
+ assert.ok(html.includes(`Version ${APP_VERSION}`));assert.equal(html.includes('Build abababab'),Boolean(BUILD_COMMIT));
+ }
 });
 
 test('rejected stored saves are preserved byte-for-byte and cannot be overwritten by autosave',()=>{

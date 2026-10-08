@@ -27,3 +27,30 @@ Reference material: [Battle Brothers developer update on Relentless](https://bat
 ## Throwing bundles
 
 Each throwing weapon carries five throws. Active and reserve bundles have separate counts; swapping sets or stowing a bundle does not refill it. The AI uses a loaded spare bundle or a melee backup when a bundle runs dry, and punches if nothing usable remains. Throwing consumes bundle charges in battle; equipped bundles refill after battle from company ammunition, one supply per restored throw. Buying ammunition or preparing for a valid fight also tops them up at the same supply cost. If supplies run short, the partial bundle persists. Looted and stowed bundles retain their remaining charges. Bows and crossbows keep their existing ammunition rules.
+
+Flankers approach outside the enemy melee line and avoid other enemies' melee reach while routing. Loaded throwing weapons fire from the wings instead of pursuing a distant archer when a wing shot is already available. A throwing flanker can draw a reserve dagger to attack an enemy engaged by an ally, provided a safe one-step approach, the swap, and an attack fit its AP and fatigue. This uses existing surround/backstab rules, rather than adding a new damage bonus. Breakers retain their role as frontline chargers.
+
+Dagger AI prefers an affordable Puncture against body armor, or Qatal Deathblow against a vulnerable target. Ordinary Stab takes priority when at least 75% of its successful damage rolls finish the enemy; it also remains available against unarmored targets or when the special cannot be afforded.
+
+Melee approach decisions reserve enough AP and fatigue for a real attack before
+entering new hostile melee reach. This applies to pursuit, formation advance,
+shield reformation and Skirmish movement. A shorter weapon budgets every step
+needed through a longer weapon's reach, including terrain costs, movement
+credits, mounts, mastery and dazed fatigue limits. Cautious fighters otherwise
+stage outside hostile reach, without reversing their previous approach. Safe
+movement still uses spare AP, and ranged targets do not impose a melee buffer.
+Healthy one-hex frontliners, working shield carriers and Breakers may push into
+one new opponent; wounded fighters and approaches into multiple new melee
+threats still require the attack budget. Already-engaged fighters remain free
+to attack or move without being forced to retreat. Legacy battles keep their
+previous approach policy.
+
+Double Grip automatically multiplies one-handed melee weapon damage by 1.25
+when the active offhand is empty. It applies to ordinary/named weapons, weapon
+skills and weapon reactions for all factions, and is included in AI damage
+predictions. It stacks multiplicatively with Duelist (1.25 × 1.12 = 1.40).
+Ranged/throwing weapons, two-handed weapons, unarmed attacks, mount bites and
+fixed damage do not receive it. Equipped shields, including broken shields,
+prevent Double Grip; reserve shields do not. Eligibility updates on weapon
+swaps without saving an extra stat. Older pre-completion battle rules stay
+unchanged. Weapon details and a battle status icon explain the bonus.

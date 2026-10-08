@@ -1,4 +1,13 @@
-# Verification - version 0.48.0, 2026-10-03
+# Verification
+
+## v0.53.0 temporary injury checks — 2026-10-05
+
+The repaired full Node run passes all 1,151 tests with zero failures, skips or cancellations after integrating main at `79b5977`. The earlier 11 baseline failures were stale expectations: portrait tests assumed equipment-dependent shrinking and clipping, the Company test expected the removed reserve-shield bar, and progression tests depended on one patrol's reward guaranteeing a level-up. Updated fixtures retain source anchors, full-size artwork, mount support and actual progression/save assertions; production portrait rendering and reward balance are unchanged.
+
+The follow-up also fixes shield-bypassing attacks subtracting full shield defense after injury reduction. A regression test compares bypassing a wounded shield with removing it; another verifies Colossus injury protection. All 52 focused injury/perk tests (23 injury tests) and 36 progression/rendering/shield checks pass.
+
+Chromium checks pass for wounds, Doctor treatment, hints and saved combat at 1400, 768 and 390 pixels. Integrated Marketplace, touch pan/pinch and log collapse, Settings-only automation and visible realtime mode pass at tablet portrait/landscape, desktop and phone sizes, without browser errors. Offline cache generation, all changed JavaScript syntax checks and whitespace checks pass. Physical iPad Safari remains untested. Permanent-injury survival stays outside this temporary-injury phase.
+
 
 ## v0.48.0 Ashen Winter checks
 

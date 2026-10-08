@@ -1,6 +1,8 @@
 import { townEventHash as hash } from './town-events.js';
 
 export const BOUNTY_HUNTER_COST = 5000;
+export const CHAMPION_BOUNTY = 300;
+export const CHAMPION_GEAR_CHANCE = .125;
 const EVENTS = [
   { id:'challengers', name:'Age of Challengers', champion:8, famed:0, mount:0, description:'Renowned fighters have gathered across the regions. Champion encounter chance rises by 8 percentage points.' },
   { id:'relic-rumors', name:'Relic Rumors', champion:0, famed:15, mount:0, description:'Old caches and trophy hoards are being uncovered. Camp named-item chance rises by 15 percentage points.' },
@@ -25,6 +27,31 @@ export function discoveryBonuses(state,encounter) {
 export function championChance(state,difficulty,bonus=0) {
   return difficulty<1?0:[0,1,3,6][difficulty]+bonus;
 }
+export function championExtraGear(state, encounter, enemy, index, getItem, createNamedItem) {
+  if (!enemy.champion && !/ Champion$/.test(enemy.name)) return {...enemy};
+  const cycle=encounter.generation??encounter.spawnCycle??encounter.acceptedDay??0;
+  const key=`${state.seed}:${encounter.id}:${cycle}:true-champion`,i=index;
+  const gear = {...enemy};
+  const frozen = state.discoveryRolls?.[encounter.id];
+  // Previously engaged generations retain their original loadouts.
+  if (!frozen || frozen.cycle !== cycle || frozen.championGearVersion === 1) {
+    const slots = i === 0 ? ['armor','helmet','shield','reserveWeapon','reserveShield'] : ['armor','helmet'];
+    for (const slot of slots) {
+      if (hash(`${key}:${i}:extra:${slot}:chance`) % 1000 >= CHAMPION_GEAR_CHANCE * 1000) continue;
+      const baseId = enemy[slot] ?? (slot === 'reserveWeapon' ? enemy.weapon : slot === 'reserveShield' ? enemy.shield : null);
+      const base = getItem(baseId);
+      if (!base || slot === 'reserveShield' && getItem(enemy.reserveWeapon ?? enemy.weapon)?.twoHanded) continue;
+      if (enemy[slot] && ['famed','named'].includes(base.rarity)) continue;
+      gear[slot] = createNamedItem(base.baseId ?? base.id, hash(`${key}:${i}:extra:${slot}:item`));
+    }
+    if (getItem(gear.reserveWeapon)?.twoHanded) gear.reserveShield = null;
+    if ((!frozen || frozen.cycle !== cycle || [1,2].includes(frozen.namedAffixVersion))
+      && ['famed','named'].includes(getItem(gear.armor)?.rarity) && getItem(gear.attachment)?.slot==='attachment'
+      && !getItem(gear.attachment).rollVersion)
+      gear.attachment=createNamedItem(gear.attachment,hash(`${key}:${i}:champion-attachment`));
+  }
+  return gear;
+}
 export function championRoster(state,encounter,getItem,createFamedItemId,{force=false}={}) {
   const bonus=discoveryBonuses(state,encounter),cycle=encounter.generation??encounter.spawnCycle??encounter.acceptedDay??0;
   const key=`${state.seed}:${encounter.id}:${cycle}:true-champion`;
@@ -38,8 +65,9 @@ export function championRoster(state,encounter,getItem,createFamedItemId,{force=
     const weapon=getItem(enemy.weapon);
     if(!weapon)return {...enemy};
     const named=['famed','named'].includes(weapon.rarity)?weapon.id:createFamedItemId(weapon.id,hash(`${key}:${i}:weapon`));
+    const gear = championExtraGear(state, encounter, {...enemy,champion:true}, i, getItem, createFamedItemId);
     const title=['the Blooded','the Unbroken','the Crow','the Oathless'][hash(i===0?`${key}:title`:`${key}:${i}:title`)%4];
-    return {...enemy,weapon:named,champion:true,championItemId:named,name:`${enemy.name.replace(/ Champion$/,'')} ${title} Champion`.slice(0,80)};
+    return {...gear,weapon:named,champion:true,championItemId:named,name:`${enemy.name.replace(/ Champion$/,'')} ${title} Champion`.slice(0,80)};
   });
 }
 export function bountyOffer(state,town,serial,point,factionId) {

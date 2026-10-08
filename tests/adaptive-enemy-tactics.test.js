@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {setSimultaneousBetaEnabled} from '../src/combat-config.js';
 import assert from 'node:assert/strict';
 import {createGame,getCampSites,startBattle,advanceBattle,validateSave,getItem,shieldMaximum,setBattleTactic,resolveBattle} from '../src/engine.js';
 import {enemyBattleTactic,recommendEnemyTactic,updateEnemyTactic,ENEMY_TACTIC_COOLDOWN} from '../src/tactical-ai.js';
@@ -7,7 +8,7 @@ import {battleHTML} from '../src/battle-view.js';
 
 function fixture(shielded=true) {
  const s=createGame(51),camp=getCampSites(s).find(c=>c.id==='wild-camp-8');s.position={x:camp.x,y:camp.y};assert.ok(startBattle(s,camp.id).ok);
- const b=s.battle;for(const tile of b.field.tiles){tile.terrain='open';tile.height=0;}
+ const b=s.battle,openingTactic=b.enemyTacticalState.tactic;for(const tile of b.field.tiles){tile.terrain='open';tile.height=0;}
  const company=b.units.filter(u=>u.side==='company');
  company.forEach((u,i)=>Object.assign(u,{q:i===0?4:3,r:8+i*2,equipment:{...u.equipment,weapon:'hunting-bow',shield:null},shieldDurability:0,maxShieldDurability:0,rangedSkill:100}));
  // Keep battle and campaign equipment aligned for save validation.
@@ -19,7 +20,7 @@ function fixture(shielded=true) {
    tacticalRole:front?'frontliner':'ranged',equipment:{...u.equipment,weapon:front?'arming-sword':'light-crossbow',shield},
    shieldDurability:shieldMaximum(shield),maxShieldDurability:shieldMaximum(shield),reload:0,throwingAmmo:{active:0,reserve:0}});
  });
- b.enemyTacticalState.tactic='defense';return{s,b,company,foes,front:foes[0],archer:foes[2]};
+ b.enemyTacticalState.tactic='defense';return{s,b,company,foes,openingTactic,front:foes[0],archer:foes[2]};
 }
 function activate(f,u){f.b.activeId=u.id;f.b.turnIndex=f.b.turnOrder.indexOf(u.id);}
 function step(f,u){activate(f,u);assert.ok(advanceBattle(f.s).ok);return f.b.lastEvent;}
@@ -43,15 +44,15 @@ test('ranged defenders only hold when they can actually counterfire and melee co
  const empty=fixture();assert.equal(recommendEnemyTactic(empty.b,getItem,0),'offense','no current incoming arrows when the company is out of ammo');
 });
 
-test('commands commit at most once per round and never less than five full rounds apart',()=>{
+test('commands commit at most once per round and never less than two full rounds apart',()=>{
  const f=fixture(),initialRng=f.b.rng;
- for(let round=1;round<=5;round++){f.b.round=round;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'defense');}
- f.b.round=6;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');
+ for(let round=1;round<=2;round++){f.b.round=round;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'defense');}
+ f.b.round=3;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');
  for(const [i,u] of f.company.entries())Object.assign(u,{q:7,r:8+i*2});
- for(let round=7;round<6+ENEMY_TACTIC_COOLDOWN;round++){f.b.round=round;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');}
- f.b.round=11;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'offense');
+ for(let round=4;round<3+ENEMY_TACTIC_COOLDOWN;round++){f.b.round=round;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');}
+ f.b.round=5;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'offense');
  for(const [i,u] of f.company.entries())Object.assign(u,{q:4,r:8+i*2});
- assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(f.b.enemyTacticalState.lastChangedRound,11);assert.equal(f.b.rng,initialRng);
+ assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(f.b.enemyTacticalState.lastChangedRound,5);assert.equal(f.b.rng,initialRng);
  const snapshot=structuredClone(f.s);for(let i=0;i<20;i++){enemyBattleTactic(f.b,getItem);battleHTML(f.b,0);}
  assert.deepEqual(f.s,snapshot,'reading intent never reevaluates or spends randomness');
 });
@@ -65,7 +66,7 @@ test('shielded frontliners raise their shields then advance despite sustained ar
  const moved={q:f.front.q,r:f.front.r};step(f,f.front);assert.deepEqual({q:f.front.q,r:f.front.r},moved,'one protected infantry step per round');
  assert.deepEqual(f.b.formationAdvance,companyPlan,'enemy movements cannot rewrite company formation');
  assert.equal(f.b.log.filter(line=>line.includes('Enemy tactic changes')).length,1);assert.deepEqual(validateSave(structuredClone(f.s)),f.s);
- assert.match(battleHTML(f.b,0),/Shield-wall advance/);assert.match(battleHTML(f.b,0),/Change cooldown: 5 rounds/);
+ assert.match(battleHTML(f.b,0),/Shield-wall advance/);assert.match(battleHTML(f.b,0),/Change cooldown: 2 rounds/);
 });
 
 test('deep archers advance into firing range while infantry maintain the shield-wall command',()=>{
@@ -86,8 +87,8 @@ test('shield-wall movement makes progress when the remaining AP cannot cover bot
 test('losing shield coverage releases shield-wall commands only after the committed cooldown',()=>{
  const f=fixture();f.b.round=6;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));
  for(const u of f.foes)u.shieldDurability=0;
- f.b.round=10;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');
- f.b.round=11;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'skirmish');
+ f.b.round=7;assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false);assert.equal(enemyBattleTactic(f.b,getItem),'shield-wall');
+ f.b.round=8;assert.ok(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo));assert.equal(enemyBattleTactic(f.b,getItem),'skirmish');
 });
 
 test('enemy skirmish sorties persist through reload and fall back after shooting without company-order interference',()=>{
@@ -123,9 +124,28 @@ test('adaptive camp battles resolve identically with stepped reloads and instant
   const instant=structuredClone(s);assert.ok(resolveBattle(instant).ok);let loaded=s,lastChange=loaded.battle.enemyTacticalState.lastChangedRound;
   for(let action=0;action<2500&&loaded.battle.status==='active';action++){
    assert.ok(advanceBattle(loaded).ok);loaded=validateSave(structuredClone(loaded));const current=loaded.battle.enemyTacticalState.lastChangedRound;
-   if(current!==lastChange){assert.ok(current-lastChange>=5);lastChange=current;}
+   if(current!==lastChange){assert.ok(current-lastChange>=2);lastChange=current;}
    assert.ok(loaded.battle.units.filter(u=>u.alive).every(u=>!['palisade','dense-trees'].includes(tileAt(loaded.battle.field,u.q,u.r).terrain)));
   }
   assert.notEqual(loaded.battle.status,'active');assert.deepEqual(loaded,instant);
+ }
+});
+
+
+test('new enemies open offensively for two rounds/cycles then adapt, including ranged-heavy camps and reloads',()=>{
+ for(const simultaneous of [false,true]){
+  setSimultaneousBetaEnabled(simultaneous);let f;
+  try{f=fixture();}finally{setSimultaneousBetaEnabled(false);}
+  assert.equal(f.openingTactic,'offense');assert.equal(!!f.b.simultaneous,simultaneous);
+  f.b.enemyTacticalState.tactic=f.openingTactic;
+  for(const [i,u] of f.foes.slice(2).entries())Object.assign(u,{q:8,r:7+i*2});
+  assert.equal(recommendEnemyTactic(f.b,getItem,f.s.supplies.ammo),'defense');
+  for(const round of [1,2,3]){
+   f.b.round=round;if(simultaneous){f.b.simultaneous.time=(round-1)*6000;f.b.simultaneous.roundEndsAt=round*6000;}
+   const changed=updateEnemyTactic(f.b,getItem,f.s.supplies.ammo);
+   assert.equal(changed,round===3);assert.equal(enemyBattleTactic(f.b,getItem),round<3?'offense':'defense');
+   refresh(f);assert.equal(enemyBattleTactic(f.b,getItem),round<3?'offense':'defense');
+   assert.equal(updateEnemyTactic(f.b,getItem,f.s.supplies.ammo),false,'same-round calls cannot change the command');
+  }
  }
 });
