@@ -52,8 +52,10 @@ test('old identities retain their original armor, zero fatigue relief and forge 
 test('modern armor credit is bounded through subsequent forging without changing old forge behavior',()=>{
  const a={locked:false,foundation:{weight:80,armorPct:20},prefixes:[],suffixes:[]};
  const item=g.getItem(encodeBoundedForgeItem('bb-noble-gear',a,catalog));
- assert.equal(item.fatigue,-11);assert.ok(item.forgeWarnings.some(w=>w.includes('Fatigue load capped at -11')));
+ assert.equal(item.fatigue,-11);assert.ok(item.forgeWarnings.some(w=>w.includes('Fatigue relief capped at 11')));
  const restored=g.getItem(encodeBoundedForgeItem('bb-noble-gear',extractForgeAffixes(item,catalog),catalog));assert.equal(restored.fatigue,-11);
+ const heavy=g.getItem(encodeBoundedForgeItem('plate-harness',a,catalog));
+ assert.equal(heavy.fatigue,g.getItem('plate-harness').fatigue-11);
 });
 
 test('an engaged expanded-affix encounter keeps its version-7 armor while new encounters use version 8',()=>{

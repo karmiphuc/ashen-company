@@ -77,7 +77,9 @@ export function resolveForgeItem(id,catalog){
 export function applyForgeProfile(definition,p,id,affixes=null){
  const b=forgeBaseline(definition),item={...b,id,baseId:definition.id,rarity:'famed',forgeProfile:Object.freeze({...p}),forgeVersion:1,name:`${definition.name} — Reforged`},capped=[];
  const cap=(key,value,min,max)=>{const actual=Math.min(max,Math.max(min,value));if(actual!==value)capped.push(`${key} capped at ${actual}`);return actual;};
- item.fatigue=cap('Fatigue load',(b.fatigue??0)-(p.weight??0),id.startsWith('forge5:')&&['armor','helmet'].includes(b.slot)?-11:0,80);
+ const signedArmor=id.startsWith('forge5:')&&['armor','helmet'].includes(b.slot);
+ const relief=signedArmor?cap('Fatigue relief',p.weight??0,0,11):p.weight??0;
+ item.fatigue=cap('Fatigue load',(b.fatigue??0)-relief,signedArmor?-11:0,80);
  item.fatigueOnSkillUse=(b.fatigueOnSkillUse??0)-(p.skillFatigue??0);
  if(['armor','helmet'].includes(b.slot)){
   item.armor=cap('Protection',Math.floor(b.armor*(1+(p.armorPct??0)/100))+(p.armorFlat??0),0,b.slot==='armor'?650:500);
