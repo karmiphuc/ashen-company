@@ -179,7 +179,7 @@ test('passive stat perks apply their stated rounded bonuses', () => {
   captain.level = 20;
   const base = getCompanyStats(captain);
   captain.perks = ['shield-expert'];
-  assert.equal(getCompanyStats(captain).meleeDefense, base.meleeDefense + 2);
+  assert.equal(getCompanyStats(captain).meleeDefense, base.meleeDefense + 3);
   captain.perks = ['brawny'];
   assert.ok(getCompanyStats(captain).maxFatigue > base.maxFatigue);
   assert.ok(getCompanyStats(captain).initiative > base.initiative);

@@ -1,3 +1,4 @@
+import {currentShieldId} from '../src/shield-balance.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -16,7 +17,7 @@ test('world area shrinks exactly 33%, retaining original towns, all nine regions
    assert.deepEqual(old,original);assert.deepEqual(restored.position,compactPoint(old.position));
    if(old.destination)assert.deepEqual(restored.destination,compactPoint(old.destination));
    for(const [id,band]of Object.entries(old.bands))assert.deepEqual({x:restored.bands[id].x,y:restored.bands[id].y},compactPoint(band));
-   if(old.battle)assert.deepEqual(restored.battle,old.battle);
+   if(old.battle)assert.deepEqual(JSON.parse(JSON.stringify(restored.battle),(_key,value)=>typeof value==='string'?currentShieldId(value):value),old.battle);
    assert.deepEqual(validateSave(restored),restored);
  }
 });

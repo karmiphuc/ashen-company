@@ -1,3 +1,4 @@
+import {currentShieldId} from '../src/shield-balance.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -154,7 +155,8 @@ test('real v0.44.6 active battle at a newly ancient site retains its original na
   const {state}=JSON.parse(readFileSync(new URL('./fixtures/regional-battle-v0446.json',import.meta.url)));
   const restored=validateSave(state);
   assert.notEqual(getCampSites(restored).find(c=>c.id===state.battle.campId).name,state.battle.encounterName);
-  assert.deepEqual(restored.battle.units,state.battle.units);
+  // Only hidden legacy shield IDs differ; every tactical field must remain exact.
+  assert.deepEqual(JSON.parse(JSON.stringify(restored.battle.units),(_key,value)=>typeof value==='string'?currentShieldId(value):value),state.battle.units);
   assert.equal(restored.battle.encounterName,state.battle.encounterName);
   assert.deepEqual(restored.battle.turnOrder,state.battle.turnOrder);
   assert.equal(restored.battle.rng,state.battle.rng);

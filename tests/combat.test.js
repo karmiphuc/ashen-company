@@ -179,7 +179,7 @@ test('shields raise defense while armor absorbs damage in a real battle', () => 
   const site = getCampSites(equipped)[0];
   const shielded = getCompanyStats(equipped.party[0]);
   const bareStats = getCompanyStats({ ...equipped.party[0], equipment: { ...equipped.party[0].equipment, shield: null } });
-  assert.equal(shielded.meleeDefense - bareStats.meleeDefense, 8);
+  assert.equal(shielded.meleeDefense - bareStats.meleeDefense, 10);
   const bare = structuredClone(equipped);
   for (const person of bare.party) {
     person.equipment.armor = null;
