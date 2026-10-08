@@ -3545,7 +3545,8 @@ function chooseBattleWeapon(state, actor, enemies) {
     const swapCost=hasPerk(actor,'quick-hands') && actor.freeSwapRound!==state.battle.round?0:4;
     if (!active?.ranged && !reserve?.ranged && reserve) {
       const backup=nearest===1 && (active?.range??1)>1 && (reserve.range??1)===1;
-      const restore=nearest>=2 && (active?.range??1)===1 && (reserve.range??1)>1;
+      const restore=nearest>=2 && (active?.range??1)===1 && (reserve.range??1)>1
+        && !(combatCommand(state.battle,actor)==='shield-wall' && actor.equipment.shield && actor.shieldDurability>0);
       if ((backup && canAfford(state.battle,actor,swapCost+attackApCost(reserve,state.battle,actor),attackFatigueCost(actor,reserve,state.battle)))
         || restore && actor.ap>=swapCost) {
         return switchBattleSet(state,actor,`${actor.name} draws ${reserve.name} ${backup?'for close fighting':'to support the line'}.`);

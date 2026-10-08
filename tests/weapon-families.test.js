@@ -382,6 +382,8 @@ test('each weapon family chooses its situational signature over an ordinary atta
   ];
   for (const [weapon, expected, configure] of scenarios) await t.test(weapon, () => {
     const { state, battle, actor, at } = battleWith(weapon);
+    // Exercise Hook's offensive use; Auto's Reach Support deliberately preserves spacing.
+    if (weapon === 'billhook') actor.tacticalRole = 'frontliner';
     const target = at('enemy-1', weapon === 'billhook' ? 4 : 3, 2);
     target.hp = target.maxHp = 250;
     actor.meleeSkill = actor.rangedSkill = 200;
