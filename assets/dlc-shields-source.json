@@ -966,7 +966,7 @@
     },
     {
       "path": "scripts/items/shields/buckler_shield.nut",
-      "reason": "Existing campaign shield preserved",
+      "reason": "Existing OG-balanced campaign shield",
       "existingId": "buckler"
     },
     {
@@ -987,12 +987,12 @@
     },
     {
       "path": "scripts/items/shields/heater_shield.nut",
-      "reason": "Existing campaign shield preserved",
+      "reason": "Existing OG-balanced campaign shield",
       "existingId": "heater-shield"
     },
     {
       "path": "scripts/items/shields/kite_shield.nut",
-      "reason": "Existing campaign shield preserved",
+      "reason": "Existing OG-balanced campaign shield",
       "existingId": "kite-shield"
     },
     {
@@ -1005,7 +1005,7 @@
     },
     {
       "path": "scripts/items/shields/oriental/southern_light_shield.nut",
-      "reason": "Existing campaign shield preserved",
+      "reason": "Existing OG-balanced campaign shield",
       "existingId": "adarga"
     },
     {
@@ -1014,7 +1014,7 @@
     },
     {
       "path": "scripts/items/shields/wooden_shield.nut",
-      "reason": "Existing campaign shield preserved",
+      "reason": "Existing OG-balanced campaign shield",
       "existingId": "round-shield"
     }
   ],

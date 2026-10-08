@@ -122,8 +122,9 @@ test('reach weapons deal with adjacent threats before a farther pursuit or focus
 test('Offense permits Shieldwall only when surrounded by two or more enemies', () => {
   for (const count of [1, 2]) {
     const { state, battle, actor, at } = setup();
-    actor.equipment.shield = 'kite-shield';
-    actor.shieldDurability = actor.maxShieldDurability = shieldMaximum('kite-shield');
+    // Use the melee-focused OG heater; kites prioritize ranged defense.
+    actor.equipment.shield = 'heater-shield';
+    actor.shieldDurability = actor.maxShieldDurability = shieldMaximum('heater-shield');
     actor.perks = ['shield-expert', 'shield-bearer'];
     actor.skillPreference = 'control';
     const first = at('enemy-1', 5, 4);

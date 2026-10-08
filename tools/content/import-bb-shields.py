@@ -38,7 +38,7 @@ records, excluded = [], []
 for path in paths:
     stem = pathlib.PurePosixPath(path).stem
     if stem in existing:
-        excluded.append({'path':path,'reason':'Existing campaign shield preserved','existingId':existing[stem]}); continue
+        excluded.append({'path':path,'reason':'Existing OG-balanced campaign shield','existingId':existing[stem]}); continue
     if stem in ['shield','named_shield'] or '/greenskins/' in path or '/beasts/' in path or stem=='named_orc_heavy_shield':
         excluded.append({'path':path,'reason':'Abstract parent or creature-specific equipment'}); continue
     text = fetch(path).decode(); variant_match = re.search(r'this\.m\.Variant\s*=\s*(?:this.Math.rand\()?([0-9]+)', text)
