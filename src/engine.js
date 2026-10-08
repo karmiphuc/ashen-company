@@ -306,7 +306,7 @@ export function mergeOwnedNamedBonuses(state) {
 
 
 // Legendary side quests are independent of the ordinary contract slot.
-function blacksmithEncounter(state,stage,acceptedDay){
+function blacksmithEncounter(state,stage,acceptedDay,{shieldDesigns=true}={}){
  const town=TOWN_BY_ID.get('ironford'),spec=BLACKSMITH_STAGES[stage-1],seed=hashSeed(`${state.seed}:blacksmith:${stage}:${acceptedDay}:v1`);
  const radii=stage===2?[210,270,330]:stage===3?[470,530,610]:[680,740,810];let point=null;
  for(const radius of radii)for(let j=0;j<24&&!point;j++){
@@ -315,9 +315,9 @@ function blacksmithEncounter(state,stage,acceptedDay){
  }
  if(!point)throw new TypeError('No reachable blacksmith quest site.');
  const pool=stage===3?ancientEnemies(3):worldEnemyTemplates(point.x,point.y,spec.difficulty);
- const enemies=Array.from({length:spec.size},(_,i)=>regionalOutfit(pool[(i+seed%pool.length)%pool.length],`blacksmith:${seed}`,i,point.x,point.y,spec.difficulty,{champions:false,...(stage===3?{theme:'ancient'}:{})}));
+ const enemies=Array.from({length:spec.size},(_,i)=>regionalOutfit(pool[(i+seed%pool.length)%pool.length],`blacksmith:${seed}`,i,point.x,point.y,spec.difficulty,{champions:false,shieldDesigns,...(stage===3?{theme:'ancient'}:{})}));
  if(stage===4){enemies[0]={...enemies[0],name:'The Collector',weapon:createFamedItemId('arming-sword',hashSeed(`${seed}:collector`),3),champion:true};enemies[0].championItemId=enemies[0].weapon;}
- return {id:`blacksmith-${stage}-${seed}`,name:spec.site,kind:'blacksmith',...point,difficulty:spec.difficulty,enemies,reward:100+spec.difficulty*95,acceptedDay,ancient:stage===3};
+ return {id:`blacksmith-${stage}-${seed}`,...(shieldDesigns?{shieldDesignsVersion:1}:{}),name:spec.site,kind:'blacksmith',...point,difficulty:spec.difficulty,enemies,reward:100+spec.difficulty*95,acceptedDay,ancient:stage===3};
 }
 export function getBlacksmithQuestEncounters(state){return blacksmithEncounters(state);}
 export function checkBlacksmithDiscovery(state){
@@ -6829,7 +6829,7 @@ export function validateSave(input) {
       && (['caravan','patrol'].includes(destinationAction.type) || UNDEAD_TYPES.includes(destinationAction.type) || input.destination.x === target.x && input.destination.y === target.y), 'destination action target');
     if (destinationAction.type === 'camp') assert(!target.cleared && destinationAction.generation === target.generation, 'destination camp generation');
   }
-  const legendaryBlacksmith=validateBlacksmith(input.legendaryBlacksmith,input.day,{getItem,validPoint,shieldMaximum,expectedReward:createFamedItemId('arming-sword',hashSeed(`${input.seed}:blacksmith:reward:v1`),3),expectedEncounter:(stage,day)=>blacksmithEncounter(input,stage,day)});
+  const legendaryBlacksmith=validateBlacksmith(input.legendaryBlacksmith,input.day,{getItem,validPoint,shieldMaximum,expectedReward:createFamedItemId('arming-sword',hashSeed(`${input.seed}:blacksmith:reward:v1`),3),expectedEncounter:(stage,day)=>blacksmithEncounter(input,stage,day,{shieldDesigns:input.legendaryBlacksmith?.quests[stage-1]?.encounter?.shieldDesignsVersion===1})});
   const battle = validateBattle(input.battle, input.party, input);
   assert(!battle || battle.tactic === tactic, 'battle tactic');
   assert(!battle || input.destination === null && pursuit === null && (battle.encounterType==='blacksmith'?Boolean(getBlacksmithQuestEncounters(input).find(e=>e.id===battle.campId)):UNDEAD_TYPES.includes(battle.encounterType) ? Boolean(getUndeadEncounters(input).find(e => e.id === battle.campId)) : battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');

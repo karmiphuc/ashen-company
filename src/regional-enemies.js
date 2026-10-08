@@ -41,7 +41,7 @@ export function worldCampText(x,y,enemyCount,index) {
 // Stable rolls use authored IDs, campaign seed and generation, never the frame clock.
 function hash(value) { let h=2166136261;for(const char of String(value)){h^=char.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0; }
 const pools = new Map();
-export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true,theme=armoryTheme(regionAt(x,y).id)}={}) {
+export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true,shieldDesigns=true,theme=armoryTheme(regionAt(x,y).id)}={}) {
   if(difficulty===0)return {...enemy};
   const result={...enemy,name:enemy.name.replace(/ Champion$/,'')},role=enemyCombatRole(enemy);
   for(const slot of ['armor','helmet']) {
@@ -57,7 +57,7 @@ export function regionalOutfit(enemy,seed,index,x,y,difficulty,{champions=true,t
     if(choices.length)result[slot]=choices[hash(`${seed}:${index}:${slot}`)%choices.length].id;
   }
   // Only existing shield bearers receive imported shields; no new unit types.
-  if(result.shield){
+  if(shieldDesigns&&result.shield){
     const choices=DLC_SHIELDS.filter(item=>item.sourceKind==='ordinary'
       &&(theme==='ancient'?item.sourceCulture==='ancient':item.sourceCulture!=='ancient'&&(!item.region||item.region===theme))
       &&item.fatigue<=[0,12,16,20][difficulty]);

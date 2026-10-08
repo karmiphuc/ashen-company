@@ -63,9 +63,16 @@ test('an imported shield can block, break and validate in actual combat',()=>{
 });
 
 test('named shield durability rolls start from source durability rather than a previously improved display roll',()=>{
- for(const base of DLC_SHIELDS.filter(i=>i.sourceNamedShield))for(const seed of [0,1,1234,4294967295]){
-  const id=createFamedItemId(base.id,seed),actual=getItem(id);
-  const expected=rollNamedItem(base,id,seed,{merged:true,rulesVersion:3,shieldDurability:base.sourceStats.durability});
+ for(const base of DLC_SHIELDS.filter(i=>i.sourceNamedShield))for(const seed of [0,1,1234,4294967295])for(const version of [3,7]){
+  const id=createFamedItemId(base.id,seed,version),actual=getItem(id);
+  const expected=rollNamedItem(base,id,seed,{merged:true,rangeRoll:version>=4,rulesVersion:version,shieldDurability:base.sourceStats.durability});
   assert.deepEqual(actual,expected,base.id);assert.ok(actual.durability<=Math.round(base.sourceStats.durability*1.6));
  }
+});
+
+test('pre-shield blacksmith quests retain their exact accepted enemy roster on reload',()=>{
+ const state=createGame(731);state.legendaryBlacksmith=JSON.parse(readFileSync(new URL('./fixtures/blacksmith-before-shields.json',import.meta.url)));
+ const loaded=validateSave(structuredClone(state));
+ assert.deepEqual(loaded.legendaryBlacksmith,state.legendaryBlacksmith);
+ assert.equal(loaded.legendaryBlacksmith.quests[1].encounter.shieldDesignsVersion,undefined);
 });
