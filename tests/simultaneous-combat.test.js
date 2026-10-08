@@ -99,9 +99,9 @@ test('47-fighter allied undead battle retains troop ownership, roles, unique hex
  const restored=validateSave(JSON.parse(JSON.stringify(s)));advanceSimultaneousBattle(s,200);advanceSimultaneousBattle(restored,200);assert.deepEqual(s,restored);
 });
 
-test('45-fighter fortified marshal battle remains saveable with full named equipment',()=>{
+test('large fortified marshal battle remains saveable with full named equipment',()=>{
  const s=veteranCompany(720),camp=getUndeadEncounters(s).find(e=>e.kind==='undead-commander');s.position={x:camp.x,y:camp.y};setSimultaneousBetaEnabled(true);assert.ok(startBattle(s,camp.id).ok);setSimultaneousBetaEnabled(false);
- assert.equal(s.battle.units.length,45);const marshal=s.battle.units.find(u=>u.troopIndex===0);for(const slot of ['weapon','armor','helmet','shield'])assert.ok(['named','famed'].includes(getItem(marshal.equipment[slot]).rarity));
+ assert.equal(s.battle.units.filter(u=>u.side==='enemy').length,30);assert.equal(s.battle.units.filter(u=>u.side==='company'&&!u.ally).length,15);const allies=s.battle.units.filter(u=>u.ally);assert.ok(allies.length>=3&&allies.length<=6);assert.ok(allies.some(u=>!u.name.startsWith('Militia')));const marshal=s.battle.units.find(u=>u.troopIndex===0);for(const slot of ['weapon','armor','helmet','shield'])assert.ok(['named','famed'].includes(getItem(marshal.equipment[slot]).rarity));
  for(let i=0;i<60&&s.battle.status==='active';i++){advanceSimultaneousBattle(s,100);if(i%20===0)safe(s);}safe(s);
 });
 
