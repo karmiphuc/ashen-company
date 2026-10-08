@@ -1,3 +1,4 @@
+import { PERFORMANCE_KEYS, newBattlePerformance, recordBattlePerformance } from './battle-performance.js';
 import {PREVIOUS_SHIELDS,previousShieldDefinitions,migrateShieldBalance,rebalanceShieldCondition} from './shield-balance.js';
 import { EQUIPMENT_SET_RULES_VERSION, isEquipmentSetRulesVersion, effectiveArmorFatigue, effectiveAttachmentFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
 import { equipmentPerk, equipmentBoost, equipmentRangedReach, rollAttachment } from './item-affixes.js';
@@ -3244,6 +3245,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [], itemConditions: [] },
     casualties: [], xp: {},
   };
+  for (const unit of battle.units) unit.battleStats = newBattlePerformance();
   battle.enemyTacticalState = {tactic:'offense',lastChangedRound:1,lastEvaluatedRound:0,lastRangedAttackRound:0};
   battle.enemyAdaptiveRulesVersion = 1;
   for (const unit of battle.units) unit.movementCredit = Math.max(0, movementBudget(unit, battle) - 2) * 2;
@@ -4415,7 +4417,9 @@ function attackTarget(state, actor, target, weapon, option = null) {
     target.attachmentArmor -= attachmentDamage;
     target.bodyArmor = Math.max(0, target.bodyArmor - (armorDamage - attachmentDamage - outerDamage));
   }
+  const hpBefore = target.hp;
   target.hp = Math.max(0, target.hp - hpDamage);
+  recordBattlePerformance(actor,target,hpBefore-target.hp,Math.min(armorBefore,armorDamage),hpBefore>0 && target.hp===0);
   if ((['knock-out', 'stunning-stone'].includes(option?.id) || option?.stunChance && battleRoll(battle)<option.stunChance) && target.hp > 0 && !target.stunProtected) {
     target.stunnedTurns = 1;
     markSimultaneousEffect(battle,target,'stunnedTurns',1);
@@ -5970,6 +5974,15 @@ export function getLootKeepQuote(state, keepIndices = []) {
   return { ...getLootShareQuote(state, donateIndices), keepIndices: [...keepIndices], donateIndices };
 }
 
+export function getNamedLootKeepQuote(state, weaponsOnly = false) {
+  if (state.battle?.status !== 'victory') return null;
+  const keepIndices=state.battle.loot.items.flatMap((id,index)=>{
+    const item=getItem(id);
+    return item?.rarity==='famed' && (!weaponsOnly || item.slot==='weapon') ? [index] : [];
+  });
+  return getLootKeepQuote(state,keepIndices);
+}
+
 export function finishBattle(state, { shareLootIndices = [] } = {}) {
   const battle = state.battle;
   if (!battle || battle.status === 'active') return result(false, 'Finish the fight before claiming its result.');
@@ -6381,6 +6394,9 @@ function validateBattle(input, party, worldState) {
       && getItem(unit.equipment.weapon)?.ranged && recordObject(unit.skirmishReturn)
       && Object.keys(unit.skirmishReturn).sort().join(',')==='phase,q,r' && passableHex(unit.skirmishReturn,field)
       && ['aim','return'].includes(unit.skirmishReturn.phase),'battle skirmish return');
+    if (unit.battleStats !== undefined) assert(recordObject(unit.battleStats)
+      && Object.keys(unit.battleStats).length === PERFORMANCE_KEYS.length
+      && PERFORMANCE_KEYS.every(key=>validCount(unit.battleStats[key])), 'battle performance stats');
     assert(unit.tacticalRole === undefined || COMBAT_ROLES.includes(unit.tacticalRole) && unit.tacticalRole !== 'auto', 'battle tactical role');
     assert(unit.skillPreference === undefined || SKILL_PREFERENCES.includes(unit.skillPreference), 'battle skill preference');
     assert(unit.reload === undefined || validCount(unit.reload) && unit.reload <= 2, 'battle reload');
@@ -6389,6 +6405,7 @@ function validateBattle(input, party, worldState) {
       id: unit.id, name: unit.name, side: unit.side, ...(unit.ally ? { ally: true } : {}), q: unit.q, r: unit.r,
       ...(input.injuryRulesVersion===1?{injuries:copyInjuries(unit.injuries)}:{}),
       ...(unit.setArmor===undefined?{}:{setArmor:structuredClone(unit.setArmor)}),
+      ...(unit.battleStats === undefined ? {} : {battleStats:{...unit.battleStats}}),
       hp: unit.hp, maxHp: unit.maxHp, bodyArmor: unit.bodyArmor, attachmentArmor, headArmor: unit.headArmor,
       maxBodyArmor: unit.maxBodyArmor, maxAttachmentArmor, ...(input.attachmentRulesVersion===1?{attachment2Armor,maxAttachment2Armor}:{}), maxHeadArmor: unit.maxHeadArmor,
       equipment: Object.fromEntries(SLOTS.filter(slot=>slot!=='attachment2'||input.attachmentRulesVersion===1||unit.equipment.attachment2!==undefined).map(slot => [slot, unit.equipment[slot] ?? null])),
