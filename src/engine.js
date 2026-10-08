@@ -4175,7 +4175,7 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   if(option?.dot)return {hp:option.fixedHealth,armorDamage:0,before:0};
   const bonus = option?.id === 'deathblow' && (target.stunnedTurns > 0 || battle.weaponCompletionVersion===1&&(target.dazedTurns>0||target.affixDazedTurns>0)) ? 1.5
     : option?.id === 'decapitate' && target.hp < target.maxHp ? 1.4
-      : option?.id === 'power-throw' ? 1.25 : ['knock-out', 'stunning-stone'].includes(option?.id) ? .5 : option?.damageMultiplier ?? 1;
+      : option?.id === 'power-throw' ? 1.25 : ['knock-out', 'stunning-stone'].includes(option?.id) ? option?.damageMultiplier ?? .5 : option?.damageMultiplier ?? 1;
   const damageMultiplier = (battle.weaponCompletionVersion===1 ? 1+getDoubleGripBonus(actor,weapon) : 1)
     * injuryMultiplier(actor,'damage')
     * (ranged&&equipmentBoost(actor,'rangedReach',getItem)?.88:1)
@@ -4184,7 +4184,7 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
     * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1)
     * (hasPerk(actor, 'polearm-training') && weaponMasteryMatches('polearm-training', weapon) ? 1.1 : 1)
     * (hasPerk(actor, 'shield-strike') && !ranged && actor.equipment.shield && actor.shieldDurability > 0 ? 1.1 : 1)
-    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && (!actor.equipment.shield || actor.shieldDurability === 0) ? 1.12+equipmentBoost(actor,'duelistPct',getItem)/100 : 1)
+    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && (!actor.equipment.shield || actor.shieldDurability === 0 || (getItem(actor.equipment.shield)?.baseId??actor.equipment.shield)==='buckler') ? 1.12+equipmentBoost(actor,'duelistPct',getItem)/100 : 1)
     * (hasPerk(actor, 'opportunist') && !ranged
       && (option?.areaAction && option.shieldWasUsable !== undefined ? !option.shieldWasUsable
         : !target.equipment.shield || target.shieldDurability === 0) ? 1.1 : 1)
