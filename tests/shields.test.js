@@ -22,9 +22,9 @@ function addItem(state, id, condition) {
 test('shield maximum, equipped condition, pack transfers, and set swaps preserve zero', () => {
   const state = createGame(801);
   const captain = state.party[0];
-  assert.equal(shieldMaximum('buckler'), 24);
-  assert.equal(shieldMaximum('kite-shield'), 80);
-  assert.equal(captain.armorDurability.shield, 24);
+  assert.equal(shieldMaximum('buckler'), 16);
+  assert.equal(shieldMaximum('kite-shield'), 48);
+  assert.equal(captain.armorDurability.shield, 16);
   addItem(state, 'kite-shield', 0);
   assert.equal(equipItem(state, 'captain', 'kite-shield', 'reserve').ok, true);
   assert.equal(captain.armorDurability.reserveShield, 0);
@@ -54,7 +54,7 @@ test('melee misses and hits wear shields; a break removes defense without losing
   advanceBattle(state);
   assert.equal(battle.lastEvent.type, 'miss');
   assert.equal(captain.shieldDurability, 0);
-  assert.equal(captain.meleeDefense, defense - 8);
+  assert.equal(captain.meleeDefense, defense - 10);
   assert.equal(captain.equipment.shield, 'buckler');
   assert.ok(battle.log.some(entry => entry.includes('Buckler breaks')));
   assert.deepEqual(validateSave(state), state);
@@ -73,7 +73,7 @@ test('melee misses and hits wear shields; a break removes defense without losing
   hitBattle.rng = 0;
   advanceBattle(hit);
   assert.equal(hitBattle.lastEvent.type, 'attack');
-  assert.equal(defender.shieldDurability, 23);
+  assert.equal(defender.shieldDurability, 15);
 });
 
 test('battle set swaps carry durability back to original sets, including legacy swapped saves', () => {
@@ -112,12 +112,12 @@ test('battle set swaps carry durability back to original sets, including legacy 
   const legacy = validateSave(state);
   const migrated = legacy.battle.units.find(entry => entry.id === 'captain');
   assert.equal(migrated.battleSetSwapped, true);
-  assert.equal(migrated.shieldDurability, 80);
-  assert.equal(migrated.reserveShieldDurability, 24);
+  assert.equal(migrated.shieldDurability, 48);
+  assert.equal(migrated.reserveShieldDurability, 16);
   assert.equal(retreatBattle(legacy).ok, true);
   assert.equal(finishBattle(legacy).ok, true);
-  assert.equal(legacy.party[0].armorDurability.shield, 24);
-  assert.equal(legacy.party[0].armorDurability.reserveShield, 80);
+  assert.equal(legacy.party[0].armorDurability.shield, 16);
+  assert.equal(legacy.party[0].armorDurability.reserveShield, 48);
   assert.deepEqual(validateSave(legacy), legacy);
 });
 
@@ -162,16 +162,16 @@ test('rest and smithy repair active and reserve shields', () => {
   captain.armorDurability.shield = 0;
   const quote = getTownServiceQuote(state, 'smithy', 'captain');
   assert.equal(quote.ok, true);
-  assert.ok(quote.entries[0].repairs.some(repair => repair.set === 'active' && repair.slot === 'shield' && repair.missing === 24));
-  assert.ok(quote.entries[0].repairs.some(repair => repair.set === 'reserve' && repair.slot === 'shield' && repair.missing === 80));
+  assert.ok(quote.entries[0].repairs.some(repair => repair.set === 'active' && repair.slot === 'shield' && repair.missing === 16));
+  assert.ok(quote.entries[0].repairs.some(repair => repair.set === 'reserve' && repair.slot === 'shield' && repair.missing === 48));
   assert.equal(useTownService(state, 'smithy', 'captain').ok, true);
-  assert.equal(captain.armorDurability.shield, 24);
-  assert.equal(captain.armorDurability.reserveShield, 80);
+  assert.equal(captain.armorDurability.shield, 16);
+  assert.equal(captain.armorDurability.reserveShield, 48);
   captain.armorDurability.shield = 0;
   captain.armorDurability.reserveShield = 0;
   state.supplies.tools = 2;
   assert.equal(camp(state).ok, true);
-  assert.equal(captain.armorDurability.shield, 24);
+  assert.equal(captain.armorDurability.shield, 16);
   assert.equal(captain.armorDurability.reserveShield, 25);
   assert.deepEqual(validateSave(state), state);
 });
@@ -182,8 +182,8 @@ test('legacy null shield condition restores full, while zero survives and over-m
   state.inventoryCondition[buckler] = null;
   delete state.party[0].armorDurability.shield;
   const loaded = validateSave(state);
-  assert.equal(loaded.inventoryCondition[buckler], 24);
-  assert.equal(loaded.party[0].armorDurability.shield, 24);
+  assert.equal(loaded.inventoryCondition[buckler], 16);
+  assert.equal(loaded.party[0].armorDurability.shield, 16);
   const broken = structuredClone(loaded);
   broken.inventoryCondition[buckler] = 0;
   broken.party[0].armorDurability.shield = 0;

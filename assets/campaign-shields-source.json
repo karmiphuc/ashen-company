@@ -1,0 +1,88 @@
+{
+  "repository": "kovasap/battle-bros-decompiled",
+  "commit": "e06d68df0915827967f98a05d0c705c1f53df0b7",
+  "records": [
+    {
+      "source": "scripts/items/shields/buckler_shield.nut",
+      "sha256": "86ab850f07c6525734e8b8668d64eec8f4a46b08c1d61d0353aa3217d847e9ac",
+      "stats": {
+        "defense": 10,
+        "rangedDefense": 5,
+        "durability": 16,
+        "fatigue": 4
+      },
+      "campaignIds": [
+        "buckler"
+      ]
+    },
+    {
+      "source": "scripts/items/shields/wooden_shield.nut",
+      "sha256": "31ebf4374e39d4c5a64a17a08ae9b2232b653779b58ac8bd4cff98bd154ccf9f",
+      "stats": {
+        "defense": 15,
+        "rangedDefense": 15,
+        "durability": 24,
+        "fatigue": 10
+      },
+      "campaignIds": [
+        "round-shield",
+        "painted-round-shield",
+        "northern-heartwood-shield"
+      ]
+    },
+    {
+      "source": "scripts/items/shields/heater_shield.nut",
+      "sha256": "5ba8bd10ef8d78d07a1fde4cfbad40f09fc8fa24f1ab4549c8eb14558cb8dbfb",
+      "stats": {
+        "defense": 20,
+        "rangedDefense": 15,
+        "durability": 32,
+        "fatigue": 14
+      },
+      "campaignIds": [
+        "heater-shield",
+        "painted-heater-shield"
+      ]
+    },
+    {
+      "source": "scripts/items/shields/kite_shield.nut",
+      "sha256": "cad78607c8fcc080f736817f1c07cdb5d0af6aa85e6097d8f51c45c7117db32b",
+      "stats": {
+        "defense": 15,
+        "rangedDefense": 25,
+        "durability": 48,
+        "fatigue": 16
+      },
+      "campaignIds": [
+        "kite-shield",
+        "painted-tower-shield"
+      ]
+    },
+    {
+      "source": "scripts/items/shields/oriental/southern_light_shield.nut",
+      "sha256": "ce00c10b7f336743670f7f388fac7e9e8386a51b2d33e584c932962f6c841ce0",
+      "stats": {
+        "defense": 15,
+        "rangedDefense": 20,
+        "durability": 18,
+        "fatigue": 10
+      },
+      "campaignIds": [
+        "adarga"
+      ]
+    },
+    {
+      "source": "scripts/items/shields/oriental/metal_round_shield.nut",
+      "sha256": "9a884c06a0b2ac2a43decab3d3d4619f6f68c10f50220a83a41e2ac6bfc5ef9a",
+      "stats": {
+        "defense": 18,
+        "rangedDefense": 18,
+        "durability": 60,
+        "fatigue": 18
+      },
+      "campaignIds": [
+        "northern-iron-round-shield"
+      ]
+    }
+  ]
+}

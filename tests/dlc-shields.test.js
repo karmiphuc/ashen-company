@@ -14,11 +14,11 @@ import {listOfflineAssets} from '../tools/build-cache.mjs';
 const source=JSON.parse(readFileSync(new URL('../assets/dlc-shields-source.json',import.meta.url)));
 const png=uri=>Buffer.from(uri.split(',')[1],'base64');
 const digest=uri=>createHash('sha256').update(png(uri)).digest('hex');
-test('shield source inventory accounts for all classes without changing existing shield definitions',()=>{
+test('shield source inventory accounts for all classes with OG-balanced existing shield definitions',()=>{
  assert.equal(DLC_SHIELDS.length,26);assert.equal(source.records.length+source.excluded.length,39);
  assert.equal(new Set(ITEMS.map(i=>i.id)).size,ITEMS.length);
  for(const row of source.records){assert.deepEqual(getItem(row.item.id),row.item);assert.match(row.sourceSha256,/^[a-f0-9]{64}$/);}
- assert.equal(shieldMaximum('buckler'),24);assert.equal(shieldMaximum('kite-shield'),80);
+ assert.equal(shieldMaximum('buckler'),16);assert.equal(shieldMaximum('kite-shield'),48);
  for(const item of DLC_SHIELDS){assert.equal(item.slot,'shield');assert.ok(item.defense>0&&item.rangedDefense>0&&item.durability>0);assert.ok(item.id.length<=40);}
 });
 test('every shield uses source inventory art and an offhand layer contained in the native portrait',()=>{

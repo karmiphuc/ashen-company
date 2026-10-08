@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,getCampSites,startBattle,advanceBattle,setBattleTactic,getItem,throwingCapacity,validateSave,resolveBattle,acceptContract,getContractTarget} from '../src/engine.js';
+import {createGame,getCampSites,startBattle,advanceBattle,setBattleTactic,getItem,shieldMaximum,throwingCapacity,validateSave,resolveBattle,acceptContract,getContractTarget} from '../src/engine.js';
 import {COMBAT_ROLES,resolveCombatRole} from '../src/tactical-ai.js';
 import {tileAt} from '../src/battle-terrain.js';
 import {findOffer} from './helpers/contract-offers.js';
 
 function fight({weapon='arming-sword',reserve=null,reserveShield=null,role='frontliner',tactic='offense',quick=false}={}){
  const state=createGame(6901),person=state.party[0];person.combatRole=role;person.equipment.weapon=weapon;person.equipment.shield=null;person.armorDurability.shield=0;
- person.reserveEquipment={weapon:reserve,shield:reserveShield};person.armorDurability.reserveShield=reserveShield?48:0;
+ person.reserveEquipment={weapon:reserve,shield:reserveShield};person.armorDurability.reserveShield=shieldMaximum(reserveShield);
  person.throwingAmmo={active:throwingCapacity(weapon),reserve:throwingCapacity(reserve)};
  if(quick){person.level=7;person.perks.push('quick-hands');}
  if(tactic==='skirmish'){const scout=state.party.find(p=>p.id==='scout');scout.equipment.weapon='hunting-bow';scout.equipment.shield=null;scout.armorDurability.shield=0;}

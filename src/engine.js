@@ -1,3 +1,4 @@
+import {PREVIOUS_SHIELDS,previousShieldDefinitions,migrateShieldBalance,rebalanceShieldCondition} from './shield-balance.js';
 import { EQUIPMENT_SET_RULES_VERSION, isEquipmentSetRulesVersion, effectiveArmorFatigue, effectiveAttachmentFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
 import { equipmentPerk, equipmentBoost, equipmentRangedReach, rollAttachment } from './item-affixes.js';
 import { recordQuestCompletion } from './quest-completion.js';
@@ -73,9 +74,9 @@ export const ITEMS = Object.freeze([
   { id: 'billhook', name: 'Billhook', slot: 'weapon', visual: 'billhook', price: 235, power: 22, damageMin: 22, damageMax: 34, hitBonus: 0, armorDamage: 1.25, range: 2, twoHanded: true, fatigueCost: 15, description: 'A hooked polearm that strikes from behind the line.' },
   { id: 'hunting-bow', name: 'Hunting Bow', slot: 'weapon', visual: 'bow', price: 185, power: 17, damageMin: 16, damageMax: 26, hitBonus: 0, armorDamage: .6, range: 4, ranged: true, twoHanded: true, description: 'A springy yew bow with a bundle of arrows.' },
   { id: 'light-crossbow', name: 'Light Crossbow', slot: 'weapon', visual: 'crossbow', price: 285, power: 27, damageMin: 25, damageMax: 38, hitBonus: 8, armorDamage: 1.2, armorPiercing: .45, range: 5, ranged: true, twoHanded: true, reloadTurns: 1, description: 'A hard shot that must be reloaded after firing.' },
-  { id: 'buckler', name: 'Buckler', slot: 'shield', visual: 'round', price: 60, armor: 6, defense: 8, fatigue: 2, description: 'Light protection for a quick fighter.' },
-  { id: 'round-shield', name: 'Round Shield', slot: 'shield', visual: 'round', price: 120, armor: 12, defense: 13, fatigue: 5, description: 'Wood and iron across the forearm.' },
-  { id: 'kite-shield', name: 'Kite Shield', slot: 'shield', visual: 'kite', price: 220, armor: 20, defense: 18, fatigue: 8, description: 'Broad cover for a crowded road.' },
+  { id: 'buckler', name: 'Buckler', slot: 'shield', visual: 'round', price: 60, armor: 10, defense: 10, rangedDefense: 5, durability: 16, fatigue: 4, description: 'Light protection for a quick fighter.' },
+  { id: 'round-shield', name: 'Round Shield', slot: 'shield', visual: 'round', price: 120, armor: 15, defense: 15, rangedDefense: 15, durability: 24, fatigue: 10, description: 'Wood and iron across the forearm.' },
+  { id: 'kite-shield', name: 'Kite Shield', slot: 'shield', visual: 'kite', price: 220, armor: 15, defense: 15, rangedDefense: 25, durability: 48, fatigue: 16, description: 'Broad cover for a crowded road.' },
   ...ADDITIONAL_ITEMS,
   ...ARMOR_ATTACHMENTS,
   ...NORTHERN_ITEMS,
@@ -192,7 +193,7 @@ const ROAMING_BANDS = Object.freeze([
   ...REGIONAL_SETTLEMENTS.map((compactTown, index) => { const town=authoredPoint(compactTown);return ({ id: `${compactTown.id}-patrol`, name: `${compactTown.name} ${compactTown.kind === 'castle' ? 'Deserters' : 'Waylayers'}`, difficulty: compactTown.kind === 'village' ? 1 : compactTown.kind === 'castle' ? 3 : 2, start: { x: town.x - 100, y: town.y + 50 }, end: { x: Math.min(4950, town.x + 130), y: Math.max(85, town.y - 50) } });}),
 ].map(band=>Object.freeze({...band,start:compactPoint(band.start),end:compactPoint(band.end)})));
 
-const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]));
+const ITEM_BY_ID = new Map([...ITEMS,...previousShieldDefinitions(ITEMS)].map(item => [item.id, item]));
 const FAMED_ID = /^(famed8|famed7|famed6|famed5|famed4|famed3|famed2|famed):([a-z0-9-]{1,40}):(0|[1-9][0-9]{0,9})$/;
 const FAMED_NAMES = ['Ashen', 'Blackthorn', 'Dawnward', 'Grimwolf', 'Ironbound', 'Oathkeeper', 'Ravenmark', 'Stormborn', 'Thornheart', 'Wolfguard'];
 
@@ -258,6 +259,7 @@ function resolveItem(id) {
     bonuses.push({ label: signature.label, value: `+${signature.value}` });
   } else if (original.slot === 'shield') {
     item.defense = (original.defense ?? 0) + 2 + roll(0) % 4;
+    if(Object.hasOwn(PREVIOUS_SHIELDS,original.id))item.rangedDefense=(original.rangedDefense??original.defense??0)+2+roll(0)%4;
     item.fatigue = Math.max(0, (original.fatigue ?? 0) - (1 + roll(4) % 3));
     bonuses.push({ label: 'Melee and ranged defense', value: `+${item.defense - original.defense}` });
     if (item.fatigue < original.fatigue) bonuses.push({ label: 'Fatigue cost', value: `-${original.fatigue - item.fatigue}` });
@@ -945,7 +947,7 @@ export function getCompanyTravelBonus(state) {
 export function createGame(seed = Date.now()) {
   const numericSeed = hashSeed(seed);
   const state = {
-    version: 1,
+    version: 1, shieldBalanceVersion:1,
     ancientRestorationSerial: 0,
     direwolfCraftSerial: 0,
     ashenWinter: initialAshenWinter(numericSeed),
@@ -4195,7 +4197,7 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
     * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1)
     * (hasPerk(actor, 'polearm-training') && weaponMasteryMatches('polearm-training', weapon) ? 1.1 : 1)
     * (hasPerk(actor, 'shield-strike') && !ranged && actor.equipment.shield && actor.shieldDurability > 0 ? 1.1 : 1)
-    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && (!actor.equipment.shield || actor.shieldDurability === 0 || (getItem(actor.equipment.shield)?.baseId??actor.equipment.shield)==='buckler') ? 1.12+equipmentBoost(actor,'duelistPct',getItem)/100 : 1)
+    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && (!actor.equipment.shield || actor.shieldDurability === 0 || (getItem(actor.equipment.shield)?.legacyShieldId??getItem(actor.equipment.shield)?.baseId??actor.equipment.shield)==='buckler') ? 1.12+equipmentBoost(actor,'duelistPct',getItem)/100 : 1)
     * (hasPerk(actor, 'opportunist') && !ranged
       && (option?.areaAction && option.shieldWasUsable !== undefined ? !option.shieldWasUsable
         : !target.equipment.shield || target.shieldDurability === 0) ? 1.1 : 1)
@@ -6008,7 +6010,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   if(battle.encounterType==='blacksmith')recordBlacksmithBattle(state,battle);
   if (!victory && undeadEncounter) {
     const remaining = battle.units.filter(u => u.side === 'enemy' && u.alive);
-    recordAshenCasualties(state, battle.campId, remaining.map(u => u.troopIndex), Object.fromEntries(remaining.map(u => [u.troopIndex, { hp: u.hp, bodyArmor: baseArmorCondition(u,'body'), headArmor: baseArmorCondition(u,'head'), shieldDurability: u.shieldDurability }])));
+    recordAshenCasualties(state, battle.campId, remaining.map(u => u.troopIndex), Object.fromEntries(remaining.map(u => [u.troopIndex, { hp: u.hp, bodyArmor: baseArmorCondition(u,'body'), headArmor: baseArmorCondition(u,'head'), shieldDurability: rebalanceShieldCondition(u.equipment.shield,u.shieldDurability,getItem) }])));
   }
   if(battle.patrolAssist){
     const a=battle.patrolAssist,p=state.factionPatrols[a.id],definition=patrolDefinitions(SETTLEMENTS).find(d=>d.id===a.id);
@@ -6046,6 +6048,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
   if (!crisisWasComplete && state.ashenWinter?.phase === 'completed') message += ' Ashen Winter ends: all settlements are free. Claim your equipment reward in the journal.';
   record(state, message);
   state.battle = null;
+  migrateShieldBalance(state,getItem,getUndeadEncounters,{inPlace:true});
   for(const fight of [...(state.worldSkirmishes??[])])if((fight.aKind==='undead-host'&&!state.ashenWinter?.hosts[fight.aId])||(fight.bKind==='undead-host'&&!state.ashenWinter?.hosts[fight.bId]))cancelWorldSkirmish(state,fight.aId);
   mergeOwnedNamedBonuses(state);
   checkBlacksmithDiscovery(state);
@@ -6121,7 +6124,7 @@ function validateBattle(input, party, worldState) {
   const famedSeed = hashSeed(`${worldState.seed}:${encounter.id}:${campGeneration}:famed-item`);
   const famedRoll = hashSeed(`${worldState.seed}:${encounter.id}:${campGeneration}:famed-roll`) % 10000;
   assert(famedDrop === null || encounterType === 'camp' && ['famed','named'].includes(famedItem?.rarity)
-    && famedBasesForCamp({...encounter,difficulty})?.includes(famedItem.baseId)
+    && famedBasesForCamp({...encounter,difficulty})?.includes(famedItem.legacyShieldId??famedItem.baseId)
     && (famedDrop === createFamedItemId(famedItem.baseId, famedSeed)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,2)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,3)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,5)||famedDrop===createFamedItemId(famedItem.baseId,famedSeed,7)||famedItem.slot==='weapon'&&famedItem.ranged&&famedDrop===createFamedItemId(famedItem.baseId,famedSeed,4)||famedDrop===`famed:${famedItem.baseId}:${famedSeed}`)
     && famedRoll < ((FAMED_CHANCES[difficulty] ?? 0)+discovery.famed/100) * 10000, 'battle famed drop');
   const previousRegionalCampName=encounterType==='camp'&&/^wild-camp-/.test(encounter.id)?worldCampText(encounter.x,encounter.y,encounter.enemies.length,Number(encounter.id.slice(10))-1).name:null;
@@ -6502,6 +6505,7 @@ function validateBattle(input, party, worldState) {
 
 export function validateSave(input) {
   assert(input && typeof input === 'object' && !Array.isArray(input), 'expected an object');
+  input=migrateShieldBalance(input,getItem,getUndeadEncounters);
   assert(input.ancientRestorationSerial === undefined || validCount(input.ancientRestorationSerial) && input.ancientRestorationSerial <= 1000000, 'ancient restoration serial');
   assert(input.direwolfCraftSerial === undefined || validCount(input.direwolfCraftSerial) && input.direwolfCraftSerial <= 1000000, 'direwolf craft serial');
   const ashenWinter = validateAshenWinter(input.ashenWinter, input.seed, SETTLEMENTS);
@@ -6892,7 +6896,7 @@ export function validateSave(input) {
   assert(input.worldExploration===undefined || validExploration(input.worldExploration), 'Invalid world exploration.');
   return {
     ...(input.worldExploration===undefined?{}:{worldExploration:input.worldExploration}),
-    version: 1, seed: input.seed, day: input.day, hour: input.hour,
+    version: 1, shieldBalanceVersion:1, seed: input.seed, day: input.day, hour: input.hour,
     ...(input.ancientRestorationSerial === undefined ? {} : { ancientRestorationSerial: input.ancientRestorationSerial }),
     ...(input.direwolfCraftSerial === undefined ? {} : { direwolfCraftSerial: input.direwolfCraftSerial }),
     ...(legendaryBlacksmith===undefined?{}:{legendaryBlacksmith}),

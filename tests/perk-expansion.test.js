@@ -136,7 +136,7 @@ test('Gifted and Relentless improve combat stats without changing level-up rolls
   assert.equal(improved.rangedSkill, baseline.rangedSkill + 3);
   assert.equal(improved.meleeDefense, baseline.meleeDefense + 2);
   assert.equal(improved.rangedDefense, baseline.rangedDefense + 2);
-  assert.equal(improved.initiative, baseline.initiative + 10);
+  assert.equal(improved.initiative, baseline.initiative + 11);
   assert.equal(person.attributes.meleeSkill, 0, 'Gifted does not add permanent training');
   assert.deepEqual(validateSave(JSON.parse(JSON.stringify(state))), state);
 });
@@ -213,7 +213,7 @@ test('Relentless keeps exact initiative across shield and weapon set swaps', () 
     person.armorDurability.head = 0;
     const firstInitiative = getCompanyStats(person).initiative;
     const secondInitiative = getCompanyStats({ ...person, equipment: { ...person.equipment, weapon: 'arming-sword', shield: 'round-shield' } }).initiative;
-    assert.equal(firstInitiative - secondInitiative, 1, `${armor} changes the rounding of a 3-fatigue swap`);
+    assert.equal(firstInitiative - secondInitiative, 3, `${armor} preserves the 6-fatigue OG shield swap`);
     assert.deepEqual(validateSave(state), state);
 
     const site = getCampSites(state)[0];
