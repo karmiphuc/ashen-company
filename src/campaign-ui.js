@@ -34,6 +34,15 @@ export function townFacilitiesHTML(state,townId) {
   const facilities=townFacilities(state.seed,town(townId));
   return `<section class="town-facilities" aria-label="Local workshops">${facilities.length?facilities.map(f=>`<article><strong>${esc(f.name)}</strong><p>${esc(f.description)}</p></article>`).join(''):'<p>General traders carry a small rotating selection. Specialist workshops can be found in other settlements.</p>'}</section>`;
 }
+// Compact map actions retain full accessible labels and tap-friendly targets.
+export function mapActionHTML(action,label,art,detail=label,primary=false) {
+  return `<button class="map-action${primary?' primary':''}" data-action="${esc(action)}" aria-label="${esc(detail)}" title="${esc(detail)}"><img src="./assets/world/${esc(art)}.png" alt="" draggable="false"><span>${esc(label)}</span></button>`;
+}
+export function worldTimeHTML(state) {
+  const light=getTimeOfDay(state.hour),name={day:'Day',evening:'Evening',night:'Night',dawn:'Dawn'}[light.phase];
+  const detail=light.phase==='night'?'Travel speed −20%; ranged hit chance −40; melee hit chance −10.':'Daylight travel and combat conditions.';
+  return `<span class="world-time" title="${esc(detail)}"><span aria-hidden="true">${light.phase==='night'?'☾':light.phase==='day'?'☀':'◐'}</span> ${name}${companyHintHTML('world-light',name,detail)}</span>`;
+}
 // Shared by the map sidebar and settlement services; affordability never hides needed care.
 export function townActionsHTML(state, townId, cards=false) {
   if(townAt(state)?.id!==townId)return '';
@@ -43,6 +52,7 @@ export function townActionsHTML(state, townId, cards=false) {
   if(getTownServiceQuote(state,'doctor').totalAmount>0||getTownServiceQuote(state,'injury-treatment').totalAmount>0)actions.push(['doctor','Doctor','Restore hitpoints or treat persistent wounds']);
   if(getTownServiceQuote(state,'smithy').totalAmount>0)actions.push(['smithy','Smithy','Instantly repair equipped armor, attachments and shields']);
   const art={market:'trade_cart',recruit:'militia_trainingcamp_01',contracts:'townhall_02',retinue:'figure_player_troupe',doctor:'figure_player_seer',smithy:'workshop_01','ancient-armorer':'workshop_01','legendary-blacksmith':'legendary-blacksmith'};
+  if(!cards)return actions.map(([action,label,description])=>mapActionHTML(action,{'Marketplace':'Market','Legendary Blacksmith':'Odran','Contracts':'Jobs','Hiring':'Hire'}[label]||label,art[action],`${label}: ${description}`)).join('');
   return actions.map(([action,label,description])=>`<button data-action="${action}"${cards?` class="settlement-service" title="${esc(description)}" aria-label="${label}: ${esc(description)}"`:''}>${cards?`<img src="./assets/world/${art[action]}.png" alt="" draggable="false"><strong>${label}</strong>`:label}</button>`).join('');
 }
 
@@ -285,8 +295,9 @@ export function gameOverHTML(state) {
 }
 
 
-export function discoveryNewsHTML(state) {
+export function discoveryNewsHTML(state, compact=false) {
   const event=getDiscoveryEvent(state);
+  if(compact&&event){const theme={challengers:['★','Champions'],'relic-rumors':['◆','Relics'],'beast-migration':['♞','Mounts']}[event.id];return `<button class="world-event-chip" data-action="retinue" title="${esc(event.name)}: ${esc(event.description)} Through day ${event.endDay}." aria-label="${esc(event.name)}: ${esc(event.description)} ${event.remainingDays} days remaining. Open Retinue and rare finds."><span aria-hidden="true">${theme[0]}</span> ${theme[1]} <small>${event.remainingDays}d</small></button>`;}
   return event?`<aside class="discovery-news" role="status"><div><strong>${esc(event.name)}</strong><span>Through day ${event.endDay} · ${event.remainingDays} ${event.remainingDays===1?'day':'days'} remaining</span><p>${esc(event.description)}</p></div><button data-action="retinue">Retinue &amp; rare finds</button></aside>`:'';
 }
 export function retinueHTML(state) {
