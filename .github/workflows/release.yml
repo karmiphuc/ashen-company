@@ -33,7 +33,7 @@ jobs:
           --test-reporter-destination=stdout --test-reporter-destination=stdout
           tests/*.test.js
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium --only-shell
       - run: npm run test:release -- --reporter=list,github
       - name: Keep failed browser diagnostics
         if: failure()

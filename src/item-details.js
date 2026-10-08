@@ -29,7 +29,7 @@ const ROLES = {
   'light-crossbow': 'A stronger five-hex ranged shot with a hit bonus and armor pressure, followed by a reload turn.',
   buckler: 'A light shield for modest melee and ranged defense without much fatigue load.',
   'round-shield': 'A balanced shield with more defense than a buckler at a moderate load.',
-  'kite-shield': 'The strongest shield defense here, but its weight reduces stamina and initiative most.',
+  'kite-shield': 'Strong missile cover for a frontliner, at a heavy fatigue and initiative cost.',
 };
 
 function signed(value) { return value > 0 ? `+${value}` : String(value); }
@@ -38,7 +38,7 @@ export function getItemDetails(item, condition) {
   const definition = item?.baseId ? getItem(item.baseId) : item;
   const base=definition?.sourceStats?{...definition,...definition.sourceStats}:definition;
   if (!item || !base) return null;
-  const baseRole = ROLES[base.id] || base.role;
+  const baseRole = ROLES[base.legacyShieldId ?? base.id] || base.role;
   if (!baseRole) return null;
   const stats = [];
   const notes = [];

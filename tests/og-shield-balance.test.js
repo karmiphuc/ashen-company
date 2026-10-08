@@ -1,4 +1,5 @@
-import {itemImage} from '../src/portraits.js';
+import {getItemDetails} from '../src/item-details.js';
+import {itemImage,portraitHTML} from '../src/portraits.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -84,8 +85,16 @@ test('unversioned named campaign shields still apply their labeled bonus to both
  }
 });
 
-test('temporary battle shield aliases retain ordinary, named and reforged inventory artwork',()=>{
+test('temporary battle shield aliases retain artwork, portrait geometry and usable inspection details',()=>{
  for(const base of Object.keys(PREVIOUS_SHIELDS))for(const id of [base,`famed:${base}:73`,`famed7:${base}:73`,encodeBoundedForgeItem(base,{locked:false,foundation:{weight:2},prefixes:[],suffixes:[]},getItem)]){
   assert.ok(itemImage(getItem(id)),id);assert.equal(itemImage(getItem(previousShieldId(id))),itemImage(getItem(id)));
+  const details=getItemDetails(getItem(previousShieldId(id)));assert.ok(details,id);assert.ok(details.role.length>45);assert.equal(details.baseName,getItemDetails(getItem(id)).baseName);
+  assert.equal(portraitHTML({name:'Guard',seed:3},{shield:getItem(previousShieldId(id))}),portraitHTML({name:'Guard',seed:3},{shield:getItem(id)}));
  }
+});
+
+test('equipment migration preserves brother names and log text that happen to match a shield ID',()=>{
+ const s=oldBattle();s.party[0].name='buckler';s.battle.units.find(u=>u.id==='captain').name='buckler';s.battle.log.push('round-shield');
+ const m=validateSave(s),u=m.battle.units.find(u=>u.id==='captain');
+ assert.equal(u.name,'buckler');assert.equal(m.party[0].name,'buckler');assert.equal(m.battle.log.at(-1),'round-shield');assert.equal(u.equipment.shield,'legacy-buckler');
 });

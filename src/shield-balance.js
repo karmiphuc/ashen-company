@@ -27,10 +27,11 @@ export function rebalanceShieldCondition(id,condition,getItem,{previous=false}={
  if(!Number.isSafeInteger(condition)||condition<0||condition>before)throw new TypeError('Invalid prior shield condition.');
  return condition===0?0:Math.max(1,Math.floor(condition*after/before));
 }
-function remapBattle(value){
- if(Array.isArray(value))return value.map(remapBattle);
- if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,v])=>[key,remapBattle(v)]));
- return typeof value==='string'?previousShieldId(value):value;
+const battleItemKeys=new Set(['shield','famedDrop','items','itemId','weaponId']);
+function remapBattle(value,key){
+ if(Array.isArray(value))return value.map(v=>remapBattle(v,key));
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,v])=>[key,remapBattle(v,key)]));
+ return typeof value==='string'&&battleItemKeys.has(key)?previousShieldId(value):value;
 }
 // Conversion is one-time, nonmutating on import, and leaves broken shields broken.
 export function migrateShieldBalance(input,getItem,getUndeadEncounters,{inPlace=false}={}){
