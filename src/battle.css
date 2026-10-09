@@ -257,3 +257,6 @@
 .simultaneous-battle .action-swing .battle-pawn,.simultaneous-battle .action-thrust .battle-pawn{will-change:transform}
 
 .simultaneous-battle .action-move:not(.action-fall){animation-duration:var(--move-time)}
+
+.battle-status-bone-plating-spent{opacity:.55}
+.battle-status-living-shield svg{fill:#a5d8a0}

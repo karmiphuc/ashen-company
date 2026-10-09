@@ -1,3 +1,4 @@
+import { EQUIPMENT_EFFECTS_VERSION, hasBonePlating, bonePlatingReady, bonePlatingAbsorbs, livingShieldRegeneration } from './equipment-specials.js';
 import { PERFORMANCE_KEYS, newBattlePerformance, recordBattlePerformance } from './battle-performance.js';
 import {PREVIOUS_SHIELDS,previousShieldDefinitions,migrateShieldBalance,rebalanceShieldCondition} from './shield-balance.js';
 import { EQUIPMENT_SET_RULES_VERSION, isEquipmentSetRulesVersion, effectiveArmorFatigue, effectiveAttachmentFatigue, createSetArmorSnapshot, baseArmorCondition, validSetArmorSnapshot } from './equipment-sets.js';
@@ -3237,7 +3238,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed,camp,encounterAffixes(state,camp.id,camp.generation)) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     injuryRulesVersion:1, injuryRng:hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}:injuries`),
-    status: 'active', equipmentSetRulesVersion:EQUIPMENT_SET_RULES_VERSION, itemAffixRulesVersion:2, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, prefixPerkRulesVersion:1, perkBalanceVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', equipmentSetRulesVersion:EQUIPMENT_SET_RULES_VERSION, itemAffixRulesVersion:2, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, equipmentEffectsVersion:EQUIPMENT_EFFECTS_VERSION, prefixPerkRulesVersion:1, perkBalanceVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -3245,7 +3246,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     loot: { gold: 0, food: 0, tools: 0, medicine: 0, ammo: 0, items: [], itemConditions: [] },
     casualties: [], xp: {},
   };
-  for (const unit of battle.units) { unit.battleStats = newBattlePerformance(); unit.prefixPerkRulesVersion=1; }
+  for (const unit of battle.units) { unit.battleStats = newBattlePerformance(); unit.prefixPerkRulesVersion=1; unit.equipmentEffectsVersion=EQUIPMENT_EFFECTS_VERSION; if(hasBonePlating(unit,getItem))unit.bonePlatingSpent=false; }
   battle.enemyTacticalState = {tactic:'offense',lastChangedRound:1,lastEvaluatedRound:0,lastRangedAttackRound:0};
   battle.enemyAdaptiveRulesVersion = 1;
   for (const unit of battle.units) unit.movementCredit = Math.max(0, movementBudget(unit, battle) - 2) * 2;
@@ -3255,7 +3256,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   orderCompanyTurnsForFormation(battle);
   if(battle.enemyOpening)battle.turnOrder.sort((a,b)=>Number(battle.units.find(u=>u.id===b).side==='enemy')-Number(battle.units.find(u=>u.id===a).side==='enemy'));
   battle.activeId = battle.turnOrder[0];
-  if(isSimultaneousBetaEnabled())battle.simultaneous=initialSimultaneousClock(battle);
+  if(isSimultaneousBetaEnabled()){battle.simultaneous=initialSimultaneousClock(battle);for(const unit of battle.units)regenerateLivingShield(battle,unit);}
   battleLog(battle, battle.enemyOpening?`${camp.name} catch the company. Enemies act first in the opening round.`:`The company engages ${camp.name}.`);
   cancelWorldSkirmish(state,encounterId);
   state.battle = battle;
@@ -4199,6 +4200,17 @@ export function shieldImpactDamage(weapon) {
   return !weapon?.ranged && AXE_VISUALS.has(visual) ? 12 : 0;
 }
 
+function regenerateLivingShield(battle,unit){
+  if(battle.equipmentEffectsVersion!==EQUIPMENT_EFFECTS_VERSION||unit.shieldRegenRound===battle.round||!unit.alive)return;
+  // Record every owner's turn, even with a different shield: swapping cannot farm regeneration.
+  unit.shieldRegenRound=battle.round;
+  const amount=livingShieldRegeneration(unit,getItem);
+  if(!amount)return;
+  const restored=Math.min(amount,unit.maxShieldDurability-unit.shieldDurability);
+  if(restored>0){unit.shieldDurability+=restored;battleLog(battle,`${unit.name}'s Living Tree Shield regrows ${restored} durability.`);}
+}
+function finishedShieldCondition(battle,id,condition){return battle.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&condition>0&&getItem(id)?.shieldRegeneration?shieldMaximum(id):condition;}
+
 function wearShield(battle, unit, amount) {
   if (!unit.equipment.shield || unit.shieldDurability <= 0 || amount <= 0) return 0;
   const previous = unit.shieldDurability;
@@ -4349,6 +4361,7 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
     + (battle.perkBalanceVersion===1&&duelist ? .25 : 0)
     + (specialist ? .1 : 0)
     + (option?.id === 'piercing-bolt' ? .2 : 0));
+  if(battle.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&target.bonePlatingSpent===false&&bonePlatingAbsorbs(target,getItem,head,piercing,option))return {hp:0,armorDamage:0,before,bonePlatingAbsorbed:true};
   let hp = option?.id === 'puncture' ? raw : before > 0
     ? Math.max(1, Math.floor(raw * piercing - before * .025) + Math.max(0, Math.floor((armorDamage - before) * .25))) : raw;
   if (head && !hasPerk(target, 'steel-brow')) hp = Math.round(hp * 1.25);
@@ -4369,17 +4382,20 @@ function predictAttack(battle, actor, target, weapon, option = null) {
   const ranged = weapon.ranged === true;
   const hitChance = battle.weaponAuditVersion===1&&option?.id==='split-shield'?1:attackHitChance(battle, actor, target, weapon, typeof option === 'number' ? option : option?.hitBonus ?? 0,
     typeof option === 'number' ? null : option) / 100;
-  let health = 0, armor = 0, kill = 0;
+  let health = 0, armor = 0, kill = 0, absorbedBodyHealth=0, absorbedBodyArmor=0, bodyChance=0;
+  const hits=option?.hits??1,multiBone=hits>1&&bonePlatingReady(target,getItem),predictionTarget=multiBone?{...target,bonePlatingSpent:true}:target;
   const rolls = Math.max(1, weapon.damageMax - weapon.damageMin + 1);
   for (let base = weapon.damageMin; base <= weapon.damageMax; base++) for (const [head, weight] of (option?.id === 'puncture' ? [[false, 1]] : option?.head===true || ['flail-headshot', 'whip-crack'].includes(option?.id) ? [[true, 1]] : [[true, getHeadHitChance(actor, weapon, option)], [false, 1-getHeadHitChance(actor, weapon, option)]])) {
-    const { hp, armorDamage, before } = attackDamageRoll(battle, actor, target, weapon, base, head, option);
+    const { hp, armorDamage, before } = attackDamageRoll(battle, actor, predictionTarget, weapon, base, head, option);
     const probability = weight / rolls;
+    if(multiBone&&!head&&attackDamageRoll(battle,actor,target,weapon,base,head,option).bonePlatingAbsorbed){absorbedBodyHealth+=hp/rolls;absorbedBodyArmor+=Math.min(before,armorDamage)/rolls;bodyChance+=probability;}
     health += hp * probability;
     armor += Math.min(before, armorDamage) * probability;
     if (hp >= target.hp) kill += probability;
   }
-  const hits=option?.hits??1;
-  return { expectedHealthDamage: health * hitChance * hits, expectedArmorDamage: armor * hitChance * hits,
+  // Multi-hit weapons spend at most one charge, not one charge per predicted strike.
+  const absorbedChance=multiBone?1-(1-hitChance*bodyChance)**hits:0;
+  return { expectedHealthDamage: health * hitChance * hits-absorbedBodyHealth*absorbedChance, expectedArmorDamage: armor * hitChance * hits-absorbedBodyArmor*absorbedChance,
     expectedShieldDamage: target.shieldDurability > 0 ? battle.perkBalanceVersion===1
       ? attackShieldDamage(actor,weapon,option)*hitChance+attackShieldDamage(actor,weapon,option,true)*(1-hitChance)
       : (option?.id==='split-shield'?shieldImpactDamage(weapon)+16:shieldImpactDamage(weapon)||(ranged?1-hitChance:2-hitChance)) : 0,
@@ -4497,7 +4513,8 @@ function attackTarget(state, actor, target, weapon, option = null) {
   const headChance = getHeadHitChance(actor, weapon, option);
   const head = headChance === 0 ? false : headChance === 1 ? true : battleRoll(battle) < headChance;
   if (head && hasPerk(actor, 'head-hunter') && weapon.id && !option?.dot && !option?.freeFollowup && !option?.noDamage) actor.headHunterReady = !actor.headHunterReady;
-  const { hp: hpDamage, armorDamage, before: armorBefore } = attackDamageRoll(battle, actor, target, weapon, baseDamage, head, option);
+  const { hp: hpDamage, armorDamage, before: armorBefore, bonePlatingAbsorbed=false } = attackDamageRoll(battle, actor, target, weapon, baseDamage, head, option);
+  if(bonePlatingAbsorbed)target.bonePlatingSpent=true;
   const weaponHit=weapon.slot==='weapon'&&!option?.freeFollowup&&!option?.dot&&!option?.noDamage;
   const consumedMomentum=weaponHit&&actor.killMomentumPct&&Math.min(actor.killMomentumPct,equipmentBoost(actor,'killMomentumPct',getItem));
   if(consumedMomentum)delete actor.killMomentumPct;
@@ -4531,7 +4548,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
       target.bleeding={damage:Math.min(18,(target.bleeding?.damage??0)+bleed),turns:2,sourceId:actor.id};
     }
   }
-  if(!option?.noDamage)changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0) + (!ranged ? Math.max(getItem(actor.equipment?.armor)?.meleeMoraleDamage ?? 0, attachmentEffect(actor.equipment,'meleeMoraleDamage')) : 0), battle));
+  if(!option?.noDamage&&!bonePlatingAbsorbed)changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0) + (!ranged ? Math.max(getItem(actor.equipment?.armor)?.meleeMoraleDamage ?? 0, attachmentEffect(actor.equipment,'meleeMoraleDamage')) : 0), battle));
   const wound = inflictTemporaryInjury(state,actor,target,weapon,option,hpDamage,head);
   const fallen = target.hp === 0;
   const perkProcs = [], effects = [];
@@ -4566,11 +4583,11 @@ function attackTarget(state, actor, target, weapon, option = null) {
         : `Berserk: +${battle.rulesVersion === 2 ? berserkAp(actor) : 2} AP.`);
     }
   }
-  const message = option?.dot?`${target.name} loses ${hpDamage} health to bleeding${fallen?'; they fall':''}.`: `${actor.name}${option?.freeFollowup ? "'s mount uses Wolf Bite against" : ' hits'} ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}${wound?` ${target.name} suffers ${wound.name}.`:''}`;
-  battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, fallen, ...(effects.length ? { effects } : {}),
+  const message = option?.dot?`${target.name} loses ${hpDamage} health to bleeding${fallen?'; they fall':''}.`: `${actor.name}${option?.freeFollowup ? "'s mount uses Wolf Bite against" : ' hits'} ${target.name}${head ? ' in the head' : ''} for ${hpDamage} health and ${Math.min(armorBefore, armorDamage)} armor${fallen ? '; they fall' : ''}.${shieldDamage ? ` Shield: -${shieldDamage}.` : ''}${perkProcs.length ? ` ${perkProcs.join(' ')}` : ''}${wound?` ${target.name} suffers ${wound.name}.`:''}${bonePlatingAbsorbed?` ${target.name}'s Bone Platings absorb the hit.`:''}`;
+  battle.lastEvent = makeBattleEvent(actor, target, 'attack', message, weapon, null, { head, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, fallen, ...(bonePlatingAbsorbed?{bonePlatingAbsorbed:true}:{}), ...(effects.length ? { effects } : {}),
     ...(option?.name ? { skillName: option.name } : {}) });
   battleLog(battle, message);
-  return { hit: true, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, head, fallen };
+  return { hit: true, hpDamage, armorDamage: Math.min(armorBefore, armorDamage), shieldDamage, head, fallen, ...(bonePlatingAbsorbed?{bonePlatingAbsorbed:true}:{}) };
 }
 
 const SWING_DIRECTIONS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
@@ -4906,6 +4923,7 @@ function attackMultiple(state,actor,target,weapon,option){
  const effects=[...new Map(events.flatMap(x=>x.effects??[]).map(x=>[x.id,x])).values()],reactions=events.flatMap(x=>x.reactions??[]);
  const total={hit:impacts.some(x=>x.hit),hpDamage:impacts.reduce((n,x)=>n+x.hpDamage,0),armorDamage:impacts.reduce((n,x)=>n+x.armorDamage,0),shieldDamage:impacts.reduce((n,x)=>n+x.shieldDamage,0),head:impacts[0].head,fallen:!target.alive};
  state.battle.lastEvent={...events[0],type:total.hit?'attack':'miss',hpDamage:total.hpDamage,armorDamage:total.armorDamage,shieldDamage:total.shieldDamage,head:total.head,fallen:total.fallen,skillName:option.name,strikes:impacts.map(x=>({...x})),...(effects.length?{effects}:{}),...(reactions.length?{reactions}:{}),message:`${actor.name} uses ${option.name} on ${target.name}: ${total.hpDamage} health, ${total.armorDamage} armor (${impacts.filter(x=>x.hit).length}/${impacts.length} strikes hit).`};
+ if(events.some(event=>event.bonePlatingAbsorbed)){delete state.battle.lastEvent.bonePlatingAbsorbed;state.battle.lastEvent.message+=` ${target.name}'s Bone Platings absorb one strike.`;}
  return total;
 }
 function tickBleeding(state,unit){
@@ -5145,6 +5163,7 @@ function advanceBattleV2(state) {
   const battle = state.battle;
   const actor = battle.units.find(unit => unit.id === battle.activeId);
   if (!actor?.alive) { nextBattleTurn(battle); return result(true, 'The next fighter takes their turn.'); }
+  regenerateLivingShield(battle,actor);
   if(battle.weaponCompletionVersion===1&&actor.bleedTickRound!==battle.round&&(actor.bleeding||freshInjuryBleeding(actor))){actor.bleedTickRound=battle.round;tickBleeding(state,actor);if(!finishBattlePhase(battle)&&!actor.alive)nextBattleTurn(battle);return result(true,battle.lastEvent.message);}
   if (battle.weaponSkillsVersion === 1 && actor.stunnedTurns > 0) {
     actor.stunnedTurns = 0;
@@ -5709,6 +5728,7 @@ function refreshSimultaneousRound(state) {
     delete unit.overwhelmed;
     if(battle.perkBalanceVersion===1)delete unit.reachAdvantageStacks;
     if(!unit.alive)continue;
+    regenerateLivingShield(battle,unit);
     unit.ap=getTurnAp(unit)+(unit.pendingBerserkAp??0);unit.pendingBerserkAp=0;
     unit.shieldWallActive=false;unit.spearwallActive=false;unit.riposteActive=false;
     unit.movementCredit=Math.max(0,movementBudget(unit,battle)-2)*2;
@@ -6115,8 +6135,8 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     const throwingAmmo = unit.battleSetSwapped
       ? { active: battleAmmo.reserve, reserve: battleAmmo.active }
       : { active: battleAmmo.active, reserve: battleAmmo.reserve };
-    const activeShieldCondition = unit.battleSetSwapped ? unit.reserveShieldDurability : unit.shieldDurability;
-    const reserveShieldCondition = unit.battleSetSwapped ? unit.shieldDurability : unit.reserveShieldDurability;
+    const activeShieldCondition = finishedShieldCondition(battle,person.equipment.shield,unit.battleSetSwapped ? unit.reserveShieldDurability : unit.shieldDurability);
+    const reserveShieldCondition = finishedShieldCondition(battle,person.reserveEquipment.shield,unit.battleSetSwapped ? unit.shieldDurability : unit.reserveShieldDurability);
     const carriedAccessories = [...unit.accessories];
     if (unit.pocketDrawnFrom !== null) carriedAccessories[unit.pocketDrawnFrom] = unit.equipment.weapon;
     if (!unit.alive) {
@@ -6159,7 +6179,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
       if (state.inventory.length >= getStashCapacity(state)) break;
       const itemId = loot.items[index];
       state.inventory.push(itemId);
-      state.inventoryCondition.push(loot.itemConditions?.[index] ?? itemCondition(itemId));
+      state.inventoryCondition.push(finishedShieldCondition(battle,itemId,loot.itemConditions?.[index] ?? itemCondition(itemId)));
     }
     if (undeadEncounter) resolveAshenObjective(state, undeadEncounter, ashenContext(state));
     else if (battle.encounterType === 'band') {
@@ -6293,6 +6313,7 @@ function validateBattle(input, party, worldState) {
   assert(encounterType === 'camp' ? validCount(campGeneration) && campGeneration <= 1000000 && campGeneration === encounter.generation : campGeneration === null, 'battle camp generation');
   assert(input.enemyTacticsVersion===undefined||input.enemyTacticsVersion===1,'battle enemy tactic rules');
   assert(input.lighting===undefined||['day','evening','night','dawn'].includes(input.lighting),'battle lighting');
+  assert(input.equipmentEffectsVersion===undefined||input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION,'battle equipment effect rules');
   assert(input.prefixPerkRulesVersion===undefined||input.prefixPerkRulesVersion===1,'battle prefix perk rules');
   assert(input.perkBalanceVersion===undefined||input.perkBalanceVersion===1,'battle perk balance rules');
   assert(input.perkCombatVersion===undefined||input.perkCombatVersion===1,'battle expanded perk rules');
@@ -6400,6 +6421,10 @@ function validateBattle(input, party, worldState) {
     const perks = unit.perks ?? partyMember?.perks ?? [];
     assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && (PERK_BY_ID.has(id) || REMOVED_PERK_MIN_LEVEL.has(id))) && new Set(perks).size === perks.length, 'battle perks');
     assert(unit.side === 'enemy' ? perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||assistingPatrol.difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
+    assert(unit.equipmentEffectsVersion===input.equipmentEffectsVersion,'battle unit equipment effect rules');
+    if(unit.bonePlatingSpent!==undefined)assert(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&typeof unit.bonePlatingSpent==='boolean'&&hasBonePlating(unit,getItem),'battle bone plating charge');
+    if(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&hasBonePlating(unit,getItem))assert(typeof unit.bonePlatingSpent==='boolean','battle missing bone plating charge');
+    if(unit.shieldRegenRound!==undefined)assert(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&validCount(unit.shieldRegenRound)&&unit.shieldRegenRound<=input.round,'battle shield regeneration round');
     assert(unit.prefixPerkRulesVersion===input.prefixPerkRulesVersion,'battle unit prefix perk rules');
     assert(unit.perkBalanceVersion===input.perkBalanceVersion,'battle unit perk balance rules');
     if(unit.reachAdvantageStacks!==undefined)assert(input.perkBalanceVersion===1&&validCount(unit.reachAdvantageStacks)&&unit.reachAdvantageStacks<=5&&hasPerk(unit,'reach-advantage')&&getItem(unit.equipment.weapon)?.twoHanded&&!getItem(unit.equipment.weapon)?.ranged,'battle reach advantage stacks');
@@ -6527,6 +6552,9 @@ function validateBattle(input, party, worldState) {
       pocketDrawnRound: unit.pocketDrawnRound ?? 0, reserveReload: unit.reserveReload ?? 0, meleePhase: unit.meleePhase ?? false,
       shieldDurability, maxShieldDurability, reserveShieldDurability, maxReserveShieldDurability, battleSetSwapped,
       throwingAmmo: { active: throwingAmmo.active, reserve: throwingAmmo.reserve },
+      ...(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION?{equipmentEffectsVersion:EQUIPMENT_EFFECTS_VERSION}:{}),
+      ...(unit.bonePlatingSpent===undefined?{}:{bonePlatingSpent:unit.bonePlatingSpent}),
+      ...(unit.shieldRegenRound===undefined?{}:{shieldRegenRound:unit.shieldRegenRound}),
       ...(input.prefixPerkRulesVersion===1?{prefixPerkRulesVersion:1}:{}),
       ...(input.perkBalanceVersion===1?{perkBalanceVersion:1}:{}),
       ...(unit.reachAdvantageStacks===undefined?{}:{reachAdvantageStacks:unit.reachAdvantageStacks}),
@@ -6594,6 +6622,7 @@ function validateBattle(input, party, worldState) {
   assert(simultaneous===undefined||rulesVersion===2&&input.weaponCompletionVersion===1,'simultaneous combat rules');
   const event = input.lastEvent;
   assert(event === null || (recordObject(event) && ['attack', 'move', 'hit', 'miss', 'fall', 'retreat', 'recover', 'hold', 'swap', 'use'].includes(event.type) && typeof event.message === 'string' && event.message.length <= (input.itemAffixRulesVersion===2?600:300) && (event.actorId === null || ids.has(event.actorId)) && (event.targetId === null || ids.has(event.targetId))), 'battle event');
+  if(event?.bonePlatingAbsorbed!==undefined)assert(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&event.bonePlatingAbsorbed===true&&event.type==='attack'&&event.head===false&&event.hpDamage===0&&event.armorDamage===0&&units.find(u=>u.id===event.targetId)?.bonePlatingSpent===true,'battle bone plating event');
   if (event?.head !== undefined) assert(typeof event.head === 'boolean', 'battle event head');
   if (event?.fallen !== undefined) assert(typeof event.fallen === 'boolean', 'battle event fallen');
   if (event?.weaponId !== undefined) assert(event.weaponId === null || getItem(event.weaponId)?.slot === 'weapon', 'battle event weapon');
@@ -6612,7 +6641,7 @@ function validateBattle(input, party, worldState) {
         && ['hpDamage', 'armorDamage', 'shieldDamage'].every(key => validCount(impact[key]) && impact[key] <= 1000)
         && typeof impact.hit === 'boolean' && typeof impact.head === 'boolean' && typeof impact.fallen === 'boolean'), 'battle event area impacts');
   }
-  if(event?.strikes!==undefined)assert(input.weaponCompletionVersion===1&&Array.isArray(event.strikes)&&event.strikes.length>=1&&event.strikes.length<=3&&event.strikes.every(x=>recordObject(x)&&['hpDamage','armorDamage','shieldDamage'].every(k=>validCount(x[k])&&x[k]<=1000)&&['hit','head','fallen'].every(k=>typeof x[k]==='boolean')),'battle multi-strike impacts');
+  if(event?.strikes!==undefined)assert(input.weaponCompletionVersion===1&&Array.isArray(event.strikes)&&event.strikes.length>=1&&event.strikes.length<=3&&event.strikes.every(x=>recordObject(x)&&['hpDamage','armorDamage','shieldDamage'].every(k=>validCount(x[k])&&x[k]<=1000)&&['hit','head','fallen'].every(k=>typeof x[k]==='boolean')&&(x.bonePlatingAbsorbed===undefined||input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&x.bonePlatingAbsorbed===true&&x.hit&&!x.head&&x.hpDamage===0&&x.armorDamage===0&&units.find(u=>u.id===event.targetId)?.bonePlatingSpent===true)),'battle multi-strike impacts');
   if (event?.reactions !== undefined) {
     assert(weaponSkillsVersion === 1 && Array.isArray(event.reactions) && event.reactions.length >= 1 && event.reactions.length <= 12
       && event.reactions.every(reaction => recordObject(reaction) && ids.has(reaction.actorId) && ids.has(reaction.targetId)
@@ -6639,6 +6668,7 @@ function validateBattle(input, party, worldState) {
     weaponId, ranged, projectile: event.projectile === undefined ? ranged && ['attack', 'miss', 'hit', 'fall'].includes(event.type) ? projectileForWeapon(getItem(weaponId)) : null : event.projectile,
     ...(event.itemId === undefined ? {} : { itemId: event.itemId }),
     ...(event.effects === undefined ? {} : { effects: event.effects.map(effect => ({ id: effect.id, amount: effect.amount, ...(effect.nextTurn === undefined ? {} : { nextTurn: effect.nextTurn }) })) }),
+    ...(event.bonePlatingAbsorbed===undefined?{}:{bonePlatingAbsorbed:event.bonePlatingAbsorbed}),
     ...(event.skillName === undefined ? {} : { skillName: event.skillName }),
     ...(event.pushedFrom === undefined ? {} : { pushedFrom: { q: event.pushedFrom.q, r: event.pushedFrom.r } }),
     from: event.from === undefined ? actor ? { q: actor.q, r: actor.r } : null : event.from === null ? null : { q: event.from.q, r: event.from.r },
@@ -6677,6 +6707,7 @@ function validateBattle(input, party, worldState) {
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
     ...(input.injuryRulesVersion===1?{injuryRulesVersion:1,injuryRng:input.injuryRng}:{}),
     ...(input.weaponCompletionVersion===undefined?{}:{weaponCompletionVersion:1}),
+    ...(input.equipmentEffectsVersion===undefined?{}:{equipmentEffectsVersion:EQUIPMENT_EFFECTS_VERSION}),
     ...(input.prefixPerkRulesVersion===undefined?{}:{prefixPerkRulesVersion:1}),
     ...(input.perkBalanceVersion===undefined?{}:{perkBalanceVersion:1}),
     ...(input.perkCombatVersion===undefined?{}:{perkCombatVersion:1}),

@@ -31,3 +31,10 @@ Custom painted and northern designs use the closest OG equivalent rather than ex
 On first loading an older save, worn and stored shield condition is rescaled by `floor(old condition × new maximum / old maximum)`, including named and reforged shields and market buybacks. Zero remains broken; a positive remainder stays at least 1. Missing condition restores full through the existing save validator. Invalid old condition is rejected rather than repaired silently. Named rolls and forge packages retain their identity and bonuses while adopting the new baseline.
 
 An imported ongoing battle uses hidden legacy definitions until it finishes, preserving shields' defenses, fatigue, durability, set swaps and pending loot throughout reloads. Collecting spoils or finishing a retreat converts the surviving equipment and recovered shields. Legacy definitions never enter shops, catalogs or new encounter pools. The one-time `shieldBalanceVersion` marker prevents repeated wear conversion, while the normal save and combat versions remain unchanged.
+
+## Living Tree Shield
+
+The imported Living Tree design now retains its [intrinsic regeneration](ATTACHMENT-SPECIAL-EFFECTS.md):
+20 durability once per owner turn/realtime cycle, capped at its rolled maximum,
+plus full post-combat restoration while unbroken. Active old saves keep their
+previous rules. Broken shields still need normal repair.

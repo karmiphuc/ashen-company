@@ -45,7 +45,9 @@ have their own armor pool, added to body protection in the sheet; named rolls
 can change that pool. Ordinary Bone Platings have 55 armor and 2 fatigue, but
 do not unlock Ritual Bone. A named attachment's fitted fatigue is
 `round(rolled fatigue × 0.8)`; a 2-fatigue roll therefore remains 2 after rounding.
-The completion grants no new Bone Platings combat effect or affix slots.
+The completion grants no extra Bone Platings charge or affix slots. Bone Platings
+have an intrinsic [once-per-battle absorption effect](ATTACHMENT-SPECIAL-EFFECTS.md)
+in new battles, independent of the set.
 
 Ritual Bone is an outfit name within the Northern family, not a nineteenth
 head/body family. Wearing only one Ritual piece cannot activate it. A second
