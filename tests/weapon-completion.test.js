@@ -14,8 +14,8 @@ function sourceAction(name){return name in aliases?aliases[name]:name.replaceAll
 function activate(b,unit){b.activeId=unit.id;b.turnIndex=b.turnOrder.indexOf(unit.id);}
 function roundtrip(state){assert.deepEqual(m.validateSave(structuredClone(state)),state);}
 
-test('all 101 existing weapons and rolled descendants have an explicit profile and matching displayed costs',()=>{
- const weapons=m.ITEMS.filter(x=>x.slot==='weapon');assert.equal(weapons.length,101);
+test('all 105 existing weapons and rolled descendants have an explicit profile and matching displayed costs',()=>{
+ const weapons=m.ITEMS.filter(x=>x.slot==='weapon');assert.equal(weapons.length,105);
  for(const item of weapons){const profile=weaponCombatProfile(item);assert.ok(profile,item.id);assert.ok(equipmentSkills(item)[0].basic,item.id);
   const rolled=m.getItem(m.createFamedItemId(item.id,731));assert.equal(weaponCombatProfile(rolled).id,profile.id,item.id);assert.deepEqual(equipmentSkills(rolled),equipmentSkills(item),item.id);
   assert.equal(getItemDetails(item).stats.find(x=>x.label==='Attack AP').value,`${equipmentSkills(item)[0].ap} (new battles)`);

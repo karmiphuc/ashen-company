@@ -1,3 +1,4 @@
+import {currentShieldId} from '../src/shield-balance.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -89,11 +90,13 @@ test('named market offers remain scarce, within budgets, and purchase/sale paths
     const state=createGame(seed);state.position={x:SETTLEMENTS.find(t=>t.id==='frostgate').x,y:140};state.gold=100000;
     const rare=getMarket(state).equipment.filter(row=>row.stock>0&&getItem(row.itemId).rarity==='named');
     assert.ok(rare.length<=1);
-    if(rare.length)found={state,id:rare[0].itemId};
+    const repairable=rare.find(row=>['armor','helmet','shield'].includes(getItem(row.itemId).slot));
+    if(repairable)found={state,id:repairable.itemId};
   }
   assert.ok(found);const {state,id}=found;
   assert.equal(buyItem(state,id).ok,true);assert.equal(getMarket(state).equipment.find(r=>r.itemId===id).stock,0);
-  state.inventoryCondition[state.inventory.indexOf(id)]=20;assert.deepEqual(validateSave(state),state);assert.equal(sellItem(state,id).ok,true);assert.equal(buyItem(state,id).ok,true);assert.equal(state.inventoryCondition[state.inventory.indexOf(id)],20,'rare buybacks preserve damage');assert.deepEqual(validateSave(state),state);
+  const damaged=Math.max(0,state.inventoryCondition[state.inventory.indexOf(id)]-5);
+  state.inventoryCondition[state.inventory.indexOf(id)]=damaged;assert.deepEqual(validateSave(state),state);assert.equal(sellItem(state,id).ok,true);assert.equal(buyItem(state,id).ok,true);assert.equal(state.inventoryCondition[state.inventory.indexOf(id)],damaged,'rare buybacks preserve damage');assert.deepEqual(validateSave(state),state);
 });
 
 test('real v0.42 active-battle fixtures retain damage and stats while adopting new maxima and DLC drop validation', () => {
@@ -152,7 +155,8 @@ test('real v0.44.6 active battle at a newly ancient site retains its original na
   const {state}=JSON.parse(readFileSync(new URL('./fixtures/regional-battle-v0446.json',import.meta.url)));
   const restored=validateSave(state);
   assert.notEqual(getCampSites(restored).find(c=>c.id===state.battle.campId).name,state.battle.encounterName);
-  assert.deepEqual(restored.battle.units,state.battle.units);
+  // Only hidden legacy shield IDs differ; every tactical field must remain exact.
+  assert.deepEqual(JSON.parse(JSON.stringify(restored.battle.units),(_key,value)=>typeof value==='string'?currentShieldId(value):value),state.battle.units);
   assert.equal(restored.battle.encounterName,state.battle.encounterName);
   assert.deepEqual(restored.battle.turnOrder,state.battle.turnOrder);
   assert.equal(restored.battle.rng,state.battle.rng);

@@ -18,3 +18,9 @@ test('every perk has its credited image bundled for offline play', async () => {
     assert.ok(assets.includes('./'+entry.asset));
   }
 });
+
+test('weapon mastery silhouettes never share the same image bytes',async()=>{
+  const masteries=PERKS.filter(p=>p.name.includes('Mastery')),hashes=[];
+  for(const p of masteries)hashes.push(createHash('sha256').update(await readFile(new URL(`../assets/perks/${p.icon}.png`,import.meta.url))).digest('hex'));
+  assert.equal(new Set(hashes).size,masteries.length);
+});

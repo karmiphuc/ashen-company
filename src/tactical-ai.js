@@ -1,7 +1,7 @@
 import { equipmentRangedReach, equipmentBoost, equipmentPerk } from './item-affixes.js';
 import { hexDistance, hexLine } from './battle-terrain.js';
 
-export const COMBAT_ROLES = Object.freeze(['auto', 'frontliner', 'skirmisher', 'ranged', 'flanker', 'breaker']);
+export const COMBAT_ROLES = Object.freeze(['auto', 'frontliner', 'skirmisher', 'ranged', 'flanker', 'breaker', 'reach-support']);
 export const SKILL_PREFERENCES = Object.freeze(['balanced', 'damage', 'control']);
 export const ENEMY_TACTIC_COOLDOWN = 2;
 export const ENEMY_TACTICS = Object.freeze(['offense', 'defense', 'shield-wall', 'skirmish']);
@@ -24,6 +24,7 @@ export function resolveCombatRole(member, weapon, reserveWeapon, equipment = {})
   const weapons = [weapon, reserveWeapon].filter(Boolean);
   if (weapons.some(item => item.ranged && !item.throwing)) return 'ranged';
   if (weapons.some(item => item.throwing)) return 'skirmisher';
+  if (!weapon?.ranged && (weapon?.range ?? 1)>1) return 'reach-support';
   if (['warhorse','armoredhorse'].includes(equipment.mount?.visual) && (equipment.armor?.armor ?? 0)>=160) return 'breaker';
   return 'frontliner';
 }
@@ -41,7 +42,7 @@ export function scoreTacticalAction(actor, action, context = {}) {
   const preference = actor.skillPreference ?? 'balanced';
   const damageWeight = preference === 'damage' ? 1.25 : preference === 'control' ? .85 : 1;
   const protectionWeight = preference === 'control' ? 1.4 : preference === 'damage' ? .8 : 1;
-  const riskWeight = { frontliner: .9, skirmisher: 1.35, ranged: 1.8, flanker: 1.2, breaker: .95 }[role] ?? 1;
+  const riskWeight = { frontliner: .9, skirmisher: 1.35, ranged: 1.8, flanker: 1.2, breaker: .95, 'reach-support': 1.4 }[role] ?? 1;
   const value = key => Number.isFinite(action[key]) ? action[key] : 0;
   let score = damageWeight * (value('expectedHealthDamage') + .25 * value('expectedArmorDamage') + .35 * value('expectedShieldDamage'))
     + 35 * value('killProbability') + protectionWeight * value('preventedDamage')
@@ -53,7 +54,7 @@ export function scoreTacticalAction(actor, action, context = {}) {
   if (role === 'ranged' || role === 'skirmisher') score += 3 * value('spacingGain');
   if (role === 'flanker' || role === 'breaker') score += 4 * value('flankGain');
   if (context.targetPriorities !== false && action.target) score += tacticalTargetPriority(role, action.target, action.targetWeapon,
-    value('targetDistance'), context.nearestDistance ?? value('targetDistance'));
+    value('targetDistance'), context.nearestDistance ?? value('targetDistance'), context.round ?? 1);
   return score + value('bonus');
 }
 
@@ -123,9 +124,9 @@ export function recommendEnemyTactic(battle, getItem, companyAmmo) {
 }
 
 
-export function tacticalTargetPriority(role, target, weapon, distance, nearest = distance) {
+export function tacticalTargetPriority(role, target, weapon, distance, nearest = distance, round = 1) {
   if (role === 'flanker') return weapon?.ranged ? 40 : (weapon?.range ?? 1) > 1 ? 30 : 0;
-  if (role === 'breaker') return (weapon?.ranged ? 22 : (weapon?.range ?? 1)>1 ? 14 : 0)
+  if (role === 'breaker') return (round >= 5 ? (weapon?.ranged ? 22 : (weapon?.range ?? 1)>1 ? 14 : 0) : 0)
     + (target.equipment?.shield && target.shieldDurability>0 ? 0 : 8)
     + Math.max(0,Math.min(10,(20-(target.meleeDefense ?? 0))*.4))
     + Math.max(0,Math.min(12,(1-target.hp/Math.max(1,target.maxHp))*12));

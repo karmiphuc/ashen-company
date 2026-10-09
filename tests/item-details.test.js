@@ -23,7 +23,7 @@ test('every weapon including famed copies exposes its family signatures and corr
 });
 
 test('every catalog item has useful details without changing the item', () => {
-  assert.equal(ITEMS.length, 462);
+  assert.equal(ITEMS.length, 492);
   for (const entry of ITEMS) {
     const before = structuredClone(entry);
     const details = getItemDetails(entry);
@@ -104,9 +104,9 @@ test('billhook, dagger, and axe show their real tradeoffs', () => {
 
 test('shields give defense rather than armor, while gear shows current durability', () => {
   const shield = getItemDetails(item('kite-shield'));
-  assert.equal(value(shield, 'Melee defense'), '+18');
-  assert.equal(value(shield, 'Ranged defense'), '+18');
-  assert.equal(value(shield, 'Fatigue load'), '8');
+  assert.equal(value(shield, 'Melee defense'), '+15');
+  assert.equal(value(shield, 'Ranged defense'), '+25');
+  assert.equal(value(shield, 'Fatigue load'), '16');
   assert.equal(value(shield, 'Body armor'), undefined);
   assert.ok(shield.notes.some(note => note.includes('does not provide body or head armor')));
 
@@ -131,10 +131,10 @@ test('armor attachments explain fit, damage order, weight and repair', () => {
 
 test('shield details preserve worn and broken condition and explain repair', () => {
   const worn = getItemDetails(item('kite-shield'), 17);
-  assert.equal(value(worn, 'Shield durability'), '17 / 80');
-  assert.equal(value(worn, 'Melee defense'), '+18');
+  assert.equal(value(worn, 'Shield durability'), '17 / 48');
+  assert.equal(value(worn, 'Melee defense'), '+15');
   const broken = getItemDetails(item('kite-shield'), 0);
-  assert.equal(value(broken, 'Shield durability'), '0 / 80 (broken)');
+  assert.equal(value(broken, 'Shield durability'), '0 / 48 (broken)');
   assert.equal(value(broken, 'Melee defense'), '0');
   assert.equal(value(broken, 'Ranged defense'), '0');
   assert.ok(broken.notes.some(note => note.includes('Smithy') && note.includes('reserve shields')));

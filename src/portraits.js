@@ -5,6 +5,7 @@ import { MOONFANG_ID, MOONFANG_ART } from './direwolf-crafting.js';
 import { DLC_ITEMS } from './dlc-items.js';
 import { NAMED_WEAPON_ART } from './named-weapon-art.js';
 import { DLC_ART } from './dlc-art.js';
+import { DLC_SHIELD_ART } from './dlc-shield-art.js';
 import { ANCIENT_RESTORATION_ART } from './ancient-restoration-art.js';
 import { FANTASY_ARMOR_VISUALS, FANTASY_HELMET_VISUALS, FANTASY_ITEM_IMAGES, FANTASY_APPEARANCES, FANTASY_CLOSED_HELMETS, FANTASY_HIDDEN_HEADS } from './fantasy-art.js';
 
@@ -81,6 +82,10 @@ export const VISUALS = {
     sword: ['weapon-sword.png', 83, 57, 'rotate(-35deg)', '8px 46px'],
     axe: ['weapon-axe.png', 81, 65, 'rotate(-45deg)', '7px 38px'],
     bow: ['weapon-bow.png', 63, 53, 'rotate(-30deg)', '27px 42px'],
+    'flanged-mace': ['weapon-flanged-mace.png', 83, 46, 'rotate(-35deg)', '8px 57px'],
+    'footmans-mace': ['weapon-footmans-mace.png', 83, 46, 'rotate(-35deg)', '8px 57px'],
+    'two-handed-spiked-club': ['weapon-two-handed-spiked-club.png', 75, 27, 'rotate(-35deg)', '10px 78px'],
+    'two-handed-flanged-mace': ['weapon-two-handed-flanged-mace.png', 75, 27, 'rotate(-35deg)', '60px 25px'],
     mace: ['weapon-mace.png', 83, 46, 'rotate(-35deg)', '8px 57px'],
     dagger: ['weapon-dagger.png', 84, 60, 'rotate(-35deg)', '7px 43px'],
     crossbow: ['weapon-crossbow.png', 45, 62, 'rotate(-25deg)', '28px 28px'],
@@ -143,6 +148,7 @@ export const VISUALS = {
     'northern-sling': ['weapon-northern-sling.png', 73, 57, 'rotate(-25deg)', '5px 60px'],
   },
   shield: {
+    ...Object.fromEntries(Object.entries(DLC_SHIELD_ART).map(([id,art])=>[id,[art.portrait,Math.max(60,art.left),art.top,'scale(1)','0px 0px']])),
     round: ['shield-round.png', 62, 68],
     kite: ['shield-kite.png', 62, 54],
     heater: ['shield-heater.png', 62, 54],
@@ -198,6 +204,7 @@ export const VISUALS = {
   },
 };
 const SHIELD_WIDTHS = {
+  ...Object.fromEntries(Object.values(DLC_SHIELD_ART).map(art=>[art.portrait,art.width])),
   'shield-round.png': 44,
   'shield-kite.png': 48,
   'shield-heater.png': 46,
@@ -208,11 +215,12 @@ const SHIELD_WIDTHS = {
   'shield-northern-heartwood-shield.png': 66,
   'shield-northern-iron-round-shield.png': 56,
 };
-const SHIELD_HEIGHTS = {'shield-round.png':56,'shield-kite.png':90,'shield-heater.png':74,'shield-adarga.png':56,'shield-painted-round-shield.png':56,'shield-painted-heater-shield.png':74,'shield-painted-tower-shield.png':176,'shield-northern-heartwood-shield.png':88,'shield-northern-iron-round-shield.png':70};
+const SHIELD_HEIGHTS = {...Object.fromEntries(Object.values(DLC_SHIELD_ART).map(art=>[art.portrait,art.height])),'shield-round.png':56,'shield-kite.png':90,'shield-heater.png':74,'shield-adarga.png':56,'shield-painted-round-shield.png':56,'shield-painted-heater-shield.png':74,'shield-painted-tower-shield.png':176,'shield-northern-heartwood-shield.png':88,'shield-northern-iron-round-shield.png':70};
 // Rest poses are expressed around the grip, independent of the sprite's crop.
 // Native BB long-weapon artwork already slopes from the opposite shoulder to
 // the weapon hand: rotating it another 30–35 degrees made it stand upright.
 const SHOULDER_WEAPONS = new Set([
+  'two-handed-spiked-club', 'two-handed-flanged-mace',
   'billhook', 'greatsword', 'greataxe', 'two-handed-hammer', 'heavyhammer',
   'pike', 'polehammer', 'war-scythe', 'warscythe', 'longaxe', 'bardiche',
   'hooked-bill', 'bladed-pike', 'goedendag', 'estoc', 'falx', 'battle-glaive',
@@ -225,6 +233,7 @@ const REVERSED_ONE_HANDERS = new Set(['military-cleaver', 'cleaver',
 // Blade/haft endpoints from the packaged raster crops. Align their axis to
 // the diagonal BB rest pose instead of applying one rotation to unlike art.
 const SHOULDER_TIPS = {
+  'weapon-two-handed-spiked-club.png': [9, 8], 'weapon-two-handed-flanged-mace.png': [15, 75],
   'weapon-billhook.png': [5, 8], 'weapon-greatsword.png': [5, 8],
   'weapon-greataxe.png': [18, 9], 'weapon-two-handed-hammer.png': [20, 10],
   'weapon-pike.png': [5, 6], 'weapon-polehammer.png': [18, 8],
@@ -237,6 +246,7 @@ const SHOULDER_TIPS = {
   'weapon-northern-heavy-flail.png': [25, 10],
 };
 const SHOULDER_DIMENSIONS = {
+  'weapon-two-handed-spiked-club.png': [56, 114], 'weapon-two-handed-flanged-mace.png': [82, 102],
   'weapon-billhook.png': [64, 116],
   'weapon-greatsword.png': [84, 102],
   'weapon-greataxe.png': [80, 94],
@@ -268,6 +278,8 @@ const ONE_HANDED_DIMENSIONS = {
   'weapon-qatal.png': [34, 64], 'weapon-shamshir.png': [64, 78],
   'weapon-spear.png': [60, 80], 'weapon-sword.png': [42, 56],
   'weapon-three-headed-flail.png': [52, 82], 'weapon-warhammer.png': [42, 66],
+  'weapon-flanged-mace.png': [48, 64], 'weapon-footmans-mace.png': [46, 66],
+  'weapon-two-handed-spiked-club.png': [56, 114], 'weapon-two-handed-flanged-mace.png': [82, 102],
   'weapon-winged-mace.png': [42, 58], 'weapon-whip.png': [66, 70],
 };
 
@@ -389,6 +401,10 @@ const ITEM_IMAGES = {
   'wood-axe': 'wood-axe.png',
   'hunting-bow': 'hunting-bow.png',
   bludgeon: 'bludgeon.png',
+  'flanged-mace': 'flanged-mace.png',
+  'footmans-mace': 'footmans-mace.png',
+  'two-handed-spiked-club': 'two-handed-spiked-club.png',
+  'two-handed-flanged-mace': 'two-handed-flanged-mace.png',
   'rondel-dagger': 'rondel-dagger.png',
   'light-crossbow': 'light-crossbow.png',
   billhook: 'billhook.png',
@@ -545,6 +561,8 @@ function layerSpec(category, item) {
     const handY=heavy?Math.min(100,115-bottom):rangedPose?105:111;
     return [named.portrait,(heavy?78:rangedPose?70:82)-gx,handY-gy,`scale(${scale.toFixed(4)}) rotate(${rotation.toFixed(4)}deg)`,`${gx}px ${gy}px`];
   }
+  const shieldSource = category === 'shield' && DLC_SHIELD_ART[item?.baseId || item?.id || visual(item)];
+  if(shieldSource)return [shieldSource.portrait,Math.max(60,shieldSource.left),shieldSource.top,'scale(1)','0px 0px'];
   const source = DIREWOLF_HELMET_ART[item?.baseId || item?.id] || ((item?.baseId || item?.id) === MOONFANG_ID ? MOONFANG_ART : null) || ancientRestoredArt(item) || DLC_ART[item?.baseId || item?.id || visual(item)];
   if (source && (category === 'armor' || category === 'helmet')) return [source.portrait, source.left, source.top];
   const variants = PORTRAIT[category];
@@ -685,10 +703,11 @@ export const portraitSVG = portraitHTML;
 export function itemImage(item) {
   const restored = ancientRestoredArt(item);
   if (restored) return restored.icon;
-  const id = item?.baseId || item?.id;
+  const id = item?.legacyShieldId || item?.baseId || item?.id;
   if (DIREWOLF_HELMET_ART[id]) return DIREWOLF_HELMET_ART[id].icon;
   if (id === MOONFANG_ID) return MOONFANG_ART.icon;
   if(NAMED_WEAPON_ART[id])return NAMED_WEAPON_ART[id].icon;
+  if (DLC_SHIELD_ART[id]) return DLC_SHIELD_ART[id].icon;
   if (DLC_ART[id]) return DLC_ART[id].icon;
   return ITEM_IMAGES[id] ? `${ITEM_ROOT}${ITEM_IMAGES[id]}` : null;
 }

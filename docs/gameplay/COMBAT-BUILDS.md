@@ -28,7 +28,7 @@ Reference material: [Battle Brothers developer update on Relentless](https://bat
 
 Each throwing weapon carries five throws. Active and reserve bundles have separate counts; swapping sets or stowing a bundle does not refill it. The AI uses a loaded spare bundle or a melee backup when a bundle runs dry, and punches if nothing usable remains. Throwing consumes bundle charges in battle; equipped bundles refill after battle from company ammunition, one supply per restored throw. Buying ammunition or preparing for a valid fight also tops them up at the same supply cost. If supplies run short, the partial bundle persists. Looted and stowed bundles retain their remaining charges. Bows and crossbows keep their existing ammunition rules.
 
-Flankers approach outside the enemy melee line and avoid other enemies' melee reach while routing. Loaded throwing weapons fire from the wings instead of pursuing a distant archer when a wing shot is already available. A throwing flanker can draw a reserve dagger to attack an enemy engaged by an ally, provided a safe one-step approach, the swap, and an attack fit its AP and fatigue. This uses existing surround/backstab rules, rather than adding a new damage bonus. Breakers retain their role as frontline chargers.
+Flankers approach outside the enemy melee line and avoid other enemies' melee reach while routing. Loaded throwing weapons fire from the wings instead of pursuing a distant archer when a wing shot is already available. A throwing flanker can draw a reserve dagger to attack an enemy engaged by an ally, provided a safe one-step approach, the swap, and an attack fit its AP and fatigue. This uses existing surround/backstab rules, rather than adding a new damage bonus. Breakers are aggressive frontliners, not wing fighters. In rounds 1–4 they approach the nearest reachable front and charge its weak points; they do not detour toward archers. Safe multi-enemy area attacks receive extra priority, while existing friendly-fire restrictions remain in force. From round 5, under Offense or Focus, they can pursue exposed archers/polearms through openings whose route costs at most two movement-cost units more than the nearest approach. An engaged Breaker may take such a step only while remaining adjacent to every currently adjacent enemy, avoiding disengagement strikes. Once unengaged, it hunts reachable backline stragglers directly. Formation orders, Spearwall and crowded-landing checks, fatigue limits, and wounded-brother self-preservation still apply. A mounted Charge requires an unengaged rider and its existing straight, clear lane; breaking through does not grant a free charge out of melee.
 
 Dagger AI prefers an affordable Puncture against body armor, or Qatal Deathblow against a vulnerable target. Ordinary Stab takes priority when at least 75% of its successful damage rolls finish the enemy; it also remains available against unarmored targets or when the special cannot be afforded.
 
@@ -54,3 +54,42 @@ fixed damage do not receive it. Equipped shields, including broken shields,
 prevent Double Grip; reserve shields do not. Eligibility updates on weapon
 swaps without saving an extra stat. Older pre-completion battle rules stay
 unchanged. Weapon details and a battle status icon explain the bonus.
+
+Mounted Flankers prioritize intercepting reachable broken enemies (morale below
+25, excluding morale-immune enemies) when no opponent is adjacent. They approach
+within one hex, using their current melee weapon or drawing a melee reserve or
+pocket weapon with normal swap costs. This interception duty takes precedence
+over wing targeting and formation commands; wounded-brother preservation still
+wins. Routes avoid other opponents’ adjacent hexes and obey terrain, fatigue,
+movement AP and approach-safety checks. Already engaged riders do not abandon
+healthy adjacent opponents to pursue another enemy. At contact with a broken
+enemy they retain melee gear and prefer attacking that enemy, so normal escape
+attempts provoke existing opportunity strikes. This adds no guaranteed root,
+free stun or escape cancellation: casualties and existing combat effects decide
+whether the enemy gets away. Targets are reevaluated every action, so recovery,
+death, escape and blocked paths do not leave stale pursuit orders.
+
+## Reach Support
+
+Auto selects Reach Support for an equipped melee weapon with more than one hex
+of reach, before the mounted Breaker rule; explicit roles and ranged-loadout
+rules retain priority. The role is also selectable in Battle behavior. Existing
+active battles retain their saved role until the next battle.
+
+Reach Support attacks from a useful current position instead of repositioning
+for marginal cover. When it advances, it prefers a position immediately behind
+an intact shield carrier, then another melee teammate, provided the screen is
+closer to the target and its route costs no more than two extra movement-cost
+units. Without a screen it approaches only to weapon reach, avoiding every
+opponent's adjacent hexes along the route. Occupancy, terrain and enemy movement
+are reevaluated each action; rough terrain can select an alternate route rather
+than repeatedly attempting an unaffordable attack position. Steps entering its
+attack range reserve AP and fatigue for an actual basic attack.
+
+An adjacent opponent causes fighting rather than disengagement. An affordable
+one-hex melee reserve can be drawn if the swap and an attack fit the budget;
+the reach weapon returns once unengaged. Without a usable backup it keeps fighting
+with the current weapon. It never uses mounted Charge, and does not Hook a
+nonadjacent enemy into its own adjacent hex. Formation commands, friendly-fire
+safety and wounded-brother preservation still apply. This is a positioning role,
+not an extra range, damage, armor or free-movement bonus.

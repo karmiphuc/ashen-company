@@ -1,6 +1,7 @@
 import { getItem } from './engine.js';
 import { weaponSkillFamily } from './combat-skills.js';
 const MUSIC_URL = new URL('../assets/audio/heartfelt-battle.mp3', import.meta.url).href;
+export const WORLD_MUSIC_URLS = Object.freeze(['harp','village','forest','road','waltz'].map(name => new URL(`../assets/audio/world-${name}.mp3`, import.meta.url).href));
 const QUEST_URL = new URL('../assets/audio/quest-complete.mp3', import.meta.url).href;
 export const EFFECT_NAMES = Object.freeze(['swing', 'metal', 'impact', 'cloth', 'sword-swish', 'heavy-swish', 'thrust',
   'bow-release', 'dagger-swish', 'axe-chop', 'chain', 'crossbow-release', 'sling-release', 'whip-release', 'reload',
@@ -68,6 +69,7 @@ export function combatSoundCue(event, duration = .55, {cinematic=false} = {}) {
 }
 
 export function createGameAudio({ createMusic = () => typeof Audio === 'function' ? new Audio(MUSIC_URL) : null,
+  createWorldMusic = url => typeof Audio === 'function' ? new Audio(url) : null, random = Math.random,
   createQuestSound = () => typeof Audio === 'function' ? new Audio(QUEST_URL) : null,
   createContext = () => { const Context = globalThis.AudioContext || globalThis.webkitAudioContext; return Context ? new Context() : null; },
   fetcher = (...args) => fetch(...args), storage, clock = () => performance.now() } = {}) {
@@ -76,7 +78,40 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
     for (const key of ['music', 'effects']) if (typeof saved?.[key] === 'boolean') preferences[key] = saved[key];
   } catch {}
   let music = null, context = null, musicUnlocked = false, priming = false, loading = null, resuming = null;
+  let worldMusic=null,worldUnlocked=false,worldPriming=false,worldPlayPending=false,worldActivation=0,worldFailures=0,worldIndex=-1,worldQueue=[];
   let scene = { active: false, playing: false, hidden: false, battleId: null }, lastEffectAt = -Infinity;
+  const worldAudible=()=>!!scene.world&&!scene.hidden&&preferences.music;
+  function nextWorldTrack(){
+    if(!worldQueue.length){
+      worldQueue=WORLD_MUSIC_URLS.map((_,index)=>index);
+      for(let i=worldQueue.length-1;i>0;i--){const j=Math.min(i,Math.max(0,Math.floor(random()*(i+1))));[worldQueue[i],worldQueue[j]]=[worldQueue[j],worldQueue[i]];}
+      if(worldQueue.at(-1)===worldIndex)[worldQueue[0],worldQueue[worldQueue.length-1]]=[worldQueue.at(-1),worldQueue[0]];
+    }
+    worldIndex=worldQueue.pop();
+    return WORLD_MUSIC_URLS[worldIndex];
+  }
+  function playWorldMusic(){
+    if(!worldMusic||!worldUnlocked||!worldAudible()||worldPriming||worldPlayPending||worldFailures>=WORLD_MUSIC_URLS.length)return;
+    worldMusic.volume=.18;
+    if(worldMusic.paused){worldPlayPending=true;Promise.resolve(worldMusic.play()).catch(()=>{worldUnlocked=false;}).finally(()=>{worldPlayPending=false;});}
+  }
+  function primeWorldMusic(){
+    if(scene.hidden||!preferences.music||worldUnlocked||worldPriming)return;
+    try{
+      if(!worldMusic){
+        worldMusic=createWorldMusic(nextWorldTrack());if(!worldMusic)return;
+        worldMusic.loop=false;worldMusic.preload='none';
+        worldMusic.onended=()=>{worldFailures=0;worldMusic.src=nextWorldTrack();playWorldMusic();};
+        worldMusic.onerror=()=>{
+          worldFailures++;if(worldFailures>=WORLD_MUSIC_URLS.length){worldMusic.pause();worldUnlocked=false;return;}
+          worldMusic.src=nextWorldTrack();playWorldMusic();
+        };
+        if(typeof document!=='undefined'&&!worldMusic.parentNode){worldMusic.id='world-music';worldMusic.hidden=true;document.body.append(worldMusic);}
+      }
+      worldFailures=0;worldMusic.volume=0;worldPriming=true;const activation=worldActivation;
+      Promise.resolve(worldMusic.play()).then(()=>{if(activation===worldActivation)worldUnlocked=true;}).catch(()=>{}).finally(()=>{worldPriming=false;applyScene();});
+    }catch{worldPriming=false;}
+  }
   const buffers = new Map(), voices = new Map();
   let pending = [], lastLoadAt = -Infinity;
   let questSound=null, questUnlocked=false, questPriming=false, questPendingAt=null;
@@ -116,6 +151,7 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
     for (const source of voices.keys()) stopVoice(source);
   }
   function applyScene() {
+    if(worldMusic&&!worldPriming){if(worldAudible())playWorldMusic();else worldMusic.pause();}
     if(scene.hidden||!preferences.effects)stopQuestSound();
     const audible = scene.active && scene.playing && !scene.hidden;
     if (!audible || !preferences.effects) stopEffects();
@@ -179,6 +215,7 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
   function unlock() {
     if (scene.hidden) return;
     primeQuestSound();
+    primeWorldMusic();
     if (preferences.effects) {
       try {
         context ??= createContext();
@@ -199,7 +236,7 @@ export function createGameAudio({ createMusic = () => typeof Audio === 'function
     applyScene();
   }
   function sync(next) {
-    if (next.hidden) { musicUnlocked = false; questUnlocked=false; }
+    if (next.hidden) { musicUnlocked = false; worldUnlocked=false; worldActivation++; questUnlocked=false; }
     if (next.battleId !== scene.battleId) { stopEffects(); lastEffectAt = -Infinity; }
     if (next.battleId !== scene.battleId && music) { try { music.currentTime = 0; } catch {} }
     scene = { ...next };

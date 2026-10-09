@@ -1,4 +1,4 @@
-import { applyNamedAffixes } from './item-affixes.js';
+import { applyNamedAffixes, NAMED_PREFIX_CHANCE } from './item-affixes.js';
 // Battle Brothers named-item rules, pinned to kovasap/battle-bros-decompiled e06d68df.
 // Existing unversioned famed IDs remain handled by the legacy resolver in engine.js.
 export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=0,merged=false,rangeRoll=false,rulesVersion=merged?3:2}={}) {
@@ -6,7 +6,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
   let state=seed>>>0;
   const roll=(min,max)=>{state=(state+0x6D2B79F5)>>>0;let x=state;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return min+((x^(x>>>14))>>>0)%(max-min+1);};
   const design=original.sourceArmor!==undefined;
-  const item={...original,id,baseId:original.id,rarity:design||original.sourceNamedWeapon?'named':'famed',rollVersion:rulesVersion};
+  const item={...original,id,baseId:original.id,rarity:design||original.sourceNamedWeapon||original.sourceNamedShield?'named':'famed',rollVersion:rulesVersion};
   const bonuses=[],mods=[],profile={};
   delete item.signature;
   if(design){item.armor=original.sourceArmor;item.fatigue=original.sourceFatigue;delete item.statBonuses;}
@@ -14,9 +14,13 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
   if(original.id==='bb-fangshire')item.statBonuses=original.statBonuses;
   const add=(key,label,value)=>{mods.push(key);bonuses.push(Object.freeze({label,value}));};
   if(['armor','helmet'].includes(item.slot)){
-    const armor=item.armor,fatigue=item.fatigue??0,pct=roll(110,125),relief=item.slot==='armor'?roll(3,9):roll(1,4);
-    profile.armorPct=pct-100;item.armor=Math.floor(armor*pct/100);item.fatigue=Math.max(Math.min(fatigue,item.slot==='armor'?8:4),fatigue-relief);
-    add('protection','Protection',`+${item.armor-armor} (${pct-100}%)`);add('weight','Fatigue cost',`-${fatigue-item.fatigue}`);
+    const armor=item.armor,fatigue=item.fatigue??0,pct=roll(110,125),relief=item.slot==='armor'?roll(3,rulesVersion>=8?11:9):roll(1,4);
+    const legacyLoad=Math.max(Math.min(fatigue,item.slot==='armor'?8:4),fatigue-relief);
+    const compensated=rulesVersion>=8&&legacyLoad===fatigue;
+    profile.armorPct=(pct-100)*(compensated?2:1);
+    item.armor=Math.floor(armor*(100+profile.armorPct)/100);
+    item.fatigue=rulesVersion>=8?fatigue-Math.min(11,Math.max(1,fatigue-legacyLoad)):legacyLoad;
+    add('protection','Protection',`+${item.armor-armor} (${profile.armorPct}%)`);add('weight','Fatigue cost',`-${fatigue-item.fatigue}`);
   }else{
     const pool=[];
     if(item.slot==='shield'){
@@ -39,7 +43,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
     pool.push(()=>{const relief=roll(1,3);item.fatigueOnSkillUse=(original.fatigueOnSkillUse??0)-relief;add('skill-fatigue','Skill fatigue',`-${relief}`);});
     for(let n=0;n<2;n++)pool.splice(roll(0,pool.length-1),1)[0]();
   }
-  item.name=original.sourceNamedWeapon?(original.fixedName?original.name:`${['Ashen','Blackthorn','Dawnward','Grimwolf','Ironbound','Oathkeeper','Ravenmark','Stormborn','Thornheart','Wolfguard'][seed%10]} ${original.namePool[(seed>>>8)%original.namePool.length]}`):design?original.name:`${['Ashen','Blackthorn','Dawnward','Grimwolf','Ironbound','Oathkeeper','Ravenmark','Stormborn','Thornheart','Wolfguard'][seed%10]} ${original.name}`;
+  item.name=original.sourceNamedWeapon?(original.fixedName?original.name:`${['Ashen','Blackthorn','Dawnward','Grimwolf','Ironbound','Oathkeeper','Ravenmark','Stormborn','Thornheart','Wolfguard'][seed%10]} ${original.namePool[(seed>>>8)%original.namePool.length]}`):design||original.sourceNamedShield?original.name:`${['Ashen','Blackthorn','Dawnward','Grimwolf','Ironbound','Oathkeeper','Ravenmark','Stormborn','Thornheart','Wolfguard'][seed%10]} ${original.name}`;
   item.description=`A rare ${original.name.toLowerCase()} with independently rolled Battle Brothers-style modifiers. ${original.description}`;
   if(merged){
     const bits=shift=>(seed>>>shift)&15;
@@ -63,7 +67,7 @@ export function rollNamedItem(original,id,seed,{shieldDurability=0,shieldDamage=
     }
     if(item.signatureDescription)item.description+=` ${item.signatureDescription}`;
   }
-  if(rulesVersion>=5){item.enhancementProfile=profile;applyNamedAffixes(item,original,seed,bonuses,{expanded:rulesVersion>=7});item.description+=` ${item.signatureDescription}`;}
+  if(rulesVersion>=5){item.enhancementProfile=profile;applyNamedAffixes(item,original,seed,bonuses,{expanded:rulesVersion>=7,prefixChance:rulesVersion>=9?NAMED_PREFIX_CHANCE:100});item.description+=` ${item.signatureDescription}`;}
   item.price=Math.min(original.collection?20000:5000,Math.round(original.price*2.4+(['armor','helmet'].includes(item.slot)?item.armor-(design?original.sourceArmor:original.armor):0)));
   item.enhancementProfile=Object.freeze(profile);item.rollModifiers=Object.freeze(mods);item.bonuses=Object.freeze(bonuses);
   return Object.freeze(item);

@@ -23,9 +23,10 @@ test('named merging inherits whole affixes within slot limits and repeated quote
   const a=createFamedItemId('arming-sword',seed,7),b=createFamedItemId('greatsword',seed+42,7);stash(s,[a,b]);
   const q=getReforgeQuote(s,0,1,'merge');assert.deepEqual(getReforgeQuote(s,0,1,'merge'),q);
   if(!q.ok){const before=structuredClone(s);assert.equal(reforgeItem(s,q).ok,false);assert.deepEqual(s,before);continue;}
-  successes++;assert.ok(q.additions.length>=1&&q.additions.length<=3);
+  successes++;assert.ok(q.additions.length>=1&&q.additions.length<=4);
   assert.ok(q.result.forgeAffixes.prefixes.length<=2);assert.ok(q.result.forgeAffixes.suffixes.length<=2);
-  assert.deepEqual(q.result.forgeAffixes.foundation,q.recipientAffixes.foundation);
+  for(const [key,n]of Object.entries(q.recipientAffixes.foundation))assert.ok(q.result.forgeAffixes.foundation[key]>=n);
+  assert.ok(q.additions.filter(a=>a.kind!=='foundation').length<=3);
   for(const kind of ['prefixes','suffixes'])for(const old of q.recipientAffixes[kind]){
    const after=q.result.forgeAffixes[kind].find(a=>a.id===old.id);assert.ok(after);
    for(const [key,n]of Object.entries(old.profile))assert.ok(after.profile[key]>=n);
@@ -57,4 +58,17 @@ test('ranged-only prefix donors cannot consume a merge on melee named recipients
  const restored=getItem(forge(s,0,1,'transfer').r.itemId);
  assert.ok(restored.bonuses.every(row=>!row.value.includes('inactive')));
  assert.deepEqual(restored.forgeProfile,getItem(donor).forgeProfile);
+});
+
+test('a zero-load named armor donor transfers its real fatigue credit through the complete forge transaction',()=>{
+ const s=readyForge(),donor=createFamedItemId('bb-assassin-head-wrap',73);
+ for(const recipient of ['bb-ancient-laurels','greathelm']){
+  s.gold=50000;stash(s,[donor,recipient]);
+  const q=getReforgeQuote(s,0,1,'transfer');assert.ok(q.ok,q.message);
+  const result=reforgeItem(s,q);assert.ok(result.ok,result.message);
+  const item=getItem(result.itemId);assert.match(result.itemId,/^forge5:/);
+  assert.equal(item.fatigue,(getItem(recipient).fatigue??0)-1);
+  assert.equal(item.forgeAffixes.foundation.weight,1);
+  assert.deepEqual(validateSave(structuredClone(s)),s);
+ }
 });

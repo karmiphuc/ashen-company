@@ -50,7 +50,7 @@ function battleWithCaptain(perks = [], weapon = 'arming-sword') {
 }
 
 test('perk catalog gives one independent point per level and learning is atomic', () => {
-  assert.equal(PERKS.length, 54);
+  assert.equal(PERKS.length, 55);
   assert.equal(new Set(PERKS.map(perk => perk.id)).size, PERKS.length);
   assert.ok(PERKS.every(perk => Object.isFrozen(perk) && perk.minLevel >= 2));
   assert.ok(PERKS.every(perk => ['general', 'weapon', 'defense', 'ranged', 'mobility'].includes(perk.category) && typeof perk.icon === 'string'));
@@ -179,7 +179,7 @@ test('passive stat perks apply their stated rounded bonuses', () => {
   captain.level = 20;
   const base = getCompanyStats(captain);
   captain.perks = ['shield-expert'];
-  assert.equal(getCompanyStats(captain).meleeDefense, base.meleeDefense + 2);
+  assert.equal(getCompanyStats(captain).meleeDefense, base.meleeDefense + 3);
   captain.perks = ['brawny'];
   assert.ok(getCompanyStats(captain).maxFatigue > base.maxFatigue);
   assert.ok(getCompanyStats(captain).initiative > base.initiative);
@@ -207,7 +207,7 @@ test('Pathfinder crosses two rough uphill tiles for the normal two-point move bu
   assert.equal(hexDistance(origin, normal), 1);
   assert.equal(hexDistance(origin, swift), 1);
   assert.equal(normal.fatigue, 6);
-  assert.equal(swift.fatigue, 3);
+  assert.equal(swift.fatigue, 2);
   assert.equal(normal.ap, 5);
   assert.equal(swift.ap, 7, 'Pathfinder halves this rough uphill move from 4 AP to 2 AP');
 });

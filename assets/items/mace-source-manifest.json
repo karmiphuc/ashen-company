@@ -1,0 +1,58 @@
+[
+  {
+    "asset": "assets/items/flanged-mace.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/weapons/melee/mace_01_1.png",
+    "bytes": 1853,
+    "sha256": "5b933168ca8895b8212d3428cd4466900ed00e9acc6ebe5fb00eb19a17cc7201",
+    "item": "flanged-mace"
+  },
+  {
+    "asset": "assets/portraits/weapon-flanged-mace.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_mace_01_1.png",
+    "bytes": 1349,
+    "sha256": "c89bc304ce06e974daec99b40aafa964e25c3eb1c00617dd54abf1130df4007b",
+    "item": "flanged-mace"
+  },
+  {
+    "asset": "assets/items/footmans-mace.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/weapons/melee/mace_02_1.png",
+    "bytes": 1148,
+    "sha256": "c77768ac114dd49a6b64dbc9dd74903f6eaaad593d57eda4544239e6456ba3e0",
+    "item": "footmans-mace"
+  },
+  {
+    "asset": "assets/portraits/weapon-footmans-mace.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_mace_02_1.png",
+    "bytes": 1275,
+    "sha256": "4b3ae7b8e1123f5830654dc917c64c8ff521c913d711a06ec749d825ef0c8287",
+    "item": "footmans-mace"
+  },
+  {
+    "asset": "assets/items/two-handed-spiked-club.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/weapons/melee/legend_two_handed_club_01.png",
+    "bytes": 6575,
+    "sha256": "a54ed9164724d10cce5271a1a4d504481268d9c14f54d199a5dd4e980f30b293",
+    "item": "two-handed-spiked-club"
+  },
+  {
+    "asset": "assets/portraits/weapon-two-handed-spiked-club.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_legend_two_handed_club_01.png",
+    "bytes": 5209,
+    "sha256": "6e02f8ce8bdd8e29610e9f97110e7e47f1057bea5166e572179dedec36a9f355",
+    "item": "two-handed-spiked-club"
+  },
+  {
+    "asset": "assets/items/two-handed-flanged-mace.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/items/weapons/melee/mace_two_handed_02_1.png",
+    "bytes": 1756,
+    "sha256": "9776e84df5b7a0a9e0bc3fb1813cd9b82c83687dbdb28db05af0fc5d18b10d39",
+    "item": "two-handed-flanged-mace"
+  },
+  {
+    "asset": "assets/portraits/weapon-two-handed-flanged-mace.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/unpacked/legend_weapons/icons/icon_mace_two_handed_02_1.png",
+    "bytes": 2509,
+    "sha256": "1c03de7f3c37ea263c878ecdba1ec544694a0596b9b58fd1fba5c653b74ae059",
+    "item": "two-handed-flanged-mace"
+  }
+]

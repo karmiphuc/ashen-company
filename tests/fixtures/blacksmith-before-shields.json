@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "lastCheckDay": 1,
+  "triggeredDay": 1,
+  "announcement": "read",
+  "quests": [
+    {
+      "status": "turnedIn",
+      "acceptedDay": 1,
+      "encounter": null,
+      "survivors": null,
+      "damage": {}
+    },
+    {
+      "status": "active",
+      "acceptedDay": 1,
+      "encounter": {
+        "id": "blacksmith-2-114471786",
+        "name": "Anvil Thieves",
+        "kind": "blacksmith",
+        "x": 830.414695045918,
+        "y": 591.8445461049462,
+        "difficulty": 2,
+        "enemies": [
+          {
+            "name": "Tollroad Spear Veteran",
+            "weapon": "military-spear",
+            "armor": "bb-padded-leather",
+            "helmet": "bb-nordic-helmet",
+            "shield": "painted-heater-shield",
+            "attachment": "noble-brocade-mantle"
+          },
+          {
+            "name": "Roadside Crossbow Veteran",
+            "weapon": "reinforced-crossbow",
+            "armor": "bb-leather-tunic",
+            "helmet": "bb-aketon-cap",
+            "shield": null
+          },
+          {
+            "name": "Hedge Swordsman Veteran",
+            "weapon": "hooked-bill",
+            "armor": "bb-noble-mail-armor",
+            "helmet": "bb-greatsword-faction-helm",
+            "shield": null
+          },
+          {
+            "name": "Marchland Bill Veteran",
+            "weapon": "military-cleaver",
+            "armor": "bb-ragged-surcoat",
+            "helmet": "bb-heavy-mail-coif",
+            "shield": "heater-shield"
+          },
+          {
+            "name": "Wagon Skirmisher Veteran",
+            "weapon": "warhammer",
+            "armor": "bb-heraldic-mail",
+            "helmet": "bb-kettle-hat",
+            "shield": "painted-round-shield"
+          },
+          {
+            "name": "Bandit Shield Veteran",
+            "weapon": "heavy-javelins",
+            "armor": "bb-reinforced-leather-tunic",
+            "helmet": "bb-physician-mask",
+            "shield": "heater-shield"
+          },
+          {
+            "name": "Tollroad Spear Veteran",
+            "weapon": "military-spear",
+            "armor": "bb-leather-lamellar",
+            "helmet": "bb-padded-nasal-helmet",
+            "shield": "painted-heater-shield",
+            "attachment": "double-mail"
+          },
+          {
+            "name": "Roadside Crossbow Veteran",
+            "weapon": "reinforced-crossbow",
+            "armor": "bb-padded-leather",
+            "helmet": "bb-rusty-mail-coif",
+            "shield": null,
+            "attachment": "direwolf-fur"
+          }
+        ],
+        "reward": 290,
+        "acceptedDay": 1,
+        "ancient": false
+      },
+      "survivors": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "damage": {}
+    },
+    {
+      "status": "locked",
+      "acceptedDay": null,
+      "encounter": null,
+      "survivors": null,
+      "damage": {}
+    },
+    {
+      "status": "locked",
+      "acceptedDay": null,
+      "encounter": null,
+      "survivors": null,
+      "damage": {}
+    }
+  ],
+  "forgeSerial": 0,
+  "freeUse": false,
+  "rewardId": null,
+  "rewardClaimed": false
+}

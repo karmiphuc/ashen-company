@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createFamedItemId, ITEMS } from '../src/engine.js';
 import { createHash } from 'node:crypto';
-import { combatSoundCue, createGameAudio, EFFECT_NAMES } from '../src/audio.js';
+import { combatSoundCue, createGameAudio, EFFECT_NAMES, WORLD_MUSIC_URLS } from '../src/audio.js';
 
 const battle = { active: true, playing: true, hidden: false, battleId: 'battle-1' };
 const flush = () => new Promise(resolve => setImmediate(resolve));
@@ -153,7 +153,7 @@ test('effects require explicit events and stay within the voice and timing limit
 });
 
 test('offline audio references are valid MP3s within the advertised download budget', async () => {
-  const names = ['heartfelt-battle', ...EFFECT_NAMES];
+  const names = ['heartfelt-battle', 'quest-complete', ...EFFECT_NAMES, ...WORLD_MUSIC_URLS.map(url=>url.split('/').at(-1).replace('.mp3',''))];
   let bytes = 0;
   for (const name of names) {
     const file = fileURLToPath(new URL(`../assets/audio/${name}.mp3`, import.meta.url));
@@ -162,7 +162,7 @@ test('offline audio references are valid MP3s within the advertised download bud
     assert.ok(data.length > 1000, `${name} is nonempty`);
     assert.ok(data.subarray(0, 3).toString() === 'ID3' || data[0] === 0xff && (data[1] & 0xe0) === 0xe0, `${name} has an MP3 header`);
   }
-  assert.ok(bytes <= 1_450_000, `audio uses ${bytes} bytes`);
+  assert.ok(bytes <= 3_500_000, `audio uses ${bytes} bytes`);
 });
 
 
@@ -341,4 +341,49 @@ test('hiding during gesture priming discards a queued completion',async()=>{
  const audio=createGameAudio({createQuestSound:()=>sound,createMusic:()=>null,createContext:()=>null,storage:emptyStorage});
  audio.unlock();audio.playQuestComplete();audio.sync({active:false,playing:false,hidden:true,battleId:null});resolvePrime();await flush();
  audio.sync({active:false,playing:false,hidden:false,battleId:null});assert.deepEqual(sound.plays,[0]);assert.equal(sound.paused,true);
+});
+
+
+test('world playlist shuffles five distinct tracks without repeats, independently of travel speed',async()=>{
+ const music=fakeMusic();const audio=createGameAudio({createWorldMusic:url=>{music.src=url;return music;},createMusic:()=>null,createQuestSound:()=>null,createContext:()=>null,storage:emptyStorage,random:()=>.5});
+ const world={world:true,active:false,playing:false,hidden:false,battleId:null};
+ audio.sync(world);assert.equal(music.plays.length,0);
+ audio.unlock();await flush();assert.equal(music.volume,.18);assert.equal(music.loop,false);assert.equal(music.paused,false);
+ const played=[];
+ for(let i=0;i<15;i++){played.push(music.src);music.paused=true;music.onended();await flush();}
+ for(let i=0;i<15;i+=5)assert.equal(new Set(played.slice(i,i+5)).size,5);
+ assert.ok(played.every((url,i)=>!i||url!==played[i-1]));
+ audio.sync(battle);assert.equal(music.paused,true,'combat silences map music');
+ audio.sync(world);await flush();assert.equal(music.paused,false);
+ const src=music.src;audio.toggle('music');assert.equal(music.paused,true);
+ audio.toggle('music');await flush();assert.equal(music.paused,false);assert.equal(music.src,src);
+ audio.sync({...world,world:false});assert.equal(music.paused,true,'other screens pause map music');
+ audio.sync({...world,hidden:true});audio.sync(world);assert.equal(music.paused,true,'visibility return requires gesture');
+ audio.unlock();await flush();assert.equal(music.paused,false);
+});
+
+test('world music bounds broken-track retries and can recover on the next gesture',async()=>{
+ const music=fakeMusic(),audio=createGameAudio({createWorldMusic:url=>{music.src=url;return music;},createMusic:()=>null,createQuestSound:()=>null,createContext:()=>null,storage:emptyStorage});
+ audio.sync({world:true,hidden:false});audio.unlock();await flush();
+ for(let i=0;i<5;i++){music.paused=true;music.onerror();await flush();}
+ assert.equal(music.paused,true);
+ audio.unlock();await flush();assert.equal(music.paused,false);
+});
+
+test('hiding during world-music priming cannot unlock a later visible scene',async()=>{
+ let finish;const music=fakeMusic();music.play=function(){this.paused=false;return new Promise(resolve=>{finish=resolve;});};
+ const audio=createGameAudio({createWorldMusic:()=>music,createMusic:()=>null,createQuestSound:()=>null,createContext:()=>null,storage:emptyStorage});
+ audio.sync({world:true,hidden:false});audio.unlock();audio.sync({world:true,hidden:true});finish();await flush();
+ audio.sync({world:true,hidden:false});assert.equal(music.paused,true);
+});
+
+test('world songs are five independently credited, traceable compact recordings',async()=>{
+ const manifest=JSON.parse(await readFile(new URL('../assets/audio/source-manifest.json',import.meta.url),'utf8'));
+ const hashes=new Set();
+ for(const url of WORLD_MUSIC_URLS){
+  const entry=manifest.files.find(entry=>url.endsWith(entry.path));assert.equal(entry?.license,'CC-BY-4.0');assert.match(entry.author,/Melissa Elliott/);
+  const data=await readFile(fileURLToPath(url));assert.equal(data.length,entry.bytes);
+  const hash=createHash('sha256').update(data).digest('hex');assert.equal(hash,entry.sha256);hashes.add(hash);
+ }
+ assert.equal(hashes.size,5);
 });

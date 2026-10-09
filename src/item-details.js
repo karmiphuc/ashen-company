@@ -29,7 +29,7 @@ const ROLES = {
   'light-crossbow': 'A stronger five-hex ranged shot with a hit bonus and armor pressure, followed by a reload turn.',
   buckler: 'A light shield for modest melee and ranged defense without much fatigue load.',
   'round-shield': 'A balanced shield with more defense than a buckler at a moderate load.',
-  'kite-shield': 'The strongest shield defense here, but its weight reduces stamina and initiative most.',
+  'kite-shield': 'Strong missile cover for a frontliner, at a heavy fatigue and initiative cost.',
 };
 
 function signed(value) { return value > 0 ? `+${value}` : String(value); }
@@ -38,7 +38,7 @@ export function getItemDetails(item, condition) {
   const definition = item?.baseId ? getItem(item.baseId) : item;
   const base=definition?.sourceStats?{...definition,...definition.sourceStats}:definition;
   if (!item || !base) return null;
-  const baseRole = ROLES[base.id] || base.role;
+  const baseRole = ROLES[base.legacyShieldId ?? base.id] || base.role;
   if (!baseRole) return null;
   const stats = [];
   const notes = [];
@@ -114,6 +114,8 @@ export function getItemDetails(item, condition) {
       { label: 'Ranged defense', value: signed(current > 0 ? item.rangedDefense??item.defense??0 : 0) },
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
     );
+    if(item.shieldRegeneration)stats.push({label:'Regeneration',value:`+${item.shieldRegeneration} durability per turn`});
+    if(item.shieldRegeneration)notes.push('Regrows once per owner turn or realtime AP cycle while active and unbroken. Swapping gives no extra regeneration. Surviving active/reserve shields fully regrow after combat; broken shields still need repairs.');
     notes.push('A shield makes attacks less likely to hit. It does not provide body or head armor durability.');
     notes.push('Incoming melee attacks and blocked arrows wear down the active shield. Axes and thrown spears inflict heavy shield damage on hits and blocks. At zero durability it provides no shield defense or shield perk bonuses. It stays repairable; rest with tools or visit a Smithy to repair active and reserve shields.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
@@ -126,6 +128,7 @@ export function getItemDetails(item, condition) {
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
       { label: 'Armor per fatigue', value: item.fatigue > 0 ? String(Math.round(maximum / item.fatigue * 10) / 10) : 'Weightless' },
     );
+    if(item.absorbsFirstBodyHit)stats.push({label:'First body hit',value:'Absorbed once per battle; excludes armor bypass'});
     if(item.rangedDefenseBonus)stats.push({label:'Ranged defense',value:signed(item.rangedDefenseBonus)});
     if(item.initiativeBonus)stats.push({label:'Initiative',value:signed(item.initiativeBonus)});
     if(item.rangedDamageReduction)stats.push({label:'Incoming ranged damage',value:`−${Math.round(item.rangedDamageReduction*100)}%`});
@@ -183,7 +186,7 @@ export function getItemDetails(item, condition) {
     stats.push({ label: skill.name, value: `${skill.ap} AP${skill.fatigue ? ` · ${Math.max(0,skill.fatigue+((skill.id==='shieldwall'||skill.id==='knock-back')?(item.slot==='shield'?item.fatigueOnSkillUse??0:0):item.slot==='weapon'?item.fatigueOnSkillUse??0:0))} fatigue before masteries` : ''}` });
     notes.push(`${skill.name}: ${skill.description}`);
   }
-  if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
+  if (item.slot === 'weapon') notes.push('Base costs are shown above. Masteries reduce attack fatigue by 25%; Dagger and Polearm also give −1 AP. Learning a mastery granted by worn gear adds −1 AP, or +10 hit chance for Dagger. Fatigue relief stays 25%. Riposte, Warbrand/Romphaia Split/Swing, shield skills, reloads and reactions retain their costs.');
   if (item.collection === 'crafted') notes.push('Crafted at a town Armorer from ordinary stash pieces. Named and reforged versions preserve the original crafted design and its intrinsic effects; named bonuses apply above its crafted baseline.');
   else if (item.collection) {
     notes.push('Ordinary protection and fatigue follow the pinned Battle Brothers definition. New named designs roll protection and weight against that source baseline. Existing legacy designs keep their saved bonuses; prices are adapted to the campaign economy.');

@@ -18,7 +18,7 @@ test('requested mail and pelt stats are exact and both slots contribute flat bon
  for(const [id,armor,fatigue] of [['double-mail',45,2],['unhold-fur',70,3],['direwolf-fur',60,3],['hyena-fur',50,2],['bone-platings',55,2]])assert.deepEqual([getItem(id).armor,getItem(id).fatigue],[armor,fatigue]);
  const p=createGame(20).party[0],before=getCompanyStats(p);
  p.equipment.attachment='hyena-fur';p.equipment.attachment2='unhold-fur';p.armorDurability.attachment=50;p.armorDurability.attachment2=70;
- const after=getCompanyStats(p);assert.equal(after.maxFatigue,before.maxFatigue-5);assert.equal(after.initiative,before.initiative);assert.equal(after.rangedDefense,before.rangedDefense+10);
+ const after=getCompanyStats(p);assert.equal(after.maxFatigue,before.maxFatigue-5);assert.equal(after.initiative,before.initiative+10);assert.equal(after.rangedDefense,before.rangedDefense+10);
  const restored=createGame(20);restored.inventory.push('hyena-fur','unhold-fur','double-mail','direwolf-fur');restored.inventoryCondition.push(50,70,45,60);assert.deepEqual(validateSave(restored),restored);
 });
 

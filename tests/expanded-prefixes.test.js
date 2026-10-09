@@ -33,7 +33,7 @@ test('every requested prefix and grade is reachable, deterministic, inspected an
   const seen=new Map(),masteries=new Set();
   for(const base of ['arming-sword','hunting-bow','patched-coat','cloth-hood','round-shield'])for(let seed=0;seed<6000;seed++){
     const item=game.getItem(game.createFamedItemId(base,seed)),prefix=item.affixPrefix;
-    assert.equal(item.rollVersion,7);assert.deepEqual(item,game.getItem(item.id));
+    assert.equal(item.rollVersion,9);assert.deepEqual(item,game.getItem(item.id));if(!prefix)continue;
     const values=seen.get(prefix.id)??new Set();values.add(prefix.value);seen.set(prefix.id,values);
     if(prefix.id==='masterful')item.grantedPerks.forEach(id=>masteries.add(id));
     if(seed<100){const profile=extractForgeProfile(item,catalog,{shieldMaximum:game.shieldMaximum,shieldDamage:game.shieldImpactDamage});assert.ok(profile,item.id);const copy=forged(base,profile);assert.deepEqual(copy.perkBoosts,Object.fromEntries([...Object.entries(item.perkBoosts),...['berserkAp','nimble','battleForged'].filter(k=>!Object.hasOwn(item.perkBoosts,k)).map(k=>[k,0])]));assert.deepEqual(copy.grantedPerks,item.grantedPerks);}
@@ -99,10 +99,10 @@ test('injury prefix lowers thresholds alone and combines with Crippling Strikes'
   assert.ok(alone);assert.ok(combined);
 });
 
-test('Masterful grants matching mastery AP/fatigue effects without spending or duplicating a perk',()=>{
+test('Masterful grants matching mastery fatigue effects without a blanket AP discount or duplicate perk',()=>{
   for(const [weapon,mastery] of [['arming-sword','sword-training'],['light-crossbow','crossbow-mastery']]){
-    const f=hit({weapon,profile:{perkFlags:perkFlags([mastery])}}),base=hit({weapon});assert.equal(f.a.ap,base.a.ap+1);assert.ok(f.a.fatigue<base.a.fatigue);assert.deepEqual(f.p.perks,[]);
-    const learned=hit({weapon,profile:{perkFlags:perkFlags([mastery])},perks:[mastery]});assert.equal(learned.a.ap,f.a.ap);assert.deepEqual(reload(f.s),f.s);
+    const f=hit({weapon,profile:{perkFlags:perkFlags([mastery])}}),base=hit({weapon});assert.equal(f.a.ap,base.a.ap);assert.ok(f.a.fatigue<base.a.fatigue);assert.deepEqual(f.p.perks,[]);
+    const learned=hit({weapon,profile:{perkFlags:perkFlags([mastery])},perks:[mastery]});assert.equal(learned.a.ap,f.a.ap+1);assert.equal(learned.a.fatigue,f.a.fatigue);assert.deepEqual(reload(f.s),f.s);
   }
 });
 
