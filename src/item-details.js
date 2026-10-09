@@ -114,6 +114,8 @@ export function getItemDetails(item, condition) {
       { label: 'Ranged defense', value: signed(current > 0 ? item.rangedDefense??item.defense??0 : 0) },
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
     );
+    if(item.shieldRegeneration)stats.push({label:'Regeneration',value:`+${item.shieldRegeneration} durability per turn`});
+    if(item.shieldRegeneration)notes.push('Regrows once per owner turn or realtime AP cycle while active and unbroken. Swapping gives no extra regeneration. Surviving active/reserve shields fully regrow after combat; broken shields still need repairs.');
     notes.push('A shield makes attacks less likely to hit. It does not provide body or head armor durability.');
     notes.push('Incoming melee attacks and blocked arrows wear down the active shield. Axes and thrown spears inflict heavy shield damage on hits and blocks. At zero durability it provides no shield defense or shield perk bonuses. It stays repairable; rest with tools or visit a Smithy to repair active and reserve shields.');
     notes.push('Its fatigue load lowers both maximum fatigue and initiative by the same amount, subject to minimums.');
@@ -126,6 +128,7 @@ export function getItemDetails(item, condition) {
       { label: 'Fatigue load', value: String(item.fatigue ?? 0) },
       { label: 'Armor per fatigue', value: item.fatigue > 0 ? String(Math.round(maximum / item.fatigue * 10) / 10) : 'Weightless' },
     );
+    if(item.absorbsFirstBodyHit)stats.push({label:'First body hit',value:'Absorbed once per battle; excludes armor bypass'});
     if(item.rangedDefenseBonus)stats.push({label:'Ranged defense',value:signed(item.rangedDefenseBonus)});
     if(item.initiativeBonus)stats.push({label:'Initiative',value:signed(item.initiativeBonus)});
     if(item.rangedDamageReduction)stats.push({label:'Incoming ranged damage',value:`−${Math.round(item.rangedDamageReduction*100)}%`});

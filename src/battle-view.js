@@ -1,3 +1,4 @@
+import { bonePlatingReady, livingShieldRegeneration } from './equipment-specials.js';
 import { equipmentSetStatus, equipmentSetBonusText } from './equipment-sets.js';
 import { getTurnAp } from './engine.js';
 import { INJURY_BY_ID, injuryEffectText, injuryStat, injuryAdjustment } from './injuries.js';
@@ -168,6 +169,8 @@ function perkEffectsHTML(effects) {
 
 function statusIconsHTML(unit, battle) {
   const statuses = [
+    unit.alive && unit.bonePlatingSpent!==undefined ? [unit.bonePlatingSpent?'bone-plating-spent':'bone-plating',bonePlatingReady(unit,getItem)?'Bone Platings ready: absorb the first body hit that does not bypass armor':'Bone Platings spent: refreshes next battle','<path d="M3 2 5 1l6 10 2 1-1 3-3-1L3 4 1 3z"/>'] : null,
+    unit.alive && livingShieldRegeneration(unit,getItem)>0 ? ['living-shield','Living Tree Shield: +20 durability once per owner turn; fully regrows after combat if unbroken','<path d="M13 2C3 1 1 7 4 11s10 1 9-9zM3 14 11 5"/>'] : null,
     ...(unit.injuries??[]).map(wound=>['wound-'+wound.id,INJURY_BY_ID.get(wound.id).name+': '+injuryEffectText(wound),'<path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z"/>']),
     unit.alive && getLoneWolfBonus(battle, unit) > 0 ? ['lone-wolf', 'Lone Wolf: +15% melee/ranged skill, defense and resolve', '<path d="m2 1 4 3h4l4-3v7l-3 5H5L2 8zm3 5v2h2V6zm4 0v2h2V6z"/>'] : null,
     unit.alive && unit.overwhelmed?.round === battle.round ? ['overwhelmed', `Overwhelmed ×${unit.overwhelmed.stacks}: −${Math.min(100, unit.overwhelmed.stacks * 10)}% melee/ranged skill until turn ends`, '<path d="M2 2h3v6h2L3.5 13 0 8h2zm7 0h3v6h2l-3.5 5L7 8h2z"/>'] : null,
