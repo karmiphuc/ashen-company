@@ -1,12 +1,14 @@
 # Tactical AI and weapon skills
 
+Current mastery costs, Pathfinder, dynamic Reach Advantage, Duelist and Heavy Weapon Specialist are specified in [PERK-BALANCE.md](PERK-BALANCE.md). New battles use those rules; historical notes below describe earlier battle versions.
+
 Version 0.37 adds automatic skills to every weapon family, including reactions, stuns and restricted area attacks. Skills use existing equipment stats, durability, ammunition and mastery discounts.
 
-Version 0.38 makes matching weapon masteries reduce ordinary attacks and weapon skills by 1 AP, with a minimum of 1 AP. Overlapping masteries apply the discount once. The AI checks and spends the same discounted cost, including Spearwall and Riposte. The table and equipment details show base costs. Shieldwall, Knock Back, reloads, swaps, consumables and reaction costs are unchanged. Earlier battles without the weapon-skills marker keep their original costs.
+Historical battles without `perkBalanceVersion: 1` retain the following rule: version 0.38 makes matching weapon masteries reduce ordinary attacks and weapon skills by 1 AP, with a minimum of 1 AP. Overlapping masteries apply the discount once. The AI checks and spends the same discounted cost, including Spearwall and Riposte. The table and equipment details show base costs. Shieldwall, Knock Back, reloads, swaps, consumables and reaction costs are unchanged. Earlier battles without the weapon-skills marker keep their original costs.
 
 Version 0.39 gives enemies below 25 morale (Breaking) one 50% flee roll per turn. Success replaces their actions with movement toward an edge, respecting terrain, occupied hexes and mount control. Leaving an adjacent opponent's reach offers that opponent an opportunity strike before the move: no AP, 5 fatigue, normal accuracy and basic damage, no counter chain. Adjacent ranged fighters use a basic unarmed strike. A kill stops flight; Spearwall can also intercept the destination. Escaped enemies disappear without granting kill XP or dropping their equipment. The roll and fleeing state persist through saves. Earlier battles without the weapon-skills marker retain their original behavior.
 
-Crossbows retain independent active/reserve loading states, even for two identical items. The AI draws a loaded reserve crossbow before reloading if ammunition, fatigue, target range and AP permit a swap plus a shot. Quick Hands or Crossbow Mastery allow two shots within a normal nine-AP turn; two unmastered shots plus a paid swap cost ten AP. When both are unloaded, reload affects only the currently wielded crossbow. Swapping never reloads a weapon.
+Crossbows retain independent active/reserve loading states, even for two identical items. The AI draws a loaded reserve crossbow before reloading if ammunition, fatigue, target range and AP permit a swap plus a shot. Quick Hands allows two shots within a normal nine-AP turn; two shots plus a paid swap cost ten AP. Earlier battles also retain Crossbow Mastery’s AP discount. When both are unloaded, reload affects only the currently wielded crossbow. Swapping never reloads a weapon.
 
 ## Company and personal orders
 

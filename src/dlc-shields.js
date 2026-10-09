@@ -714,11 +714,12 @@ export const DLC_SHIELDS = Object.freeze([
     "defense": 20,
     "rangedDefense": 17,
     "durability": 40,
+    "shieldRegeneration": 20,
     "fatigue": 12,
     "collection": "beasts-and-exploration",
     "sourceKind": "crafted",
     "sourceCulture": "mercenary",
-    "description": "This shield carved out of the remains of a living tree slowly regrows if it sustains any damage. At a glance, it almost looks as if its grotesque face is still moving. Adapted as equipment; source regeneration and magical effects are not simulated.",
+    "description": "This shield carved out of the remains of a living tree slowly regrows if it sustains any damage. At a glance, it almost looks as if its grotesque face is still moving. Regenerates 20 durability once per turn while active and unbroken. Surviving shields fully regrow after combat.",
     "role": "+20 melee defense, +17 ranged defense; 40 durability at a 12 fatigue cost."
   },
   {

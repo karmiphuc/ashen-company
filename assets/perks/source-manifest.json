@@ -42,20 +42,6 @@
     "sha256": "95df6640353d734b36bf26ae279eac0b61af6244c7af11e1dfe673e7a204590e"
   },
   {
-    "perk": "bow-mastery",
-    "asset": "assets/perks/bow-mastery.png",
-    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/coordinated_volleys_circle.png",
-    "bytes": 6767,
-    "sha256": "94f3aed19d449291d9ba270f362b926710faf96f68ca3d64829061f6944bfd35"
-  },
-  {
-    "perk": "crossbow-mastery",
-    "asset": "assets/perks/crossbow-mastery.png",
-    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/PiercingBoltPerk.png",
-    "bytes": 6967,
-    "sha256": "9465c28ecf86e5b710c9670d91ff6f2e8fb3e05adb701da5750bf2af05205ab7"
-  },
-  {
     "perk": "pathfinder",
     "asset": "assets/perks/pathfinder.png",
     "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/climb.png",
@@ -131,5 +117,278 @@
     "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/gruesome_circle.png",
     "bytes": 7494,
     "sha256": "5de3925918e16a9c07472a4a7c9bfc98faac8aad4c557c0f8bcf2455f5103e62"
+  },
+  {
+    "perk": "sword-training",
+    "asset": "assets/perks/sword-training.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/spec_greatsword.png",
+    "bytes": 6547,
+    "sha256": "3fc24345bc4aa86b517bee1773402c5f3ec2a7f49a1f4ef297d7df142cb8ff89"
+  },
+  {
+    "perk": "axe-training",
+    "asset": "assets/perks/axe-training.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/woodaxe_01.png",
+    "bytes": 10370,
+    "sha256": "b9179925bfaf98105efee6c7bd08b6a652e7c80dc7e31685c08a0a4861be2299"
+  },
+  {
+    "perk": "mace-training",
+    "asset": "assets/perks/mace-training.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/perk_spec_mace.png",
+    "bytes": 7266,
+    "sha256": "f995102cb2f428615c4719fc125ca02566c84078b28fc46804ca9e96b3a9f7b3"
+  },
+  {
+    "perk": "spear-training",
+    "asset": "assets/perks/spear-training.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/spearthrust_mastery.png",
+    "bytes": 7176,
+    "sha256": "c8040a202a24b4b765b9ee516f8c6f26b476a55e43bf61117b2b72c9788d0faa"
+  },
+  {
+    "perk": "polearm-training",
+    "asset": "assets/perks/polearm-training.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/perk_spec_bitchfork.png",
+    "bytes": 8056,
+    "sha256": "4e5d76eb3f9f9192841d2182796cec97de7550c8375d2a053fdd97ec073b8e3d"
+  },
+  {
+    "perk": "dagger-training",
+    "asset": "assets/perks/dagger-training.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/knife_01.png",
+    "bytes": 10091,
+    "sha256": "744ff3009c3b3ad8f027f39eec6a127931f831623dd3d6effbcd7c1b09280631"
+  },
+  {
+    "perk": "throwing-training",
+    "asset": "assets/perks/throwing-training.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/perk_spec_javelin.png",
+    "bytes": 7500,
+    "sha256": "b964897c963c86ed62f194d04777c9215f7b0a80431369d85f54d8ee339400f6"
+  },
+  {
+    "perk": "bow-mastery",
+    "asset": "assets/perks/bow-mastery.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/perk_spec_longbow.png",
+    "bytes": 7406,
+    "sha256": "e27c292a1144e84d7508f60d325bb73a453bf41e8de351562eb681b180690a00"
+  },
+  {
+    "perk": "crossbow-mastery",
+    "asset": "assets/perks/crossbow-mastery.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/perk_spec_xbow.png",
+    "bytes": 7526,
+    "sha256": "3b6437c5248edf6a5588c94e9edc4fd546e6779008d9d2e267913bb85992ef59"
+  },
+  {
+    "perk": "rotation",
+    "asset": "assets/perks/rotation.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/rebound_circle.png",
+    "bytes": 7191,
+    "sha256": "a3de448cb871d572c998b747d58b0e8f1112ca394ef14f35c92e9a50404fe61d"
+  },
+  {
+    "perk": "overwhelm",
+    "asset": "assets/perks/overwhelm.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/devastating_strikes.png",
+    "bytes": 7485,
+    "sha256": "fb0046eae9118ba2b01762839ae1dd312d9bf4e6c113410c34468accabd321d0"
+  },
+  {
+    "perk": "lone-wolf",
+    "asset": "assets/perks/lone-wolf.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/wolf_circle.png",
+    "bytes": 7261,
+    "sha256": "2e182bafa3cbfcf521a158fcfb1726006363c13a0cb557b0687abc4e8129eb80"
+  },
+  {
+    "perk": "underdog",
+    "asset": "assets/perks/underdog.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/strength_in_numbers.png",
+    "bytes": 7623,
+    "sha256": "85791ca8f7f10fbd1bec6ebd2cd49a607e1df70f6b5cd536b65b15f83445b08c"
+  },
+  {
+    "perk": "head-hunter",
+    "asset": "assets/perks/head-hunter.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/mark_target.png",
+    "bytes": 6634,
+    "sha256": "b8c694861ec5733fc9a794fa19c7cde036fd88075ed4ac1b6188ec28cd0f0c10"
+  },
+  {
+    "perk": "gifted",
+    "asset": "assets/perks/gifted.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/promised_potential.png",
+    "bytes": 6967,
+    "sha256": "5fa3fef65d53f3a5a11b021618eaa7c633d10e70d282b856441a838748164dad"
+  },
+  {
+    "perk": "quick-hands",
+    "asset": "assets/perks/quick-hands.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/sleight_of_hand.png",
+    "bytes": 6894,
+    "sha256": "6e10b13d11c7d168f734244f8bed0b506ea7d6f8eaa8e96d45a922b26b8d0339"
+  },
+  {
+    "perk": "combat-bandaging",
+    "asset": "assets/perks/combat-bandaging.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/bandage_circle.png",
+    "bytes": 7255,
+    "sha256": "1ebc3082ea7fc21585a1beec798ba19c1026bce1c0d158d5bfb6f5f4845cc56f"
+  },
+  {
+    "perk": "crippling-strikes",
+    "asset": "assets/perks/crippling-strikes.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/debilitate_circle_56.png",
+    "bytes": 6710,
+    "sha256": "8a89adc4c1d9287ff306e18b904fed8193923f12d8006ed0397b4ad8f0452841"
+  },
+  {
+    "perk": "layered-armor",
+    "asset": "assets/perks/layered-armor.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/runed_armour_circle.png",
+    "bytes": 7009,
+    "sha256": "3a98764f0c8cf968ec4f1a91b7c4552000914071bebb99ec2ba7669a40d9ae54"
+  },
+  {
+    "perk": "battle-flow",
+    "asset": "assets/perks/battle-flow.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/battle_flow56_circle.png",
+    "bytes": 6525,
+    "sha256": "66b3daa7e8e377f877b33410df7936c616f7795e82fb121f859554b3e520ec19"
+  },
+  {
+    "perk": "shield-bearer",
+    "asset": "assets/perks/shield-bearer.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/shields_up.png",
+    "bytes": 7734,
+    "sha256": "b3521394bac4cfd3681230e6f7b4a09b3eea8584ad74ba78c39c5a0e7364bbe7"
+  },
+  {
+    "perk": "shield-strike",
+    "asset": "assets/perks/shield-strike.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/smashing_shields_circle.png",
+    "bytes": 7317,
+    "sha256": "afb8b981a4826d5aef53ddcb2705a38e7edb7fd928ee44e8687959f2aa9f2535"
+  },
+  {
+    "perk": "iron-jaw",
+    "asset": "assets/perks/iron-jaw.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/stalwart.png",
+    "bytes": 7447,
+    "sha256": "06e2308b3728374990e985d6194cb5cf7dc141ea12c8898736dacc366f3a6e49"
+  },
+  {
+    "perk": "battle-forged",
+    "asset": "assets/perks/battle-forged.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/runed_helm_circle.png",
+    "bytes": 6973,
+    "sha256": "64c95b074fd4d4ca0803add753e95d6392fa41cb8a0562eaae0828c7450cd867"
+  },
+  {
+    "perk": "agile-defense",
+    "asset": "assets/perks/agile-defense.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/untouchable_circle.png",
+    "bytes": 7608,
+    "sha256": "ee76559c71594b0adada3ee9600619f703be80c81047048114407611e7de5eda"
+  },
+  {
+    "perk": "nimble",
+    "asset": "assets/perks/nimble.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/ubernimble_circle.png",
+    "bytes": 6992,
+    "sha256": "9e44178f347699561314d2891a74b02270b206820ac51121b9fb7fef6fc6f000"
+  },
+  {
+    "perk": "reach-advantage",
+    "asset": "assets/perks/reach-advantage.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/spears_circle.png",
+    "bytes": 7583,
+    "sha256": "5a7e2dd4228f8eed3e4fca188936c018f9379132cd58913df81d9abb90cdc04c"
+  },
+  {
+    "perk": "last-stand",
+    "asset": "assets/perks/last-stand.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/laststand_circle.png",
+    "bytes": 7136,
+    "sha256": "c12830b717e9dc9a455d31f2abf3f0bf6e3d889d93099022e8d6dec29f514ab1"
+  },
+  {
+    "perk": "duelist",
+    "asset": "assets/perks/duelist.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/en_gaurd_circle.png",
+    "bytes": 7432,
+    "sha256": "b31b456ccfe2da11127878b8019837d28bc43553927d3bc7befd24a7a48a6ace"
+  },
+  {
+    "perk": "opportunist",
+    "asset": "assets/perks/opportunist.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/prepared.png",
+    "bytes": 4530,
+    "sha256": "0530613a7ddba5a24ccc10f56a5735a449564b07cba0ea7e59512a729dba5536"
+  },
+  {
+    "perk": "marksman",
+    "asset": "assets/perks/marksman.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/wind_reader.png",
+    "bytes": 7218,
+    "sha256": "81d7f364fe672be51f6cedf15b73ce1201388a22014a6ff7b7f41b599f988766"
+  },
+  {
+    "perk": "point-blank",
+    "asset": "assets/perks/point-blank.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/closecombat56.png",
+    "bytes": 7171,
+    "sha256": "62967d233b878cbd3186f5ae165c8eb4ecdf706d1716490f27d137e1208cc966"
+  },
+  {
+    "perk": "volley-fire",
+    "asset": "assets/perks/volley-fire.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/coordinated_volleys_circle.png",
+    "bytes": 6767,
+    "sha256": "94f3aed19d449291d9ba270f362b926710faf96f68ca3d64829061f6944bfd35"
+  },
+  {
+    "perk": "reload-drill",
+    "asset": "assets/perks/reload-drill.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/recuperation.png",
+    "bytes": 6993,
+    "sha256": "9f91c214326b941ce7d11154e4e3f88283985833ec9731dfd082483047e5b06c"
+  },
+  {
+    "perk": "fleet-footed",
+    "asset": "assets/perks/fleet-footed.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/perk_sprint.png",
+    "bytes": 6665,
+    "sha256": "ef82fa077af259015618c1de6e8abd3d9eca11d91c62a2c36979d3fc3fce3f88"
+  },
+  {
+    "perk": "relentless",
+    "asset": "assets/perks/relentless.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/steadfast_circle.png",
+    "bytes": 7760,
+    "sha256": "37b87f796c321d085bf52790aef4333a29aa3d2c572da75b3b7ec0321e448038"
+  },
+  {
+    "perk": "marathoner",
+    "asset": "assets/perks/marathoner.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/dedication_circle.png",
+    "bytes": 6745,
+    "sha256": "b8e28427e39ce26963970e8b1cd0579281dd65300d9a38258776a8c1a0d6052f"
+  },
+  {
+    "perk": "high-ground",
+    "asset": "assets/perks/high-ground.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/climb.png",
+    "bytes": 7584,
+    "sha256": "9672104ccb117d0b33109fa8f2265089537e6084fc4923b19d5229e36c700c6c"
+  },
+  {
+    "perk": "heavy-weapon-specialist",
+    "asset": "assets/perks/heavy-weapon-specialist.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/hammer_the_gap.png",
+    "bytes": 5964,
+    "sha256": "7294f9ba1dfc6505a0c22d97e305c419309f67c7adc7ae5202139f555745a978"
   }
 ]
