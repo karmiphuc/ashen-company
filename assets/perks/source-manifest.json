@@ -383,5 +383,12 @@
     "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/climb.png",
     "bytes": 7584,
     "sha256": "9672104ccb117d0b33109fa8f2265089537e6084fc4923b19d5229e36c700c6c"
+  },
+  {
+    "perk": "heavy-weapon-specialist",
+    "asset": "assets/perks/heavy-weapon-specialist.png",
+    "source": "https://raw.githubusercontent.com/Battle-Brothers-Legends/Legends-public/b014cdf8520e69b2383116d1654977e9dbb10d96/gfx/ui/perks/hammer_the_gap.png",
+    "bytes": 5964,
+    "sha256": "7294f9ba1dfc6505a0c22d97e305c419309f67c7adc7ae5202139f555745a978"
   }
 ]

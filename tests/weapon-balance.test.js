@@ -11,9 +11,9 @@ test('Warbrand and Rhomphaia Split/Swing cost five AP, including named rolls; ot
  assert.ok(equipmentSkills(m.getItem('rhomphaia')).some(s=>s.id==='reap'));
  for(const name of ['split','swing'])assert.equal(equipmentSkills(m.getItem('greatsword')).find(s=>s.id===name).ap,6);
 });
-test('Duelist adds damage with ordinary and named bucklers, but not other intact shields',()=>{
+test('Duelist adds penetration with ordinary and named bucklers, but not other intact shields',()=>{
  for(const shield of [null,'buckler',m.createFamedItemId('buckler',17),'legacy-buckler','famed:legacy-buckler:17','round-shield']){
-  const f=fixture('arming-sword');f.a.equipment.shield=shield;f.a.shieldDurability=m.shieldMaximum(shield);f.a.perks=['duelist'];f.state.party[0].level=4;f.state.party[0].perks=['duelist'];
+  const f=fixture('arming-sword');f.t.headArmor=f.t.bodyArmor=150;f.a.equipment.shield=shield;f.a.shieldDurability=m.shieldMaximum(shield);f.a.perks=['duelist'];f.state.party[0].level=4;f.state.party[0].perks=['duelist'];
   const plain=structuredClone(f.state);plain.battle.units.find(u=>u.id===f.a.id).perks=[];
   m.advanceBattle(f.state);m.advanceBattle(plain);
   const enhanced=f.b.lastEvent.hpDamage,normal=plain.battle.lastEvent.hpDamage;

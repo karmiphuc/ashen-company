@@ -817,7 +817,6 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
   const dodgeDefense = hasPerk(person, 'dodge') ? Math.floor(initiative * .15) : 0;
   const nimbleBoost=equipmentBoost(person,'nimble',getItem,1);
   const nimbleDefense = armorFatigue <= 15+nimbleBoost*5 && hasPerk(person, 'nimble') ? 5*(1+nimbleBoost) : 0;
-  const reachDefense = hasPerk(person, 'reach-advantage') && equipped.weapon?.twoHanded && !equipped.weapon.ranged ? 5 : 0;
   const giftedSkill = hasPerk(person, 'gifted') ? 3 : 0;
   const giftedDefense = hasPerk(person, 'gifted') ? 2 : 0;
   const baseResolve = 42 + (captain ? 10 : 0) + (attributes.resolve ?? 0) + (recruit.resolve ?? 0);
@@ -825,7 +824,7 @@ export function getCompanyStats(person, {ignoreInjuries = false} = {}) {
     maxHp,
     meleeSkill: 54 + (captain ? 9 : guard ? 6 : 0) + (person.seed % 7) + (attributes.meleeSkill ?? 0) + (recruit.meleeSkill ?? 0) + giftedSkill + mountHit + famedStatBonus('meleeSkill'),
     rangedSkill: 40 + (scout ? 13 : 0) + (person.seed % 9) + (attributes.rangedSkill ?? 0) + (recruit.rangedSkill ?? 0) + giftedSkill + mountHit + famedStatBonus('rangedSkill'),
-    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + reachDefense + giftedDefense + famedStatBonus('meleeDefense') + (mount?.meleeDefenseBonus ?? 0),
+    meleeDefense: 5 + (guard ? 3 : 0) + (attributes.meleeDefense ?? 0) + (recruit.meleeDefense ?? 0) + effectiveShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('meleeDefense') + (mount?.meleeDefenseBonus ?? 0),
     rangedDefense: 5 + (scout ? 3 : 0) + (attributes.rangedDefense ?? 0) + (recruit.rangedDefense ?? 0) + effectiveRangedShieldDefense + dodgeDefense + nimbleDefense + giftedDefense + famedStatBonus('rangedDefense') + (mount?.rangedDefenseBonus ?? 0) + attachmentBonus(person.equipment,'rangedDefenseBonus'),
     maxFatigue: Math.max(30, 100 + (attributes.maxFatigue ?? 0) + (recruit.maxFatigue ?? 0) - fatigue - (mount?.fatigue ?? 0) + famedStatBonus('maxFatigue')),
     initiative,
@@ -3132,8 +3131,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
       morale: person.morale, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false,
       spearwallActive: false, riposteActive: false, stunnedTurns: 0, stunProtected: false, pendingBerserkAp: 0,
       meleeSkill: stats.meleeSkill, rangedSkill: stats.rangedSkill,
-      meleeDefense: stats.meleeDefense - (hasPerk(person, 'dodge') ? Math.floor(stats.initiative * .15) : 0)
-        - (hasPerk(person, 'reach-advantage') && getItem(person.equipment.weapon)?.twoHanded && !getItem(person.equipment.weapon)?.ranged ? 5 : 0),
+      meleeDefense: stats.meleeDefense - (hasPerk(person, 'dodge') ? Math.floor(stats.initiative * .15) : 0),
       rangedDefense: stats.rangedDefense - (hasPerk(person, 'dodge') ? Math.floor(stats.initiative * .15) : 0),
       maxFatigue: stats.maxFatigue, initiative: stats.initiative, resolve: stats.resolve,
     }];
@@ -3237,7 +3235,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed,camp,encounterAffixes(state,camp.id,camp.generation)) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
     injuryRulesVersion:1, injuryRng:hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}:injuries`),
-    status: 'active', equipmentSetRulesVersion:EQUIPMENT_SET_RULES_VERSION, itemAffixRulesVersion:2, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
+    status: 'active', equipmentSetRulesVersion:EQUIPMENT_SET_RULES_VERSION, itemAffixRulesVersion:2, lighting:getTimeOfDay(state.hour).phase, escapeRulesVersion:1, championLootVersion:2, enemyScalingVersion:1, enemyTacticsVersion:1, championRulesVersion:1, attachmentRulesVersion:1, perkBalanceVersion:1, perkCombatVersion:1, rulesVersion: 2, weaponSkillsVersion: 1, weaponAuditVersion: 1, weaponCompletionVersion: 1, roleConsistencyVersion: 1, mountSkillsVersion: 1, mountBalanceVersion: 1, round: 1, activeId: null, units: [...company, ...allies, ...enemies],
     enemyOpening: encounterType==='band'&&enemyOpening,
     turnOrder: [], turnIndex: 0, rng: hashSeed(`${state.seed}:${camp.id}:${state.day}:${state.contractSerial}`),
     lootSeed: hashSeed(`${state.seed}:${camp.id}:${encounterType === 'band' ? camp.spawnCycle : camp.generation}:salvage`),
@@ -3250,7 +3248,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   battle.enemyAdaptiveRulesVersion = 1;
   for (const unit of battle.units) unit.movementCredit = Math.max(0, movementBudget(unit, battle) - 2) * 2;
   battle.formationAdvance = ['advance-formation', 'shield-wall'].includes(battle.tactic) ? makeFormationAdvancePlan(battle) : null;
-  for (const unit of battle.units) { unit.injuries ??= []; unit.ap=getTurnAp(unit); }
+  for (const unit of battle.units) { unit.injuries ??= []; unit.perkBalanceVersion=1; unit.ap=getTurnAp(unit); }
   battle.turnOrder = sortTurnOrder(battle);
   orderCompanyTurnsForFormation(battle);
   if(battle.enemyOpening)battle.turnOrder.sort((a,b)=>Number(battle.units.find(u=>u.id===b).side==='enemy')-Number(battle.units.find(u=>u.id===a).side==='enemy'));
@@ -3285,6 +3283,7 @@ function nextBattleTurn(battle) {
     if (unit?.alive) {
       battle.turnIndex = next;
       battle.activeId = unit.id;
+      if(battle.perkBalanceVersion===1)delete unit.reachAdvantageStacks;
       unit.ap = battle.rulesVersion === 2 ? getTurnAp(unit) + (battle.weaponSkillsVersion === 1 ? unit.pendingBerserkAp ?? 0 : 0) : 2;
       if (battle.rulesVersion === 2) {
         unit.shieldWallActive = false;
@@ -3388,7 +3387,7 @@ function battleMovementCost(battle, actor, from, to) {
 }
 
 function movementFatigue(actor, cost) {
-  return cost * (hasPerk(actor, 'marathoner') ? 2 : 3);
+  return Math.ceil(cost * (hasPerk(actor, 'marathoner') ? 2 : 3) * (actor.perkBalanceVersion===1 && hasPerk(actor,'pathfinder') ? .5 : 1));
 }
 
 function movementBudget(actor, battle) {
@@ -3426,6 +3425,7 @@ function changeBattleWeapon(actor, weaponId, shieldId, shieldDurability = actor.
   const oldDefense = shieldDefenseFor(actor, actor.equipment.shield),oldRangedDefense=shieldDefenseFor(actor,actor.equipment.shield,actor.shieldDurability,true);
   const oldFatigue = battleGearFatigue(actor.equipment);
   actor.equipment.weapon = weaponId;
+  if(actor.perkBalanceVersion===1&&(!getItem(weaponId)?.twoHanded||getItem(weaponId)?.ranged))delete actor.reachAdvantageStacks;
   if(roleRules(battle)&&!getItem(weaponId)?.ranged)delete actor.skirmishReturn;
   actor.equipment.shield = shieldId;
   actor.shieldWallActive = false;
@@ -4110,15 +4110,32 @@ const AXE_VISUALS = new Set(['axe', 'greataxe', 'hand-axe', 'longaxe', 'bardiche
 const WEAPON_MASTERY_IDS = ['sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training'];
 
 
+function battleMasteryMatches(actor,id,weapon) {
+  if(actor.perkBalanceVersion!==1){
+    if(id==='polearm-training')return !weapon?.ranged&&(weapon?.range??1)>=2;
+    if(id==='spear-training')return !weapon?.throwing&&/spear|pike/.test(weaponTrainingVisual(weapon)??'');
+    if(id==='mace-training'&&['polemace','heavymace','heavyflail'].includes(weaponTrainingVisual(weapon)))return false;
+  }
+  return weaponMasteryMatches(id,weapon);
+}
+
+function heavyWeaponSpecialist(actor,weapon) {
+  return actor.perkBalanceVersion===1 && weapon?.slot==='weapon' && weapon.twoHanded && !weapon.ranged && (weapon.range??1)===1 && hasPerk(actor,'heavy-weapon-specialist');
+}
+
+function masteredFatigue(actor,weapon,base) {
+  return Math.ceil(base * (hasWeaponMastery(actor,weapon) ? .75 : 1) * (heavyWeaponSpecialist(actor,weapon) ? .9 : 1));
+}
+
 function hasWeaponMastery(actor, weapon) {
   return isBow(weapon) && hasPerk(actor, 'bow-mastery')
     || isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery')
-    || WEAPON_MASTERY_IDS.some(id => hasPerk(actor, id) && weaponMasteryMatches(id, weapon));
+    || WEAPON_MASTERY_IDS.some(id => hasPerk(actor, id) && battleMasteryMatches(actor,id, weapon));
 }
 
 function attackFatigueCost(actor, weapon, battle=null) {
   const base = Math.max(0,((battle?.weaponCompletionVersion===1?equipmentSkills(weapon)[0]?.fatigue:undefined) ?? weapon?.fatigueCost ?? (weapon?.ranged ? 9 : 11))+(weapon?.fatigueOnSkillUse??0));
-  return hasWeaponMastery(actor, weapon) ? Math.ceil(base * .75) : base;
+  return masteredFatigue(actor,weapon,base);
 }
 
 function attackApCost(weapon, battle = null, actor = null, option = null) {
@@ -4126,13 +4143,17 @@ function attackApCost(weapon, battle = null, actor = null, option = null) {
   const base = option?.ap ?? (battle?.weaponCompletionVersion===1&&battle.weaponSkillsVersion===1?equipmentSkills(weapon)[0]?.ap:undefined) ?? (isCrossbow(weapon) ? 3 : weapon?.ranged ? 4
     : battle?.weaponSkillsVersion === 1 && ['dagger', 'qatal'].includes(weaponSkillFamily(weapon)) ? 3
     : weapon?.twoHanded || (weapon?.range ?? 1) > 1 && !weapon?.ranged ? 6 : 4);
-  return battle?.weaponSkillsVersion === 1 && actor && hasWeaponMastery(actor, weapon) ? Math.max(1, base - 1) : base;
+  const fixedSkillCost=actor?.perkBalanceVersion===1&&['split','swing'].includes(option?.id)&&base===5;
+  const discount=!fixedSkillCost && actor && (actor.perkBalanceVersion===1
+    ? weaponMasteryMatches('dagger-training',weapon)&&hasPerk(actor,'dagger-training') || weaponMasteryMatches('polearm-training',weapon)&&hasPerk(actor,'polearm-training')
+    : hasWeaponMastery(actor,weapon));
+  return battle?.weaponSkillsVersion === 1 && discount ? Math.max(1, base - 1) : base;
 }
 
 function weaponTrainingHit(actor, weapon) {
-  if (hasPerk(actor, 'sword-training') && weaponMasteryMatches('sword-training', weapon)) return 8;
-  if (hasPerk(actor, 'spear-training') && weaponMasteryMatches('spear-training', weapon)) return 8;
-  if (hasPerk(actor, 'throwing-training') && weaponMasteryMatches('throwing-training', weapon)) return 8;
+  if (hasPerk(actor, 'sword-training') && battleMasteryMatches(actor,'sword-training', weapon)) return 8;
+  if (hasPerk(actor, 'spear-training') && battleMasteryMatches(actor,'spear-training', weapon)) return 8;
+  if (hasPerk(actor, 'throwing-training') && battleMasteryMatches(actor,'throwing-training', weapon)) return 8;
   return 0;
 }
 
@@ -4225,7 +4246,7 @@ export function attackHitChance(battle, actor, target, weapon, hitBonus = 0, opt
   const dodgeDefense = hasPerk(target, 'dodge')
     ? Math.floor(Math.max(0, combatInitiative(target) - target.fatigue * (hasPerk(target, 'relentless') ? .1 : .2)) * .15) : 0;
   const reachDefense = hasPerk(target, 'reach-advantage') && getItem(target.equipment.weapon)?.twoHanded
-    && !getItem(target.equipment.weapon)?.ranged ? 5 : 0;
+    && !getItem(target.equipment.weapon)?.ranged ? battle.perkBalanceVersion===1 ? (target.reachAdvantageStacks??0)*5 : 5 : 0;
   const anticipationDefense = ranged && hasPerk(target, 'anticipation')
     ? Math.max(10, Math.floor(injuryStat(target,'rangedDefense') * (.1+equipmentBoost(target,'anticipationPct',getItem)/100) * hexDistance(actor, target))) : 0;
   const shieldBypass = (option?.shieldBypass || ['flail-headshot', 'whip-crack'].includes(option?.id)) ? shieldDefenseFor(target, target.equipment.shield) : 0;
@@ -4247,7 +4268,7 @@ export function attackHitChance(battle, actor, target, weapon, hitBonus = 0, opt
   const adjacentShotPenalty = ranged && distance === 1 && !hasPerk(actor, 'point-blank') ? 12 : 0;
   const baseChance = clamped(Math.round(skill * (1 + getMoraleEffects(actor).modifier)) + (weapon.hitBonus ?? 0) + (weapon.skillHitBonus ?? 0) - defense + 15 + terrainHit
     + surroundingHit + (hasPerk(actor, 'fast-adaptation') ? actor.adaptation * 10 : 0) + perkHit + hitBonus
-    - Math.floor(actor.fatigue / 7) - adjacentShotPenalty - (battle.weaponCompletionVersion===1&&!ranged&&weapon.range>=2&&distance===1&&!hasPerk(actor,'polearm-training')?15:0), 12, 90);
+    - Math.floor(actor.fatigue / 7) - adjacentShotPenalty - (battle.weaponCompletionVersion===1&&!ranged&&weapon.range>=2&&distance===1&&!(battle.perkBalanceVersion===1?hasWeaponMastery(actor,weapon):hasPerk(actor,'polearm-training'))?15:0), 12, 90);
   return clamped(baseChance - getNightHitPenalty(battle,ranged), 12, 90);
 }
 
@@ -4255,7 +4276,7 @@ function attackSkillFatigue(actor, weapon, option) {
   if (!option?.fatigue) return attackFatigueCost(actor, weapon);
   if (option.id === 'aimed-shot') return aimedFatigueCost(actor);
   const base=Math.max(0,option.fatigue+(weapon?.fatigueOnSkillUse??0));
-  return hasWeaponMastery(actor,weapon)?Math.ceil(base*.75):base;
+  return masteredFatigue(actor,weapon,base);
 }
 
 export function getDoubleGripBonus(unit, weapon = getItem(unit.equipment?.weapon)) {
@@ -4277,6 +4298,9 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   if(battle.weaponAuditVersion===1&&option?.id==='split-shield')return {hp:0,armorDamage:0,before:0};
   if(option?.noDamage)return {hp:0,armorDamage:0,before:0};
   if(option?.dot)return {hp:option.fixedHealth,armorDamage:0,before:0};
+  const specialist=heavyWeaponSpecialist(actor,weapon);
+  const duelist=!ranged&&weapon.slot==='weapon'&&!weapon.twoHanded
+    &&(!actor.equipment.shield||actor.shieldDurability===0||(getItem(actor.equipment.shield)?.legacyShieldId??getItem(actor.equipment.shield)?.baseId??actor.equipment.shield)==='buckler')&&hasPerk(actor,'duelist');
   const bonus = option?.id === 'deathblow' && (target.stunnedTurns > 0 || battle.weaponCompletionVersion===1&&(target.dazedTurns>0||target.affixDazedTurns>0)) ? 1.5
     : option?.id === 'decapitate' && target.hp < target.maxHp ? 1.4
       : option?.id === 'power-throw' ? 1.25 : ['knock-out', 'stunning-stone'].includes(option?.id) ? option?.damageMultiplier ?? .5 : option?.damageMultiplier ?? 1;
@@ -4286,12 +4310,14 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
     * (weapon.slot==='weapon'&&!option?.freeFollowup&&!option?.dot&&actor.killMomentumPct&&equipmentBoost(actor,'killMomentumPct',getItem)?1+Math.min(actor.killMomentumPct,equipmentBoost(actor,'killMomentumPct',getItem))/100:1)
     * (hasPerk(actor, 'executioner') && (battle.injuryRulesVersion===1 ? target.injuries?.length>0 : target.hp < target.maxHp) ? 1.2+equipmentBoost(actor,'executionerPct',getItem)/100 : 1)
     * (hasPerk(actor, 'killing-frenzy') && actor.frenzyUntilRound >= battle.round ? 1.25 : 1)
-    * (hasPerk(actor, 'polearm-training') && weaponMasteryMatches('polearm-training', weapon) ? 1.1 : 1)
+    * (hasPerk(actor, 'polearm-training') && battleMasteryMatches(actor,'polearm-training', weapon) ? 1.1 : 1)
     * (hasPerk(actor, 'shield-strike') && !ranged && actor.equipment.shield && actor.shieldDurability > 0 ? 1.1 : 1)
-    * (hasPerk(actor, 'duelist') && !ranged && weapon.slot === 'weapon' && !weapon.twoHanded && (!actor.equipment.shield || actor.shieldDurability === 0 || (getItem(actor.equipment.shield)?.legacyShieldId??getItem(actor.equipment.shield)?.baseId??actor.equipment.shield)==='buckler') ? 1.12+equipmentBoost(actor,'duelistPct',getItem)/100 : 1)
+    * (duelist ? (battle.perkBalanceVersion===1?1:1.12)+equipmentBoost(actor,'duelistPct',getItem)/100 : 1)
     * (hasPerk(actor, 'opportunist') && !ranged
       && (option?.areaAction && option.shieldWasUsable !== undefined ? !option.shieldWasUsable
         : !target.equipment.shield || target.shieldDurability === 0) ? 1.1 : 1)
+    * (battle.perkBalanceVersion===1&&weapon.throwing&&hasPerk(actor,'throwing-training') ? distance<=2?1.4:distance===3?1.2:1 : 1)
+    * (specialist&&option?.area ? 1.05 : 1)
     * (hasPerk(actor, 'volley-fire') && ranged && distance >= 3-equipmentBoost(actor,'volleyDistance',getItem) ? 1.1 : 1) * bonus;
   const mount = getItem(actor.equipment.mount);
   const mountDamage = mount ? battle.mountBalanceVersion === 1 ? mount.damageBonus : mount.visual === 'armoredhorse' ? .2 : .15 : 0;
@@ -4302,16 +4328,18 @@ function attackDamageRoll(battle, actor, target, weapon, base, head, option = nu
   const before = head ? target.headArmor : target.attachmentArmor + (target.attachment2Armor??0) + target.bodyArmor;
   let armorDamage = option?.noArmor || option?.id === 'puncture' ? 0 : Math.max(1, Math.round(raw * (weapon.armorDamage ?? 1)
     * (head ? 1.1 : 1) * (option?.armorMultiplier??(option?.id === 'crush-armor' ? 1.5 : 1))
-    * (hasPerk(actor, 'axe-training') && weaponMasteryMatches('axe-training', weapon) ? 1.15 : 1)
+    * (hasPerk(actor, 'axe-training') && battleMasteryMatches(actor,'axe-training', weapon) ? 1.15 : 1)
     * (hasPerk(target, 'battle-forged') && before > 0 ? .85-equipmentBoost(target,'battleForged',getItem)*.05 : 1)));
   const piercing = Math.min(1, (weapon.armorPiercing ?? .30)
     + (isCrossbow(weapon) && hasPerk(actor, 'crossbow-mastery') ? .2 : 0)
-    + (hasPerk(actor, 'dagger-training') && weaponMasteryMatches('dagger-training', weapon) ? .15 : 0)
+    + (hasPerk(actor, 'dagger-training') && battleMasteryMatches(actor,'dagger-training', weapon) ? .15 : 0)
+    + (battle.perkBalanceVersion===1&&duelist ? .25 : 0)
+    + (specialist ? .1 : 0)
     + (option?.id === 'piercing-bolt' ? .2 : 0));
   let hp = option?.id === 'puncture' ? raw : before > 0
     ? Math.max(1, Math.floor(raw * piercing - before * .025) + Math.max(0, Math.floor((armorDamage - before) * .25))) : raw;
   if (head && !hasPerk(target, 'steel-brow')) hp = Math.round(hp * 1.25);
-  if (hasPerk(actor, 'mace-training') && weaponMasteryMatches('mace-training', weapon)) hp = Math.round(hp * 1.1);
+  if (hasPerk(actor, 'mace-training') && battleMasteryMatches(actor,'mace-training', weapon)) hp = Math.round(hp * 1.1);
   if (hasPerk(target, 'iron-jaw')) hp = Math.max(1, Math.round(hp * .8));
   // Fur reduces final received missile damage at either hit location.
   if(ranged){const multiplier=1-attachmentEffect(target.equipment,'rangedDamageReduction');hp=Math.max(1,Math.round(hp*multiplier));armorDamage=armorDamage?Math.max(1,Math.round(armorDamage*multiplier)):0;}
@@ -4338,7 +4366,9 @@ function predictAttack(battle, actor, target, weapon, option = null) {
   }
   const hits=option?.hits??1;
   return { expectedHealthDamage: health * hitChance * hits, expectedArmorDamage: armor * hitChance * hits,
-    expectedShieldDamage: target.shieldDurability > 0 ? (option?.id === 'split-shield' ? shieldImpactDamage(weapon) + 16 : shieldImpactDamage(weapon) || (ranged ? 1 - hitChance : 2 - hitChance)) : 0,
+    expectedShieldDamage: target.shieldDurability > 0 ? battle.perkBalanceVersion===1
+      ? attackShieldDamage(actor,weapon,option)*hitChance+attackShieldDamage(actor,weapon,option,true)*(1-hitChance)
+      : (option?.id==='split-shield'?shieldImpactDamage(weapon)+16:shieldImpactDamage(weapon)||(ranged?1-hitChance:2-hitChance)) : 0,
     killProbability: hits>1?0:kill * hitChance };
 }
 
@@ -4382,6 +4412,11 @@ function inflictTemporaryInjury(state,actor,target,weapon,option,healthDamage,he
   return definition;
 }
 
+function attackShieldDamage(actor,weapon,option,miss=false) {
+  const base=option?.id==='split-shield'?shieldImpactDamage(weapon)+16:shieldImpactDamage(weapon)||(weapon.ranged?miss?1:0:miss?2:1);
+  return Math.ceil(base*(option?.id==='split-shield'&&actor.perkBalanceVersion===1&&hasPerk(actor,'axe-training')&&weaponMasteryMatches('axe-training',weapon)?1.5:1)*(1+equipmentBoost(actor,'shieldDamagePct',getItem)/100));
+}
+
 function attackTarget(state, actor, target, weapon, option = null) {
   const battle = state.battle;
   if(battle.weaponCompletionVersion===1&&battle.weaponSkillsVersion===1&&!option?.id)option={...equipmentSkills(weapon)[0],...option};
@@ -4417,7 +4452,7 @@ function attackTarget(state, actor, target, weapon, option = null) {
   if (!ranged && hexDistance(actor, target) <= 1) battle.engaged = true;
   applyOverwhelm(battle, actor, target, weapon, option);
   if (battleRoll(battle) * 100 >= chance) {
-    const shieldDamage = option?.noDamage||option?.dot?0:wearShield(battle,target,Math.ceil((option?.id==='split-shield'?shieldImpactDamage(weapon)+16:shieldImpactDamage(weapon)||(ranged?1:2))*(1+equipmentBoost(actor,'shieldDamagePct',getItem)/100)));
+    const shieldDamage = option?.noDamage||option?.dot?0:wearShield(battle,target,attackShieldDamage(actor,weapon,option,true));
     if (hasPerk(actor, 'fast-adaptation')) actor.adaptation += 1;
     const message = `${actor.name}${option?.freeFollowup ? "'s mount misses with Wolf Bite against" : ' misses'} ${target.name}.${shieldDamage ? ` ${target.name}'s shield takes ${shieldDamage} damage.` : ''}`;
     battle.lastEvent = makeBattleEvent(actor, target, 'miss', message, weapon, null, { shieldDamage, ...(option?.name ? { skillName: option.name } : {}) });
@@ -4437,7 +4472,8 @@ function attackTarget(state, actor, target, weapon, option = null) {
     return { hit: false, hpDamage: 0, armorDamage: 0, shieldDamage, head: false, fallen: false };
   }
   actor.adaptation = 0;
-  const shieldDamage = option?.noDamage||option?.dot?0:wearShield(battle,target,Math.ceil((option?.id==='split-shield'?shieldImpactDamage(weapon)+16:shieldImpactDamage(weapon)||(ranged?0:1))*(1+equipmentBoost(actor,'shieldDamagePct',getItem)/100)));
+  if(battle.perkBalanceVersion===1&&hasPerk(actor,'reach-advantage')&&weapon.slot==='weapon'&&weapon.twoHanded&&!weapon.ranged&&!option?.dot&&!option?.freeFollowup&&!option?.noDamage&&option?.id!=='split-shield'&&!(option?.oppositeHit&&option?.areaFollowup))actor.reachAdvantageStacks=Math.min(5,(actor.reachAdvantageStacks??0)+1);
+  const shieldDamage = option?.noDamage||option?.dot?0:wearShield(battle,target,attackShieldDamage(actor,weapon,option));
   if(battle.weaponAuditVersion===1&&option?.id==='split-shield'){
     const message=`${actor.name} strikes ${target.name}'s shield for ${shieldDamage} durability.`;
     battle.lastEvent=makeBattleEvent(actor,target,'attack',message,weapon,null,{head:false,hpDamage:0,armorDamage:0,shieldDamage,fallen:false,skillName:option.name});battleLog(battle,message);
@@ -4476,8 +4512,9 @@ function attackTarget(state, actor, target, weapon, option = null) {
     if(option?.disarm){target.disarmedTurns=option.disarm;markSimultaneousEffect(battle,target,'disarmedTurns',option.disarm);target.spearwallActive=false;target.riposteActive=false;}
     if(!battle.simultaneous&&(option?.daze||option?.stagger||headDaze)){const remaining=new Set(battle.turnOrder.slice(battle.turnIndex+1));battle.turnOrder.splice(battle.turnIndex+1,remaining.size,...sortTurnOrder(battle).filter(id=>remaining.has(id)));}
     if(option?.bleed&&hpDamage>=3&&target.undeadTraitsVersion!==1){
+      const bleed=option.bleed*(battle.perkBalanceVersion===1&&hasPerk(actor,'sword-training')&&weaponMasteryMatches('sword-training',weapon)?2:1);
       if(battle.simultaneous)target.bleedTickRound=battle.round;
-      target.bleeding={damage:Math.min(18,(target.bleeding?.damage??0)+option.bleed),turns:2,sourceId:actor.id};
+      target.bleeding={damage:Math.min(18,(target.bleeding?.damage??0)+bleed),turns:2,sourceId:actor.id};
     }
   }
   if(!option?.noDamage)changeBattleMorale(battle, target, -moraleDamage(target, 3 + Math.min(8, Math.floor(hpDamage / 8)) + (hasPerk(actor, 'fearsome') && hpDamage > 0 ? 10 : 0) + (!ranged ? Math.max(getItem(actor.equipment?.armor)?.meleeMoraleDamage ?? 0, attachmentEffect(actor.equipment,'meleeMoraleDamage')) : 0), battle));
@@ -4783,7 +4820,7 @@ function spearwallReactionsOnMove(state, mover, from) {
       from: { q: defender.q, r: defender.r }, to: destination,
       hpDamage: impact.hpDamage, armorDamage: impact.armorDamage, shieldDamage: impact.shieldDamage,
       head: impact.head, fallen: impact.fallen, weaponId: defender.equipment.weapon, effects: event.effects ?? [], skillName: 'Spearwall' });
-    if (!impact.hit) defender.spearwallActive = false;
+    if (!impact.hit && !(battle.perkBalanceVersion===1&&hasPerk(defender,'spear-training'))) defender.spearwallActive = false;
     if (impact.hit || !mover.alive) {
       mover.q = from.q; mover.r = from.r;
       return { blocked: true, reactions };
@@ -5098,6 +5135,7 @@ function advanceBattleV2(state) {
   if (battle.weaponSkillsVersion === 1 && actor.stunnedTurns > 0) {
     actor.stunnedTurns = 0;
     actor.ap = 0;
+    if(battle.perkBalanceVersion===1)delete actor.reachAdvantageStacks;
     actor.turnStartedRound = battle.round;
     const message = `${actor.name} is stunned and loses a turn.`;
     battle.lastEvent = makeBattleEvent(actor, null, 'hold', message, getItem(actor.equipment.weapon), null, { skillName: 'Stunned' });
@@ -5109,6 +5147,7 @@ function advanceBattleV2(state) {
   if (!enemies.length) { finishBattlePhase(battle); return result(true, 'The battle is over.'); }
   if (actor.turnStartedRound !== battle.round) {
     actor.fatigue = Math.max(0, actor.fatigue - Math.max(0,15+injuryAdjustment(actor,'fatigueRecovery')));
+    if(battle.perkBalanceVersion===1)delete actor.reachAdvantageStacks;
     actor.turnStartedRound = battle.round;
     if (battle.weaponSkillsVersion === 1) actor.stunProtected = false;
   }
@@ -5654,6 +5693,7 @@ function refreshSimultaneousRound(state) {
   battle.turnIndex=0;battle.activeId=battle.turnOrder[0];
   for(const unit of battle.units){
     delete unit.overwhelmed;
+    if(battle.perkBalanceVersion===1)delete unit.reachAdvantageStacks;
     if(!unit.alive)continue;
     unit.ap=getTurnAp(unit)+(unit.pendingBerserkAp??0);unit.pendingBerserkAp=0;
     unit.shieldWallActive=false;unit.spearwallActive=false;unit.riposteActive=false;
@@ -5740,6 +5780,7 @@ export function advanceBattle(state) {
   }
   if (actor.turnStartedRound !== battle.round) {
     actor.fatigue = Math.max(0, actor.fatigue - 6);
+    if(battle.perkBalanceVersion===1)delete actor.reachAdvantageStacks;
     actor.turnStartedRound = battle.round;
   }
   if (useBattleAccessory(state, actor, enemies)) {
@@ -6238,6 +6279,7 @@ function validateBattle(input, party, worldState) {
   assert(encounterType === 'camp' ? validCount(campGeneration) && campGeneration <= 1000000 && campGeneration === encounter.generation : campGeneration === null, 'battle camp generation');
   assert(input.enemyTacticsVersion===undefined||input.enemyTacticsVersion===1,'battle enemy tactic rules');
   assert(input.lighting===undefined||['day','evening','night','dawn'].includes(input.lighting),'battle lighting');
+  assert(input.perkBalanceVersion===undefined||input.perkBalanceVersion===1,'battle perk balance rules');
   assert(input.perkCombatVersion===undefined||input.perkCombatVersion===1,'battle expanded perk rules');
   assert(input.roleConsistencyVersion===undefined||input.roleConsistencyVersion===1,'battle role consistency rules');
   assert(input.injuryRulesVersion===undefined||input.injuryRulesVersion===1,'battle injury rules');
@@ -6343,6 +6385,8 @@ function validateBattle(input, party, worldState) {
     const perks = unit.perks ?? partyMember?.perks ?? [];
     assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && (PERK_BY_ID.has(id) || REMOVED_PERK_MIN_LEVEL.has(id))) && new Set(perks).size === perks.length, 'battle perks');
     assert(unit.side === 'enemy' ? perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||assistingPatrol.difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
+    assert(unit.perkBalanceVersion===input.perkBalanceVersion,'battle unit perk balance rules');
+    if(unit.reachAdvantageStacks!==undefined)assert(input.perkBalanceVersion===1&&validCount(unit.reachAdvantageStacks)&&unit.reachAdvantageStacks<=5&&hasPerk(unit,'reach-advantage')&&getItem(unit.equipment.weapon)?.twoHanded&&!getItem(unit.equipment.weapon)?.ranged,'battle reach advantage stacks');
     if (unit.headHunterReady !== undefined) assert(input.perkCombatVersion === 1 && hasPerk({perks}, 'head-hunter') && typeof unit.headHunterReady === 'boolean', 'battle head hunter');
     if (unit.rotationRound !== undefined) assert(input.perkCombatVersion === 1 && validCount(unit.rotationRound) && unit.rotationRound <= input.round, 'battle rotation round');
     if (unit.overwhelmed !== undefined) assert(input.perkCombatVersion === 1 && recordObject(unit.overwhelmed) && Object.keys(unit.overwhelmed).sort().join(',') === 'round,stacks' && validCount(unit.overwhelmed.round) && unit.overwhelmed.round >= 1 && unit.overwhelmed.round <= input.round && validCount(unit.overwhelmed.stacks) && unit.overwhelmed.stacks >= 1 && unit.overwhelmed.stacks <= 100, 'battle overwhelm');
@@ -6467,6 +6511,8 @@ function validateBattle(input, party, worldState) {
       pocketDrawnRound: unit.pocketDrawnRound ?? 0, reserveReload: unit.reserveReload ?? 0, meleePhase: unit.meleePhase ?? false,
       shieldDurability, maxShieldDurability, reserveShieldDurability, maxReserveShieldDurability, battleSetSwapped,
       throwingAmmo: { active: throwingAmmo.active, reserve: throwingAmmo.reserve },
+      ...(input.perkBalanceVersion===1?{perkBalanceVersion:1}:{}),
+      ...(unit.reachAdvantageStacks===undefined?{}:{reachAdvantageStacks:unit.reachAdvantageStacks}),
       ...(unit.headHunterReady === undefined ? {} : {headHunterReady:unit.headHunterReady}),
       ...(unit.rotationRound === undefined ? {} : {rotationRound:unit.rotationRound}),
       ...(unit.overwhelmed === undefined ? {} : {overwhelmed:{...unit.overwhelmed}}),
@@ -6614,6 +6660,7 @@ function validateBattle(input, party, worldState) {
     ...(input.weaponAuditVersion===undefined?{}:{weaponAuditVersion:1}),
     ...(input.injuryRulesVersion===1?{injuryRulesVersion:1,injuryRng:input.injuryRng}:{}),
     ...(input.weaponCompletionVersion===undefined?{}:{weaponCompletionVersion:1}),
+    ...(input.perkBalanceVersion===undefined?{}:{perkBalanceVersion:1}),
     ...(input.perkCombatVersion===undefined?{}:{perkCombatVersion:1}),
     ...(input.roleConsistencyVersion===undefined?{}:{roleConsistencyVersion:1}),
     ...(input.attachmentRulesVersion===undefined?{}:{attachmentRulesVersion:1}),

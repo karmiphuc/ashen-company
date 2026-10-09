@@ -18,7 +18,7 @@ function fight(perks=[],duplicate=false) {
 }
 
 test('dual crossbows fire before reloading, preserve both loading states and reload only the wielded one',()=>{
-  for(const perks of [['quick-hands'],['crossbow-mastery']])for(const duplicate of [false,true]) {
+  for(const perks of [['quick-hands'],['crossbow-mastery','quick-hands']])for(const duplicate of [false,true]) {
     let {state,actor,enemy}=fight(perks,duplicate);
     advanceBattle(state);assert.equal(state.battle.lastEvent.type,'attack');assert.equal(actor.reload,1);assert.equal(actor.reserveReload,0);
     state=validateSave(structuredClone(state));actor=state.battle.units.find(u=>u.id===actor.id);
@@ -39,8 +39,10 @@ test('dual crossbows fire before reloading, preserve both loading states and rel
 });
 
 test('without discounted AP or a free swap the AI reloads instead of wasting a paid swap',()=>{
-  const {state,actor}=fight();advanceBattle(state);advanceBattle(state);
-  assert.equal(state.battle.lastEvent.skillName,'Reload');assert.equal(actor.battleSetSwapped,false);
+  for(const perks of [[],['crossbow-mastery']]){
+    const {state,actor}=fight(perks);advanceBattle(state);advanceBattle(state);
+    assert.equal(state.battle.lastEvent.skillName,'Reload');assert.equal(actor.battleSetSwapped,false);
+  }
 });
 
 test('broken enemies roll once per turn; successful fleeing persists across an action reload',()=>{
