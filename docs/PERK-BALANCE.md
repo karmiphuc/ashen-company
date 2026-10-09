@@ -8,6 +8,10 @@ consistent rules, including simulated pathfinding copies. Save validation checks
 that unit and battle markers agree. This is a combat rule version, not a release
 version or a reason to reroll gear.
 
+Free-perk prefixes can now [enhance a matching learned perk](LEARNED-PREFIX-PERKS.md)
+under the additional `prefixPerkRulesVersion: 1` combat marker. The base perk
+balance below remains unchanged without that equipment synergy.
+
 ## Approved scope
 
 Eight masteries (Sword, Axe, Mace, Spear, Polearm, Throwing, Bow and Crossbow),
@@ -19,7 +23,9 @@ perk. Existing perks keep their IDs, learned points and equipment grants.
 
 - All matching masteries retain 25% attack fatigue reduction, rounded up once.
   Learned and equipment-granted copies never stack that discount twice.
-- Only Dagger and true Polearm Mastery reduce matching weapon skill AP by 1.
+- Only the base Dagger and true Polearm Masteries reduce matching weapon skill AP by 1.
+  Learned-prefix enhancements add −1 AP to other masteries and another −1 AP
+  to Polearm; Dagger instead gains +10 hit chance.
   Dagger retains the existing 3-to-2 AP basic stab.
 - Polearm Mastery covers genuine polearms and ordinary pikes, excluding longaxes,
   polehammers, polemaces, whips and Spetums. Those weapons retain their own family

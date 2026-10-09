@@ -121,9 +121,9 @@ test('specific polearm eligibility and intentional skill costs stay intact',()=>
  const dagger=fight('rondel-dagger',['dagger-training']);dagger.actor.ap=2;dagger.actor.fatigue=dagger.actor.maxFatigue-6;advanceBattle(dagger.state);assert.equal(dagger.battle.lastEvent.skillName,'Stab');assert.equal(dagger.actor.ap,0);
 });
 
-test('equipment-granted mastery gets one fatigue reduction and no blanket AP discount',()=>{
+test('equipment mastery grants the base perk and enhances a learned mastery once',()=>{
  const catalogue=id=>ITEMS.find(item=>item.id===id),id=encodeForgeItem('greatsword',{perkFlags:perkFlags(['sword-training'])},catalogue);
- for(const learned of [[],['sword-training']]){const f=fight(id,learned);f.actor.ap=6;f.actor.fatigue=f.actor.maxFatigue-12;advanceBattle(f.state);assert.equal(f.battle.lastEvent.skillName,'Overhead Strike');assert.equal(f.actor.ap,0);assert.equal(f.actor.fatigue,f.actor.maxFatigue);}
+ for(const learned of [[],['sword-training']]){const f=fight(id,learned);f.actor.ap=6;f.actor.fatigue=f.actor.maxFatigue-12;advanceBattle(f.state);assert.equal(f.battle.lastEvent.skillName,'Overhead Strike');assert.equal(f.actor.ap,learned.length?1:0);assert.equal(f.actor.fatigue,f.actor.maxFatigue);}
 });
 
 test('new rule markers and earned stacks round-trip; malformed stacks reject; legacy saves retain costs',()=>{

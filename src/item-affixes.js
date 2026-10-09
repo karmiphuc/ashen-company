@@ -34,6 +34,8 @@ function currentAffixes(actor,getItem) {
 }
 export function equipmentBoost(actor,key,getItem,cap=PREFIX_EFFECTS[key]?.cap??2){return Math.min(cap,currentAffixes(actor,getItem).boosts[key]??0);}
 export function equipmentPerk(actor,id,getItem){return currentAffixes(actor,getItem).perks.has(id);}
+// Learned eligibility stays live: learning a perk must not stale the worn-item cache.
+export function equipmentPerkUpgrade(actor,id,getItem){return (!actor?.side||actor.prefixPerkRulesVersion===1)&&!!actor?.perks?.includes(id)&&equipmentPerk(actor,id,getItem);}
 export function equipmentRangedReach(actor,getItem){return currentAffixes(actor,getItem).range;}
 function seededRoll(seed, salt) {
   let state=(seed ^ salt)>>>0;
@@ -88,14 +90,15 @@ export function applyNamedAffixes(item, original, seed, bonuses, {expanded=false
     ...(item.ranged ? [['watchful','Watchful','anticipation','Anticipation']] : [['ruthless','Ruthless','backstabber','Backstabber']])
   ];
   if(!expanded){
-  const [prefixId,prefix,perk,effect]=prefixPool[prefixRoll(0,prefixPool.length-1)];
+  const [prefixId,prefix,perk,baseEffect]=prefixPool[prefixRoll(0,prefixPool.length-1)];
+  const effect=perk?equipmentPerkText(perk):baseEffect;
   item.grantedPerks=Object.freeze(perk?[perk]:[]);
   if(prefixId==='farseeing')item.rangedRangeBonus=1;
   item.perkBoosts=Object.freeze(prefixId==='bloodrush'?{berserkAp:1}:prefixId==='featherbound'?{nimble:1}:prefixId==='tempered'?{battleForged:1}:{});
   item.affixPrefix=Object.freeze({id:prefixId,name:prefix,effect});item.affixSuffix=Object.freeze({id:suffixId,name:suffix,profile:suffixProfile});
   item.name=`${prefix} ${item.name} ${suffix}`;
-  bonuses.push(Object.freeze({label:`Prefix · ${prefix}`,value:perk?`Grants ${effect} while equipped`:effect}));
-  item.signatureDescription=`${prefix}: ${effect}. Equipment perks do not stack with the same learned perk or another item granting it. Reserve gear grants no effects. Berserk bonuses stack up to +2 AP; Battle Forged up to 10% extra reduction. Nimble enhancement applies once.`;
+  bonuses.push(Object.freeze({label:`Prefix · ${prefix}`,value:effect}));
+  item.signatureDescription=`${prefix}: ${effect}. A learned copy activates the enhancement once; duplicate grants do not stack. Reserve gear grants no effects. Berserk bonuses stack up to +2 AP; Battle Forged up to 10% extra reduction. Nimble enhancement applies once.`;
     return;
   }
   const choices=[...prefixPool.map(([id,name,perk,effect])=>({id,name,perk,effect,weight:4,grades:[1]})),...eligibleExpandedPrefixes(item,light)];
