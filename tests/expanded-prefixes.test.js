@@ -102,7 +102,7 @@ test('injury prefix lowers thresholds alone and combines with Crippling Strikes'
 test('Masterful grants matching mastery fatigue effects without a blanket AP discount or duplicate perk',()=>{
   for(const [weapon,mastery] of [['arming-sword','sword-training'],['light-crossbow','crossbow-mastery']]){
     const f=hit({weapon,profile:{perkFlags:perkFlags([mastery])}}),base=hit({weapon});assert.equal(f.a.ap,base.a.ap);assert.ok(f.a.fatigue<base.a.fatigue);assert.deepEqual(f.p.perks,[]);
-    const learned=hit({weapon,profile:{perkFlags:perkFlags([mastery])},perks:[mastery]});assert.equal(learned.a.ap,f.a.ap);assert.deepEqual(reload(f.s),f.s);
+    const learned=hit({weapon,profile:{perkFlags:perkFlags([mastery])},perks:[mastery]});assert.equal(learned.a.ap,f.a.ap+1);assert.equal(learned.a.fatigue,f.a.fatigue);assert.deepEqual(reload(f.s),f.s);
   }
 });
 

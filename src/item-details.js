@@ -183,7 +183,7 @@ export function getItemDetails(item, condition) {
     stats.push({ label: skill.name, value: `${skill.ap} AP${skill.fatigue ? ` · ${Math.max(0,skill.fatigue+((skill.id==='shieldwall'||skill.id==='knock-back')?(item.slot==='shield'?item.fatigueOnSkillUse??0:0):item.slot==='weapon'?item.fatigueOnSkillUse??0:0))} fatigue before masteries` : ''}` });
     notes.push(`${skill.name}: ${skill.description}`);
   }
-  if (item.slot === 'weapon') notes.push('A matching weapon mastery reduces attacks and weapon skills by 1 AP, once even with overlapping masteries. Base costs are shown above; shield skills, reloads and reactions are unchanged.');
+  if (item.slot === 'weapon') notes.push('Base costs are shown above. Masteries reduce attack fatigue by 25%; Dagger and Polearm also give −1 AP. Learning a mastery granted by worn gear adds −1 AP, or +10 hit chance for Dagger. Fatigue relief stays 25%. Riposte, Warbrand/Romphaia Split/Swing, shield skills, reloads and reactions retain their costs.');
   if (item.collection === 'crafted') notes.push('Crafted at a town Armorer from ordinary stash pieces. Named and reforged versions preserve the original crafted design and its intrinsic effects; named bonuses apply above its crafted baseline.');
   else if (item.collection) {
     notes.push('Ordinary protection and fatigue follow the pinned Battle Brothers definition. New named designs roll protection and weight against that source baseline. Existing legacy designs keep their saved bonuses; prices are adapted to the campaign economy.');

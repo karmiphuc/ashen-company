@@ -135,7 +135,7 @@ test('champion named armor attachments get the stronger tier, guaranteed loot an
 test('Fleet prefix supplies the existing light-armor movement credit without learning or duplicating the perk',()=>{
   const armor=find('patched-coat',i=>i.grantedPerks.includes('fleet-footed'));
   const {state,actor}=fight({armor});assert.equal(actor.movementCredit,2);assert.ok(!state.party[0].perks.includes('fleet-footed'));
-  const second=fight({armor,perks:['fleet-footed']});assert.equal(second.actor.movementCredit,2);
+  const second=fight({armor,perks:['fleet-footed']});assert.equal(second.actor.movementCredit,4);
 });
 test('equipment Shield Expert loses its entire shield defense bonus when the shield breaks',()=>{
   const shield=find('round-shield',i=>i.grantedPerks.includes('shield-expert'));
