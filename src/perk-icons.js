@@ -1,4 +1,5 @@
 export const PERK_ICON_OVERRIDES = Object.freeze({
+  "heavy-weapon-specialist": "heavy-weapon-specialist",
   "sword-training": "sword-training",
   "axe-training": "axe-training",
   "mace-training": "mace-training",

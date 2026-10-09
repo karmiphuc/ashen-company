@@ -18,9 +18,9 @@ for(const weapon of ['arming-sword','fighting-knife',createFamedItemId('arming-s
  const f=fight(weapon),empty=structuredClone(f.state);empty.battle.units.find(u=>u.id===f.actor.id).equipment.shield=null;
  const base=hit(f.state),boost=hit(empty);assert.equal(boost.hpDamage,Math.round(base.hpDamage*1.25));assert.equal(boost.skillName,base.skillName);
 });
-test('Double Grip stacks multiplicatively with Duelist',()=>{
+test('Double Grip retains its damage bonus while Duelist adds penetration',()=>{
  const f=fight(),duelist=structuredClone(f.state),unit=duelist.battle.units.find(u=>u.id===f.actor.id);unit.equipment.shield=null;unit.perks=['duelist'];
- const base=hit(f.state);assert.equal(hit(duelist).hpDamage,Math.round(base.hpDamage*1.25*1.12));
+ const base=hit(f.state);assert.equal(hit(duelist).hpDamage,Math.round(base.hpDamage*1.25));
 });
 for(const shield of ['usable','broken'])test(`${shield} equipped shield prevents Double Grip`,()=>{
  const f=fight(),control=structuredClone(f.state);if(shield==='broken')f.actor.shieldDurability=0;assert.equal(getDoubleGripBonus(f.actor),0);assert.equal(hit(f.state).hpDamage,hit(control).hpDamage);

@@ -9,7 +9,7 @@ export const COMBAT_SKILLS = Object.freeze({
   'aimed-shot': { id: 'aimed-shot', name: 'Aimed Shot', ap: 7, fatigue: 15, hitBonus: 15, rangeBonus: 1, description: 'Aim carefully: +15 hit chance and +1 range.' },
   shieldwall: { id: 'shieldwall', name: 'Shieldwall', ap: 4, fatigue: 20, description: 'Double the active shield defense until the next turn or a gear change.' },
   'knock-back': { id: 'knock-back', name: 'Knock Back', ap: 4, fatigue: 20, description: 'Push an adjacent enemy into a free hex; no damage. Cannot push through trees, fighters or cliffs.' },
-  spearwall: { id: 'spearwall', name: 'Spearwall', ap: 4, fatigue: 30, description: 'Brace a spear (Spetum: 6 AP, 35 fatigue); a hit stops an entering enemy, and a miss ends the stance.' },
+  spearwall: { id: 'spearwall', name: 'Spearwall', ap: 4, fatigue: 30, description: 'Brace a spear (Spetum: 6 AP, 35 fatigue); a hit stops an entering enemy. A miss ends the stance unless Spear Mastery preserves it in a new battle.' },
   riposte: { id: 'riposte', name: 'Riposte', ap: 2, fatigue: 25, description: 'Counter an adjacent melee attack that misses. Each counter costs 5 fatigue.' },
   split: { id: 'split', name: 'Split', ap: 6, fatigue: 25, description: 'Strike a target and the next hex behind it with a two-handed sword.' },
   swing: { id: 'swing', name: 'Swing', ap: 6, fatigue: 30, damageMultiplier: .8, description: 'Strike up to three adjacent hexes with a two-handed sword at 80% damage.' },
