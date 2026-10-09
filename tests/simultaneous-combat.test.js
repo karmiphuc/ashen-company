@@ -113,7 +113,7 @@ test('real beta victory awards normal loot and settles once',()=>{
 });
 
 test('cached beta pathfinding preserves the existing tactical action on the same grid',()=>{
- for(const seed of [19,53,719])for(const role of ['frontliner','ranged','skirmisher','flanker','breaker'])for(const weapon of ['arming-sword','hunting-bow','light-crossbow','billhook','throwing-spears']){
+ for(const seed of [19,53,719])for(const role of ['frontliner','ranged','skirmisher','flanker','breaker','reach-support'])for(const weapon of ['arming-sword','hunting-bow','light-crossbow','billhook','throwing-spears']){
   const a=battle(seed),actor=a.battle.units[0];actor.tacticalRole=role;actor.equipment.weapon=weapon;
   const b=structuredClone(a);delete b.battle.simultaneous;
   b.battle.activeId=actor.id;b.battle.turnIndex=b.battle.turnOrder.indexOf(actor.id);
@@ -257,4 +257,21 @@ test('a stunned straggler cannot skip the incoming impact animation at an otherw
  advanceSimultaneousBattle(s,850);assert.equal(b.round,1);
  advanceSimultaneousBattle(s,50);assert.equal(b.round,1);
  advanceSimultaneousBattle(s,50,{maxActions:1});assert.equal(b.round,2);assert.equal(target.stunnedTurns,1);safe(s);
+});
+
+test('cached Reach Support shelter and rough-terrain routes match turn-based decisions',()=>{
+ for(const rough of [false,true]){
+  const a=battle(19),btl=a.battle,actor=btl.units.find(u=>u.side==='company'),ally=btl.units.find(u=>u.side==='company'&&u!==actor),target=btl.units.find(u=>u.side==='enemy');
+  for(const tile of btl.field.tiles){tile.terrain='open';tile.height=0;}
+  for(const [i,u]of btl.units.entries())Object.assign(u,{q:1+i,r:20});
+  Object.assign(actor,{q:4,r:8,ap:9,fatigue:0,turnStartedRound:1,tacticalRole:'reach-support',equipment:{...actor.equipment,weapon:'billhook',shield:null,mount:null},shieldDurability:0});
+  Object.assign(ally,{q:6,r:8,equipment:{...ally.equipment,weapon:'arming-sword',shield:'round-shield'},shieldDurability:40});
+  Object.assign(target,{q:7,r:8,hp:300,maxHp:300});
+  if(rough)btl.field.tiles.find(t=>t.q===5&&t.r===8).terrain='trees';
+  const b=structuredClone(a);delete b.battle.simultaneous;b.battle.activeId=actor.id;b.battle.turnIndex=b.battle.turnOrder.indexOf(actor.id);
+  for(const u of btl.units)btl.simultaneous.actors[u.id].readyAt=u.id===actor.id?0:2000;
+  advanceBattle(b);advanceSimultaneousBattle(a,50);
+  assert.equal(b.battle.lastEvent.type,'move');assert.deepEqual(btl.lastEvent,b.battle.lastEvent);
+  assert.deepEqual(btl.units.map(u=>[u.id,u.q,u.r,u.hp,u.fatigue]),b.battle.units.map(u=>[u.id,u.q,u.r,u.hp,u.fatigue]));
+ }
 });

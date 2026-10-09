@@ -17,12 +17,12 @@ function fight(weapon,perks,distance=1) {
   return {state,battle,actor,target};
 }
 
-test('masteries discount matching basic attacks once, including overlapping reach and axe mastery',()=>{
+test('only dagger and true polearm masteries discount basic attack AP in new battles',()=>{
   for(const [weapon,perks,cost,distance] of [
-    ['arming-sword',['sword-training'],3,1],['rondel-dagger',['dagger-training'],2,1],
-    ['greatsword',['sword-training'],5,1],['longaxe',['axe-training','polearm-training'],5,2],
-    ['hunting-bow',['bow-mastery'],3,3],['light-crossbow',['crossbow-mastery'],2,3],
-    ['javelins',['throwing-training'],3,3],
+    ['arming-sword',['sword-training'],4,1],['rondel-dagger',['dagger-training'],2,1],
+    ['greatsword',['sword-training'],6,1],['longaxe',['axe-training','polearm-training'],6,2],
+    ['hunting-bow',['bow-mastery'],4,3],['light-crossbow',['crossbow-mastery'],3,3],
+    ['javelins',['throwing-training'],4,3], ['billhook',['polearm-training'],5,2],
   ]) {
     const {state,battle,actor}=fight(weapon,perks,distance);
     actor.ap=cost; actor.fatigue=actor.maxFatigue-Math.ceil((equipmentSkills(getItem(weapon))[0].fatigue??getItem(weapon).fatigueCost??(getItem(weapon).ranged?9:11))*.75);
@@ -33,13 +33,13 @@ test('masteries discount matching basic attacks once, including overlapping reac
   }
 });
 
-test('discounted signature attack and Spearwall are considered affordable and spend their actual AP',()=>{
+test('signature attacks and Spearwall spend their full AP with non-polearm mastery',()=>{
   const mace=fight('bludgeon',['mace-training']);
-  mace.actor.ap=3;mace.actor.skillPreference='control';
+  mace.actor.ap=4;mace.actor.skillPreference='control';
   advanceBattle(mace.state);
   assert.equal(mace.battle.lastEvent.skillName,'Knock Out');assert.equal(mace.actor.ap,0);
   const spear=fight('spear',['spear-training'],2);
-  spear.battle.tactic='defense';spear.actor.skillPreference='control';spear.actor.ap=3;
+  spear.battle.tactic='defense';spear.actor.skillPreference='control';spear.actor.ap=4;
   advanceBattle(spear.state);
   assert.equal(spear.battle.lastEvent.skillName,'Spearwall');assert.equal(spear.actor.ap,0);
 });

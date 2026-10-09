@@ -53,4 +53,18 @@ export function eligibleExpandedPrefixes(item,light){return EXPANDED_PREFIXES.fi
   &&(!p.light||light)&&(!p.ranged||item.ranged)&&(!p.rangedWeapon||item.slot!=='weapon'||item.ranged)
   &&(!p.melee||!item.ranged)&&(!p.oneHanded||!item.twoHanded));}
 export function prefixEffectText(key,n){return PREFIX_EFFECTS[key]?.text(n);}
-export const equipmentPerkText=id=>`Grants ${PERK_BY_ID.get(id)?.name??id} while equipped; does not duplicate a learned copy`;
+export const LEARNED_PERK_ENHANCEMENTS=Object.freeze({
+  'pathfinder':'75% less movement fatigue',
+  'fleet-footed':'+2 movement points in light armor',
+  'recover':'removes 75% of current fatigue (minimum 22)',
+  'relentless':'equipment initiative penalty reduced to 25%; Dodge fatigue penalty halved again',
+  'steel-brow':'10% less head-hit health damage',
+  'shield-expert':'+40% shield defense; shield damage taken reduced by 60%',
+  'backstabber':'+8 hit chance per other adjacent ally',
+  'anticipation':'15% ranged defense per distance tile (minimum 15)',
+  'combat-bandaging':'+25% healing from combat supplies',
+  'quick-hands':'later swaps cost 2 AP after the first free swap',
+  'layered-armor':'10% less body armor damage while an attachment has protection',
+  ...Object.fromEntries(AFFIX_MASTERIES.map(id=>[id,id==='dagger-training'?'+10 hit chance with daggers':id==='polearm-training'?'matching weapon skills cost 1 additional AP less (excludes Romphaia Split/Swing)':'matching weapon skills cost 1 AP less (excludes Riposte and Warbrand/Romphaia Split/Swing)']))
+});
+export const equipmentPerkText=id=>`Grants ${PERK_BY_ID.get(id)?.name??id} while equipped; if learned, ${LEARNED_PERK_ENHANCEMENTS[id]}`;
