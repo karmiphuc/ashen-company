@@ -1,3 +1,4 @@
+import { PERK_ICON_OVERRIDES } from './perk-icons.js';
 const PERK_CATEGORIES = {
   general: ['crippling-strikes', 'colossus', 'gifted', 'fast-adaptation', 'executioner', 'berserk', 'killing-frenzy', 'battle-flow', 'fearsome', 'duelist', 'opportunist', 'overwhelm', 'head-hunter'],
   weapon: ['backstabber', 'sword-training', 'axe-training', 'mace-training', 'spear-training', 'polearm-training', 'dagger-training', 'throwing-training', 'shield-strike'],
@@ -5,7 +6,6 @@ const PERK_CATEGORIES = {
   ranged: ['bullseye', 'anticipation', 'bow-mastery', 'crossbow-mastery', 'marksman', 'point-blank', 'volley-fire', 'reload-drill'],
   mobility: ['pathfinder', 'recover', 'fleet-footed', 'relentless', 'marathoner', 'high-ground', 'quick-hands', 'combat-bandaging', 'rotation'],
 };
-const CATEGORY_ICONS = { general: 'executioner', weapon: 'backstabber', defense: 'shield-expert', ranged: 'bullseye', mobility: 'pathfinder' };
 const ORIGINAL_PERK_ICONS = new Set(['colossus', 'pathfinder', 'fast-adaptation', 'recover', 'bullseye', 'executioner', 'steel-brow', 'dodge', 'fortified-mind', 'shield-expert', 'backstabber', 'anticipation', 'brawny', 'bow-mastery', 'crossbow-mastery', 'berserk', 'killing-frenzy', 'fearsome']);
 
 export const REMOVED_PERK_MIN_LEVEL = new Map([['student', 2], ['field-medic', 2], ['forager', 2], ['paymaster', 2], ['trailblazer', 3]]);
@@ -68,7 +68,9 @@ export const PERKS = Object.freeze([
 ].map(perk => {
   const category = Object.entries(PERK_CATEGORIES).find(([, ids]) => ids.includes(perk.id))?.[0];
   if (!category) throw new Error(`Missing perk category: ${perk.id}`);
-  return Object.freeze({ ...perk, category, icon: ORIGINAL_PERK_ICONS.has(perk.id) ? perk.id : CATEGORY_ICONS[category] });
+  const icon=PERK_ICON_OVERRIDES[perk.id] ?? (ORIGINAL_PERK_ICONS.has(perk.id)?perk.id:null);
+  if(!icon)throw new Error(`Missing dedicated perk artwork: ${perk.id}`);
+  return Object.freeze({ ...perk, category, icon });
 }));
 
 export const PERK_BY_ID = new Map(PERKS.map(perk => [perk.id, perk]));
