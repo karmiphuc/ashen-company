@@ -40,6 +40,7 @@ Current catalogs, crafting recipes, sets and named-item rules.
 
 Regions, crisis implementation, terrain and scenery.
 
+- [Ashen siege and marshal force balance](world/ASHEN-FORCE-BALANCE.md)
 - [Frozen Vigil warrior quests](world/LEGACY-WARRIOR.md)
 - [Ashen Winter implementation specification](world/ASHEN-WINTER-IMPLEMENTATION-SPEC.md)
 - [Battle terrain and camp defense — v0.47.0](world/BATTLE-TERRAIN.md)

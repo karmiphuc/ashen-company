@@ -34,7 +34,7 @@ import { WORLD_ENEMY_PROFILES, worldEnemyTemplates, worldCampText, regionalOutfi
 import { REGIONAL_SETTLEMENTS, WORLD_LIMITS, FRONTIER_CAMP_CELLS, REGIONS, regionAt, roadNetwork, distanceToRoad, WORLD_LAYOUT_VERSION, compactPoint, authoredPoint } from './geography.js';
 import { FRONTIER_ITEMS } from './frontier-items.js';
 import { MOUNTS } from './mounts.js';
-import { factionPatrols, soldierFactionAt, patrolDefinitions, initialPatrolProgress, advanceFactionSimulation, worldSkirmishFor, isJoinablePatrolSkirmish, patrolSkirmishSide, cancelWorldSkirmish, skirmishDuration } from './faction-patrols.js';
+import { factionPatrols, factionTroops, soldierFactionAt, patrolDefinitions, initialPatrolProgress, advanceFactionSimulation, worldSkirmishFor, isJoinablePatrolSkirmish, patrolSkirmishSide, cancelWorldSkirmish, skirmishDuration } from './faction-patrols.js';
 import { cityMountOffer, campMountReward, regionalMountPool } from './mount-distribution.js';
 import { getMountRewardDefinitions, scheduledMountReward } from './mount-events.js';
 import { enemyProgression, enemyRosterSize } from './enemy-progression.js';
@@ -48,7 +48,7 @@ import { scheduledTownEvent, townEventHash, townEventModifiers } from './town-ev
 import { CARAVAN_ATTACK_WARNING_HOURS, CARAVAN_SHORTAGE_HOURS, CARAVAN_TRAVEL_HOURS, routeSegmentDistance, shipmentId, shipmentPlan, shipmentPosition } from './caravans.js';
 import { ASHEN_CONFIG, initialAshenWinter, crisisHash } from './crisis-director.js';
 import { settlementAccess } from './settlement-access.js';
-import { UNDEAD_TYPES, allSettlementsCaptured, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
+import { UNDEAD_TYPES, crisisAllyRoster, allSettlementsCaptured, advanceAshenWinter, ashenEncounterRecords, exteriorPoint, resolveAshenObjective, recordAshenCasualties, npcAshenVictory, validateAshenWinter } from './undead-crisis.js';
 import { COMBAT_SKILLS, WEAPON_ACTIONS, equipmentSkills, weaponSkillFamily } from './combat-skills.js';
 import { evaluateAreaSafety, compareAreaSafety } from './area-safety.js';
 import { COMBAT_ROLES, SKILL_PREFERENCES, resolveCombatRole, isAffordableAction, rankTacticalActions, enemyBattleTactic, updateEnemyTactic, ENEMY_TACTICS, tacticalTargetPriority, rangedScreenModifier, shouldPreserveBrother } from './tactical-ai.js';
@@ -3302,7 +3302,9 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     delete template.appearanceId;if(person.appearanceId)template.appearanceId=person.appearanceId;
     return template;
   })()]:camp.enemies.map((e,i)=>makeEnemyUnit(e,i));
-  const jointBattle = encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && state.contract?.type === 'assault'
+  const crisisAlliesVersion=undead&&['undead-liberation','undead-commander'].includes(encounterType)?1:undefined;
+  const crisisRoster=crisisAlliesVersion?crisisAllyRoster(undead.force.seed,encounterType):[];
+  const jointBattle = crisisAlliesVersion || encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && state.contract?.type === 'assault'
     && state.contract.campId === camp.id && state.contract.campGeneration === camp.generation && !huntComplete(state);
   // Additional ranged ranks cannot occupy q=13, the camp's rear palisade.
   // Keep legal original cells and place overflow in free walkable deployment
@@ -3319,24 +3321,26 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     enemyOccupied.add(`${unit.q},${unit.r}`);
   }
   const allies = [];
-  if (jointBattle||patrolAssist) for (let index = 0; index < (patrolAssist?patrolAssist.troops.length:3); index++) {
+  const crisisGuards=crisisAlliesVersion?factionTroops(undead.force.seed,soldierFactionAt(camp.x,camp.y).id,2,crisisRoster.length):[];
+  if (jointBattle||patrolAssist) for (let index = 0; index < (patrolAssist?patrolAssist.troops.length:crisisAlliesVersion?crisisRoster.length:3); index++) {
     const allyRank = camp.veteranRank ?? 0;
     const gear = { armor: 'patched-coat', attachment: null, attachment2:null, helmet: 'cloth-hood',
-      weapon: ['arming-sword', 'spear', 'bludgeon'][index], shield: index === 1 ? 'round-shield' : 'buckler', mount: null };
+      weapon: ['arming-sword', 'spear', 'bludgeon'][index%3], shield: index === 1 ? 'round-shield' : 'buckler', mount: null };
     const occupied = new Set([...company, ...enemies, ...allies].map(unit => `${unit.q},${unit.r}`));
     const edgeRows=hashSeed(`${state.seed}:${camp.id}:ally-edge`)%2?[19,20]:[4,3];
     const point = [...edgeRows,...(edgeRows[0]>10?[18,21,17,22]:[5,2,6,1])].flatMap(r => [9,10,8,7,6].map(q => ({q,r})))
       .find(hex => passableHex(hex, field) && !occupied.has(`${hex.q},${hex.r}`));
     if(!point)return result(false,'No room to deploy allied reinforcements.');
-    if(patrolAssist){
-      const soldier=makeEnemyUnit(assistance.patrol.enemies[index],index,assistance.patrol.difficulty,0,false);
+    if(patrolAssist || crisisRoster[index]==='guard'){
+      const template=patrolAssist?assistance.patrol.enemies[index]:crisisGuards[index];
+      const soldier=makeEnemyUnit(template,index,patrolAssist?assistance.patrol.difficulty:2,0,false);
       delete soldier.undeadTraitsVersion;delete soldier.troopIndex;
       Object.assign(soldier,{id:`ally-${index+1}`,side:'company',ally:true,q:point.q,r:point.r,morale:70});
       allies.push(soldier);continue;
     }
     const shield = shieldMaximum(gear.shield);
     allies.push({ id: `ally-${index + 1}`, name: encounterType === 'rescue' ? ['Caravan Guard', 'Wagon Spearman', 'Caravan Veteran'][index]
-      : ['Militia Captain', 'Militia Spearman', 'Militia Fighter'][index], side: 'company', ally: true,
+      : ['Militia Captain', 'Militia Spearman', 'Militia Fighter'][index%3], side: 'company', ally: true,
       q: point.q, r: point.r, hp: 62 + allyRank * 8, maxHp: 62 + allyRank * 8, bodyArmor: armorMaximum(gear.armor), attachmentArmor: 0, attachment2Armor:0, maxAttachment2Armor:0, headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: 0, maxHeadArmor: armorMaximum(gear.helmet),
       shieldDurability: shield, maxShieldDurability: shield, reserveShieldDurability: 0, maxReserveShieldDurability: 0, battleSetSwapped: false,
@@ -3361,6 +3365,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     id: `battle-${camp.id}-${state.day}-${state.contractSerial}`, campId: camp.id,
     ...(undead ? { crisisContext: { crisisId: state.ashenWinter.crisisId, frontId: undead.frontId, townId: undead.townId, forceSeed: undead.force.seed, generation: undead.force.generation } } : {}),
     ...(patrolAssist?{patrolAssist}:{}),
+    ...(crisisAlliesVersion?{crisisAlliesVersion}:{}),
     encounterType, encounterName: camp.name, difficulty: camp.difficulty, campGeneration: encounterType === 'camp' ? camp.generation : null,
     famedDrop: encounterType === 'camp' ? famedDropForCamp(state.seed,camp,encounterAffixes(state,camp.id,camp.generation)) : null, mountReward: encounterType==='camp' ? campMountReward(state.seed,camp,camp.discoveryBonuses?.mount??0) : null, field,
     tactic: state.tactic ?? 'offense', focusTargetId: null, lastContactRound: 1, engaged: false,
@@ -6511,13 +6516,18 @@ function validateBattle(input, party, worldState) {
   assert(input.itemAffixRulesVersion===undefined||[1,2].includes(input.itemAffixRulesVersion),'battle item affix rules');
   assert(input.championLootVersion===undefined||[1,2].includes(input.championLootVersion),'battle champion loot rules');
   assert(input.enemyScalingVersion===undefined||input.enemyScalingVersion===1,'battle enemy scaling rules');
-  const enemyLimit=warrior?1:undead?ASHEN_CONFIG.commanderSize:input.enemyScalingVersion===1?20:12;
+  assert(input.crisisAlliesVersion===undefined || input.crisisAlliesVersion===1 && undead && ['undead-liberation','undead-commander'].includes(encounterType),'battle crisis allies');
+  const crisisRoster=input.crisisAlliesVersion?crisisAllyRoster(undead.force.seed,encounterType):[];
+  const allyCount=patrolAssist?patrolAssist.troops.length:input.crisisAlliesVersion?crisisRoster.length:3;
+  const crisisGuards=input.crisisAlliesVersion?factionTroops(undead.force.seed,soldierFactionAt(encounter.x,encounter.y).id,2,crisisRoster.length):[];
+  const validAllyId=id=>/^ally-[1-9]\d?$/.test(id)&&Number(id.slice(5))<=allyCount;
+  const enemyLimit=warrior?1:undead?Math.max(ASHEN_CONFIG.commanderSize,undead.force.size):input.enemyScalingVersion===1?20:12;
   const validEnemyId=id=>/^enemy-[1-9]\d?$/.test(id)&&Number(id.slice(6))<=enemyLimit;
-  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + (patrolAssist?9:3) + enemyLimit, 'battle units');
+  assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + allyCount + enemyLimit, 'battle units');
   assert(warrior?input.units.filter(u=>u.side==='enemy').length===1:input.units.filter(u=>u.side==='enemy').length<=enemyLimit,'battle enemy count');
   const ids = new Set();
   const partyIds = new Set(party.map(person => person.id));
-  const questAllies = encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && worldState.contract?.type === 'assault'
+  const questAllies = input.crisisAlliesVersion || encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && worldState.contract?.type === 'assault'
     && worldState.contract.campId === input.campId && worldState.contract.campGeneration === campGeneration
     && !huntComplete(worldState);
   const units = input.units.map(unit => {
@@ -6529,9 +6539,13 @@ function validateBattle(input, party, worldState) {
     else if(blacksmith?.ancient&&unit.side==='enemy')assert(unit.undeadTraitsVersion===1&&blacksmith.enemies.some(e=>e.troopIndex===unit.troopIndex)&&unit.id===`enemy-${unit.troopIndex+1}`&&unit.morale===60,'blacksmith ancient troop');
     else assert(unit.undeadTraitsVersion === undefined && unit.troopIndex === undefined, 'unexpected undead traits');
     assert(unit.ally === undefined || unit.ally === true, 'battle ally marker');
-    assert(unit.ally ? (questAllies||patrolAssist) && unit.side === 'company' && new RegExp(`^ally-[1-${patrolAssist?patrolAssist.troops.length:3}]$`).test(unit.id)
+    assert(unit.ally ? (questAllies||patrolAssist) && unit.side === 'company' && validAllyId(unit.id)
       : unit.side === 'company' ? partyIds.has(unit.id) : validEnemyId(unit.id), 'battle unit ownership');
     assert(typeof unit.name === 'string' && unit.name.length > 0 && unit.name.length <= 80, 'battle unit name');
+    if(unit.ally&&input.crisisAlliesVersion){
+      const index=Number(unit.id.slice(5))-1;
+      assert(unit.name===(crisisRoster[index]==='guard'?crisisGuards[index].name:['Militia Captain','Militia Spearman','Militia Fighter'][index%3]),'battle crisis soldier identity');
+    }
     if(unit.ally&&patrolAssist)assert(unit.name===assistingPatrol?.enemies[Number(unit.id.slice(5))-1]?.name,'battle patrol soldier identity');
     assert(passableHex(unit, field), 'battle hex');
     assert(validCount(unit.maxHp) && unit.maxHp >= 1 && unit.maxHp <= 300 && validCount(unit.hp) && unit.hp <= unit.maxHp && unit.alive === (unit.hp > 0), 'battle health');
@@ -6588,7 +6602,7 @@ function validateBattle(input, party, worldState) {
     assert(validCount(turnStartedRound) && turnStartedRound <= input.round, 'battle turn started round');
     assert(validCount(freeSwapRound) && freeSwapRound <= input.round && validCount(freeHealRound) && freeHealRound <= input.round, 'battle free actions');
     assert(validCount(formationMovedRound) && formationMovedRound <= input.round && (aiTargetId === null || partyIds.has(aiTargetId)
-      || new RegExp(`^ally-[1-${patrolAssist?patrolAssist.troops.length:3}]$`).test(aiTargetId) || validEnemyId(aiTargetId)), 'battle AI state');
+      || validAllyId(aiTargetId) || validEnemyId(aiTargetId)), 'battle AI state');
     assert(validCount(movementCredit) && movementCredit <= Math.max(0, movementBudget(unit, { mountBalanceVersion,attachmentRulesVersion:input.attachmentRulesVersion }) - 2) * 2, 'battle movement credit');
     assert(recordObject(reserveEquipment) && (reserveEquipment.weapon === null || getItem(reserveEquipment.weapon)?.slot === 'weapon') && (reserveEquipment.shield === null || getItem(reserveEquipment.shield)?.slot === 'shield') && (!getItem(reserveEquipment.weapon)?.twoHanded || reserveEquipment.shield === null), 'battle reserve equipment');
     assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'battle accessories');
@@ -6734,7 +6748,7 @@ function validateBattle(input, party, worldState) {
   assert(focusTargetId === null || units.some(unit => unit.side === 'enemy' && unit.id === focusTargetId), 'battle focus target');
   const fieldedIds=new Set(getBattleRoster(worldState).map(p=>p.id));
   assert(units.filter(unit => unit.side === 'company' && !unit.ally).length === fieldedIds.size && units.filter(unit=>unit.side==='company'&&!unit.ally).every(unit=>fieldedIds.has(unit.id)), 'battle company roster');
-  assert(units.filter(unit => unit.ally).length === (patrolAssist?patrolAssist.troops.length:questAllies ? 3 : 0), 'battle allied roster');
+  assert(units.filter(unit => unit.ally).length === (questAllies||patrolAssist?allyCount:0), 'battle allied roster');
   assert(units.filter(unit => unit.side === 'company' && !unit.ally).every(unit => party.some(person => person.id === unit.id)), 'battle company roster');
   const formationAdvanceInput = input.formationAdvance ?? null;
   assert(['advance-formation', 'shield-wall'].includes(tactic) ? recordObject(formationAdvanceInput) : formationAdvanceInput === null, 'battle formation advance');
@@ -6841,6 +6855,7 @@ function validateBattle(input, party, worldState) {
   return {
     ...(undead ? { crisisContext: { ...input.crisisContext } } : {}),
     ...(patrolAssist?{patrolAssist:structuredClone(patrolAssist)}:{}),
+    ...(input.crisisAlliesVersion?{crisisAlliesVersion:1}:{}),
     id: input.id, campId: input.campId, ...(input.enemyOpening===undefined?{}:{enemyOpening:input.enemyOpening}), encounterType, encounterName, difficulty, campGeneration, famedDrop, ...(input.mountReward===undefined?{}:{mountReward}), tactic, focusTargetId, lastContactRound, engaged, formationAdvance, status: input.status, round: input.round, activeId: input.activeId,
     ...(input.enemyTacticsVersion===undefined?{}:{enemyTacticsVersion:1}),
     ...(input.enemyAdaptiveRulesVersion===undefined?{}:{enemyAdaptiveRulesVersion:1,enemyTacticalState:{...enemyTacticalState}}),

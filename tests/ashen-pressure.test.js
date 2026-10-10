@@ -44,7 +44,7 @@ test('active old crisis receives strong hosts immediately without healing or res
  const s=legacy(active()),host=Object.values(s.ashenWinter.hosts)[0];host.force.troops=[0,2,5];
  host.force.damage={2:{hp:20,bodyArmor:30,headArmor:20,shieldDurability:10}};
  const old=structuredClone(host.force),before=structuredClone(s);assert.deepEqual(validateSave(s),s);assert.deepEqual(s,before);
- advanceAshenWinter(s,context);assert.equal(s.ashenWinter.version,3);assert.deepEqual(host.force,old);
+ advanceAshenWinter(s,context);assert.equal(s.ashenWinter.version,4);assert.deepEqual(host.force,old);
  assert.ok(Object.keys(s.ashenWinter.hosts).length>=9);
  assert.ok(Object.values(s.ashenWinter.hosts).filter(h=>h.id.endsWith(':2')).every(h=>h.force.troops.length===24));
  assert.deepEqual(validateSave(s),s);
@@ -52,7 +52,7 @@ test('active old crisis receives strong hosts immediately without healing or res
 
 for(const index of [0,1,2])test(`marshal ${index+1} carries four stable named trophies, a one-handed weapon and superior boss stats`,()=>{
  const s=active(719+index),e=getUndeadEncounters(s).filter(e=>e.kind==='undead-commander')[index];
- assert.equal(e.enemies.length,30);const commander=e.enemies.find(u=>u.troopIndex===0);
+ assert.equal(e.enemies.length,25);const commander=e.enemies.find(u=>u.troopIndex===0);
  assert.ok(commander.champion);assert.equal(getItem(commander.weapon).twoHanded??false,false);
  for(const slot of ['weapon','shield','armor','helmet'])assert.ok(['named','famed'].includes(getItem(commander[slot]).rarity));
  assert.deepEqual(getUndeadEncounters(validateSave(s)).find(u=>u.id===e.id).enemies,e.enemies);
