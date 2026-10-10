@@ -437,3 +437,12 @@ body.world-screen>#time-of-day-indicator{display:none}
 .legacy-set-icons{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
 .legacy-set-icons img{width:30px;height:36px;object-fit:contain}
 @media(max-width:650px){.legacy-loadouts{grid-template-columns:1fr}.legacy-loadouts fieldset{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.legacy-set-history{grid-template-columns:1fr}}
+
+.company-history-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:10px;margin-bottom:12px}
+.company-history-grid article{min-width:0;padding:12px;overflow-wrap:anywhere}
+.company-history-grid h3{margin:8px 0}.company-history-grid h3 small{font-size:12px}
+.company-history-grid .button-row{gap:8px;font-size:12px;color:#57411c}
+.company-history-grid ul{padding-left:20px;font-size:13px}
+@media(max-width:650px){.company-history-grid{grid-template-columns:1fr}}
+
+.company-history-grid .eyebrow{color:#665329}.company-history-grid small{color:#51472e}
