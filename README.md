@@ -151,3 +151,5 @@ The [engineering and product council consultation](docs/ENGINEERING-PRODUCT-COUN
 ### Endgame progression
 
 [Company Legacy and endgame goals](docs/ENDGAME-LEGACY.md) describe the sealed-heirloom retirement chain and future mentor/charter options. [Persistent rival companies](docs/RIVAL-COMPANIES.md) document fair economy, real-combat simulation and hostility requirements; rivals remain planned in [issue #174](https://github.com/karmiphuc/ashen-company/issues/174).
+
+[The Frozen Vigil](docs/LEGACY-WARRIOR.md) records the separate four-step quest to awaken a preserved top warrior and defeat his real build in a solo encounter before recruitment.

@@ -5,7 +5,7 @@ import { worldRoute } from './world-navigation.js';
 import { visualRandom, REGION_STYLE, terrainStamp, roadCurve, settlementProfile, settlementGround, overviewBorderAlpha, showActorLabel, movementPose } from './map-illustration.js';
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
 import { regionAt, regionalTownArt } from './geography.js';
-import { getActiveContracts, SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getBlacksmithQuestEncounters, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
+import { getActiveContracts, SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getBlacksmithQuestEncounters, getLegacyWarriorEncounters, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = ['legendary-blacksmith',
   ...SETTLEMENT_SCENERY_ASSETS,
@@ -103,7 +103,7 @@ function townArt(town) {
 
 function bands() {
   const quest=state?getQuestEncounter(state):null;
-  const value = state ? [...getRoamingBands(state),...getUndeadEncounters(state),...getBlacksmithQuestEncounters(state),...(['deserters','bounty'].includes(quest?.kind)?[quest]:[])] : [];
+  const value = state ? [...getRoamingBands(state),...getUndeadEncounters(state),...getBlacksmithQuestEncounters(state),...getLegacyWarriorEncounters(state),...(['deserters','bounty'].includes(quest?.kind)?[quest]:[])] : [];
   return Array.isArray(value) ? value : [];
 }
 
@@ -626,7 +626,7 @@ function draw() {
   });
   drawWorldFog();
   // Quest directions remain visible through unexplored ground without revealing terrain.
-  getBlacksmithQuestEncounters(state).filter(site=>!worldPointVisible(state,site)).forEach(site=>{sprite(context,'fortified_outpost_01',site.x,site.y,44,.9);context.font=`bold ${Math.max(13,9/camera.zoom)}px Georgia`;context.textAlign='center';context.fillStyle='#efcb82';context.fillText(site.name,site.x,site.y+26);});
+  [...getBlacksmithQuestEncounters(state),...getLegacyWarriorEncounters(state)].filter(site=>!worldPointVisible(state,site)).forEach(site=>{sprite(context,'fortified_outpost_01',site.x,site.y,44,.9);context.font=`bold ${Math.max(13,9/camera.zoom)}px Georgia`;context.textAlign='center';context.fillStyle='#efcb82';context.fillText(site.name,site.x,site.y+26);});
   drawActorGround('company',state.position.x,state.position.y);
   sprite(context, 'figure_player_party', state.position.x, state.position.y, 36, .7,actorPoses.get('company')?.flip);
   sprite(context, 'banner_101', state.position.x + 14, state.position.y - 23, 25, .8);
