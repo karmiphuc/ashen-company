@@ -5,7 +5,7 @@ import { worldRoute } from './world-navigation.js';
 import { visualRandom, REGION_STYLE, terrainStamp, roadCurve, settlementProfile, settlementGround, overviewBorderAlpha, showActorLabel, movementPose } from './map-illustration.js';
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
 import { regionAt, regionalTownArt } from './geography.js';
-import { getActiveContracts, SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getBlacksmithQuestEncounters, getLegacyTombEncounters, getLegacyWarriorEncounters, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
+import { getActiveContracts, SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getBlacksmithQuestEncounters, getLegacyTombEncounters, getLegacyWarriorEncounters, getFactionPatrols, getRivalMapCompanies, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = ['legendary-blacksmith',
   ...SETTLEMENT_SCENERY_ASSETS,
@@ -423,11 +423,12 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const world = { x: camera.x + (current.x - width / 2) / camera.zoom, y: camera.y + (current.y - height / 2) / camera.zoom };
       const town = SETTLEMENTS.find(item => worldPointExplored(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 48);
       const camp = getCampSites(state).find(item => worldPointExplored(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 34);
+      const rival=getRivalMapCompanies(state).filter(r=>r.active&&worldPointVisible(state,r)).find(r=>Math.hypot(r.x-24-world.x,r.y-24-world.y)<24);
       const patrol = getFactionPatrols(state).filter(p=>p.active && worldPointVisible(state,p)).find(item=>Math.hypot(item.x+24-world.x,item.y-24-world.y)<24);
       const band = nearestMapBand(bands().filter(item=>(['blacksmith','legacy-warrior','legacy-tomb'].includes(item.kind)||worldPointVisible(state,item))),world);
       const caravan = caravans().find(item => (['blacksmith','legacy-warrior','legacy-tomb'].includes(item.kind)||worldPointVisible(state,item)) && Math.hypot(item.x - world.x, item.y - world.y) < 24);
       const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
-      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind.startsWith('undead-')?band.kind:['deserters','bounty','blacksmith','legacy-warrior','legacy-tomb'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }
+      const existingTarget = rival ? {type:'rival',id:rival.id,entity:rival} : patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind.startsWith('undead-')?band.kind:['deserters','bounty','blacksmith','legacy-warrior','legacy-tomb'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }
         : camp ? { type: 'camp', id: camp.id, entity: camp }
           : town ? { type: 'town', id: town.id, entity: town }
             : null;
@@ -435,7 +436,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const target = caravan && caravanDistance <= existingDistance
         ? { type: 'caravan', id: caravan.id, entity: caravan }
         : existingTarget;
-      if ((target?.type?.startsWith('undead-') || target?.type === 'legacy-tomb' || target?.type === 'legacy-warrior' || target?.type === 'blacksmith' || target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
+      if ((target?.type?.startsWith('undead-') || target?.type === 'legacy-tomb' || target?.type === 'legacy-warrior' || target?.type === 'blacksmith' || target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'rival' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
       else if (!target && !sceneryAt(settlementStructures.filter(item=>worldPointExplored(state,item)), world) && !landmarkAt(landmarks.filter(item=>worldPointExplored(state,item)),world)) onTravel(world.x, world.y);
@@ -472,7 +473,7 @@ export function zoomMap(factor) {
 export function selectMapTown(town) { selection = town?.id || null; draw(); }
 export function selectMapCamp(id) { selection = id; draw(); }
 export function updateMap(game) { if(state?.seed!==game.seed){previousPositions.clear();actorPoses.clear();}state = game;revealWorld(game,SETTLEMENTS);
-  const actors=[{id:'company',...game.position,destination:game.destination},...bands(),...caravans(),...getFactionPatrols(game).filter(p=>p.active && worldPointVisible(state,p))];
+  const actors=[{id:'company',...game.position,destination:game.destination},...bands(),...caravans(),...getFactionPatrols(game).filter(p=>p.active && worldPointVisible(state,p)),...getRivalMapCompanies(game).filter(r=>r.active&&worldPointVisible(game,r))];
   const next=new Map();for(const actor of actors){actorPoses.set(actor.id,movementPose(previousPositions.get(actor.id),actor,actor.destination));next.set(actor.id,{x:actor.x,y:actor.y,flip:actorPoses.get(actor.id).flip});}previousPositions=next;actorPoses=new Map(actors.map(a=>[a.id,actorPoses.get(a.id)])); settlementStructures = worldSettlementScenery(game); if (canvas?.isConnected) { if (background && background.seed!==game.seed) buildBackground(); draw(); } }
 
 function draw() {
@@ -597,6 +598,15 @@ function draw() {
     context.font='bold 10px Arial';context.textAlign='center';context.strokeStyle='#142016';context.lineWidth=3;
     const label=camera.zoom>=.4||selection===p.id?`${p.factionLabel} · ${p.enemies.length}`:`${p.enemies.length}`;
     context.strokeText(label,p.x,p.y+28);context.fillStyle=p.color;context.fillText(label,p.x,p.y+28);if(p.battleHoursRemaining!==undefined){context.fillStyle='#efd191';context.fillText(`⚔ Fighting · ${Math.ceil(p.battleHoursRemaining)}h`,p.x,p.y+40);}context.restore();
+  });
+
+  getRivalMapCompanies(state).filter(r=>r.active&&worldPointVisible(state,r)).forEach(r=>{
+    context.save();context.translate(-24,-24);
+    context.beginPath();context.arc(r.x,r.y+3,18,0,Math.PI*2);context.fillStyle='#1c1a16e8';context.fill();context.strokeStyle=r.color;context.lineWidth=selection===r.id?4:2;context.stroke();
+    context.font='bold 20px Georgia';context.textAlign='center';context.fillStyle=r.color;context.fillText(r.crest,r.x,r.y+9);
+    context.font='bold 10px Arial';context.strokeStyle='#142016';context.lineWidth=3;
+    const label=camera.zoom>=.4||selection===r.id?`${r.name} · ${r.size}`:`${r.size}`;
+    context.strokeText(label,r.x,r.y+28);context.fillText(label,r.x,r.y+28);context.restore();
   });
 
   if (state.destination) {

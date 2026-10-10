@@ -1,3 +1,4 @@
+import { rivalSidebarHTML } from './rival-company-ui.js';
 import { battleMvpAwards } from './battle-performance.js';
 import { equipmentSetStatus, effectiveArmorFatigue, effectiveAttachmentFatigue, equipmentSetCompletionText } from './equipment-sets.js';
 import { INJURY_BY_ID, injuryEffectText, injuryDailyMedicine } from './injuries.js';
@@ -243,6 +244,7 @@ export function difficultyHTML(level=1) {
 }
 
 export function campSidebarHTML(state, site) {
+  if(site.kind==='rival')return rivalSidebarHTML(state,site);
   if(site.kind==='legacy-tomb')return `<div class="location-header hostile-location"><div class="eyebrow">◇ Entombed legends</div><h2>${esc(site.name)}</h2><p>♞ ${site.enemies.length} undead cavalry · set ${state.companyLegacy.stage}/3</p></div><div class="scout-enemies">${site.enemies.map((enemy,index)=>`<div>${portraitHTML({name:enemy.name,seed:index},Object.fromEntries(['armor','helmet','attachment','attachment2','weapon','shield','mount'].map(slot=>[slot,item(enemy[slot])])),50)}<strong>${esc(enemy.name)}</strong></div>`).join('')}</div><button class="primary" data-quest-travel="legacy-tomb" data-target-id="${esc(site.id)}">⚔ Ride to the tomb</button><details><summary>Tomb reward</summary><p>${esc(site.description)}</p><p>Guardians cannot flee. Their gear does not drop; report after victory to unveil one complete set, with its original bonuses and wear.</p></details>`;
 
   if(site.kind.startsWith('undead-')){

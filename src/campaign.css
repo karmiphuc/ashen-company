@@ -446,3 +446,14 @@ body.world-screen>#time-of-day-indicator{display:none}
 @media(max-width:650px){.company-history-grid{grid-template-columns:1fr}}
 
 .company-history-grid .eyebrow{color:#665329}.company-history-grid small{color:#51472e}
+
+.rival-supply-strip{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;font-size:13px}
+.rival-hardship{color:#efae7a}.rival-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0}
+.rival-roster>div{display:flex;flex-direction:column;align-items:center;min-width:0;padding:7px 2px;border:1px solid #8b754e}
+.rival-roster strong{font-size:12px;text-align:center}.rival-roster small{font-size:11px}
+.rival-banner-list{display:grid;gap:8px}.rival-banner-list>div{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+.rival-banner-list button{padding:5px 9px;font-size:12px}.rival-banner-list small{font-size:12px}
+
+.world-sidebar .rival-company-panel .location-header{display:block}.rival-company-panel{min-width:0;overflow-wrap:anywhere}.rival-company-panel h2{overflow-wrap:anywhere}
+.rival-roster .bb-portrait{align-self:flex-start}.rival-roster .rival-mounted{grid-column:1/-1}.rival-roster .rival-mounted .bb-portrait{align-self:center;margin-inline-end:var(--portrait-overhang,0px)}
+.rival-roster .bb-portrait{margin-bottom:20px}

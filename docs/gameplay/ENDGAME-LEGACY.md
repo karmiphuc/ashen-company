@@ -1,6 +1,6 @@
 # Endgame goals and Company Legacy
 
-Design reference for [issue #174](https://github.com/karmiphuc/ashen-company/issues/174). The implemented inheritance chain is described below; rival companies, mentor/charter inheritances and defeat salvage remain planned.
+Design reference for [issue #174](https://github.com/karmiphuc/ashen-company/issues/174). The implemented inheritance chain is described below; the rival supply-route foundation is implemented; rival combat/progression, mentor/charter inheritances and defeat salvage remain planned.
 
 ## Why this exists
 
@@ -48,7 +48,7 @@ Defeat could record achievements and allow salvage only for an heirloom actually
 
 ## Planned: pressure during a continuing campaign
 
-[Rival companies](../plans/RIVAL-COMPANIES.md) should earn their growth through travel, contracts and real combat. Hostility escalates visibly and offers negotiation, intimidation, avoidance or fighting. Their actual roster and equipment determine an ambush.
+[Rival companies](../plans/RIVAL-COMPANIES.md) now persist and establish supply routes after Ashen Winter; their [first milestone](../world/RIVAL-COMPANIES.md) has normal upkeep and no battle/contract rewards yet. They should earn their later growth through travel, contracts and real combat. Hostility escalates visibly and offers negotiation, intimidation, avoidance or fighting. Their actual roster and equipment determine an ambush.
 
 Endgame competitors can race the player for announced rare bounties, ancient expeditions or lucrative commissions, with explicit ownership/cooperation rules. Do not silently remove accepted player quests or inflate all enemies. The original longer-term crisis sequence remains Ashen first, then a faction war that can change borders; it is a separate design and not implemented by this legacy chain.
 
@@ -62,4 +62,4 @@ Open **Chronicle → ◇ Past banners**. Compact cards show retirement day, reno
 
 Up to twelve recent retirement summaries persist separately on this device. Each new retirement records its summary before replacing the active save, with rollback attempts for both history and the latest full backup if saving fails. Invalid history blocks retirement rather than silently erasing memories; active gameplay/saves remain independent. Existing latest-retirement backups are read through normal save validation and shown without requiring a new retirement. That older summary is retained when the next retirement creates the history store. Histories do not sync between devices. **Export history** downloads summary JSON for safekeeping; it cannot be imported as a playable campaign. **Retired save** still exports the latest complete retired campaign, and older complete saves require the player’s own exports. Clearing browser storage removes local memories.
 
-Rival companies, company charters, mentors and faction war remain separate planned features. The gallery deliberately grants no account-wide power before those systems have fair progression rules.
+Rival combat and progression, company charters, mentors and faction war remain separate planned features. The gallery deliberately grants no account-wide power before those systems have fair progression rules.
