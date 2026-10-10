@@ -4,7 +4,7 @@
 
 Date: 2026-09-28
 
-Implementation update: 2026-10-01. Version 0.37 completes the core families, reactions, stuns and restricted area attacks, and adds signatures for the remaining equipment families. Repairable shields were implemented in v0.33. Existing active battles retain their prior rules. This document preserves the agreed design; implementation details and additional family skills are recorded in [current tactical rules](TACTICAL-AI.md).
+Implementation update: 2026-10-01. Version 0.37 completes the core families, reactions, stuns and restricted area attacks, and adds signatures for the remaining equipment families. Repairable shields were implemented in v0.33. Existing active battles retain their prior rules. This document preserves the agreed design; implementation details and additional family skills are recorded in [current tactical rules](../gameplay/TACTICAL-AI.md).
 
 This document records the original agreed design. The full core scope covers spears, swords, maces, daggers, bows, and shields. The table is now implemented; further item-specific tuning remains future work.
 

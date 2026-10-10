@@ -8,7 +8,7 @@ consistent rules, including simulated pathfinding copies. Save validation checks
 that unit and battle markers agree. This is a combat rule version, not a release
 version or a reason to reroll gear.
 
-Free-perk prefixes can now [enhance a matching learned perk](LEARNED-PREFIX-PERKS.md)
+Free-perk prefixes can now [enhance a matching learned perk](../equipment/LEARNED-PREFIX-PERKS.md)
 under the additional `prefixPerkRulesVersion: 1` combat marker. The base perk
 balance below remains unchanged without that equipment synergy.
 

@@ -1,4 +1,6 @@
-# Verification
+# Verification history
+
+These are dated records for the named versions and revisions. Test counts, implementation scope and remaining limits apply to those checks; they do not certify the current build. See the [release log](CHANGELOG.md) and [current documentation](../README.md).
 
 ## v0.53.0 temporary injury checks — 2026-10-05
 

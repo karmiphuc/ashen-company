@@ -25,9 +25,9 @@ For the next feature pass, use Battle Brothers as the direct reference for both 
 
 ## Current prototype boundary
 
-The dated v0.2 baseline in [verification notes](VERIFICATION.md) recorded an eight-settlement world, courier and supply contracts, markets, food and wages, recruitment, camping/foraging, equipment slots, and local save/offline support. At that baseline, people had HP and morale fields, while armor/fatigue/power were equipment values; combat-driven body/head armor, AP, initiative, morale checks, battle injuries, XP/levels, and battle loot were not implemented. This is a versioned snapshot, not a claim about later work: check the current implementation and browser evidence before describing what has shipped.
+The dated v0.2 baseline in [verification notes](../releases/VERIFICATION.md) recorded an eight-settlement world, courier and supply contracts, markets, food and wages, recruitment, camping/foraging, equipment slots, and local save/offline support. At that baseline, people had HP and morale fields, while armor/fatigue/power were equipment values; combat-driven body/head armor, AP, initiative, morale checks, battle injuries, XP/levels, and battle loot were not implemented. This is a versioned snapshot, not a claim about later work: check the current implementation and browser evidence before describing what has shipped.
 
-Battle Brothers art is incorporated in this prototype; provenance and the published asset terms are documented in [asset credits](ASSET-CREDITS.md). The portrait renderer aligns imported body, face, hair, armor, helmet, shield, and weapon layers. Do not describe that artwork as Ashen Company's original art.
+Battle Brothers art is incorporated in this prototype; provenance and the published asset terms are documented in [asset credits](../art/ASSET-CREDITS.md). The portrait renderer aligns imported body, face, hair, armor, helmet, shield, and weapon layers. Do not describe that artwork as Ashen Company's original art.
 
 ## iPad offline note
 

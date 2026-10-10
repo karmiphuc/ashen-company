@@ -76,7 +76,7 @@ test('beta retreat settles real wounds and removes only the completed battlefiel
 
 test('new beta modules are cached for offline play and design records activation and AP timing',async()=>{
  const build=await readFile(new URL('../tools/build-cache.mjs',import.meta.url),'utf8');assert.match(build,/src\/combat-config.js/);assert.match(build,/src\/simultaneous-combat.js/);
- const doc=await readFile(new URL('../docs/SIMULTANEOUS-COMBAT-BETA.md',import.meta.url),'utf8');assert.match(doc,/combat-beta=1/);assert.match(doc,/6-second AP cycle/);
+ const doc=await readFile(new URL('../docs/development/SIMULTANEOUS-COMBAT-BETA.md',import.meta.url),'utf8');assert.match(doc,/combat-beta=1/);assert.match(doc,/6-second AP cycle/);
 });
 
 function veteranCompany(seed=719){

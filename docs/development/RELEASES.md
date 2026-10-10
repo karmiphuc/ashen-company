@@ -1,12 +1,6 @@
 # Automated releases and offline updates
 
-## What failed
-
-The UI hardcoded 0.53.0 while package metadata had reached 0.54.0. Later equipment
-features shipped without another release number. Legacy GitHub Pages published
-main directly: no repository test/build gate caught the drift. Version 0.55.0
-unified the displayed version; the Verified release pipeline removes the remaining
-manual patch-bump and deployment steps.
+The Verified release workflow builds, tests and publishes a commit-numbered static artifact. A release is complete when its live version and offline cache match that tested artifact. See the [release log](../releases/CHANGELOG.md) for changes in each recorded release.
 
 ## Automatic numbering
 
@@ -18,7 +12,8 @@ a distinct version. Rebuilding a commit produces the same version and cache.
 Full git history is required; missing or unrelated anchors fail the build.
 
 For a deliberate minor release, update the base version and anchor together to
-an existing main ancestor and add a README summary. Do not manually increment
+an existing main ancestor and add a summary to [release notes](../releases/NOTES.md), indexed in the
+[release log](../releases/CHANGELOG.md). Do not manually increment
 patch numbers for individual PRs. Development `prepare-offline` displays the
 base version; the production `build` generates both version and exact commit.
 Save / Menu shows the release and eight-character build ID; `release.json` in
