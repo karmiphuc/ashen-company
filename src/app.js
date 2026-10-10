@@ -1,8 +1,8 @@
 import { getLegacyWarrior, getLegacyWarriorEncounters, turnInWarriorQuest, recoverLegacyWarrior } from './engine.js';
 import { warriorJournalHTML } from './legacy-warrior-ui.js';
 import { storeLegacyRetirement, LEGACY_STASH_LIMIT } from './company-legacy.js';
-import { getCompanyLegacy, getLegacyRetirementQuote, createLegacyCampaign, turnInLegacyQuest } from './engine.js';
-import { legacyJournalHTML, legacyPanelHTML, legacyRetirementHTML, legacyConfirmationHTML } from './company-legacy-ui.js';
+import { getLegacySetRetirementQuote, getLegacyTombEncounters, getCompanyLegacy, getLegacyRetirementQuote, createLegacyCampaign, turnInLegacyQuest } from './engine.js';
+import { legacyJournalHTML, legacyPanelHTML, blankLegacySets, legacyRetirementHTML, legacyConfirmationHTML } from './company-legacy-ui.js';
 import { DIREWOLF_LEATHER_HELMET, direwolfHelmetRecipe } from './direwolf-helmets.js';
 import { direwolfHelmetHTML, direwolfHelmetConfirmationHTML, direwolfHelmetResultHTML } from './direwolf-helmet-ui.js';
 import { getDirewolfHelmetQuote, craftDirewolfHelmet } from './engine.js';
@@ -128,7 +128,7 @@ function singleContractHTML(contract){
  const c=contract,t=town(c.to),supply=c.type==='supply';return `<div class="contract-card"><div class="eyebrow">${supply?'Supply contract':'Sealed dispatches'}</div><h3>${supply?`${c.quantity} ${good(c.goodId).name}`:'Delivery'} to ${t.name}</h3><p>${supply?`Cargo: ${state.cargo[c.goodId]||0} / ${c.quantity}. Buy goods at a market, then deliver.`:'Your dispatches are packed. Reach the destination to collect payment.'}</p><div class="contract-reward">${c.reward} crowns · ${c.renown||1} renown</div><button class="primary${isContractReady(state,c)?' is-ready':''}" data-travel="${t.id}">${isContractReady(state,c)?'✓ ':''}Travel to ${t.name}</button></div>`;
 }
 function sidebarHTML(){
- if(chosenCamp){const encounter=getEncounterSites(state).find(c=>c.id===chosenCamp)||getCaravans(state).find(c=>c.id===chosenCamp);if(encounter && !['blacksmith','legacy-warrior'].includes(encounter.kind) && !(getCampSites(state).some(c=>c.id===encounter.id)?worldPointExplored(state,encounter):worldPointVisible(state,encounter)))chosenCamp=null;}
+ if(chosenCamp){const encounter=getEncounterSites(state).find(c=>c.id===chosenCamp)||getCaravans(state).find(c=>c.id===chosenCamp);if(encounter && !['blacksmith','legacy-warrior','legacy-tomb'].includes(encounter.kind) && !(getCampSites(state).some(c=>c.id===encounter.id)?worldPointExplored(state,encounter):worldPointVisible(state,encounter)))chosenCamp=null;}
  if(chosenCamp){const caravan=getCaravans(state).find(c=>c.id===chosenCamp);if(caravan)return caravanSidebarHTML(state,caravan)+(state.contract?contractHTML():'');const site=getEncounterSites(state).find(c=>c.id===chosenCamp);if(site)return campSidebarHTML(state,site)+(state.contract?contractHTML():'');}
  const t=town(chosenTown)||townAt(state)||SETTLEMENTS[0],here=townAt(state)?.id===t.id;
  const access=getSettlementAccess(state,t.id);
@@ -253,6 +253,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
  if(b.hasAttribute('data-company-hint')){if(companyHintButton===b&&companyHintPinned)closeCompanyHint();else openCompanyHint(b,true);return;}
  if(b.dataset.warriorTurnin!==undefined){const r=turnInWarriorQuest(state,Number(b.dataset.warriorTurnin));toast(r.message);if(r.ok){save();render();}return;}
  if(b.dataset.warriorTown){$('#modal').close();tab='world';chosenCamp=null;chosenTown=b.dataset.warriorTown;render();focusMap(town(chosenTown));return;}
+ if(b.dataset.legacyTomb){const site=getLegacyTombEncounters(state).find(e=>e.id===b.dataset.legacyTomb);if(site){const r=activateMapTarget(state,'legacy-tomb',site.id);toast(r.message);if(r.ok){if(state.battle)enterBattleView();else{chosenCamp=site.id;speed=1;tab='world';$('#modal').close();save();render();}}}return;}
  if(b.dataset.warriorChallenge){const site=getLegacyWarriorEncounters(state).find(e=>e.id===b.dataset.warriorChallenge);if(site){const r=activateMapTarget(state,'legacy-warrior',site.id);toast(r.message);if(r.ok){if(state.battle)enterBattleView();else{chosenCamp=site.id;speed=1;tab='world';$('#modal').close();save();render();}}}return;}
  if(b.dataset.legacyItem!==undefined){const quote=getLegacyRetirementQuote(state,Number(b.dataset.legacyItem));if(!quote.ok){toast(quote.message);return;}legacyRetirementQuote=quote;showModal('Entrust your heirloom?',legacyConfirmationHTML(state,quote),'COMPANY LEGACY');return;}
  if(b.dataset.legacyTurnin!==undefined){const r=turnInLegacyQuest(state,Number(b.dataset.legacyTurnin));toast(r.message);if(r.ok){save();render();showModal('Company Legacy',legacyPanelHTML(state));}return;}
@@ -333,7 +334,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
  case 'find-company':if(state.battle){focusBattleCamera('company');}else{tab='world';render();focusMap(state.position);window.scrollTo({top:0,behavior:'auto'});}break;
  case 'center':focusMap(state.position);break;case 'zoom-in':zoomMap(1.25);break;case 'zoom-out':zoomMap(.8);break;
  case 'export':exportSave();break;case 'export-recovery':exportSave(true);break;case 'import':$('#import-file').click();break;
- case 'legacy-retire':legacyRetirementQuote=null;showModal('Choose an heirloom',legacyRetirementHTML(state),'COMPANY LEGACY');break;
+ case 'legacy-retire':legacyRetirementQuote={version:3,setIndices:blankLegacySets()};showModal('Entomb three legends',legacyRetirementHTML(state,legacyRetirementQuote.setIndices),'COMPANY LEGACY');break;
+ case 'legacy-edit':showModal('Entomb three legends',legacyRetirementHTML(state,legacyRetirementQuote.setIndices),'COMPANY LEGACY');break;
+ case 'legacy-review':{const q=getLegacySetRetirementQuote(state,legacyRetirementQuote?.setIndices);if(!q.ok){toast(q.message);break;}legacyRetirementQuote=q;showModal('Entrust three entombed sets?',legacyConfirmationHTML(state,q),'COMPANY LEGACY');break;}
  case 'legacy-map':{const q=getCompanyLegacy(state)?.quest;if(q){$('#modal').close();tab='world';chosenCamp=null;chosenTown=q.townId;render();focusMap(town(q.townId));}break;}
  case 'legacy-export-retired':{let text;try{text=localStorage.getItem(SAVE_KEY+'-retired');}catch{}if(!text){toast('No retired company backup is available on this device.');break;}const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='ashen-company-retired.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);toast('Retired company exported.');break;}
  case 'legacy-confirm':{
@@ -515,3 +518,15 @@ prepareOffline();
 
 // A tablet's folded controls become the regular desktop toolbar on resize.
 window.addEventListener('resize',()=>{if(matchMedia('(min-width:1367px)').matches&&$('.battle-more'))$('.battle-more').open=true;});
+
+document.addEventListener('change',event=>{
+ const input=event.target;if(!input.matches('[data-legacy-set]')||legacyRetirementQuote?.version!==3)return;
+ const sets=structuredClone(legacyRetirementQuote.setIndices),n=Number(input.dataset.legacySet),slot=input.dataset.legacySlot;
+ sets[n][slot]=input.value===''?null:Number(input.value);
+ if(slot==='weapon'&&getItem(state.inventory[sets[n].weapon])?.twoHanded)sets[n].shield=null;
+ if(slot==='attachment'&&sets[n].attachment===null)sets[n].attachment2=null;
+ legacyRetirementQuote={version:3,setIndices:sets};
+ const modal=document.querySelector('#modal'),scroll=modal.scrollTop;
+ showModal('Entomb three legends',legacyRetirementHTML(state,sets),'COMPANY LEGACY');modal.scrollTop=scroll;
+ document.querySelector(`[data-legacy-set="${n}"][data-legacy-slot="${slot}"]`)?.focus({preventScroll:true});
+});

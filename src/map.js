@@ -5,7 +5,7 @@ import { worldRoute } from './world-navigation.js';
 import { visualRandom, REGION_STYLE, terrainStamp, roadCurve, settlementProfile, settlementGround, overviewBorderAlpha, showActorLabel, movementPose } from './map-illustration.js';
 import { SETTLEMENT_SCENERY_ASSETS, worldSettlementScenery, sceneryAt } from './settlement-scenery.js';
 import { regionAt, regionalTownArt } from './geography.js';
-import { getActiveContracts, SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getBlacksmithQuestEncounters, getLegacyWarriorEncounters, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
+import { getActiveContracts, SETTLEMENTS, WORLD_BOUNDS, terrainAt, getCampSites, getRoamingBands, getQuestEncounter, getBlacksmithQuestEncounters, getLegacyTombEncounters, getLegacyWarriorEncounters, getFactionPatrols, getCaravans, getUndeadEncounters, getSettlementAccess, getTownLocalSupply, WORLD_REGIONS, WORLD_ROADS } from './engine.js';
 
 const names = ['legendary-blacksmith',
   ...SETTLEMENT_SCENERY_ASSETS,
@@ -103,7 +103,7 @@ function townArt(town) {
 
 function bands() {
   const quest=state?getQuestEncounter(state):null;
-  const value = state ? [...getRoamingBands(state),...getUndeadEncounters(state),...getBlacksmithQuestEncounters(state),...getLegacyWarriorEncounters(state),...(['deserters','bounty'].includes(quest?.kind)?[quest]:[])] : [];
+  const value = state ? [...getRoamingBands(state),...getUndeadEncounters(state),...getBlacksmithQuestEncounters(state),...getLegacyTombEncounters(state),...getLegacyWarriorEncounters(state),...(['deserters','bounty'].includes(quest?.kind)?[quest]:[])] : [];
   return Array.isArray(value) ? value : [];
 }
 
@@ -424,10 +424,10 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const town = SETTLEMENTS.find(item => worldPointExplored(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 48);
       const camp = getCampSites(state).find(item => worldPointExplored(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 34);
       const patrol = getFactionPatrols(state).filter(p=>p.active && worldPointVisible(state,p)).find(item=>Math.hypot(item.x+24-world.x,item.y-24-world.y)<24);
-      const band = nearestMapBand(bands().filter(item=>(item.kind==='blacksmith'||worldPointVisible(state,item))),world);
-      const caravan = caravans().find(item => (item.kind==='blacksmith'||worldPointVisible(state,item)) && Math.hypot(item.x - world.x, item.y - world.y) < 24);
+      const band = nearestMapBand(bands().filter(item=>(['blacksmith','legacy-warrior','legacy-tomb'].includes(item.kind)||worldPointVisible(state,item))),world);
+      const caravan = caravans().find(item => (['blacksmith','legacy-warrior','legacy-tomb'].includes(item.kind)||worldPointVisible(state,item)) && Math.hypot(item.x - world.x, item.y - world.y) < 24);
       const caravanDistance = caravan ? Math.hypot(caravan.x - world.x, caravan.y - world.y) : Infinity;
-      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind.startsWith('undead-')?band.kind:['deserters','bounty','blacksmith'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }
+      const existingTarget = patrol ? {type:'patrol',id:patrol.id,entity:patrol} : band ? { type: band.kind.startsWith('undead-')?band.kind:['deserters','bounty','blacksmith','legacy-warrior','legacy-tomb'].includes(band.kind)?band.kind:'band', id: band.id, entity: band }
         : camp ? { type: 'camp', id: camp.id, entity: camp }
           : town ? { type: 'town', id: town.id, entity: town }
             : null;
@@ -435,7 +435,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const target = caravan && caravanDistance <= existingDistance
         ? { type: 'caravan', id: caravan.id, entity: caravan }
         : existingTarget;
-      if ((target?.type?.startsWith('undead-') || target?.type === 'blacksmith' || target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
+      if ((target?.type?.startsWith('undead-') || target?.type === 'legacy-tomb' || target?.type === 'legacy-warrior' || target?.type === 'blacksmith' || target?.type === 'bounty' || target?.type === 'deserters' || target?.type === 'patrol' || target?.type === 'band' || target?.type === 'caravan') && campCallback) campCallback(target.entity);
       else if (target?.type === 'camp' && campCallback) campCallback(target.entity);
       else if (target?.type === 'town' && townCallback) townCallback(target.entity);
       else if (!target && !sceneryAt(settlementStructures.filter(item=>worldPointExplored(state,item)), world) && !landmarkAt(landmarks.filter(item=>worldPointExplored(state,item)),world)) onTravel(world.x, world.y);
@@ -557,7 +557,7 @@ function draw() {
   activeBands.forEach((band, index) => {
     if(band.kind!=='blacksmith'&&!worldPointVisible(state,band))return;
     const count = bandCount(band), selected = selection === band.id, hunted = state.pursuit === band.id;
-    const undead=band.kind.startsWith('undead-')||band.kind==='blacksmith'&&band.ancient;
+    const undead=band.kind==='legacy-tomb'||band.kind.startsWith('undead-')||band.kind==='blacksmith'&&band.ancient;
     const stronghold = band.kind === 'undead-commander';
     const art = band.kind==='blacksmith'?'fortified_outpost_01':stronghold?'fortified_outpost_01':undead?'figure_undead_host':{ 'northern-highlands':'figure_player_berserker',greenwood:'figure_player_ranger','blackwater-basin':'figure_player_slave','far-steppe':'figure_player_nomad','saffron-coast':'figure_player_nomad',sunlands:'figure_player_nomad','highland-clans':'figure_player_berserker','southern-sultanate':'figure_player_nomad',south: 'figure_player_nomad', north: 'figure_player_berserker', east: 'figure_player_assassin', forest: 'figure_player_ranger' }[band.factionId] || ['figure_player_beggar', 'figure_player_berserker', 'figure_player_assassin', 'figure_player_slave'][index % 4];
     context.save();
@@ -626,7 +626,7 @@ function draw() {
   });
   drawWorldFog();
   // Quest directions remain visible through unexplored ground without revealing terrain.
-  [...getBlacksmithQuestEncounters(state),...getLegacyWarriorEncounters(state)].filter(site=>!worldPointVisible(state,site)).forEach(site=>{sprite(context,'fortified_outpost_01',site.x,site.y,44,.9);context.font=`bold ${Math.max(13,9/camera.zoom)}px Georgia`;context.textAlign='center';context.fillStyle='#efcb82';context.fillText(site.name,site.x,site.y+26);});
+  [...getBlacksmithQuestEncounters(state),...getLegacyTombEncounters(state),...getLegacyWarriorEncounters(state)].filter(site=>!worldPointVisible(state,site)).forEach(site=>{sprite(context,'fortified_outpost_01',site.x,site.y,44,.9);context.font=`bold ${Math.max(13,9/camera.zoom)}px Georgia`;context.textAlign='center';context.fillStyle='#efcb82';context.fillText(site.name,site.x,site.y+26);});
   drawActorGround('company',state.position.x,state.position.y);
   sprite(context, 'figure_player_party', state.position.x, state.position.y, 36, .7,actorPoses.get('company')?.flip);
   sprite(context, 'banner_101', state.position.x + 14, state.position.y - 23, 25, .8);
