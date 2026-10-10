@@ -20,6 +20,8 @@ const CORE = [
   './src/audio.js',
   './src/quest-completion.js',
   './src/company-legacy.js',
+  './src/legacy-warrior.js',
+  './src/legacy-warrior-ui.js',
   './src/company-legacy-ui.js',
   './src/app.js',
   './src/item-details.js',
