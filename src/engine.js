@@ -5308,8 +5308,10 @@ function advanceBattleV2(state) {
   // Realtime and turn-based battles share the same cache and tactical rules.
   const battle=state.battle,previousItems=simultaneousItemCache;
   simultaneousItemCache=new Map();
-  simultaneousActionCaches.set(battle,{mounted:battle.units.filter(u=>getItem(u.equipment.mount))});
-  try { return advanceBattleV2Decision(state); }
+  try {
+    simultaneousActionCaches.set(battle,{mounted:battle.units.filter(u=>getItem(u.equipment.mount))});
+    return advanceBattleV2Decision(state);
+  }
   finally { simultaneousItemCache=previousItems;simultaneousActionCaches.delete(battle); }
 }
 
