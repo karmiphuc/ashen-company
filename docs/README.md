@@ -93,3 +93,12 @@ Release highlights and historical validation. Notes do not certify that a build 
 - [Verification history](releases/VERIFICATION.md)
 
 - [Persistent rival companies — planned](plans/RIVAL-COMPANIES.md)
+
+## Recent mechanics and design
+
+- [Attachment Special Effects](equipment/ATTACHMENT-SPECIAL-EFFECTS.md)
+- [Learned Prefix Perks](equipment/LEARNED-PREFIX-PERKS.md)
+- [Shields](equipment/SHIELDS.md)
+- [Perk Balance](gameplay/PERK-BALANCE.md)
+- [Battle Performance](development/BATTLE-PERFORMANCE.md)
+- [Perk Artwork And Maces](plans/PERK-ARTWORK-AND-MACES.md)
