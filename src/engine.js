@@ -3886,6 +3886,8 @@ function rangedTerrainModifier(battle, actor, from, target) {
 }
 
 function simultaneousTargetPath(battle,actor,target,range,keepRangedSpace,occupied,cache,goalTest=null) {
+  if(hexDistance(actor,target)<=range&&(!keepRangedSpace||nearestEnemyDistance(battle,actor,actor)>=2)
+    &&(!goalTest||goalTest({...actor,path:[],cost:0})))return [];
   const stamp=battle.units.filter(u=>u.alive).map(u=>`${u.id}:${u.q},${u.r}`).join('|');
   if(cache.stamp!==stamp){cache.stamp=stamp;cache.paths=new Map();}
   const key=`${actor.id}:${actor.q},${actor.r}:${actor.side}:${hasPerk(actor,'pathfinder')}:${equipmentBoost(actor,'heightRelief',getItem)}:${keepRangedSpace}`;
@@ -5302,6 +5304,16 @@ function preserveWoundedBrother(state, actor, enemies) {
 }
 
 function advanceBattleV2(state) {
+  // Paths and resolved items are reusable only within this actor decision.
+  // Realtime and turn-based battles share the same cache and tactical rules.
+  const battle=state.battle,previousItems=simultaneousItemCache;
+  simultaneousItemCache=new Map();
+  simultaneousActionCaches.set(battle,{mounted:battle.units.filter(u=>getItem(u.equipment.mount))});
+  try { return advanceBattleV2Decision(state); }
+  finally { simultaneousItemCache=previousItems;simultaneousActionCaches.delete(battle); }
+}
+
+function advanceBattleV2Decision(state) {
   const battle = state.battle;
   const actor = battle.units.find(unit => unit.id === battle.activeId);
   if (!actor?.alive) { nextBattleTurn(battle); return result(true, 'The next fighter takes their turn.'); }
@@ -5911,11 +5923,8 @@ export function advanceSimultaneousBattle(state,elapsedMs=SIM_STEP_MS,{maxAction
       // Earlier equal-time actions may kill or stun a fighter. Never commit a stale action.
       if(!actor.alive||actor.ap<=0||actor.stunnedTurns)continue;
       battle.turnIndex=battle.turnOrder.indexOf(actor.id);battle.activeId=actor.id;
-      const before=actor.ap,previous=battle.lastEvent,previousItems=simultaneousItemCache;
-      simultaneousItemCache=new Map();
-      simultaneousActionCaches.set(battle,{mounted:battle.units.filter(u=>getItem(u.equipment.mount))});
-      try { advanceBattleV2(state); }
-      finally { simultaneousItemCache=previousItems;simultaneousActionCaches.delete(battle); }
+      const before=actor.ap,previous=battle.lastEvent;
+      advanceBattleV2(state);
       const event=battle.lastEvent===previous?null:battle.lastEvent;
       const berserkRefund=event?.effects?.find(e=>e.id==='berserk'&&!e.nextTurn)?.amount??0;
       const delay=simultaneousActionDelay(actor,event?.type==='hold'?0:before-actor.ap+berserkRefund,event);

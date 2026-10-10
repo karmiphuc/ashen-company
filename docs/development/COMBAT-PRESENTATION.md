@@ -58,3 +58,15 @@ were below 350ms after integration with the newer armory assets. Physical iPad v
 Run `npm run build` followed by `npm run test:release`. The existing realtime,
 mounted-control and battle-view Node tests check the unchanged combat rules;
 the release browser tests also verify save-preserving offline updates.
+
+## Shared tactical decision caches
+
+Turn-based and realtime combat use the same per-action cache for resolved items,
+mounted blockers and reachable terrain paths. A single terrain search can serve
+multiple enemy targets and Reach Support shelter goals; an already valid attack
+position needs no terrain search. Flanking restrictions still use their existing
+route calculation. The cache is cleared in `finally` after every action, including
+errors, so movement, casualties, swaps and reloads cannot retain stale routes.
+No cache is saved, and combat rules, clocks, AP costs and target scoring remain
+unchanged. This avoids repeated pathfinding in large crisis battles and the
+regression suite without skipping simulation or weakening its checks.
