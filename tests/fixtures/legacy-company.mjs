@@ -1,7 +1,7 @@
 import { createGame, SETTLEMENTS, getUndeadEncounters, createFamedItemId, validateSave } from '../../src/engine.js';
 import { advanceAshenWinter, resolveAshenObjective } from '../../src/undead-crisis.js';
-export function completedCompany() {
-  const state=createGame(719), original=structuredClone(state.party[0]);
+export function completedCompany(seed=719) {
+  const state=createGame(seed), original=structuredClone(state.party[0]);
   while(state.party.length<6)state.party.push({...structuredClone(original),id:`veteran-${state.party.length}`});
   state.party.forEach(p=>p.level=7);state.formation=Array.from({length:36},(_,i)=>state.party[i]?.id??null);
   state.day=60;state.shipments={};state.shipmentLegacyThroughDay=60;

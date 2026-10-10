@@ -1,3 +1,4 @@
+import { advanceRivalCompanies, rivalCompanySites, rivalCompanyMarkers, validateRivalCompanies } from './rival-companies.js';
 import { LEGACY_SET_SLOTS, LEGACY_TOMB_STAGES, initialEntombedLegacy, tombReady, tombGuardOutfit, tombRank } from './entombed-legacy.js';
 import { WARRIOR_STAGES, freezeLegacyWarrior, warriorReady } from './legacy-warrior.js';
 import { LEGACY_STAGES, LEGACY_STASH_LIMIT, LEGACY_STASH_SLOTS, initialLegacy, legacyStageReady, recordLegacyContract, recordLegacyVictory, validateLegacy } from './company-legacy.js';
@@ -929,6 +930,10 @@ function cartLevel(state) { return [1,2].includes(state.retinue?.cartLevel) ? st
 export function getCompanyTravelMultiplier(state) {
   return (1 + getCompanyTravelBonus(state)) * (cartLevel(state) === 1 ? .95 : 1) * getTimeOfDay(state.hour).travelMultiplier * (hasRetinue(state,'scout')?1.1:1);
 }
+export function getWorldTravelSpeed(state) {
+  const onNewRoad=(state.position.x>2120||state.position.y>1380)&&distanceToRoad(state.position.x,state.position.y,WORLD_ROADS)<=18;
+  return (onNewRoad?SPEED*1.15:terrainSpeed(terrainAt(state.position.x,state.position.y)))*getCompanyTravelMultiplier(state);
+}
 export function getCompanyCart(state) {
   const level=cartLevel(state);
   return {level,cost:level===0?7500:level===1?15000:0,stashCapacity:getStashCapacity(state),cargoCapacity:getCargoCapacity(state),speedPenalty:level===1?5:0};
@@ -1508,6 +1513,15 @@ function visibleEquipmentStock(state, town, item, stock, event) {
   return townEventHash(`${event.id}:${item.id}:reserved`) % 2 === 0 ? 0 : stock;
 }
 
+function provisionQuotes(state,town,stock,event) {
+ return {food:{ buyPrice: Math.max(2, Math.round(5 * MARKET_FACTORS[town.id].grain * recoveryFactor(state, town.id, townEventModifiers(event).foodBuy ?? 1))), stock: stock.food, owned: state.food },supplies:Object.entries(SUPPLY_INFO).map(([kind, info]) => ({ kind, name: info.name, buyPrice: Math.round(info.buyPrice * recoveryFactor(state, town.id)), stock: stock.supplies?.[kind] ?? info.stock, owned: state.supplies?.[kind] ?? 0 }))};
+}
+export function getProvisionMarket(state) {
+ const town=townAt(state);if(!town||townBlocked(state,town.id))return null;
+ const existing=state.marketStock?.[town.id];
+ const stock=existing?.day===state.day?existing:dailyMarketStock(state,town);
+ return provisionQuotes(state,town,stock,getTownEvent(state,town.id));
+}
 export function getMarket(state, townId) {
   const town = townAt(state);
   if (!town || (townId !== undefined && town.id !== townId) || townBlocked(state, town.id)) return null;
@@ -1525,7 +1539,7 @@ export function getMarket(state, townId) {
       daysUntilRestock: (cycle + 1) * ARMORY_ROTATION_DAYS + 1 - state.day,
       summary: `${SETTLEMENT_TYPES[town.kind].summary} Small regional selections rotate weekly. Blacksmiths expand weapons and shields; armorsmiths expand armor and helmets. Provisions, trade goods, and supplies restock daily.${town.id === 'highpass' ? ' One Riding Horse arrives on days 8, 22, 36 and every 14 days thereafter; available that week until bought.' : ''}`,
     },
-    food: { buyPrice: Math.max(2, Math.round(5 * MARKET_FACTORS[town.id].grain * recoveryFactor(state, town.id, townEventModifiers(event).foodBuy ?? 1))), stock: stock.food, owned: state.food },
+    ...provisionQuotes(state,town,stock,event),
     equipment: [
       ...ITEMS.map(item => {
         const offers = (stock.buyback ?? []).filter(entry=>entry.itemId===item.id);
@@ -1543,7 +1557,6 @@ export function getMarket(state, townId) {
         brokerLocal:broker&&owned>0&&cargoFromHere(state,good.id,town.id)===owned,
         stock:stock.goods[good.id],owned};
     }),
-    supplies: Object.entries(SUPPLY_INFO).map(([kind, info]) => ({ kind, name: info.name, buyPrice: Math.round(info.buyPrice * recoveryFactor(state, town.id)), stock: stock.supplies?.[kind] ?? info.stock, owned: state.supplies?.[kind] ?? 0 })),
   };
 }
 
@@ -1904,7 +1917,7 @@ function startHostileContact(state, bandId) {
   return startBattle(state, bandId, {enemyOpening:true});
 }
 
-export function getEncounterSites(state) { return [...getLegacyTombEncounters(state),...getLegacyWarriorEncounters(state),...getBlacksmithQuestEncounters(state), ...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
+export function getEncounterSites(state) { return [...getLegacyTombEncounters(state),...getLegacyWarriorEncounters(state),...getBlacksmithQuestEncounters(state), ...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state),...getRivalCompanies(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
 
 // Keep the legacy primary contract field for old saves and combat consumers.
 export function getContractCategory(contract) {
@@ -1989,6 +2002,7 @@ export function activateMapTarget(state, type, id) {
     if (travel.ok) state.destinationAction = { type: encounter.kind, id };
     return travel;
   }
+  if(type==='rival'){const rival=getRivalCompanies(state).find(r=>r.id===id);return result(Boolean(rival),rival?`${rival.name}: ${rival.activity}.`:'Company unavailable.');}
   if(type==='patrol'){if(getJoinablePatrolBattle(state,id))return joinPatrolBattle(state,id);const patrol=getFactionPatrols(state).find(p=>p.id===id);return result(Boolean(patrol),patrol?`${patrol.name} are ${patrol.playerRelation} soldiers.`:'Patrol unavailable.');}
   if (type === 'caravan' && getQuestEncounter(state)?.id === id) type = 'rescue';
   if (type === 'caravan') {
@@ -2124,12 +2138,7 @@ export function getInjuryCare(state, person) {
     fresh:wound.fresh===true}));
 }
 
-function atMidnight(state) {
-  const previousDiscovery=discoveryEvent(state);
-  state.day += 1;
-  recoverDailyInjuries(state);
-  const currentDiscovery=discoveryEvent(state);
-  if(currentDiscovery?.id!==previousDiscovery?.id||currentDiscovery?.startDay!==previousDiscovery?.startDay){if(previousDiscovery)record(state,`${previousDiscovery.name} has ended.`);if(currentDiscovery)record(state,`${currentDiscovery.name}: ${currentDiscovery.description} Ends after day ${currentDiscovery.endDay}.`);}
+function applyDailyUpkeep(state) {
   const foodNeeded = dailyFoodConsumption(state);
   const wages = state.party.reduce((total, person) => total + getCompanyStats(person).dailyWage, 0);
   const foodShort = Math.max(0, foodNeeded - state.food);
@@ -2148,6 +2157,15 @@ function atMidnight(state) {
     record(state, 'The company could not collect full wages.');
   }
   if (!foodShort && !wagesShort) record(state, `Paid ${wages} crowns and ate ${foodNeeded} provisions.`);
+}
+
+function atMidnight(state) {
+  const previousDiscovery=discoveryEvent(state);
+  state.day += 1;
+  recoverDailyInjuries(state);
+  const currentDiscovery=discoveryEvent(state);
+  if(currentDiscovery?.id!==previousDiscovery?.id||currentDiscovery?.startDay!==previousDiscovery?.startDay){if(previousDiscovery)record(state,`${previousDiscovery.name} has ended.`);if(currentDiscovery)record(state,`${currentDiscovery.name}: ${currentDiscovery.description} Ends after day ${currentDiscovery.endDay}.`);}
+  applyDailyUpkeep(state);
   checkBlacksmithDiscovery(state);
 }
 
@@ -2179,11 +2197,23 @@ function advanceClock(state, hours) {
   }
 }
 
+function rivalContext(state) {
+ return {settlements:SETTLEMENTS,normalize:normalizeMember,stats:getCompanyStats,food:getDailyFood,travelSpeed:getWorldTravelSpeed,
+  train:trainAttributes,rest:applyRestRecovery,
+  daily(view){recoverDailyInjuries(view);applyDailyUpkeep(view);},
+  market:getProvisionMarket,buyFood,buySupplies,getItem,itemCondition,
+  validateMembers(members,day){validateCompanyMembers(members,day);return members.map(normalizePersistedMember);},
+  servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable};
+}
+export function advanceRivalSimulation(state) { advanceRivalCompanies(state,rivalContext(state)); }
+export function getRivalMapCompanies(state) { return rivalCompanyMarkers(state); }
+export function getRivalCompanies(state) { return rivalCompanySites(state,rivalContext(state)); }
 function advanceWorldStep(state) {
   snapWorldStepClock(state);
   const displaced = advanceAshenWinter(state, ashenContext(state));
   advanceCaravans(state, worldHours(state));
   advanceSoldiers(state);
+  advanceRivalSimulation(state);
   const contact = advanceRoamingBands(state);
   if (displaced) return { ...result(true, displaced.message), blockedTown: displaced.townId, interrupted: true };
   if (contact) return startHostileContact(state, contact);
@@ -2236,8 +2266,7 @@ export function tick(state, hours) {
     }
     if (state.destination) {
       const distanceLeft = distance(state.position, state.destination);
-      const onNewRoad = (state.position.x > 2120 || state.position.y > 1380) && distanceToRoad(state.position.x,state.position.y,WORLD_ROADS) <= 18;
-      const speed = (onNewRoad ? SPEED * 1.15 : terrainSpeed(terrainAt(state.position.x, state.position.y))) * getCompanyTravelMultiplier(state);
+      const speed = getWorldTravelSpeed(state);
       const movement = Math.min(distanceLeft, speed * step);
       if (distanceLeft > 0) {
         moveWorldToward(state.position,state.destination,movement);
@@ -2481,7 +2510,7 @@ export function buyFood(state, quantity = 5) {
   const access = requireTown(state);
   if (access.error) return access.error;
   if (!validQuantity(quantity, 100)) return result(false, 'Choose 1 to 100 provisions.');
-  const offer = getMarket(state).food;
+  const offer = getProvisionMarket(state).food;
   const cost = offer.buyPrice * quantity;
   if (offer.stock < quantity) return result(false, 'The market does not have that many provisions today.');
   if (state.gold < cost) return result(false, 'The company cannot afford those provisions.');
@@ -2544,7 +2573,7 @@ export function buySupplies(state, kind, quantity = 1) {
   if (access.error) return access.error;
   if (!SUPPLY_INFO[kind]) return result(false, 'Unknown supply.');
   if (!validQuantity(quantity, 100)) return result(false, 'Choose 1 to 100 supplies.');
-  const offer = getMarket(state).supplies.find(entry => entry.kind === kind);
+  const offer = getProvisionMarket(state).supplies.find(entry => entry.kind === kind);
   const cost = offer.buyPrice * quantity;
   if (offer.stock < quantity) return result(false, 'The market does not have that many supplies today.');
   if (state.gold < cost) return result(false, 'The company cannot afford those supplies.');
@@ -2936,11 +2965,7 @@ function advanceStationaryTime(state, hours) {
   return null;
 }
 
-export function camp(state) {
-  const blocked = actionBlocked(state);
-  if (blocked) return blocked;
-  const interrupted = advanceStationaryTime(state, 6);
-  if (interrupted) return interrupted;
+function applyRestRecovery(state) {
   const wounded = state.party.some(person => person.hp < getCompanyStats(person).maxHp);
   const medicated = wounded && state.supplies.medicine > injuryDailyMedicine(state.party);
   if (medicated) state.supplies.medicine -= 1;
@@ -2966,6 +2991,15 @@ export function camp(state) {
       }
     }
   }
+  return {medicated,repairs};
+}
+
+export function camp(state) {
+  const blocked = actionBlocked(state);
+  if (blocked) return blocked;
+  const interrupted = advanceStationaryTime(state, 6);
+  if (interrupted) return interrupted;
+  const {medicated,repairs} = applyRestRecovery(state);
   const message = `The company rests for six hours${medicated ? ' with medicine' : ''}${repairs ? ` and uses ${repairs} tools for repairs` : ''}.`;
   record(state, message);
   return result(true, message);
@@ -6959,6 +6993,99 @@ function validateBattle(input, party, worldState) {
   };
 }
 
+function validateCompanyMembers(members,day) {
+  const ids = new Set();
+  for (const person of members) {
+    assert(person && typeof person === 'object' && !Array.isArray(person), 'person');
+    assert(typeof person.id === 'string' && person.id.length <= 40 && /^[a-z0-9-]+$/.test(person.id) && !ids.has(person.id), 'person id');
+    ids.add(person.id);
+    assert(typeof person.name === 'string' && person.name.length > 0 && person.name.length <= 80, 'person name');
+    assert(person.combatRole === undefined || COMBAT_ROLES.includes(person.combatRole), 'person combat role');
+    assert(person.skillPreference === undefined || SKILL_PREFERENCES.includes(person.skillPreference), 'person skill preference');
+    assert(typeof person.background === 'string' && person.background.length > 0 && person.background.length <= 80, 'person background');
+    const backgroundDefinition = person.backgroundId === undefined ? null : RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId);
+    assert(person.backgroundId === undefined || backgroundDefinition && person.background === backgroundDefinition.name, 'person background id');
+    assert(person.appearanceId === backgroundDefinition?.appearanceId, 'person appearance');
+    const traits = person.traits ?? [];
+    assert(Array.isArray(traits) && traits.length <= 2 && traits.every(id => typeof id === 'string' && RECRUIT_TRAIT_BY_ID.has(id)) && new Set(traits).size === traits.length, 'person traits');
+    assert(backgroundDefinition ? traits.length >= 1 && RECRUIT_TRAIT_BY_ID.get(traits[0]).kind === 'positive' && (traits.length === 1 || RECRUIT_TRAIT_BY_ID.get(traits[1]).kind === 'tradeoff') : traits.length === 0, 'person trait kinds');
+    assert(validCount(person.seed) && person.seed <= 0xffffffff, 'person seed');
+    assert(person.talents===undefined||recordObject(person.talents)&&Object.keys(person.talents).length===3&&Object.entries(person.talents).every(([key,stars])=>ATTRIBUTES.includes(key)&&Number.isSafeInteger(stars)&&stars>=1&&stars<=3), 'person talents');
+    assert(Number.isFinite(person.morale) && person.morale >= 0 && person.morale <= 100, 'person morale');
+    assert(person.equipment && typeof person.equipment === 'object' && !Array.isArray(person.equipment), 'equipment');
+    for (const slot of SLOTS) {
+      const itemId = ['attachment','attachment2', 'mount'].includes(slot) ? person.equipment[slot] ?? null : person.equipment[slot];
+      assert(itemId === null || getItem(itemId)?.slot === (slot==='attachment2'?'attachment':slot), `${slot} equipment`);
+    }
+    assert(!person.equipment.attachment || person.equipment.armor, 'attachment requires armor');
+    assert(!person.equipment.attachment2||person.equipment.armor&&hasPerk(person,'layered-armor'),'second attachment requires Layered Armor and body armor');
+    const reserve = person.reserveEquipment ?? { weapon: null, shield: null };
+    const accessories = person.accessories ?? [null, null];
+    assert(recordObject(reserve) && (reserve.weapon === null || getItem(reserve.weapon)?.slot === 'weapon') && (reserve.shield === null || getItem(reserve.shield)?.slot === 'shield') && (!getItem(reserve.weapon)?.twoHanded || reserve.shield === null), 'reserve equipment');
+    assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'accessories');
+    assert(person.attributes === undefined || recordObject(person.attributes), 'person attributes');
+    assert(person.armorDurability === undefined || recordObject(person.armorDurability), 'person armor durability');
+    assert(person.level !== null && person.xp !== null && person.trainingPoints !== null, 'person progress');
+    assert(person.level === undefined || Number.isSafeInteger(person.level) && person.level >= 1 && person.level <= 30, 'person level');
+    assert(person.trainingPoints === undefined || validCount(person.trainingPoints) && person.trainingPoints <= 29, 'person training points');
+    const earnedLevel = person.level ?? 1;
+    const perks = person.perks ?? [];
+    assert(Array.isArray(perks) && perks.length <= earnedLevel - 1 && perks.every(id => typeof id === 'string' && (PERK_BY_ID.get(id)?.minLevel ?? REMOVED_PERK_MIN_LEVEL.get(id) ?? Infinity) <= earnedLevel) && new Set(perks).size === perks.length, 'person perks');
+    if (person.pendingLevelUps === undefined) {
+      assert((person.trainingPoints ?? 0) <= earnedLevel - 1, 'legacy training points');
+    } else {
+      const pending = person.pendingLevelUps;
+      assert(Array.isArray(pending) && pending.length <= earnedLevel - 1 && (person.trainingPoints === undefined || person.trainingPoints === pending.length), 'pending level-ups');
+      for (let index = 0; index < pending.length; index++) {
+        const entry = pending[index];
+        const level = earnedLevel - pending.length + index + 1;
+        assert(recordObject(entry) && Object.keys(entry).length === 2 && entry.level === level && recordObject(entry.rolls), 'pending level');
+        assert(Object.keys(entry.rolls).length === ATTRIBUTES.length && ATTRIBUTES.every(key => Number.isSafeInteger(entry.rolls[key]) && entry.rolls[key] >= 1 && entry.rolls[key] <= 5 && entry.rolls[key] === levelRolls(person.seed, level,person.talents)[key]), 'level rolls');
+      }
+    }
+    assert(person.injuries===undefined || validInjuries(person.injuries,day),'person injuries');
+    const member = normalizeMember(person);
+    if (person.throwingAmmo !== undefined) assert(recordObject(person.throwingAmmo)
+      && Object.keys(person.throwingAmmo).length === 2
+      && Object.hasOwn(person.throwingAmmo, 'active') && Object.hasOwn(person.throwingAmmo, 'reserve'), 'person throwing ammo');
+    assert(validCount(member.throwingAmmo.active) && member.throwingAmmo.active <= throwingCapacity(person.equipment.weapon)
+      && validCount(member.throwingAmmo.reserve) && member.throwingAmmo.reserve <= throwingCapacity(reserve.weapon), 'person throwing ammo');
+    assert(Number.isSafeInteger(member.level) && member.level >= 1 && member.level <= 30, 'person level');
+    assert(validCount(member.xp) && member.xp < member.level * 50 && validCount(member.trainingPoints) && member.trainingPoints <= 29, 'person experience');
+    assert(recordObject(person.attributes ?? {}) && Object.keys(person.attributes ?? {}).every(key => ATTRIBUTES.includes(key)), 'person attributes');
+    for (const key of ATTRIBUTES) assert(validCount(member.attributes[key]) && member.attributes[key] <= 1000, `person ${key}`);
+    assert(validCount(member.armorDurability.body) && member.armorDurability.body <= armorMaximum(person.equipment.armor), 'body durability');
+    assert(validCount(member.armorDurability.attachment) && member.armorDurability.attachment <= armorMaximum(person.equipment.attachment), 'attachment durability');
+    assert(validCount(member.armorDurability.attachment2)&&member.armorDurability.attachment2<=armorMaximum(person.equipment.attachment2),'second attachment durability');
+    assert(validCount(member.armorDurability.head) && member.armorDurability.head <= armorMaximum(person.equipment.helmet), 'head durability');
+    assert(validCount(member.armorDurability.shield) && member.armorDurability.shield <= shieldMaximum(person.equipment.shield), 'shield durability');
+    assert(validCount(member.armorDurability.reserveShield) && member.armorDurability.reserveShield <= shieldMaximum(reserve.shield), 'reserve shield durability');
+    assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
+  }
+  return ids;
+}
+function normalizePersistedMember(person) {
+  return normalizeMember({
+    id: person.id, name: person.name, background: person.background, seed: person.seed,
+    combatRole: person.combatRole ?? 'auto', skillPreference: person.skillPreference ?? 'balanced',
+    ...(person.backgroundId === undefined ? {} : { backgroundId: person.backgroundId }),
+    ...(person.appearanceId ? { appearanceId: person.appearanceId } : {}),
+    traits: [...(person.traits ?? [])],
+    hp: person.hp, morale: person.morale, injuries:copyInjuries(person.injuries),
+    equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot] ?? null])),
+    reserveEquipment: { weapon: person.reserveEquipment?.weapon ?? null, shield: person.reserveEquipment?.shield ?? null },
+    accessories: [...(person.accessories ?? [null, null])],
+    throwingAmmo: person.throwingAmmo ? { active: person.throwingAmmo.active, reserve: person.throwingAmmo.reserve } : undefined,
+    level: person.level, xp: person.xp, trainingPoints: person.trainingPoints,
+    perks: [...(person.perks ?? [])],
+    pendingLevelUps: person.pendingLevelUps,
+    talents: person.talents?{...person.talents}:undefined,
+    attributes: person.attributes ? { ...person.attributes } : undefined,
+    armorDurability: person.armorDurability ? { body: person.armorDurability.body, attachment: person.armorDurability.attachment, attachment2:person.armorDurability.attachment2, head: person.armorDurability.head,
+      shield: person.armorDurability.shield, reserveShield: person.armorDurability.reserveShield } : undefined,
+  });
+}
+
 export function validateSave(input) {
   assert(input && typeof input === 'object' && !Array.isArray(input), 'expected an object');
   input=migrateShieldBalance(input,getItem,getUndeadEncounters);
@@ -6966,6 +7093,7 @@ export function validateSave(input) {
   assert(input.direwolfCraftSerial === undefined || validCount(input.direwolfCraftSerial) && input.direwolfCraftSerial <= 1000000, 'direwolf craft serial');
   const ashenWinter = validateAshenWinter(input.ashenWinter, input.seed, SETTLEMENTS);
   const legacyWarrior=validateWarrior(input.legacyWarrior,input);
+  const rivalCompanies=validateRivalCompanies(input.rivalCompanies,input,rivalContext(input));
   const companyLegacy=validateLegacy(input.companyLegacy,{getItem,isNamedItem,itemCondition,now:worldHours(input)});
   input = { ...input, ashenWinter };
   for (const encounter of getUndeadEncounters(input)) for (const enemy of encounter.enemies) {
@@ -7103,74 +7231,7 @@ export function validateSave(input) {
   const gameOver = input.gameOver === undefined ? false : input.gameOver;
   assert(typeof gameOver === 'boolean', 'game over');
   assert(Array.isArray(input.party) && input.party.length <= MAX_COMPANY_SIZE && (input.party.length > 0 || gameOver), 'party');
-  const ids = new Set();
-  for (const person of input.party) {
-    assert(person && typeof person === 'object' && !Array.isArray(person), 'person');
-    assert(typeof person.id === 'string' && person.id.length <= 40 && /^[a-z0-9-]+$/.test(person.id) && !ids.has(person.id), 'person id');
-    ids.add(person.id);
-    assert(typeof person.name === 'string' && person.name.length > 0 && person.name.length <= 80, 'person name');
-    assert(person.combatRole === undefined || COMBAT_ROLES.includes(person.combatRole), 'person combat role');
-    assert(person.skillPreference === undefined || SKILL_PREFERENCES.includes(person.skillPreference), 'person skill preference');
-    assert(typeof person.background === 'string' && person.background.length > 0 && person.background.length <= 80, 'person background');
-    const backgroundDefinition = person.backgroundId === undefined ? null : RECRUIT_BACKGROUND_BY_ID.get(person.backgroundId);
-    assert(person.backgroundId === undefined || backgroundDefinition && person.background === backgroundDefinition.name, 'person background id');
-    assert(person.appearanceId === backgroundDefinition?.appearanceId, 'person appearance');
-    const traits = person.traits ?? [];
-    assert(Array.isArray(traits) && traits.length <= 2 && traits.every(id => typeof id === 'string' && RECRUIT_TRAIT_BY_ID.has(id)) && new Set(traits).size === traits.length, 'person traits');
-    assert(backgroundDefinition ? traits.length >= 1 && RECRUIT_TRAIT_BY_ID.get(traits[0]).kind === 'positive' && (traits.length === 1 || RECRUIT_TRAIT_BY_ID.get(traits[1]).kind === 'tradeoff') : traits.length === 0, 'person trait kinds');
-    assert(validCount(person.seed) && person.seed <= 0xffffffff, 'person seed');
-    assert(person.talents===undefined||recordObject(person.talents)&&Object.keys(person.talents).length===3&&Object.entries(person.talents).every(([key,stars])=>ATTRIBUTES.includes(key)&&Number.isSafeInteger(stars)&&stars>=1&&stars<=3), 'person talents');
-    assert(Number.isFinite(person.morale) && person.morale >= 0 && person.morale <= 100, 'person morale');
-    assert(person.equipment && typeof person.equipment === 'object' && !Array.isArray(person.equipment), 'equipment');
-    for (const slot of SLOTS) {
-      const itemId = ['attachment','attachment2', 'mount'].includes(slot) ? person.equipment[slot] ?? null : person.equipment[slot];
-      assert(itemId === null || getItem(itemId)?.slot === (slot==='attachment2'?'attachment':slot), `${slot} equipment`);
-    }
-    assert(!person.equipment.attachment || person.equipment.armor, 'attachment requires armor');
-    assert(!person.equipment.attachment2||person.equipment.armor&&hasPerk(person,'layered-armor'),'second attachment requires Layered Armor and body armor');
-    const reserve = person.reserveEquipment ?? { weapon: null, shield: null };
-    const accessories = person.accessories ?? [null, null];
-    assert(recordObject(reserve) && (reserve.weapon === null || getItem(reserve.weapon)?.slot === 'weapon') && (reserve.shield === null || getItem(reserve.shield)?.slot === 'shield') && (!getItem(reserve.weapon)?.twoHanded || reserve.shield === null), 'reserve equipment');
-    assert(Array.isArray(accessories) && accessories.length === 2 && accessories.every(id => id === null || getItem(id)?.slot === 'accessory' || getItem(id)?.pocketWeapon === true), 'accessories');
-    assert(person.attributes === undefined || recordObject(person.attributes), 'person attributes');
-    assert(person.armorDurability === undefined || recordObject(person.armorDurability), 'person armor durability');
-    assert(person.level !== null && person.xp !== null && person.trainingPoints !== null, 'person progress');
-    assert(person.level === undefined || Number.isSafeInteger(person.level) && person.level >= 1 && person.level <= 30, 'person level');
-    assert(person.trainingPoints === undefined || validCount(person.trainingPoints) && person.trainingPoints <= 29, 'person training points');
-    const earnedLevel = person.level ?? 1;
-    const perks = person.perks ?? [];
-    assert(Array.isArray(perks) && perks.length <= earnedLevel - 1 && perks.every(id => typeof id === 'string' && (PERK_BY_ID.get(id)?.minLevel ?? REMOVED_PERK_MIN_LEVEL.get(id) ?? Infinity) <= earnedLevel) && new Set(perks).size === perks.length, 'person perks');
-    if (person.pendingLevelUps === undefined) {
-      assert((person.trainingPoints ?? 0) <= earnedLevel - 1, 'legacy training points');
-    } else {
-      const pending = person.pendingLevelUps;
-      assert(Array.isArray(pending) && pending.length <= earnedLevel - 1 && (person.trainingPoints === undefined || person.trainingPoints === pending.length), 'pending level-ups');
-      for (let index = 0; index < pending.length; index++) {
-        const entry = pending[index];
-        const level = earnedLevel - pending.length + index + 1;
-        assert(recordObject(entry) && Object.keys(entry).length === 2 && entry.level === level && recordObject(entry.rolls), 'pending level');
-        assert(Object.keys(entry.rolls).length === ATTRIBUTES.length && ATTRIBUTES.every(key => Number.isSafeInteger(entry.rolls[key]) && entry.rolls[key] >= 1 && entry.rolls[key] <= 5 && entry.rolls[key] === levelRolls(person.seed, level,person.talents)[key]), 'level rolls');
-      }
-    }
-    assert(person.injuries===undefined || validInjuries(person.injuries,input.day),'person injuries');
-    const member = normalizeMember(person);
-    if (person.throwingAmmo !== undefined) assert(recordObject(person.throwingAmmo)
-      && Object.keys(person.throwingAmmo).length === 2
-      && Object.hasOwn(person.throwingAmmo, 'active') && Object.hasOwn(person.throwingAmmo, 'reserve'), 'person throwing ammo');
-    assert(validCount(member.throwingAmmo.active) && member.throwingAmmo.active <= throwingCapacity(person.equipment.weapon)
-      && validCount(member.throwingAmmo.reserve) && member.throwingAmmo.reserve <= throwingCapacity(reserve.weapon), 'person throwing ammo');
-    assert(Number.isSafeInteger(member.level) && member.level >= 1 && member.level <= 30, 'person level');
-    assert(validCount(member.xp) && member.xp < member.level * 50 && validCount(member.trainingPoints) && member.trainingPoints <= 29, 'person experience');
-    assert(recordObject(person.attributes ?? {}) && Object.keys(person.attributes ?? {}).every(key => ATTRIBUTES.includes(key)), 'person attributes');
-    for (const key of ATTRIBUTES) assert(validCount(member.attributes[key]) && member.attributes[key] <= 1000, `person ${key}`);
-    assert(validCount(member.armorDurability.body) && member.armorDurability.body <= armorMaximum(person.equipment.armor), 'body durability');
-    assert(validCount(member.armorDurability.attachment) && member.armorDurability.attachment <= armorMaximum(person.equipment.attachment), 'attachment durability');
-    assert(validCount(member.armorDurability.attachment2)&&member.armorDurability.attachment2<=armorMaximum(person.equipment.attachment2),'second attachment durability');
-    assert(validCount(member.armorDurability.head) && member.armorDurability.head <= armorMaximum(person.equipment.helmet), 'head durability');
-    assert(validCount(member.armorDurability.shield) && member.armorDurability.shield <= shieldMaximum(person.equipment.shield), 'shield durability');
-    assert(validCount(member.armorDurability.reserveShield) && member.armorDurability.reserveShield <= shieldMaximum(reserve.shield), 'reserve shield durability');
-    assert(validCount(person.hp) && person.hp >= 1 && person.hp <= getCompanyStats(member).maxHp, 'person hp');
-  }
+  const ids = validateCompanyMembers(input.party,input.day);
   const formation = input.formation === undefined ? seedFormation(input.party) : input.formation;
   const reserveIds=input.reserveIds===undefined?[null,null,null]:input.reserveIds,automation=input.automation===undefined?{buyAmmo:false,equipBandages:false}:input.automation;
   assert(Array.isArray(reserveIds)&&reserveIds.length===3&&reserveIds.every(id=>id===null||ids.has(id)),'reserves');
@@ -7322,25 +7383,7 @@ export function validateSave(input) {
   const normalizeContract = contract => contract ? { id: contract.id, type: contract.type ?? 'courier', from: contract.from, to: contract.to, reward: contract.reward, renown: contract.renown ?? 1, ...(contract.type === 'supply' ? { goodId: contract.goodId, quantity: contract.quantity } : {}), ...(['hunt', 'assault'].includes(contract.type) ? { campId: contract.campId, campGeneration: contract.campGeneration??0 } : {}), ...(contract.type === 'rescue' ? { rescueId: contract.rescueId, rescuePoint: { ...contract.rescuePoint }, rescueDifficulty: contract.rescueDifficulty, rescued: contract.rescued } : {}), ...(['deserters','bounty'].includes(contract.type)?{deserterId:contract.deserterId,deserterPoint:{...contract.deserterPoint},factionId:contract.factionId,difficulty:3,defeated:contract.defeated}:{}), acceptedDay: contract.acceptedDay } : null;
   const inventory = [...input.inventory];
   const conditions = [...inventoryCondition];
-  const party = input.party.map(person => normalizeMember({
-    id: person.id, name: person.name, background: person.background, seed: person.seed,
-    combatRole: person.combatRole ?? 'auto', skillPreference: person.skillPreference ?? 'balanced',
-    ...(person.backgroundId === undefined ? {} : { backgroundId: person.backgroundId }),
-    ...(person.appearanceId ? { appearanceId: person.appearanceId } : {}),
-    traits: [...(person.traits ?? [])],
-    hp: person.hp, morale: person.morale, injuries:copyInjuries(person.injuries),
-    equipment: Object.fromEntries(SLOTS.map(slot => [slot, person.equipment[slot] ?? null])),
-    reserveEquipment: { weapon: person.reserveEquipment?.weapon ?? null, shield: person.reserveEquipment?.shield ?? null },
-    accessories: [...(person.accessories ?? [null, null])],
-    throwingAmmo: person.throwingAmmo ? { active: person.throwingAmmo.active, reserve: person.throwingAmmo.reserve } : undefined,
-    level: person.level, xp: person.xp, trainingPoints: person.trainingPoints,
-    perks: [...(person.perks ?? [])],
-    pendingLevelUps: person.pendingLevelUps,
-    talents: person.talents?{...person.talents}:undefined,
-    attributes: person.attributes ? { ...person.attributes } : undefined,
-    armorDurability: person.armorDurability ? { body: person.armorDurability.body, attachment: person.armorDurability.attachment, attachment2:person.armorDurability.attachment2, head: person.armorDurability.head,
-      shield: person.armorDurability.shield, reserveShield: person.armorDurability.reserveShield } : undefined,
-  }));
+  const party = input.party.map(normalizePersistedMember);
   for (const person of party) {
     if (getItem(person.equipment.weapon)?.twoHanded && person.equipment.shield) {
       assert(battle === null && inventory.length < getStashCapacity(input), 'legacy bow and shield');
@@ -7361,6 +7404,7 @@ export function validateSave(input) {
     ashenWinter,
     ...(companyLegacy===undefined?{}:{companyLegacy}),
     ...(legacyWarrior===undefined?{}:{legacyWarrior}),
+    ...(rivalCompanies===undefined?{}:{rivalCompanies}),
     gold: input.gold, food: input.food, renown: input.renown,
     party, formation: expandedFormation(formation), reserveIds:[...reserveIds],automation:{buyAmmo:automation.buyAmmo,equipBandages:automation.equipBandages},
     inventory, inventoryCondition: conditions, cargo: { ...cargo },...(input.cargoOrigins===undefined?{}:{cargoOrigins:Object.fromEntries(Object.entries(input.cargoOrigins).map(([id,lots])=>[id,lots.map(lot=>({...lot}))]))}), supplies: { ...supplies },

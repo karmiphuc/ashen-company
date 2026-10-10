@@ -1,6 +1,6 @@
-# Persistent rival mercenary companies — planned
+# Persistent rival mercenary companies
 
-Implementation plan: [issue #174](https://github.com/karmiphuc/ashen-company/issues/174). No rival companies are introduced by the inheritance feature. Existing faction patrols are a different system and currently use an approximate offscreen outcome model; reusing that outcome calculation would not satisfy these requirements.
+Implementation plan: [issue #174](https://github.com/karmiphuc/ashen-company/issues/174). The inheritance feature did not introduce rivals. The first persistent supply-route milestone is now implemented; see [current behavior and shared-rule audit](../world/RIVAL-COMPANIES.md). Combat, paid work, growth and rivalry remain planned. Existing faction patrols are a different system and currently use an approximate offscreen outcome model; reusing that outcome calculation would not satisfy these requirements.
 
 ## Company identities and growth
 
@@ -40,8 +40,8 @@ Map crests and compact inspection should communicate identity, visible roster/ge
 
 ## Delivery order and evidence
 
-1. Shared-rule audit, bounded persistent companies, migration and inspection.
-2. Travel, upkeep, affordable settlement transactions, recovery and insolvency.
+1. **Implemented:** shared-rule audit, bounded persistent companies, old-save activation and inspection.
+2. **Implemented:** travel, upkeep, affordable supply purchases, recovery and insolvency. Gear purchases, paid treatment and earnings are deferred to the work/combat milestone.
 3. Real headless encounters, deterministic scheduling, claims and exactly-once results.
 4. Earned stats, equipment/roster management and legitimate named accumulation.
 5. Visible hostility, pursuit, negotiation and player encounters; safe joining separately if necessary.
