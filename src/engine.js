@@ -1,3 +1,5 @@
+import { WARRIOR_STAGES, freezeLegacyWarrior, warriorReady } from './legacy-warrior.js';
+import { LEGACY_STAGES, initialLegacy, legacyStageReady, recordLegacyContract, recordLegacyVictory, validateLegacy } from './company-legacy.js';
 import { EQUIPMENT_EFFECTS_VERSION, hasBonePlating, bonePlatingReady, bonePlatingAbsorbs, livingShieldRegeneration } from './equipment-specials.js';
 import { PERFORMANCE_KEYS, newBattlePerformance, recordBattlePerformance } from './battle-performance.js';
 import {PREVIOUS_SHIELDS,previousShieldDefinitions,migrateShieldBalance,rebalanceShieldCondition} from './shield-balance.js';
@@ -1005,6 +1007,113 @@ export function createGame(seed = Date.now()) {
   return state;
 }
 
+// Retirement constructs a fresh campaign; the caller commits storage before replacing the live state.
+export function getCompanyLegacy(state) {
+  const legacy=state.companyLegacy;
+  if(!legacy)return null;
+  return {...structuredClone(legacy),item:getItem(legacy.itemId),quest:legacy.stage<=4?LEGACY_STAGES[legacy.stage-1]:null,ready:legacyStageReady(state)};
+}
+export function getLegacyRetirementQuote(state,index) {
+  const blocked=actionBlocked(state);if(blocked)return blocked;
+  const access=requireTown(state);if(access.error)return access.error;
+  if(state.destination||state.ashenWinter?.phase!=='completed')return result(false,'Complete the Ashen crisis and stop in an open settlement before retiring.');
+  if(getActiveContracts(state).length)return result(false,'Finish your active contracts before retiring.');
+  if((state.companyLegacy?.generation??0)>=1000000)return result(false,'This lineage has reached its limit.');
+  if(!Number.isInteger(index)||index<0||index>=state.inventory.length)return result(false,'Choose one named weapon, armor, helmet or shield from your stash.');
+  const itemId=state.inventory[index],item=getItem(itemId);
+  if(!isNamedItem(item)||!['weapon','armor','helmet','shield'].includes(item.slot))return result(false,'Choose a named weapon, armor, helmet or shield.');
+  return {ok:true,itemId,index,condition:state.inventoryCondition[index],stamp:JSON.stringify([state.seed,state.day,state.hour,state.inventory,state.inventoryCondition,state.companyLegacy?.generation??0]),message:'One sealed heirloom. All other equipment, gold and levels stay with the retired company.'};
+}
+export function createLegacyCampaign(state,quote,seed=Date.now()) {
+  const fresh=getLegacyRetirementQuote(state,quote?.index);
+  if(!fresh.ok)return fresh;
+  if(!quote||quote.stamp!==fresh.stamp||quote.itemId!==fresh.itemId||quote.condition!==fresh.condition)return result(false,'The heirloom selection changed. Choose it again.');
+  const next=createGame(seed);
+  next.legacyWarrior=freezeLegacyWarrior(state,hashSeed,getCompanyStats);
+  next.companyLegacy=initialLegacy({seed:state.seed,day:state.day,renown:state.renown},fresh.itemId,fresh.condition,(state.companyLegacy?.generation??0)+1);
+  record(next,'A retired company entrusted you with a sealed heirloom. Company Legacy in the chronicle records four steps to earn it.');
+  return {ok:true,state:validateSave(next),message:'A new banner rises. Your heirloom remains sealed until its four side quests are complete.'};
+}
+export function turnInLegacyQuest(state,stage) {
+  const blocked=actionBlocked(state);if(blocked)return blocked;
+  const access=requireTown(state);if(access.error)return access.error;
+  const legacy=state.companyLegacy,quest=LEGACY_STAGES[(legacy?.stage??0)-1];
+  if(!legacy||legacy.stage!==stage||!quest)return result(false,'That legacy quest is not available.');
+  if(state.destination||access.town.id!==quest.townId)return result(false,`Report to ${TOWN_BY_ID.get(quest.townId).name}.`);
+  if(!legacyStageReady(state))return result(false,quest.objective);
+  if(stage===4&&state.inventory.length>=getStashCapacity(state))return result(false,'Free one stash slot to restore your heirloom.');
+  if(stage===1){state.gold-=100;state.food-=10;}
+  if(stage===2){state.gold-=500;state.supplies.tools-=5;for(const id of ['iron','timber']){consumeCargoOrigins(state,id,4,quest.townId);state.cargo[id]-=4;if(!state.cargo[id])delete state.cargo[id];}}
+  if(stage===4){state.inventory.push(legacy.itemId);state.inventoryCondition.push(legacy.condition);}
+  legacy.stage++;
+  const message=stage===4?`${getItem(legacy.itemId).name} is restored to your stash with its original bonuses and condition.`:`${quest.name} completed. Next: ${LEGACY_STAGES[stage].name}.`;
+  record(state,message);recordQuestCompletion(state,`company-legacy-${stage}`);return result(true,message);
+}
+
+export function recoverLegacyWarrior(state,retired){
+ if(state.legacyWarrior||!state.companyLegacy||!retired)return false;
+ const source=state.companyLegacy.source;if(retired.seed!==source.seed||retired.day!==source.day||retired.renown!==source.renown)return false;
+ const validated=validateSave(retired);state.legacyWarrior=freezeLegacyWarrior(validated,hashSeed,getCompanyStats);return Boolean(state.legacyWarrior);
+}
+export function getLegacyWarrior(state){const w=state.legacyWarrior;if(!w)return null;return {...structuredClone(w),quest:WARRIOR_STAGES[w.stage-1]??null,ready:warriorReady(state)};}
+export function getLegacyWarriorEncounters(state){
+ const w=state.legacyWarrior;if(!w||w.stage!==4||w.defeated)return [];
+ const home=TOWN_BY_ID.get('ravenfell'),point=nearestWorldPoint({x:home.x+90,y:home.y+70});
+ return [{id:`legacy-warrior-${w.sourceSeed}`,kind:'legacy-warrior',name:`Frozen Vigil · ${w.member.name}`,...point,difficulty:3,reward:0,description:'One awakened warrior, with the preserved build of your earlier company. No reinforcements. Your brothers can fall; defeating him earns his allegiance, not duplicate equipment.',enemies:[{name:w.member.name,...w.member.equipment}]}];
+}
+function restoredWarriorMember(state){
+ const w=state.legacyWarrior,member=structuredClone(w.member);member.injuries=[];member.hp=getCompanyStats(member).maxHp;
+ if(w.condition){Object.assign(member,w.condition);}
+ return member;
+}
+export function turnInWarriorQuest(state,stage){
+ const blocked=actionBlocked(state);if(blocked)return blocked;const access=requireTown(state);if(access.error)return access.error;
+ const w=state.legacyWarrior,quest=WARRIOR_STAGES[(w?.stage??0)-1];
+ if(!w||w.stage!==stage||!quest)return result(false,'That warrior quest is not available.');
+ if(state.destination||access.town.id!==quest.townId)return result(false,`Report to ${TOWN_BY_ID.get(quest.townId).name}.`);
+ if(!warriorReady(state))return result(false,quest.objective);
+ if(stage===4){
+  const member=restoredWarriorMember(state);member.id=`legacy-warrior-${w.sourceSeed}`;member.hp=Math.max(1,member.hp);
+  const formation=[...getFormation(state)],reserves=[...getReserveSlots(state)],fielded=getBattleRoster(state).length;
+  const vacancy=fielded<MAX_BATTLE_SIZE?[...FRONT_FORMATION,...MIDDLE_FORMATION,...REAR_FORMATION].find(i=>formation[i]===null):reserves.findIndex(id=>id===null);
+  if(state.party.length>=MAX_COMPANY_SIZE||vacancy===undefined||vacancy<0||state.party.some(p=>p.id===member.id))return result(false,'Free a company and formation/reserve place before recruiting the warrior.');
+  state.party.push(normalizeMember(member));if(fielded<MAX_BATTLE_SIZE)formation[vacancy]=member.id;else reserves[vacancy]=member.id;state.formation=formation;state.reserveIds=reserves;
+ }else if(stage===1){state.gold-=100;state.food-=5;}
+ else if(stage===2){consumeCargoOrigins(state,'wool',4,quest.townId);state.cargo.wool-=4;if(!state.cargo.wool)delete state.cargo.wool;state.supplies.medicine-=5;state.supplies.tools-=8;}
+ else{consumeCargoOrigins(state,'iron',6,quest.townId);state.cargo.iron-=6;if(!state.cargo.iron)delete state.cargo.iron;state.gold-=1000;state.supplies.tools-=6;}
+ w.stage++;const message=stage===4?`${w.member.name} joins your company, wounded from the challenge. Normal wages and upkeep apply.`:`${quest.name} completed. ${WARRIOR_STAGES[stage].objective}`;
+ record(state,message);recordQuestCompletion(state,`legacy-warrior-${stage}`);return result(true,message);
+}
+function recordWarriorBattle(state,battle){
+ const w=state.legacyWarrior;if(battle.encounterType!=='legacy-warrior'||!w)return;
+ const unit=battle.units.find(u=>u.side==='enemy'),swapped=unit.battleSetSwapped;
+ const original=structuredClone(w.member),gear=swapped?{...unit.equipment,weapon:unit.reserveEquipment.weapon,shield:unit.reserveEquipment.shield}:{...unit.equipment};
+ original.equipment=gear;original.reserveEquipment=swapped?{weapon:unit.equipment.weapon,shield:unit.equipment.shield}:{...unit.reserveEquipment};
+ original.armorDurability={body:baseArmorCondition(unit,'body'),head:baseArmorCondition(unit,'head'),attachment:unit.attachmentArmor,attachment2:unit.attachment2Armor,shield:swapped?unit.reserveShieldDurability:unit.shieldDurability,reserveShield:swapped?unit.shieldDurability:unit.reserveShieldDurability};
+ original.throwingAmmo=swapped?{active:unit.throwingAmmo.reserve,reserve:unit.throwingAmmo.active}:{...unit.throwingAmmo};original.accessories=[...unit.accessories];
+ original.injuries=copyInjuries(unit.injuries).map(({fresh,sourceId,...wound})=>wound);
+ if(unit.pocketDrawnFrom!==null){original.accessories[unit.pocketDrawnFrom]=unit.equipment.weapon;if(swapped)original.reserveEquipment.weapon=unit.pocketStowedWeapon;else original.equipment.weapon=unit.pocketStowedWeapon;}
+ for(const [set,key] of [['equipment','active'],['reserveEquipment','reserve']])original.throwingAmmo[key]=Math.min(original.throwingAmmo[key],throwingCapacity(original[set].weapon));
+ original.hp=Math.min(Math.max(1,unit.hp),getCompanyStats(original).maxHp);w.condition=original;
+ if(battle.status==='victory'&&!unit.escaped){w.defeated=true;record(state,`${w.member.name} yields. Return to Ravenfell to recruit the awakened warrior.`);}
+}
+function validateWarrior(input,world){
+ if(input===undefined)return undefined;
+ assert(recordObject(input)&&Object.keys(input).length===7&&input.version===1&&validCount(input.sourceSeed)&&input.sourceSeed<=0xffffffff&&Number.isSafeInteger(input.sourceDay)&&input.sourceDay>=1&&input.sourceDay<=1000000&&Number.isInteger(input.stage)&&input.stage>=1&&input.stage<=5&&typeof input.defeated==='boolean','legacy warrior');
+ assert(input.stage<2||world.day>=30,'premature warrior discovery');assert(input.stage<4||world.day>=60,'premature warrior challenge');
+ assert(!input.defeated||input.stage>=4&&input.condition!==null,'warrior defeat stage');assert(input.stage!==5||input.defeated,'warrior recruitment');
+ const validateMember=member=>{const probe=createGame(input.sourceSeed);probe.day=Math.max(input.sourceDay,world.day);probe.shipments={};probe.shipmentLegacyThroughDay=probe.day;probe.party=[member];probe.formation=Array.from({length:36},(_,i)=>i===0?member.id:null);return validateSave(probe).party[0];};
+ const member=validateMember(input.member);assert(member.hp>0,'frozen warrior survivor');
+ const condition=input.condition===null?null:validateMember(input.condition);
+ if(condition){
+  const mutable=new Set(['hp','armorDurability','throwingAmmo','injuries','accessories']);
+  for(const key of Object.keys(member))if(!mutable.has(key))assert(JSON.stringify(condition[key])===JSON.stringify(member[key]),'warrior preserved build');
+  assert(condition.accessories.every((id,i)=>id===null||id===member.accessories[i]),'warrior accessory ownership');
+ }
+ assert(input.stage<4?condition===null:true,'premature warrior condition');
+ return {...structuredClone(input),member,condition};
+}
+
 export function terrainAt(x, y) {
   if (!inBounds(x, y)) return 'sea';
   if (worldBlocked({x,y})) return 'mountain';
@@ -1743,7 +1852,7 @@ function startHostileContact(state, bandId) {
   return startBattle(state, bandId, {enemyOpening:true});
 }
 
-export function getEncounterSites(state) { return [...getBlacksmithQuestEncounters(state), ...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
+export function getEncounterSites(state) { return [...getLegacyWarriorEncounters(state),...getBlacksmithQuestEncounters(state), ...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
 
 // Keep the legacy primary contract field for old saves and combat consumers.
 export function getContractCategory(contract) {
@@ -1841,7 +1950,7 @@ export function activateMapTarget(state, type, id) {
     return result(true, message);
   }
   const target = type === 'town' ? TOWN_BY_ID.get(id) : type === 'camp' ? getCampSites(state).find(site => site.id === id)
-    : type==='blacksmith'?getBlacksmithQuestEncounters(state).find(e=>e.id===id)
+    : type==='legacy-warrior'?getLegacyWarriorEncounters(state).find(e=>e.id===id):type==='blacksmith'?getBlacksmithQuestEncounters(state).find(e=>e.id===id)
     : ['rescue','deserters','bounty'].includes(type) ? (getQuestEncounter(state)?.id === id ? getQuestEncounter(state) : null) : null;
   if (!target) return result(false, 'That destination is unavailable.');
   if (type === 'camp' && target.cleared) return result(false, 'This camp has already been cleared.');
@@ -1859,7 +1968,7 @@ export function activateMapTarget(state, type, id) {
     state.destination = null; state.pursuit = null; state.destinationAction = null;
     return { ...result(true, `Entering ${target.name}.`), openTown: id };
   }
-  if (['camp', 'rescue', 'deserters','bounty','blacksmith'].includes(type) && distance(state.position, target) <= CAMP_RADIUS) return startBattle(state, id);
+  if (['camp', 'rescue', 'deserters','bounty','blacksmith','legacy-warrior'].includes(type) && distance(state.position, target) <= CAMP_RADIUS) return startBattle(state, id);
   const travel = travelTo(state, target.x, target.y);
   if (travel.ok) {
     state.destinationAction = { type, id, ...(type === 'camp' ? { generation: target.generation } : {}) };
@@ -1931,6 +2040,7 @@ function completeContract(state, town, contract) {
   }
   useContractBoardSlot(state,contract.from,getContractCategory(contract),contract.acceptedDay);
   storeContracts(state,getActiveContracts(state).filter(c=>c!==contract));
+  recordLegacyContract(state,contract.id);
   recordQuestCompletion(state,contract.id);
   return true;
 }
@@ -2102,6 +2212,7 @@ export function tick(state, hours) {
       if (blocked) { state.position = exteriorPoint(town, SETTLEMENTS); engagement = { ...result(true, blocked.message), blockedTown: town.id }; }
       else engagement = { ...result(true, `Entering ${town.name}.`), openTown: town.id };
     }
+    else if(!engagement&&arrivedAction?.type==='legacy-warrior')engagement=startBattle(state,arrivedAction.id);
     else if (!engagement && UNDEAD_TYPES.includes(arrivedAction?.type)) {
       const target = getUndeadEncounters(state).find(e => e.id === arrivedAction.id);
       engagement = target ? startBattle(state, target.id) : result(false, 'The undead force is no longer there.');
@@ -3087,10 +3198,11 @@ function shieldWallDeployment(company) {
 export function startBattle(state, encounterId, {enemyOpening=false,patrolId=null}={}) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
+  const warrior=getLegacyWarriorEncounters(state).find(e=>e.id===encounterId);
   const blacksmith=getBlacksmithQuestEncounters(state).find(e=>e.id===encounterId);
   const undead = getUndeadEncounters(state).find(e => e.id === encounterId);
-  const encounterType = blacksmith ? 'blacksmith' : undead ? undead.kind : getQuestEncounter(state)?.id === encounterId ? state.contract.type : BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
-  const camp = blacksmith ?? undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
+  const encounterType = warrior?'legacy-warrior':blacksmith ? 'blacksmith' : undead ? undead.kind : getQuestEncounter(state)?.id === encounterId ? state.contract.type : BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
+  const camp = warrior ?? blacksmith ?? undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
   if (!camp) return result(false, 'That hostile group is no longer here.');
   if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${Math.ceil(camp.respawnHours/24)} days.`);
   const npcFight=worldSkirmishFor(state,encounterId);
@@ -3174,7 +3286,17 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
       maxFatigue: 85 + (enemy.marshal?40:enemy.champion?20:0) + bonus('maxFatigue') - (rareMount?.fatigue ?? 0), initiative: bonus('initiative') + 75 + (enemy.champion?8:0) + unitDifficulty * 6 + rank * 3 + (rareMount?.initiativeBonus ?? 0) + role.initiative + attachmentBonus(gear,'initiativeBonus'), resolve: 32 + (unitDifficulty>=3?20:0) + (enemy.champion?40:0) + unitDifficulty * 8 + rank * 4 + bonus('resolve'),
     };
   };
-  const enemies=camp.enemies.map((e,i)=>makeEnemyUnit(e,i));
+  const enemies=warrior?[(()=>{
+    const person=restoredWarriorMember(state),stats=getCompanyStats(person,{ignoreInjuries:true}),template=structuredClone(company[0]);
+    Object.assign(template,{id:'enemy-1',side:'enemy',name:person.name,skillPreference:person.skillPreference,q:11,r:10,equipment:{...person.equipment},reserveEquipment:{...person.reserveEquipment},accessories:[...person.accessories],throwingAmmo:{...person.throwingAmmo},perks:[...person.perks],seed:person.seed,injuries:copyInjuries(person.injuries).map(w=>({...w,fresh:false,sourceId:null})),hp:person.hp,maxHp:getCompanyStats(person).maxHp,morale:person.morale,alive:true});
+    for(const key of ['bodyArmor','headArmor','attachmentArmor','attachment2Armor','maxBodyArmor','maxHeadArmor','maxAttachmentArmor','maxAttachment2Armor','shieldDurability','maxShieldDurability','reserveShieldDurability','maxReserveShieldDurability','meleeSkill','rangedSkill','meleeDefense','rangedDefense','maxFatigue','initiative','resolve'])template[key]=stats[key];
+    // Waking disorientation applies once; retreat must not reset the penalty.
+    if(state.legacyWarrior.condition===null)template.dazedTurns=2;
+    template.bodyArmor=person.armorDurability.body;template.headArmor=person.armorDurability.head;
+    if(hasPerk(person,'dodge')){template.meleeDefense-=Math.floor(stats.initiative*.15);template.rangedDefense-=Math.floor(stats.initiative*.15);}
+    delete template.appearanceId;if(person.appearanceId)template.appearanceId=person.appearanceId;
+    return template;
+  })()]:camp.enemies.map((e,i)=>makeEnemyUnit(e,i));
   const crisisAlliesVersion=undead&&['undead-liberation','undead-commander'].includes(encounterType)?1:undefined;
   const crisisRoster=crisisAlliesVersion?crisisAllyRoster(undead.force.seed,encounterType):[];
   const jointBattle = crisisAlliesVersion || encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && state.contract?.type === 'assault'
@@ -3226,7 +3348,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
       rangedDefense: 7 + allyRank + (getItem(gear.shield).rangedDefense??getItem(gear.shield).defense), maxFatigue: 85, initiative: 75 + allyRank * 2, resolve: 45 + allyRank * 2 });
   }
   // Resolve each soldier once from the full loadout, including NPC mounts.
-  for(const unit of [...enemies,...allies])unit.tacticalRole=resolveCombatRole({},getItem(unit.equipment.weapon),getItem(unit.reserveEquipment.weapon),{armor:getItem(unit.equipment.armor),mount:getItem(unit.equipment.mount)});
+  for(const unit of [...enemies,...allies])unit.tacticalRole=resolveCombatRole(warrior&&unit.side==='enemy'?state.legacyWarrior.member:{},getItem(unit.equipment.weapon),getItem(unit.reserveEquipment.weapon),{armor:getItem(unit.equipment.armor),mount:getItem(unit.equipment.mount)});
   for(const unit of [...company,...allies,...enemies]){
     const person=unit.side==='company'?personById(state,unit.id):null;
     const raw={body:person?person.armorDurability.body:unit.bodyArmor,head:person?person.armorDurability.head:unit.headArmor};
@@ -3261,7 +3383,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   orderCompanyTurnsForFormation(battle);
   if(battle.enemyOpening)battle.turnOrder.sort((a,b)=>Number(battle.units.find(u=>u.id===b).side==='enemy')-Number(battle.units.find(u=>u.id===a).side==='enemy'));
   battle.activeId = battle.turnOrder[0];
-  if(isSimultaneousBetaEnabled()){battle.simultaneous=initialSimultaneousClock(battle);for(const unit of battle.units)regenerateLivingShield(battle,unit);}
+  if(isSimultaneousBetaEnabled()){battle.simultaneous=initialSimultaneousClock(battle);for(const unit of battle.units){regenerateLivingShield(battle,unit);if(unit.dazedTurns>0)markSimultaneousEffect(battle,unit,'dazedTurns',unit.dazedTurns);}}
   battleLog(battle, battle.enemyOpening?`${camp.name} catch the company. Enemies act first in the opening round.`:`The company engages ${camp.name}.`);
   cancelWorldSkirmish(state,encounterId);
   state.battle = battle;
@@ -3309,6 +3431,7 @@ function nextBattleTurn(battle) {
 }
 
 function victoryLoot(battle, enemies) {
+  if(battle.encounterType==='legacy-warrior')return {gold:0,food:0,tools:0,medicine:0,ammo:0,items:[],itemConditions:[]};
   const tier = battle.difficulty ?? 0;
   const band = battle.encounterType === 'band';
   const seed = battle.lootSeed ?? hashSeed(battle.id);
@@ -3653,6 +3776,8 @@ function mountedFlankerPursuit(state, actor, enemies) {
   }
   // Once engaged, retain the melee set and let normal adjacent attacks resolve.
   if (adjacent.length || !path.length) return null;
+  const charge=horseChargePlan(battle,actor,target,active);
+  if (charge) {performHorseCharge(state,actor,target,active,charge);return result(true,battle.lastEvent.message);}
   const moved=moveToRangedPosition(state,actor,{point:path[0],message:`${actor.name} rides to intercept ${target.name}.`},'pursuit');
   if (moved) actor.aiTargetId=target.id;
   return moved;
@@ -4600,7 +4725,7 @@ const SWING_DIRECTIONS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
 function horseChargePlan(battle, actor, target, weapon) {
   const mount = getItem(actor.equipment.mount);
   if (battle.mountSkillsVersion !== 1 || !/horse/.test(mount?.visual ?? '') || weapon.ranged
-    || ['ranged','flanker','reach-support'].includes(actor.tacticalRole) || actor.ap < 6
+    || ['ranged','reach-support'].includes(actor.tacticalRole) || actor.ap < 6
     || battle.units.some(unit => unit.alive && unit.side !== actor.side && hexDistance(actor, unit) === 1)) return null;
   const distance = hexDistance(actor, target);
   if (distance < 3 || distance > 4) return null;
@@ -4618,6 +4743,13 @@ function horseChargePlan(battle, actor, target, weapon) {
     path.push(point); from = point;
   }
   if (actor.fatigue + fatigueCost > tacticalFatigueLimit(battle,actor)) return null;
+  if (actor.tacticalRole==='flanker') {
+    const others=battle.units.filter(unit=>unit.alive && !unit.escaped && unit.side!==actor.side && unit.id!==target.id);
+    if (others.some(unit=>hexDistance(unit,target)<=2)
+      || path.some(point=>others.some(unit=>hexDistance(point,unit)<=1))
+      || path.some(point=>battle.units.some(unit=>unit.alive && !unit.escaped && unit.side!==actor.side
+        && unit.spearwallActive && hexDistance(point,unit)<=1))) return null;
+  }
   if (actor.tacticalRole==='breaker') {
     const threats=battle.units.filter(u=>u.alive && u.side!==actor.side && u.id!==target.id);
     if (threats.filter(u=>hexDistance(path.at(-1),u)<=1).length>2
@@ -5357,8 +5489,7 @@ function advanceBattleV2(state) {
     const aimed = isBow(weapon) ? predictAttack(battle, actor, target, weapon, 15) : null;
     const charge = !(role==='breaker' && battle.round<5 && distance>nearest)
       && !actor.disarmedTurns && ['offense', 'focus'].includes(companyTactic) && horseChargePlan(battle, actor, target, weapon);
-    if (charge && (!wingDuty || flankerGoal(battle,actor,target,false)(charge.path.at(-1))
-      && !enemies.some(e=>e.id!==target.id && hexDistance(charge.path.at(-1),e)<=1))) {
+    if (charge) {
       const predicted = predictAttack(battle, { ...actor, ...charge.path.at(-1) }, target, weapon, COMBAT_SKILLS.charge);
       candidates.push({ id: 'charge', type: 'charge', targetId: target.id, target, plan: charge, apCost: 6,
         fatigueCost: charge.fatigueCost, ...predicted, preventedDamage: injuryStat(target,'meleeSkill') * .25,
@@ -6213,8 +6344,10 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     else if (battle.encounterType === 'rescue') {
       if (state.contract?.type === 'rescue' && state.contract.rescueId === battle.campId) state.contract.rescued = true;
     }
-    else if(battle.encounterType!=='blacksmith') { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+campRespawnHours(state,battle.campId,camp.generation),generation:camp.generation }; }
+    else if(!['blacksmith','legacy-warrior'].includes(battle.encounterType)) { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+campRespawnHours(state,battle.campId,camp.generation),generation:camp.generation }; }
   }
+  recordWarriorBattle(state,battle);
+  recordLegacyVictory(state,battle);
   if(battle.encounterType==='blacksmith')recordBlacksmithBattle(state,battle);
   if (!victory && undeadEncounter) {
     const remaining = battle.units.filter(u => u.side === 'enemy' && u.alive);
@@ -6288,11 +6421,12 @@ function validateBattleField(input) {
 function validateBattle(input, party, worldState) {
   if (input === undefined || input === null) return null;
   const encounterType = input.encounterType ?? 'camp';
+  const warrior=encounterType==='legacy-warrior'?getLegacyWarriorEncounters(worldState).find(e=>e.id===input.campId):null;
   const blacksmith=encounterType==='blacksmith'?getBlacksmithQuestEncounters(worldState).find(e=>e.id===input.campId):null;
   const undead = UNDEAD_TYPES.includes(encounterType) ? getUndeadEncounters(worldState).find(e => e.id === input.campId && e.kind === encounterType) : null;
   assert(recordObject(input) && (encounterType === 'camp' ? isCampId(input.campId) : encounterType === 'band' ? BAND_BY_ID.has(input.campId)
-    : blacksmith || undead || ['rescue','deserters','bounty'].includes(encounterType) && worldState.contract?.type===encounterType && getQuestEncounter(worldState)?.id === input.campId), 'battle encounter');
-  const encounter = blacksmith ?? undead ?? (encounterType === 'band' ? BAND_BY_ID.get(input.campId) : ['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(worldState)
+    : warrior || blacksmith || undead || ['rescue','deserters','bounty'].includes(encounterType) && worldState.contract?.type===encounterType && getQuestEncounter(worldState)?.id === input.campId), 'battle encounter');
+  const encounter = warrior ?? blacksmith ?? undead ?? (encounterType === 'band' ? BAND_BY_ID.get(input.campId) : ['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(worldState)
     : getCampSites(worldState).find(camp=>camp.id===input.campId));
   if (undead) assert(recordObject(input.crisisContext) && input.crisisContext.crisisId === worldState.ashenWinter.crisisId && input.crisisContext.frontId === undead.frontId && input.crisisContext.townId === undead.townId && input.crisisContext.forceSeed === undead.force.seed && input.crisisContext.generation === undead.force.generation, 'crisis battle context');
   else assert(input.crisisContext === undefined, 'unexpected crisis context');
@@ -6382,10 +6516,10 @@ function validateBattle(input, party, worldState) {
   const allyCount=patrolAssist?patrolAssist.troops.length:input.crisisAlliesVersion?crisisRoster.length:3;
   const crisisGuards=input.crisisAlliesVersion?factionTroops(undead.force.seed,soldierFactionAt(encounter.x,encounter.y).id,2,crisisRoster.length):[];
   const validAllyId=id=>/^ally-[1-9]\d?$/.test(id)&&Number(id.slice(5))<=allyCount;
-  const enemyLimit=undead?Math.max(ASHEN_CONFIG.commanderSize,undead.force.size):input.enemyScalingVersion===1?20:12;
+  const enemyLimit=warrior?1:undead?Math.max(ASHEN_CONFIG.commanderSize,undead.force.size):input.enemyScalingVersion===1?20:12;
   const validEnemyId=id=>/^enemy-[1-9]\d?$/.test(id)&&Number(id.slice(6))<=enemyLimit;
   assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + allyCount + enemyLimit, 'battle units');
-  assert(input.units.filter(u=>u.side==='enemy').length<=enemyLimit,'battle enemy count');
+  assert(warrior?input.units.filter(u=>u.side==='enemy').length===1:input.units.filter(u=>u.side==='enemy').length<=enemyLimit,'battle enemy count');
   const ids = new Set();
   const partyIds = new Set(party.map(person => person.id));
   const questAllies = input.crisisAlliesVersion || encounterType === 'undead-liberation' || encounterType === 'rescue' || encounterType === 'camp' && worldState.contract?.type === 'assault'
@@ -6425,16 +6559,18 @@ function validateBattle(input, party, worldState) {
     assert(recordObject(unit.equipment), 'battle equipment');
     for (const slot of SLOTS) assert(unit.equipment[slot] === null || ['attachment','attachment2', 'mount'].includes(slot) && unit.equipment[slot] === undefined || getItem(unit.equipment[slot])?.slot === (slot==='attachment2'?'attachment':slot), 'battle equipment');
     assert(unit.equipment.attachment === undefined || unit.equipment.attachment === null || unit.equipment.armor, 'battle attachment requires armor');
-    assert(!unit.equipment.attachment2||input.attachmentRulesVersion===1&&unit.equipment.armor&&unit.side==='company'&&!unit.ally&&hasPerk(party.find(person=>person.id===unit.id),'layered-armor'),'battle second attachment');
+    assert(!unit.equipment.attachment2||input.attachmentRulesVersion===1&&unit.equipment.armor&&(unit.side==='company'&&!unit.ally&&hasPerk(party.find(person=>person.id===unit.id),'layered-armor')||warrior&&unit.side==='enemy'&&hasPerk(worldState.legacyWarrior.member,'layered-armor')),'battle second attachment');
     assert(!getItem(unit.equipment.weapon)?.twoHanded || !unit.equipment.shield, 'battle two handed weapon');
     const reserveEquipment = unit.reserveEquipment ?? { weapon: null, shield: null };
     const accessories = unit.accessories ?? [null, null];
     const partyMember = unit.side === 'company' && !unit.ally ? party.find(person => person.id === unit.id) : null;
-    assert(unit.appearanceId === partyMember?.appearanceId, 'battle unit appearance');
+    const warriorMember=warrior&&unit.side==='enemy'?worldState.legacyWarrior.member:null;
+    assert(unit.appearanceId === (partyMember??warriorMember)?.appearanceId, 'battle unit appearance');
+    if(warriorMember)assert(unit.name===warriorMember.name&&unit.seed===warriorMember.seed,'warrior identity');
     if (partyMember) assert((unit.equipment.mount ?? null) === (partyMember.equipment.mount ?? null), 'battle mount owner');
     const perks = unit.perks ?? partyMember?.perks ?? [];
     assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && (PERK_BY_ID.has(id) || REMOVED_PERK_MIN_LEVEL.has(id))) && new Set(perks).size === perks.length, 'battle perks');
-    assert(unit.side === 'enemy' ? perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||assistingPatrol.difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
+    assert(unit.side === 'enemy' ? warriorMember?JSON.stringify(perks)===JSON.stringify(warriorMember.perks):perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||assistingPatrol.difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
     assert(unit.equipmentEffectsVersion===input.equipmentEffectsVersion,'battle unit equipment effect rules');
     if(unit.bonePlatingSpent!==undefined)assert(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&typeof unit.bonePlatingSpent==='boolean'&&hasBonePlating(unit,getItem),'battle bone plating charge');
     if(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&hasBonePlating(unit,getItem))assert(typeof unit.bonePlatingSpent==='boolean','battle missing bone plating charge');
@@ -6752,6 +6888,8 @@ export function validateSave(input) {
   assert(input.ancientRestorationSerial === undefined || validCount(input.ancientRestorationSerial) && input.ancientRestorationSerial <= 1000000, 'ancient restoration serial');
   assert(input.direwolfCraftSerial === undefined || validCount(input.direwolfCraftSerial) && input.direwolfCraftSerial <= 1000000, 'direwolf craft serial');
   const ashenWinter = validateAshenWinter(input.ashenWinter, input.seed, SETTLEMENTS);
+  const legacyWarrior=validateWarrior(input.legacyWarrior,input);
+  const companyLegacy=validateLegacy(input.companyLegacy,{getItem,isNamedItem,itemCondition,now:worldHours(input)});
   input = { ...input, ashenWinter };
   for (const encounter of getUndeadEncounters(input)) for (const enemy of encounter.enemies) {
     const d = enemy.savedDamage; if (!d) continue;
@@ -7066,9 +7204,9 @@ export function validateSave(input) {
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const destinationAction = input.destinationAction ?? null;
   if (destinationAction !== null) {
-    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan', 'patrol', 'rescue', 'deserters', 'bounty', 'blacksmith', ...UNDEAD_TYPES].includes(destinationAction.type), 'destination action');
+    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan', 'patrol', 'rescue', 'deserters', 'bounty', 'blacksmith', 'legacy-warrior', ...UNDEAD_TYPES].includes(destinationAction.type), 'destination action');
     const target = UNDEAD_TYPES.includes(destinationAction.type) ? getUndeadEncounters(input).find(e => e.id === destinationAction.id) : destinationAction.type === 'town' ? (TOWN_BY_ID.has(destinationAction.id) && townBlocked(input, destinationAction.id) && input.destination?.x !== TOWN_BY_ID.get(destinationAction.id).x ? exteriorPoint(TOWN_BY_ID.get(destinationAction.id), SETTLEMENTS) : TOWN_BY_ID.get(destinationAction.id))
-      : destinationAction.type === 'blacksmith' ? getBlacksmithQuestEncounters(input).find(e=>e.id===destinationAction.id)
+      : destinationAction.type === 'legacy-warrior' ? getLegacyWarriorEncounters(input).find(e=>e.id===destinationAction.id) : destinationAction.type === 'blacksmith' ? getBlacksmithQuestEncounters(input).find(e=>e.id===destinationAction.id)
       : destinationAction.type === 'patrol' ? getJoinablePatrolBattle(input,destinationAction.id)?.patrol
       : destinationAction.type === 'camp' ? getCampSites(input).find(site => site.id === destinationAction.id)
       : ['rescue','deserters','bounty'].includes(destinationAction.type) ? getQuestEncounter(input)?.id === destinationAction.id ? getQuestEncounter(input) : null
@@ -7080,7 +7218,7 @@ export function validateSave(input) {
   const legendaryBlacksmith=validateBlacksmith(input.legendaryBlacksmith,input.day,{getItem,validPoint,shieldMaximum,expectedReward:createFamedItemId('arming-sword',hashSeed(`${input.seed}:blacksmith:reward:v1`),3),expectedEncounter:(stage,day)=>blacksmithEncounter(input,stage,day,{shieldDesigns:input.legendaryBlacksmith?.quests[stage-1]?.encounter?.shieldDesignsVersion===1})});
   const battle = validateBattle(input.battle, input.party, input);
   assert(!battle || battle.tactic === tactic, 'battle tactic');
-  assert(!battle || input.destination === null && pursuit === null && (battle.encounterType==='blacksmith'?Boolean(getBlacksmithQuestEncounters(input).find(e=>e.id===battle.campId)):UNDEAD_TYPES.includes(battle.encounterType) ? Boolean(getUndeadEncounters(input).find(e => e.id === battle.campId)) : battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');
+  assert(!battle || input.destination === null && pursuit === null && (battle.encounterType==='legacy-warrior'?Boolean(getLegacyWarriorEncounters(input).find(e=>e.id===battle.campId)):battle.encounterType==='blacksmith'?Boolean(getBlacksmithQuestEncounters(input).find(e=>e.id===battle.campId)):UNDEAD_TYPES.includes(battle.encounterType) ? Boolean(getUndeadEncounters(input).find(e => e.id === battle.campId)) : battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');
   assert(!gameOver || input.party.length === 0 && battle === null, 'game over state');
   assert(Array.isArray(input.visited) && input.visited.length <= SETTLEMENTS.length && input.visited.every(id => TOWN_BY_ID.has(id)) && new Set(input.visited).size === input.visited.length, 'visited settlements');
   assert(Array.isArray(input.log) && input.log.length <= MAX_LOG && input.log.every(entry => typeof entry === 'string' && entry.length <= 500), 'log');
@@ -7144,6 +7282,8 @@ export function validateSave(input) {
     ...(input.direwolfCraftSerial === undefined ? {} : { direwolfCraftSerial: input.direwolfCraftSerial }),
     ...(legendaryBlacksmith===undefined?{}:{legendaryBlacksmith}),
     ashenWinter,
+    ...(companyLegacy===undefined?{}:{companyLegacy}),
+    ...(legacyWarrior===undefined?{}:{legacyWarrior}),
     gold: input.gold, food: input.food, renown: input.renown,
     party, formation: expandedFormation(formation), reserveIds:[...reserveIds],automation:{buyAmmo:automation.buyAmmo,equipBandages:automation.equipBandages},
     inventory, inventoryCondition: conditions, cargo: { ...cargo },...(input.cargoOrigins===undefined?{}:{cargoOrigins:Object.fromEntries(Object.entries(input.cargoOrigins).map(([id,lots])=>[id,lots.map(lot=>({...lot}))]))}), supplies: { ...supplies },

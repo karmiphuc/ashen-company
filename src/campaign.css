@@ -394,3 +394,15 @@ body.world-screen>#time-of-day-indicator{display:none}
 
 .result-metric.result-mvp{border:2px solid #c8ad60;padding:5px;background:linear-gradient(135deg,#b9973526,#312819)}
 .result-mvp-symbol{font-size:.72em;color:#dace79;margin-right:4px}
+/* A compact inheritance card; the item remains visible without crowding the map. */
+.legacy-heirloom{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;min-width:0}
+.legacy-heirloom > img{width:64px;height:72px;object-fit:contain;flex-shrink:0}
+.legacy-heirloom h3{overflow-wrap:anywhere;margin:.25rem 0}
+.legacy-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;max-height:45vh;overflow:auto;padding:.25rem}
+.legacy-items button{display:flex;align-items:center;flex-direction:column;gap:.3rem;min-width:0}
+.legacy-items img{width:56px;height:64px;object-fit:contain}
+.legacy-items span{overflow-wrap:anywhere}
+.legacy-panel details,.legacy-journal details{margin-top:.75rem}
+.legacy-panel .is-ready{border-color:#b5f06b;color:#c8f991}
+
+.warrior-journal details{margin-top:.75rem}

@@ -19,7 +19,7 @@ function pursuit(weapon='arming-sword',reserve=null){
  Object.assign(f.target,{q:7,r:8,morale:10});Object.assign(f.foes[1],{q:10,r:5,morale:60});f.foes[2].alive=false;f.foes[2].hp=0;return f;
 }
 test('Mounted Flanker prioritizes a broken melee enemy over a healthy archer',()=>{
- const f=pursuit();assert.equal(step(f).type,'move');assert.equal(f.actor.aiTargetId,f.target.id);assert.deepEqual([f.actor.q,f.actor.r],[4,8]);
+ const f=pursuit();assert.equal(step(f).skillName,'Charge');assert.equal(f.actor.aiTargetId,f.target.id);assert.deepEqual([f.actor.q,f.actor.r],[6,8]);
 });
 test('Mounted Flanker draws a loaded melee reserve before chasing',()=>{
  const f=pursuit('hunting-bow','arming-sword');assert.equal(step(f).type,'swap');assert.equal(f.actor.equipment.weapon,'arming-sword');assert.equal(f.actor.aiTargetId,f.target.id);assert.equal(step(f).type,'move');assert.equal(f.actor.equipment.weapon,'arming-sword');
@@ -53,4 +53,26 @@ test('Pursuit does not grant a free swap without Quick Hands',()=>{
 });
 test('Wounded mounted Flanker leaves interception to healthy brothers',()=>{
  const f=pursuit();f.actor.hp=1;f.target.hp=20;const before=f.actor.q;step(f);assert.ok(f.actor.q<=before);assert.notEqual(f.actor.aiTargetId,f.target.id);
+});
+
+for(const morale of [10,60])test(`Mounted Flanker charges an isolated target with morale ${morale}`,()=>{
+ const f=pursuit();f.target.morale=morale;f.foes[1].alive=false;f.foes[1].hp=0;assert.equal(step(f).skillName,'Charge');assert.equal(f.actor.aiTargetId,f.target.id);
+});
+for(const morale of [10,60])test(`Nearby friends forbid Flanker Charge even with morale ${morale}`,()=>{
+ const f=pursuit();f.target.morale=morale;Object.assign(f.foes[1],{q:8,r:7});assert.notEqual(step(f).skillName,'Charge');
+});
+test('A guard alongside the charge lane forbids an otherwise isolated target Charge',()=>{
+ const f=pursuit();Object.assign(f.foes[1],{q:4,r:9});assert.notEqual(step(f).skillName,'Charge');
+});
+test('An isolated Spearwall target forbids Flanker Charge',()=>{
+ const f=pursuit();f.target.equipment.weapon='spear';f.target.spearwallActive=true;f.foes[1].alive=false;f.foes[1].hp=0;assert.notEqual(step(f).skillName,'Charge');
+});
+test('Insufficient AP or fatigue makes mounted pursuit use ordinary actions',()=>{
+ for(const exhausted of [false,true]){const f=pursuit();if(exhausted)f.actor.fatigue=f.actor.maxFatigue;else f.actor.ap=5;assert.notEqual(step(f).skillName,'Charge');}
+});
+test('A friendly blocker in the straight lane forbids Flanker Charge',()=>{
+ const f=pursuit();const ally=f.b.units.find(u=>u.side==='company'&&u!==f.actor);Object.assign(ally,{q:4,r:8});assert.notEqual(step(f).skillName,'Charge');
+});
+test('Non-horse mounted Flankers do not inherit horse Charge',()=>{
+ const f=pursuit();f.actor.equipment.mount='warg-mount';assert.notEqual(step(f).skillName,'Charge');
 });
