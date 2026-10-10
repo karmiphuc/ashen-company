@@ -1,3 +1,4 @@
+import { tombReady, validateEntombedLegacy } from './entombed-legacy.js';
 // Bounded, campaign-local inheritance. No combat bonuses or separate account progression.
 export const LEGACY_STAGES = Object.freeze([
   { name: 'A New Banner', townId: 'oakwatch', objective: 'Register your company in Oakwatch: 100 crowns and 10 provisions.' },
@@ -12,6 +13,7 @@ export function initialLegacy(source, itemId, condition, generation = 1, stash =
 }
 export function legacyStageReady(state) {
   const legacy = state.companyLegacy;
+  if(legacy?.version===3)return tombReady(state)&&legacy.defeated;
   if (!legacy || legacy.stage === 5) return false;
   if (legacy.stage === 1) return state.gold >= 100 && state.food >= 10;
   if (legacy.stage === 2) return state.gold >= 500 && (state.cargo.iron ?? 0) >= 4 && (state.cargo.timber ?? 0) >= 4 && state.supplies.tools >= 5;
@@ -20,16 +22,17 @@ export function legacyStageReady(state) {
 }
 export function recordLegacyContract(state, id) {
   const legacy = state.companyLegacy;
-  if (legacy?.stage === 3 && !legacy.contracts.includes(id) && legacy.contracts.length < 3) legacy.contracts.push(id);
+  if (legacy?.version!==3 && legacy?.stage === 3 && !legacy.contracts.includes(id) && legacy.contracts.length < 3) legacy.contracts.push(id);
 }
 export function recordLegacyVictory(state, battle) {
   const legacy = state.companyLegacy;
-  if (legacy?.stage !== 4 || battle.status !== 'victory' || !['camp', 'band'].includes(battle.encounterType) || battle.difficulty < 2) return;
+  if (legacy?.version===3 || legacy?.stage !== 4 || battle.status !== 'victory' || !['camp', 'band'].includes(battle.encounterType) || battle.difficulty < 2) return;
   const key = battle.id;
   if (!legacy.victories.includes(key) && legacy.victories.length < 3) legacy.victories.push(key);
 }
 export function validateLegacy(input, { getItem, isNamedItem, itemCondition, now }) {
   if (input === undefined) return undefined;
+  if(input?.version===3)return validateEntombedLegacy(input,{getItem,itemCondition,now});
   const check = (ok, label) => { if (!ok) throw new TypeError(`Invalid company legacy: ${label}`); };
   const count = n => Number.isSafeInteger(n) && n >= 0;
   const keys = (value, expected) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === expected.length && expected.every(key => Object.hasOwn(value, key));

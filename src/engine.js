@@ -1,3 +1,4 @@
+import { LEGACY_SET_SLOTS, LEGACY_TOMB_STAGES, initialEntombedLegacy, tombReady, tombGuardOutfit, tombRank } from './entombed-legacy.js';
 import { WARRIOR_STAGES, freezeLegacyWarrior, warriorReady } from './legacy-warrior.js';
 import { LEGACY_STAGES, LEGACY_STASH_LIMIT, LEGACY_STASH_SLOTS, initialLegacy, legacyStageReady, recordLegacyContract, recordLegacyVictory, validateLegacy } from './company-legacy.js';
 import { EQUIPMENT_EFFECTS_VERSION, hasBonePlating, bonePlatingReady, bonePlatingAbsorbs, livingShieldRegeneration } from './equipment-specials.js';
@@ -1011,14 +1012,18 @@ export function createGame(seed = Date.now()) {
 export function getCompanyLegacy(state) {
   const legacy=state.companyLegacy;
   if(!legacy)return null;
-  return {...structuredClone(legacy),item:getItem(legacy.itemId),quest:legacy.stage<=4?LEGACY_STAGES[legacy.stage-1]:null,ready:legacyStageReady(state)};
+  return {...structuredClone(legacy),item:getItem(legacy.itemId),quest:legacy.version===3?LEGACY_TOMB_STAGES[legacy.stage-1]??null:legacy.stage<=4?LEGACY_STAGES[legacy.stage-1]:null,ready:legacyStageReady(state)};
 }
-export function getLegacyRetirementQuote(state,index,stashIndices=[]) {
+function legacyRetirementBlocked(state) {
   const blocked=actionBlocked(state);if(blocked)return blocked;
   const access=requireTown(state);if(access.error)return access.error;
   if(state.destination||state.ashenWinter?.phase!=='completed')return result(false,'Complete the Ashen crisis and stop in an open settlement before retiring.');
   if(getActiveContracts(state).length)return result(false,'Finish your active contracts before retiring.');
   if((state.companyLegacy?.generation??0)>=1000000)return result(false,'This lineage has reached its limit.');
+  return null;
+}
+export function getLegacyRetirementQuote(state,index,stashIndices=[]) {
+  const blocked=legacyRetirementBlocked(state);if(blocked)return blocked;
   if(!Number.isInteger(index)||index<0||index>=state.inventory.length)return result(false,'Choose one named weapon, armor, helmet or shield from your stash.');
   const itemId=state.inventory[index],item=getItem(itemId);
   if(!isNamedItem(item)||!['weapon','armor','helmet','shield'].includes(item.slot))return result(false,'Choose a named weapon, armor, helmet or shield.');
@@ -1028,23 +1033,65 @@ export function getLegacyRetirementQuote(state,index,stashIndices=[]) {
   const stash=stashIndices.map(i=>({itemId:state.inventory[i],condition:state.inventoryCondition[i]}));
   return {ok:true,itemId,index,stashIndices:[...stashIndices],stash,condition:state.inventoryCondition[index],stamp:JSON.stringify([state.seed,state.day,state.hour,state.inventory,state.inventoryCondition,state.companyLegacy?.generation??0,stashIndices]),message:`One sealed heirloom${stash.length?` and ${stash.length} sealed stash finds`:''}. Gold and levels stay with the retired company.`};
 }
+// Copy indices identify real stash copies, including legitimately identical named rolls.
+export function getLegacySetRetirementQuote(state,setIndices){
+ const blocked=legacyRetirementBlocked(state);if(blocked)return blocked;
+ if(!Array.isArray(setIndices)||setIndices.length!==3)return result(false,'Choose three complete entombed sets.');
+ const used=new Set(),sets=[];
+ for(const [n,indices] of setIndices.entries()){
+  if(!recordObject(indices)||Object.keys(indices).length!==LEGACY_SET_SLOTS.length||!LEGACY_SET_SLOTS.every(slot=>Object.hasOwn(indices,slot)))return result(false,'Choose every loadout slot.');
+  const set={};
+  for(const slot of LEGACY_SET_SLOTS){const i=indices[slot];
+   if(i===null&&['attachment','attachment2','shield'].includes(slot)){set[slot]=null;continue;}
+   if(!Number.isSafeInteger(i)||i<0||i>=state.inventory.length||used.has(i)||getItem(state.inventory[i])?.slot!==(slot==='attachment2'?'attachment':slot))return result(false,`Set ${n+1}: choose an unused ${slot==='attachment2'?'attachment':slot} from the stash.`);
+   used.add(i);set[slot]={itemId:state.inventory[i],condition:state.inventoryCondition[i]};
+  }
+  const weapon=getItem(set.weapon.itemId);
+  if(weapon.ranged||weapon.throwing)return result(false,'Entombed cavalry sets require melee weapons.');
+  if(weapon.twoHanded?set.shield!==null:set.shield===null)return result(false,'Choose a shield with a one-handed weapon; leave it empty with a two-hander.');
+  if(set.attachment2&&!set.attachment)return result(false,'Choose the first attachment before the second.');
+  sets.push(set);
+ }
+ return {ok:true,version:3,setIndices:structuredClone(setIndices),sets,stamp:JSON.stringify([state.seed,state.day,state.hour,state.inventory,state.inventoryCondition,state.companyLegacy?.generation??0,setIndices]),message:'Three legends entombed with their gear. Each tomb releases one complete set.'};
+}
+export function getLegacyTombEncounters(state){
+ const legacy=state.companyLegacy;if(legacy?.version!==3||legacy.stage===4||legacy.defeated||!tombReady(state))return [];
+ const spec=LEGACY_TOMB_STAGES[legacy.stage-1],home=TOWN_BY_ID.get(spec.townId),point=nearestWorldPoint({x:clamped(home.x-90,WORLD_BOUNDS.minX+10,WORLD_BOUNDS.maxX-10),y:clamped(home.y+70,WORLD_BOUNDS.minY+10,WORLD_BOUNDS.maxY-10)});
+ const enemies=Array.from({length:spec.size},(_,i)=>tombGuardOutfit(legacy,i)).filter(e=>legacy.guards===null||e.savedDamage);
+ return [{id:`legacy-tomb-${legacy.source.seed}-${legacy.stage}`,kind:'legacy-tomb',name:spec.name,...point,difficulty:3,veteranRank:tombRank(legacy.stage),reward:0,description:spec.objective,enemies}];
+}
+function recordLegacyTombBattle(state,battle){
+ if(battle.encounterType!=='legacy-tomb')return;
+ const legacy=state.companyLegacy;
+ if(battle.status==='victory'){legacy.defeated=true;legacy.guards=null;record(state,'The tomb is open. Report to its settlement to unveil one complete set.');return;}
+ legacy.guards=battle.units.filter(u=>u.side==='enemy'&&u.alive).map(u=>({index:u.troopIndex,hp:u.hp,bodyArmor:baseArmorCondition(u,'body'),headArmor:baseArmorCondition(u,'head'),attachmentArmor:u.attachmentArmor,attachment2Armor:u.attachment2Armor,shieldDurability:rebalanceShieldCondition(u.equipment.shield,u.shieldDurability,getItem)}));
+}
 export function createLegacyCampaign(state,quote,seed=Date.now()) {
-  const fresh=getLegacyRetirementQuote(state,quote?.index,quote?.stashIndices??[]);
+  const fresh=quote?.version===3?getLegacySetRetirementQuote(state,quote.setIndices):getLegacyRetirementQuote(state,quote?.index,quote?.stashIndices??[]);
   if(!fresh.ok)return fresh;
-  if(!quote||quote.stamp!==fresh.stamp||quote.itemId!==fresh.itemId||quote.condition!==fresh.condition||JSON.stringify(quote.stash??[])!==JSON.stringify(fresh.stash))return result(false,'The inheritance selection changed. Choose it again.');
+  if(!quote||quote.stamp!==fresh.stamp||(fresh.version===3?JSON.stringify(quote.sets)!==JSON.stringify(fresh.sets):quote.itemId!==fresh.itemId||quote.condition!==fresh.condition||JSON.stringify(quote.stash??[])!==JSON.stringify(fresh.stash)))return result(false,'The inheritance selection changed. Choose it again.');
   const next=createGame(seed);
   next.legacyWarrior=freezeLegacyWarrior(state,hashSeed,getCompanyStats);
-  next.companyLegacy=initialLegacy({seed:state.seed,day:state.day,renown:state.renown},fresh.itemId,fresh.condition,(state.companyLegacy?.generation??0)+1,fresh.stash);
+  next.companyLegacy=fresh.version===3?initialEntombedLegacy({seed:state.seed,day:state.day,renown:state.renown},fresh.sets,(state.companyLegacy?.generation??0)+1):initialLegacy({seed:state.seed,day:state.day,renown:state.renown},fresh.itemId,fresh.condition,(state.companyLegacy?.generation??0)+1,fresh.stash);
+  if(fresh.version===3){record(next,'Three fallen legends lie entombed with their gear. Each tomb side quest unveils one complete set.');return {ok:true,state:validateSave(next),message:'A new banner rises. Three entombed sets await their tomb quests.'};}
   record(next,'A retired company entrusted you with a sealed heirloom. Company Legacy in the chronicle records four steps to earn it.');
   return {ok:true,state:validateSave(next),message:'A new banner rises. Your heirloom remains sealed until its four side quests are complete.'};
 }
 export function turnInLegacyQuest(state,stage) {
   const blocked=actionBlocked(state);if(blocked)return blocked;
   const access=requireTown(state);if(access.error)return access.error;
-  const legacy=state.companyLegacy,quest=LEGACY_STAGES[(legacy?.stage??0)-1];
+  const legacy=state.companyLegacy,quest=(legacy?.version===3?LEGACY_TOMB_STAGES:LEGACY_STAGES)[(legacy?.stage??0)-1];
   if(!legacy||legacy.stage!==stage||!quest)return result(false,'That legacy quest is not available.');
   if(state.destination||access.town.id!==quest.townId)return result(false,`Report to ${TOWN_BY_ID.get(quest.townId).name}.`);
   if(!legacyStageReady(state))return result(false,quest.objective);
+  if(legacy.version===3){
+    const entries=Object.values(legacy.sets[stage-1]).filter(Boolean);
+    if(state.inventory.length+entries.length>getStashCapacity(state))return result(false,`Free ${entries.length} stash slots to unveil this set.`);
+    for(const entry of entries){state.inventory.push(entry.itemId);state.inventoryCondition.push(entry.condition);}
+    legacy.stage++;legacy.defeated=false;legacy.guards=null;
+    const message=`Entombed set ${stage} unveiled with its original bonuses and wear.`;
+    record(state,message);recordQuestCompletion(state,`company-legacy-${stage}`);return result(true,message);
+  }
   const inheritedItems=[{itemId:legacy.itemId,condition:legacy.condition},...(legacy.stash??[])];
   if(stage===4&&state.inventory.length+inheritedItems.length>getStashCapacity(state))return result(false,`Free ${inheritedItems.length} stash slots to restore your inheritance.`);
   if(stage===1){state.gold-=100;state.food-=10;}
@@ -1857,7 +1904,7 @@ function startHostileContact(state, bandId) {
   return startBattle(state, bandId, {enemyOpening:true});
 }
 
-export function getEncounterSites(state) { return [...getLegacyWarriorEncounters(state),...getBlacksmithQuestEncounters(state), ...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
+export function getEncounterSites(state) { return [...getLegacyTombEncounters(state),...getLegacyWarriorEncounters(state),...getBlacksmithQuestEncounters(state), ...getCampSites(state), ...getRoamingBands(state), ...getUndeadEncounters(state), ...getFactionPatrols(state), ...(getQuestEncounter(state) ? [getQuestEncounter(state)] : [])]; }
 
 // Keep the legacy primary contract field for old saves and combat consumers.
 export function getContractCategory(contract) {
@@ -1955,7 +2002,7 @@ export function activateMapTarget(state, type, id) {
     return result(true, message);
   }
   const target = type === 'town' ? TOWN_BY_ID.get(id) : type === 'camp' ? getCampSites(state).find(site => site.id === id)
-    : type==='legacy-warrior'?getLegacyWarriorEncounters(state).find(e=>e.id===id):type==='blacksmith'?getBlacksmithQuestEncounters(state).find(e=>e.id===id)
+    : type==='legacy-tomb'?getLegacyTombEncounters(state).find(e=>e.id===id):type==='legacy-warrior'?getLegacyWarriorEncounters(state).find(e=>e.id===id):type==='blacksmith'?getBlacksmithQuestEncounters(state).find(e=>e.id===id)
     : ['rescue','deserters','bounty'].includes(type) ? (getQuestEncounter(state)?.id === id ? getQuestEncounter(state) : null) : null;
   if (!target) return result(false, 'That destination is unavailable.');
   if (type === 'camp' && target.cleared) return result(false, 'This camp has already been cleared.');
@@ -1973,7 +2020,7 @@ export function activateMapTarget(state, type, id) {
     state.destination = null; state.pursuit = null; state.destinationAction = null;
     return { ...result(true, `Entering ${target.name}.`), openTown: id };
   }
-  if (['camp', 'rescue', 'deserters','bounty','blacksmith','legacy-warrior'].includes(type) && distance(state.position, target) <= CAMP_RADIUS) return startBattle(state, id);
+  if (['camp', 'rescue', 'deserters','bounty','blacksmith','legacy-warrior','legacy-tomb'].includes(type) && distance(state.position, target) <= CAMP_RADIUS) return startBattle(state, id);
   const travel = travelTo(state, target.x, target.y);
   if (travel.ok) {
     state.destinationAction = { type, id, ...(type === 'camp' ? { generation: target.generation } : {}) };
@@ -2217,6 +2264,7 @@ export function tick(state, hours) {
       if (blocked) { state.position = exteriorPoint(town, SETTLEMENTS); engagement = { ...result(true, blocked.message), blockedTown: town.id }; }
       else engagement = { ...result(true, `Entering ${town.name}.`), openTown: town.id };
     }
+    else if(!engagement&&arrivedAction?.type==='legacy-tomb')engagement=startBattle(state,arrivedAction.id);
     else if(!engagement&&arrivedAction?.type==='legacy-warrior')engagement=startBattle(state,arrivedAction.id);
     else if (!engagement && UNDEAD_TYPES.includes(arrivedAction?.type)) {
       const target = getUndeadEncounters(state).find(e => e.id === arrivedAction.id);
@@ -3203,11 +3251,12 @@ function shieldWallDeployment(company) {
 export function startBattle(state, encounterId, {enemyOpening=false,patrolId=null}={}) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
+  const tomb=getLegacyTombEncounters(state).find(e=>e.id===encounterId);
   const warrior=getLegacyWarriorEncounters(state).find(e=>e.id===encounterId);
   const blacksmith=getBlacksmithQuestEncounters(state).find(e=>e.id===encounterId);
   const undead = getUndeadEncounters(state).find(e => e.id === encounterId);
-  const encounterType = warrior?'legacy-warrior':blacksmith ? 'blacksmith' : undead ? undead.kind : getQuestEncounter(state)?.id === encounterId ? state.contract.type : BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
-  const camp = warrior ?? blacksmith ?? undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
+  const encounterType = tomb?'legacy-tomb':warrior?'legacy-warrior':blacksmith ? 'blacksmith' : undead ? undead.kind : getQuestEncounter(state)?.id === encounterId ? state.contract.type : BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
+  const camp = tomb ?? warrior ?? blacksmith ?? undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
   if (!camp) return result(false, 'That hostile group is no longer here.');
   if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${Math.ceil(camp.respawnHours/24)} days.`);
   const npcFight=worldSkirmishFor(state,encounterId);
@@ -3258,15 +3307,16 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     }];
   });
   if (['shield-wall','skirmish'].includes(state.tactic)) shieldWallDeployment(company);
-  const makeEnemyUnit = (enemy, index, unitDifficulty=camp.difficulty, unitRank=camp.veteranRank??0, undeadUnit=Boolean(undead||blacksmith?.ancient)) => {
+  const makeEnemyUnit = (enemy, index, unitDifficulty=camp.difficulty, unitRank=camp.veteranRank??0, undeadUnit=Boolean(tomb||undead||blacksmith?.ancient)) => {
     const rank = unitRank;
     // These authored champions bypass ordinary camp/band promotion.
-    if (!['camp','band','bounty'].includes(encounterType)) enemy = championExtraGear(state, camp, enemy,
+    if (!['camp','band','bounty','legacy-tomb'].includes(encounterType)) enemy = championExtraGear(state, camp, enemy,
       enemy.troopIndex ?? index, getItem, championItemFactory(undead || blacksmith?.ancient ? 'ancient' : armoryTheme(regionAt(camp.x,camp.y).id)));
     const rareMount = getItem(enemy.mount);
-    const gear = { armor: enemy.armor, attachment: enemy.attachment ?? null, attachment2:null, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield, mount: rareMount?.id ?? null };
+    const gear = { armor: enemy.armor, attachment: enemy.attachment ?? null, attachment2:tomb?enemy.attachment2??null:null, helmet: enemy.helmet, weapon: enemy.weapon, shield: enemy.shield, mount: rareMount?.id ?? null };
     const role = enemyRoleBonuses(enemy, CAMP_BY_ID.has(camp.id) ? 0 : unitDifficulty);
-    const worn={equipment:gear,perks:role.perks,side:'enemy',prefixPerkRulesVersion:1,shieldDurability:enemy.savedDamage?.shieldDurability??shieldMaximum(gear.shield)};
+    if(tomb)role.perks=gear.attachment2?['layered-armor']:[];
+    const worn={equipment:gear,perks:role.perks,side:'enemy',prefixPerkRulesVersion:1,shieldDurability:enemy.savedDamage?.shieldDurability??enemy.entombedSet?.shield?.condition??shieldMaximum(gear.shield)};
     const shieldDefense=shieldDefenseFor(worn,gear.shield),rangedShieldDefense=shieldDefenseFor(worn,gear.shield,worn.shieldDurability,true);
     const bonus = key => Object.values(gear).reduce((sum,id)=>sum+(getItem(id)?.statBonuses?.[key]??0),0);
     const baseHp = 25 + unitDifficulty * 12 + rank * 8 + ((enemy.troopIndex ?? index) === 0 && unitDifficulty === 3 ? 12 : 0);
@@ -3274,9 +3324,9 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     return {
       ...(enemy.champion?{champion:true,championItemId:enemy.championItemId}:{}),
       id: `enemy-${(enemy.troopIndex ?? index) + 1}`, ...(undeadUnit ? { undeadTraitsVersion: 1, troopIndex: enemy.troopIndex } : {}), name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + DEPLOYMENT_ROW_OFFSET + FRONT_FORMATION[index % 12],
-      hp: enemy.savedDamage?.hp ?? hp, maxHp: hp, bodyArmor: enemy.savedDamage?.bodyArmor ?? armorMaximum(gear.armor), attachmentArmor: armorMaximum(gear.attachment), attachment2Armor:0, maxAttachment2Armor:0, headArmor: enemy.savedDamage?.headArmor ?? armorMaximum(gear.helmet),
+      hp: enemy.savedDamage?.hp ?? hp, maxHp: hp, bodyArmor: enemy.savedDamage?.bodyArmor ?? enemy.entombedSet?.armor?.condition ?? armorMaximum(gear.armor), attachmentArmor: tomb?enemy.savedDamage?.attachmentArmor??enemy.entombedSet?.attachment?.condition??armorMaximum(gear.attachment):armorMaximum(gear.attachment), attachment2Armor:tomb?enemy.savedDamage?.attachment2Armor??enemy.entombedSet?.attachment2?.condition??armorMaximum(gear.attachment2):0, maxAttachment2Armor:armorMaximum(gear.attachment2), headArmor: enemy.savedDamage?.headArmor ?? enemy.entombedSet?.helmet?.condition ?? armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: armorMaximum(gear.attachment), maxHeadArmor: armorMaximum(gear.helmet),
-      shieldDurability: enemy.savedDamage?.shieldDurability ?? shieldMaximum(gear.shield), maxShieldDurability: shieldMaximum(gear.shield),
+      shieldDurability: enemy.savedDamage?.shieldDurability ?? enemy.entombedSet?.shield?.condition ?? shieldMaximum(gear.shield), maxShieldDurability: shieldMaximum(gear.shield),
       reserveShieldDurability: shieldMaximum(enemy.reserveShield), maxReserveShieldDurability: shieldMaximum(enemy.reserveShield), battleSetSwapped: false,
       equipment: gear, reserveEquipment: { weapon: enemy.reserveWeapon ?? null, shield: enemy.reserveShield ?? null },
       throwingAmmo: { active: throwingCapacity(gear.weapon), reserve: throwingCapacity(enemy.reserveWeapon) }, accessories: [null, null],
@@ -3341,7 +3391,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     const shield = shieldMaximum(gear.shield);
     allies.push({ id: `ally-${index + 1}`, name: encounterType === 'rescue' ? ['Caravan Guard', 'Wagon Spearman', 'Caravan Veteran'][index]
       : ['Militia Captain', 'Militia Spearman', 'Militia Fighter'][index%3], side: 'company', ally: true,
-      q: point.q, r: point.r, hp: 62 + allyRank * 8, maxHp: 62 + allyRank * 8, bodyArmor: armorMaximum(gear.armor), attachmentArmor: 0, attachment2Armor:0, maxAttachment2Armor:0, headArmor: armorMaximum(gear.helmet),
+      q: point.q, r: point.r, hp: 62 + allyRank * 8, maxHp: 62 + allyRank * 8, bodyArmor: armorMaximum(gear.armor), attachmentArmor: 0, attachment2Armor:tomb?enemy.savedDamage?.attachment2Armor??enemy.entombedSet?.attachment2?.condition??armorMaximum(gear.attachment2):0, maxAttachment2Armor:armorMaximum(gear.attachment2), headArmor: armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: 0, maxHeadArmor: armorMaximum(gear.helmet),
       shieldDurability: shield, maxShieldDurability: shield, reserveShieldDurability: 0, maxReserveShieldDurability: 0, battleSetSwapped: false,
       equipment: gear, reserveEquipment: { weapon: null, shield: null }, throwingAmmo: { active: 0, reserve: 0 }, accessories: [null, null],
@@ -3352,6 +3402,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
       meleeSkill: 47 + allyRank * 3, rangedSkill: 25, meleeDefense: 7 + allyRank + getItem(gear.shield).defense,
       rangedDefense: 7 + allyRank + (getItem(gear.shield).rangedDefense??getItem(gear.shield).defense), maxFatigue: 85, initiative: 75 + allyRank * 2, resolve: 45 + allyRank * 2 });
   }
+  if(tomb)for(const unit of enemies){const load=Object.values(unit.equipment).reduce((sum,id)=>sum+(getItem(id)?.fatigue??0),0),mountFatigue=getItem(unit.equipment.mount)?.fatigue??0;unit.maxFatigue=Math.max(20,unit.maxFatigue-load+mountFatigue);unit.initiative=Math.max(1,unit.initiative-load);}
   // Resolve each soldier once from the full loadout, including NPC mounts.
   for(const unit of [...enemies,...allies])unit.tacticalRole=resolveCombatRole(warrior&&unit.side==='enemy'?state.legacyWarrior.member:{},getItem(unit.equipment.weapon),getItem(unit.reserveEquipment.weapon),{armor:getItem(unit.equipment.armor),mount:getItem(unit.equipment.mount)});
   for(const unit of [...company,...allies,...enemies]){
@@ -3436,7 +3487,7 @@ function nextBattleTurn(battle) {
 }
 
 function victoryLoot(battle, enemies) {
-  if(battle.encounterType==='legacy-warrior')return {gold:0,food:0,tools:0,medicine:0,ammo:0,items:[],itemConditions:[]};
+  if(['legacy-warrior','legacy-tomb'].includes(battle.encounterType))return {gold:0,food:0,tools:0,medicine:0,ammo:0,items:[],itemConditions:[]};
   const tier = battle.difficulty ?? 0;
   const band = battle.encounterType === 'band';
   const seed = battle.lootSeed ?? hashSeed(battle.id);
@@ -6360,9 +6411,10 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     else if (battle.encounterType === 'rescue') {
       if (state.contract?.type === 'rescue' && state.contract.rescueId === battle.campId) state.contract.rescued = true;
     }
-    else if(!['blacksmith','legacy-warrior'].includes(battle.encounterType)) { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+campRespawnHours(state,battle.campId,camp.generation),generation:camp.generation }; }
+    else if(!['blacksmith','legacy-warrior','legacy-tomb'].includes(battle.encounterType)) { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+campRespawnHours(state,battle.campId,camp.generation),generation:camp.generation }; }
   }
   recordWarriorBattle(state,battle);
+  recordLegacyTombBattle(state,battle);
   recordLegacyVictory(state,battle);
   if(battle.encounterType==='blacksmith')recordBlacksmithBattle(state,battle);
   if (!victory && undeadEncounter) {
@@ -6437,12 +6489,13 @@ function validateBattleField(input) {
 function validateBattle(input, party, worldState) {
   if (input === undefined || input === null) return null;
   const encounterType = input.encounterType ?? 'camp';
+  const tomb=encounterType==='legacy-tomb'?getLegacyTombEncounters(worldState).find(e=>e.id===input.campId):null;
   const warrior=encounterType==='legacy-warrior'?getLegacyWarriorEncounters(worldState).find(e=>e.id===input.campId):null;
   const blacksmith=encounterType==='blacksmith'?getBlacksmithQuestEncounters(worldState).find(e=>e.id===input.campId):null;
   const undead = UNDEAD_TYPES.includes(encounterType) ? getUndeadEncounters(worldState).find(e => e.id === input.campId && e.kind === encounterType) : null;
   assert(recordObject(input) && (encounterType === 'camp' ? isCampId(input.campId) : encounterType === 'band' ? BAND_BY_ID.has(input.campId)
-    : warrior || blacksmith || undead || ['rescue','deserters','bounty'].includes(encounterType) && worldState.contract?.type===encounterType && getQuestEncounter(worldState)?.id === input.campId), 'battle encounter');
-  const encounter = warrior ?? blacksmith ?? undead ?? (encounterType === 'band' ? BAND_BY_ID.get(input.campId) : ['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(worldState)
+    : tomb || warrior || blacksmith || undead || ['rescue','deserters','bounty'].includes(encounterType) && worldState.contract?.type===encounterType && getQuestEncounter(worldState)?.id === input.campId), 'battle encounter');
+  const encounter = tomb ?? warrior ?? blacksmith ?? undead ?? (encounterType === 'band' ? BAND_BY_ID.get(input.campId) : ['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(worldState)
     : getCampSites(worldState).find(camp=>camp.id===input.campId));
   if (undead) assert(recordObject(input.crisisContext) && input.crisisContext.crisisId === worldState.ashenWinter.crisisId && input.crisisContext.frontId === undead.frontId && input.crisisContext.townId === undead.townId && input.crisisContext.forceSeed === undead.force.seed && input.crisisContext.generation === undead.force.generation, 'crisis battle context');
   else assert(input.crisisContext === undefined, 'unexpected crisis context');
@@ -6532,9 +6585,10 @@ function validateBattle(input, party, worldState) {
   const allyCount=patrolAssist?patrolAssist.troops.length:input.crisisAlliesVersion?crisisRoster.length:3;
   const crisisGuards=input.crisisAlliesVersion?factionTroops(undead.force.seed,soldierFactionAt(encounter.x,encounter.y).id,2,crisisRoster.length):[];
   const validAllyId=id=>/^ally-[1-9]\d?$/.test(id)&&Number(id.slice(5))<=allyCount;
-  const enemyLimit=warrior?1:undead?Math.max(ASHEN_CONFIG.commanderSize,undead.force.size):input.enemyScalingVersion===1?20:12;
+  const enemyLimit=tomb?LEGACY_TOMB_STAGES[worldState.companyLegacy.stage-1].size:warrior?1:undead?Math.max(ASHEN_CONFIG.commanderSize,undead.force.size):input.enemyScalingVersion===1?20:12;
   const validEnemyId=id=>/^enemy-[1-9]\d?$/.test(id)&&Number(id.slice(6))<=enemyLimit;
   assert(Array.isArray(input.units) && input.units.length >= 2 && input.units.length <= MAX_BATTLE_SIZE + allyCount + enemyLimit, 'battle units');
+  if(tomb)assert(input.units.filter(u=>u.side==='enemy').length===tomb.enemies.length&&!input.units.some(u=>u.ally),'tomb roster');
   assert(warrior?input.units.filter(u=>u.side==='enemy').length===1:input.units.filter(u=>u.side==='enemy').length<=enemyLimit,'battle enemy count');
   const ids = new Set();
   const partyIds = new Set(party.map(person => person.id));
@@ -6547,6 +6601,7 @@ function validateBattle(input, party, worldState) {
     ids.add(unit.id);
     assert(unit.side === 'company' || unit.side === 'enemy', 'battle side');
     if (undead && unit.side === 'enemy') assert(unit.undeadTraitsVersion === 1 && undead.force.troops.includes(unit.troopIndex) && unit.id === `enemy-${unit.troopIndex + 1}` && unit.morale === 60, 'undead troop');
+    else if(tomb&&unit.side==='enemy')assert(unit.undeadTraitsVersion===1&&tomb.enemies.some(e=>e.troopIndex===unit.troopIndex)&&unit.id===`enemy-${unit.troopIndex+1}`&&unit.morale===60,'tomb undead troop');
     else if(blacksmith?.ancient&&unit.side==='enemy')assert(unit.undeadTraitsVersion===1&&blacksmith.enemies.some(e=>e.troopIndex===unit.troopIndex)&&unit.id===`enemy-${unit.troopIndex+1}`&&unit.morale===60,'blacksmith ancient troop');
     else assert(unit.undeadTraitsVersion === undefined && unit.troopIndex === undefined, 'unexpected undead traits');
     assert(unit.ally === undefined || unit.ally === true, 'battle ally marker');
@@ -6575,18 +6630,23 @@ function validateBattle(input, party, worldState) {
     assert(recordObject(unit.equipment), 'battle equipment');
     for (const slot of SLOTS) assert(unit.equipment[slot] === null || ['attachment','attachment2', 'mount'].includes(slot) && unit.equipment[slot] === undefined || getItem(unit.equipment[slot])?.slot === (slot==='attachment2'?'attachment':slot), 'battle equipment');
     assert(unit.equipment.attachment === undefined || unit.equipment.attachment === null || unit.equipment.armor, 'battle attachment requires armor');
-    assert(!unit.equipment.attachment2||input.attachmentRulesVersion===1&&unit.equipment.armor&&(unit.side==='company'&&!unit.ally&&hasPerk(party.find(person=>person.id===unit.id),'layered-armor')||warrior&&unit.side==='enemy'&&hasPerk(worldState.legacyWarrior.member,'layered-armor')),'battle second attachment');
+    assert(!unit.equipment.attachment2||input.attachmentRulesVersion===1&&unit.equipment.armor&&(unit.side==='company'&&!unit.ally&&hasPerk(party.find(person=>person.id===unit.id),'layered-armor')||tomb&&unit.side==='enemy'&&tomb.enemies.some(e=>e.troopIndex===unit.troopIndex&&e.attachment2===unit.equipment.attachment2)||warrior&&unit.side==='enemy'&&hasPerk(worldState.legacyWarrior.member,'layered-armor')),'battle second attachment');
     assert(!getItem(unit.equipment.weapon)?.twoHanded || !unit.equipment.shield, 'battle two handed weapon');
     const reserveEquipment = unit.reserveEquipment ?? { weapon: null, shield: null };
     const accessories = unit.accessories ?? [null, null];
     const partyMember = unit.side === 'company' && !unit.ally ? party.find(person => person.id === unit.id) : null;
     const warriorMember=warrior&&unit.side==='enemy'?worldState.legacyWarrior.member:null;
+    const tombGuard=tomb&&unit.side==='enemy'?tomb.enemies.find(e=>e.troopIndex===unit.troopIndex):null;
+    if(tombGuard){
+      assert(unit.name===tombGuard.name&&SLOTS.every(slot=>(unit.equipment[slot]??null)===(tombGuard[slot]??null))&&reserveEquipment.weapon===null&&reserveEquipment.shield===null&&accessories.every(x=>x===null),'tomb gear ownership');
+      assert(!unit.champion,'tomb loot exclusion');
+    }
     assert(unit.appearanceId === (partyMember??warriorMember)?.appearanceId, 'battle unit appearance');
     if(warriorMember)assert(unit.name===warriorMember.name&&unit.seed===warriorMember.seed,'warrior identity');
     if (partyMember) assert((unit.equipment.mount ?? null) === (partyMember.equipment.mount ?? null), 'battle mount owner');
     const perks = unit.perks ?? partyMember?.perks ?? [];
     assert(Array.isArray(perks) && perks.every(id => typeof id === 'string' && (PERK_BY_ID.has(id) || REMOVED_PERK_MIN_LEVEL.has(id))) && new Set(perks).size === perks.length, 'battle perks');
-    assert(unit.side === 'enemy' ? warriorMember?JSON.stringify(perks)===JSON.stringify(warriorMember.perks):perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||assistingPatrol.difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
+    assert(unit.side === 'enemy' ? tombGuard?JSON.stringify(perks)===JSON.stringify(tombGuard.attachment2?['layered-armor']:[]):warriorMember?JSON.stringify(perks)===JSON.stringify(warriorMember.perks):perks.length === 0 || difficulty === 3 && perks.length === 1 && ['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : unit.ally ? (patrolAssist ? perks.length===0||assistingPatrol.difficulty===3&&perks.length===1&&['bullseye','shield-expert','quick-hands','backstabber'].includes(perks[0]) : perks.length === 0) : perks.length === (partyMember.perks ?? []).length && perks.every((id, index) => id === partyMember.perks[index]), 'battle perk owner');
     assert(unit.equipmentEffectsVersion===input.equipmentEffectsVersion,'battle unit equipment effect rules');
     if(unit.bonePlatingSpent!==undefined)assert(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&typeof unit.bonePlatingSpent==='boolean'&&hasBonePlating(unit,getItem),'battle bone plating charge');
     if(input.equipmentEffectsVersion===EQUIPMENT_EFFECTS_VERSION&&hasBonePlating(unit,getItem))assert(typeof unit.bonePlatingSpent==='boolean','battle missing bone plating charge');
@@ -6860,6 +6920,7 @@ function validateBattle(input, party, worldState) {
     const maximum = itemCondition(loot.items[index]);
     return maximum === null ? condition === null : validCount(condition) && condition <= maximum;
   }), 'battle loot condition');
+  if(tomb)assert(loot.items.length===0&&['gold','food','tools','medicine','ammo'].every(k=>loot[k]===0),'tomb duplicate loot');
   for (const key of ['food', 'tools', 'medicine', 'ammo']) assert(validCount(loot[key]) && loot[key] <= 1000, `battle loot ${key}`);
   assert(Array.isArray(input.casualties) && input.casualties.length <= MAX_COMPANY_SIZE && input.casualties.every(id => partyIds.has(id)) && new Set(input.casualties).size === input.casualties.length, 'battle casualties');
   assert(recordObject(input.xp) && Object.keys(input.xp).every(id => partyIds.has(id) && validCount(input.xp[id]) && input.xp[id] <= 1000), 'battle xp');
@@ -7220,9 +7281,9 @@ export function validateSave(input) {
   assert(pursuit === null || BAND_BY_ID.has(pursuit) && input.destination !== null && (bands[pursuit]?.defeatedUntil ?? 0) <= worldHours(input), 'pursuit');
   const destinationAction = input.destinationAction ?? null;
   if (destinationAction !== null) {
-    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan', 'patrol', 'rescue', 'deserters', 'bounty', 'blacksmith', 'legacy-warrior', ...UNDEAD_TYPES].includes(destinationAction.type), 'destination action');
+    assert(recordObject(destinationAction) && ['town', 'camp', 'caravan', 'patrol', 'rescue', 'deserters', 'bounty', 'blacksmith', 'legacy-warrior', 'legacy-tomb', ...UNDEAD_TYPES].includes(destinationAction.type), 'destination action');
     const target = UNDEAD_TYPES.includes(destinationAction.type) ? getUndeadEncounters(input).find(e => e.id === destinationAction.id) : destinationAction.type === 'town' ? (TOWN_BY_ID.has(destinationAction.id) && townBlocked(input, destinationAction.id) && input.destination?.x !== TOWN_BY_ID.get(destinationAction.id).x ? exteriorPoint(TOWN_BY_ID.get(destinationAction.id), SETTLEMENTS) : TOWN_BY_ID.get(destinationAction.id))
-      : destinationAction.type === 'legacy-warrior' ? getLegacyWarriorEncounters(input).find(e=>e.id===destinationAction.id) : destinationAction.type === 'blacksmith' ? getBlacksmithQuestEncounters(input).find(e=>e.id===destinationAction.id)
+      : destinationAction.type === 'legacy-tomb' ? getLegacyTombEncounters(input).find(e=>e.id===destinationAction.id):destinationAction.type === 'legacy-warrior' ? getLegacyWarriorEncounters(input).find(e=>e.id===destinationAction.id) : destinationAction.type === 'blacksmith' ? getBlacksmithQuestEncounters(input).find(e=>e.id===destinationAction.id)
       : destinationAction.type === 'patrol' ? getJoinablePatrolBattle(input,destinationAction.id)?.patrol
       : destinationAction.type === 'camp' ? getCampSites(input).find(site => site.id === destinationAction.id)
       : ['rescue','deserters','bounty'].includes(destinationAction.type) ? getQuestEncounter(input)?.id === destinationAction.id ? getQuestEncounter(input) : null
@@ -7234,7 +7295,7 @@ export function validateSave(input) {
   const legendaryBlacksmith=validateBlacksmith(input.legendaryBlacksmith,input.day,{getItem,validPoint,shieldMaximum,expectedReward:createFamedItemId('arming-sword',hashSeed(`${input.seed}:blacksmith:reward:v1`),3),expectedEncounter:(stage,day)=>blacksmithEncounter(input,stage,day,{shieldDesigns:input.legendaryBlacksmith?.quests[stage-1]?.encounter?.shieldDesignsVersion===1})});
   const battle = validateBattle(input.battle, input.party, input);
   assert(!battle || battle.tactic === tactic, 'battle tactic');
-  assert(!battle || input.destination === null && pursuit === null && (battle.encounterType==='legacy-warrior'?Boolean(getLegacyWarriorEncounters(input).find(e=>e.id===battle.campId)):battle.encounterType==='blacksmith'?Boolean(getBlacksmithQuestEncounters(input).find(e=>e.id===battle.campId)):UNDEAD_TYPES.includes(battle.encounterType) ? Boolean(getUndeadEncounters(input).find(e => e.id === battle.campId)) : battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');
+  assert(!battle || input.destination === null && pursuit === null && (battle.encounterType==='legacy-tomb'?Boolean(getLegacyTombEncounters(input).find(e=>e.id===battle.campId)):battle.encounterType==='legacy-warrior'?Boolean(getLegacyWarriorEncounters(input).find(e=>e.id===battle.campId)):battle.encounterType==='blacksmith'?Boolean(getBlacksmithQuestEncounters(input).find(e=>e.id===battle.campId)):UNDEAD_TYPES.includes(battle.encounterType) ? Boolean(getUndeadEncounters(input).find(e => e.id === battle.campId)) : battle.encounterType === 'band' ? (bands[battle.campId]?.defeatedUntil ?? 0) <= worldHours(input) : !campRecord(input,battle.campId).cleared), 'battle location');
   assert(!gameOver || input.party.length === 0 && battle === null, 'game over state');
   assert(Array.isArray(input.visited) && input.visited.length <= SETTLEMENTS.length && input.visited.every(id => TOWN_BY_ID.has(id)) && new Set(input.visited).size === input.visited.length, 'visited settlements');
   assert(Array.isArray(input.log) && input.log.length <= MAX_LOG && input.log.every(entry => typeof entry === 'string' && entry.length <= 500), 'log');

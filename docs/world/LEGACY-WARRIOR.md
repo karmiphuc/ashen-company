@@ -1,10 +1,10 @@
 # The Frozen Vigil — awakened legacy warrior
 
-A four-step side quest in an inherited campaign preserves a real survivor from the retired company. It supplements the sealed heirloom chain; it does not occupy an ordinary contract slot or create a newly rolled boss/race.
+A four-step side quest in an inherited campaign preserves a real survivor from the retired company. It supplements the three entombed-set tomb quests (or the sealed heirloom chain in existing campaigns); it does not occupy an ordinary contract slot or create a newly rolled boss/race.
 
 ## Fixed selection and preservation
 
-At retirement, rank living members by level, then melee/ranged skill and melee defense, with stable ID tie-breaking. Choose deterministically among the best three survivors within two levels of the company's highest living level, using the retired campaign seed. The next campaign seed, chosen heirloom and reloads do not reroll this choice.
+At retirement, rank living members by level, then melee/ranged skill and melee defense, with stable ID tie-breaking. Choose deterministically among the best three survivors within two levels of the company's highest living level, using the retired campaign seed. The next campaign seed, chosen inheritance gear and reloads do not reroll this choice.
 
 Store the actual member: identity/appearance, background, level/XP, trained attributes and pending levels, learned perks, active/reserve equipment, accessories, mount, item identities/affixes and equipment condition. No player-level scaling, champion promotion, extra named rolls or hidden boss stats apply.
 
