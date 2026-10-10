@@ -19,6 +19,8 @@ const CORE = [
   './src/battle-geometry.js',
   './src/audio.js',
   './src/quest-completion.js',
+  './src/company-legacy.js',
+  './src/company-legacy-ui.js',
   './src/app.js',
   './src/item-details.js',
   './src/engine.js',

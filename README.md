@@ -147,3 +147,7 @@ Breaker is a cavalry role for opening weak points with a safe Charge, then explo
 Regional scenery includes ruined watches, small smoking battlefield remains using the user-provided tile sheet, and a desert necropolis with pyramids and a sphinx. The rejected ruin/temple sprite pack has been removed. Frostspine, Stormteeth and Sunwall are impassable ridges: travel and roving troops take derived routes around them while all existing trade roads remain open. Three untargetable cave entrances reserve future legendary quest sites in deep Greenwood, Frostspine's central cleft and beside the necropolis. Decorations and smoke are baked into the cached background.
 
 The [engineering and product council consultation](docs/ENGINEERING-PRODUCT-COUNCIL.md) prioritizes regression prevention, maintainability and rapid feature delivery against a verified repository baseline.
+
+### Endgame progression
+
+[Company Legacy and endgame goals](docs/ENDGAME-LEGACY.md) describe the sealed-heirloom retirement chain and future mentor/charter options. [Persistent rival companies](docs/RIVAL-COMPANIES.md) document fair economy, real-combat simulation and hostility requirements; rivals remain planned in [issue #174](https://github.com/karmiphuc/ashen-company/issues/174).
