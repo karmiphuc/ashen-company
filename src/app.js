@@ -1,6 +1,6 @@
 import { getLegacyWarrior, getLegacyWarriorEncounters, turnInWarriorQuest, recoverLegacyWarrior } from './engine.js';
 import { warriorJournalHTML } from './legacy-warrior-ui.js';
-import { storeLegacyRetirement } from './company-legacy.js';
+import { storeLegacyRetirement, LEGACY_STASH_LIMIT } from './company-legacy.js';
 import { getCompanyLegacy, getLegacyRetirementQuote, createLegacyCampaign, turnInLegacyQuest } from './engine.js';
 import { legacyJournalHTML, legacyPanelHTML, legacyRetirementHTML, legacyConfirmationHTML } from './company-legacy-ui.js';
 import { DIREWOLF_LEATHER_HELMET, direwolfHelmetRecipe } from './direwolf-helmets.js';
@@ -489,6 +489,22 @@ document.addEventListener('click',event=>{
  case 'forge-confirm':{const recipient=item(state.inventory[forgeSelection.recipient]);forgeQuote=getReforgeQuote(state,forgeSelection.donor,forgeSelection.recipient,['named','famed'].includes(recipient?.rarity)?'merge':'transfer');if(!forgeQuote.ok){toast(forgeQuote.message);showBlacksmith();break;}showModal('Confirm permanent sacrifice',forgeConfirmationHTML(forgeQuote),'ODRAN’S FORGE');break;}
  case 'forge-commit':{const r=reforgeItem(state,forgeQuote);forgeQuote=null;toast(r.message);save();render();if(r.ok){forgeSelection.donor=null;forgeSelection.recipient=null;showModal('The work is done',forgeSuccessHTML(state,r),'ODRAN’S FORGE');}else showBlacksmith();break;}
  }
+});
+document.addEventListener('change',event=>{
+ if(!event.target.matches('[data-legacy-cache]')||!legacyRetirementQuote)return;
+ const input=event.target,index=Number(input.dataset.legacyCache),current=legacyRetirementQuote.stashIndices??[];
+ const indices=input.checked?[...current,index]:current.filter(i=>i!==index);
+ const quote=getLegacyRetirementQuote(state,legacyRetirementQuote.index,indices);
+ if(!quote.ok){input.checked=!input.checked;toast(quote.message);return;}
+ legacyRetirementQuote=quote;
+ const count=document.querySelector('[data-legacy-cache-count]');if(count)count.textContent=`${quote.stash.length}/${LEGACY_STASH_LIMIT}`;
+ document.querySelectorAll('[data-legacy-cache]').forEach(box=>{box.disabled=quote.stash.length>=LEGACY_STASH_LIMIT&&!box.checked;});
+});
+document.addEventListener('input',event=>{
+ if(!event.target.matches('[data-legacy-cache-search]'))return;
+ const query=event.target.value.trim().toLowerCase();let visible=0;
+ document.querySelectorAll('[data-legacy-cache-name]').forEach(card=>{card.hidden=!card.dataset.legacyCacheName.includes(query);if(!card.hidden)visible++;});
+ const empty=document.querySelector('[data-legacy-cache-empty]');if(empty)empty.hidden=visible>0;
 });
 document.addEventListener('change',event=>{if(!event.target.matches('[data-forge-filter],[data-forge-search]'))return;forgeSelection[event.target.hasAttribute('data-forge-filter')?'filter':'search']=event.target.value;showBlacksmith();document.querySelector(event.target.hasAttribute('data-forge-filter')?'[data-forge-filter]':'[data-forge-search]')?.focus();});
 document.addEventListener('change',event=>{if(!event.target.matches('[data-direwolf-helmet-copy]'))return;const index=Number(event.target.dataset.direwolfHelmetCopy);if(!Number.isSafeInteger(index)||index<0||index>=direwolfHelmetRecipe(direwolfHelmetSelection.recipeId).materialIds.length)return;direwolfHelmetSelection.indices[index]=event.target.value===''?null:Number(event.target.value);showDirewolfHelmets();document.querySelector(`[data-direwolf-helmet-copy="${index}"]`)?.focus({preventScroll:true});});

@@ -1,5 +1,5 @@
 import { WARRIOR_STAGES, freezeLegacyWarrior, warriorReady } from './legacy-warrior.js';
-import { LEGACY_STAGES, initialLegacy, legacyStageReady, recordLegacyContract, recordLegacyVictory, validateLegacy } from './company-legacy.js';
+import { LEGACY_STAGES, LEGACY_STASH_LIMIT, LEGACY_STASH_SLOTS, initialLegacy, legacyStageReady, recordLegacyContract, recordLegacyVictory, validateLegacy } from './company-legacy.js';
 import { EQUIPMENT_EFFECTS_VERSION, hasBonePlating, bonePlatingReady, bonePlatingAbsorbs, livingShieldRegeneration } from './equipment-specials.js';
 import { PERFORMANCE_KEYS, newBattlePerformance, recordBattlePerformance } from './battle-performance.js';
 import {PREVIOUS_SHIELDS,previousShieldDefinitions,migrateShieldBalance,rebalanceShieldCondition} from './shield-balance.js';
@@ -1013,7 +1013,7 @@ export function getCompanyLegacy(state) {
   if(!legacy)return null;
   return {...structuredClone(legacy),item:getItem(legacy.itemId),quest:legacy.stage<=4?LEGACY_STAGES[legacy.stage-1]:null,ready:legacyStageReady(state)};
 }
-export function getLegacyRetirementQuote(state,index) {
+export function getLegacyRetirementQuote(state,index,stashIndices=[]) {
   const blocked=actionBlocked(state);if(blocked)return blocked;
   const access=requireTown(state);if(access.error)return access.error;
   if(state.destination||state.ashenWinter?.phase!=='completed')return result(false,'Complete the Ashen crisis and stop in an open settlement before retiring.');
@@ -1022,15 +1022,19 @@ export function getLegacyRetirementQuote(state,index) {
   if(!Number.isInteger(index)||index<0||index>=state.inventory.length)return result(false,'Choose one named weapon, armor, helmet or shield from your stash.');
   const itemId=state.inventory[index],item=getItem(itemId);
   if(!isNamedItem(item)||!['weapon','armor','helmet','shield'].includes(item.slot))return result(false,'Choose a named weapon, armor, helmet or shield.');
-  return {ok:true,itemId,index,condition:state.inventoryCondition[index],stamp:JSON.stringify([state.seed,state.day,state.hour,state.inventory,state.inventoryCondition,state.companyLegacy?.generation??0]),message:'One sealed heirloom. All other equipment, gold and levels stay with the retired company.'};
+  if(!Array.isArray(stashIndices)||stashIndices.length>LEGACY_STASH_LIMIT||new Set(stashIndices).size!==stashIndices.length
+    ||stashIndices.some(i=>!Number.isSafeInteger(i)||i<0||i>=state.inventory.length||i===index||!LEGACY_STASH_SLOTS.includes(getItem(state.inventory[i])?.slot)))
+    return result(false,`Choose up to ${LEGACY_STASH_LIMIT} different stash copies, excluding your heirloom.`);
+  const stash=stashIndices.map(i=>({itemId:state.inventory[i],condition:state.inventoryCondition[i]}));
+  return {ok:true,itemId,index,stashIndices:[...stashIndices],stash,condition:state.inventoryCondition[index],stamp:JSON.stringify([state.seed,state.day,state.hour,state.inventory,state.inventoryCondition,state.companyLegacy?.generation??0,stashIndices]),message:`One sealed heirloom${stash.length?` and ${stash.length} sealed stash finds`:''}. Gold and levels stay with the retired company.`};
 }
 export function createLegacyCampaign(state,quote,seed=Date.now()) {
-  const fresh=getLegacyRetirementQuote(state,quote?.index);
+  const fresh=getLegacyRetirementQuote(state,quote?.index,quote?.stashIndices??[]);
   if(!fresh.ok)return fresh;
-  if(!quote||quote.stamp!==fresh.stamp||quote.itemId!==fresh.itemId||quote.condition!==fresh.condition)return result(false,'The heirloom selection changed. Choose it again.');
+  if(!quote||quote.stamp!==fresh.stamp||quote.itemId!==fresh.itemId||quote.condition!==fresh.condition||JSON.stringify(quote.stash??[])!==JSON.stringify(fresh.stash))return result(false,'The inheritance selection changed. Choose it again.');
   const next=createGame(seed);
   next.legacyWarrior=freezeLegacyWarrior(state,hashSeed,getCompanyStats);
-  next.companyLegacy=initialLegacy({seed:state.seed,day:state.day,renown:state.renown},fresh.itemId,fresh.condition,(state.companyLegacy?.generation??0)+1);
+  next.companyLegacy=initialLegacy({seed:state.seed,day:state.day,renown:state.renown},fresh.itemId,fresh.condition,(state.companyLegacy?.generation??0)+1,fresh.stash);
   record(next,'A retired company entrusted you with a sealed heirloom. Company Legacy in the chronicle records four steps to earn it.');
   return {ok:true,state:validateSave(next),message:'A new banner rises. Your heirloom remains sealed until its four side quests are complete.'};
 }
@@ -1041,12 +1045,13 @@ export function turnInLegacyQuest(state,stage) {
   if(!legacy||legacy.stage!==stage||!quest)return result(false,'That legacy quest is not available.');
   if(state.destination||access.town.id!==quest.townId)return result(false,`Report to ${TOWN_BY_ID.get(quest.townId).name}.`);
   if(!legacyStageReady(state))return result(false,quest.objective);
-  if(stage===4&&state.inventory.length>=getStashCapacity(state))return result(false,'Free one stash slot to restore your heirloom.');
+  const inheritedItems=[{itemId:legacy.itemId,condition:legacy.condition},...(legacy.stash??[])];
+  if(stage===4&&state.inventory.length+inheritedItems.length>getStashCapacity(state))return result(false,`Free ${inheritedItems.length} stash slots to restore your inheritance.`);
   if(stage===1){state.gold-=100;state.food-=10;}
   if(stage===2){state.gold-=500;state.supplies.tools-=5;for(const id of ['iron','timber']){consumeCargoOrigins(state,id,4,quest.townId);state.cargo[id]-=4;if(!state.cargo[id])delete state.cargo[id];}}
-  if(stage===4){state.inventory.push(legacy.itemId);state.inventoryCondition.push(legacy.condition);}
+  if(stage===4)for(const entry of inheritedItems){state.inventory.push(entry.itemId);state.inventoryCondition.push(entry.condition);}
   legacy.stage++;
-  const message=stage===4?`${getItem(legacy.itemId).name} is restored to your stash with its original bonuses and condition.`:`${quest.name} completed. Next: ${LEGACY_STAGES[stage].name}.`;
+  const message=stage===4?`${getItem(legacy.itemId).name}${legacy.stash?.length?` and ${legacy.stash.length} sealed stash finds are`:' is'} restored to your stash with original bonuses and condition.`:`${quest.name} completed. Next: ${LEGACY_STAGES[stage].name}.`;
   record(state,message);recordQuestCompletion(state,`company-legacy-${stage}`);return result(true,message);
 }
 
