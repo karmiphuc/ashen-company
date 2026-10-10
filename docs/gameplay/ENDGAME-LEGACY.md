@@ -42,7 +42,7 @@ The proposed retirement menu eventually offers exactly **one** of these choices:
 - **Veteran mentor:** a retired survivor provides training/advice outside the combat roster initially. Define limited costs and benefits before implementing; do not transfer a level-30 fighter into early battles.
 - **Company charter:** a distinct starting origin, such as mounted hunters with fewer recruits and higher upkeep. Tradeoffs should alter decisions rather than add permanent damage or gold.
 
-Other proposed legacy unlocks are banners, backgrounds, unusual origins and challenge contracts. Company history could record roster, notable achievements and signature gear. The full retired save already preserves those facts locally, but a dedicated history gallery is not implemented.
+Other proposed legacy unlocks are banners, backgrounds, unusual origins and challenge contracts. Company history now records those retirement memories in the gallery below.
 
 Defeat could record achievements and allow salvage only for an heirloom actually evacuated. Neither defeat inheritance nor salvage is implemented: no automatic post-wipe replacement item or revival. Cross-device legacy storage, exact mentor effects and charter balance need their own design and migration tests.
 
@@ -55,3 +55,11 @@ Endgame competitors can race the player for announced rare bounties, ancient exp
 ## Validation
 
 Exercise three real encounter/turn-in sequences, exact final-elite gear and both attachment effects, no duplicate loot, full-stash atomic claims, age/renown gates, wrong or closed settlements, ordinary-contract independence and repeated turn-ins. Simulate normal and realtime actions, save/reload active battles and casualty/damage persistence across retreat. Reject malformed slot types, shield/two-hander conflicts, impossible guardian wear, duplicate indices, stale or tampered quotes and forged battle equipment/loot. Retain the old four-step engine and browser tests for versions 1 and 2. Browser coverage includes cancellation, storage failure/retry, backup export, compact touch layouts and final tomb navigation/reward persistence. Run production build and existing release/offline checks; do not manually bump release numbers.
+
+## Implemented: company-history gallery
+
+Open **Chronicle → ◇ Past banners**. Compact cards show retirement day, renown, Ashen victory, tomb sets unveiled during that campaign and surviving roster count. Expand a card for each brother’s name/level, the Frozen Vigil survivor and the names of the chosen inherited gear. These are retirement snapshots, not live quest progress or a complete lifetime death ledger; only brothers still present in the retiring roster can be recorded. No rewards, extra gear or combat bonuses come from history.
+
+Up to twelve recent retirement summaries persist separately on this device. Each new retirement records its summary before replacing the active save, with rollback attempts for both history and the latest full backup if saving fails. Invalid history blocks retirement rather than silently erasing memories; active gameplay/saves remain independent. Existing latest-retirement backups are read through normal save validation and shown without requiring a new retirement. That older summary is retained when the next retirement creates the history store. Histories do not sync between devices. **Export history** downloads summary JSON for safekeeping; it cannot be imported as a playable campaign. **Retired save** still exports the latest complete retired campaign, and older complete saves require the player’s own exports. Clearing browser storage removes local memories.
+
+Rival companies, company charters, mentors and faction war remain separate planned features. The gallery deliberately grants no account-wide power before those systems have fair progression rules.

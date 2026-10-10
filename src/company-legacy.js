@@ -1,3 +1,4 @@
+import { appendCompanyMemory } from './company-history.js';
 import { tombReady, validateEntombedLegacy } from './entombed-legacy.js';
 // Bounded, campaign-local inheritance. No combat bonuses or separate account progression.
 export const LEGACY_STAGES = Object.freeze([
@@ -62,14 +63,19 @@ export function validateLegacy(input, { getItem, isNamedItem, itemCondition, now
   return structuredClone(input);
 }
 
-// Archive first. A failed active-save write also attempts to preserve the previous archive.
-export function storeLegacyRetirement(storage, key, current, next) {
-  const archiveKey=key+'-retired', currentText=JSON.stringify(current), nextText=JSON.stringify(next);
-  const previous=storage.getItem(archiveKey);
-  storage.setItem(archiveKey,currentText);
-  try { storage.setItem(key,nextText); }
-  catch(error) {
-    try { if(previous===null)storage.removeItem(archiveKey);else storage.setItem(archiveKey,previous); } catch { /* The active save remains unchanged even if archive rollback fails. */ }
+// Write history and archive before replacing the live company; roll both back on failure.
+export function storeLegacyRetirement(storage, key, current, next, memory, initialHistory) {
+  const archiveKey=key+'-retired',historyKey=key+'-history';
+  const currentText=JSON.stringify(current),nextText=JSON.stringify(next);
+  const previous=storage.getItem(archiveKey),previousHistory=memory?storage.getItem(historyKey):null;
+  const historyText=memory?appendCompanyMemory(previousHistory??(initialHistory?JSON.stringify(initialHistory):null),memory):null;
+  const changed=[];
+  try {
+    if(memory){storage.setItem(historyKey,historyText);changed.push([historyKey,previousHistory]);}
+    storage.setItem(archiveKey,currentText);changed.push([archiveKey,previous]);
+    storage.setItem(key,nextText);
+  } catch(error) {
+    for(const [changedKey,value] of changed.reverse())try{if(value===null)storage.removeItem(changedKey);else storage.setItem(changedKey,value);}catch{/* Preserve live company even when rollback storage fails. */}
     throw error;
   }
 }
