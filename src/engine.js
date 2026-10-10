@@ -1,3 +1,4 @@
+import { LEGACY_STAGES, initialLegacy, legacyStageReady, recordLegacyContract, recordLegacyVictory, validateLegacy } from './company-legacy.js';
 import { EQUIPMENT_EFFECTS_VERSION, hasBonePlating, bonePlatingReady, bonePlatingAbsorbs, livingShieldRegeneration } from './equipment-specials.js';
 import { PERFORMANCE_KEYS, newBattlePerformance, recordBattlePerformance } from './battle-performance.js';
 import {PREVIOUS_SHIELDS,previousShieldDefinitions,migrateShieldBalance,rebalanceShieldCondition} from './shield-balance.js';
@@ -1005,6 +1006,48 @@ export function createGame(seed = Date.now()) {
   return state;
 }
 
+// Retirement constructs a fresh campaign; the caller commits storage before replacing the live state.
+export function getCompanyLegacy(state) {
+  const legacy=state.companyLegacy;
+  if(!legacy)return null;
+  return {...structuredClone(legacy),item:getItem(legacy.itemId),quest:legacy.stage<=4?LEGACY_STAGES[legacy.stage-1]:null,ready:legacyStageReady(state)};
+}
+export function getLegacyRetirementQuote(state,index) {
+  const blocked=actionBlocked(state);if(blocked)return blocked;
+  const access=requireTown(state);if(access.error)return access.error;
+  if(state.destination||state.ashenWinter?.phase!=='completed')return result(false,'Complete the Ashen crisis and stop in an open settlement before retiring.');
+  if(getActiveContracts(state).length)return result(false,'Finish your active contracts before retiring.');
+  if((state.companyLegacy?.generation??0)>=1000000)return result(false,'This lineage has reached its limit.');
+  if(!Number.isInteger(index)||index<0||index>=state.inventory.length)return result(false,'Choose one named weapon, armor, helmet or shield from your stash.');
+  const itemId=state.inventory[index],item=getItem(itemId);
+  if(!isNamedItem(item)||!['weapon','armor','helmet','shield'].includes(item.slot))return result(false,'Choose a named weapon, armor, helmet or shield.');
+  return {ok:true,itemId,index,condition:state.inventoryCondition[index],stamp:JSON.stringify([state.seed,state.day,state.hour,state.inventory,state.inventoryCondition,state.companyLegacy?.generation??0]),message:'One sealed heirloom. All other equipment, gold and levels stay with the retired company.'};
+}
+export function createLegacyCampaign(state,quote,seed=Date.now()) {
+  const fresh=getLegacyRetirementQuote(state,quote?.index);
+  if(!fresh.ok)return fresh;
+  if(!quote||quote.stamp!==fresh.stamp||quote.itemId!==fresh.itemId||quote.condition!==fresh.condition)return result(false,'The heirloom selection changed. Choose it again.');
+  const next=createGame(seed);
+  next.companyLegacy=initialLegacy({seed:state.seed,day:state.day,renown:state.renown},fresh.itemId,fresh.condition,(state.companyLegacy?.generation??0)+1);
+  record(next,'A retired company entrusted you with a sealed heirloom. Company Legacy in the chronicle records four steps to earn it.');
+  return {ok:true,state:validateSave(next),message:'A new banner rises. Your heirloom remains sealed until its four side quests are complete.'};
+}
+export function turnInLegacyQuest(state,stage) {
+  const blocked=actionBlocked(state);if(blocked)return blocked;
+  const access=requireTown(state);if(access.error)return access.error;
+  const legacy=state.companyLegacy,quest=LEGACY_STAGES[(legacy?.stage??0)-1];
+  if(!legacy||legacy.stage!==stage||!quest)return result(false,'That legacy quest is not available.');
+  if(state.destination||access.town.id!==quest.townId)return result(false,`Report to ${TOWN_BY_ID.get(quest.townId).name}.`);
+  if(!legacyStageReady(state))return result(false,quest.objective);
+  if(stage===4&&state.inventory.length>=getStashCapacity(state))return result(false,'Free one stash slot to restore your heirloom.');
+  if(stage===1){state.gold-=100;state.food-=10;}
+  if(stage===2){state.gold-=500;state.supplies.tools-=5;for(const id of ['iron','timber']){consumeCargoOrigins(state,id,4,quest.townId);state.cargo[id]-=4;if(!state.cargo[id])delete state.cargo[id];}}
+  if(stage===4){state.inventory.push(legacy.itemId);state.inventoryCondition.push(legacy.condition);}
+  legacy.stage++;
+  const message=stage===4?`${getItem(legacy.itemId).name} is restored to your stash with its original bonuses and condition.`:`${quest.name} completed. Next: ${LEGACY_STAGES[stage].name}.`;
+  record(state,message);recordQuestCompletion(state,`company-legacy-${stage}`);return result(true,message);
+}
+
 export function terrainAt(x, y) {
   if (!inBounds(x, y)) return 'sea';
   if (worldBlocked({x,y})) return 'mountain';
@@ -1931,6 +1974,7 @@ function completeContract(state, town, contract) {
   }
   useContractBoardSlot(state,contract.from,getContractCategory(contract),contract.acceptedDay);
   storeContracts(state,getActiveContracts(state).filter(c=>c!==contract));
+  recordLegacyContract(state,contract.id);
   recordQuestCompletion(state,contract.id);
   return true;
 }
@@ -6218,6 +6262,7 @@ export function finishBattle(state, { shareLootIndices = [] } = {}) {
     }
     else if(battle.encounterType!=='blacksmith') { const camp=getCampSites(state).find(site=>site.id===battle.campId); state.camps[battle.campId] = { clearedDay:state.day,respawnAt:worldHours(state)+campRespawnHours(state,battle.campId,camp.generation),generation:camp.generation }; }
   }
+  recordLegacyVictory(state,battle);
   if(battle.encounterType==='blacksmith')recordBlacksmithBattle(state,battle);
   if (!victory && undeadEncounter) {
     const remaining = battle.units.filter(u => u.side === 'enemy' && u.alive);
@@ -6745,6 +6790,7 @@ export function validateSave(input) {
   assert(input.ancientRestorationSerial === undefined || validCount(input.ancientRestorationSerial) && input.ancientRestorationSerial <= 1000000, 'ancient restoration serial');
   assert(input.direwolfCraftSerial === undefined || validCount(input.direwolfCraftSerial) && input.direwolfCraftSerial <= 1000000, 'direwolf craft serial');
   const ashenWinter = validateAshenWinter(input.ashenWinter, input.seed, SETTLEMENTS);
+  const companyLegacy=validateLegacy(input.companyLegacy,{getItem,isNamedItem,itemCondition,now:worldHours(input)});
   input = { ...input, ashenWinter };
   for (const encounter of getUndeadEncounters(input)) for (const enemy of encounter.enemies) {
     const d = enemy.savedDamage; if (!d) continue;
@@ -7137,6 +7183,7 @@ export function validateSave(input) {
     ...(input.direwolfCraftSerial === undefined ? {} : { direwolfCraftSerial: input.direwolfCraftSerial }),
     ...(legendaryBlacksmith===undefined?{}:{legendaryBlacksmith}),
     ashenWinter,
+    ...(companyLegacy===undefined?{}:{companyLegacy}),
     gold: input.gold, food: input.food, renown: input.renown,
     party, formation: expandedFormation(formation), reserveIds:[...reserveIds],automation:{buyAmmo:automation.buyAmmo,equipBandages:automation.equipBandages},
     inventory, inventoryCondition: conditions, cargo: { ...cargo },...(input.cargoOrigins===undefined?{}:{cargoOrigins:Object.fromEntries(Object.entries(input.cargoOrigins).map(([id,lots])=>[id,lots.map(lot=>({...lot}))]))}), supplies: { ...supplies },
