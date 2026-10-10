@@ -34,10 +34,13 @@ Current catalogs, crafting recipes, sets and named-item rules.
 - [Named weapons and skill checks — v0.46.9](equipment/NAMED-WEAPONS.md)
 - [Three-piece equipment completions](equipment/THREE-PIECE-SETS.md)
 
+- [Company Legacy and endgame goals](gameplay/ENDGAME-LEGACY.md)
+
 ## World and campaign
 
 Regions, crisis implementation, terrain and scenery.
 
+- [Frozen Vigil warrior quests](world/LEGACY-WARRIOR.md)
 - [Ashen Winter implementation specification](world/ASHEN-WINTER-IMPLEMENTATION-SPEC.md)
 - [Battle terrain and camp defense — v0.47.0](world/BATTLE-TERRAIN.md)
 - [World-map illustration (0.48.1)](world/MAP-IMMERSION.md)
@@ -88,3 +91,5 @@ Release highlights and historical validation. Notes do not certify that a build 
 - [Release log](releases/CHANGELOG.md)
 - [Release notes](releases/NOTES.md)
 - [Verification history](releases/VERIFICATION.md)
+
+- [Persistent rival companies — planned](plans/RIVAL-COMPANIES.md)

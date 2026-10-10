@@ -93,3 +93,14 @@ with the current weapon. It never uses mounted Charge, and does not Hook a
 nonadjacent enemy into its own adjacent hex. Formation commands, friendly-fire
 safety and wounded-brother preservation still apply. This is a positioning role,
 not an extra range, damage, armor or free-movement bonus.
+
+Mounted horse Flankers can Charge isolated stragglers, including broken enemies.
+The target must have no living opponent on its side within two hexes; no other
+opponent may border any charge-path hex, and no hostile Spearwall may threaten
+the lane (including the target's). The rider must be unengaged, use a melee
+weapon, afford the normal 6 AP and fatigue, and have the existing straight,
+clear 3–4-hex horse charge lane. Broken-enemy interception tries this safe Charge
+before ordinary pursuit movement. For other isolated targets, Charge competes
+with normal tactical actions under Offense/Focus; Flankers continue using their
+wing routes against supported formations. No charge eligibility is granted to
+ranged weapons, non-horse mounts or Reach Support.

@@ -47,6 +47,9 @@ Start with the [documentation index](docs/README.md). It separates current gamep
 - [Release log](docs/releases/CHANGELOG.md) and [detailed release notes](docs/releases/NOTES.md)
 - [Equipment sets and crafting](docs/equipment/EQUIPMENT-DESIGN-FEATURES.md)
 - [Ancient restoration](docs/equipment/ANCIENT-RESTORATION.md) and [Direwolf Moonfang crafting](docs/equipment/DIREWOLF-MOONFANG.md)
+- [Company Legacy and endgame goals](docs/gameplay/ENDGAME-LEGACY.md)
+- [Frozen Vigil warrior quests](docs/world/LEGACY-WARRIOR.md)
+- [Planned rival companies](docs/plans/RIVAL-COMPANIES.md) · [issue #174](https://github.com/karmiphuc/ashen-company/issues/174)
 - [World and regions](docs/world/REGIONAL-WORLD.md)
 - [Asset credits](docs/art/ASSET-CREDITS.md)
 

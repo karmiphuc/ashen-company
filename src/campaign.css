@@ -391,3 +391,16 @@ body.world-screen>#time-of-day-indicator{display:none}
 .loot-actions>button:only-child{grid-column:1/-1}.loot-actions>button>span[aria-hidden]{font-size:17px;line-height:1}
 .loot-actions .named-loot-shortcut{border-color:#b69654;color:#ffe0a2;background:linear-gradient(#625033,#392e20)}
 .result-loot-heading{display:flex;align-items:center;gap:9px;margin-bottom:12px}.result-loot-heading h2{flex:1;margin:0}
+
+/* A compact inheritance card; the item remains visible without crowding the map. */
+.legacy-heirloom{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;min-width:0}
+.legacy-heirloom > img{width:64px;height:72px;object-fit:contain;flex-shrink:0}
+.legacy-heirloom h3{overflow-wrap:anywhere;margin:.25rem 0}
+.legacy-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;max-height:45vh;overflow:auto;padding:.25rem}
+.legacy-items button{display:flex;align-items:center;flex-direction:column;gap:.3rem;min-width:0}
+.legacy-items img{width:56px;height:64px;object-fit:contain}
+.legacy-items span{overflow-wrap:anywhere}
+.legacy-panel details,.legacy-journal details{margin-top:.75rem}
+.legacy-panel .is-ready{border-color:#b5f06b;color:#c8f991}
+
+.warrior-journal details{margin-top:.75rem}
