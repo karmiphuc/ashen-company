@@ -3290,6 +3290,8 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
     const person=restoredWarriorMember(state),stats=getCompanyStats(person,{ignoreInjuries:true}),template=structuredClone(company[0]);
     Object.assign(template,{id:'enemy-1',side:'enemy',name:person.name,skillPreference:person.skillPreference,q:11,r:10,equipment:{...person.equipment},reserveEquipment:{...person.reserveEquipment},accessories:[...person.accessories],throwingAmmo:{...person.throwingAmmo},perks:[...person.perks],seed:person.seed,injuries:copyInjuries(person.injuries).map(w=>({...w,fresh:false,sourceId:null})),hp:person.hp,maxHp:getCompanyStats(person).maxHp,morale:person.morale,alive:true});
     for(const key of ['bodyArmor','headArmor','attachmentArmor','attachment2Armor','maxBodyArmor','maxHeadArmor','maxAttachmentArmor','maxAttachment2Armor','shieldDurability','maxShieldDurability','reserveShieldDurability','maxReserveShieldDurability','meleeSkill','rangedSkill','meleeDefense','rangedDefense','maxFatigue','initiative','resolve'])template[key]=stats[key];
+    // Waking disorientation applies once; retreat must not reset the penalty.
+    if(state.legacyWarrior.condition===null)template.dazedTurns=2;
     template.bodyArmor=person.armorDurability.body;template.headArmor=person.armorDurability.head;
     if(hasPerk(person,'dodge')){template.meleeDefense-=Math.floor(stats.initiative*.15);template.rangedDefense-=Math.floor(stats.initiative*.15);}
     delete template.appearanceId;if(person.appearanceId)template.appearanceId=person.appearanceId;
@@ -3376,7 +3378,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   orderCompanyTurnsForFormation(battle);
   if(battle.enemyOpening)battle.turnOrder.sort((a,b)=>Number(battle.units.find(u=>u.id===b).side==='enemy')-Number(battle.units.find(u=>u.id===a).side==='enemy'));
   battle.activeId = battle.turnOrder[0];
-  if(isSimultaneousBetaEnabled()){battle.simultaneous=initialSimultaneousClock(battle);for(const unit of battle.units)regenerateLivingShield(battle,unit);}
+  if(isSimultaneousBetaEnabled()){battle.simultaneous=initialSimultaneousClock(battle);for(const unit of battle.units){regenerateLivingShield(battle,unit);if(unit.dazedTurns>0)markSimultaneousEffect(battle,unit,'dazedTurns',unit.dazedTurns);}}
   battleLog(battle, battle.enemyOpening?`${camp.name} catch the company. Enemies act first in the opening round.`:`The company engages ${camp.name}.`);
   cancelWorldSkirmish(state,encounterId);
   state.battle = battle;

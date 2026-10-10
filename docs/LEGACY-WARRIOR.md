@@ -8,7 +8,7 @@ At retirement, rank living members by level, then melee/ranged skill and melee d
 
 Store the actual member: identity/appearance, background, level/XP, trained attributes and pending levels, learned perks, active/reserve equipment, accessories, mount, item identities/affixes and equipment condition. No player-level scaling, champion promotion, extra named rolls or hidden boss stats apply.
 
-The new campaign cannot use the warrior before completing the chain. Thawing and preparation heal his pre-freeze HP/injuries; they do not upgrade gear or repair its wear. During the challenge, fresh injuries, HP loss, armor/shield damage, reserve changes and throwing ammunition persist after retreat. A retry cannot refill or reroll him.
+The new campaign cannot use the warrior before completing the chain. On his first awakening he is forcibly dazed for two of his turns (−25% damage, fatigue capacity and initiative), or two 6-second combat rounds in realtime. Saving preserves the remaining duration; retreating does not renew this waking penalty. Thawing and preparation heal his pre-freeze HP/injuries; they do not upgrade gear or repair its wear. During the challenge, fresh injuries, HP loss, armor/shield damage, reserve changes and throwing ammunition persist after retreat. A retry cannot refill or reroll him.
 
 Older inherited saves can recover their snapshot only from this device's validated retirement backup whose seed, day and renown match the inheritance source. Missing or unrelated backups produce no invented warrior. Existing saves without either inheritance or a frozen warrior remain unchanged.
 

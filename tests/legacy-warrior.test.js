@@ -1,5 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import * as g from '../src/engine.js';import {completedCompany}from './fixtures/legacy-company.mjs';
+import {setSimultaneousBetaEnabled}from '../src/combat-config.js';
+import {expireSimultaneousEffects,SIM_ROUND_MS}from '../src/simultaneous-combat.js';
 import {warriorJournalHTML}from '../src/legacy-warrior-ui.js';
 const at=(s,id)=>{const t=g.SETTLEMENTS.find(t=>t.id===id);s.position={x:t.x,y:t.y};s.destination=null;s.destinationAction=null;};
 const fresh=()=>{const source=completedCompany();return g.createLegacyCampaign(source,g.getLegacyRetirementQuote(source,0),12).state;};
@@ -18,7 +20,7 @@ test('four independent quests lead to exactly one real preserved-build opponent 
  at(s,'ravenfell');const n=s.party.length;assert.equal(g.turnInWarriorQuest(s,4).ok,true);assert.equal(s.party.length,n+1);const recruit=s.party.at(-1);assert.equal(recruit.level,frozen.level);assert.deepEqual(recruit.attributes,frozen.attributes);assert.deepEqual(recruit.perks,frozen.perks);assert.equal(recruit.hp,1);assert.equal(g.turnInWarriorQuest(s,4).ok,false);assert.deepEqual(g.validateSave(s),s);
 });
 test('retreat persists HP, armor, reserve state and ammo across reload and retry',()=>{
- let s=challenge();const site=g.getLegacyWarriorEncounters(s)[0];g.startBattle(s,site.id);const u=s.battle.units.find(u=>u.side==='enemy');u.hp-=9;u.bodyArmor=Math.max(0,u.bodyArmor-10);g.retreatBattle(s);assert.equal(g.finishBattle(s).ok,true);assert.equal(s.legacyWarrior.defeated,false);s=g.validateSave(JSON.parse(JSON.stringify(s)));assert.equal(g.startBattle(s,site.id).ok,true);const retry=s.battle.units.find(u=>u.side==='enemy');assert.equal(retry.hp,u.hp);assert.equal(retry.bodyArmor,u.bodyArmor);assert.deepEqual(g.validateSave(s),s);
+ let s=challenge();const site=g.getLegacyWarriorEncounters(s)[0];g.startBattle(s,site.id);const u=s.battle.units.find(u=>u.side==='enemy');u.hp-=9;u.bodyArmor=Math.max(0,u.bodyArmor-10);g.retreatBattle(s);assert.equal(g.finishBattle(s).ok,true);assert.equal(s.legacyWarrior.defeated,false);s=g.validateSave(JSON.parse(JSON.stringify(s)));assert.equal(g.startBattle(s,site.id).ok,true);const retry=s.battle.units.find(u=>u.side==='enemy');assert.equal(retry.dazedTurns??0,0);assert.equal(retry.hp,u.hp);assert.equal(retry.bodyArmor,u.bodyArmor);assert.deepEqual(g.validateSave(s),s);
 });
 test('quest resource/age gates and malformed frozen builds are rejected without changing the company',()=>{
  const s=fresh(),copy=structuredClone(s);assert.equal(g.turnInWarriorQuest(s,1).ok,false);assert.deepEqual(s,copy);assert.match(warriorJournalHTML(s),/1\/4/);
@@ -38,4 +40,27 @@ test('a real endgame build retains learned perks, stat growth, both attachments 
 test('a saved retry cannot replace the preserved gear or buy unearned attribute/perk upgrades',()=>{
  const valid=challenge(),site=g.getLegacyWarriorEncounters(valid)[0];g.startBattle(valid,site.id);g.retreatBattle(valid);g.finishBattle(valid);
  for(const change of [w=>w.condition.equipment.weapon='greatsword',w=>w.condition.attributes.meleeSkill++,w=>w.condition.perks.push('colossus'),w=>w.condition.level++,w=>w.condition.name='Imposter']){const bad=structuredClone(valid);change(bad.legacyWarrior);assert.throws(()=>g.validateSave(bad));}
+});
+
+
+test('awakening daze lasts two owner turns and survives battle reload without renewing on retry',()=>{
+ let s=challenge();g.startBattle(s,g.getLegacyWarriorEncounters(s)[0].id);
+ let enemy=s.battle.units.find(u=>u.side==='enemy');assert.equal(enemy.dazedTurns,2);
+ s=g.validateSave(JSON.parse(JSON.stringify(s)));enemy=s.battle.units.find(u=>u.side==='enemy');assert.equal(enemy.dazedTurns,2);
+ // End actors' turns without attacking to isolate the existing owner-turn clock.
+ const changes=[];let previous=2;
+ for(let i=0;i<200&&enemy.dazedTurns>0;i++){
+  const actor=s.battle.units.find(u=>u.id===s.battle.activeId);actor.ap=0;g.advanceBattle(s);
+  if(enemy.dazedTurns!==previous){assert.equal(actor.id,enemy.id);changes.push(enemy.dazedTurns);previous=enemy.dazedTurns;s=g.validateSave(JSON.parse(JSON.stringify(s)));enemy=s.battle.units.find(u=>u.side==='enemy');}
+ }
+ assert.deepEqual(changes,[1,0]);
+});
+test('realtime awakening daze is scheduled, saved and expires after two combat rounds',()=>{
+ setSimultaneousBetaEnabled(true);
+ try{
+  let s=challenge();g.startBattle(s,g.getLegacyWarriorEncounters(s)[0].id);s=g.validateSave(JSON.parse(JSON.stringify(s)));
+  const b=s.battle,u=b.units.find(u=>u.side==='enemy');assert.equal(u.dazedTurns,2);assert.equal(b.simultaneous.actors[u.id].effects.dazedTurns,2*SIM_ROUND_MS);
+  b.simultaneous.time=SIM_ROUND_MS;expireSimultaneousEffects(b);assert.equal(u.dazedTurns,1);
+  b.simultaneous.time=2*SIM_ROUND_MS;expireSimultaneousEffects(b);assert.equal(u.dazedTurns,0);assert.equal(b.simultaneous.actors[u.id].effects.dazedTurns,undefined);
+ }finally{setSimultaneousBetaEnabled(false);}
 });
