@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createGame,getCampSites,startBattle,advanceBattle,validateSave} from '../src/engine.js';
-import {newBattlePerformance,recordBattlePerformance} from '../src/battle-performance.js';
+import {newBattlePerformance,recordBattlePerformance,battleMvpAwards} from '../src/battle-performance.js';
 import {battleResultsHTML} from '../src/campaign-ui.js';
 
 function fight(){const state=createGame(7391),camp=getCampSites(state)[0];state.position={x:camp.x,y:camp.y};assert.ok(startBattle(state,camp.id).ok);return state;}
@@ -33,4 +33,15 @@ test('Results use two-column card markup and put fallen brothers first',()=>{
  const state=fight(),brothers=state.battle.units.filter(u=>u.side==='company'&&!u.ally),dead=brothers[1];dead.alive=false;dead.hp=0;state.battle.status='victory';brothers[0].battleStats={kills:3,armorDamageDealt:145,hpDamageDealt:82,armorDamageReceived:51};state.battle.xp[brothers[0].id]=62;
  const html=battleResultsHTML(state);assert.ok(html.indexOf(`data-result-brother="${dead.id}"`)<html.indexOf(`data-result-brother="${brothers[0].id}"`));assert.match(html,/result-brother-grid/);assert.match(html,/Enemies killed: 3/);assert.match(html,/Armor damage dealt to enemies: 145/);assert.match(html,/Hitpoint damage dealt to enemies: 82/);assert.match(html,/Armor damage received: 51/);assert.match(html,/Experience gained: 62/);assert.match(html,/† Fallen/);
  delete brothers[0].battleStats;assert.match(battleResultsHTML(state),/Enemies killed: not recorded/);
+});
+
+test('MVPs include tied and fallen brothers, exclude allies and zero/unrecorded metrics',()=>{
+ const units=[{id:'a',side:'company',alive:true,battleStats:{kills:2,armorDamageDealt:40,hpDamageDealt:10,armorDamageReceived:0}},
+ {id:'b',side:'company',alive:false,battleStats:{kills:2,armorDamageDealt:10,hpDamageDealt:80,armorDamageReceived:20}},
+ {id:'ally',side:'company',ally:true,battleStats:{kills:999,armorDamageDealt:999,hpDamageDealt:999,armorDamageReceived:999}},
+ {id:'legacy',side:'company'}];
+ assert.deepEqual(battleMvpAwards(units),new Map([['a',{kills:'Most Lethal',armorDamageDealt:'Tank Killer'}],['b',{kills:'Most Lethal',armorDamageReceived:'Tanker',hpDamageDealt:'Assassin'}]]));
+ assert.equal(battleMvpAwards([{id:'zero',side:'company',battleStats:newBattlePerformance()}]).size,0);
+ const state=fight();state.battle.status='victory';state.battle.units[0].battleStats={kills:1,armorDamageDealt:20,hpDamageDealt:10,armorDamageReceived:5};
+ const html=battleResultsHTML(state);for(const label of ['Most Lethal','Tanker','Tank Killer','Assassin'])assert.match(html,new RegExp(`data-mvp="${label}"`));assert.equal((html.match(/result-mvp-symbol/g)||[]).length,4);
 });

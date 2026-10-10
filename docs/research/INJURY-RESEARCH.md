@@ -71,7 +71,7 @@ Permanent injuries do not recover through ordinary rest or temple treatment. The
 
 ## Verified Ashen Company implementation
 
-Temporary injuries are complete in v0.53.0. See [current rules, care and save compatibility](TEMPORARY-INJURIES.md) for the shipped behavior and explicit adaptations.
+Temporary injuries are complete in v0.53.0. See [current rules, care and save compatibility](../gameplay/TEMPORARY-INJURIES.md) for the shipped behavior and explicit adaptations.
 
 | Research requirement | Implemented code and verification |
 | --- | --- |

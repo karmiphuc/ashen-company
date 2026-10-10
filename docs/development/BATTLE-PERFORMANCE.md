@@ -30,3 +30,10 @@ the exact complement using the existing XP/morale rules. It ignores manual
 checkbox selections, preserves retained item conditions, and collects crowns and
 supplies normally. The shortcut is disabled when no named items are present.
 The hint lists the kept/donated item counts; it does not create extra rewards.
+
+Four company MVP categories highlight the winning metric box with a bold gold
+border and a small ★: Most Lethal (kills), Tanker (armor received), Tank Killer
+(armor stripped), and Assassin (HP damage inflicted). Accessible labels, hover
+labels and the panel hint name each award. All positive ties share an award,
+including fallen brothers; allied NPCs, zero scores and unrecorded stats do not
+win. Awards are visual recognition and do not change XP or loot.

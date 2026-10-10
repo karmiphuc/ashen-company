@@ -35,4 +35,4 @@ Three named ranges are authored in gaps between the 71 existing road links: snow
 
 No legendary encounters or rewards activate yet. Decoration clicks produce no target or travel order. All textured sprites and static smoke are baked into the existing raster capped at 4096px; no animation loop or decorative NPC simulation is added.
 
-Landmark artwork comes from freely licensed Clint Bellanger, Nirdia and Wildfire Games assets. Source/derivative licenses and reproducible crop/render recipes are documented in [ASSET-CREDITS.md](ASSET-CREDITS.md) and `assets/world/landmark-sources.json`. Landmark and ridge rendering has no flat polygon fallback.
+Landmark artwork comes from freely licensed Clint Bellanger, Nirdia and Wildfire Games assets. Source/derivative licenses and reproducible crop/render recipes are documented in [ASSET-CREDITS.md](../art/ASSET-CREDITS.md) and `assets/world/landmark-sources.json`. Landmark and ridge rendering has no flat polygon fallback.

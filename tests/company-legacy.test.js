@@ -60,3 +60,31 @@ test('archive and active-save write failures never replace the active company an
   else{storeLegacyRetirement(storage,'save',{company:'old'},{company:'new'});assert.equal(values.get('save'),'{"company":"new"}');assert.equal(values.get('save-retired'),'{"company":"old"}');}
  }
 });
+
+test('up to three stash copies inherit exact rolls and wear, unlock together and cannot be claimed twice',()=>{
+ const source=completedCompany();
+ source.inventory.push(createFamedItemId('patched-coat',53,7),'bone-platings','war-horse');source.inventoryCondition.push(7,1,null);
+ const before=structuredClone(source),quote=getLegacyRetirementQuote(source,0,[1,2,3]);assert.equal(quote.ok,true);
+ let s=createLegacyCampaign(source,quote,91).state;assert.deepEqual(source,before);assert.equal(s.companyLegacy.version,2);
+ assert.deepEqual(s.companyLegacy.stash,source.inventory.slice(1).map((itemId,i)=>({itemId,condition:source.inventoryCondition[i+1]})));
+ assert.deepEqual(s.inventory,createGame(91).inventory);s=reload(s);prepare(s);
+ for(let i=0;i<3;i++)recordLegacyContract(s,`job-${i}`);at(s,'stonebridge');turnInLegacyQuest(s,3);
+ for(let i=0;i<3;i++)recordLegacyVictory(s,{id:`battle-${i}`,status:'victory',encounterType:'camp',difficulty:2});
+ s.day=30;s.renown=150;s.shipmentLegacyThroughDay=30;at(s,'ironford');s=reload(s);
+ const cap=getStashCapacity(s);s.inventory=Array(cap-3).fill('spear');s.inventoryCondition=s.inventory.map(()=>null);
+ const full=structuredClone(s);assert.equal(turnInLegacyQuest(s,4).ok,false);assert.deepEqual(s,full);
+ s.inventory.pop();s.inventoryCondition.pop();assert.equal(turnInLegacyQuest(s,4).ok,true);
+ assert.deepEqual(s.inventory.slice(-4),source.inventory);assert.deepEqual(s.inventoryCondition.slice(-4),source.inventoryCondition);
+ assert.equal(turnInLegacyQuest(s,4).ok,false);assert.deepEqual(reload(s),s);assert.match(legacyPanelHTML(s),/3 keepsakes/);
+});
+test('stash selection rejects duplicate indices, heirloom reuse, excess copies, stale wear and forged quotes',()=>{
+ const source=completedCompany();source.inventory.push('spear','spear','bone-platings','war-horse');source.inventoryCondition.push(null,null,1,null);
+ for(const indices of [[0],[1,1],[-1],[5],[1.5],[1,2,3,4],null,'1'])assert.equal(getLegacyRetirementQuote(source,0,indices).ok,false);
+ const quote=getLegacyRetirementQuote(source,0,[1,2,3]);assert.equal(quote.ok,true);assert.equal(createLegacyCampaign(source,{...quote,stash:[]},91).ok,false);
+ source.inventoryCondition[3]=0;assert.equal(createLegacyCampaign(source,quote,91).ok,false);
+ const copies=createLegacyCampaign(source,getLegacyRetirementQuote(source,0,[1,2]),91).state;assert.equal(copies.companyLegacy.stash.length,2);assert.deepEqual(copies.companyLegacy.stash[0],copies.companyLegacy.stash[1]);assert.deepEqual(reload(copies),copies);
+});
+test('malformed sealed stash records cannot smuggle unknown items, impossible wear or excess copies',()=>{
+ const source=completedCompany();source.inventory.push('bone-platings');source.inventoryCondition.push(1);const s=createLegacyCampaign(source,getLegacyRetirementQuote(source,0,[1]),91).state;
+ for(const change of [l=>l.version=1,l=>l.stash=null,l=>l.stash=Array(4).fill(l.stash[0]),l=>l.stash[0].itemId='missing',l=>l.stash[0].condition=999,l=>l.stash[0].condition=-1,l=>l.stash[0].extra=true,l=>delete l.stash]){const bad=structuredClone(s);change(bad.companyLegacy);assert.throws(()=>reload(bad),/company legacy/);}
+});

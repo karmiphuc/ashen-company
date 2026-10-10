@@ -9,7 +9,8 @@ If GitHub access blocks pull request creation, preserve the completed work on a 
 Deployment automatically advances the patch version from `package.json` using
 the first-parent commit count since `release.baseCommit`. Do not manually bump
 the patch for each PR. For a new minor release, set its base version and anchor
-to an existing ancestor commit together, and add its summary to README.md.
+to an existing ancestor commit together, and add its summary to
+`docs/releases/NOTES.md`, indexed in `docs/releases/CHANGELOG.md`.
 Run `npm run prepare-offline` for development metadata and the offline worker.
 Never hardcode a separate version in the UI or edit the generated files manually.
 Run `node --test tests/release.test.js tests/offline.test.js` before opening the PR.

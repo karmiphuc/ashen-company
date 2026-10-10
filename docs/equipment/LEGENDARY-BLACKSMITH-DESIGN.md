@@ -36,6 +36,6 @@ Quotes are pure. Commit revalidates town access, quest unlock, selected copy ind
 
 ## Art and validation
 
-The workshop is the unmodified CC0 [Medieval Blacksmith Isometric 2.5D](https://opengameart.org/content/medieval-blacksmith-isometric-25d) by feudalwars. It is shown at Ironford and in the forge UI. Source and SHA-256 are pinned in `assets/world/legendary-blacksmith-source.json`, with credits in `docs/ASSET-CREDITS.md`.
+The workshop is the unmodified CC0 [Medieval Blacksmith Isometric 2.5D](https://opengameart.org/content/medieval-blacksmith-isometric-25d) by feudalwars. It is shown at Ironford and in the forge UI. Source and SHA-256 are pinned in `assets/world/legendary-blacksmith-source.json`, with credits in `docs/art/ASSET-CREDITS.md`.
 
 `tests/legendary-blacksmith.test.js` covers discovery, the complete chain, retreat/Collector outcomes, all existing named roll versions, full transfer and accumulating merges, stale/invalid transactions, wear/ammunition, equipment/combat/save/resale and malformed progression. Browser checks cover desktop/mobile selection, confirmation, actual commit, touch targets and overflow. The private recovery save is checked locally and is never committed.

@@ -392,6 +392,8 @@ body.world-screen>#time-of-day-indicator{display:none}
 .loot-actions .named-loot-shortcut{border-color:#b69654;color:#ffe0a2;background:linear-gradient(#625033,#392e20)}
 .result-loot-heading{display:flex;align-items:center;gap:9px;margin-bottom:12px}.result-loot-heading h2{flex:1;margin:0}
 
+.result-metric.result-mvp{border:2px solid #c8ad60;padding:5px;background:linear-gradient(135deg,#b9973526,#312819)}
+.result-mvp-symbol{font-size:.72em;color:#dace79;margin-right:4px}
 /* A compact inheritance card; the item remains visible without crowding the map. */
 .legacy-heirloom{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;min-width:0}
 .legacy-heirloom > img{width:64px;height:72px;object-fit:contain;flex-shrink:0}
@@ -404,3 +406,19 @@ body.world-screen>#time-of-day-indicator{display:none}
 .legacy-panel .is-ready{border-color:#b5f06b;color:#c8f991}
 
 .warrior-journal details{margin-top:.75rem}
+
+.legacy-stash-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:.5rem 0 1rem}
+.legacy-stash-summary img{width:38px;height:42px;object-fit:contain}
+.legacy-cache-picker{margin:1rem 0;padding:12px;border:1px solid #756443;background:#17151055}
+.legacy-cache-picker h3{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0}
+.legacy-cache-picker p{margin:.4rem 0 .7rem;font-size:13px}
+.legacy-cache-search{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.legacy-cache-search input{width:100%;min-width:0}
+.legacy-cache-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:6px;max-height:30vh;overflow:auto;padding:2px}
+.legacy-cache-item{position:relative;display:flex;align-items:center;flex-direction:column;gap:4px;min-width:0;margin:0;padding:7px 5px;border:1px solid #62563d;background:#252119;cursor:pointer}
+.legacy-cache-item:has(:checked){border-color:#c8ad60;background:#55472c;box-shadow:inset 0 0 0 1px #c8ad60}
+.legacy-cache-item:has(:focus-visible){outline:2px solid #c8f991;outline-offset:1px}
+.legacy-cache-item input{position:absolute;left:5px;top:5px;margin:0}
+.legacy-cache-item img{width:42px;height:46px;object-fit:contain}
+.legacy-cache-item span{font-size:11px;line-height:1.2;text-align:center;overflow-wrap:anywhere}
+.legacy-cache-item[hidden]{display:none}

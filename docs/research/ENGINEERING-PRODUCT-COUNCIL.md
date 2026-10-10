@@ -23,7 +23,7 @@ Your spontaneous requests remain the feature backlog. The agent should turn each
 | `package.json` is 0.50.18, README opens at 0.48.9 and verification at 0.48.0; Play still describes 12 recruits and a 14×8 field | Current instructions and historical verification need clearer separation. Past green results are historical evidence, not today's release signal. |
 | Physical iPad Safari offline installation/save retention remains unverified in README | Chromium evidence must not be presented as physical iPad validation. Keep the device check small and explicit. |
 
-Source anchors: [development instructions](../README.md#development), [current play instructions](../README.md#play), [verification history](VERIFICATION.md), [step/reload equivalence](../tests/tactical-compat.test.js), [historical combat fixtures](../tests/weapon-skills-compat.test.js), [offline generation](../tools/build-cache.mjs), [offline verification](../tests/offline.test.js).
+Source anchors: [development instructions](../../README.md#development), [current play instructions](../../README.md#play), [verification history](../releases/VERIFICATION.md), [step/reload equivalence](../../tests/tactical-compat.test.js), [historical combat fixtures](../../tests/weapon-skills-compat.test.js), [offline generation](../../tools/build-cache.mjs), [offline verification](../../tests/offline.test.js).
 
 ## Repair the baseline before trusting auto-merge
 
