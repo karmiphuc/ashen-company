@@ -6,7 +6,7 @@ Implementation plan: [issue #174](https://github.com/karmiphuc/ashen-company/iss
 
 Introduce three persistent companies from campaign start, including inherited campaigns; do not gate them behind Ashen Winter. Older saves introduce missing rivals at the current date without retroactive bills. Start with three persistent companies: profitable contract specialists, aggressive camp hunters and disciplined faction-backed mercenaries. Reuse existing races, backgrounds, equipment, mounts and role AI. Authored starting budgets/rosters must be explicit; faction identity does not imply unlimited subsidies.
 
-Each member retains HP, injuries, morale, XP, level, stats, equipment and condition. Earn XP through actual work and surviving combat. Implement ordinary, role-weighted stat growth first; random perk selection comes later, respects prerequisites/points and persists seeded choices. Until implemented, members keep starting perks without substitute hidden stat bonuses.
+Each member retains HP, injuries, morale, XP, level, stats, equipment and condition. Earn XP through actual work and surviving combat. Authored starting levels 3–5 are approved, with ordinary starting stat rolls, zero XP and no learned perks; future growth must be earned. The isolated combat adapter spends earned level-ups using ordinary stat rolls and seeded random legal perks with normal points/level requirements. Automatic live-world earnings and encounters remain pending; no placeholder growth or hidden stat bonuses. Existing saved companies retain their progress.
 
 Named gear comes from real drops or purchases. Members choose affordable, role-appropriate equipment and retain its actual rolls, durability, attachments and reserve state. No guaranteed replacement gear, free resurrection or scaling to the player's level. Losses, bankruptcy, downsizing, retreat and dissolution must be possible.
 
@@ -45,7 +45,7 @@ Map crests and compact inspection should communicate identity, visible roster/ge
 3. **Adapter implemented:** isolated real headless encounters, bounded worker execution, resumable checkpoints and verified settlement receipts. **Next:** campaign-time scheduling, encounter claims, exactly-once live world results, earned-income accounting and casualty/roster migration.
 4. Earned stats, equipment/roster management and legitimate named accumulation.
 5. Visible hostility, pursuit, negotiation and player encounters; safe joining separately if necessary.
-6. Random valid perk choices.
+6. **Adapter implemented:** seeded random valid perk choices from earned points; live-world application follows encounter integration.
 7. Announced contested endgame objectives.
 
 Run seeded 30/90-day simulations and report distributions of money, shortages, losses, contracts, levels and named acquisitions. Do not require every company to survive. Check accounting, equivalent movement, seeded headless/ordinary combat parity, save/reload/batch determinism and malformed-state rejection. Cover mounted/ranged/reach behavior and opportunity strikes. Measure iPad frame times and save sizes with multiple encounters: aim for ~4 ms simulation slices, no feature-attributable synchronous task over 50 ms and no simulation pause over one second. These performance targets need measurement, not assertions based only on a passing unit suite.

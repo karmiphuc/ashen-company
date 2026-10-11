@@ -1,6 +1,6 @@
-import { createRivalBattleSnapshot, validateRivalBattleSnapshot, validateSave, getCampSites, advanceBattle, retreatBattle, finishBattle } from './engine.js';
+import { createRivalBattleSnapshot, validateRivalBattleSnapshot, validateSave, getCampSites, advanceBattle, retreatBattle, finishBattle, trainRivalSurvivors } from './engine.js';
 
-export const HEADLESS_RULES_VERSION = 1;
+export const HEADLESS_RULES_VERSION = 2;
 export const HEADLESS_MAX_STEPS = 20000;
 export const HEADLESS_MAX_BYTES = 8 * 1024 * 1024;
 const fields=['version','companyId','encounterId','steps','status','state','world','enemyWorldIndices','receipt'];
@@ -47,6 +47,7 @@ export function advanceHeadlessQueue(jobs,cursor=0,options={}){
 function outcome(job){
  const state=structuredClone(job.state),battle=state.battle;
  const result=finishBattle(state);if(!result.ok)fail(result.message);
+ if(job.version>=2)trainRivalSurvivors(state);
  return {companyId:job.companyId,encounterId:job.encounterId,battleId:battle.id,generation:battle.campGeneration,
   outcome:battle.status,enemies:battle.units.filter(unit=>unit.side==='enemy').map((unit,index)=>({worldIndex:job.enemyWorldIndices[index],unit:structuredClone(unit)})),losses:[...battle.casualties],xp:structuredClone(battle.xp),
   party:state.party,gold:state.gold,food:state.food,supplies:state.supplies,
@@ -64,7 +65,7 @@ export function settleHeadlessCombat(job){
 }
 
 export function restoreHeadlessCombat(input){
- if(!exact(input,fields)||input.version!==HEADLESS_RULES_VERSION||size(input)>HEADLESS_MAX_BYTES)fail('version/fields/size');
+ if(!exact(input,fields)||![1,HEADLESS_RULES_VERSION].includes(input.version)||size(input)>HEADLESS_MAX_BYTES)fail('version/fields/size');
  if(!Number.isSafeInteger(input.steps)||input.steps<0||input.steps>HEADLESS_MAX_STEPS||!['running','ready','settled'].includes(input.status))fail('progress');
  const world=validateSave(structuredClone(input.world)),owner=world.rivalCompanies?.companies.find(c=>c.id===input.companyId);
  if(!owner||owner.status==='dissolved')fail('owner');
@@ -82,7 +83,7 @@ export function restoreHeadlessCombat(input){
  }
 
  if((input.status==='running')!==(state.battle.status==='active')||input.status!=='settled'&&input.receipt!==null)fail('status');
- const job={version:HEADLESS_RULES_VERSION,companyId:input.companyId,encounterId:input.encounterId,steps:input.steps,status:input.status,state,world,enemyWorldIndices:[...indices],receipt:null};
+ const job={version:input.version,companyId:input.companyId,encounterId:input.encounterId,steps:input.steps,status:input.status,state,world,enemyWorldIndices:[...indices],receipt:null};
  if(input.status==='settled'){job.receipt=outcome(job);if(!same(input.receipt,job.receipt))fail('settlement receipt');}
  return job;
 }

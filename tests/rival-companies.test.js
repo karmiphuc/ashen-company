@@ -13,7 +13,7 @@ test('three fixed campaign companies activate once at the current clock without 
  const fresh=createGame(17);advanceRivalSimulation(fresh);assert.equal(fresh.rivalCompanies.companies.length,3);assert.equal(fresh.rivalCompanies.startedHour,8);assert.deepEqual(validateSave(fresh).rivalCompanies,fresh.rivalCompanies);
  const {state}=entombedCompany(),before=structuredClone(state);advanceRivalSimulation(state);const saved=structuredClone(state.rivalCompanies);advanceRivalSimulation(state);assert.deepEqual(state.rivalCompanies,saved);
  assert.equal(saved.startedHour,(state.day-1)*24+state.hour);assert.deepEqual(saved.companies.map(c=>c.gold),[12000,9000,16000]);assert.deepEqual(saved.companies.map(c=>c.party.length),[6,7,8]);
- for(const company of saved.companies)for(const member of company.party){assert.equal(member.trainingPoints,0);assert.equal(member.pendingLevelUps.length,0);assert.equal(member.perks.length,0);assert.equal(member.xp,0);}
+ for(const company of saved.companies)for(const member of company.party){assert.equal(member.trainingPoints,0);assert.equal(member.pendingLevelUps.length,0);assert.equal(member.perks.length,0);assert.equal(member.xp,0);assert.equal(member.level,RIVAL_DEFINITIONS.find(d=>d.id===company.id).level);}
  delete state.rivalCompanies;assert.deepEqual(state,before);assert.equal(validateSave(before).rivalCompanies,undefined);
 });
 test('ordinary world ticks activate rivals before the crisis and migrate old saves without backdated upkeep',()=>{

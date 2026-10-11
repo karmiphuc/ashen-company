@@ -1,3 +1,4 @@
+import { spendRivalLevelUps } from './rival-progression.js';
 import { advanceRivalCompanies, rivalCompanySites, rivalCompanyMarkers, validateRivalCompanies } from './rival-companies.js';
 import { LEGACY_SET_SLOTS, LEGACY_TOMB_STAGES, initialEntombedLegacy, tombReady, tombGuardOutfit, tombRank } from './entombed-legacy.js';
 import { WARRIOR_STAGES, freezeLegacyWarrior, warriorReady } from './legacy-warrior.js';
@@ -2208,6 +2209,9 @@ function rivalContext(state) {
 export function advanceRivalSimulation(state) { advanceRivalCompanies(state,rivalContext(state)); }
 export function getRivalMapCompanies(state) { return rivalCompanyMarkers(state); }
 export function getRivalCompanies(state) { return rivalCompanySites(state,rivalContext(state)); }
+export function trainRivalSurvivors(state) {
+ return spendRivalLevelUps(state,{train:trainAttributes,learn:learnPerk,points:getPerkPoints,choices:getPerkChoices,hash:hashSeed});
+}
 function advanceWorldStep(state) {
   snapWorldStepClock(state);
   const displaced = advanceAshenWinter(state, ashenContext(state));
