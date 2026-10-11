@@ -44,6 +44,8 @@ Future casualties, recruitment, earned income and committed battles will need an
 
 ## Evidence and next milestone
 
+The [shared headless combat adapter](HEADLESS-RIVAL-COMBAT.md) now resolves real isolated encounters in a worker. It does not yet claim camps or apply receipts to live rival companies; their automatic combat and earnings remain pending integration.
+
 Unit coverage checks activation/old saves, normal/night/mounted travel parity, six-hour rest and tool/medicine parity, real stock/prices, midnight bills, wound recovery, reload/partition determinism, dissolution without teleport/refill, malformed saves and inability to launch a placeholder NPC fight. Shared engine, cart, night, retinue, injury, legacy and world regressions cover the extracted services. Browser coverage checks actual endgame inspection/reload and iPad widths; campaign-start rivals are visible before any crisis and survive reload.
 
 `node tools/simulate-rivals.mjs` reproducibly runs three seeded 30/90-day supply-route simulations through the shared services and validates both checkpoints. This isolates rival scheduling; it does not simulate other NPC combat or claim iPad hardware performance. Contract counts, combat losses, XP gains and named acquisitions are all zero because those systems are not implemented. Record measured p95/max step times and save sizes instead of treating a unit-test pass as a frame-rate guarantee.
