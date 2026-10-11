@@ -47,9 +47,13 @@ Never bypass validation by uploading files directly. Failed browser traces are u
 when diagnosing failures.
 
 The repository must use Pages **GitHub Actions** publishing, not legacy branch
-publishing. The deployment job checks the setting and attempts to switch it
-using its scoped `pages: write` token. If GitHub refuses, deployment fails and
-an administrator must choose Actions in Settings → Pages → Build and deployment.
+publishing. A read-only publishing preflight checks this setting before running the full
+main release suite. It fails with the exact Settings link if legacy publishing
+is still enabled. The workflow token cannot change this administrator setting;
+an administrator must choose GitHub Actions in Settings → Pages → Build and
+deployment → Source. After switching, dispatch Verified release on main to build,
+publish and verify the stamped artifact. PR validation remains available while
+this one-time setup is pending.
 The connector's direct Pages-setting update is denied (HTTP 403).
 `Validate release` should also be a required branch check where an
 administrator can configure it. The current connector cannot read or edit
@@ -78,3 +82,7 @@ To update, open online and wait for **Offline ready**, then check Save / Menu.
 An offline app retains its installed version until reconnecting. Do not clear
 site data to update: that removes the device's company. Export a save backup
 when troubleshooting.
+
+A successful legacy Pages branch build is not release verification: it publishes
+the development `0.55.0` metadata and has no exact build commit. Do not claim the
+tested artifact was deployed unless **Verify live release** succeeds.
