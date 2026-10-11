@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {completedCompany} from '../tests/fixtures/legacy-company.mjs';
-import {advanceRivalSimulation,validateSave} from '../src/engine.js';
+import {createGame,advanceRivalSimulation,validateSave} from '../src/engine.js';
 const key='ashen-company-save-v1';
 test('endgame rivals can be scouted from the chronicle on iPad, expose their real roster, and persist across reload',async({page})=>{
  const state=completedCompany();state.inventory=[];state.inventoryCondition=[];advanceRivalSimulation(state);validateSave(state);
@@ -17,4 +17,4 @@ test('mounted rivals keep full-size bodies and reserve room for horses in the na
  const state=completedCompany();state.inventory=[];state.inventoryCondition=[];advanceRivalSimulation(state);state.position={...state.rivalCompanies.companies[2].position};
  await page.addInitScript(({key,state})=>{localStorage.setItem(key,JSON.stringify(state));},{key,state});await page.goto('./');await page.setViewportSize({width:768,height:768});await page.locator('[data-tab="journal"]').first().click();await page.locator('[data-rival-inspect="rival:bronze-oath"]').click();await expect(page.locator('.rival-roster>div')).toHaveCount(8);await expect(page.locator('.rival-mounted')).toHaveCount(2);expect(await page.locator('.rival-company-panel').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);expect(await page.locator('.rival-mounted .bb-portrait').first().evaluate(el=>el.getBoundingClientRect().width)).toBe(58);await page.screenshot({path:'/tmp/rival-mounted-ipad.png'});
 });
-test('pre-crisis campaigns do not show late-game rival bands',async({page})=>{await page.goto('./');await page.locator('[data-tab="journal"]').first().click();await expect(page.locator('.rival-journal')).toHaveCount(0);});
+test('campaign-start rivals are visible in the chronicle before any crisis and survive reload',async({page})=>{const state=createGame(17);advanceRivalSimulation(state);await page.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(state));},{key,state});await page.goto('./');await page.locator('[data-tab="journal"]').first().click();await expect(page.locator('.rival-journal')).toContainText('Other mercenary companies');await expect(page.locator('.rival-journal')).toContainText('Gilded Road');await page.reload();await page.locator('[data-tab="journal"]').first().click();await expect(page.locator('.rival-journal')).toContainText('Bronze Oath');});

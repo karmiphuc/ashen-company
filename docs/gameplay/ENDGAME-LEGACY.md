@@ -48,7 +48,7 @@ Defeat could record achievements and allow salvage only for an heirloom actually
 
 ## Planned: pressure during a continuing campaign
 
-[Rival companies](../plans/RIVAL-COMPANIES.md) now persist and establish supply routes after Ashen Winter; their [first milestone](../world/RIVAL-COMPANIES.md) has normal upkeep and no battle/contract rewards yet. They should earn their later growth through travel, contracts and real combat. Hostility escalates visibly and offers negotiation, intimidation, avoidance or fighting. Their actual roster and equipment determine an ambush.
+[Rival companies](../plans/RIVAL-COMPANIES.md) now persist and establish supply routes from campaign start; their [first milestone](../world/RIVAL-COMPANIES.md) has normal upkeep and no battle/contract rewards yet. They should earn their later growth through travel, contracts and real combat. Hostility escalates visibly and offers negotiation, intimidation, avoidance or fighting. Their actual roster and equipment determine an ambush.
 
 Endgame competitors can race the player for announced rare bounties, ancient expeditions or lucrative commissions, with explicit ownership/cooperation rules. Do not silently remove accepted player quests or inflate all enemies. The original longer-term crisis sequence remains Ashen first, then a faction war that can change borders; it is a separate design and not implemented by this legacy chain.
 

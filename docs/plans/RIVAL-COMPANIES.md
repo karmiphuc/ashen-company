@@ -4,7 +4,7 @@ Implementation plan: [issue #174](https://github.com/karmiphuc/ashen-company/iss
 
 ## Company identities and growth
 
-Start with three persistent companies: profitable contract specialists, aggressive camp hunters and disciplined faction-backed mercenaries. Reuse existing races, backgrounds, equipment, mounts and role AI. Authored starting budgets/rosters must be explicit; faction identity does not imply unlimited subsidies.
+Introduce three persistent companies from campaign start, including inherited campaigns; do not gate them behind Ashen Winter. Older saves introduce missing rivals at the current date without retroactive bills. Start with three persistent companies: profitable contract specialists, aggressive camp hunters and disciplined faction-backed mercenaries. Reuse existing races, backgrounds, equipment, mounts and role AI. Authored starting budgets/rosters must be explicit; faction identity does not imply unlimited subsidies.
 
 Each member retains HP, injuries, morale, XP, level, stats, equipment and condition. Earn XP through actual work and surviving combat. Implement ordinary, role-weighted stat growth first; random perk selection comes later, respects prerequisites/points and persists seeded choices. Until implemented, members keep starting perks without substitute hidden stat bonuses.
 

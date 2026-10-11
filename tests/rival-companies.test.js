@@ -9,12 +9,17 @@ import {rivalSidebarHTML,rivalJournalHTML} from '../src/rival-company-ui.js';
 function ready(){const {state}=entombedCompany();advanceRivalSimulation(state);return state;}
 function step(state,hours=.25){state.hour+=hours;if(state.hour>=24){state.day+=Math.floor(state.hour/24);state.hour%=24;}advanceRivalSimulation(state);}
 function hours(state,n){for(let i=0;i<n*4;i++)step(state);}
-test('three fixed endgame companies activate once at the current clock without retroactive bills or changing player progress',()=>{
- const fresh=createGame(17);advanceRivalSimulation(fresh);assert.equal(fresh.rivalCompanies,undefined);
+test('three fixed campaign companies activate once at the current clock without retroactive bills or changing player progress',()=>{
+ const fresh=createGame(17);advanceRivalSimulation(fresh);assert.equal(fresh.rivalCompanies.companies.length,3);assert.equal(fresh.rivalCompanies.startedHour,8);assert.deepEqual(validateSave(fresh).rivalCompanies,fresh.rivalCompanies);
  const {state}=entombedCompany(),before=structuredClone(state);advanceRivalSimulation(state);const saved=structuredClone(state.rivalCompanies);advanceRivalSimulation(state);assert.deepEqual(state.rivalCompanies,saved);
  assert.equal(saved.startedHour,(state.day-1)*24+state.hour);assert.deepEqual(saved.companies.map(c=>c.gold),[12000,9000,16000]);assert.deepEqual(saved.companies.map(c=>c.party.length),[6,7,8]);
  for(const company of saved.companies)for(const member of company.party){assert.equal(member.trainingPoints,0);assert.equal(member.pendingLevelUps.length,0);assert.equal(member.perks.length,0);assert.equal(member.xp,0);}
  delete state.rivalCompanies;assert.deepEqual(state,before);assert.equal(validateSave(before).rivalCompanies,undefined);
+});
+test('ordinary world ticks activate rivals before the crisis and migrate old saves without backdated upkeep',()=>{
+ const fresh=createGame(91);tick(fresh,.25);assert.equal(fresh.rivalCompanies.companies.length,3);assert.equal(fresh.rivalCompanies.startedHour,8.25);validateSave(fresh);
+ const old=createGame(92);old.hour=8.1;const restored=validateSave(old);assert.equal(restored.rivalCompanies,undefined);tick(restored,.15);
+ assert.equal(restored.rivalCompanies.startedHour,8.25);assert.deepEqual(restored.rivalCompanies.companies.map(c=>c.gold),[12000,9000,16000]);assert.ok(restored.rivalCompanies.companies.every(c=>c.ledger.wages===0&&c.ledger.provisions===0));validateSave(restored);
 });
 test('rival movement equals normal player movement with terrain, roads, mounts and night, and rest stops travel',()=>{
  for(const hour of [12,22]){

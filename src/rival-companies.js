@@ -1,7 +1,7 @@
 import { moveWorldToward, worldPointInBounds, worldBlocked } from './world-navigation.js';
 import { defaultRetinue } from './retinue.js';
 
-// Fixed endgame arrivals, independent of the player's strength or possessions.
+// Fixed campaign arrivals, independent of the player's strength or possessions.
 export const RIVAL_DEFINITIONS = Object.freeze([
  {id:'gilded-road',name:'Gilded Road',crest:'◇',color:'#ddbd65',identity:'Contract specialists',homes:['oakwatch','greyhaven','stonebridge'],size:6,level:3,gold:12000},
  {id:'red-jackals',name:'Red Jackals',crest:'⚒',color:'#d78068',identity:'Camp hunters',homes:['ironford','highpass','ravenfell'],size:7,level:4,gold:9000},
@@ -63,7 +63,7 @@ function nextDestination(company,context){
 }
 export function advanceRivalCompanies(world,context){
  const now=nowOf(world);
- if(world.rivalCompanies===undefined){if(world.ashenWinter?.phase!=='completed')return;world.rivalCompanies={version:1,startedHour:now,lastHour:now,companies:RIVAL_DEFINITIONS.map(d=>startingCompany(world,d,context))};return;}
+ if(world.rivalCompanies===undefined){world.rivalCompanies={version:1,startedHour:now,lastHour:now,companies:RIVAL_DEFINITIONS.map(d=>startingCompany(world,d,context))};return;}
  const record=world.rivalCompanies,elapsed=now-record.lastHour;if(elapsed<=1e-9)return;
  // Caller advances on the existing quarter-hour world schedule; never catch up a forged backlog.
  if(elapsed>.2500001)throw new TypeError('Invalid rival simulation clock');
@@ -102,7 +102,7 @@ export function validateRivalCompanies(input,world,context){
  if(input===undefined)return undefined;
  const check=(ok,label)=>{if(!ok)throw new TypeError(`Invalid rival companies: ${label}`);},count=n=>Number.isSafeInteger(n)&&n>=0&&n<=1000000000,time=n=>Number.isFinite(n)&&n>=0&&n<=nowOf(world),point=p=>keys(p,['x','y'])&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&worldPointInBounds(p)&&!worldBlocked(p);
  check(keys(input,['version','startedHour','lastHour','companies'])&&input.version===1,'version/fields');
- check(world.ashenWinter?.phase==='completed'&&time(input.startedHour)&&time(input.lastHour)&&input.lastHour>=input.startedHour&&[input.startedHour,input.lastHour].every(n=>Math.abs(n*4-Math.round(n*4))<1e-7)&&nowOf(world)-input.lastHour<.2500001,'clock/activation');
+ check(time(input.startedHour)&&time(input.lastHour)&&input.lastHour>=input.startedHour&&[input.startedHour,input.lastHour].every(n=>Math.abs(n*4-Math.round(n*4))<1e-7)&&nowOf(world)-input.lastHour<.2500001,'clock/activation');
  check(Array.isArray(input.companies)&&input.companies.length===3&&input.companies.every((c,i)=>c?.id===RIVAL_DEFINITIONS[i].id),'identities');
  const result=structuredClone(input);
  for(const company of result.companies){
