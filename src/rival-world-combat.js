@@ -33,6 +33,7 @@ export function planRivalCombat(world,context){
   // Contact has consequences even for sleeping, wounded or penniless rivals.
   const contact=!context.sanctuary(world,company.position)&&bands.filter(b=>available(b)&&Math.hypot(company.position.x-b.x,company.position.y-b.y)<=context.bandRadius).sort((a,b)=>a.id.localeCompare(b.id))[0];
   if(contact){reserve(company,contact);continue;}
+  if(world.pursuit===`rival:${company.id}`||context.huntingPlayer?.(world,company))continue;
   const ready=company.food>=context.food({...world,party:company.party,retinue:context.retinue()})*2&&!company.party.some(p=>p.hp<context.stats(p).maxHp*.65);
   if(company.targetCampId&&(!ready||rivalSaleableLoot(company,context))){company.targetCampId=null;continue;}
   if(company.targetCampId){

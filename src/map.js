@@ -603,14 +603,14 @@ function draw() {
 
   getRivalMapCompanies(state).filter(r=>r.active&&worldPointVisible(state,r)).forEach(r=>{
     context.save();drawActorGround(r.id,r.x,r.y);
-    if(selection===r.id){context.strokeStyle=r.color;context.lineWidth=2/camera.zoom;context.beginPath();context.ellipse(r.x,r.y+5,24,10,0,0,Math.PI*2);context.stroke();}
+    if(selection===r.id||r.playerRelation==='hostile'){context.strokeStyle=r.playerRelation==='hostile'?'#de7264':r.color;context.lineWidth=2/camera.zoom;context.beginPath();context.ellipse(r.x,r.y+5,24,10,0,0,Math.PI*2);context.stroke();}
     const flip=actorPoses.get(r.id)?.flip,bodyScale=Math.max(1,.55/camera.zoom);
     sprite(context,r.id==='rival:red-jackals'?'figure_player_berserker':r.id==='rival:bronze-oath'?'figure_player_assassin':'figure_player_party',r.x+5*bodyScale,r.y,34*bodyScale,.8,flip);
     if(r.size>1)sprite(context,'figure_player_ranger',r.x-10*bodyScale,r.y+2*bodyScale,27*bodyScale,.8,flip);
     drawRivalBanner(context,r.id,r.x+18*bodyScale,r.y-16*bodyScale,camera.zoom,selection===r.id,true);
     context.textAlign='center';context.fillStyle=r.color;
     context.font=`bold ${Math.max(10,9/camera.zoom)}px Arial`;context.strokeStyle='#142016';context.lineWidth=3/camera.zoom;
-    const label=camera.zoom>=.4||selection===r.id?`${r.name} · ${r.size}`:`${r.size}`;
+    const label=camera.zoom>=.4||selection===r.id?`${r.playerRelation==='hostile'?'⚔ ':''}${r.name} · ${r.size}`:`${r.size}`;
     context.strokeText(label,r.x,r.y+28*bodyScale);context.fillText(label,r.x,r.y+28*bodyScale);context.restore();
   });
 

@@ -459,3 +459,4 @@ body.world-screen>#time-of-day-indicator{display:none}
 .rival-roster .bb-portrait{margin-bottom:20px}
 
 .rival-banner{width:32px;height:38px;flex:none;vertical-align:middle}.rival-company-panel .location-header>.rival-banner{float:left;width:42px;height:50px;margin:0 10px 6px 0}.rival-banner-list strong{display:flex;align-items:center;gap:8px}
+.rival-war-notice{display:flex;align-items:center;justify-content:space-between;gap:8px;border-left:3px solid #de7264;padding:6px 9px;background:#5d262433;color:#f0b49b}.rival-war-notice .company-hint{flex:none}

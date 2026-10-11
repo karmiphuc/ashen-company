@@ -1,6 +1,6 @@
 # Rival companies: supply routes, goals and real combat
 
-Persistent rival companies now run supply routes, nearby camp expeditions and roaming band conflicts using the shared turn-based combat engine in a worker. They physically reach camps, retain real survivors, wounds, armor wear and ammo usage, and earn ordinary loot/XP with normal stat and random perk progression. **Paid contracts, recruitment, equipment purchases and attacks on the player remain pending.** No power-score victories or invented earnings are used. Accepted player contracts and story/crisis encounters are protected.
+Persistent rival companies now run supply routes, nearby camp expeditions and roaming band conflicts using the shared turn-based combat engine in a worker. They physically reach camps, retain real survivors, wounds, armor wear and ammo usage, and earn ordinary loot/XP with normal stat and random perk progression. **Paid contracts, recruitment, equipment purchases remain pending.** No power-score victories or invented earnings are used. Accepted player contracts and story/crisis encounters are protected.
 
 ## Activation and authored arrivals
 
@@ -54,7 +54,7 @@ At the deadline, the transaction applies actual survivor gear/HP/injuries, XP, s
 
 ## Evidence and next milestone
 
-The [shared headless combat adapter](HEADLESS-RIVAL-COMBAT.md) now resolves real isolated encounters in a worker. Its controller reserves encounters and commits real results to live companies. Paid contracts, equipment purchases, recruitment and player hostility remain pending.
+The [shared headless combat adapter](HEADLESS-RIVAL-COMBAT.md) now resolves real isolated encounters in a worker. Its controller reserves encounters and commits real results to live companies. Paid contracts, equipment purchases, recruitment remain pending.
 
 Unit coverage checks activation/old saves, daytime/mounted travel parity, nighttime camps/inns and dawn resume, six-hour rest and tool/medicine parity, real stock/prices, midnight bills, wound recovery, reload/partition determinism, dissolution without teleport/refill, malformed saves and inability to launch a placeholder NPC fight. Shared engine, cart, night, retinue, injury, legacy and world regressions cover the extracted services. Browser coverage checks actual endgame inspection/reload and iPad widths; campaign-start rivals are visible before any crisis and survive reload.
 
@@ -70,7 +70,7 @@ Historical baseline measured before nighttime sleep, after the lightweight suppl
 
 These are 8,640 quarter-hour steps per seed, not iPad measurements or combat-scheduler benchmarks. An earlier run with full armory projections on every supply quote and concurrent regression/browser work showed substantial timing outliers; the narrow shared quote path removes that unnecessary work. Hardware/browser profiling remains necessary before claiming the eventual full rival system meets frame targets.
 
-Next: paid contract claims, affordable gear purchases, recruitment and announced player hostility. The real combat adapter, bounded worker scheduler, encounter ownership and exactly-once camp/band outcomes are implemented. Preserve normal earned progression and costs in subsequent milestones.
+Next: paid contract claims, affordable gear purchases, recruitment. The real combat adapter, bounded worker scheduler, encounter ownership and exactly-once camp/band outcomes are implemented. Preserve normal earned progression and costs in subsequent milestones.
 
 ### Live simulation evidence
 
@@ -105,3 +105,33 @@ Ordinary spoils redirect a company toward the nearest reachable open town, using
 Town visits equip useful finds before selling up to twelve ordinary items per day at normal local prices and stock limits. Larger backlogs keep the company resting safely for the next day's sale instead of seeking another raid. Retained named reserves do not repeatedly force a selling trip. Gold proceeds enter the existing earned-income ledger; food, supplies and wages still cost real money. The existing save schema accepts any real settlement as a modern selling destination while preserving authored home-route indices for subsequent patrols. Legacy route validation remains unchanged.
 
 Equipment selection uses a conservative condition/fatigue/damage heuristic rather than a perfect build optimizer. Named perk combinations are preserved by native swaps, but shopping for equipment, second attachment/reserve-set optimization, recruitment and cargo trading are future work.
+
+## Declarations of war and faction warrants
+
+Diplomacy is checked once per campaign day, after live rival recovery/progression. Existing companies and saves retain their people, resources and jobs; a missing `rivalDiplomacy` record starts neutral, without retroactive declarations or bills. Its optional version-1 record tracks declaration/reason, faction warrant, elimination/claim state, pursuit cooldown and actual lost resources. The rival company/job schema remains version 2.
+
+| Company | Declaration requirements | Goal |
+|---|---|---|
+| Red Jackals | At least 14 actual days since rival activation, 5 surviving members, average level 7, 6,000 genuinely earned crowns | Predatory competition: demand exclusive hunting grounds and threaten companies refusing their toll |
+| Gilded Road | At least 28 actual days, 5 survivors, average level 8, 10,000 earned crowns and player renown 120 | Cautious commercial rivals escalate only after building a successful company |
+| Bronze Oath | Remains neutral | Lawful road wardens; no invented player/faction grievance |
+
+A declaration is permanent and immediately authorizes player engagement/pursuit. It appears in the chronicle, compact map hostility markings, the company's sidebar and a notification when issued. The short war notice has a touch-accessible explanation. Neutral, dissolved, town-sheltered and already-committed companies cannot be attacked. Declarations grant one day before rivals initiate pursuit.
+
+After the warning, a travelling hostile company may hunt within 180 world units only in daylight, outside accessible towns, with at least two days of food, all members above 65% health and estimated strength at least 1.1 times the player's visible company. Loot liquidation and recovery take priority. Movement uses ordinary company speed, terrain and mounts. Hostile companies avoid a visibly stronger player within 100 units using the existing physical detour budget. Sleep/town sanctuary, NPC fight ownership and encounter grace remain in force. A player pursuing a declared rival can catch it at night. Post-battle pursuit cooldown is 24 hours; this never prevents the player hunting remaining members.
+
+### Actual player-versus-rival combat
+
+Enemy units are built from the rival's persistent members, without camp difficulty/rank/champion stat promotions or new gear rolls. Their stats, learned and equipment-granted perks, roles, equipment, reserve sets, accessories, set bonuses, mounts, HP, injuries, morale and conditions are preserved. Enemy bows/crossbows spend the rival ammunition pool; thrown ammunition stays attached to the real weapon. Reload validation binds the enemy roster, owned equipment/perks and frozen purse to the live rival.
+
+After any result, dead members stay dead. Survivors retain wounds, durability, spent ammo and actual earned kill XP; their legal stat/random-perk upgrades use the existing rival progression service. Escaped members retain their HP and gear, and the company recovers normally without replacement troops. A retreat or partial victory cannot recreate defenders, refill ammunition or yield the same gear twice.
+
+Player victory salvages the defeated members' actual gear. Eliminating the last surviving member also exposes the real stash, provisions, tools, medicine, remaining ammo and treasury (subject to the normal 100,000-crown battle-loot ceiling). No random camp cash, supplies, bonus attachment rolls or duplicate named gear are generated. Transferred/lost resources balance through the diplomacy loss ledger. A rival victory can collect up to 1,000 actual player crowns; when the player loses or retreats, abandoned dead-player gear can enter the rival's normal 512-slot stash. This uses real possessions, not invented rewards.
+
+### Hard outlaw contract
+
+Once declared Jackals have at least 5 survivors, average level 8 and 8,000 earned crowns, the faction governing their current location issues a warrant. Its settlements may prioritize one `rival-bounty` on their existing weekly combat board. Offers require the live company still to meet the roster/level threshold; there is no stronger quest copy, extra fighters, teleport or special stat boost. Payment is the current summed member levels × 100 crowns, bounded to 3,000–9,000 at acceptance, plus 3 renown.
+
+The contract consumes the ordinary combat slot, leaving the letter and merchant slots available. Its bronze map navigation button pursues the real moving company and turns lime green after player elimination of its last member. Escaped survivors keep the objective open. Return to the issuing settlement for one payment; entering the town from nearby also settles ready contracts. The warrant is permanently marked claimed after payment. If the company falls elsewhere or dissolves, the contract is withdrawn without payment and frees the combat slot; weekly board consumption remains intact. Killing the company before taking the warrant grants its ordinary actual loot but no retroactive contract payment.
+
+Rival paid contracts, equipment purchases, recruitment, joining NPC battles and negotiated diplomacy remain future work. Wars do not replace the real economy with catch-up levels, respawns or subsidies.

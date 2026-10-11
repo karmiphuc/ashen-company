@@ -1,15 +1,12 @@
+import {rivalRelation,rivalHuntsPlayer,advanceRivalPlayerPursuit} from './rival-diplomacy.js';
 import {equipRivalLoot,rivalSaleableLoot} from './rival-equipment.js';
 import {RIVAL_GOALS,rivalStrength,bandStrength,rivalRiskMargin} from './rival-goals.js';
 import { rivalFightFor } from './rival-world-combat.js';
 import { nearestWorldPoint, moveWorldToward, worldPointInBounds, worldBlocked, worldRoute } from './world-navigation.js';
 import { defaultRetinue } from './retinue.js';
 
-// Fixed campaign arrivals, independent of the player's strength or possessions.
-export const RIVAL_DEFINITIONS = Object.freeze([
- {id:'gilded-road',name:'Gilded Road',crest:'◇',color:'#ddbd65',identity:'Contract specialists',homes:['oakwatch','greyhaven','stonebridge'],size:6,level:3,gold:12000},
- {id:'red-jackals',name:'Red Jackals',crest:'⚒',color:'#d78068',identity:'Camp hunters',homes:['ironford','highpass','ravenfell'],size:7,level:4,gold:9000},
- {id:'bronze-oath',name:'Bronze Oath',crest:'♜',color:'#9db7ce',identity:'Faction-backed veterans',homes:['ambercross','windrest','kargan'],size:8,level:5,gold:16000},
-].map(d=>Object.freeze({...d,homes:Object.freeze(d.homes)})));
+import {RIVAL_DEFINITIONS} from './rival-definitions.js';
+export {RIVAL_DEFINITIONS} from './rival-definitions.js';
 const definitions=new Map(RIVAL_DEFINITIONS.map(d=>[d.id,d]));
 const nowOf=state=>(state.day-1)*24+state.hour;
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -103,10 +100,13 @@ export function advanceRivalCompanies(world,context){
   // Sleep gates the interval's start: the last evening step can reach town,
   // but 05:45–06:00 never travels. Midnight upkeep still runs while asleep.
   if(sleepingAt(record.lastHour))continue;
+  if(record.version===2&&advanceRivalPlayerPursuit(world,company,context,elapsed))continue;
   const selling=record.version===2&&rivalSaleableLoot(company,context);
   if(selling)lootDestination(company,context);
   if(record.version===2&&!context.sanctuary(world,company.position)){
-   const threat=bands.filter(b=>!rivalFightFor(world,b.id)&&b.behavior!=='fighting'&&distance(company.position,b)<=100&&rivalStrength(company,context)<bandStrength(b,context)*rivalRiskMargin(company,context))
+   const ownStrength=rivalStrength(company,context),playerStrength=rivalRelation(world,company.id)==='hostile'?rivalStrength({party:world.party},context):0;
+   const playerThreat=playerStrength&&distance(company.position,world.position)<=100&&ownStrength<playerStrength*rivalRiskMargin(company,context)?{...world.position,id:'player-company',player:true}:null;
+   const threat=[...bands,...(playerThreat?[playerThreat]:[])].filter(b=>b.player||!rivalFightFor(world,b.id)&&b.behavior!=='fighting'&&distance(company.position,b)<=100&&ownStrength<bandStrength(b,context)*rivalRiskMargin(company,context))
     .sort((a,b)=>distance(company.position,a)-distance(company.position,b)||a.id.localeCompare(b.id))[0];
    if(threat){
     company.targetCampId=null;
@@ -143,15 +143,16 @@ export function advanceRivalCompanies(world,context){
  record.lastHour=now;
 }
 export function rivalCompanyMarkers(world){
- return (world.rivalCompanies?.companies??[]).map(company=>{const definition=definitions.get(company.id);return {goal:RIVAL_GOALS[company.id],id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',size:company.party.length};});
+ return (world.rivalCompanies?.companies??[]).map(company=>{const definition=definitions.get(company.id);return {goal:RIVAL_GOALS[company.id],id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',size:company.party.length,playerRelation:rivalRelation(world,company.id)};});
 }
 export function rivalCompanySites(world,context){
  return (world.rivalCompanies?.companies??[]).map(company=>{
   const definition=definitions.get(company.id),view=facade(world,company),target=context.settlements.find(t=>t.id===company.targetTownId),food=context.food(view),wages=company.party.reduce((sum,p)=>sum+context.stats(p).dailyWage,0);
   const town=sleepingAt(nowOf(world))?context.settlements.find(t=>distance(company.position,t)<=1e-7&&context.servicesAvailable(t.id)):null;
   const fight=rivalFightFor(world,company.id);
-  const activity=fight?'⚔ Fighting · '+context.camps(world).find(c=>c.id===fight.encounterId)?.name:company.status==='dissolved'?'Company dissolved':sleepingAt(nowOf(world))?town?`Staying at the inn in ${town.name} until dawn`:'Sleeping in camp until dawn':company.status==='travelling'?`Travelling to ${company.targetCampId?context.camps(world).find(c=>c.id===company.targetCampId)?.name??'a camp':target.name}`:'Resting and provisioning';
-  return {goal:RIVAL_GOALS[company.id],id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,identity:definition.identity,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',activity,targetTownId:target.id,party:company.party,gold:company.gold,food:company.food,supplies:company.supplies,ledger:company.ledger,dailyWages:wages,dailyFood:food,unpaidDays:company.unpaidDays,hungryDays:company.hungryDays,playerRelation:'neutral'};
+  const hunting=rivalHuntsPlayer(world,company,context);
+  const activity=hunting?'Hunting your company':fight?'⚔ Fighting · '+context.camps(world).find(c=>c.id===fight.encounterId)?.name:company.status==='dissolved'?'Company dissolved':sleepingAt(nowOf(world))?town?`Staying at the inn in ${town.name} until dawn`:'Sleeping in camp until dawn':company.status==='travelling'?`Travelling to ${company.targetCampId?context.camps(world).find(c=>c.id===company.targetCampId)?.name??'a camp':target.name}`:'Resting and provisioning';
+  return {goal:RIVAL_GOALS[company.id],id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,identity:definition.identity,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',activity,targetTownId:target.id,difficulty:3,enemies:company.party.map(p=>({name:p.name,...p.equipment})),behavior:hunting?'hunting-company':company.status,party:company.party,gold:company.gold,food:company.food,supplies:company.supplies,ledger:company.ledger,dailyWages:wages,dailyFood:food,unpaidDays:company.unpaidDays,hungryDays:company.hungryDays,playerRelation:rivalRelation(world,company.id),declaredHour:world.rivalDiplomacy?.companies[company.id]?.declaredHour??null,warReason:world.rivalDiplomacy?.companies[company.id]?.reason??null,outlawFaction:world.rivalDiplomacy?.companies[company.id]?.outlawFaction??null,sheltered:context.sanctuary(world,company.position),pursuing:rivalHuntsPlayer(world,company,context)};
  });
 }
 const keys=(object,expected)=>object&&typeof object==='object'&&!Array.isArray(object)&&Object.keys(object).length===expected.length&&expected.every(k=>Object.hasOwn(object,k));
@@ -165,7 +166,7 @@ export function validateRivalCompanies(input,world,context){
  const result=structuredClone(input);
  for(const company of result.companies){
   check(keys(company,[...companyKeys,...(modern?combatCompanyKeys:[])]),'company fields');
-  const definition=definitions.get(company.id);
+  const definition=definitions.get(company.id),losses=world.rivalDiplomacy?.companies[company.id]?.losses??{gold:0,food:0,tools:0,medicine:0,ammo:0};
   check(point(company.position)&&(modern?context.settlements.some(t=>t.id===company.targetTownId):definition.homes.includes(company.targetTownId)),'position/route');
   check(['resting','travelling','dissolved'].includes(company.status)&&Number.isFinite(company.restUntil)&&company.restUntil>=0&&company.restUntil<=input.lastHour+6.0000001,'rest state');
   check(Number.isInteger(company.routeIndex)&&company.routeIndex>=0&&company.routeIndex<definition.homes.length&& (modern||company.targetTownId===definition.homes[company.routeIndex]),'route index');
@@ -173,11 +174,11 @@ export function validateRivalCompanies(input,world,context){
   check(keys(company.supplies,['tools','medicine','ammo'])&&Object.values(company.supplies).every(n=>count(n)&&n<=10000),'supplies');
   check(keys(company.ledger,[...ledgerKeys,...(modern?earnedLedgerKeys:[])])&&Object.values(company.ledger).every(count),'ledger');
   check(company.ledger.purchases>=company.ledger.foodBought*2+company.ledger.toolsBought+company.ledger.medicineBought,'purchase accounting');
-  check(company.gold+company.ledger.wages+company.ledger.purchases===definition.gold+(company.ledger.goldEarned??0),'treasury accounting');
-  check(company.food+company.ledger.provisions===definition.size*3+company.ledger.foodBought+(company.ledger.foodLoot??0),'provision accounting');
-  check(company.supplies.tools+company.ledger.tools===8+company.ledger.toolsBought+(company.ledger.toolsLoot??0)&&company.supplies.medicine+company.ledger.medicine===5+company.ledger.medicineBought+(company.ledger.medicineLoot??0),'supply accounting');
+  check(company.gold+company.ledger.wages+company.ledger.purchases+losses.gold===definition.gold+(company.ledger.goldEarned??0),'treasury accounting');
+  check(company.food+company.ledger.provisions+losses.food===definition.size*3+company.ledger.foodBought+(company.ledger.foodLoot??0),'provision accounting');
+  check(company.supplies.tools+company.ledger.tools+losses.tools===8+company.ledger.toolsBought+(company.ledger.toolsLoot??0)&&company.supplies.medicine+company.ledger.medicine+losses.medicine===5+company.ledger.medicineBought+(company.ledger.medicineLoot??0),'supply accounting');
   check(Array.isArray(company.party)&&(modern?company.party.length<=definition.size:company.party.length===definition.size)&&company.party.every((p,i)=>modern?Array.from({length:definition.size},(_,j)=>`${company.id}-${j+1}`).includes(p?.id):p?.id===`${company.id}-${i+1}`),'roster');
-  if(modern){check(company.targetCampId===null||context.campId(company.targetCampId),'camp destination');check(count(company.lastHuntDay)&&company.lastHuntDay<=world.day,'hunt date');check(company.supplies.ammo+company.ledger.ammoUsed===company.ledger.ammoOpening+company.ledger.ammoLoot+company.ledger.ammoBought,'ammo accounting');}
+  if(modern){check(company.targetCampId===null||context.campId(company.targetCampId),'camp destination');check(count(company.lastHuntDay)&&company.lastHuntDay<=world.day,'hunt date');check(company.supplies.ammo+company.ledger.ammoUsed+losses.ammo===company.ledger.ammoOpening+company.ledger.ammoLoot+company.ledger.ammoBought,'ammo accounting');}
   company.party=context.validateMembers(company.party,world.day);
   check(Array.isArray(company.inventory)&&company.inventory.length<=context.stashCapacity&&company.inventory.every(id=>typeof id==='string'&&id.length<=16000&&context.getItem(id)),'stash');
   check(Array.isArray(company.inventoryCondition)&&company.inventoryCondition.length===company.inventory.length&&company.inventoryCondition.every((n,i)=>context.itemCondition(company.inventory[i])===null?n===null:count(n)&&n<=context.itemCondition(company.inventory[i])),'stash condition');
