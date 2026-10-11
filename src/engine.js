@@ -1,3 +1,5 @@
+import { restoreHeadlessCombat } from './headless-combat.js';
+import { planRivalCombat,commitRivalCombat,rivalCombatBarrier,rivalFightFor,applyRivalCampWear } from './rival-world-combat.js';
 import { spendRivalLevelUps } from './rival-progression.js';
 import { advanceRivalCompanies, rivalCompanySites, rivalCompanyMarkers, validateRivalCompanies } from './rival-companies.js';
 import { LEGACY_SET_SLOTS, LEGACY_TOMB_STAGES, initialEntombedLegacy, tombReady, tombGuardOutfit, tombRank } from './entombed-legacy.js';
@@ -2198,15 +2200,35 @@ function advanceClock(state, hours) {
   }
 }
 
+function rivalCampTarget(world,id) {
+ if(!isCampId(id))return null;
+ const progress=campRecord(world,id);if(progress.cleared)return null;
+ return {...(CAMP_BY_ID.get(id)??randomCamp(world,id,RANDOM_CAMP_IDS.indexOf(id),progress.generation)),generation:progress.generation};
+}
+function rivalScoutingCamps(world) {
+ return [...CAMP_SITES.map(c=>c.id),...RANDOM_CAMP_IDS].map(id=>{
+  const camp=rivalCampTarget(world,id);
+  return camp?{...camp,enemyCount:enemyRosterSize(world,camp.difficulty,camp.enemies.length),cleared:false}:{id,cleared:true};
+ });
+}
 function rivalContext(state) {
  return {settlements:SETTLEMENTS,normalize:normalizeMember,stats:getCompanyStats,food:getDailyFood,travelSpeed:getWorldTravelSpeed,
   train:trainAttributes,rest:applyRestRecovery,
   daily(view){recoverDailyInjuries(view);applyDailyUpkeep(view);},
   market:getProvisionMarket,buyFood,buySupplies,getItem,itemCondition,
   validateMembers(members,day){validateCompanyMembers(members,day);return members.map(normalizePersistedMember);},
-  servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable};
+  servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable,camps:getCampSites,targetCamp:rivalCampTarget,contracts:getActiveContracts,campId:isCampId,radius:CAMP_RADIUS,validateWorld:validateSave,checkpoint:restoreHeadlessCombat,injuries:validInjuries};
 }
-export function advanceRivalSimulation(state) { advanceRivalCompanies(state,rivalContext(state)); }
+export function advanceRivalSimulation(state) { commitRivalCombat(state,rivalContext(state));advanceRivalCompanies(state,rivalContext(state));if(state.rivalCompanies?.version===2)planRivalWorldCombat(state); }
+export function planRivalWorldCombat(state) {
+ planRivalCombat(state,{
+  ...rivalContext(state),retinue:defaultRetinue,camps:rivalScoutingCamps,skirmish:worldSkirmishFor,canReach:(from,to)=>Boolean(worldRoute(from,to)),
+  snapshot:world=>structuredClone({...world,
+   day:Math.floor(world.rivalCompanies.lastHour/24)+1,hour:world.rivalCompanies.lastHour%24,
+   inventory:[],inventoryCondition:[],cargo:{},log:[],rivalCompanies:{...world.rivalCompanies,jobs:[]}}),
+ });
+}
+
 export function getRivalMapCompanies(state) { return rivalCompanyMarkers(state); }
 export function getRivalCompanies(state) { return rivalCompanySites(state,rivalContext(state)); }
 export function trainRivalSurvivors(state) {
@@ -2241,6 +2263,7 @@ export function tick(state, hours) {
     const now = worldHours(state);
     const nextWorldStep = (Math.floor((now + 1e-9) / WORLD_STEP_HOURS) + 1) * WORLD_STEP_HOURS;
     const step = Math.min(remaining, Math.max(1e-9, nextWorldStep - now));
+    const rivalPending=rivalCombatBarrier(state,now+step);if(rivalPending)return rivalPending;
     let arrivedAction = null;
     let arrived = false;
     if (state.destinationAction?.type === 'caravan') {
@@ -2366,7 +2389,7 @@ export function getContractOffers(state, townId) {
     { id: `courier-${serial}`, type: 'courier', from: town.id, to: courierTarget.id, reward: courierReward, renown: 1 },
     { id: `supply-${serial}`, type: 'supply', from: town.id, to: supplyTarget.id, reward: supplyReward, renown: 2, goodId: good.id, quantity },
   ];
-  const availableCamps = getCampSites(state).filter(site => !site.cleared).sort((a, b) => distance(a, town) - distance(b, town));
+  const availableCamps = getCampSites(state).filter(site => !site.cleared&&!rivalFightFor(state,site.id)).sort((a, b) => distance(a, town) - distance(b, town));
   const camp = availableCamps[0];
   if (camp) offers.push({ id: `hunt-${serial}`, type: 'hunt', from: town.id, to: town.id, campId: camp.id, campGeneration:camp.generation, reward: camp.reward + Math.round(distance(camp, town) * .15 / 5) * 5, renown: 2 });
   const assaultCamp = availableCamps.find(site => site.difficulty >= 2) ?? camp;
@@ -2948,6 +2971,7 @@ function advanceStationaryTime(state, hours) {
     const now = worldHours(state);
     const nextWorldStep = (Math.floor((now + 1e-9) / WORLD_STEP_HOURS) + 1) * WORLD_STEP_HOURS;
     const step = Math.min(remaining, Math.max(1e-9, nextWorldStep - now));
+    const rivalPending=rivalCombatBarrier(state,now+step);if(rivalPending)return rivalPending;
     advanceClock(state, step);
     remaining -= step;
     const reachedWorldStep = Math.abs(worldHours(state) / WORLD_STEP_HOURS - Math.round(worldHours(state) / WORLD_STEP_HOURS)) < 1e-7;
@@ -3001,6 +3025,7 @@ function applyRestRecovery(state) {
 export function camp(state) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
+  const rivalPending=rivalCombatBarrier(state,worldHours(state)+6);if(rivalPending)return rivalPending;
   const interrupted = advanceStationaryTime(state, 6);
   if (interrupted) return interrupted;
   const {medicated,repairs} = applyRestRecovery(state);
@@ -3012,6 +3037,7 @@ export function camp(state) {
 export function forage(state) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
+  const rivalPending=rivalCombatBarrier(state,worldHours(state)+4);if(rivalPending)return rivalPending;
   const interrupted = advanceStationaryTime(state, 4);
   if (interrupted) return interrupted;
   const terrain = terrainAt(state.position.x, state.position.y);
@@ -3149,7 +3175,7 @@ export function getCampSites(state) {
     if (scaling.cavalry && enemies.length && camp.factionId!=='ancient') enemies[0].mount = rareEnemyMount(state.seed, camp.id, progress.generation, camp.x, camp.y);
     const discovery=discoveryBonuses(state,{...camp,generation:progress.generation});
     const champions=championRoster(state,{...camp,generation:progress.generation,enemies:rollEncounterNamed(state,{id:camp.id,generation:progress.generation},enemies)},getItem,championItemFactory(camp.factionId==='ancient'?'ancient':armoryTheme(regionAt(camp.x,camp.y).id),{affixes:encounterAffixes(state,camp.id,progress.generation)}));
-    return {...camp,discoveryBonuses:discovery,description:scaling.reinforcements?`${enemies.length} fighters hold this position. Veteran reinforcements have gathered as your company has grown.`:camp.description,kind:'camp',generation:progress.generation,veteranRank:scaling.rank,famedChance:(FAMED_CHANCES[camp.difficulty]??0)+discovery.famed/100,mountChance:camp.random&&camp.difficulty===3?(12+discovery.mount)/100:0,enemies:survivingWorldEnemies(state,id,progress.generation,champions),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
+    return {...camp,discoveryBonuses:discovery,description:scaling.reinforcements?`${enemies.length} fighters hold this position. Veteran reinforcements have gathered as your company has grown.`:camp.description,kind:'camp',rivalCompanyId:rivalFightFor(state,id)?.companyId??null,generation:progress.generation,veteranRank:scaling.rank,famedChance:(FAMED_CHANCES[camp.difficulty]??0)+discovery.famed/100,mountChance:camp.random&&camp.difficulty===3?(12+discovery.mount)/100:0,enemies:applyRivalCampWear(state,id,progress.generation,survivingWorldEnemies(state,id,progress.generation,champions)),cleared:progress.cleared,clearedDay:progress.cleared?state.camps[id].clearedDay:null,respawnHours:progress.cleared?Math.ceil(progress.respawnAt-worldHours(state)):0};
   });
 }
 
@@ -3303,6 +3329,7 @@ function beginBattle(state, encounterId, {enemyOpening=false,patrolId=null,locke
   const camp = lockedCamp ?? tomb ?? warrior ?? blacksmith ?? undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
   if (!camp) return result(false, 'That hostile group is no longer here.');
   if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${Math.ceil(camp.respawnHours/24)} days.`);
+  if(!isolated&&rivalFightFor(state,encounterId))return result(false,'Another mercenary company is fighting here. Wait for its battle report.');
   const npcFight=isolated?null:worldSkirmishFor(state,encounterId);
   // A player interception can happen before the next world-simulation step.
   // Bring the nearby patrol along instead of leaving it behind when no NPC
@@ -3368,16 +3395,16 @@ function beginBattle(state, encounterId, {enemyOpening=false,patrolId=null,locke
     return {
       ...(enemy.champion?{champion:true,championItemId:enemy.championItemId}:{}),
       id: `enemy-${(enemy.troopIndex ?? index) + 1}`, ...(undeadUnit ? { undeadTraitsVersion: 1, troopIndex: enemy.troopIndex } : {}), name: enemy.name, side: 'enemy', q: getItem(gear.weapon)?.ranged ? 12 + Math.floor(index / 12) : 11 - Math.floor(index / 12), r: 2 + DEPLOYMENT_ROW_OFFSET + FRONT_FORMATION[index % 12],
-      hp: enemy.savedDamage?.hp ?? hp, maxHp: hp, bodyArmor: enemy.savedDamage?.bodyArmor ?? enemy.entombedSet?.armor?.condition ?? armorMaximum(gear.armor), attachmentArmor: tomb?enemy.savedDamage?.attachmentArmor??enemy.entombedSet?.attachment?.condition??armorMaximum(gear.attachment):armorMaximum(gear.attachment), attachment2Armor:tomb?enemy.savedDamage?.attachment2Armor??enemy.entombedSet?.attachment2?.condition??armorMaximum(gear.attachment2):0, maxAttachment2Armor:armorMaximum(gear.attachment2), headArmor: enemy.savedDamage?.headArmor ?? enemy.entombedSet?.helmet?.condition ?? armorMaximum(gear.helmet),
+      hp: Math.min(enemy.savedDamage?.hp ?? hp,hp), maxHp: hp, bodyArmor: enemy.savedDamage?.bodyArmor ?? enemy.entombedSet?.armor?.condition ?? armorMaximum(gear.armor), attachmentArmor: enemy.savedDamage?.attachmentArmor??(tomb?enemy.entombedSet?.attachment?.condition??armorMaximum(gear.attachment):armorMaximum(gear.attachment)), attachment2Armor:tomb?enemy.savedDamage?.attachment2Armor??enemy.entombedSet?.attachment2?.condition??armorMaximum(gear.attachment2):0, maxAttachment2Armor:armorMaximum(gear.attachment2), headArmor: enemy.savedDamage?.headArmor ?? enemy.entombedSet?.helmet?.condition ?? armorMaximum(gear.helmet),
       maxBodyArmor: armorMaximum(gear.armor), maxAttachmentArmor: armorMaximum(gear.attachment), maxHeadArmor: armorMaximum(gear.helmet),
       shieldDurability: enemy.savedDamage?.shieldDurability ?? enemy.entombedSet?.shield?.condition ?? shieldMaximum(gear.shield), maxShieldDurability: shieldMaximum(gear.shield),
-      reserveShieldDurability: shieldMaximum(enemy.reserveShield), maxReserveShieldDurability: shieldMaximum(enemy.reserveShield), battleSetSwapped: false,
+      reserveShieldDurability: enemy.savedDamage?.reserveShieldDurability??shieldMaximum(enemy.reserveShield), maxReserveShieldDurability: shieldMaximum(enemy.reserveShield), battleSetSwapped: false,
       equipment: gear, reserveEquipment: { weapon: enemy.reserveWeapon ?? null, shield: enemy.reserveShield ?? null },
       throwingAmmo: { active: throwingCapacity(gear.weapon), reserve: throwingCapacity(enemy.reserveWeapon) }, accessories: [null, null],
       pocketDrawnFrom: null, pocketStowedWeapon: null, pocketStowedReload: 0, pocketDrawnRound: 0, reserveReload: 0, meleePhase: false,
       perks: role.perks, adaptation: 0, berserkRound: 0, frenzyUntilRound: 0, turnStartedRound: 0, freeSwapRound: 0, freeHealRound: 0,
       seed: hashSeed(`${state.seed}:${camp.id}:${enemy.troopIndex ?? index}`), alive: true,
-      morale: undeadUnit ? 60 : 55 + unitDifficulty * 8, fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
+      injuries:copyInjuries(enemy.savedDamage?.injuries??[]).map(wound=>({...wound,fresh:false,sourceId:null})),morale: enemy.savedDamage?.morale??(undeadUnit ? 60 : 55 + unitDifficulty * 8), fatigue: 0, ap: 9, reload: 0, shieldWallActive: false, aiTargetId: null, formationMovedRound: 0,
       spearwallActive: false, riposteActive: false, stunnedTurns: 0, stunProtected: false, pendingBerserkAp: 0,
       meleeSkill: 30 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.meleeSkill + bonus('meleeSkill'), rangedSkill: 28 + championSkill + unitDifficulty * 6 + rank * 4 + (rareMount?.hitBonus ?? 0) + role.rangedSkill + bonus('rangedSkill'),
       meleeDefense: 2 + championDefense + unitDifficulty * 2 + rank * 2 + shieldDefense + bonus('meleeDefense') + (rareMount?.meleeDefenseBonus ?? 0),

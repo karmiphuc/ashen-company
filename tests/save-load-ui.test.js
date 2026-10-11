@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {APP_VERSION} from '../src/release.js';
+import {RivalCombatController} from '../src/rival-combat-controller.js';
 const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
 const code=(name,next)=>app.slice(app.indexOf(`function ${name}(`),app.indexOf(`function ${next}(`));
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
@@ -17,9 +18,9 @@ test('Save menu renders the actual escaped load error instead of a literal templ
 
 test('rejected stored saves are preserved byte-for-byte and cannot be overwritten by autosave',()=>{
  const raw=' { "campaign" : "preserved" } ',storage=new Map([['save',raw]]),writes=[];
- const env={state:{newCompany:true},chosenTown:'oakwatch',SAVE_KEY:'save',unreadSave:false,corruptSave:null,saveError:'',saveProblem:false,localStorage:{getItem:key=>storage.get(key),setItem:(key,value)=>writes.push([key,value])},validateSave:()=>{throw Error('Invalid save: Ashen Winter town deadlines');},townAt:()=>null,toast(){}};
+ const env={RivalCombatController,state:{newCompany:true},chosenTown:'oakwatch',SAVE_KEY:'save',unreadSave:false,corruptSave:null,saveError:'',saveProblem:false,localStorage:{getItem:key=>storage.get(key),setItem:(key,value)=>writes.push([key,value])},validateSave:()=>{throw Error('Invalid save: Ashen Winter town deadlines');},townAt:()=>null,toast(){}};
  const load=app.slice(app.indexOf('try{const raw=localStorage.getItem(SAVE_KEY)'),app.indexOf("if(state.battle)tab='battle';"));
- runInNewContext(load+code('save','toast')+'save();',env);assert.equal(env.corruptSave,raw);assert.equal(env.saveError,'Invalid save: Ashen Winter town deadlines');assert.equal(env.unreadSave,true);assert.equal(writes.length,0);assert.equal(storage.get('save'),raw);
+ runInNewContext(load+code('save','toast')+'rivalCombat.pump(); save();',env);assert.equal(env.corruptSave,raw);assert.equal(env.saveError,'Invalid save: Ashen Winter town deadlines');assert.equal(env.unreadSave,true);assert.equal(writes.length,0);assert.equal(storage.get('save'),raw);
 });
 
 for(const recovery of [false,true])test(`export ${recovery?'recovery':'default'} downloads the preserved save rather than the fallback company`,async()=>{
