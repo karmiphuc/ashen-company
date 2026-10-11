@@ -30,6 +30,7 @@ function startingCompany(world,definition,context){
  for(const member of company.party){while(member.pendingLevelUps.length)context.train(view,member.id,[member.combatRole==='ranged'?'rangedSkill':'meleeSkill','meleeDefense','maxFatigue']);member.hp=context.stats(member).maxHp;}
  return company;
 }
+const sleepingAt=clock=>{const hour=clock%24;return hour>=20||hour<6;};
 function nightly(world,company,context,now){
  const view=facade(world,company,now),foodNeeded=context.food(view),wages=company.party.reduce((sum,p)=>sum+context.stats(p).dailyWage,0),gold=company.gold,food=company.food;
  const before=supplySnapshot(company);context.daily(view);retain(company,view,before);
@@ -72,6 +73,9 @@ export function advanceRivalCompanies(world,context){
   if(company.status==='dissolved')continue;
   if(midnight)nightly(world,company,context,now);
   if(company.status==='dissolved')continue;
+  // Sleep gates the interval's start: the last evening step can reach town,
+  // but 05:45–06:00 never travels. Midnight upkeep still runs while asleep.
+  if(sleepingAt(record.lastHour))continue;
   let target=context.settlements.find(t=>t.id===company.targetTownId);
   if(company.status==='resting'){
    if(distance(company.position,target)<=1e-7)shop(world,company,context,now);
@@ -94,7 +98,9 @@ export function rivalCompanyMarkers(world){
 export function rivalCompanySites(world,context){
  return (world.rivalCompanies?.companies??[]).map(company=>{
   const definition=definitions.get(company.id),view=facade(world,company),target=context.settlements.find(t=>t.id===company.targetTownId),food=context.food(view),wages=company.party.reduce((sum,p)=>sum+context.stats(p).dailyWage,0);
-  return {id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,identity:definition.identity,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',activity:company.status==='travelling'?`Travelling to ${target.name}`:company.status==='dissolved'?'Company dissolved':'Resting and provisioning',targetTownId:target.id,party:company.party,gold:company.gold,food:company.food,supplies:company.supplies,ledger:company.ledger,dailyWages:wages,dailyFood:food,unpaidDays:company.unpaidDays,hungryDays:company.hungryDays,playerRelation:'neutral'};
+  const town=sleepingAt(nowOf(world))?context.settlements.find(t=>distance(company.position,t)<=1e-7&&context.servicesAvailable(t.id)):null;
+  const activity=company.status==='dissolved'?'Company dissolved':sleepingAt(nowOf(world))?town?`Staying at the inn in ${town.name} until dawn`:'Sleeping in camp until dawn':company.status==='travelling'?`Travelling to ${target.name}`:'Resting and provisioning';
+  return {id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,identity:definition.identity,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',activity,targetTownId:target.id,party:company.party,gold:company.gold,food:company.food,supplies:company.supplies,ledger:company.ledger,dailyWages:wages,dailyFood:food,unpaidDays:company.unpaidDays,hungryDays:company.hungryDays,playerRelation:'neutral'};
  });
 }
 const keys=(object,expected)=>object&&typeof object==='object'&&!Array.isArray(object)&&Object.keys(object).length===expected.length&&expected.every(k=>Object.hasOwn(object,k));
