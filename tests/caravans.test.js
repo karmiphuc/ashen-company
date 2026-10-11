@@ -293,6 +293,8 @@ test('old active wagons keep their position while remaining travel doubles; old 
 
   const threatened = ironfordAttack();
   threatened.hour = 16;
+  // Align the rival clock with this manually positioned historical-save fixture.
+  threatened.rivalCompanies.lastHour = (threatened.day-1)*24+16;
   threatened.shipments.ironford.attackHour = 16;
   delete threatened.shipments.ironford.travelHours;
   delete threatened.shipments.ironford.travelStartHour;
@@ -305,6 +307,8 @@ test('old active wagons keep their position while remaining travel doubles; old 
 
   const fighting = ironfordAttack();
   fighting.hour = 16;
+  // Align the rival clock with this manually positioned historical-save fixture.
+  fighting.rivalCompanies.lastHour = (fighting.day-1)*24+16;
   const raider = getRoamingBands(fighting).find(row => row.id === fighting.shipments.ironford.attackerId);
   fighting.position = { x: raider.x, y: raider.y };
   assert.equal(pursueBand(fighting, raider.id).ok, true);
@@ -316,6 +320,8 @@ test('old active wagons keep their position while remaining travel doubles; old 
 
   const legacyLost = loseIronfordShipment();
   legacyLost.hour = 23;
+  // Align the rival clock with this manually positioned historical-save fixture.
+  legacyLost.rivalCompanies.lastHour = (legacyLost.day-1)*24+23;
   legacyLost.shipments.ironford.attackHour = 16;
   legacyLost.shipments.ironford.resolvedHour = 23;
   delete legacyLost.shipments.ironford.travelHours;

@@ -31,7 +31,7 @@ test('four actual side quests consume materials, earn contract/battle progress a
  at(s,'stonebridge');assert.equal(turnInLegacyQuest(s,3).ok,true);
  const camps=getCampSites(s).filter(c=>c.difficulty>=2&&!c.cleared).slice(0,3);assert.equal(camps.length,3);
  for(const camp of camps){win(s,camp);s=reload(s);}
- assert.equal(s.companyLegacy.victories.length,3);at(s,'ironford');assert.equal(turnInLegacyQuest(s,4).ok,false);s.day=30;s.renown=150;s.shipmentLegacyThroughDay=s.day;
+ assert.equal(s.companyLegacy.victories.length,3);at(s,'ironford');assert.equal(turnInLegacyQuest(s,4).ok,false);s.day=30;s.renown=150;s.shipmentLegacyThroughDay=s.day;if(s.rivalCompanies)s.rivalCompanies.lastHour=(s.day-1)*24+Math.floor(s.hour*4)/4;
  assert.equal(getCompanyLegacy(s).ready,true);const n=s.inventory.length;assert.equal(turnInLegacyQuest(s,4).ok,true);assert.equal(s.inventory.at(-1),itemId);assert.equal(s.inventoryCondition.at(-1),null);assert.equal(s.inventory.length,n+1);assert.equal(turnInLegacyQuest(s,4).ok,false);assert.deepEqual(reload(s),s);assert.match(legacyPanelHTML(s),/restored to the stash/);
 });
 test('retreat, easy and story battles do not advance the legacy challenge',()=>{

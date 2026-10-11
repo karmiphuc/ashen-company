@@ -175,7 +175,8 @@ test('ancient helmets ignore camp gains and shortage losses; removing one restor
   wearHelmet(state, wearer); wearer.morale = 50; normal.morale = 50;
   assert.equal(camp(state).ok, true);
   assert.equal(wearer.morale, 50); assert.equal(normal.morale, 59);
-  state.hour = 23.75; state.food = 0; state.gold = 0;
+  // This fixture jumps directly to the next midnight rather than simulating travel.
+  state.hour = 23.75; state.rivalCompanies.lastHour = (state.day-1)*24+state.hour; state.food = 0; state.gold = 0;
   tick(state, .25);
   assert.equal(wearer.morale, 50); assert.equal(normal.morale, 37);
   assert.deepEqual(validateSave(structuredClone(state)), state);
