@@ -1,3 +1,4 @@
+import { RivalCombatController } from './rival-combat-controller.js';
 import { rivalJournalHTML } from './rival-company-ui.js';
 import { getRivalCompanies } from './engine.js';
 import { readCompanyHistory, companyMemory, companyHistoryHTML } from './company-history.js';
@@ -77,6 +78,8 @@ let defaultBattleSpeed=4;
 try{const stored=localStorage.getItem(BATTLE_SPEED_KEY),saved=parseBattleSpeed(stored,4);if(saved!==0)defaultBattleSpeed=saved;if(stored==='3')localStorage.setItem(BATTLE_SPEED_KEY,'4');}catch{}
 let state=createGame(7391),tab='world',selected='captain',chosenTown='oakwatch',speed=0,slotFilter='all',marketTab='gear',toastTimer,saveProblem=false,corruptSave=null,unreadSave=false,saveError="";
 try{const raw=localStorage.getItem(SAVE_KEY);if(raw){try{state=validateSave(JSON.parse(raw));chosenTown=townAt(state)?.id||'oakwatch';}catch(error){unreadSave=true;corruptSave=raw;saveError=error.message;}}}catch{saveProblem=true;}
+const rivalCombat=new RivalCombatController({world:()=>unreadSave?null:state,onChange:(_world,checkpoint)=>{if(checkpoint.status==='settled'||performance.now()-lastRivalSave>2000){save();lastRivalSave=performance.now();}}});
+let lastRivalSave=0,rivalPendingToast=false,rivalRestBusy=false;
 if(state.battle)tab='battle';
 let catalogCollection='all';
 let marketReturnScroll=null;
@@ -259,7 +262,7 @@ function settings(){showModal('Save & offline play',`<p>Your company is saved on
 function exportSave(recovery=false){const preserved=(recovery||unreadSave)&&corruptSave!==null;const text=preserved?corruptSave:JSON.stringify(state,null,2);const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=preserved?'ashen-company-damaged-save.json':`ashen-company-day-${state.day}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);toast('Save exported. Keep the file as a backup.');}
 function startTravel(x,y){const r=travelTo(state,x,y);toast(r.message);if(r.ok){speed=1;tab='world';$('#modal').close();save();render();}}
 document.addEventListener('change',event=>{const input=event.target;if(input.hasAttribute('data-world-fog')){setWorldFogEnabled(input.checked);updateMap(state);render();return;}if(input.dataset.marketFilter){const kind=input.dataset.marketFilter;if(kind==='slot')marketSlot=input.value;else if(kind==='sort')marketSort=input.value;else if(kind==='affordable')marketAffordable=input.checked;else if(kind==='rare')marketRare=input.checked;market();document.querySelector(`[data-market-filter="${kind}"]`)?.focus({preventScroll:true});return;}if(input.dataset.companyAutomation){const r=setCompanyAutomation(state,input.dataset.companyAutomation,input.checked);toast(r.message);save();render();if($('#modal').open){if($('#modal [data-market-tab]')){marketTab='supplies';market();}else settings();$('#modal [data-company-automation="'+input.dataset.companyAutomation+'"]')?.focus();}else $('[data-company-automation="'+input.dataset.companyAutomation+'"]')?.focus();return;}if(input.dataset.keepLoot===undefined)return;const index=Number(input.dataset.keepLoot);lootKeepSelection=input.checked?[...new Set([...lootKeepSelection,index])]:lootKeepSelection.filter(value=>value!==index);const scroll=captureScrollState();render();restoreScrollState(scroll);document.querySelector(`[data-keep-loot="${index}"]`)?.focus({preventScroll:true});});
-document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
+document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
  if(b.hasAttribute('data-company-hint')){if(companyHintButton===b&&companyHintPinned)closeCompanyHint();else openCompanyHint(b,true);return;}
  if(b.dataset.warriorTurnin!==undefined){const r=turnInWarriorQuest(state,Number(b.dataset.warriorTurnin));toast(r.message);if(r.ok){save();render();}return;}
  if(b.dataset.warriorTown){$('#modal').close();tab='world';chosenCamp=null;chosenTown=b.dataset.warriorTown;render();focusMap(town(chosenTown));return;}
@@ -340,7 +343,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
  case 'hire-bounty-hunter':retinueTransaction(hireBountyHunter);break;
  case 'upgrade-scout':retinueTransaction(upgradeScout);break;
  case 'close-modal':marketReturnScroll=null;$('#modal').close();if(state.battle)render();break;case 'market':returnToMarket();break;case 'contracts':contracts();break;case 'recruit':recruitModal();break;
- case 'camp':speed=0;run(camp);break;case 'forage':speed=0;run(forage);if($('#modal').open)market();break;
+ case 'camp':case 'forage':{if(rivalRestBusy)break;speed=0;rivalRestBusy=true;b.disabled=true;const restingCompany=state;try{await rivalCombat.flush();if(state!==restingCompany)break;run(b.dataset.action==='camp'?camp:forage);if(b.dataset.action==='forage'&&$('#modal').open)market();}catch{toast('Battle reports are temporarily unavailable. Your company is preserved; try again shortly.');}finally{rivalRestBusy=false;b.disabled=false;}break;}
  case 'go-company':$('#modal').close();tab='company';slotFilter='all';render();break;case 'settings':settings();break;
  case 'find-company':if(state.battle){focusBattleCamera('company');}else{tab='world';render();focusMap(state.position);window.scrollTo({top:0,behavior:'auto'});}break;
  case 'center':focusMap(state.position);break;case 'zoom-in':zoomMap(1.25);break;case 'zoom-out':zoomMap(.8);break;
@@ -403,6 +406,7 @@ async function fastResolveSimultaneous(){
 let last=performance.now(),lastSave=0,lastCombatResources=0,lastHour='';
 function animate(now){
  const elapsed=Math.min((now-last)/1000,.25);last=now;
+ if(!document.hidden)rivalCombat.pump();
  if(!document.hidden&&!$('#modal').open){
   if(state.battle?.simultaneous&&state.battle.status!=='active'&&!battleResultAt&&$('.simultaneous-battle')){stopSimultaneousWorker();battleResultAt=now+battlePresentationHold(state.battle,battleSpeed);save();render();}
   if(battleResultAt&&state.battle?.simultaneous)advanceBattlePresentation($('#main'),state.battle,battleSpeed);
@@ -422,7 +426,7 @@ function animate(now){
   }
   else if(state.battle?.status==='active'&&battleSpeed){battleElapsed+=elapsed;if(battleElapsed>=battleActionDuration(battleSpeed,state.battle?.lastEvent)){battleElapsed=0;advanceBattle(state);if(state.battle.status!=='active')battleResultAt=now+battleActionDuration(battleSpeed,state.battle?.lastEvent)*1000;if(state.battle.status!=='active'){save();render(true);}else{gameAudio.playEvent(state.battle.lastEvent,battleActionDuration(battleSpeed,state.battle.lastEvent),{cinematic:battleSpeed==='cinematic'});if(!updateTurnBattleView($('#main'),state.battle,battleSpeed))render(true);if(now-lastSave>=2000){save();lastSave=now;}if(now-lastCombatResources>=250){resources();lastCombatResources=now;}}}}
   else if(!state.battle&&speed&&tab==='world'){
-   const before=getActiveContracts(state).length,wasTraveling=!!state.destination,wasPursuing=!!state.pursuit,tickResult=tick(state,elapsed*(speed===1?.84:1.68));if(state.battle){toast(tickResult?.message||'The company catches the band. Battle begins.');enterBattleView();requestAnimationFrame(animate);return;}if(tickResult?.blockedTown){handleBlockade(tickResult);save();render();toast(tickResult.message);requestAnimationFrame(animate);return;}if(tickResult?.openTown){speed=0;chosenTown=tickResult.openTown;chosenCamp=null;tab='town';save();render();toast(tickResult.message);requestAnimationFrame(animate);return;}updateMap(state);const key=`${state.day}-${Math.floor(state.hour*4)}`;if(key!==lastHour){updateSpeed(true);resources();lastHour=key;const banner=$('#crisis-banner');if(banner)banner.innerHTML=crisisBannerHTML(state,true);const side=$('.world-sidebar');if(side&&document.activeElement?.id!=='destinations')side.innerHTML=sidebarHTML();}
+   const before=getActiveContracts(state).length,wasTraveling=!!state.destination,wasPursuing=!!state.pursuit,tickResult=tick(state,elapsed*(speed===1?.84:1.68));if(tickResult?.rivalPending){if(!rivalPendingToast)toast(tickResult.message);rivalPendingToast=true;}else rivalPendingToast=false;if(state.battle){toast(tickResult?.message||'The company catches the band. Battle begins.');enterBattleView();requestAnimationFrame(animate);return;}if(tickResult?.blockedTown){handleBlockade(tickResult);save();render();toast(tickResult.message);requestAnimationFrame(animate);return;}if(tickResult?.openTown){speed=0;chosenTown=tickResult.openTown;chosenCamp=null;tab='town';save();render();toast(tickResult.message);requestAnimationFrame(animate);return;}updateMap(state);const key=`${state.day}-${Math.floor(state.hour*4)}`;if(key!==lastHour){updateSpeed(true);resources();lastHour=key;const banner=$('#crisis-banner');if(banner)banner.innerHTML=crisisBannerHTML(state,true);const side=$('.world-sidebar');if(side&&document.activeElement?.id!=='destinations')side.innerHTML=sidebarHTML();}
    if(wasTraveling&&!state.destination){speed=0;chosenTown=townAt(state)?.id||chosenTown;save();render();toast(before>getActiveContracts(state).length?'Contract fulfilled. Payment received.':wasPursuing?'The company catches the band. Ready to engage.':chosenCamp?.startsWith('shipment:')?'The caravan journey has ended. Check its report.':chosenCamp?'The company reaches the hostile location. Inspect the enemy before engaging.':'The company has arrived.');}
    if(now-lastSave>2000){save();lastSave=now;}
   }
