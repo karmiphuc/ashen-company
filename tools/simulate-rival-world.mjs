@@ -19,6 +19,6 @@ for(const seed of [12,13,14]){
  }
  console.error(`Completed seed ${seed}: ${fights} real fights, ${losses} losses`);
  const restored=validateSave(JSON.parse(JSON.stringify(world)));assert.deepEqual(restored.rivalCompanies,world.rivalCompanies);
- results.push({seed,days,fights,losses,saveBytes:Buffer.byteLength(JSON.stringify(world)),companies:world.rivalCompanies.companies.map(c=>({id:c.id,members:c.party.length,gold:c.gold,earned:c.ledger.goldEarned,food:c.food,ammo:c.supplies.ammo,levels:c.party.map(p=>p.level),perks:c.party.map(p=>p.perks.length)}))});
+ results.push({seed,days,fights,losses,saveBytes:Buffer.byteLength(JSON.stringify(world)),declarations:Object.entries(world.rivalDiplomacy?.companies??{}).filter(([,e])=>e.declaredHour!==null).map(([id,e])=>({id,reason:e.reason,outlawFaction:e.outlawFaction})),companies:world.rivalCompanies.companies.map(c=>({id:c.id,members:c.party.length,gold:c.gold,earned:c.ledger.goldEarned,food:c.food,ammo:c.supplies.ammo,levels:c.party.map(p=>p.level),perks:c.party.map(p=>p.perks.length)}))});
 }
 console.log(JSON.stringify(results,null,2));
