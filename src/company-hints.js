@@ -1,0 +1,2 @@
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function companyHintHTML(id,label,detail){const key=`company-hint-${id}`;return `<span class="company-hint"><button type="button" class="company-hint-button" data-company-hint aria-label="About ${esc(label)}" aria-describedby="${esc(key)}" aria-expanded="false">?</button><span class="company-hint-tip" id="${esc(key)}" role="tooltip" hidden><strong>${esc(label)}</strong><span>${esc(detail)}</span></span></span>`;}

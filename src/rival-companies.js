@@ -1,5 +1,6 @@
+import {RIVAL_GOALS,rivalStrength,bandStrength} from './rival-goals.js';
 import { rivalFightFor } from './rival-world-combat.js';
-import { moveWorldToward, worldPointInBounds, worldBlocked } from './world-navigation.js';
+import { nearestWorldPoint, moveWorldToward, worldPointInBounds, worldBlocked } from './world-navigation.js';
 import { defaultRetinue } from './retinue.js';
 
 // Fixed campaign arrivals, independent of the player's strength or possessions.
@@ -72,6 +73,7 @@ export function advanceRivalCompanies(world,context){
  // Caller advances on the existing quarter-hour world schedule; never catch up a forged backlog.
  if(elapsed>.2500001)throw new TypeError('Invalid rival simulation clock');
  const midnight=Math.floor(now/24)>Math.floor(record.lastHour/24);
+ const bands=record.version===2?context.bands(world):[];
  for(const company of record.companies){
   if(company.status==='dissolved')continue;
   if(midnight)nightly(world,company,context,now);
@@ -79,6 +81,20 @@ export function advanceRivalCompanies(world,context){
   // Sleep gates the interval's start: the last evening step can reach town,
   // but 05:45–06:00 never travels. Midnight upkeep still runs while asleep.
   if(sleepingAt(record.lastHour))continue;
+  if(record.version===2&&!context.sanctuary(world,company.position)){
+   const threat=bands.filter(b=>!rivalFightFor(world,b.id)&&b.behavior!=='fighting'&&distance(company.position,b)<=100&&rivalStrength(company,context)<bandStrength(b,context)*RIVAL_GOALS[company.id].margin)
+    .sort((a,b)=>distance(company.position,a)-distance(company.position,b)||a.id.localeCompare(b.id))[0];
+   if(threat){
+    company.targetCampId=null;
+    const home=context.settlements.find(t=>t.id===company.targetTownId),dx=company.position.x-threat.x,dy=company.position.y-threat.y;
+    const budget=context.travelSpeed(facade(world,company,record.lastHour))*elapsed;
+    const candidates=[home,...Array.from({length:8},(_,i)=>{const angle=Math.atan2(dy,dx)+i*Math.PI/4;return nearestWorldPoint({x:company.position.x+Math.cos(angle)*100,y:company.position.y+Math.sin(angle)*100});})];
+    const escape=candidates.filter(p=>p&&worldPointInBounds(p)).map(target=>{const position={...company.position};moveWorldToward(position,target,budget);return position;})
+      .filter(p=>distance(p,threat)>distance(company.position,threat)+1e-7).sort((a,b)=>distance(b,threat)-distance(a,threat))[0];
+    if(escape)Object.assign(company.position,escape);
+    continue;
+   }
+  }
   let target=company.targetCampId?context.targetCamp(world,company.targetCampId):context.settlements.find(t=>t.id===company.targetTownId);
   if(!target){company.targetCampId=null;target=context.settlements.find(t=>t.id===company.targetTownId);}
   if(company.status==='resting'){
@@ -97,7 +113,7 @@ export function advanceRivalCompanies(world,context){
  record.lastHour=now;
 }
 export function rivalCompanyMarkers(world){
- return (world.rivalCompanies?.companies??[]).map(company=>{const definition=definitions.get(company.id);return {id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',size:company.party.length};});
+ return (world.rivalCompanies?.companies??[]).map(company=>{const definition=definitions.get(company.id);return {goal:RIVAL_GOALS[company.id],id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',size:company.party.length};});
 }
 export function rivalCompanySites(world,context){
  return (world.rivalCompanies?.companies??[]).map(company=>{
@@ -105,7 +121,7 @@ export function rivalCompanySites(world,context){
   const town=sleepingAt(nowOf(world))?context.settlements.find(t=>distance(company.position,t)<=1e-7&&context.servicesAvailable(t.id)):null;
   const fight=rivalFightFor(world,company.id);
   const activity=fight?'⚔ Fighting · '+context.camps(world).find(c=>c.id===fight.encounterId)?.name:company.status==='dissolved'?'Company dissolved':sleepingAt(nowOf(world))?town?`Staying at the inn in ${town.name} until dawn`:'Sleeping in camp until dawn':company.status==='travelling'?`Travelling to ${company.targetCampId?context.camps(world).find(c=>c.id===company.targetCampId)?.name??'a camp':target.name}`:'Resting and provisioning';
-  return {id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,identity:definition.identity,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',activity,targetTownId:target.id,party:company.party,gold:company.gold,food:company.food,supplies:company.supplies,ledger:company.ledger,dailyWages:wages,dailyFood:food,unpaidDays:company.unpaidDays,hungryDays:company.hungryDays,playerRelation:'neutral'};
+  return {goal:RIVAL_GOALS[company.id],id:`rival:${company.id}`,kind:'rival',name:definition.name,crest:definition.crest,color:definition.color,identity:definition.identity,x:company.position.x,y:company.position.y,active:company.status!=='dissolved',activity,targetTownId:target.id,party:company.party,gold:company.gold,food:company.food,supplies:company.supplies,ledger:company.ledger,dailyWages:wages,dailyFood:food,unpaidDays:company.unpaidDays,hungryDays:company.hungryDays,playerRelation:'neutral'};
  });
 }
 const keys=(object,expected)=>object&&typeof object==='object'&&!Array.isArray(object)&&Object.keys(object).length===expected.length&&expected.every(k=>Object.hasOwn(object,k));
@@ -148,18 +164,19 @@ function validateCombatRecords(record,world,context,check,count){
  check(Array.isArray(record.jobs)&&record.jobs.length<=3,'combat jobs');
  for(const job of record.jobs){
   check(keys(job,['companyId','encounterId','generation','startedHour','endHour','source','checkpoint'])&&definitions.has(job.companyId)&&context.campId(job.encounterId)&&!companies.has(job.companyId)&&!camps.has(job.encounterId),'combat ownership');companies.add(job.companyId);camps.add(job.encounterId);
-  check(Number.isFinite(job.startedHour)&&job.startedHour>=0&&job.startedHour<=now&&job.startedHour%24>=6&&job.startedHour%24<=14&&Math.abs(job.startedHour*4-Math.round(job.startedHour*4))<1e-7&&job.endHour===job.startedHour+6&&now<=job.endHour&&count(job.generation),'combat clock');
+  check(Number.isFinite(job.startedHour)&&job.startedHour>=0&&job.startedHour<=now&&(context.bandId(job.encounterId)||job.startedHour%24>=6&&job.startedHour%24<=14)&&Math.abs(job.startedHour*4-Math.round(job.startedHour*4))<1e-7&&job.endHour===job.startedHour+(context.bandId(job.encounterId)?.25:6)&&now<=job.endHour&&count(job.generation),'combat clock');
   check(job.source?.rivalCompanies?.version===2&&job.source.rivalCompanies.jobs.length===0&&JSON.stringify(job.source).length<=300000&&nowOf(job.source)===job.startedHour,'combat source');
   job.source=context.validateWorld(job.source);
-  const initial=job.source.rivalCompanies.companies.find(c=>c.id===job.companyId),owner=record.companies.find(c=>c.id===job.companyId),camp=context.camps(job.source).find(c=>c.id===job.encounterId);
-  check(owner.status!=='dissolved'&&owner.lastHuntDay===world.day&&camp&&!camp.cleared&&camp.generation===job.generation&&Math.hypot(owner.position.x-camp.x,owner.position.y-camp.y)<=context.radius,'combat contact');
+  const initial=job.source.rivalCompanies.companies.find(c=>c.id===job.companyId),owner=record.companies.find(c=>c.id===job.companyId),camp=context.encounter(job.source,job.encounterId);
+  check(owner.status!=='dissolved'&&owner.lastHuntDay===Math.floor(job.startedHour/24)+1&&camp&&!camp.cleared&&(camp.generation??camp.spawnCycle)===job.generation&&Math.hypot(owner.position.x-camp.x,owner.position.y-camp.y)<=context.radius,'combat contact');
+  if(context.bandId(job.encounterId)){const current=world.bands?.[job.encounterId],initialBand=job.source.bands[job.encounterId];check(current&&current.spawnCycle===job.generation&&current.x===initialBand.x&&current.y===initialBand.y&&current.defeatedUntil===initialBand.defeatedUntil,'frozen band participants');}
   for(const key of ['party','position','gold','food','supplies','inventory','inventoryCondition','cargo'])check(JSON.stringify(owner[key])===JSON.stringify(initial[key]),'frozen combat participants');
-  check(!world.battle||world.battle.campId!==job.encounterId,'player combat conflict');check(!context.contracts(world).some(c=>c.campId===job.encounterId),'accepted contract conflict');
+  check((!world.battle||world.battle.campId!==job.encounterId)&&world.pursuit!==job.encounterId,'player combat conflict');check(!context.contracts(world).some(c=>c.campId===job.encounterId),'accepted contract conflict');
   if(job.checkpoint!==null){check(JSON.stringify(job.checkpoint).length<=750000,'checkpoint size');check(job.checkpoint.world?.rivalCompanies?.jobs?.length===0&&JSON.stringify(job.checkpoint.world)===JSON.stringify(job.source),'checkpoint source');job.checkpoint=context.checkpoint(job.checkpoint);check(job.checkpoint.companyId===job.companyId&&job.checkpoint.encounterId===job.encounterId,'checkpoint owner');}
  }
  check(Array.isArray(record.reports)&&record.reports.length<=12,'combat reports');
  for(const report of record.reports)check(keys(report,['companyId','encounterId','outcome','losses','gold','hour'])&&definitions.has(report.companyId)&&context.campId(report.encounterId)&&['victory','defeat','retreat'].includes(report.outcome)&&count(report.losses)&&report.losses<=8&&Number.isSafeInteger(report.gold)&&report.gold>=0&&report.gold<=1e9&&Number.isFinite(report.hour)&&report.hour>=0&&report.hour<=now,'combat report');
- check(record.campWear&&typeof record.campWear==='object'&&!Array.isArray(record.campWear)&&Object.keys(record.campWear).length<=64,'camp wear');
+ check(record.campWear&&typeof record.campWear==='object'&&!Array.isArray(record.campWear)&&Object.keys(record.campWear).length<=128,'camp wear');
  for(const [id,wear]of Object.entries(record.campWear)){
   check(context.campId(id)&&keys(wear,['generation','units'])&&count(wear.generation)&&Array.isArray(wear.units)&&wear.units.length>0&&wear.units.length<=20&&new Set(wear.units.map(u=>u.index)).size===wear.units.length,'camp wear identities');
   for(const unit of wear.units)check(keys(unit,['index','hp','bodyArmor','headArmor','shieldDurability','reserveShieldDurability','attachmentArmor','morale','injuries'])&&Object.entries(unit).every(([key,value])=>key==='injuries'?context.injuries(value,world.day):count(value))&&unit.index<20&&unit.hp>0&&unit.hp<=10000&&unit.bodyArmor<=10000&&unit.headArmor<=10000&&unit.shieldDurability<=10000&&unit.reserveShieldDurability<=10000&&unit.attachmentArmor<=10000&&unit.morale<=100,'camp wear values');

@@ -1,6 +1,6 @@
-# Rival companies: persistent supply-route foundation
+# Rival companies: supply routes, goals and real combat
 
-Persistent rival companies now run supply routes and nearby camp expeditions using the shared turn-based combat engine in a worker. They physically reach camps, retain real survivors, wounds, armor wear and ammo usage, and earn ordinary loot/XP with normal stat and random perk progression. **Paid contracts, recruitment, equipment upgrades and attacks on the player remain pending.** No power-score victories or invented earnings are used. Accepted player contracts and story/crisis encounters are protected.
+Persistent rival companies now run supply routes, nearby camp expeditions and roaming band conflicts using the shared turn-based combat engine in a worker. They physically reach camps, retain real survivors, wounds, armor wear and ammo usage, and earn ordinary loot/XP with normal stat and random perk progression. **Paid contracts, recruitment, equipment upgrades and attacks on the player remain pending.** No power-score victories or invented earnings are used. Accepted player contracts and story/crisis encounters are protected.
 
 ## Activation and authored arrivals
 
@@ -40,7 +40,7 @@ Three consecutive unpaid or hungry nights dissolve the company in place. The fin
 
 ## Inspection and persistence
 
-Each company has a permanent swallowtail banner with its own color, crest and stripe pattern, distinct from bandit sprites and their small difficulty flags. The banner remains readable at overview zoom and is repeated beside the company name in inspection and the chronicle. Visible world-map banners show company identity and member count. Select a crest, or use **Chronicle → Other banners → Scout** when within normal scouting range. Compact two-column roster cards show real names, levels, HP and equipment portraits. Supply/treasury indicators have accessible labels; accounting and unfinished progression details sit behind expandable hints. Unseen companies do not expose map locations through a scout action.
+Each company has a permanent swallowtail banner with its own color, crest and stripe pattern, distinct from bandit sprites and their small difficulty flags. The banner remains readable at overview zoom and is repeated beside the company name in inspection and the chronicle. Visible world-map parties carry compact company heraldry and member counts. Select a party, or use **Chronicle → Other banners → Scout** when within normal scouting range. Compact two-column roster cards show real names, levels, HP and equipment portraits. Supply/treasury indicators have accessible labels; accounting and unfinished progression details sit behind expandable hints. Unseen companies do not expose map locations through a scout action.
 
 The optional `rivalCompanies` record accepts the original version-1 supply routes. The live controller migrates these to version 2 without changing any resources, levels, gear, shortages or dissolution. Version 2 adds camp destinations, last expedition date, earned-income/ammo ledgers, up to three reservations, twelve recent reports and bounded defender wear records. Casualties reduce the original roster; no replacements are generated. Jobs save their fixed source and acknowledged running/settled checkpoint, with no nested jobs inside those source snapshots. Save validation checks ownership, contact, clocks, frozen resources, shared battle state, receipts, wear and accounting. Snapshot limits reserve space within the existing 4 MiB import/export limit. No global save/combat version bump.
 
@@ -54,11 +54,11 @@ At the deadline, the transaction applies actual survivor gear/HP/injuries, XP, s
 
 ## Evidence and next milestone
 
-The [shared headless combat adapter](HEADLESS-RIVAL-COMBAT.md) now resolves real isolated encounters in a worker. It does not yet claim camps or apply receipts to live rival companies; their automatic combat and earnings remain pending integration.
+The [shared headless combat adapter](HEADLESS-RIVAL-COMBAT.md) now resolves real isolated encounters in a worker. Its controller reserves encounters and commits real results to live companies. Paid contracts, equipment spending/upgrades, recruitment and player hostility remain pending.
 
 Unit coverage checks activation/old saves, daytime/mounted travel parity, nighttime camps/inns and dawn resume, six-hour rest and tool/medicine parity, real stock/prices, midnight bills, wound recovery, reload/partition determinism, dissolution without teleport/refill, malformed saves and inability to launch a placeholder NPC fight. Shared engine, cart, night, retinue, injury, legacy and world regressions cover the extracted services. Browser coverage checks actual endgame inspection/reload and iPad widths; campaign-start rivals are visible before any crisis and survive reload.
 
-`node tools/simulate-rivals.mjs` reproducibly runs three seeded 30/90-day supply-route simulations through the shared services and validates both checkpoints. This isolates rival scheduling; it does not simulate other NPC combat or claim iPad hardware performance. Contract counts, combat losses, XP gains and named acquisitions are all zero because those systems are not implemented. Record measured p95/max step times and save sizes instead of treating a unit-test pass as a frame-rate guarantee.
+`node tools/simulate-rivals.mjs` reproducibly runs three seeded 30/90-day supply-route simulations through the shared services and validates both checkpoints. This isolates rival scheduling; it does not simulate other NPC combat or claim iPad hardware performance. That isolated supply-only tool disables combat, so its contract counts, combat losses, XP gains and named acquisitions remain zero; use the live-world tool below for combat evidence. Record measured p95/max step times and save sizes instead of treating a unit-test pass as a frame-rate guarantee.
 
 Historical baseline measured before nighttime sleep, after the lightweight supply-quote change; these treasury and timing figures do not describe the new sleeping schedule. Day 30/90 means elapsed days after rival arrival, not campaign day:
 
@@ -70,8 +70,28 @@ Historical baseline measured before nighttime sleep, after the lightweight suppl
 
 These are 8,640 quarter-hour steps per seed, not iPad measurements or combat-scheduler benchmarks. An earlier run with full armory projections on every supply quote and concurrent regression/browser work showed substantial timing outliers; the narrow shared quote path removes that unnecessary work. Hardware/browser profiling remains necessary before claiming the eventual full rival system meets frame targets.
 
-Next: build an isolated headless battle adapter and deterministic bounded scheduler using the real combat engine. Add encounter ownership and exactly-once outcomes before allowing camp jobs or quest claims. Earnings, roster/equipment growth and visible rivalry follow; no power-score winner shortcuts and no hidden combat boosts.
+Next: paid contract claims, affordable gear spending/upgrades, recruitment and announced player hostility. The real combat adapter, bounded worker scheduler, encounter ownership and exactly-once camp/band outcomes are implemented. Preserve normal earned progression and costs in subsequent milestones.
 
 ### Live simulation evidence
 
-`node tools/simulate-rival-world.mjs` advances three real campaign seeds for three days, resolving each physically contacted camp through the native turn-based engine and validating reloads. Seeds 12/13/14 produced 4/2/3 fights and 1/0/0 losses. Rival camp earnings were 613/275/445 crowns total; final saves were approximately 63/85/62 kB. Some companies had no earnings and others lost a brother; there is no guaranteed profitable result or level-up. These are functional Node simulations, not physical-iPad FPS measurements. Live browser coverage checks background worker completion, reload, deadline application, ordinary camping, exactly-once rewards and rendering without a measured frame gap above one second.
+The historical camp-only run of `node tools/simulate-rival-world.mjs` advanced three real campaign seeds for three days, resolving each physically contacted camp through the native turn-based engine and validating reloads. Seeds 12/13/14 produced 4/2/3 fights and 1/0/0 losses. Rival camp earnings were 613/275/445 crowns total; final saves were approximately 63/85/62 kB. Some companies had no earnings and others lost a brother; there is no guaranteed profitable result or level-up. These are functional Node simulations, not physical-iPad FPS measurements. Live browser coverage checks background worker completion, reload, deadline application, ordinary camping, exactly-once rewards and rendering without a measured frame gap above one second.
+
+## Roaming bands, money goals and map parties
+
+Rivals now appear as small parties using the existing world character figures, with their permanent heraldry beside the figures. Character silhouettes and compact flags stay visible at overview zoom; the hit target uses the party's actual position. No new race, character artwork or combat bonuses are introduced. The inspection panel shows one short goal label; its hint explains the priority.
+
+| Company | Money goal | Voluntary scouting / safety margin |
+| --- | --- | --- |
+| Gilded Road | Cautious earners: preserve wage reserves and take nearby, low-risk spoils | 80 world units / 1.60× estimated opponent strength |
+| Red Jackals | Loot hunters: seek camps and isolated bands for ordinary loot | 180 world units / 1.05× |
+| Bronze Oath | Road wardens: prioritize caravan raiders, then nearby road spoils | 130 world units / 1.25× |
+
+Scouting estimates consider surviving roster, health, actual armor wear, attack/defense, visible enemy tier/veterancy and champion status. Estimates only guide movement: they cannot decide winners or produce rewards. Camp choice favors ordinary reward relative to travel distance. Supply readiness and one voluntary expedition per day still apply. No paid contract fee or faction salary is manufactured for the wardens.
+
+Awake rivals detour from stronger bands within 100 world units, spending the ordinary travel budget on reachable steps that increase separation. Terrain can trap them; there is no teleport, speed concession or guarantee of escape. Bandits can pursue a nearby vulnerable rival outside an accessible town, using existing bandit detection/leash/speed rules. Existing wagon assignments retain priority, and a nearer eligible player target still takes precedence. These decisions do not read hidden player gear or resources.
+
+Physical interception outside town reserves an actual shared-engine fight even if the rival is wounded, resting, sleeping or short of provisions. A rival cannot opt out because its estimate says it would lose. Player-selected pursuits, accepted contracts, player battles and existing faction commitments remain protected. Each band can be committed to only one fight; its movement and new faction claims stop until settlement. A protected player target therefore remains the player's encounter rather than being stolen by the NPC system.
+
+Roaming encounters occupy one fixed quarter-hour of campaign time, followed by the ordinary six-hour rival recovery stop. Camp expeditions retain their six-hour daylight commitment. This shorter road duration permits night ambushes without freezing a roster across unpaid midnights: a 23:45 fight settles at midnight before normal rival upkeep charges the actual survivors. Worker CPU time never changes either duration. If unresolved, the existing world-time barrier waits for an acknowledged result while rendering continues. Player camping/foraging also resumes only the remaining hours if a new NPC fight starts mid-action; no early recovery, restarted duration or duplicated forage reward.
+
+Victories apply normal band loot, XP, stat/perk progression and the existing 48-hour replacement/spawn-cycle rules. Defeats retain actual rival deaths and surviving bandit HP, morale, armor/shield/attachment damage and injuries, tied to the original spawn cycle. A replacement band does not inherit stale damage. Defeating a caravan's actual assigned raider releases that shipment using the same accounting. Saves keep existing rival version-two fields and permit bounded camp-or-band reservations/wear (128 records maximum; the authored ordinary encounter catalog is smaller). Existing camp checkpoints and prior rival resources/progress remain valid.

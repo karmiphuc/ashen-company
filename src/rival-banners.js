@@ -14,10 +14,10 @@ export function rivalBannerHTML(id){
  const spec=rivalBannerSpec(id);if(!spec)return '';
  return `<svg class="rival-banner" viewBox="-5 -3 40 47" aria-hidden="true" focusable="false"><path d="M-3 43V-2H32" fill="none" stroke="#d6b477" stroke-width="2"/><path d="${path}" fill="${spec.color}" stroke="#161510" stroke-width="2"/><path d="${spec.decoration}" fill="none" stroke="#fff4d2" stroke-opacity=".55" stroke-width="2"/><text x="15" y="23" text-anchor="middle" font-family="Georgia" font-size="20" font-weight="bold" fill="#171713">${spec.mark}</text></svg>`;
 }
-export function drawRivalBanner(context,id,x,y,zoom=1,selected=false){
+export function drawRivalBanner(context,id,x,y,zoom=1,selected=false,compact=false){
  const spec=rivalBannerSpec(id);if(!spec)return;
  // Heraldry remains recognizable when the world is zoomed out, without a label.
- const scale=Math.max(.9,1/Math.max(.1,zoom));
+ const scale=compact?Math.max(.45,.4/Math.max(.1,zoom)):Math.max(.9,1/Math.max(.1,zoom));
  context.save();context.translate(x-15*scale,y-28*scale);context.scale(scale,scale);
  context.lineWidth=selected?3:2;context.strokeStyle=selected?'#fff3bd':'#d6b477';context.beginPath();context.moveTo(-3,43);context.lineTo(-3,-2);context.lineTo(32,-2);context.stroke();
  context.beginPath();outline.forEach(([px,py],index)=>index?context.lineTo(px,py):context.moveTo(px,py));context.closePath();context.fillStyle=spec.color;context.fill();context.strokeStyle='#161510';context.lineWidth=2;context.stroke();

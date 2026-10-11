@@ -1,4 +1,4 @@
-import { createRivalBattleSnapshot, validateRivalBattleSnapshot, validateSave, getCampSites, advanceBattle, retreatBattle, finishBattle, trainRivalSurvivors } from './engine.js';
+import { createRivalBattleSnapshot, validateRivalBattleSnapshot, validateSave, getRivalCombatEncounter, advanceBattle, retreatBattle, finishBattle, trainRivalSurvivors } from './engine.js';
 
 export const HEADLESS_RULES_VERSION = 2;
 export const HEADLESS_MAX_STEPS = 20000;
@@ -48,10 +48,11 @@ function outcome(job){
  const state=structuredClone(job.state),battle=state.battle;
  const result=finishBattle(state);if(!result.ok)fail(result.message);
  if(job.version>=2)trainRivalSurvivors(state);
- return {companyId:job.companyId,encounterId:job.encounterId,battleId:battle.id,generation:battle.campGeneration,
+ return {companyId:job.companyId,encounterId:job.encounterId,battleId:battle.id,generation:battle.encounterType==='band'?state.bands[job.encounterId].spawnCycle-(battle.status==='victory'?1:0):battle.campGeneration,
   outcome:battle.status,enemies:battle.units.filter(unit=>unit.side==='enemy').map((unit,index)=>({worldIndex:job.enemyWorldIndices[index],unit:structuredClone(unit)})),losses:[...battle.casualties],xp:structuredClone(battle.xp),
   party:state.party,gold:state.gold,food:state.food,supplies:state.supplies,
   inventory:state.inventory,inventoryCondition:state.inventoryCondition,cargo:state.cargo,
+  ...(battle.encounterType==='band'?{bandRecord:structuredClone(state.bands[job.encounterId])}:{}),
   campRecord:structuredClone(state.camps[job.encounterId]??null)};
 }
 
@@ -70,7 +71,7 @@ export function restoreHeadlessCombat(input){
  const world=validateSave(structuredClone(input.world)),owner=world.rivalCompanies?.companies.find(c=>c.id===input.companyId);
  if(!owner||owner.status==='dissolved')fail('owner');
  const state=validateRivalBattleSnapshot(input.state,world);
- const indices=getCampSites(world).find(c=>c.id===input.encounterId)?.enemies.map((enemy,index)=>enemy.worldIndex??enemy.troopIndex??index);
+ const indices=getRivalCombatEncounter(world,input.encounterId)?.enemies.map((enemy,index)=>enemy.worldIndex??enemy.troopIndex??index);
  if(!same(indices,input.enemyWorldIndices))fail('enemy world identities');
  if(state.battle.campId!==input.encounterId||state.party.length!==owner.party.length||state.party.some((p,i)=>p.id!==owner.party[i].id))fail('participants');
  if(world.battle||!same(state.position,owner.position)||state.gold!==owner.gold

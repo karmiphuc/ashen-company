@@ -1,3 +1,4 @@
+import { rivalStrength,bandStrength } from './rival-goals.js';
 import { restoreHeadlessCombat } from './headless-combat.js';
 import { planRivalCombat,commitRivalCombat,rivalCombatBarrier,rivalFightFor,applyRivalCampWear } from './rival-world-combat.js';
 import { spendRivalLevelUps } from './rival-progression.js';
@@ -1751,6 +1752,7 @@ function roamingBand(state, band) {
   const pool = tier ? worldEnemyTemplates(band.start.x, band.start.y, tier) : band.enemies;
   const offset = Math.floor(random() * pool.length);
   const committed=worldSkirmishFor(state,band.id);
+  const rivalFight=rivalFightFor(state,band.id);
   const committedTroops=committed?.bTroops??(state.battle?.campId===band.id?state.battle.patrolAssist?.enemyTroops:null);
   const committedSize=committedTroops?Math.max(...committedTroops)+1:0;
   const enemies = Array.from({ length: committedTroops?committedSize:enemyRosterSize(state,tier,count) }, (_, index) => { const enemy = { ...pool[(index + offset) % pool.length] }; return regionalOutfit(enemy, `${state.seed}:${band.id}:${spawnCycle}`, index, band.start.x, band.start.y, tier); });
@@ -1763,9 +1765,9 @@ function roamingBand(state, band) {
     id: band.id, name: band.name, kind: 'band', difficulty: tier, strength, spawnCycle, veteranRank: progression.rank,
     ...(tier ? { factionId: regionAt(band.start.x,band.start.y).id, factionLabel: WORLD_ENEMY_PROFILES[regionAt(band.start.x,band.start.y).id].label } : {}),
     ...(committed?{battleHoursRemaining:Math.max(0,committed.endHour-worldHours(state))}:{}),
-    x: position.x, y: position.y, behavior:committed?'fighting':behavior, targetId: behavior === 'raiding-caravan' ? position.targetId : null,
-    enemies: survivingWorldEnemies(state, band.id, spawnCycle, championRoster(state,{id:band.id,spawnCycle,difficulty:tier,enemies:rollEncounterNamed(state,{id:band.id,spawnCycle},enemies)},getItem,championItemFactory(armoryTheme(regionAt(band.start.x,band.start.y).id),{affixes:encounterAffixes(state,band.id,spawnCycle)}))),
-    description: committed ? `Fighting faction soldiers. About ${Math.ceil(committed.endHour-worldHours(state))} hours remain.` : target ? `These raiders are closing on the armorer wagon bound for ${TOWN_BY_ID.get(target.destinationId).name}. Defeat them before they reach it.`
+    x: position.x, y: position.y, behavior:committed||rivalFight?'fighting':behavior, rivalCompanyId:rivalFight?.companyId??null,targetId: ['raiding-caravan','hunting-rival'].includes(behavior) ? position.targetId : null,
+    enemies: applyRivalCampWear(state,band.id,spawnCycle,survivingWorldEnemies(state, band.id, spawnCycle, championRoster(state,{id:band.id,spawnCycle,difficulty:tier,enemies:rollEncounterNamed(state,{id:band.id,spawnCycle},enemies)},getItem,championItemFactory(armoryTheme(regionAt(band.start.x,band.start.y).id),{affixes:encounterAffixes(state,band.id,spawnCycle)})))),
+    description: rivalFight?'Fighting another mercenary company.':position.behavior==='hunting-rival'?'These raiders are pursuing a mercenary company.':committed ? `Fighting faction soldiers. About ${Math.ceil(committed.endHour-worldHours(state))} hours remain.` : target ? `These raiders are closing on the armorer wagon bound for ${TOWN_BY_ID.get(target.destinationId).name}. Defeat them before they reach it.`
       : position.behavior === 'hunting-company' ? 'These raiders have spotted the Ashen Company and are giving chase.'
       : tier ? `${enemies.length} armed raiders patrol the frontier. Scout their equipment before engaging.` : `${enemies.length} lightly equipped brigand${enemies.length === 1 ? ' roams' : 's roam'} the road. A good first fight for an untested company.`,
     reward: 0,
@@ -1802,7 +1804,7 @@ export function joinPatrolBattle(state,id) {
 }
 function advanceSoldiers(state) {
   const currentHostile=id=>[...getRoamingBands(state),...getUndeadEncounters(state).filter(e=>e.kind==='undead-host')].find(b=>b.id===id);
-  advanceFactionSimulation(state,{settlements:SETTLEMENTS,getItem,servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable,hostiles:()=>[...getRoamingBands(state),...getUndeadEncounters(state).filter(e=>e.kind==='undead-host')],currentHostile,
+  advanceFactionSimulation(state,{settlements:SETTLEMENTS,getItem,servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable,hostiles:()=>[...getRoamingBands(state).filter(e=>!rivalFightFor(state,e.id)),...getUndeadEncounters(state).filter(e=>e.kind==='undead-host')],currentHostile,
     hostileResult(target,survivors,won,fight,committedTroops=fight?.bTroops) {
       const current=currentHostile(target.id);if(!current)return;
       if (target.kind === 'undead-host') {
@@ -1877,10 +1879,11 @@ function advanceRoamingBands(state) {
   const now = worldHours(state);
   const sanctuary = companyInSanctuary(state);
   let contactId = null;
+  const scoutContext=rivalContext(state),scoutedBands=state.rivalCompanies?.version===2?new Map(rivalScoutingBands(state).map(b=>[b.id,b])):new Map();
   for (const band of ROAMING_BANDS) {
     const progress = activeBandProgress(state, band);
     if (!state.bands?.[band.id]) state.bands[band.id] = progress;
-    if (progress.defeatedUntil > now || worldSkirmishFor(state,band.id)) continue;
+    if (progress.defeatedUntil > now || worldSkirmishFor(state,band.id)||rivalFightFor(state,band.id)) continue;
     const shipmentEntry = assignedShipment(state, band.id);
     if (shipmentEntry) {
       const [townId, shipment] = shipmentEntry;
@@ -1898,6 +1901,16 @@ function advanceRoamingBands(state) {
     const separation = distance(progress, state.position);
     const canHunt = !sanctuary && now >= (state.encounterGraceUntil ?? 0)
       && (separation <= BAND_AGGRO_RADIUS * getBandAwarenessMultiplier(state) || progress.behavior === 'hunting-company' && separation <= BAND_CHASE_LEASH * getBandAwarenessMultiplier(state));
+    const scouted=scoutedBands.get(band.id);
+    const prey=scouted&&!(canHunt&&separation<=BAND_RADIUS)?(state.rivalCompanies.companies.filter(c=>c.status!=='dissolved'&&!rivalFightFor(state,c.id)&&!scoutContext.sanctuary(state,c.position)
+      &&distance(progress,c.position)<=(progress.behavior==='hunting-rival'&&progress.targetId===c.id?BAND_CHASE_LEASH:BAND_AGGRO_RADIUS)
+      &&(!canHunt||distance(progress,c.position)<separation)
+      &&rivalStrength(c,scoutContext)<=bandStrength(scouted,scoutContext)*1.35)
+      .sort((a,b)=>distance(progress,a.position)-distance(progress,b.position)||a.id.localeCompare(b.id))[0]):null;
+    if(prey){progress.behavior='hunting-rival';progress.targetId=prey.id;
+      moveTowardPoint(progress,prey.position,terrainSpeed(terrainAt(progress.x,progress.y))*(1+BAND_CHASE_BONUS)*WORLD_STEP_HOURS);
+      continue;
+    }
     if (canHunt) {
       progress.behavior = 'hunting-company';
       progress.targetId = null;
@@ -1960,6 +1973,7 @@ export function pursueBand(state, id) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   const band = getRoamingBands(state).find(entry => entry.id === id);
+  if(rivalFightFor(state,id))return result(false,'Another mercenary company is fighting that band.');
   if (!band) return result(false, 'That band is no longer on the road.');
   const joint=alliedBattleAgainst(state,id);
   if(joint)return joinPatrolBattle(state,joint.patrol.id);
@@ -2201,9 +2215,18 @@ function advanceClock(state, hours) {
 }
 
 function rivalCampTarget(world,id) {
+ if(BAND_BY_ID.has(id))return roamingBand(world,BAND_BY_ID.get(id));
  if(!isCampId(id))return null;
  const progress=campRecord(world,id);if(progress.cleared)return null;
  return {...(CAMP_BY_ID.get(id)??randomCamp(world,id,RANDOM_CAMP_IDS.indexOf(id),progress.generation)),generation:progress.generation};
+}
+function rivalScoutingBands(world){
+ const companies=(world.rivalCompanies?.companies??[]).filter(c=>c.status!=='dissolved');
+ const radius=Math.max(180,BAND_AGGRO_RADIUS,BAND_CHASE_LEASH);
+ // Read full gear/promotions only for bands inside an actual rival's scouting
+ // or chase range; unrelated world rosters stay off the quarter-hour path.
+ return ROAMING_BANDS.filter(b=>companies.some(c=>distance(c.position,world.bands?.[b.id]??b.start)<=radius))
+  .map(b=>roamingBand(world,b)).filter(Boolean);
 }
 function rivalScoutingCamps(world) {
  return [...CAMP_SITES.map(c=>c.id),...RANDOM_CAMP_IDS].map(id=>{
@@ -2217,12 +2240,12 @@ function rivalContext(state) {
   daily(view){recoverDailyInjuries(view);applyDailyUpkeep(view);},
   market:getProvisionMarket,buyFood,buySupplies,getItem,itemCondition,
   validateMembers(members,day){validateCompanyMembers(members,day);return members.map(normalizePersistedMember);},
-  servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable,camps:getCampSites,targetCamp:rivalCampTarget,contracts:getActiveContracts,campId:isCampId,radius:CAMP_RADIUS,validateWorld:validateSave,checkpoint:restoreHeadlessCombat,injuries:validInjuries};
+  servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable,camps:world=>[...getCampSites(world),...getRoamingBands(world)],bands:rivalScoutingBands,encounter:getRivalCombatEncounter,sanctuary:(world,position)=>SETTLEMENTS.some(t=>getSettlementAccess(world,t.id).servicesAvailable&&distance(position,t)<=TOWN_RADIUS),targetCamp:rivalCampTarget,contracts:getActiveContracts,campId:id=>isCampId(id)||BAND_BY_ID.has(id),bandId:id=>BAND_BY_ID.has(id),radius:CAMP_RADIUS,validateWorld:validateSave,checkpoint:restoreHeadlessCombat,injuries:validInjuries};
 }
 export function advanceRivalSimulation(state) { commitRivalCombat(state,rivalContext(state));advanceRivalCompanies(state,rivalContext(state));if(state.rivalCompanies?.version===2)planRivalWorldCombat(state); }
 export function planRivalWorldCombat(state) {
  planRivalCombat(state,{
-  ...rivalContext(state),retinue:defaultRetinue,camps:rivalScoutingCamps,skirmish:worldSkirmishFor,canReach:(from,to)=>Boolean(worldRoute(from,to)),
+  ...rivalContext(state),retinue:defaultRetinue,camps:rivalScoutingCamps,bandRadius:BAND_RADIUS,playerContact:band=>!companyInSanctuary(state)&&worldHours(state)>=(state.encounterGraceUntil??0)&&distance(state.position,band)<=BAND_RADIUS,skirmish:worldSkirmishFor,canReach:(from,to)=>Boolean(worldRoute(from,to)),
   snapshot:world=>structuredClone({...world,
    day:Math.floor(world.rivalCompanies.lastHour/24)+1,hour:world.rivalCompanies.lastHour%24,
    inventory:[],inventoryCondition:[],cargo:{},log:[],rivalCompanies:{...world.rivalCompanies,jobs:[]}}),
@@ -2241,6 +2264,7 @@ function advanceWorldStep(state) {
   advanceSoldiers(state);
   advanceRivalSimulation(state);
   const contact = advanceRoamingBands(state);
+  if(state.rivalCompanies?.version===2)planRivalWorldCombat(state);
   if (displaced) return { ...result(true, displaced.message), blockedTown: displaced.townId, interrupted: true };
   if (contact) return startHostileContact(state, contact);
   const undead = getUndeadEncounters(state).find(e => e.kind === 'undead-host' && !worldSkirmishFor(state,e.id) && distance(e, state.position) <= BAND_RADIUS);
@@ -3022,11 +3046,12 @@ function applyRestRecovery(state) {
   return {medicated,repairs};
 }
 
-export function camp(state) {
+export function camp(state,{remainingHours=6}={}) {
+  if(!Number.isFinite(remainingHours)||remainingHours<0||remainingHours>6)return result(false,'Invalid remaining rest time.');
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
-  const rivalPending=rivalCombatBarrier(state,worldHours(state)+6);if(rivalPending)return rivalPending;
-  const interrupted = advanceStationaryTime(state, 6);
+  const rivalPending=rivalCombatBarrier(state,worldHours(state)+remainingHours);if(rivalPending)return rivalPending;
+  const interrupted = advanceStationaryTime(state, remainingHours);
   if (interrupted) return interrupted;
   const {medicated,repairs} = applyRestRecovery(state);
   const message = `The company rests for six hours${medicated ? ' with medicine' : ''}${repairs ? ` and uses ${repairs} tools for repairs` : ''}.`;
@@ -3034,11 +3059,12 @@ export function camp(state) {
   return result(true, message);
 }
 
-export function forage(state) {
+export function forage(state,{remainingHours=4}={}) {
+  if(!Number.isFinite(remainingHours)||remainingHours<0||remainingHours>4)return result(false,'Invalid remaining forage time.');
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
-  const rivalPending=rivalCombatBarrier(state,worldHours(state)+4);if(rivalPending)return rivalPending;
-  const interrupted = advanceStationaryTime(state, 4);
+  const rivalPending=rivalCombatBarrier(state,worldHours(state)+remainingHours);if(rivalPending)return rivalPending;
+  const interrupted = advanceStationaryTime(state, remainingHours);
   if (interrupted) return interrupted;
   const terrain = terrainAt(state.position.x, state.position.y);
   const bonus = terrain === 'forest' ? 2 : terrain === 'marsh' ? 1 : terrain === 'mountain' ? -1 : 0;
@@ -3524,13 +3550,14 @@ function beginBattle(state, encounterId, {enemyOpening=false,patrolId=null,locke
 
 // Preparation only: callers own reservation, scheduling and the world-result
 // transaction. These snapshots never alias or settle into the live campaign.
+export function getRivalCombatEncounter(world,id){return BAND_BY_ID.has(id)?roamingBand(world,BAND_BY_ID.get(id)):getCampSites(world).find(e=>e.id===id);}
 export function createRivalBattleSnapshot(world,companyId,encounterId) {
   const source=validateSave(structuredClone(world));
   if(source.battle||source.gameOver)throw new TypeError('Rival battle preparation requires an idle active campaign');
   const owner=source.rivalCompanies?.companies.find(company=>company.id===companyId);
   if(!owner||owner.status==='dissolved')throw new TypeError('Unknown or dissolved rival company');
-  const camp=getCampSites(source).find(site=>site.id===encounterId);
-  if(!camp||camp.cleared||worldSkirmishFor(source,camp.id)
+  const camp=getRivalCombatEncounter(source,encounterId);
+  if(!camp||camp.cleared||source.pursuit===camp.id||worldSkirmishFor(source,camp.id)
     ||getActiveContracts(source).some(contract=>contract.campId===camp.id))throw new TypeError('Rival camp is unavailable or reserved');
   if(distance(owner.position,camp)>CAMP_RADIUS)throw new TypeError('Rival must reach the camp before fighting');
   const state=structuredClone(source);
@@ -3544,7 +3571,7 @@ export function createRivalBattleSnapshot(world,companyId,encounterId) {
     tactic:'offense',battle:null,gameOver:false,log:[]});
   // Enemy size, gear, promotions and wear are captured from the live world
   // before replacing the player roster with the rival's actual members.
-  const started=beginBattle(state,camp.id,{lockedCamp:structuredClone(camp),isolated:true});
+  const started=beginBattle(state,camp.id,{lockedCamp:structuredClone(camp),isolated:true,enemyOpening:camp.behavior==='hunting-rival'});
   if(!started.ok)throw new TypeError(started.message);
   return {state,world:source,enemyWorldIndices:camp.enemies.map((enemy,index)=>enemy.worldIndex??enemy.troopIndex??index)};
 }
@@ -3552,11 +3579,11 @@ export function createRivalBattleSnapshot(world,companyId,encounterId) {
 export function validateRivalBattleSnapshot(input,encounterWorld) {
   const world=validateSave(structuredClone(encounterWorld));
   const state=validateSave({...structuredClone(input),battle:null});
-  const camp=getCampSites(world).find(site=>site.id===input.battle?.campId);
-  assert(camp&&!camp.cleared&&!world.battle&&!world.gameOver&&!worldSkirmishFor(world,camp.id)
+  const camp=getRivalCombatEncounter(world,input.battle?.campId);
+  assert(camp&&!camp.cleared&&!world.battle&&!world.gameOver&&!worldSkirmishFor(world,camp.id)&&world.pursuit!==camp.id
     &&!getActiveContracts(world).some(contract=>contract.campId===camp.id)&&distance(state.position,camp)<=CAMP_RADIUS,'isolated rival encounter');
   const battle=validateBattle(input.battle,state.party,state,camp);
-  assert(battle&&battle.encounterType==='camp'&&!battle.simultaneous&&!battle.patrolAssist,'isolated rival battle');
+  assert(battle&&['camp','band'].includes(battle.encounterType)&&!battle.simultaneous&&!battle.patrolAssist,'isolated rival battle');
   assert(battle.tactic===state.tactic&&state.destination===null&&state.pursuit===null&&!state.gameOver,'isolated rival context');
   assert(state.seed===world.seed&&state.day===world.day&&state.hour===world.hour,'isolated rival clock');
   assert(!state.contract&&!state.additionalContracts.length&&!state.companyLegacy&&!state.legacyWarrior&&!state.legendaryBlacksmith
@@ -7362,9 +7389,10 @@ export function validateSave(input) {
       && Number.isFinite(entry.defeatedUntil) && entry.defeatedUntil >= 0 && entry.defeatedUntil <= worldHours(input) + 48
       && validCount(entry.spawnCycle) && entry.spawnCycle <= 1000000
       && inBounds(entry.x, entry.y) && (entry.direction === 1 || entry.direction === -1)
-      && ['patrolling', 'hunting-company', 'raiding-caravan'].includes(entry.behavior)
+      && ['patrolling', 'hunting-company', 'raiding-caravan','hunting-rival'].includes(entry.behavior)
       && (entry.targetId === null || typeof entry.targetId === 'string' && entry.targetId.length <= 80)
-      && (entry.behavior === 'raiding-caravan') === (entry.targetId !== null), 'band state');
+      && (['raiding-caravan','hunting-rival'].includes(entry.behavior)) === (entry.targetId !== null)
+      && (entry.behavior!=='hunting-rival'||input.rivalCompanies?.companies.some(c=>c.id===entry.targetId)), 'band state');
     normalizedBands[band.id] = { defeatedUntil: entry.defeatedUntil, spawnCycle: entry.spawnCycle,
       x: entry.x, y: entry.y, direction: entry.direction, behavior: entry.behavior, targetId: entry.targetId };
   }

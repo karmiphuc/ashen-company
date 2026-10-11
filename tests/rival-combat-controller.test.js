@@ -14,3 +14,9 @@ test('switching campaigns while a worker request is pending never writes a check
  const controller=new RivalCombatController({world:()=>current,workerFactory:()=>worker={postMessage(message){if(message.type==='prepare')queueMicrotask(()=>this.onmessage({data:{requestId:message.requestId,ok:true,result:{status:'running'}}}));else this.message=message;},terminate(){}}});
  const pending=controller.pump();await new Promise(resolve=>setImmediate(resolve));current=fresh;controller.close();await pending;assert.deepEqual(fresh,saved);assert.equal(old.rivalCompanies.jobs[0].checkpoint,null);
 });
+test('rest resumes only unspent campaign time when a new fight starts during its first attempt',async()=>{
+ const world=createGame(12),controller=new RivalCombatController({world:()=>world});let reports=0,attempts=0,recovery=0;
+ controller.flush=async()=>{reports++;};
+ const result=await controller.rest((state,{remainingHours})=>{attempts++;if(attempts===1){assert.equal(remainingHours,6);state.hour+=.75;return {rivalPending:true};}assert.equal(remainingHours,5.25);state.hour+=remainingHours;recovery++;return {ok:true};},6);
+ assert.equal(world.hour,14);assert.equal(reports,2);assert.equal(recovery,1);assert.equal(result.ok,true);controller.close();
+});
