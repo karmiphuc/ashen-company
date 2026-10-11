@@ -12,7 +12,7 @@ Named gear comes from real drops or purchases. Members choose affordable, role-a
 
 ## Fairness and economy
 
-Use the player's movement calculation: terrain/roads, night, mounts, relevant equipment and carried-load/cart modifiers. No teleportation or exceptional pursuit speed. Companies physically reach jobs, targets and settlements.
+Use the player's movement calculation: terrain/roads, night, mounts, relevant equipment and carried-load/cart modifiers. Rivals camp from 20:00 to 06:00, or stay at the inn when already in town, while ordinary midnight upkeep continues. No teleportation or exceptional pursuit speed. Companies physically reach jobs, targets and settlements.
 
 Maintain their own treasury, wages, provisions, ammo, repair tools, medicine, stash/cargo and stock transactions. Purchases use settlement prices and availability; repairs cost tools/time or paid services, injuries require recovery/treatment, and ammo is actually spent. Essential supplies and wage reserves take priority over upgrades. Do not generate bailout income, combat bonuses or extra loot.
 

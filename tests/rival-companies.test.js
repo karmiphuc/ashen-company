@@ -21,8 +21,8 @@ test('ordinary world ticks activate rivals before the crisis and migrate old sav
  const old=createGame(92);old.hour=8.1;const restored=validateSave(old);assert.equal(restored.rivalCompanies,undefined);tick(restored,.15);
  assert.equal(restored.rivalCompanies.startedHour,8.25);assert.deepEqual(restored.rivalCompanies.companies.map(c=>c.gold),[12000,9000,16000]);assert.ok(restored.rivalCompanies.companies.every(c=>c.ledger.wages===0&&c.ledger.provisions===0));validateSave(restored);
 });
-test('rival movement equals normal player movement with terrain, roads, mounts and night, and rest stops travel',()=>{
- for(const hour of [12,22]){
+test('daytime rival movement equals normal player movement with terrain, roads and mounts, and rest stops travel',()=>{
+ for(const hour of [6,12,19.75]){
   const state=ready(),company=state.rivalCompanies.companies[2];state.hour=hour;state.rivalCompanies.lastHour=(state.day-1)*24+hour;
   company.status='travelling';company.routeIndex=1;company.targetTownId='windrest';company.restUntil=0;
   const point={...company.position},view={...state,party:company.party,position:point,retinue:defaultRetinue()};const target=(getRivalCompanies(state).find(s=>s.id==='rival:bronze-oath'));
@@ -61,4 +61,20 @@ test('save validation rejects malformed ownership, clocks, resources, gear and l
  const state=ready();const mutations=[s=>s.rivalCompanies.version=2,s=>s.rivalCompanies.lastHour-=1,s=>s.rivalCompanies.lastHour-=.1,s=>s.rivalCompanies.companies.pop(),s=>s.rivalCompanies.companies[0].id='fake',s=>s.rivalCompanies.companies[0].gold++,s=>s.rivalCompanies.companies[0].food++,s=>{s.rivalCompanies.companies[0].food++;s.rivalCompanies.companies[0].ledger.foodBought++;},s=>s.rivalCompanies.companies[0].position.x=-1,s=>s.rivalCompanies.companies[0].targetTownId='ravenfell',s=>s.rivalCompanies.companies[0].party[0].equipment.weapon='unknown',s=>s.rivalCompanies.companies[0].party[0].hp=100000,s=>s.rivalCompanies.companies[0].supplies.tools++,s=>s.rivalCompanies.companies[0].status='dissolved',s=>s.rivalCompanies.companies[0].extra=true];
  for(const mutate of mutations){const bad=structuredClone(state);mutate(bad);assert.throws(()=>validateSave(bad));}
  const restored=validateSave(state);restored.rivalCompanies.companies[0].party[0].name='Edited';assert.notEqual(state.rivalCompanies.companies[0].party[0].name,'Edited');assert.equal(JSON.stringify(state.rivalCompanies).length<50000,true);
+});
+
+test('rivals sleep from 20:00 to 06:00 without night travel or shopping, keep routes through reload, and resume at dawn',()=>{
+ const state=ready();state.hour=19.75;state.rivalCompanies.lastHour=(state.day-1)*24+state.hour;
+ const company=state.rivalCompanies.companies[2];company.status='travelling';company.routeIndex=1;company.targetTownId='windrest';company.restUntil=0;
+ const before={...company.position};step(state);assert.notDeepEqual(company.position,before);assert.match(getRivalCompanies(state)[2].activity,/Sleeping in camp/);
+ const stopped={...company.position},route=company.targetTownId;hours(state,4);assert.deepEqual(company.position,stopped);assert.ok(company.ledger.wages>0);assert.ok(company.ledger.provisions>0);
+ const restored=validateSave(JSON.parse(JSON.stringify(state)));hours(state,6);hours(restored,6);assert.equal(state.hour,6);assert.deepEqual(company.position,stopped);assert.equal(company.targetTownId,route);assert.deepEqual(state.rivalCompanies,restored.rivalCompanies);
+ step(state);step(restored);assert.notDeepEqual(company.position,stopped);assert.deepEqual(state.rivalCompanies,restored.rivalCompanies);validateSave(state);
+});
+test('town rivals stay at the inn until dawn and defer expired rest and purchases exactly once',()=>{
+ const state=ready();state.hour=20;state.rivalCompanies.lastHour=(state.day-1)*24+20;
+ const company=state.rivalCompanies.companies[0],position={...company.position};company.restUntil=state.rivalCompanies.lastHour;company.party[0].hp=40;
+ assert.match(getRivalCompanies(state)[0].activity,/Staying at the inn in Oakwatch until dawn/);const playerGold=state.gold;
+ hours(state,10);assert.deepEqual(company.position,position);assert.equal(company.lastShopDay,0);assert.equal(company.party[0].hp,40);assert.equal(company.ledger.wages,42);assert.equal(company.ledger.provisions,6);
+ step(state);assert.notDeepEqual(company.position,position);assert.ok(company.party[0].hp>40);assert.equal(company.lastShopDay,state.day);assert.equal(state.gold,playerGold);const healed=company.party[0].hp;step(state);assert.equal(company.party[0].hp,healed);validateSave(state);
 });

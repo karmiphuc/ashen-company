@@ -20,13 +20,15 @@ Each starts with three days of food, eight tools, five medicine and 24 ammo. Bro
 
 | Rule | Shared implementation | Rival behavior |
 | --- | --- | --- |
-| Movement | `getWorldTravelSpeed`, `getCompanyTravelMultiplier`, `moveWorldToward` | Actual terrain, road and night pace; existing mount bonuses; no pursuit boost or teleport. Fixed routes avoid blocked towns. |
+| Movement | `getWorldTravelSpeed`, `getCompanyTravelMultiplier`, `moveWorldToward` | Actual terrain and road pace while awake; existing mount bonuses; no pursuit boost or teleport. Fixed routes avoid blocked towns. |
 | Wages / food | `applyDailyUpkeep`, `getCompanyStats`, `getDailyFood` | Pay once per crossed midnight; normal hunger/low-morale penalties. No food concession. |
 | Temporary injuries | `recoverDailyInjuries` | Persistent wounds, real daily medicine cost, ordinary deterministic healing rolls. |
 | Rest / repairs | `applyRestRecovery` | Stop for six hours; normal HP/morale gain, medicine and tools; no recovery concession. |
 | Supplies | `provisionQuotes`, `buyFood`, `buySupplies`, shared `marketStock` | Real local prices and daily stock. Essential food first, then medicine/tools only when needed. Reserve three days of wages; never spend unavailable gold. |
 | Members / saves | `validateCompanyMembers`, `normalizePersistedMember` | Same gear, HP, injury, talent, training, perk, attachment and durability validation as player members. |
 | Future combat | Ordinary `startBattle` / `advanceBattle` / `finishBattle` | **Not adapted yet.** These player-campaign functions have outcome/loot/camp ownership effects which need isolation before headless use. |
+
+Rivals sleep from 20:00 until 06:00. Travelling companies camp at their current position; companies at an accessible settlement stay at its inn. Sleep preserves the route, stops travel and shopping, and defers any expired six-hour recovery until morning; it adds no free healing or supply refill. Midnight wages, food, injury recovery and insolvency still run normally. Inspection shows the camp or inn activity. This is derived from the existing clock and position, so old saves need no migration.
 
 Supply quotes avoid building the full equipment catalog. Rest/medical effects do not advance a second world clock. NPC transactions operate on their own roster/resources and share only the real world market stock. A small, separate marker getter lets the map draw crests without recalculating all NPC stats each frame.
 
@@ -46,11 +48,11 @@ Future casualties, recruitment, earned income and committed battles will need an
 
 The [shared headless combat adapter](HEADLESS-RIVAL-COMBAT.md) now resolves real isolated encounters in a worker. It does not yet claim camps or apply receipts to live rival companies; their automatic combat and earnings remain pending integration.
 
-Unit coverage checks activation/old saves, normal/night/mounted travel parity, six-hour rest and tool/medicine parity, real stock/prices, midnight bills, wound recovery, reload/partition determinism, dissolution without teleport/refill, malformed saves and inability to launch a placeholder NPC fight. Shared engine, cart, night, retinue, injury, legacy and world regressions cover the extracted services. Browser coverage checks actual endgame inspection/reload and iPad widths; campaign-start rivals are visible before any crisis and survive reload.
+Unit coverage checks activation/old saves, daytime/mounted travel parity, nighttime camps/inns and dawn resume, six-hour rest and tool/medicine parity, real stock/prices, midnight bills, wound recovery, reload/partition determinism, dissolution without teleport/refill, malformed saves and inability to launch a placeholder NPC fight. Shared engine, cart, night, retinue, injury, legacy and world regressions cover the extracted services. Browser coverage checks actual endgame inspection/reload and iPad widths; campaign-start rivals are visible before any crisis and survive reload.
 
 `node tools/simulate-rivals.mjs` reproducibly runs three seeded 30/90-day supply-route simulations through the shared services and validates both checkpoints. This isolates rival scheduling; it does not simulate other NPC combat or claim iPad hardware performance. Contract counts, combat losses, XP gains and named acquisitions are all zero because those systems are not implemented. Record measured p95/max step times and save sizes instead of treating a unit-test pass as a frame-rate guarantee.
 
-Measured on this cloud Node environment, after the lightweight supply-quote change. Day 30/90 means elapsed days after rival arrival, not campaign day:
+Historical baseline measured before nighttime sleep, after the lightweight supply-quote change; these treasury and timing figures do not describe the new sleeping schedule. Day 30/90 means elapsed days after rival arrival, not campaign day:
 
 | Seed | Day-30 treasury: Gilded / Jackals / Oath | Day-90 treasury | Day-90 Jackals | p95 / max rival step | Rival record size |
 | --- | --- | --- | --- | --- | --- |
