@@ -1,3 +1,4 @@
+import {nearestWorldPoint} from '../src/world-navigation.js';
 import {populateLateGameHistory} from '../tests/helpers/rival-late-game.js';
 import {test,expect} from '@playwright/test';
 import {createGame,advanceRivalSimulation,planRivalWorldCombat,getRoamingBands,validateSave,SETTLEMENTS} from '../src/engine.js';
@@ -31,4 +32,15 @@ test('late-game band contact starts in the browser worker and commits without si
  const reports=saved.rivalCompanies.reports.filter(r=>r.encounterId===band.id);expect(reports).toHaveLength(1);expect(reports[0].hour).toBe(8.25);expect(saved.bands[band.id].spawnCycle).toBe(band.spawnCycle+1);
  for(const [id,value] of Object.entries(wear))if(id!==band.id)expect(saved.rivalCompanies.campWear[id]).toEqual(value);
  expect(errors).toEqual([]);
+});
+
+test('six rivals autonomously chase a moving two-bandit party and the live worker settles their fight',async({page})=>{
+ const world=createGame(12);advanceRivalSimulation(world);enableRivalCombat(world);
+ const band=getRoamingBands(world).find(b=>b.difficulty===0&&b.enemies.length===2&&SETTLEMENTS.every(t=>Math.hypot(t.x-b.x,t.y-b.y)>90));
+ const company=world.rivalCompanies.companies[0];company.position=nearestWorldPoint({x:band.x+45,y:band.y});company.status='travelling';expect(company.party).toHaveLength(6);expect(company.targetCampId).toBeNull();validateSave(world);
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(({key,world})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(world));},{key,world});await page.goto('./');await page.locator('[data-speed="1"]').click();
+ await expect.poll(()=>page.evaluate(({key,id})=>JSON.parse(localStorage.getItem(key)).rivalCompanies.reports.some(r=>r.encounterId===id),{key,id:band.id}),{timeout:30000}).toBe(true);
+ await page.locator('[data-speed="0"]').click();const saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);validateSave(saved);
+ const report=saved.rivalCompanies.reports.find(r=>r.encounterId===band.id);expect(report.companyId).toBe('gilded-road');expect(report.outcome).toBe('victory');expect(report.hour).toBeLessThan(12);expect(saved.bands[band.id].spawnCycle).toBe(band.spawnCycle+1);expect(saved.rivalCompanies.jobs.some(j=>j.companyId==='gilded-road')).toBe(false);
+ await page.reload();const restored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);validateSave(restored);expect(restored.rivalCompanies.reports.filter(r=>r.encounterId===band.id)).toHaveLength(1);expect(errors).toEqual([]);
 });

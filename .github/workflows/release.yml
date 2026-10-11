@@ -13,8 +13,25 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  publishing:
+    name: Check publishing configuration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        if: github.event_name != 'pull_request'
+      - name: Require Actions publishing before release validation
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/check-pages-publishing.sh
+
   validate:
     name: Validate release
+    needs: publishing
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -73,10 +90,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mode=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type)
-          if [ "$mode" != workflow ]; then
-            gh api "repos/$GITHUB_REPOSITORY/pages" --method PUT -f build_type=workflow --silent
-          fi
-          test "$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type)" = workflow
+          test "$mode" = workflow
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Deploy tested artifact
         id: deployment
