@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,advanceRivalSimulation,getCampSites,startBattle,advanceBattle,finishBattle,getCompanyStats} from '../src/engine.js';
+import {createGame,advanceRivalSimulation,getCampSites,startBattle,advanceBattle,finishBattle,getCompanyStats,trainRivalSurvivors} from '../src/engine.js';
 import {createHeadlessCombat,restoreHeadlessCombat,advanceHeadlessCombat,advanceHeadlessQueue,settleHeadlessCombat,HEADLESS_MAX_STEPS} from '../src/headless-combat.js';
 import {setSimultaneousBetaEnabled} from '../src/combat-config.js';
 function scene(seed=12,companyId='gilded-road',{day=1,level=1,difficulty=1}={}){
@@ -37,7 +37,7 @@ test('rivals must arrive, cannot take player-accepted camps or cleared camps, an
 test('bounded headless slices match ordinary combat, including ammo, injury, wear, casualties, XP and real loot',()=>{
  const s=scene(),before=structuredClone(s.world),job=saved(jobFor(s)),ordinary=structuredClone(job.state);
  while(ordinary.battle.status==='active')assert.equal(advanceBattle(ordinary).ok,true);
- const receipt=finish(job);assert.deepEqual(job.state.battle,ordinary.battle);assert.equal(finishBattle(ordinary).ok,true);
+ const receipt=finish(job);assert.deepEqual(job.state.battle,ordinary.battle);assert.equal(finishBattle(ordinary).ok,true);trainRivalSurvivors(ordinary);
  for(const field of ['party','gold','food','supplies','inventory','inventoryCondition','cargo'])assert.deepEqual(receipt[field],ordinary[field],field);
  assert.deepEqual(receipt.campRecord,ordinary.camps[s.camp.id]);assert.equal(receipt.outcome,'victory');assert.ok(receipt.gold>12000);assert.ok(receipt.party.some(p=>p.xp>0));assert.ok(receipt.supplies.ammo<24);assert.ok(receipt.party.some(p=>p.armorDurability.body<210));
  assert.deepEqual(s.world,before);const snapshot=structuredClone(job),retry=settleHeadlessCombat(job);assert.deepEqual(job,snapshot);assert.deepEqual(retry,receipt);retry.party[0].hp=1;assert.notEqual(job.receipt.party[0].hp,1);assert.deepEqual(saved(job).receipt,receipt);
@@ -85,9 +85,25 @@ test('deterministic stalemate guard retreats through the shared rules and does n
 
 test('restore rejects forged modes, ownership, version, progress, clocks and settlement receipts',()=>{
  const job=jobFor(scene());
- for(const mutate of [j=>j.version=2,j=>j.extra=true,j=>j.steps=-1,j=>j.status='settled',j=>j.companyId='bronze-oath',j=>j.encounterId='another-camp',j=>j.state.gold++,j=>j.state.party[0].level++,j=>j.state.retinue.members.push('scavenger'),j=>j.state.battle.units.pop(),j=>j.state.hour++,j=>j.state.battle.units[0].hp=99999,j=>j.state.battle.units[0].equipment.weapon='missing',j=>j.world.rivalCompanies.companies[0].gold++]){
+ for(const mutate of [j=>j.version=3,j=>j.extra=true,j=>j.steps=-1,j=>j.status='settled',j=>j.companyId='bronze-oath',j=>j.encounterId='another-camp',j=>j.state.gold++,j=>j.state.party[0].level++,j=>j.state.retinue.members.push('scavenger'),j=>j.state.battle.units.pop(),j=>j.state.hour++,j=>j.state.battle.units[0].hp=99999,j=>j.state.battle.units[0].equipment.weapon='missing',j=>j.world.rivalCompanies.companies[0].gold++]){
   const bad=structuredClone(job);mutate(bad);assert.throws(()=>restoreHeadlessCombat(bad));
  }
  const terminal=jobFor(scene());finish(terminal);for(const mutate of [j=>j.receipt.gold++,j=>j.receipt.party[0].equipment.weapon='spear',j=>j.receipt.outcome='defeat']){const bad=structuredClone(terminal);mutate(bad);assert.throws(()=>restoreHeadlessCombat(bad),/receipt/);}
  assert.throws(()=>settleHeadlessCombat(job),/still running/);assert.equal(saved(terminal).status,'settled');
+});
+
+test('rivals gain only battle XP and spend earned stat rolls and legal perks deterministically',()=>{
+ const s=scene(),job=jobFor(s);assert.ok(job.state.party.every(p=>p.level===3&&p.xp===0&&p.perks.length===0));
+ while(job.state.battle.status==='active')assert.equal(advanceBattle(job.state).ok,true);job.status='ready';
+ const ordinary=structuredClone(job.state);assert.equal(finishBattle(ordinary).ok,true);const untrained=structuredClone(ordinary);
+ const receipt=settleHeadlessCombat(job);trainRivalSurvivors(ordinary);assert.deepEqual(receipt.party,ordinary.party);
+ for(const member of receipt.party){const earned=untrained.party.find(p=>p.id===member.id);assert.equal(member.level,earned.level);assert.equal(member.xp,earned.xp);assert.equal(member.trainingPoints,0);assert.equal(member.pendingLevelUps.length,0);assert.equal(member.perks.length,member.level-1);}
+ const before=structuredClone(ordinary);trainRivalSurvivors(ordinary);assert.deepEqual(ordinary,before);assert.deepEqual(saved(job).receipt,receipt);
+ // A multi-level reward has real pending rolls and perk points; spending them
+ // must use exactly those values without increasing XP or granting extra levels.
+ const member=ordinary.party[0];member.level=7;member.perks=[];member.pendingLevelUps=[{level:7,rolls:{maxHp:2,maxFatigue:3,resolve:4,initiative:2,meleeSkill:5,rangedSkill:1,meleeDefense:2,rangedDefense:3}}];member.trainingPoints=1;
+ const copy=structuredClone(ordinary),attributes={...member.attributes},xp=member.xp;trainRivalSurvivors(ordinary);trainRivalSurvivors(copy);assert.deepEqual(ordinary,copy);assert.equal(member.level,7);assert.equal(member.xp,xp);assert.equal(member.attributes.meleeSkill,attributes.meleeSkill+5);assert.equal(member.attributes.meleeDefense,attributes.meleeDefense+2);assert.equal(member.attributes.maxFatigue,attributes.maxFatigue+3);assert.equal(new Set(member.perks).size,6);
+});
+test('old version-one combat checkpoints preserve their original settlement without automatic perk spending',()=>{
+ const job=jobFor(scene());job.version=1;const ordinary=structuredClone(job.state);while(ordinary.battle.status==='active')advanceBattle(ordinary);finishBattle(ordinary);const receipt=finish(job);assert.deepEqual(receipt.party,ordinary.party);assert.equal(saved(job).version,1);assert.deepEqual(saved(job).receipt,receipt);
 });

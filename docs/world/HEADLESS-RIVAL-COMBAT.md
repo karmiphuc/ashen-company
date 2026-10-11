@@ -24,7 +24,7 @@ A job progresses through `running → ready → settled`. Checkpoints retain the
 
 `settleHeadlessCombat` invokes ordinary `finishBattle` on a private copy. Its receipt contains actual casualties, survivors, XP, gear wear, consumables, gold, food, supplies, stash items and the camp record. It also retains every enemy’s terminal state and original world troop index, including pre-existing world casualties, so integration can preserve opponent losses and wear without renumbering survivors. The terminal battle remains as an audit. Repeated settlement returns the same isolated receipt, and a restored settled checkpoint recomputes and verifies that receipt.
 
-The receipt is **not applied to the world yet**. Before automatic rival fights are enabled, an owning world transaction must reserve one encounter generation, map progress to campaign time, pause travel during combat, persist the job and reservation, and consume the receipt exactly once. It must update NPC income/loot/casualty ledgers and camp losses atomically, protect accepted player targets and handle retreat/defeat without healing or replacing troops. CPU speed must not decide when a campaign reward becomes available. Random perk selection and hostile rival ambushes remain later milestones.
+The receipt is **not applied to the world yet**. Before automatic rival fights are enabled, an owning world transaction must reserve one encounter generation, map progress to campaign time, pause travel during combat, persist the job and reservation, and consume the receipt exactly once. It must update NPC income/loot/casualty ledgers and camp losses atomically, protect accepted player targets and handle retreat/defeat without healing or replacing troops. CPU speed must not decide when a campaign reward becomes available. Hostile rival ambushes remain a later milestone. Version-2 jobs now spend earned level-ups after ordinary settlement using player stat rolls and seeded random legal perks, with no extra XP or point grants. Version-1 checkpoints retain their original settlement behavior and receipts, so existing in-flight jobs do not change on reload.
 
 ## Evidence
 
@@ -32,7 +32,7 @@ The receipt is **not applied to the world yet**. Before automatic rival fights a
 
 `e2e/headless-combat.spec.js` exercises the real browser module worker, checks its receipt against the native engine, checks rendering continues during a long worker slice with no measured frame gap above one second, and replaces the worker from an acknowledged checkpoint. These are Chromium checks using the iPad viewport, not physical-iPad measurements.
 
-`node tools/simulate-headless.mjs` repeats three contact scenarios with fixed seeds. It reports real outcomes and measured preparation/action costs; it is not a whole-campaign or economy simulation. One cloud run recorded:
+`node tools/simulate-headless.mjs` repeats three contact scenarios with fixed seeds. It reports real outcomes and measured preparation/action costs; it is not a whole-campaign or economy simulation. The historical level-3/4/5 starting-roster baseline below predates automatic spending of available points; rerun the tool for current outcomes. That baseline recorded:
 
 | Seed / company | Camp | Result | Actions / rounds | Losses | Snapshot | p95 / max action |
 | --- | --- | --- | --- | --- | --- | --- |

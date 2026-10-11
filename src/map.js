@@ -1,3 +1,4 @@
+import { drawRivalBanner } from './rival-banners.js';
 import { FOG_CELL_SIZE, FOG_COLUMNS, FOG_ROWS, WORLD_VIEW_RADIUS, isWorldFogEnabled, revealWorld, worldPointVisible, worldPointExplored } from './world-fog.js';
 import { sceneFootprintContains } from './regional-scenes.js';
 import { WORLD_LANDMARK_ASSETS, worldLandmarks, landmarkAt, drawWorldLandmark, drawMountainRanges } from './world-landmarks.js';
@@ -423,7 +424,7 @@ export function mountMap(game, onChooseTown, onTravel, onChooseCamp, onActivate)
       const world = { x: camera.x + (current.x - width / 2) / camera.zoom, y: camera.y + (current.y - height / 2) / camera.zoom };
       const town = SETTLEMENTS.find(item => worldPointExplored(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 48);
       const camp = getCampSites(state).find(item => worldPointExplored(state,item) && Math.hypot(item.x - world.x, item.y - world.y) < 34);
-      const rival=getRivalMapCompanies(state).filter(r=>r.active&&worldPointVisible(state,r)).find(r=>Math.hypot(r.x-24-world.x,r.y-24-world.y)<24);
+      const rival=getRivalMapCompanies(state).filter(r=>r.active&&worldPointVisible(state,r)).find(r=>Math.hypot(r.x-24-world.x,r.y-24-world.y)<Math.max(24,22/camera.zoom));
       const patrol = getFactionPatrols(state).filter(p=>p.active && worldPointVisible(state,p)).find(item=>Math.hypot(item.x+24-world.x,item.y-24-world.y)<24);
       const band = nearestMapBand(bands().filter(item=>(['blacksmith','legacy-warrior','legacy-tomb'].includes(item.kind)||worldPointVisible(state,item))),world);
       const caravan = caravans().find(item => (['blacksmith','legacy-warrior','legacy-tomb'].includes(item.kind)||worldPointVisible(state,item)) && Math.hypot(item.x - world.x, item.y - world.y) < 24);
@@ -602,8 +603,8 @@ function draw() {
 
   getRivalMapCompanies(state).filter(r=>r.active&&worldPointVisible(state,r)).forEach(r=>{
     context.save();context.translate(-24,-24);
-    context.beginPath();context.arc(r.x,r.y+3,18,0,Math.PI*2);context.fillStyle='#1c1a16e8';context.fill();context.strokeStyle=r.color;context.lineWidth=selection===r.id?4:2;context.stroke();
-    context.font='bold 20px Georgia';context.textAlign='center';context.fillStyle=r.color;context.fillText(r.crest,r.x,r.y+9);
+    drawRivalBanner(context,r.id,r.x,r.y,camera.zoom,selection===r.id);
+    context.textAlign='center';context.fillStyle=r.color;
     context.font='bold 10px Arial';context.strokeStyle='#142016';context.lineWidth=3;
     const label=camera.zoom>=.4||selection===r.id?`${r.name} · ${r.size}`:`${r.size}`;
     context.strokeText(label,r.x,r.y+28);context.fillText(label,r.x,r.y+28);context.restore();

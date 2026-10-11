@@ -12,7 +12,9 @@ The first ordinary quarter-hour world step introduces these three companies once
 | Red Jackals | Camp hunters | 7 / 4 | 9,000 | Ironford → Highpass → Ravenfell |
 | Bronze Oath | Faction-backed veterans | 8 / 5 | 16,000 | Ambercross → Windrest → Kargan |
 
-Each starts with three days of food, eight tools, five medicine and 24 ammo. Bronze Oath's first two brothers have ordinary riding horses, including their food cost. All use existing characters/gear, ordinary seeded talents and legal level-up rolls: train three normal attributes per starting level, with no extra combat multipliers. No learned perks are invented; later randomized perk selection remains its own milestone. Starting money, equipment and levels are explicit authored arrivals, not purchases claimed to have happened offscreen. There are no faction subsidies after arrival.
+Each starts with three days of food, eight tools, five medicine and 24 ammo. Bronze Oath's first two brothers have ordinary riding horses, including their food cost. All use existing characters/gear and ordinary seeded talents. New companies retain the approved authored level-3/4/5 starts, with zero XP and three normal stat rolls per starting level-up. They start without learned perks; the combat adapter spends their valid available perk points alongside later earned points. Starting money and equipment remain explicit authored arrivals, not purchases claimed to have happened offscreen. There are no faction subsidies, hidden stat multipliers or scaling to the player. Previously saved companies retain their existing stats, levels and gear; no retroactive reset or additional rewards occur.
+
+The real-combat adapter now trains surviving members after ordinary battle XP creates level-ups: three role-appropriate attributes using the actual pending player rolls, then seeded random valid perks within normal level and point limits. Reloads and repeated settlement do not reroll choices or spend points twice. This reward handling is implemented in the isolated adapter; automatic live-world fights and applying their results remain pending.
 
 ## Shared-rule audit and current rules
 
@@ -26,7 +28,7 @@ Each starts with three days of food, eight tools, five medicine and 24 ammo. Bro
 | Rest / repairs | `applyRestRecovery` | Stop for six hours; normal HP/morale gain, medicine and tools; no recovery concession. |
 | Supplies | `provisionQuotes`, `buyFood`, `buySupplies`, shared `marketStock` | Real local prices and daily stock. Essential food first, then medicine/tools only when needed. Reserve three days of wages; never spend unavailable gold. |
 | Members / saves | `validateCompanyMembers`, `normalizePersistedMember` | Same gear, HP, injury, talent, training, perk, attachment and durability validation as player members. |
-| Future combat | Ordinary `startBattle` / `advanceBattle` / `finishBattle` | **Not adapted yet.** These player-campaign functions have outcome/loot/camp ownership effects which need isolation before headless use. |
+| Combat adapter | Ordinary `startBattle` / `advanceBattle` / `finishBattle`, `trainAttributes`, `learnPerk` | Worker-backed real outcomes, XP, stat rolls and random valid perks; automatic live-world scheduling and receipt application remain pending. |
 
 Rivals sleep from 20:00 until 06:00. Travelling companies camp at their current position; companies at an accessible settlement stay at its inn. Sleep preserves the route, stops travel and shopping, and defers any expired six-hour recovery until morning; it adds no free healing or supply refill. Midnight wages, food, injury recovery and insolvency still run normally. Inspection shows the camp or inn activity. This is derived from the existing clock and position, so old saves need no migration.
 
@@ -38,7 +40,7 @@ Three consecutive unpaid or hungry nights dissolve the company in place. The fin
 
 ## Inspection and persistence
 
-Visible world-map crests show company identity and member count. Select a crest, or use **Chronicle → Other banners → Scout** when within normal scouting range. Compact two-column roster cards show real names, levels, HP and equipment portraits. Supply/treasury indicators have accessible labels; accounting and unfinished progression details sit behind expandable hints. Unseen companies do not expose map locations through a scout action.
+Each company has a permanent swallowtail banner with its own color, crest and stripe pattern, distinct from bandit sprites and their small difficulty flags. The banner remains readable at overview zoom and is repeated beside the company name in inspection and the chronicle. Visible world-map banners show company identity and member count. Select a crest, or use **Chronicle → Other banners → Scout** when within normal scouting range. Compact two-column roster cards show real names, levels, HP and equipment portraits. Supply/treasury indicators have accessible labels; accounting and unfinished progression details sit behind expandable hints. Unseen companies do not expose map locations through a scout action.
 
 The optional `rivalCompanies` version-1 record contains activation/simulation clocks and exactly three authored company identities. Each record owns its route, position, rest/shop timing, resources, roster and ledger. Saves without it remain unchanged; no global save/combat version bump. Imported records reject missing/excess companies, invalid clocks/routes/positions, impossible resources or wear, extra top-level fields and unbalanced accounting. They return isolated normalized NPC members. Save size is bounded by three small rosters; no history of unlimited events/fights accumulates.
 
