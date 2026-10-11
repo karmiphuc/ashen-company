@@ -3283,6 +3283,12 @@ function shieldWallDeployment(company) {
 }
 
 export function startBattle(state, encounterId, {enemyOpening=false,patrolId=null}={}) {
+  return beginBattle(state,encounterId,{enemyOpening,patrolId});
+}
+
+// Only the isolated factory supplies a locked world encounter. Player entry
+// points cannot replace enemies or borrow another company's battle context.
+function beginBattle(state, encounterId, {enemyOpening=false,patrolId=null,lockedCamp=null,isolated=false}={}) {
   const blocked = actionBlocked(state);
   if (blocked) return blocked;
   const tomb=getLegacyTombEncounters(state).find(e=>e.id===encounterId);
@@ -3290,14 +3296,14 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   const blacksmith=getBlacksmithQuestEncounters(state).find(e=>e.id===encounterId);
   const undead = getUndeadEncounters(state).find(e => e.id === encounterId);
   const encounterType = tomb?'legacy-tomb':warrior?'legacy-warrior':blacksmith ? 'blacksmith' : undead ? undead.kind : getQuestEncounter(state)?.id === encounterId ? state.contract.type : BAND_BY_ID.has(encounterId) ? 'band' : 'camp';
-  const camp = tomb ?? warrior ?? blacksmith ?? undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
+  const camp = lockedCamp ?? tomb ?? warrior ?? blacksmith ?? undead ?? (['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(state) : encounterType === 'band' ? getRoamingBands(state).find(band => band.id === encounterId) : getCampSites(state).find(site=>site.id===encounterId));
   if (!camp) return result(false, 'That hostile group is no longer here.');
   if (encounterType === 'camp' && camp.cleared) return result(false, `This camp is deserted. Raiders may return in ${Math.ceil(camp.respawnHours/24)} days.`);
-  const npcFight=worldSkirmishFor(state,encounterId);
+  const npcFight=isolated?null:worldSkirmishFor(state,encounterId);
   // A player interception can happen before the next world-simulation step.
   // Bring the nearby patrol along instead of leaving it behind when no NPC
   // skirmish has been committed yet. Never borrow troops from another fight.
-  const nearbyPatrol=!npcFight&&!patrolId&&['band','undead-host'].includes(encounterType)
+  const nearbyPatrol=!isolated&&!npcFight&&!patrolId&&['band','undead-host'].includes(encounterType)
     ?getFactionPatrols(state).filter(p=>p.active&&p.playerRelation==='ally'&&p.behavior!=='returning'&&!worldSkirmishFor(state,p.id)
       &&(state.factionPatrols[p.id]?.cooldownUntil??0)<=worldHours(state)&&distance(p,camp)<=CAMP_RADIUS
       &&(!p.targetId||p.targetId===encounterId))
@@ -3473,7 +3479,7 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   orderCompanyTurnsForFormation(battle);
   if(battle.enemyOpening)battle.turnOrder.sort((a,b)=>Number(battle.units.find(u=>u.id===b).side==='enemy')-Number(battle.units.find(u=>u.id===a).side==='enemy'));
   battle.activeId = battle.turnOrder[0];
-  if(isSimultaneousBetaEnabled()){battle.simultaneous=initialSimultaneousClock(battle);for(const unit of battle.units){regenerateLivingShield(battle,unit);if(unit.dazedTurns>0)markSimultaneousEffect(battle,unit,'dazedTurns',unit.dazedTurns);}}
+  if(!isolated&&isSimultaneousBetaEnabled()){battle.simultaneous=initialSimultaneousClock(battle);for(const unit of battle.units){regenerateLivingShield(battle,unit);if(unit.dazedTurns>0)markSimultaneousEffect(battle,unit,'dazedTurns',unit.dazedTurns);}}
   battleLog(battle, battle.enemyOpening?`${camp.name} catch the company. Enemies act first in the opening round.`:`The company engages ${camp.name}.`);
   cancelWorldSkirmish(state,encounterId);
   state.battle = battle;
@@ -3483,6 +3489,54 @@ export function startBattle(state, encounterId, {enemyOpening=false,patrolId=nul
   const message = `Battle begins at ${camp.name}.`;
   record(state, message);
   return result(true, message);
+}
+
+// Preparation only: callers own reservation, scheduling and the world-result
+// transaction. These snapshots never alias or settle into the live campaign.
+export function createRivalBattleSnapshot(world,companyId,encounterId) {
+  const source=validateSave(structuredClone(world));
+  if(source.battle||source.gameOver)throw new TypeError('Rival battle preparation requires an idle active campaign');
+  const owner=source.rivalCompanies?.companies.find(company=>company.id===companyId);
+  if(!owner||owner.status==='dissolved')throw new TypeError('Unknown or dissolved rival company');
+  const camp=getCampSites(source).find(site=>site.id===encounterId);
+  if(!camp||camp.cleared||worldSkirmishFor(source,camp.id)
+    ||getActiveContracts(source).some(contract=>contract.campId===camp.id))throw new TypeError('Rival camp is unavailable or reserved');
+  if(distance(owner.position,camp)>CAMP_RADIUS)throw new TypeError('Rival must reach the camp before fighting');
+  const state=structuredClone(source);
+  delete state.rivalCompanies;
+  for(const key of ['companyLegacy','legacyWarrior','legendaryBlacksmith'])delete state[key];
+  Object.assign(state,{party:structuredClone(owner.party),gold:owner.gold,food:owner.food,
+    supplies:structuredClone(owner.supplies),inventory:[...owner.inventory],inventoryCondition:[...owner.inventoryCondition],
+    cargo:structuredClone(owner.cargo),retinue:defaultRetinue(),automation:{buyAmmo:false,equipBandages:false},
+    position:{...owner.position},formation:seedFormation(owner.party),reserveIds:[null,null,null],
+    contract:null,additionalContracts:[],destination:null,destinationAction:null,pursuit:null,
+    tactic:'offense',battle:null,gameOver:false,log:[]});
+  // Enemy size, gear, promotions and wear are captured from the live world
+  // before replacing the player roster with the rival's actual members.
+  const started=beginBattle(state,camp.id,{lockedCamp:structuredClone(camp),isolated:true});
+  if(!started.ok)throw new TypeError(started.message);
+  return {state,world:source,enemyWorldIndices:camp.enemies.map((enemy,index)=>enemy.worldIndex??enemy.troopIndex??index)};
+}
+
+export function validateRivalBattleSnapshot(input,encounterWorld) {
+  const world=validateSave(structuredClone(encounterWorld));
+  const state=validateSave({...structuredClone(input),battle:null});
+  const camp=getCampSites(world).find(site=>site.id===input.battle?.campId);
+  assert(camp&&!camp.cleared&&!world.battle&&!world.gameOver&&!worldSkirmishFor(world,camp.id)
+    &&!getActiveContracts(world).some(contract=>contract.campId===camp.id)&&distance(state.position,camp)<=CAMP_RADIUS,'isolated rival encounter');
+  const battle=validateBattle(input.battle,state.party,state,camp);
+  assert(battle&&battle.encounterType==='camp'&&!battle.simultaneous&&!battle.patrolAssist,'isolated rival battle');
+  assert(battle.tactic===state.tactic&&state.destination===null&&state.pursuit===null&&!state.gameOver,'isolated rival context');
+  assert(state.seed===world.seed&&state.day===world.day&&state.hour===world.hour,'isolated rival clock');
+  assert(!state.contract&&!state.additionalContracts.length&&!state.companyLegacy&&!state.legacyWarrior&&!state.legendaryBlacksmith
+    &&!state.automation.buyAmmo&&!state.automation.equipBandages
+    &&Object.entries(defaultRetinue()).every(([key,value])=>JSON.stringify(state.retinue[key])===JSON.stringify(value)), 'isolated rival ownership');
+  const enemies=battle.units.filter(unit=>unit.side==='enemy');
+  assert(enemies.length===camp.enemies.length&&enemies.every((unit,i)=>unit.id===`enemy-${(camp.enemies[i].troopIndex??i)+1}`
+    &&['armor','helmet','attachment','mount'].every(slot=>(unit.equipment[slot]??null)===(camp.enemies[i][slot]??null))), 'isolated rival enemy roster');
+
+  state.battle=battle;
+  return state;
 }
 
 function nextBattleTurn(battle) {
@@ -6520,7 +6574,7 @@ function validateBattleField(input) {
   return { columns: input.columns, rows: input.rows, biome: input.biome, tiles };
 }
 
-function validateBattle(input, party, worldState) {
+function validateBattle(input, party, worldState, lockedEncounter=null) {
   if (input === undefined || input === null) return null;
   const encounterType = input.encounterType ?? 'camp';
   const tomb=encounterType==='legacy-tomb'?getLegacyTombEncounters(worldState).find(e=>e.id===input.campId):null;
@@ -6529,7 +6583,7 @@ function validateBattle(input, party, worldState) {
   const undead = UNDEAD_TYPES.includes(encounterType) ? getUndeadEncounters(worldState).find(e => e.id === input.campId && e.kind === encounterType) : null;
   assert(recordObject(input) && (encounterType === 'camp' ? isCampId(input.campId) : encounterType === 'band' ? BAND_BY_ID.has(input.campId)
     : tomb || warrior || blacksmith || undead || ['rescue','deserters','bounty'].includes(encounterType) && worldState.contract?.type===encounterType && getQuestEncounter(worldState)?.id === input.campId), 'battle encounter');
-  const encounter = tomb ?? warrior ?? blacksmith ?? undead ?? (encounterType === 'band' ? BAND_BY_ID.get(input.campId) : ['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(worldState)
+  const encounter = lockedEncounter ?? tomb ?? warrior ?? blacksmith ?? undead ?? (encounterType === 'band' ? BAND_BY_ID.get(input.campId) : ['rescue','deserters','bounty'].includes(encounterType) ? getQuestEncounter(worldState)
     : getCampSites(worldState).find(camp=>camp.id===input.campId));
   if (undead) assert(recordObject(input.crisisContext) && input.crisisContext.crisisId === worldState.ashenWinter.crisisId && input.crisisContext.frontId === undead.frontId && input.crisisContext.townId === undead.townId && input.crisisContext.forceSeed === undead.force.seed && input.crisisContext.generation === undead.force.generation, 'crisis battle context');
   else assert(input.crisisContext === undefined, 'unexpected crisis context');
