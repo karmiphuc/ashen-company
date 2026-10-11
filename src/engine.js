@@ -2251,9 +2251,14 @@ export function advanceRivalSimulation(state) { commitRivalCombat(state,rivalCon
 export function planRivalWorldCombat(state) {
  planRivalCombat(state,{
   ...rivalContext(state),retinue:defaultRetinue,camps:rivalScoutingCamps,bandRadius:BAND_RADIUS,playerContact:band=>!companyInSanctuary(state)&&worldHours(state)>=(state.encounterGraceUntil??0)&&distance(state.position,band)<=BAND_RADIUS,skirmish:worldSkirmishFor,canReach:(from,to)=>Boolean(worldRoute(from,to)),
-  snapshot:world=>structuredClone({...world,
+  snapshot:(world,company,encounter)=>structuredClone({...world,
    day:Math.floor(world.rivalCompanies.lastHour/24)+1,hour:world.rivalCompanies.lastHour%24,
-   inventory:[],inventoryCondition:[],cargo:{},log:[],rivalCompanies:{...world.rivalCompanies,jobs:[]}}),
+   inventory:[],inventoryCondition:[],cargo:{},log:[],rivalCompanies:{...world.rivalCompanies,jobs:[],reports:[],
+    // Unrelated spoils and defender wounds never participate in this fight.
+    // Keep the complete owner and target; compact only the isolated copy so
+    // late-game histories cannot silently prevent physical contact battles.
+    companies:world.rivalCompanies.companies.map(c=>c.id===company.id?c:{...c,inventory:[],inventoryCondition:[]}),
+    campWear:world.rivalCompanies.campWear[encounter.id]?{[encounter.id]:world.rivalCompanies.campWear[encounter.id]}:{}}}),
  });
 }
 
