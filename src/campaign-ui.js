@@ -1,3 +1,5 @@
+import {companyHintHTML} from './company-hints.js';
+export {companyHintHTML} from './company-hints.js';
 import { rivalSidebarHTML } from './rival-company-ui.js';
 import { battleMvpAwards } from './battle-performance.js';
 import { equipmentSetStatus, effectiveArmorFatigue, effectiveAttachmentFatigue, equipmentSetCompletionText } from './equipment-sets.js';
@@ -11,7 +13,6 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp
 const item = getItem;
 const town = id => SETTLEMENTS.find(entry => entry.id === id);
 const itemIcon = (entry, alt=entry?.name) => `<img class="equipment-icon${entry?.rarity === 'famed' ? ' famed-item-icon' : ''}" src="${itemImage(entry)}" alt="${esc(alt)}">`;
-export function companyHintHTML(id,label,detail){const key=`company-hint-${id}`;return `<span class="company-hint"><button type="button" class="company-hint-button" data-company-hint aria-label="About ${esc(label)}" aria-describedby="${esc(key)}" aria-expanded="false">?</button><span class="company-hint-tip" id="${esc(key)}" role="tooltip" hidden><strong>${esc(label)}</strong><span>${esc(detail)}</span></span></span>`;}
 function talentHTML(person,key){const stars=person.talents?.[key]??0;return stars?` <span class="talent-stars" role="img" aria-label="${stars}-star talent" title="${stars===3?'Always +5 at level-up':`+${stars} to level-up rolls (maximum +5)`}">${'★'.repeat(stars)}</span>`:'';}
 export const statLabels = {maxHp:'Hitpoints',maxFatigue:'Maximum Fatigue',resolve:'Resolve',initiative:'Initiative',meleeSkill:'Melee Skill',rangedSkill:'Ranged Skill',meleeDefense:'Melee Defense',rangedDefense:'Ranged Defense'};
 const combatRoles = {auto:'Auto',frontliner:'Frontliner',skirmisher:'Skirmisher',ranged:'Ranged',flanker:'Flanker',breaker:'Breaker','reach-support':'Reach Support'};
@@ -262,7 +263,7 @@ export function campSidebarHTML(state, site) {
   const mountNote=site.mountChance?`<p>High-tier camp reward: ${Math.round(site.mountChance*100)}% chance of an extra mount, alongside named loot.</p>`:'';
   const famedChance=Math.round((Number(site.famedChance)||0)*100);
   const caravan=roaming&&site.behavior==='raiding-caravan'?getCaravans(state).find(entry=>entry.id===site.targetId):null;
-  const activity=site.behavior==='hunting-company'?'Pursuing your company':site.behavior==='raiding-caravan'?`Raiding ${town(caravan?.destinationId)?.name||'a'} wagon`:'Patrolling';
+  const activity=site.behavior==='fighting'?'Fighting mercenaries or faction troops':site.behavior==='hunting-rival'?'Pursuing another mercenary company':site.behavior==='hunting-company'?'Pursuing your company':site.behavior==='raiding-caravan'?`Raiding ${town(caravan?.destinationId)?.name||'a'} wagon`:'Patrolling';
   const raidPhase=caravan&&caravanContact(caravan)?'Wagon intercepted':'Closing on the wagon';
   const sanctuary=roaming&&site.behavior==='hunting-company'?'<p class="caravan-note">Reach a settlement to escape pursuit. Resting in the wilderness can be interrupted.</p>':'';
   const raidNotice=site.behavior==='raiding-caravan'?`<p class="band-activity ${caravan&&caravanContact(caravan)?'in-contact':''}">${raidPhase}</p>`:'';

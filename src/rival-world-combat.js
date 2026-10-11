@@ -1,3 +1,5 @@
+import {rivalSaleableLoot} from './rival-equipment.js';
+import {RIVAL_GOALS,rivalCanHunt} from './rival-goals.js';
 // Live-world reservations and outcome accounting. Combat itself stays in the
 // shared turn-based worker; no power-score winner or synthetic rewards.
 export const RIVAL_ENGAGEMENT_HOURS=6;
@@ -16,31 +18,43 @@ export function planRivalCombat(world,context){
  if(world.battle||world.gameOver||!world.rivalCompanies)return;
  enableRivalCombat(world);const record=world.rivalCompanies,now=record.lastHour;
  const hour=now%24,day=Math.floor(now/24)+1;
- const reserved=new Set([world.destinationAction?.id,...context.contracts(world).map(c=>c.campId),...record.jobs.map(j=>j.encounterId)]);
- let camps;
+ const reserved=new Set([world.pursuit,world.destinationAction?.id,...context.contracts(world).map(c=>c.campId),...record.jobs.map(j=>j.encounterId)]);
+ let camps;const bands=context.bands(world),available=band=>!context.playerContact(band)&&!reserved.has(band.id)&&!context.skirmish(world,band.id)&&!context.sanctuary(world,band);
+ const reserve=(company,encounter)=>{
+  const source=context.snapshot(world),sourceBytes=new TextEncoder().encode(JSON.stringify(source)).byteLength;
+  const baseBytes=new TextEncoder().encode(JSON.stringify({...world,rivalCompanies:{...record,jobs:[]}})).byteLength;
+  const reservedBytes=record.jobs.reduce((sum,j)=>sum+new TextEncoder().encode(JSON.stringify(j.source)).byteLength+750000,0);
+  if(sourceBytes>300000||baseBytes+reservedBytes+sourceBytes+750000>4*1024*1024-65536)return false;
+  record.jobs.push({companyId:company.id,encounterId:encounter.id,generation:encounter.generation??encounter.spawnCycle,startedHour:now,endHour:now+(encounter.kind==='band'?.25:RIVAL_ENGAGEMENT_HOURS),source,checkpoint:null});
+  company.lastHuntDay=day;reserved.add(encounter.id);return true;
+ };
  for(const company of record.companies){
   if(company.status==='dissolved'||rivalFightFor(world,company.id))continue;
+  // Contact has consequences even for sleeping, wounded or penniless rivals.
+  const contact=!context.sanctuary(world,company.position)&&bands.filter(b=>available(b)&&Math.hypot(company.position.x-b.x,company.position.y-b.y)<=context.bandRadius).sort((a,b)=>a.id.localeCompare(b.id))[0];
+  if(contact){reserve(company,contact);continue;}
   const ready=company.food>=context.food({...world,party:company.party,retinue:context.retinue()})*2&&!company.party.some(p=>p.hp<context.stats(p).maxHp*.65);
-  if(company.targetCampId&&!ready){company.targetCampId=null;continue;}
+  if(company.targetCampId&&(!ready||rivalSaleableLoot(company,context))){company.targetCampId=null;continue;}
   if(company.targetCampId){
    const camp=reserved.has(company.targetCampId)?null:context.targetCamp(world,company.targetCampId);
    if(!camp||context.skirmish(world,camp.id)){company.targetCampId=null;continue;}
    if(Math.hypot(company.position.x-camp.x,company.position.y-camp.y)>context.radius)continue;
    // An engagement plus its aftermath occupies six campaign hours. Restrict
    // starts to daylight so nightly upkeep never uses a stale participant list.
-   if(hour<6||hour>14||company.lastHuntDay===day)continue;
-   const source=context.snapshot(world);
-   const sourceBytes=new TextEncoder().encode(JSON.stringify(source)).byteLength;
-   const baseBytes=new TextEncoder().encode(JSON.stringify({...world,rivalCompanies:{...record,jobs:[]}})).byteLength;
-   const reservedBytes=record.jobs.reduce((sum,j)=>sum+new TextEncoder().encode(JSON.stringify(j.source)).byteLength+750000,0);
-   if(sourceBytes>300000||baseBytes+reservedBytes+sourceBytes+750000>4*1024*1024-65536)continue; // preserve export/import capacity
-   record.jobs.push({companyId:company.id,encounterId:camp.id,generation:camp.generation,startedHour:now,endHour:now+RIVAL_ENGAGEMENT_HOURS,source,checkpoint:null});
-   company.lastHuntDay=day;reserved.add(camp.id);continue;
+   if(camp.kind!=='band'&&(hour<6||hour>14||company.lastHuntDay===day))continue;
+   if(camp.kind==='band'&&!rivalCanHunt(company,camp,context)){company.targetCampId=null;continue;}
+   reserve(company,camp);continue;
   }
   if(company.status!=='travelling'||company.lastHuntDay===world.day||!ready)continue;
+  if(hour<6||hour>=20||context.sanctuary(world,company.position))continue;
+  const selling=rivalSaleableLoot(company,context),goal=RIVAL_GOALS[company.id];
+  const prey=bands.filter(b=>available(b)&&Math.hypot(company.position.x-b.x,company.position.y-b.y)<=(selling?context.bandRadius:goal.huntRange)&&rivalCanHunt(company,b,context))
+   .sort((a,b)=>(company.id==='bronze-oath'?Number(b.behavior==='raiding-caravan')-Number(a.behavior==='raiding-caravan'):0)||Math.hypot(company.position.x-a.x,company.position.y-a.y)-Math.hypot(company.position.x-b.x,company.position.y-b.y)||a.id.localeCompare(b.id)).find(b=>context.canReach(company.position,b));
+  if(prey){company.targetCampId=prey.id;reserved.add(prey.id);continue;}
+  if(selling)continue; // Cash in first; do not detour into a camp raid.
   camps??=context.camps(world);
-  const candidate=camps.filter(c=>!c.cleared&&!reserved.has(c.id)&&!context.skirmish(world,c.id)&&c.enemyCount<=company.party.length&&c.difficulty<=2&&Math.hypot(company.position.x-c.x,company.position.y-c.y)<=180)
-   .sort((a,b)=>Math.hypot(company.position.x-a.x,company.position.y-a.y)-Math.hypot(company.position.x-b.x,company.position.y-b.y)||a.id.localeCompare(b.id)).find(c=>context.canReach(company.position,c));
+  const candidate=camps.filter(c=>!c.cleared&&!reserved.has(c.id)&&!context.skirmish(world,c.id)&&c.enemyCount<=company.party.length&&c.difficulty<=2&&rivalCanHunt(company,c,context)&&Math.hypot(company.position.x-c.x,company.position.y-c.y)<=goal.huntRange)
+   .sort((a,b)=>(b.reward??0)/(30+Math.hypot(company.position.x-b.x,company.position.y-b.y))-(a.reward??0)/(30+Math.hypot(company.position.x-a.x,company.position.y-a.y))||a.id.localeCompare(b.id)).find(c=>context.canReach(company.position,c));
   if(candidate){company.targetCampId=candidate.id;reserved.add(candidate.id);}
  }
 }
@@ -66,9 +80,13 @@ export function commitRivalCombat(world,context){
   for(const key of ['party','gold','food','supplies','inventory','inventoryCondition','cargo'])company[key]=structuredClone(receipt[key]);
   company.targetCampId=null;company.status=company.party.length?'resting':'dissolved';company.restUntil=company.party.length?now+6:0;
   if(receipt.outcome==='victory'){
-   world.camps[job.encounterId]={...receipt.campRecord,clearedDay:world.day,respawnAt:job.endHour+(receipt.campRecord.respawnAt-job.startedHour)};
+   if(receipt.bandRecord){
+    world.bands[job.encounterId]={...receipt.bandRecord,defeatedUntil:job.endHour+48};
+    for(const shipment of Object.values(world.shipments??{}))if(shipment.attackerId===job.encounterId&&shipment.attackerSpawnCycle===job.generation&&['en-route','under-attack'].includes(shipment.status))Object.assign(shipment,{status:'en-route',attackerId:null,attackerSpawnCycle:null,attackHour:null,raidCleared:true});
+   }else world.camps[job.encounterId]={...receipt.campRecord,clearedDay:world.day,respawnAt:job.endHour+(receipt.campRecord.respawnAt-job.startedHour)};
    delete world.worldLosses[job.encounterId];delete record.campWear[job.encounterId];
   }else{
+   if(receipt.bandRecord)Object.assign(world.bands[job.encounterId],{behavior:'patrolling',targetId:null});
    const survivors=receipt.enemies.filter(e=>e.unit.alive||e.unit.escaped),previous=world.worldLosses[job.encounterId];
    const size=Math.max(previous?.size??0,...receipt.enemies.map(e=>e.worldIndex+1));
    if(survivors.length&&survivors.length<size)world.worldLosses[job.encounterId]={cycle:job.generation,size,survivors:survivors.map(e=>e.worldIndex)};

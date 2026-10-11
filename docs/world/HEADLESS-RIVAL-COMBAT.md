@@ -1,10 +1,10 @@
 # Shared headless combat for rival companies
 
-This implements the combat-adapter part of [milestone 3](../plans/RIVAL-COMPANIES.md). It is an executable, worker-backed library with real battle outcomes, not yet an automatic world activity. The [current rival companies](RIVAL-COMPANIES.md) still travel, provision, recover and pay upkeep. Camp reservations, campaign-time scheduling, exactly-once world settlement, earned-income accounting and changing NPC rosters are the next integration step. Preparing a job does not claim or clear a camp, pay a live rival or alter the player's campaign.
+This implements the shared combat adapter and live encounter integration in [milestone 3](../plans/RIVAL-COMPANIES.md). The [current rival companies](RIVAL-COMPANIES.md) physically reserve ordinary camps and roaming band encounters; the controller schedules campaign deadlines and commits verified outcomes once. Preparation itself remains isolated: it cannot clear an encounter, pay a live company or alter the player's inventory.
 
 ## Actual participants and rules
 
-`createHeadlessCombat(world, companyId, encounterId)` requires an existing, solvent rival physically within the normal camp contact radius. The target must be an uncleared ordinary camp with no ongoing patrol fight or accepted player contract targeting it. Unique story, tomb, crisis and caravan objectives are excluded. Preparation uses isolated copies of the real NPC members, gear, HP, injuries, consumables, funds, food, ammo and stash.
+`createHeadlessCombat(world, companyId, encounterId)` requires an existing, solvent rival physically within the normal camp contact radius. The target must be an uncleared ordinary camp or active roaming band, with no ongoing patrol fight, selected player pursuit or accepted player contract targeting it. Unique story, tomb, crisis and caravan objectives are excluded. Preparation uses isolated copies of the real NPC members, gear, HP, injuries, consumables, funds, food, ammo and stash.
 
 Capture the enemy roster from the current world before replacing the player roster with the rival's party. This preserves the camp's actual size, veteran promotions, named rolls, mounts and prior world losses. A smaller rival does not cause an easier camp to be regenerated. Terrain, lighting and random seeds also remain fixed. Reuse the existing formation builder, battle creation, `advanceBattle`, retreat and `finishBattle` rules; there is no second damage, injury, AP, morale, reaction or loot calculator.
 
@@ -24,7 +24,7 @@ A job progresses through `running → ready → settled`. Checkpoints retain the
 
 `settleHeadlessCombat` invokes ordinary `finishBattle` on a private copy. Its receipt contains actual casualties, survivors, XP, gear wear, consumables, gold, food, supplies, stash items and the camp record. It also retains every enemy’s terminal state and original world troop index, including pre-existing world casualties, so integration can preserve opponent losses and wear without renumbering survivors. The terminal battle remains as an audit. Repeated settlement returns the same isolated receipt, and a restored settled checkpoint recomputes and verifies that receipt.
 
-The live [rival-company controller](RIVAL-COMPANIES.md) now reserves physically contacted ordinary camps, saves source/checkpoints, and commits these receipts once at a fixed six-hour expedition deadline. It pauses rival travel and recovery during the commitment, protects accepted player targets, accounts for earned resources and updates real camp casualties and defender wear. No battle winner is estimated and no worker work executes on the UI thread.
+The live [rival-company controller](RIVAL-COMPANIES.md) now reserves physically contacted ordinary camps and bands, saves source/checkpoints, and commits these receipts once at a fixed deadline (six hours for camps; one quarter-hour for roaming interceptions). It pauses rival travel and recovery during the commitment, protects accepted player targets, accounts for earned resources and updates real camp casualties and defender wear. No battle winner is estimated and no worker work executes on the UI thread.
 
 Version-2 jobs spend available level-ups after ordinary settlement using player stat rolls and seeded random legal perks, with no extra XP or point grants. Version-1 checkpoints retain their original settlement behavior and receipts, so existing in-flight jobs do not change on reload. Paid contracts, equipment upgrades, recruitment, joining rival fights and hostile ambushes remain later milestones.
 
@@ -43,3 +43,9 @@ Version-2 jobs spend available level-ups after ordinary settlement using player 
 | 14 / Bronze Oath | day 80, tier 3, 9 enemies | defeat | 532 / 16 | 8 of 8 | 115,507 B | 18.76 / 51.20 ms |
 
 Preparation measured 106.59, 64.18 and 21.80 ms respectively. These measurements justify worker execution; they do not establish a hard 4 ms action limit or live gameplay FPS. The victorious companies earned ordinary loot and XP; the defeated company gained no gold or replacement items and spent all its ammo. All settled receipts survived restoration without changing their outcomes.
+
+### Roaming encounter integration
+
+The same adapter now accepts ordinary roaming band IDs, capturing their real current spawn-cycle roster, gear, casualties and persisted damage before replacing the player party. A band receipt additionally includes its normal band progress; camp receipt shapes are unchanged, preserving existing checkpoints. Restoration validates camp-or-band native battle context and exact enemy world identities. Victories increment the actual band cycle and schedule its ordinary 48-hour replacement; defeats persist defender wear for that cycle. Both use actual combat XP, loot and costs, without outcome estimates.
+
+Road interceptions use a fixed quarter-hour commitment, can occur at night and settle before the next midnight rival upkeep. Camp commitments remain six hours within daylight. Reservations exclude player-selected targets and faction commitments, freeze the band as well as the rival, and use the existing worker queue, checkpoint acknowledgements, size reservation and exactly-once transaction. Player rest waits/resumes around newly created encounters without repeating elapsed hours or reward application.

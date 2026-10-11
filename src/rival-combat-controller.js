@@ -38,5 +38,17 @@ export class RivalCombatController {
    await (this.busy??this.pump());
   }
  }
+ async rest(action,hours){
+  const world=this.world(),end=rivalClock(world)+hours;
+  while(!this.closed&&this.world()===world){
+   await this.flush();
+   if(this.closed||this.world()!==world)break;
+   const result=action(world,{remainingHours:Math.max(0,end-rivalClock(world))});
+   if(!result?.rivalPending)return result;
+   // New fights can begin during stationary time. Resume only the unspent
+   // hours after their reports arrive; never restart the full rest or heal early.
+  }
+  return {ok:false,message:'The company changed before resting finished.'};
+ }
  close(){this.closed=true;this.reset();}
 }

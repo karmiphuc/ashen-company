@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import {createGame,advanceRivalSimulation,planRivalWorldCombat,tick,validateSave} from '../src/engine.js';
 import {createHeadlessCombat,advanceHeadlessCombat,settleHeadlessCombat} from '../src/headless-combat.js';
 import {acknowledgeRivalCombat} from '../src/rival-world-combat.js';
+const days=Number(process.argv.find(a=>a.startsWith('--days='))?.slice(7)??3);
+assert.ok(Number.isSafeInteger(days)&&days>=1&&days<=90,'Use --days=1..90');
 const results=[];
 for(const seed of [12,13,14]){
+ console.error(`Starting seed ${seed}, ${days} days`);
  const world=createGame(seed);advanceRivalSimulation(world);planRivalWorldCombat(world);let fights=0,losses=0;
- for(let quarter=0;quarter<3*96;quarter++){
+ for(let quarter=0;quarter<days*96;quarter++){
   planRivalWorldCombat(world);
   for(const reservation of world.rivalCompanies.jobs){
    if(reservation.checkpoint)continue;
@@ -14,7 +17,8 @@ for(const seed of [12,13,14]){
   }
   const result=tick(world,.25);assert.equal(result?.rivalPending,undefined);assert.equal(world.battle,null);
  }
+ console.error(`Completed seed ${seed}: ${fights} real fights, ${losses} losses`);
  const restored=validateSave(JSON.parse(JSON.stringify(world)));assert.deepEqual(restored.rivalCompanies,world.rivalCompanies);
- results.push({seed,days:3,fights,losses,saveBytes:Buffer.byteLength(JSON.stringify(world)),companies:world.rivalCompanies.companies.map(c=>({id:c.id,members:c.party.length,gold:c.gold,earned:c.ledger.goldEarned,food:c.food,ammo:c.supplies.ammo,levels:c.party.map(p=>p.level),perks:c.party.map(p=>p.perks.length)}))});
+ results.push({seed,days,fights,losses,saveBytes:Buffer.byteLength(JSON.stringify(world)),companies:world.rivalCompanies.companies.map(c=>({id:c.id,members:c.party.length,gold:c.gold,earned:c.ledger.goldEarned,food:c.food,ammo:c.supplies.ammo,levels:c.party.map(p=>p.level),perks:c.party.map(p=>p.perks.length)}))});
 }
 console.log(JSON.stringify(results,null,2));

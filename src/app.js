@@ -343,7 +343,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('button');i
  case 'hire-bounty-hunter':retinueTransaction(hireBountyHunter);break;
  case 'upgrade-scout':retinueTransaction(upgradeScout);break;
  case 'close-modal':marketReturnScroll=null;$('#modal').close();if(state.battle)render();break;case 'market':returnToMarket();break;case 'contracts':contracts();break;case 'recruit':recruitModal();break;
- case 'camp':case 'forage':{if(rivalRestBusy)break;speed=0;rivalRestBusy=true;b.disabled=true;const restingCompany=state;try{await rivalCombat.flush();if(state!==restingCompany)break;run(b.dataset.action==='camp'?camp:forage);if(b.dataset.action==='forage'&&$('#modal').open)market();}catch{toast('Battle reports are temporarily unavailable. Your company is preserved; try again shortly.');}finally{rivalRestBusy=false;b.disabled=false;}break;}
+ case 'camp':case 'forage':{if(rivalRestBusy)break;speed=0;rivalRestBusy=true;b.disabled=true;const restingCompany=state;try{const restResult=await rivalCombat.rest(b.dataset.action==='camp'?camp:forage,b.dataset.action==='camp'?6:4);if(state!==restingCompany)break;run(()=>restResult);if(b.dataset.action==='forage'&&$('#modal').open)market();}catch{toast('Battle reports are temporarily unavailable. Your company is preserved; try again shortly.');}finally{rivalRestBusy=false;b.disabled=false;}break;}
  case 'go-company':$('#modal').close();tab='company';slotFilter='all';render();break;case 'settings':settings();break;
  case 'find-company':if(state.battle){focusBattleCamera('company');}else{tab='world';render();focusMap(state.position);window.scrollTo({top:0,behavior:'auto'});}break;
  case 'center':focusMap(state.position);break;case 'zoom-in':zoomMap(1.25);break;case 'zoom-out':zoomMap(.8);break;
