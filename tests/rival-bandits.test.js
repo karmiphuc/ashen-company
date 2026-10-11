@@ -1,3 +1,4 @@
+import {populateLateGameHistory} from './helpers/rival-late-game.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createGame,advanceRivalSimulation,planRivalWorldCombat,getRoamingBands,validateSave,tick,startBattle,SETTLEMENTS,getCompanyStats} from '../src/engine.js';
@@ -31,4 +32,15 @@ test('an immediate player interception takes precedence over a rival standing ne
 
 test('towns liquidate only real ordinary spoils at normal prices and the stash uses the player base limit',()=>{
  const world=createGame(12);advanceRivalSimulation(world);enableRivalCombat(world);const company=world.rivalCompanies.companies[0];const named=NAMED_WEAPONS[0].id;company.inventory=[...Array(129).fill('arming-sword'),named];company.inventoryCondition=Array(130).fill(null);validateSave(world);const before=company.gold,playerGold=world.gold,quote=getMarket(world).equipment.find(e=>e.itemId==='arming-sword').sellPrice;tick(world,.25);assert.equal(company.inventory.length,118);assert.ok(company.inventory.includes(named)||company.party.some(p=>p.equipment.weapon===named));assert.equal(world.gold,playerGold);assert.equal(company.gold-before,quote*12);assert.equal(company.gold-before,company.ledger.goldEarned);assert.ok(company.ledger.goldEarned>0);validateSave(world);
+});
+
+test('a large late-game campaign still reserves and resolves a real roaming contact',()=>{
+ const {world,band,company}=scene();
+ populateLateGameHistory(world);
+ validateSave(world);assert.ok(JSON.stringify(world).length>300000);
+ const originalWear=structuredClone(world.rivalCompanies.campWear);planRivalWorldCombat(world);
+ const job=world.rivalCompanies.jobs.find(j=>j.companyId===company.id);assert.ok(job,'contact must reserve a real battle instead of following forever');
+ assert.equal(job.endHour-job.startedHour,.25);assert.deepEqual(world.rivalCompanies.campWear,originalWear,'snapshot trimming must not erase live-world wear');validateSave(world);
+ const combat=resolve(job);restoreHeadlessCombat(combat);acknowledgeRivalCombat(world,company.id,combat);tick(world,.25);
+ assert.equal(world.rivalCompanies.jobs.some(j=>j.companyId===company.id),false);assert.ok(world.rivalCompanies.reports.some(r=>r.companyId===company.id&&r.encounterId===band.id));validateSave(world);
 });

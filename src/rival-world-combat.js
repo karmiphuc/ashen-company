@@ -21,7 +21,7 @@ export function planRivalCombat(world,context){
  const reserved=new Set([world.pursuit,world.destinationAction?.id,...context.contracts(world).map(c=>c.campId),...record.jobs.map(j=>j.encounterId)]);
  let camps;const bands=context.bands(world),available=band=>!context.playerContact(band)&&!reserved.has(band.id)&&!context.skirmish(world,band.id)&&!context.sanctuary(world,band);
  const reserve=(company,encounter)=>{
-  const source=context.snapshot(world),sourceBytes=new TextEncoder().encode(JSON.stringify(source)).byteLength;
+  const source=context.snapshot(world,company,encounter),sourceBytes=new TextEncoder().encode(JSON.stringify(source)).byteLength;
   const baseBytes=new TextEncoder().encode(JSON.stringify({...world,rivalCompanies:{...record,jobs:[]}})).byteLength;
   const reservedBytes=record.jobs.reduce((sum,j)=>sum+new TextEncoder().encode(JSON.stringify(j.source)).byteLength+750000,0);
   if(sourceBytes>300000||baseBytes+reservedBytes+sourceBytes+750000>4*1024*1024-65536)return false;
