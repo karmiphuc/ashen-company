@@ -1,6 +1,7 @@
-import {RIVAL_GOALS,rivalStrength,bandStrength} from './rival-goals.js';
+import {equipRivalLoot,rivalSaleableLoot} from './rival-equipment.js';
+import {RIVAL_GOALS,rivalStrength,bandStrength,rivalRiskMargin} from './rival-goals.js';
 import { rivalFightFor } from './rival-world-combat.js';
-import { nearestWorldPoint, moveWorldToward, worldPointInBounds, worldBlocked } from './world-navigation.js';
+import { nearestWorldPoint, moveWorldToward, worldPointInBounds, worldBlocked, worldRoute } from './world-navigation.js';
 import { defaultRetinue } from './retinue.js';
 
 // Fixed campaign arrivals, independent of the player's strength or possessions.
@@ -47,9 +48,9 @@ function shop(world,company,context,now){
  if(company.lastShopDay===view.day||!context.servicesAvailable(company.targetTownId))return;
  company.lastShopDay=view.day;
  if(world.rivalCompanies?.version===2){
-  // A bounded town transaction liquidates genuine ordinary spoils at normal
-  // local prices. Keep named/famed finds for later equipment progression.
-  for(const id of company.inventory.filter(id=>!['named','famed'].includes(context.getItem(id)?.rarity)).slice(0,4)){
+  // Outfit the roster before liquidating ordinary spoils at native local prices.
+  equipRivalLoot(view,context);
+  for(const id of company.inventory.filter(id=>!['named','famed'].includes(context.getItem(id)?.rarity)).slice(0,12)){
    const before=view.gold;if(context.sellItem(view,id).ok)company.ledger.goldEarned+=view.gold-before;
   }
  }
@@ -73,6 +74,20 @@ function nextDestination(company,context){
  // No open town: remain in place and try again after a real six-hour rest.
  company.status='resting';
 }
+function lootDestination(company,context){
+ // Compare reachable route lengths, not straight lines through mountains.
+ const towns=context.settlements.filter(t=>context.servicesAvailable(t.id)).sort((a,b)=>distance(company.position,a)-distance(company.position,b)||a.id.localeCompare(b.id));
+ let best=null,bestLength=Infinity;
+ for(const town of towns){
+  if(distance(company.position,town)>bestLength)break;
+  const path=worldRoute(company.position,town);if(!path)continue;
+  let from=company.position,length=0;
+  for(const point of path){length+=distance(from,point);from=point;}
+  if(length<bestLength){best=town;bestLength=length;}
+ }
+ if(!best)return false;
+ company.targetTownId=best.id;company.targetCampId=null;return true;
+}
 export function advanceRivalCompanies(world,context){
  const now=nowOf(world);
  if(world.rivalCompanies===undefined){world.rivalCompanies={version:1,startedHour:now,lastHour:now,companies:RIVAL_DEFINITIONS.map(d=>startingCompany(world,d,context))};return;}
@@ -88,8 +103,10 @@ export function advanceRivalCompanies(world,context){
   // Sleep gates the interval's start: the last evening step can reach town,
   // but 05:45–06:00 never travels. Midnight upkeep still runs while asleep.
   if(sleepingAt(record.lastHour))continue;
+  const selling=record.version===2&&rivalSaleableLoot(company,context);
+  if(selling)lootDestination(company,context);
   if(record.version===2&&!context.sanctuary(world,company.position)){
-   const threat=bands.filter(b=>!rivalFightFor(world,b.id)&&b.behavior!=='fighting'&&distance(company.position,b)<=100&&rivalStrength(company,context)<bandStrength(b,context)*RIVAL_GOALS[company.id].margin)
+   const threat=bands.filter(b=>!rivalFightFor(world,b.id)&&b.behavior!=='fighting'&&distance(company.position,b)<=100&&rivalStrength(company,context)<bandStrength(b,context)*rivalRiskMargin(company,context))
     .sort((a,b)=>distance(company.position,a)-distance(company.position,b)||a.id.localeCompare(b.id))[0];
    if(threat){
     company.targetCampId=null;
@@ -108,7 +125,13 @@ export function advanceRivalCompanies(world,context){
    if(distance(company.position,target)<=1e-7)shop(world,company,context,now);
    if(now+1e-9<company.restUntil)continue;
    const view=facade(world,company,now),before=supplySnapshot(company);context.rest(view);retain(company,view,before);
-   company.status='travelling';nextDestination(company,context);company.restUntil=now+6;
+   company.status='travelling';
+   // If the daily sale batch leaves ordinary loot, wait safely for tomorrow's
+   // market visit instead of collecting another fight's spoils.
+   if(record.version===2&&rivalSaleableLoot(company,context)&&lootDestination(company,context)){
+    company.restUntil=now+6;if(distance(company.position,context.settlements.find(t=>t.id===company.targetTownId))<=1e-7){company.status='resting';continue;}
+   }else nextDestination(company,context);
+   company.restUntil=now+6;
    if(company.status==='resting')continue;
    target=context.settlements.find(t=>t.id===company.targetTownId);
   }
@@ -143,9 +166,9 @@ export function validateRivalCompanies(input,world,context){
  for(const company of result.companies){
   check(keys(company,[...companyKeys,...(modern?combatCompanyKeys:[])]),'company fields');
   const definition=definitions.get(company.id);
-  check(point(company.position)&&definition.homes.includes(company.targetTownId),'position/route');
+  check(point(company.position)&&(modern?context.settlements.some(t=>t.id===company.targetTownId):definition.homes.includes(company.targetTownId)),'position/route');
   check(['resting','travelling','dissolved'].includes(company.status)&&Number.isFinite(company.restUntil)&&company.restUntil>=0&&company.restUntil<=input.lastHour+6.0000001,'rest state');
-  check(Number.isInteger(company.routeIndex)&&company.routeIndex>=0&&company.routeIndex<definition.homes.length&&company.targetTownId===definition.homes[company.routeIndex],'route index');
+  check(Number.isInteger(company.routeIndex)&&company.routeIndex>=0&&company.routeIndex<definition.homes.length&& (modern||company.targetTownId===definition.homes[company.routeIndex]),'route index');
   check(count(company.lastShopDay)&&company.lastShopDay<=world.day&&count(company.gold)&&count(company.food)&&count(company.unpaidDays)&&company.unpaidDays<=3&&count(company.hungryDays)&&company.hungryDays<=3,'resources');
   check(keys(company.supplies,['tools','medicine','ammo'])&&Object.values(company.supplies).every(n=>count(n)&&n<=10000),'supplies');
   check(keys(company.ledger,[...ledgerKeys,...(modern?earnedLedgerKeys:[])])&&Object.values(company.ledger).every(count),'ledger');

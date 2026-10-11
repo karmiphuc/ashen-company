@@ -1,3 +1,4 @@
+import {rivalSaleableLoot} from './rival-equipment.js';
 import {RIVAL_GOALS,rivalCanHunt} from './rival-goals.js';
 // Live-world reservations and outcome accounting. Combat itself stays in the
 // shared turn-based worker; no power-score winner or synthetic rewards.
@@ -33,7 +34,7 @@ export function planRivalCombat(world,context){
   const contact=!context.sanctuary(world,company.position)&&bands.filter(b=>available(b)&&Math.hypot(company.position.x-b.x,company.position.y-b.y)<=context.bandRadius).sort((a,b)=>a.id.localeCompare(b.id))[0];
   if(contact){reserve(company,contact);continue;}
   const ready=company.food>=context.food({...world,party:company.party,retinue:context.retinue()})*2&&!company.party.some(p=>p.hp<context.stats(p).maxHp*.65);
-  if(company.targetCampId&&!ready){company.targetCampId=null;continue;}
+  if(company.targetCampId&&(!ready||rivalSaleableLoot(company,context))){company.targetCampId=null;continue;}
   if(company.targetCampId){
    const camp=reserved.has(company.targetCampId)?null:context.targetCamp(world,company.targetCampId);
    if(!camp||context.skirmish(world,camp.id)){company.targetCampId=null;continue;}
@@ -46,10 +47,11 @@ export function planRivalCombat(world,context){
   }
   if(company.status!=='travelling'||company.lastHuntDay===world.day||!ready)continue;
   if(hour<6||hour>=20||context.sanctuary(world,company.position))continue;
-  const goal=RIVAL_GOALS[company.id];
-  const prey=bands.filter(b=>available(b)&&Math.hypot(company.position.x-b.x,company.position.y-b.y)<=goal.huntRange&&rivalCanHunt(company,b,context))
+  const selling=rivalSaleableLoot(company,context),goal=RIVAL_GOALS[company.id];
+  const prey=bands.filter(b=>available(b)&&Math.hypot(company.position.x-b.x,company.position.y-b.y)<=(selling?context.bandRadius:goal.huntRange)&&rivalCanHunt(company,b,context))
    .sort((a,b)=>(company.id==='bronze-oath'?Number(b.behavior==='raiding-caravan')-Number(a.behavior==='raiding-caravan'):0)||Math.hypot(company.position.x-a.x,company.position.y-a.y)-Math.hypot(company.position.x-b.x,company.position.y-b.y)||a.id.localeCompare(b.id)).find(b=>context.canReach(company.position,b));
   if(prey){company.targetCampId=prey.id;reserved.add(prey.id);continue;}
+  if(selling)continue; // Cash in first; do not detour into a camp raid.
   camps??=context.camps(world);
   const candidate=camps.filter(c=>!c.cleared&&!reserved.has(c.id)&&!context.skirmish(world,c.id)&&c.enemyCount<=company.party.length&&c.difficulty<=2&&rivalCanHunt(company,c,context)&&Math.hypot(company.position.x-c.x,company.position.y-c.y)<=goal.huntRange)
    .sort((a,b)=>(b.reward??0)/(30+Math.hypot(company.position.x-b.x,company.position.y-b.y))-(a.reward??0)/(30+Math.hypot(company.position.x-a.x,company.position.y-a.y))||a.id.localeCompare(b.id)).find(c=>context.canReach(company.position,c));

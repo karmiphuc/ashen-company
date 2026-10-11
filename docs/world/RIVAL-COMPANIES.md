@@ -1,6 +1,6 @@
 # Rival companies: supply routes, goals and real combat
 
-Persistent rival companies now run supply routes, nearby camp expeditions and roaming band conflicts using the shared turn-based combat engine in a worker. They physically reach camps, retain real survivors, wounds, armor wear and ammo usage, and earn ordinary loot/XP with normal stat and random perk progression. **Paid contracts, recruitment, equipment upgrades and attacks on the player remain pending.** No power-score victories or invented earnings are used. Accepted player contracts and story/crisis encounters are protected.
+Persistent rival companies now run supply routes, nearby camp expeditions and roaming band conflicts using the shared turn-based combat engine in a worker. They physically reach camps, retain real survivors, wounds, armor wear and ammo usage, and earn ordinary loot/XP with normal stat and random perk progression. **Paid contracts, recruitment, equipment purchases and attacks on the player remain pending.** No power-score victories or invented earnings are used. Accepted player contracts and story/crisis encounters are protected.
 
 ## Activation and authored arrivals
 
@@ -34,7 +34,7 @@ Rivals sleep from 20:00 until 06:00. Travelling companies camp at their current 
 
 Supply quotes avoid building the full equipment catalog. Rest/medical effects do not advance a second world clock. NPC transactions operate on their own roster/resources and share only the real world market stock. A small, separate marker getter lets the map draw crests without recalculating all NPC stats each frame.
 
-Each company has its own treasury, provisions, ammo, tools, medicine, stash/cargo containers and resource ledger. Its resource ledger balances starting funds against wages/purchases, starting food against purchases/consumption, and tools/medicine against purchases/use. Ledger records are validated on import. Ammo purchases use real town stock and prices, aiming for 24 reserve ammo after an expedition. Paid medical services, equipment upgrades, cargo trading and foraging remain pending. The income/consumption ledger records actual loot, ammo expenditure and purchases.
+Each company has its own treasury, provisions, ammo, tools, medicine, stash/cargo containers and resource ledger. Its resource ledger balances starting funds against wages/purchases, starting food against purchases/consumption, and tools/medicine against purchases/use. Ledger records are validated on import. Ammo purchases use real town stock and prices, aiming for 24 reserve ammo after an expedition. Paid medical services, equipment purchases, cargo trading and foraging remain pending. The income/consumption ledger records actual loot, ammo expenditure and purchases.
 
 Three consecutive unpaid or hungry nights dissolve the company in place. The final roster and accounting remain saved for the chronicle; no refills, replacement roster, resurrection or automatic reactivation. This is deliberately a finite-budget foundation: camp earnings may still fail to cover losses or upkeep. No profitable outcome is guaranteed.
 
@@ -54,7 +54,7 @@ At the deadline, the transaction applies actual survivor gear/HP/injuries, XP, s
 
 ## Evidence and next milestone
 
-The [shared headless combat adapter](HEADLESS-RIVAL-COMBAT.md) now resolves real isolated encounters in a worker. Its controller reserves encounters and commits real results to live companies. Paid contracts, equipment spending/upgrades, recruitment and player hostility remain pending.
+The [shared headless combat adapter](HEADLESS-RIVAL-COMBAT.md) now resolves real isolated encounters in a worker. Its controller reserves encounters and commits real results to live companies. Paid contracts, equipment purchases, recruitment and player hostility remain pending.
 
 Unit coverage checks activation/old saves, daytime/mounted travel parity, nighttime camps/inns and dawn resume, six-hour rest and tool/medicine parity, real stock/prices, midnight bills, wound recovery, reload/partition determinism, dissolution without teleport/refill, malformed saves and inability to launch a placeholder NPC fight. Shared engine, cart, night, retinue, injury, legacy and world regressions cover the extracted services. Browser coverage checks actual endgame inspection/reload and iPad widths; campaign-start rivals are visible before any crisis and survive reload.
 
@@ -70,7 +70,7 @@ Historical baseline measured before nighttime sleep, after the lightweight suppl
 
 These are 8,640 quarter-hour steps per seed, not iPad measurements or combat-scheduler benchmarks. An earlier run with full armory projections on every supply quote and concurrent regression/browser work showed substantial timing outliers; the narrow shared quote path removes that unnecessary work. Hardware/browser profiling remains necessary before claiming the eventual full rival system meets frame targets.
 
-Next: paid contract claims, affordable gear spending/upgrades, recruitment and announced player hostility. The real combat adapter, bounded worker scheduler, encounter ownership and exactly-once camp/band outcomes are implemented. Preserve normal earned progression and costs in subsequent milestones.
+Next: paid contract claims, affordable gear purchases, recruitment and announced player hostility. The real combat adapter, bounded worker scheduler, encounter ownership and exactly-once camp/band outcomes are implemented. Preserve normal earned progression and costs in subsequent milestones.
 
 ### Live simulation evidence
 
@@ -96,4 +96,12 @@ Roaming encounters occupy one fixed quarter-hour of campaign time, followed by t
 
 Victories apply normal band loot, XP, stat/perk progression and the existing 48-hour replacement/spawn-cycle rules. Defeats retain actual rival deaths and surviving bandit HP, morale, armor/shield/attachment damage and injuries, tied to the original spawn cycle. A replacement band does not inherit stale damage. Defeating a caravan's actual assigned raider releases that shipment using the same accounting. Saves keep existing rival version-two fields and permit bounded camp-or-band reservations/wear (128 records maximum; the authored ordinary encounter catalog is smaller). Existing camp checkpoints and prior rival resources/progress remain valid.
 
-Companies use the ordinary 512-slot base stash limit, matching native combat settlement. At an accessible town they sell at most four actually owned ordinary spoils per shop day through the normal sale service and local stock/prices. Actual sale proceeds enter the earned-income ledger before supply purchases. Named/famed finds remain in their stash; there are no invented sale receipts or equipment subsidies. Equipment purchases and automatic gear upgrades remain pending.
+Companies use the ordinary 512-slot base stash limit, matching native combat settlement. At an accessible town they sell at most twelve actually owned ordinary spoils per shop day through the normal sale service and local stock/prices. Actual sale proceeds enter the earned-income ledger before supply purchases. Before selling, they equip useful earned weapons, armor, helmets, shields, attachments and mounts through native equipment swaps. Swaps preserve item condition, displaced gear and HP, respect stash/attachment rules, retain ranged/reach/one-handed weapon styles, avoid exhausting fatigue capacity, and reject armor swaps that remove existing defense bonuses. Named/famed reserves are retained. Equipment purchases remain pending; there are no invented sale receipts or equipment subsidies.
+
+### Cashing in and earned equipment
+
+Ordinary spoils redirect a company toward the nearest reachable open town, using route length through real terrain. They finish their actual six-hour post-battle recovery and travel at normal speed; nighttime sleep still applies. While carrying saleable loot, scouting requires 1.75 times their normal safety margin, camp raids are deferred, and only roaming enemies already within the immediate encounter radius qualify for opportunistic hunting. Forced interceptions still resolve real combat, regardless of loot or readiness.
+
+Town visits equip useful finds before selling up to twelve ordinary items per day at normal local prices and stock limits. Larger backlogs keep the company resting safely for the next day's sale instead of seeking another raid. Retained named reserves do not repeatedly force a selling trip. Gold proceeds enter the existing earned-income ledger; food, supplies and wages still cost real money. The existing save schema accepts any real settlement as a modern selling destination while preserving authored home-route indices for subsequent patrols. Legacy route validation remains unchanged.
+
+Equipment selection uses a conservative condition/fatigue/damage heuristic rather than a perfect build optimizer. Named perk combinations are preserved by native swaps, but shopping for equipment, second attachment/reserve-set optimization, recruitment and cargo trading are future work.

@@ -2238,7 +2238,7 @@ function rivalContext(state) {
  return {settlements:SETTLEMENTS,normalize:normalizeMember,stats:getCompanyStats,food:getDailyFood,travelSpeed:getWorldTravelSpeed,
   train:trainAttributes,rest:applyRestRecovery,
   daily(view){recoverDailyInjuries(view);applyDailyUpkeep(view);},
-  market:getProvisionMarket,buyFood,buySupplies,sellItem,stashCapacity:MAX_INVENTORY,getItem,itemCondition,
+  market:getProvisionMarket,buyFood,buySupplies,sellItem,equipItem,stashCapacity:MAX_INVENTORY,getItem,itemCondition,
   validateMembers(members,day){validateCompanyMembers(members,day);return members.map(normalizePersistedMember);},
   servicesAvailable:id=>getSettlementAccess(state,id).servicesAvailable,camps:world=>[...getCampSites(world),...getRoamingBands(world)],bands:rivalScoutingBands,encounter:getRivalCombatEncounter,sanctuary:(world,position)=>SETTLEMENTS.some(t=>getSettlementAccess(world,t.id).servicesAvailable&&distance(position,t)<=TOWN_RADIUS),targetCamp:rivalCampTarget,contracts:getActiveContracts,campId:id=>isCampId(id)||BAND_BY_ID.has(id),bandId:id=>BAND_BY_ID.has(id),radius:CAMP_RADIUS,validateWorld:validateSave,checkpoint:restoreHeadlessCombat,injuries:validInjuries};
 }

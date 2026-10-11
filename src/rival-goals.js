@@ -1,3 +1,4 @@
+import {rivalSaleableLoot} from './rival-equipment.js';
 // Scouting estimates guide movement only. Battles always use the shared engine.
 export const RIVAL_GOALS=Object.freeze({
  'gilded-road':{label:'Cautious earners',icon:'¤',margin:1.6,huntRange:80,description:'Protect wage reserves; take low-risk spoils near the supply route.'},
@@ -14,4 +15,5 @@ export function bandStrength(band,context){
   const fitness=.15+.85*(wear?.hp??hp)/Math.max(1,hp);
   return sum+(hp*(.5+skill/100)+((wear?.bodyArmor??context.itemCondition(e.armor)??0)+(wear?.headArmor??context.itemCondition(e.helmet)??0))*.25+(e.defense??2+tier*2+rank*2+(e.champion?8:0))*2)*fitness;},0);
 }
-export function rivalCanHunt(company,band,context){return rivalStrength(company,context)>=bandStrength(band,context)*RIVAL_GOALS[company.id].margin;}
+export function rivalRiskMargin(company,context){return RIVAL_GOALS[company.id].margin*(rivalSaleableLoot(company,context)?1.75:1);}
+export function rivalCanHunt(company,band,context){return rivalStrength(company,context)>=bandStrength(band,context)*rivalRiskMargin(company,context);}
