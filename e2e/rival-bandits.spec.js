@@ -28,7 +28,7 @@ test('late-game band contact starts in the browser worker and commits without si
  await page.reload();await page.locator('[data-speed="1"]').click();
  await expect.poll(()=>page.evaluate(({key,id})=>JSON.parse(localStorage.getItem(key)).rivalCompanies.reports.some(r=>r.encounterId===id),{key,id:band.id}),{timeout:15000}).toBe(true);
  await page.locator('[data-speed="0"]').click();const saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);validateSave(saved);
- expect(saved.hour).toBeLessThan(9);expect(saved.rivalCompanies.reports.filter(r=>r.encounterId===band.id)).toHaveLength(1);expect(saved.bands[band.id].spawnCycle).toBe(band.spawnCycle+1);
+ const reports=saved.rivalCompanies.reports.filter(r=>r.encounterId===band.id);expect(reports).toHaveLength(1);expect(reports[0].hour).toBe(8.25);expect(saved.bands[band.id].spawnCycle).toBe(band.spawnCycle+1);
  for(const [id,value] of Object.entries(wear))if(id!==band.id)expect(saved.rivalCompanies.campWear[id]).toEqual(value);
  expect(errors).toEqual([]);
 });
