@@ -46,6 +46,13 @@ function shop(world,company,context,now){
  const view=facade(world,company,now);
  if(company.lastShopDay===view.day||!context.servicesAvailable(company.targetTownId))return;
  company.lastShopDay=view.day;
+ if(world.rivalCompanies?.version===2){
+  // A bounded town transaction liquidates genuine ordinary spoils at normal
+  // local prices. Keep named/famed finds for later equipment progression.
+  for(const id of company.inventory.filter(id=>!['named','famed'].includes(context.getItem(id)?.rarity)).slice(0,4)){
+   const before=view.gold;if(context.sellItem(view,id).ok)company.ledger.goldEarned+=view.gold-before;
+  }
+ }
  const market=context.market(view);if(!market)return;
  const reserve=company.party.reduce((sum,p)=>sum+context.stats(p).dailyWage,0)*3;
  const foodTarget=Math.ceil(context.food(view)*3);
@@ -149,7 +156,7 @@ export function validateRivalCompanies(input,world,context){
   check(Array.isArray(company.party)&&(modern?company.party.length<=definition.size:company.party.length===definition.size)&&company.party.every((p,i)=>modern?Array.from({length:definition.size},(_,j)=>`${company.id}-${j+1}`).includes(p?.id):p?.id===`${company.id}-${i+1}`),'roster');
   if(modern){check(company.targetCampId===null||context.campId(company.targetCampId),'camp destination');check(count(company.lastHuntDay)&&company.lastHuntDay<=world.day,'hunt date');check(company.supplies.ammo+company.ledger.ammoUsed===company.ledger.ammoOpening+company.ledger.ammoLoot+company.ledger.ammoBought,'ammo accounting');}
   company.party=context.validateMembers(company.party,world.day);
-  check(Array.isArray(company.inventory)&&company.inventory.length<=128&&company.inventory.every(id=>typeof id==='string'&&id.length<=16000&&context.getItem(id)),'stash');
+  check(Array.isArray(company.inventory)&&company.inventory.length<=context.stashCapacity&&company.inventory.every(id=>typeof id==='string'&&id.length<=16000&&context.getItem(id)),'stash');
   check(Array.isArray(company.inventoryCondition)&&company.inventoryCondition.length===company.inventory.length&&company.inventoryCondition.every((n,i)=>context.itemCondition(company.inventory[i])===null?n===null:count(n)&&n<=context.itemCondition(company.inventory[i])),'stash condition');
   check(keys(company.cargo,[]),'cargo');
   check((company.status==='dissolved')===(company.unpaidDays===3||company.hungryDays===3||modern&&!company.party.length),'dissolution');

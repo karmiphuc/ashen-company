@@ -4,7 +4,8 @@ import {createGame,advanceRivalSimulation,planRivalWorldCombat,getRoamingBands,v
 import {enableRivalCombat,acknowledgeRivalCombat} from '../src/rival-world-combat.js';
 import {createHeadlessCombat,advanceHeadlessCombat,settleHeadlessCombat,restoreHeadlessCombat} from '../src/headless-combat.js';
 import {RIVAL_GOALS,rivalCanHunt} from '../src/rival-goals.js';
-import {getItem} from '../src/engine.js';
+import {getItem,getMarket} from '../src/engine.js';
+import {NAMED_WEAPONS} from '../src/named-weapons.js';
 const itemCondition=id=>getItem(id)?.armor??null;
 function scene(hour=8,difficulty=0){const world=createGame(12);world.hour=hour;advanceRivalSimulation(world);enableRivalCombat(world);const band=getRoamingBands(world).find(b=>b.difficulty===difficulty&&SETTLEMENTS.every(t=>Math.hypot(t.x-b.x,t.y-b.y)>40));const company=world.rivalCompanies.companies[0];company.position={x:band.x,y:band.y};company.status='travelling';return {world,band,company};}
 function resolve(job){const combat=createHeadlessCombat(job.source,job.companyId,job.encounterId);while(combat.status==='running')advanceHeadlessCombat(combat,{maxSteps:256,budgetMs:1000});settleHeadlessCombat(combat);return combat;}
@@ -27,3 +28,7 @@ test('selected player pursuits and town sanctuary remain protected from rival re
 });
 
 test('an immediate player interception takes precedence over a rival standing next to the same band',()=>{const {world,band}=scene();world.position={x:band.x,y:band.y};world.encounterGraceUntil=0;planRivalWorldCombat(world);assert.equal(world.rivalCompanies.jobs.some(j=>j.encounterId===band.id),false);assert.equal(startBattle(world,band.id).ok,true);validateSave(world);});
+
+test('towns liquidate only real ordinary spoils at normal prices and the stash uses the player base limit',()=>{
+ const world=createGame(12);advanceRivalSimulation(world);enableRivalCombat(world);const company=world.rivalCompanies.companies[0];const named=NAMED_WEAPONS[0].id;company.inventory=[...Array(129).fill('arming-sword'),named];company.inventoryCondition=Array(130).fill(null);validateSave(world);const before=company.gold,playerGold=world.gold,quote=getMarket(world).equipment.find(e=>e.itemId==='arming-sword').sellPrice;tick(world,.25);assert.equal(company.inventory.length,126);assert.ok(company.inventory.includes(named));assert.equal(world.gold,playerGold);assert.equal(company.gold-before,quote*4);assert.equal(company.gold-before,company.ledger.goldEarned);assert.ok(company.ledger.goldEarned>0);validateSave(world);
+});
