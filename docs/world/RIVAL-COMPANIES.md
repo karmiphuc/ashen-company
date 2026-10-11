@@ -4,7 +4,7 @@ This is the first two milestones of the [rival-company plan](../plans/RIVAL-COMP
 
 ## Activation and authored arrivals
 
-After Ashen Winter is completed, the next ordinary quarter-hour world step introduces these three companies once. An older completed-crisis save activates them at its current date; there are no retroactive bills, rerolls or player-level scaling. Companies do not appear before the crisis, and a new inherited campaign starts without them until its own crisis is completed.
+The first ordinary quarter-hour world step introduces these three companies once, from the start of every campaign, including inherited campaigns. Older saves without rivals activate them at their current date regardless of crisis progress; there are no retroactive bills, rerolls or player-level scaling. Existing companies keep their progress and dissolved companies stay dissolved.
 
 | Company | Identity | Brothers / level | Treasury | Supply route |
 | --- | --- | --- | --- | --- |
@@ -44,7 +44,7 @@ Future casualties, recruitment, earned income and committed battles will need an
 
 ## Evidence and next milestone
 
-Unit coverage checks activation/old saves, normal/night/mounted travel parity, six-hour rest and tool/medicine parity, real stock/prices, midnight bills, wound recovery, reload/partition determinism, dissolution without teleport/refill, malformed saves and inability to launch a placeholder NPC fight. Shared engine, cart, night, retinue, injury, legacy and world regressions cover the extracted services. Browser coverage checks actual endgame inspection/reload and iPad widths; pre-crisis campaigns have no rival UI.
+Unit coverage checks activation/old saves, normal/night/mounted travel parity, six-hour rest and tool/medicine parity, real stock/prices, midnight bills, wound recovery, reload/partition determinism, dissolution without teleport/refill, malformed saves and inability to launch a placeholder NPC fight. Shared engine, cart, night, retinue, injury, legacy and world regressions cover the extracted services. Browser coverage checks actual endgame inspection/reload and iPad widths; campaign-start rivals are visible before any crisis and survive reload.
 
 `node tools/simulate-rivals.mjs` reproducibly runs three seeded 30/90-day supply-route simulations through the shared services and validates both checkpoints. This isolates rival scheduling; it does not simulate other NPC combat or claim iPad hardware performance. Contract counts, combat losses, XP gains and named acquisitions are all zero because those systems are not implemented. Record measured p95/max step times and save sizes instead of treating a unit-test pass as a frame-rate guarantee.
 

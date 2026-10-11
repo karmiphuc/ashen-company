@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ITEMS, SETTLEMENTS, createGame, createFamedItemId, getTownEvent, getTownEconomy, getMarket,
-  acceptContract, travelTo, tick, buyAll, buyFood, buyGood,
+  acceptContract, travelTo, tick, buyAll, buyFood, buySupplies, buyGood,
   sellGood, buyItem, sellItem, getPurchaseQuote, validateSave,
 } from '../src/engine.js';
 import { townFacilities } from '../src/town-facilities.js';
@@ -374,7 +374,8 @@ test('market save migration keeps depleted stock and famed buybacks; malformed e
     'a market saved before the shipment does not infer a future event marker');
   assert.deepEqual(equipmentCounts(getMarket(importedPreEvent)), projected);
   assert.equal(getTownEvent(beforeEvent, 'ironford')?.type, 'armorer-shipment-en-route');
-  assert.equal(buyFood(importedPreEvent, 1).ok, true);
+  // Rivals may legitimately buy the town's remaining food; tools still exercise the market write.
+  assert.equal(buySupplies(importedPreEvent, 'tools', 1).ok, true);
   assert.equal(importedPreEvent.marketStock.ironford.appliedEventId, null,
     'an unarrived shipment is not marked as applied by a market write');
   assert.deepEqual(equipmentCounts(getMarket(importedPreEvent)), projected);
@@ -382,7 +383,7 @@ test('market save migration keeps depleted stock and famed buybacks; malformed e
   const duringEvent = createGame(shipment.seed);
   atTown(duringEvent, 'ironford');
   advanceTo(duringEvent, shipment.event.startDay);
-  assert.equal(buyFood(duringEvent, 1).ok, true);
+  assert.equal(buySupplies(duringEvent, 'tools', 1).ok, true);
   const stockedDuringEvent = equipmentCounts(getMarket(duringEvent));
   delete duringEvent.marketStock.ironford.armoryCycle;
   delete duringEvent.marketStock.ironford.appliedEventId;

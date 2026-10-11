@@ -7,5 +7,5 @@ export function rivalSidebarHTML(state,site){
 }
 export function rivalJournalHTML(state){
  const sites=getRivalCompanies(state);if(!sites.length)return '';
- return `<section class="paper-card rival-journal"><div class="eyebrow">OTHER BANNERS</div><h2>Mercenaries after the winter</h2><div class="rival-banner-list">${sites.map(site=>`<div><strong>${esc(site.crest)} ${esc(site.name)}</strong><small>${site.active?'Neutral company':'Dissolved'}</small>${site.active&&worldPointVisible(state,site)?`<button data-rival-inspect="${esc(site.id)}" aria-label="Inspect ${esc(site.name)}">⌖ Scout</button>`:site.active?'<small>Beyond scouting range</small>':''}</div>`).join('')}</div></section>`;
+ return `<section class="paper-card rival-journal"><div class="eyebrow">OTHER BANNERS</div><h2>Other mercenary companies</h2><div class="rival-banner-list">${sites.map(site=>`<div><strong>${esc(site.crest)} ${esc(site.name)}</strong><small>${site.active?'Neutral company':'Dissolved'}</small>${site.active&&worldPointVisible(state,site)?`<button data-rival-inspect="${esc(site.id)}" aria-label="Inspect ${esc(site.name)}">⌖ Scout</button>`:site.active?'<small>Beyond scouting range</small>':''}</div>`).join('')}</div></section>`;
 }
